@@ -737,6 +737,7 @@ func protectedProductRouteFeatures() []protectedProductRouteFeature {
 		{method: "PUT", pattern: "/api/v1/document-parsing-rules/versions/:versionID/", featureKey: FeatureDocumentManagement},
 		{method: "POST", pattern: "/api/v1/document-parsing-rules/versions/:versionID/publish/", featureKey: FeatureDocumentManagement},
 		{method: "POST", pattern: "/api/v1/document-parsing-rules/versions/:versionID/simulate/", featureKey: FeatureDocumentManagement},
+		{method: "GET", pattern: "/api/v1/document-templates/versions/:versionID/preview.pdf", featureKey: FeatureDocumentManagement},
 		{method: "GET", pattern: "/api/v1/document-parsing-rules/:ruleSetID/fixtures/", featureKey: FeatureDocumentManagement},
 		{method: "POST", pattern: "/api/v1/document-parsing-rules/:ruleSetID/fixtures/", featureKey: FeatureDocumentManagement},
 		{method: "GET", pattern: "/api/v1/document-parsing-rules/fixtures/:fixtureID/", featureKey: FeatureDocumentManagement},

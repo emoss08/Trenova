@@ -561,6 +561,11 @@ input ApplyCustomerPaymentInput {
   paymentId: ID!
 }
 
+input AssignDocumentTemplateInput {
+  customerId: ID!
+  templateId: ID!
+}
+
 """
 Assigns a pay profile to a worker. Any currently-open assignment for the worker
 is automatically ended on the new effective date — no manual cleanup needed.
@@ -933,6 +938,16 @@ input CostingControlInput {
   targetMarginPercent: String
   useLiveFuelPrice: Boolean!
   version: Int!
+}
+
+input CreateDocumentTemplateVersionInput {
+  content: DocumentTemplateVersionInput
+  """
+  Copy content from an existing version. This is how both "edit a copy of what
+  is live" and rollback are expressed — history is never edited in place.
+  """
+  sourceVersionId: ID
+  templateId: ID!
 }
 
 input CreateMyLoadCommentInput {
@@ -2370,6 +2385,261 @@ type DocumentPacketRuleConnection {
 type DocumentPacketRuleEdge {
   cursor: String!
   node: DocumentPacketRule!
+}
+
+type DocumentTemplate {
+  activeVersion: DocumentTemplateVersion
+  activeVersionId: ID
+  assignments: [DocumentTemplateAssignment!]
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  createdById: ID
+  description: String!
+  id: ID!
+  isOrgDefault: Boolean!
+  kind: String!
+  name: String!
+  organizationId: ID!
+  updatedAt: Int!
+  updatedById: ID
+  version: Int!
+  versions: [DocumentTemplateVersion!]
+}
+
+type DocumentTemplateAssignment {
+  assignedById: ID
+  businessUnitId: ID!
+  createdAt: Int!
+  customer: Customer
+  customerId: ID!
+  id: ID!
+  kind: String!
+  organizationId: ID!
+  template: DocumentTemplate
+  templateId: ID!
+  updatedAt: Int!
+}
+
+type DocumentTemplateAssignmentConnection {
+  edges: [DocumentTemplateAssignmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DocumentTemplateAssignmentEdge {
+  cursor: String!
+  node: DocumentTemplateAssignment!
+}
+
+enum DocumentTemplateChannel {
+  EmailHTML
+  EmailText
+  NotificationBody
+  NotificationTitle
+  PDF
+  Subject
+}
+
+type DocumentTemplateConnection {
+  edges: [DocumentTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+One finding from parsing or rendering a template. Severity is advisory in a
+preview and blocking at publish.
+"""
+type DocumentTemplateDiagnostic {
+  code: String!
+  column: Int!
+  field: String!
+  line: Int!
+  message: String!
+  severity: String!
+}
+
+type DocumentTemplateEdge {
+  cursor: String!
+  node: DocumentTemplate!
+}
+
+input DocumentTemplateInput {
+  code: String!
+  description: String
+  isOrgDefault: Boolean
+  kind: String!
+  name: String!
+}
+
+"""
+A registered template kind. The catalog is driven by the Go registry, not by
+rows, so it is the same for every organization and fixed in cardinality.
+"""
+type DocumentTemplateKind {
+  category: String!
+  channels: [DocumentTemplateChannel!]!
+  customerScoped: Boolean!
+  description: String!
+  displayName: String!
+  kind: String!
+  paged: Boolean!
+  requiredPaths: [String!]!
+  source: DocumentTemplateSource!
+  """
+  The template governing this kind for the organization right now, absent when
+  the built-in is still in effect.
+  """
+  template: DocumentTemplate
+  variables: [DocumentTemplateVariable!]!
+}
+
+enum DocumentTemplateOrientation {
+  Landscape
+  Portrait
+}
+
+enum DocumentTemplatePageSize {
+  A4
+  Legal
+  Letter
+}
+
+type DocumentTemplatePreview {
+  contentHash: String!
+  diagnostics: [DocumentTemplateDiagnostic!]!
+  """
+  Rendered HTML as a *string*, never served as text/html on this origin. The
+  client renders it inside a sandboxed iframe; handing it back as a document
+  would let an organization's template run against the app origin.
+  """
+  html: String!
+  """
+  Where to fetch the printed PDF. The bytes stay off GraphQL: base64 in a JSON
+  envelope inflates by a third and cannot stream.
+  """
+  pdfUrl: String
+  source: DocumentTemplateSource!
+  subject: String!
+  text: String!
+}
+
+"""
+Preview unsaved editor content, a stored version, or the built-in.
+
+Content wins over versionId, because the editor previews what is on screen and
+that has by definition not been saved yet.
+"""
+input DocumentTemplatePreviewInput {
+  content: DocumentTemplateVersionInput
+  includePdf: Boolean
+  kind: String!
+  versionId: ID
+}
+
+"""
+Which tier of the resolution chain produced a template: a per-customer
+assignment, the organization default, or the built-in that ships with the
+system.
+"""
+enum DocumentTemplateSource {
+  Assigned
+  BuiltIn
+  OrgDefault
+}
+
+"""
+One variable an author may reference, as the editor's autocomplete and reference
+panel present it.
+"""
+type DocumentTemplateVariable {
+  """
+  What the value means in business terms. The editor shows it verbatim, which is
+  why the catalog carries prose rather than a type name.
+  """
+  description: String!
+  """The element shape, for Object and Collection variables."""
+  fields: [DocumentTemplateVariable!]
+  path: String!
+  """
+  A published version must still reference this path. These are the fields whose
+  absence makes a document legally deficient rather than merely ugly.
+  """
+  required: Boolean!
+  type: DocumentTemplateVariableType!
+}
+
+enum DocumentTemplateVariableType {
+  Bool
+  Collection
+  Date
+  DateTime
+  Decimal
+  Int
+  Money
+  Object
+  String
+  StringList
+}
+
+type DocumentTemplateVersion {
+  archivedAt: Int
+  archivedById: ID
+  bodyHtml: String!
+  bodyText: String!
+  businessUnitId: ID!
+  contentHash: String!
+  createdAt: Int!
+  cssContent: String!
+  footerHtml: String!
+  headerHtml: String!
+  id: ID!
+  marginBottom: Float
+  marginLeft: Float
+  marginRight: Float
+  marginTop: Float
+  organizationId: ID!
+  orientation: DocumentTemplateOrientation
+  pageSize: DocumentTemplatePageSize
+  publishNotes: String!
+  publishedAt: Int
+  publishedById: ID
+  sourceVersionId: ID
+  """
+  True when the built-in this version was copied from has since changed, so the
+  editor can offer to show what moved instead of leaving the copy silently
+  behind the shipped default.
+  """
+  starterDrifted: Boolean!
+  starterHash: String!
+  status: DocumentTemplateVersionStatus!
+  subject: String!
+  templateId: ID!
+  updatedAt: Int!
+  version: Int!
+  versionNumber: Int!
+}
+
+input DocumentTemplateVersionInput {
+  bodyHtml: String
+  bodyText: String
+  cssContent: String
+  footerHtml: String
+  headerHtml: String
+  marginBottom: Float
+  marginLeft: Float
+  marginRight: Float
+  marginTop: Float
+  orientation: DocumentTemplateOrientation
+  pageSize: DocumentTemplatePageSize
+  subject: String
+}
+
+enum DocumentTemplateVersionStatus {
+  Active
+  Archived
+  Draft
 }
 
 type DocumentType {
@@ -4608,7 +4878,9 @@ type Mutation {
   approveDetentionOccurrence(occurrenceId: ID!): DetentionOccurrence!
   approveDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   approveWorkerPTO(id: ID!): WorkerPTO!
+  archiveDocumentTemplateVersion(id: ID!): DocumentTemplateVersion!
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
+  assignDocumentTemplate(input: AssignDocumentTemplateInput!): DocumentTemplateAssignment!
   assignPayProfileToWorker(input: AssignPayProfileInput!): WorkerPayAssignment!
   attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
   """Transfer accrued pay events onto a draft settlement."""
@@ -4635,6 +4907,8 @@ type Mutation {
   closeEscrowAccount(accountId: ID!): EscrowAccount!
   closeOrder(id: ID!): Order!
   createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
+  createDocumentTemplate(input: DocumentTemplateInput!): DocumentTemplate!
+  createDocumentTemplateVersion(input: CreateDocumentTemplateVersionInput!): DocumentTemplateVersion!
   createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
   createFuelIndex(input: FuelIndexInput!): FuelIndex!
@@ -4667,6 +4941,8 @@ type Mutation {
   createTrailer(input: TrailerInput!): Trailer!
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   deleteDetentionPolicy(id: ID!): Boolean!
+  deleteDocumentTemplate(id: ID!): Boolean!
+  deleteDocumentTemplateVersion(id: ID!): Boolean!
   deleteFuelIndex(id: ID!): Boolean!
   deleteFuelIndexPrice(id: ID!): Boolean!
   deleteFuelSurchargeProgram(id: ID!): Boolean!
@@ -4736,6 +5012,7 @@ type Mutation {
   pinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
   postDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  publishDocumentTemplateVersion(id: ID!, notes: String): DocumentTemplateVersion!
   recalculateDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
   """
@@ -4776,9 +5053,16 @@ type Mutation {
   Revokes portal access: deactivates the linked login and voids pending invitations.
   """
   revokeWorkerPortalAccess(workerId: ID!): Boolean!
+  """
+  Rollback creates a new draft from the target and publishes it rather than
+  reactivating history, so a generated document never names a version that was
+  live at two different times under two different approvals.
+  """
+  rollbackDocumentTemplate(notes: String, versionId: ID!): DocumentTemplateVersion!
   runReport(input: RunReportInput!): ReportRun!
   saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
+  sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   setOrgDefaultTableConfiguration(enabled: Boolean!, id: ID!): TableConfiguration!
   """Moves an open dispute into review (back office)."""
@@ -4787,6 +5071,7 @@ type Mutation {
   submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
+  unassignDocumentTemplate(input: UnassignDocumentTemplateInput!): Boolean!
   uncancelShipment(id: ID!): Shipment!
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
@@ -4797,6 +5082,8 @@ type Mutation {
   """Updates the org's Dash feature toggles (back office)."""
   updateDashControl(input: UpdateDashControlInput!): DashControl!
   updateDetentionPolicy(id: ID!, input: DetentionPolicyInput!): DetentionPolicy!
+  updateDocumentTemplate(id: ID!, input: DocumentTemplateInput!): DocumentTemplate!
+  updateDocumentTemplateVersion(id: ID!, input: DocumentTemplateVersionInput!): DocumentTemplateVersion!
   updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateEscrowAccount(input: UpdateEscrowAccountInput!): EscrowAccount!
@@ -5637,6 +5924,7 @@ type Query {
   customFieldDefinition(id: ID!): CustomFieldDefinition
   customFieldDefinitions(input: DataTableConnectionInput!): CustomFieldDefinitionConnection!
   customer(id: ID!): Customer
+  customerDocumentTemplateAssignments(customerId: ID!): [DocumentTemplateAssignment!]!
   customerPayment(id: ID!): CustomerPayment
   customerPayments(input: DataTableConnectionInput!): CustomerPaymentConnection!
   customers(input: DataTableConnectionInput!): CustomerConnection!
@@ -5662,6 +5950,14 @@ type Query {
   distanceProfiles(input: DataTableConnectionInput!): DistanceProfileConnection!
   documentPacketRule(id: ID!): DocumentPacketRule
   documentPacketRules(input: DataTableConnectionInput!): DocumentPacketRuleConnection!
+  documentTemplate(id: ID!): DocumentTemplate
+  documentTemplateAssignments(input: DataTableConnectionInput!): DocumentTemplateAssignmentConnection!
+  """
+  The registry catalog that powers the admin variable picker and the kind list.
+  """
+  documentTemplateKinds: [DocumentTemplateKind!]!
+  documentTemplateVersion(id: ID!): DocumentTemplateVersion
+  documentTemplates(input: DataTableConnectionInput!): DocumentTemplateConnection!
   documentType(id: ID!): DocumentType
   documentTypes(input: DataTableConnectionInput!): DocumentTypeConnection!
   drillThroughReport(input: ReportDrillInput!): ReportPreview!
@@ -5817,6 +6113,12 @@ type Query {
   recurringEarnings(input: DataTableConnectionInput!): RecurringEarningConnection!
   recurringShipment(id: ID!): RecurringShipment
   recurringShipments(input: DataTableConnectionInput!): RecurringShipmentConnection!
+  """
+  Preview is a query because it mutates nothing — which also lets the editor
+  cache renders by content hash and make undo an instant cache hit.
+  """
+  renderDocumentTemplatePreview(input: DocumentTemplatePreviewInput!): DocumentTemplatePreview!
+  renderMessageTemplatePreview(input: DocumentTemplatePreviewInput!): DocumentTemplatePreview!
   reportCatalog: ReportCatalog!
   reportDashboard(id: ID!): ReportDashboard!
   reportDashboards: [ReportDashboard!]!
@@ -6777,6 +7079,13 @@ input SelectOptionsInput {
   offset: Int = 0
   query: String
   resource: SelectOptionResource!
+}
+
+input SendTestMessageTemplateInput {
+  content: DocumentTemplateVersionInput
+  kind: String!
+  toEmail: String!
+  versionId: ID
 }
 
 type ServiceFailure {
@@ -8792,6 +9101,11 @@ input TrailerPatchInput {
   version: Int
   vin: String
   year: Int
+}
+
+input UnassignDocumentTemplateInput {
+  customerId: ID!
+  kind: String!
 }
 
 """

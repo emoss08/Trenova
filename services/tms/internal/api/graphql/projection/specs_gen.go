@@ -64,6 +64,12 @@ var DistanceProfileSpec TypeSpec
 
 var DocumentPacketRuleSpec TypeSpec
 
+var DocumentTemplateSpec TypeSpec
+
+var DocumentTemplateAssignmentSpec TypeSpec
+
+var DocumentTemplateVersionSpec TypeSpec
+
 var DocumentTypeSpec TypeSpec
 
 var DriverExpenseSpec TypeSpec
@@ -2841,6 +2847,284 @@ func init() {
 			{
 				Name:        "expirationWarningDays",
 				FieldMapKey: "expirationWarningDays",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	DocumentTemplateSpec = TypeSpec{
+		TypeName: "DocumentTemplate",
+		FieldMap: buncolgen.DocumentTemplateFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "isOrgDefault",
+				FieldMapKey: "isOrgDefault",
+			},
+			{
+				Name:        "activeVersionId",
+				FieldMapKey: "activeVersionId",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "updatedById",
+				FieldMapKey: "updatedById",
+			},
+			{
+				Name:        "activeVersion",
+				FieldMapKey: "activeVersionId",
+				Relation: &RelationSpec{
+					Target: &DocumentTemplateVersionSpec,
+				},
+			},
+			{
+				Name: "versions",
+				Relation: &RelationSpec{
+					Target: &DocumentTemplateVersionSpec,
+				},
+			},
+			{
+				Name: "assignments",
+				Relation: &RelationSpec{
+					Target: &DocumentTemplateAssignmentSpec,
+				},
+			},
+		},
+	}
+
+	DocumentTemplateAssignmentSpec = TypeSpec{
+		TypeName: "DocumentTemplateAssignment",
+		FieldMap: buncolgen.DocumentTemplateAssignmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "templateId",
+				FieldMapKey: "templateId",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "assignedById",
+				FieldMapKey: "assignedById",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "template",
+				FieldMapKey: "templateId",
+				Relation: &RelationSpec{
+					Target: &DocumentTemplateSpec,
+				},
+			},
+			{
+				Name:        "customer",
+				FieldMapKey: "customerId",
+				Relation: &RelationSpec{
+					Target: &CustomerSpec,
+				},
+			},
+		},
+	}
+
+	DocumentTemplateVersionSpec = TypeSpec{
+		TypeName: "DocumentTemplateVersion",
+		FieldMap: buncolgen.DocumentTemplateVersionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "templateId",
+				FieldMapKey: "templateId",
+			},
+			{
+				Name:        "sourceVersionId",
+				FieldMapKey: "sourceVersionId",
+			},
+			{
+				Name:        "versionNumber",
+				FieldMapKey: "versionNumber",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "subject",
+				FieldMapKey: "subject",
+			},
+			{
+				Name:        "bodyHtml",
+				FieldMapKey: "bodyHtml",
+			},
+			{
+				Name:        "bodyText",
+				FieldMapKey: "bodyText",
+			},
+			{
+				Name:        "cssContent",
+				FieldMapKey: "cssContent",
+			},
+			{
+				Name:        "headerHtml",
+				FieldMapKey: "headerHtml",
+			},
+			{
+				Name:        "footerHtml",
+				FieldMapKey: "footerHtml",
+			},
+			{
+				Name:        "pageSize",
+				FieldMapKey: "pageSize",
+			},
+			{
+				Name:        "orientation",
+				FieldMapKey: "orientation",
+			},
+			{
+				Name:        "marginTop",
+				FieldMapKey: "marginTop",
+			},
+			{
+				Name:        "marginBottom",
+				FieldMapKey: "marginBottom",
+			},
+			{
+				Name:        "marginLeft",
+				FieldMapKey: "marginLeft",
+			},
+			{
+				Name:        "marginRight",
+				FieldMapKey: "marginRight",
+			},
+			{
+				Name:        "contentHash",
+				FieldMapKey: "contentHash",
+			},
+			{
+				Name:        "starterHash",
+				FieldMapKey: "starterHash",
+			},
+			{
+				Name:    "starterDrifted",
+				Special: "starterDrifted",
+			},
+			{
+				Name:        "publishNotes",
+				FieldMapKey: "publishNotes",
+			},
+			{
+				Name:        "publishedById",
+				FieldMapKey: "publishedById",
+			},
+			{
+				Name:        "publishedAt",
+				FieldMapKey: "publishedAt",
+			},
+			{
+				Name:        "archivedById",
+				FieldMapKey: "archivedById",
+			},
+			{
+				Name:        "archivedAt",
+				FieldMapKey: "archivedAt",
 			},
 			{
 				Name:        "version",

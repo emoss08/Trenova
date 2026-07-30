@@ -47,6 +47,10 @@ virtuals:
     - secretState
   AuditEntry:
     - entityRef
+  # Computed by comparing the version's recorded starter hash against the
+  # built-in as it stands today. There is no column to select for it.
+  DocumentTemplateVersion:
+    - starterDrifted
   Order:
     - legs
   ReportSchedule:

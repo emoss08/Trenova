@@ -492,6 +492,7 @@ func documentManagementRouteRefs() []RouteRef {
 			"/api/v1/document-parsing-rules/versions/:versionID/",
 			"/api/v1/document-parsing-rules/:ruleSetID/fixtures/",
 			"/api/v1/document-parsing-rules/fixtures/:fixtureID/",
+			"/api/v1/document-templates/versions/:versionID/preview.pdf",
 			"/api/v1/document-types/",
 			"/api/v1/document-types/:docTypeID/",
 			"/api/v1/document-types/select-options/",

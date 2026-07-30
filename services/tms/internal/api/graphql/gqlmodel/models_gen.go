@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
@@ -167,6 +168,11 @@ type ApplyCustomerPaymentInput struct {
 	PaymentID      string                             `json:"paymentId"`
 	AccountingDate int                                `json:"accountingDate"`
 	Applications   []*CustomerPaymentApplicationInput `json:"applications"`
+}
+
+type AssignDocumentTemplateInput struct {
+	TemplateID string `json:"templateId"`
+	CustomerID string `json:"customerId"`
 }
 
 // Assigns a pay profile to a worker. Any currently-open assignment for the worker
@@ -373,6 +379,14 @@ type CostingControlInput struct {
 	PlannedMonthlyMiles  *int    `json:"plannedMonthlyMiles,omitempty"`
 	TargetMarginPercent  *string `json:"targetMarginPercent,omitempty"`
 	Version              int     `json:"version"`
+}
+
+type CreateDocumentTemplateVersionInput struct {
+	TemplateID string `json:"templateId"`
+	// Copy content from an existing version. This is how both "edit a copy of what
+	// is live" and rollback are expressed — history is never edited in place.
+	SourceVersionID *string                       `json:"sourceVersionId,omitempty"`
+	Content         *DocumentTemplateVersionInput `json:"content,omitempty"`
 }
 
 type CreateMyLoadCommentInput struct {
@@ -1257,6 +1271,121 @@ type DocumentPacketRuleConnection struct {
 type DocumentPacketRuleEdge struct {
 	Node   *documentpacketrule.DocumentPacketRule `json:"node"`
 	Cursor string                                 `json:"cursor"`
+}
+
+type DocumentTemplateAssignmentConnection struct {
+	Edges      []*DocumentTemplateAssignmentEdge `json:"edges"`
+	PageInfo   *PageInfo                         `json:"pageInfo"`
+	TotalCount *int                              `json:"totalCount,omitempty"`
+}
+
+type DocumentTemplateAssignmentEdge struct {
+	Node   *documenttemplate.DocumentTemplateAssignment `json:"node"`
+	Cursor string                                       `json:"cursor"`
+}
+
+type DocumentTemplateConnection struct {
+	Edges      []*DocumentTemplateEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+// One finding from parsing or rendering a template. Severity is advisory in a
+// preview and blocking at publish.
+type DocumentTemplateDiagnostic struct {
+	Severity string `json:"severity"`
+	Code     string `json:"code"`
+	Field    string `json:"field"`
+	Message  string `json:"message"`
+	Line     int    `json:"line"`
+	Column   int    `json:"column"`
+}
+
+type DocumentTemplateEdge struct {
+	Node   *documenttemplate.DocumentTemplate `json:"node"`
+	Cursor string                             `json:"cursor"`
+}
+
+type DocumentTemplateInput struct {
+	Kind         string  `json:"kind"`
+	Code         string  `json:"code"`
+	Name         string  `json:"name"`
+	Description  *string `json:"description,omitempty"`
+	IsOrgDefault *bool   `json:"isOrgDefault,omitempty"`
+}
+
+// A registered template kind. The catalog is driven by the Go registry, not by
+// rows, so it is the same for every organization and fixed in cardinality.
+type DocumentTemplateKind struct {
+	Kind           string                      `json:"kind"`
+	DisplayName    string                      `json:"displayName"`
+	Description    string                      `json:"description"`
+	Category       string                      `json:"category"`
+	Channels       []documenttemplate.Channel  `json:"channels"`
+	Paged          bool                        `json:"paged"`
+	CustomerScoped bool                        `json:"customerScoped"`
+	Variables      []*DocumentTemplateVariable `json:"variables"`
+	RequiredPaths  []string                    `json:"requiredPaths"`
+	// The template governing this kind for the organization right now, absent when
+	// the built-in is still in effect.
+	Template *documenttemplate.DocumentTemplate `json:"template,omitempty"`
+	Source   documenttemplate.TemplateSource    `json:"source"`
+}
+
+type DocumentTemplatePreview struct {
+	Subject string `json:"subject"`
+	// Rendered HTML as a *string*, never served as text/html on this origin. The
+	// client renders it inside a sandboxed iframe; handing it back as a document
+	// would let an organization's template run against the app origin.
+	HTML        string                          `json:"html"`
+	Text        string                          `json:"text"`
+	Source      documenttemplate.TemplateSource `json:"source"`
+	ContentHash string                          `json:"contentHash"`
+	Diagnostics []*DocumentTemplateDiagnostic   `json:"diagnostics"`
+	// Where to fetch the printed PDF. The bytes stay off GraphQL: base64 in a JSON
+	// envelope inflates by a third and cannot stream.
+	PDFURL *string `json:"pdfUrl,omitempty"`
+}
+
+// Preview unsaved editor content, a stored version, or the built-in.
+//
+// Content wins over versionId, because the editor previews what is on screen and
+// that has by definition not been saved yet.
+type DocumentTemplatePreviewInput struct {
+	Kind       string                        `json:"kind"`
+	VersionID  *string                       `json:"versionId,omitempty"`
+	Content    *DocumentTemplateVersionInput `json:"content,omitempty"`
+	IncludePDF *bool                         `json:"includePdf,omitempty"`
+}
+
+// One variable an author may reference, as the editor's autocomplete and reference
+// panel present it.
+type DocumentTemplateVariable struct {
+	Path string                        `json:"path"`
+	Type documenttemplate.VariableType `json:"type"`
+	// What the value means in business terms. The editor shows it verbatim, which is
+	// why the catalog carries prose rather than a type name.
+	Description string `json:"description"`
+	// A published version must still reference this path. These are the fields whose
+	// absence makes a document legally deficient rather than merely ugly.
+	Required bool `json:"required"`
+	// The element shape, for Object and Collection variables.
+	Fields []*DocumentTemplateVariable `json:"fields,omitempty"`
+}
+
+type DocumentTemplateVersionInput struct {
+	Subject      *string                       `json:"subject,omitempty"`
+	BodyHTML     *string                       `json:"bodyHtml,omitempty"`
+	BodyText     *string                       `json:"bodyText,omitempty"`
+	CSSContent   *string                       `json:"cssContent,omitempty"`
+	HeaderHTML   *string                       `json:"headerHtml,omitempty"`
+	FooterHTML   *string                       `json:"footerHtml,omitempty"`
+	PageSize     *documenttemplate.PageSize    `json:"pageSize,omitempty"`
+	Orientation  *documenttemplate.Orientation `json:"orientation,omitempty"`
+	MarginTop    *float64                      `json:"marginTop,omitempty"`
+	MarginBottom *float64                      `json:"marginBottom,omitempty"`
+	MarginLeft   *float64                      `json:"marginLeft,omitempty"`
+	MarginRight  *float64                      `json:"marginRight,omitempty"`
 }
 
 type DocumentTypeConnection struct {
@@ -2962,6 +3091,13 @@ type SelectOptionsInput struct {
 	Filters  map[string]any       `json:"filters,omitempty"`
 }
 
+type SendTestMessageTemplateInput struct {
+	Kind      string                        `json:"kind"`
+	VersionID *string                       `json:"versionId,omitempty"`
+	Content   *DocumentTemplateVersionInput `json:"content,omitempty"`
+	ToEmail   string                        `json:"toEmail"`
+}
+
 type ServiceFailureConnection struct {
 	Edges      []*ServiceFailureEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
@@ -4361,6 +4497,11 @@ type TrailerPatchInput struct {
 	RegistrationExpiry      *int                         `json:"registrationExpiry,omitempty"`
 	Version                 *int                         `json:"version,omitempty"`
 	CustomFields            map[string]any               `json:"customFields,omitempty"`
+}
+
+type UnassignDocumentTemplateInput struct {
+	Kind       string `json:"kind"`
+	CustomerID string `json:"customerId"`
 }
 
 type UpcomingWorkerPTOInput struct {

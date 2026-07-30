@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
@@ -101,6 +102,9 @@ type ResolverRoot interface {
 	CustomerPaymentApplication() CustomerPaymentApplicationResolver
 	DashControl() DashControlResolver
 	DistanceProfile() DistanceProfileResolver
+	DocumentTemplate() DocumentTemplateResolver
+	DocumentTemplateAssignment() DocumentTemplateAssignmentResolver
+	DocumentTemplateVersion() DocumentTemplateVersionResolver
 	DriverPayEvent() DriverPayEventResolver
 	DriverPayEventComponent() DriverPayEventComponentResolver
 	DriverSettlement() DriverSettlementResolver
@@ -1608,6 +1612,136 @@ type ComplexityRoot struct {
 	DocumentPacketRuleEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	DocumentTemplate struct {
+		ActiveVersion   func(childComplexity int) int
+		ActiveVersionID func(childComplexity int) int
+		Assignments     func(childComplexity int) int
+		BusinessUnitID  func(childComplexity int) int
+		Code            func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		CreatedByID     func(childComplexity int) int
+		Description     func(childComplexity int) int
+		ID              func(childComplexity int) int
+		IsOrgDefault    func(childComplexity int) int
+		Kind            func(childComplexity int) int
+		Name            func(childComplexity int) int
+		OrganizationID  func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+		UpdatedByID     func(childComplexity int) int
+		Version         func(childComplexity int) int
+		Versions        func(childComplexity int) int
+	}
+
+	DocumentTemplateAssignment struct {
+		AssignedByID   func(childComplexity int) int
+		BusinessUnitID func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Customer       func(childComplexity int) int
+		CustomerID     func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Kind           func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		Template       func(childComplexity int) int
+		TemplateID     func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+	}
+
+	DocumentTemplateAssignmentConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	DocumentTemplateAssignmentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	DocumentTemplateConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	DocumentTemplateDiagnostic struct {
+		Code     func(childComplexity int) int
+		Column   func(childComplexity int) int
+		Field    func(childComplexity int) int
+		Line     func(childComplexity int) int
+		Message  func(childComplexity int) int
+		Severity func(childComplexity int) int
+	}
+
+	DocumentTemplateEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	DocumentTemplateKind struct {
+		Category       func(childComplexity int) int
+		Channels       func(childComplexity int) int
+		CustomerScoped func(childComplexity int) int
+		Description    func(childComplexity int) int
+		DisplayName    func(childComplexity int) int
+		Kind           func(childComplexity int) int
+		Paged          func(childComplexity int) int
+		RequiredPaths  func(childComplexity int) int
+		Source         func(childComplexity int) int
+		Template       func(childComplexity int) int
+		Variables      func(childComplexity int) int
+	}
+
+	DocumentTemplatePreview struct {
+		ContentHash func(childComplexity int) int
+		Diagnostics func(childComplexity int) int
+		HTML        func(childComplexity int) int
+		PDFURL      func(childComplexity int) int
+		Source      func(childComplexity int) int
+		Subject     func(childComplexity int) int
+		Text        func(childComplexity int) int
+	}
+
+	DocumentTemplateVariable struct {
+		Description func(childComplexity int) int
+		Fields      func(childComplexity int) int
+		Path        func(childComplexity int) int
+		Required    func(childComplexity int) int
+		Type        func(childComplexity int) int
+	}
+
+	DocumentTemplateVersion struct {
+		ArchivedAt      func(childComplexity int) int
+		ArchivedByID    func(childComplexity int) int
+		BodyHTML        func(childComplexity int) int
+		BodyText        func(childComplexity int) int
+		BusinessUnitID  func(childComplexity int) int
+		CSSContent      func(childComplexity int) int
+		ContentHash     func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		FooterHTML      func(childComplexity int) int
+		HeaderHTML      func(childComplexity int) int
+		ID              func(childComplexity int) int
+		MarginBottom    func(childComplexity int) int
+		MarginLeft      func(childComplexity int) int
+		MarginRight     func(childComplexity int) int
+		MarginTop       func(childComplexity int) int
+		OrganizationID  func(childComplexity int) int
+		Orientation     func(childComplexity int) int
+		PageSize        func(childComplexity int) int
+		PublishNotes    func(childComplexity int) int
+		PublishedAt     func(childComplexity int) int
+		PublishedByID   func(childComplexity int) int
+		SourceVersionID func(childComplexity int) int
+		StarterDrifted  func(childComplexity int) int
+		StarterHash     func(childComplexity int) int
+		Status          func(childComplexity int) int
+		Subject         func(childComplexity int) int
+		TemplateID      func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+		Version         func(childComplexity int) int
+		VersionNumber   func(childComplexity int) int
 	}
 
 	DocumentType struct {
@@ -3148,7 +3282,9 @@ type ComplexityRoot struct {
 		ApproveDetentionOccurrence            func(childComplexity int, occurrenceID string) int
 		ApproveDriverSettlement               func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
 		ApproveWorkerPto                      func(childComplexity int, id string) int
+		ArchiveDocumentTemplateVersion        func(childComplexity int, id string) int
 		AssignBillingQueueBiller              func(childComplexity int, id string, input gqlmodel.BillingQueueAssignInput) int
+		AssignDocumentTemplate                func(childComplexity int, input gqlmodel.AssignDocumentTemplateInput) int
 		AssignPayProfileToWorker              func(childComplexity int, input gqlmodel.AssignPayProfileInput) int
 		AttachOrderShipments                  func(childComplexity int, orderID string, shipmentIds []string) int
 		AttachPayEventsToSettlement           func(childComplexity int, input gqlmodel.AttachPayEventsInput) int
@@ -3171,6 +3307,8 @@ type ComplexityRoot struct {
 		CloseEscrowAccount                    func(childComplexity int, accountID string) int
 		CloseOrder                            func(childComplexity int, id string) int
 		CreateDetentionPolicy                 func(childComplexity int, input gqlmodel.DetentionPolicyInput) int
+		CreateDocumentTemplate                func(childComplexity int, input gqlmodel.DocumentTemplateInput) int
+		CreateDocumentTemplateVersion         func(childComplexity int, input gqlmodel.CreateDocumentTemplateVersionInput) int
 		CreateEquipmentManufacturer           func(childComplexity int, input gqlmodel.EquipmentManufacturerInput) int
 		CreateEquipmentType                   func(childComplexity int, input gqlmodel.EquipmentTypeInput) int
 		CreateFuelIndex                       func(childComplexity int, input gqlmodel.FuelIndexInput) int
@@ -3196,6 +3334,8 @@ type ComplexityRoot struct {
 		CreateTrailer                         func(childComplexity int, input gqlmodel.TrailerInput) int
 		DecideAgentProposal                   func(childComplexity int, id string, input gqlmodel.AgentProposalDecisionInput) int
 		DeleteDetentionPolicy                 func(childComplexity int, id string) int
+		DeleteDocumentTemplate                func(childComplexity int, id string) int
+		DeleteDocumentTemplateVersion         func(childComplexity int, id string) int
 		DeleteFuelIndex                       func(childComplexity int, id string) int
 		DeleteFuelIndexPrice                  func(childComplexity int, id string) int
 		DeleteFuelSurchargeProgram            func(childComplexity int, id string) int
@@ -3244,6 +3384,7 @@ type ComplexityRoot struct {
 		PinShipmentComment                    func(childComplexity int, shipmentID string, commentID string) int
 		PostAndApplyCustomerPayment           func(childComplexity int, input gqlmodel.PostCustomerPaymentInput) int
 		PostDriverSettlement                  func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
+		PublishDocumentTemplateVersion        func(childComplexity int, id string, notes *string) int
 		RecalculateDriverSettlement           func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
 		RecalculateShipmentDistance           func(childComplexity int, shipmentID string) int
 		RecordMyStopAction                    func(childComplexity int, input gqlmodel.RecordMyStopActionInput) int
@@ -3264,9 +3405,11 @@ type ComplexityRoot struct {
 		ReverseCustomerPayment                func(childComplexity int, input gqlmodel.ReverseCustomerPaymentInput) int
 		ReviewDriverExpense                   func(childComplexity int, input gqlmodel.ReviewDriverExpenseInput) int
 		RevokeWorkerPortalAccess              func(childComplexity int, workerID string) int
+		RollbackDocumentTemplate              func(childComplexity int, versionID string, notes *string) int
 		RunReport                             func(childComplexity int, input gqlmodel.RunReportInput) int
 		SaveTelematicsFormMapping             func(childComplexity int, input gqlmodel.SaveTelematicsFormMappingInput) int
 		SendDetentionNotice                   func(childComplexity int, occurrenceID string) int
+		SendTestMessageTemplate               func(childComplexity int, input gqlmodel.SendTestMessageTemplateInput) int
 		SetDefaultTableConfiguration          func(childComplexity int, id string) int
 		SetOrgDefaultTableConfiguration       func(childComplexity int, id string, enabled bool) int
 		StartSettlementDisputeReview          func(childComplexity int, id string) int
@@ -3274,6 +3417,7 @@ type ComplexityRoot struct {
 		SubmitMyExpense                       func(childComplexity int, input gqlmodel.SubmitMyExpenseInput) int
 		TransferShipmentOwnership             func(childComplexity int, id string, input gqlmodel.ShipmentTransferOwnershipInput) int
 		TransferShipmentToBilling             func(childComplexity int, input gqlmodel.ShipmentTransferToBillingInput) int
+		UnassignDocumentTemplate              func(childComplexity int, input gqlmodel.UnassignDocumentTemplateInput) int
 		UncancelShipment                      func(childComplexity int, id string) int
 		UnpinShipmentComment                  func(childComplexity int, shipmentID string, commentID string) int
 		UnresolveShipmentComment              func(childComplexity int, shipmentID string, commentID string) int
@@ -3283,6 +3427,8 @@ type ComplexityRoot struct {
 		UpdateCostingControl                  func(childComplexity int, input gqlmodel.CostingControlInput) int
 		UpdateDashControl                     func(childComplexity int, input gqlmodel.UpdateDashControlInput) int
 		UpdateDetentionPolicy                 func(childComplexity int, id string, input gqlmodel.DetentionPolicyInput) int
+		UpdateDocumentTemplate                func(childComplexity int, id string, input gqlmodel.DocumentTemplateInput) int
+		UpdateDocumentTemplateVersion         func(childComplexity int, id string, input gqlmodel.DocumentTemplateVersionInput) int
 		UpdateEquipmentManufacturer           func(childComplexity int, id string, input gqlmodel.EquipmentManufacturerInput) int
 		UpdateEquipmentType                   func(childComplexity int, id string, input gqlmodel.EquipmentTypeInput) int
 		UpdateEscrowAccount                   func(childComplexity int, input gqlmodel.UpdateEscrowAccountInput) int
@@ -3723,265 +3869,273 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		APIKey                       func(childComplexity int, id string) int
-		APIKeys                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		AccessorialCharge            func(childComplexity int, id string) int
-		AccessorialCharges           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		AccountType                  func(childComplexity int, id string) int
-		AccountTypes                 func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		AgentControl                 func(childComplexity int) int
-		AgentException               func(childComplexity int, id string) int
-		AgentExceptions              func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		AgentProposal                func(childComplexity int, id string) int
-		AgentProposals               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		AgentRun                     func(childComplexity int, id string) int
-		AgentRuns                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		ArAgingSummary               func(childComplexity int, asOfDate *int) int
-		ArAgingTrend                 func(childComplexity int, weeks *int) int
-		ArCashFlowForecast           func(childComplexity int, pastWeeks *int, futureWeeks *int) int
-		ArCollectionPerformance      func(childComplexity int, periodDays *int) int
-		ArCollectionsWorklist        func(childComplexity int, limit *int) int
-		ArCustomerLedger             func(childComplexity int, customerID string) int
-		ArCustomerProfile            func(childComplexity int, customerID string) int
-		ArCustomerStatement          func(childComplexity int, customerID string, startDate *int, asOfDate *int) int
-		ArDashboardKpis              func(childComplexity int) int
-		ArDsoTrend                   func(childComplexity int, weeks *int) int
-		ArOpenItems                  func(childComplexity int, customerID *string, asOfDate *int) int
-		ArPaymentStats               func(childComplexity int) int
-		ArTopOverdueCustomers        func(childComplexity int, limit *int) int
-		AttentionSummary             func(childComplexity int) int
-		AuditEntries                 func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		AuditEntriesByResourceID     func(childComplexity int, input gqlmodel.DataTableConnectionInput, resourceID string) int
-		AuditEntry                   func(childComplexity int, id string) int
-		CannedReports                func(childComplexity int) int
-		Commodities                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		Commodity                    func(childComplexity int, id string) int
-		CostingControl               func(childComplexity int) int
-		CurrentSettlementPeriod      func(childComplexity int) int
-		CustomFieldDefinition        func(childComplexity int, id string) int
-		CustomFieldDefinitions       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		Customer                     func(childComplexity int, id string) int
-		CustomerPayment              func(childComplexity int, id string) int
-		CustomerPayments             func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		Customers                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		DashControl                  func(childComplexity int) int
-		DefaultTableConfiguration    func(childComplexity int, resource string) int
-		DetentionCustomerStats       func(childComplexity int, input gqlmodel.DetentionStatsInput) int
-		DetentionDesk                func(childComplexity int) int
-		DetentionDisputePacket       func(childComplexity int, occurrenceID string) int
-		DetentionFacilityStats       func(childComplexity int, input gqlmodel.DetentionStatsInput) int
-		DetentionOccurrence          func(childComplexity int, id string) int
-		DetentionPolicies            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		DetentionPolicy              func(childComplexity int, id string) int
-		DetentionPolicyPreview       func(childComplexity int, policy gqlmodel.DetentionPolicyInput, scenario gqlmodel.DetentionPreviewScenarioInput) int
-		DetentionWaiverStats         func(childComplexity int, input gqlmodel.DetentionStatsInput) int
-		DispatchAssignmentPreview    func(childComplexity int, input gqlmodel.DispatchAssignmentPreviewInput) int
-		DispatchBoard                func(childComplexity int, input gqlmodel.DispatchBoardInput) int
-		DispatchDriverMoves          func(childComplexity int, input gqlmodel.DispatchDriverMovesInput) int
-		DispatchMoveCandidates       func(childComplexity int, input gqlmodel.DispatchMoveCandidatesInput) int
-		DistanceOverride             func(childComplexity int, id string) int
-		DistanceOverrides            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		DistanceProfile              func(childComplexity int, id string) int
-		DistanceProfiles             func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		DocumentPacketRule           func(childComplexity int, id string) int
-		DocumentPacketRules          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		DocumentType                 func(childComplexity int, id string) int
-		DocumentTypes                func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		DrillThroughReport           func(childComplexity int, input gqlmodel.ReportDrillInput) int
-		DriverExpense                func(childComplexity int, id string) int
-		DriverExpenses               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		DriverPayEvents              func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		DriverSettlement             func(childComplexity int, id string) int
-		DriverSettlements            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		EdiCommunicationProfiles     func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		EdiInboundFiles              func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *edi.InboundFileStatus, partnerID *string) int
-		EdiMappingProfiles           func(childComplexity int, input gqlmodel.DataTableConnectionInput, partnerID *string) int
-		EdiMessages                  func(childComplexity int, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edi.DocumentDirection, partnerID *string) int
-		EdiPartnerReadiness          func(childComplexity int, partnerIds []string) int
-		EdiPartnerScorecards         func(childComplexity int, sinceHours *int) int
-		EdiPartners                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		EdiSummary                   func(childComplexity int, sinceHours *int) int
-		EdiTemplates                 func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *edi.TemplateStatus, transactionSet *string, direction *edi.DocumentDirection) int
-		EdiTestCases                 func(childComplexity int, input gqlmodel.DataTableConnectionInput, partnerDocumentProfileID *string) int
-		EdiTransfers                 func(childComplexity int, input gqlmodel.DataTableConnectionInput, direction gqlmodel.EdiTransferDirection) int
-		EdiVolumeSeries              func(childComplexity int, sinceHours *int) int
-		EffectiveWorkerPayAssignment func(childComplexity int, workerID string) int
-		EiaSeriesOptions             func(childComplexity int) int
-		EmailProfile                 func(childComplexity int, id string) int
-		EmailProfiles                func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		EquipmentManufacturer        func(childComplexity int, id string) int
-		EquipmentManufacturers       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		EquipmentType                func(childComplexity int, id string) int
-		EquipmentTypes               func(childComplexity int, input gqlmodel.DataTableConnectionInput, classes []equipmenttype.Class) int
-		EscrowAccount                func(childComplexity int, id string) int
-		EscrowAccounts               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		ExportSettlementBatchCSV     func(childComplexity int, batchID string) int
-		FiscalYear                   func(childComplexity int, id string) int
-		FiscalYears                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		FleetCode                    func(childComplexity int, id string) int
-		FleetCodes                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		FleetCostSummary             func(childComplexity int, startDate *int, endDate *int) int
-		FormulaTemplate              func(childComplexity int, id string) int
-		FormulaTemplates             func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		FuelDashboard                func(childComplexity int) int
-		FuelIndex                    func(childComplexity int, id string) int
-		FuelIndexPriceHistory        func(childComplexity int, indexID string, from *string, to *string, limit *int) int
-		FuelIndexes                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		FuelProgramCurrentRates      func(childComplexity int) int
-		FuelSurchargeProgram         func(childComplexity int, id string) int
-		FuelSurchargePrograms        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		GenerateFuelSurchargeTable   func(childComplexity int, input gqlmodel.GenerateFuelTableInput) int
-		HazardousMaterial            func(childComplexity int, id string) int
-		HazardousMaterials           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		HazmatSegregationRule        func(childComplexity int, id string) int
-		HazmatSegregationRules       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		HoldReason                   func(childComplexity int, id string) int
-		HoldReasons                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		HomeLayout                   func(childComplexity int) int
-		HomeLayoutPreset             func(childComplexity int, id string) int
-		HomeLayoutPresets            func(childComplexity int) int
-		HomeLayoutPreview            func(childComplexity int, presetID *string, roleID *string) int
-		HomeWidgetCatalog            func(childComplexity int) int
-		HosCertificationSummary      func(childComplexity int, startDate string, endDate string) int
-		Invoice                      func(childComplexity int, id string) int
-		Invoices                     func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		JournalEntriesBySource       func(childComplexity int, sourceType string, sourceID string) int
-		JournalEntry                 func(childComplexity int, id string) int
-		JournalReversal              func(childComplexity int, id string) int
-		JournalReversals             func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		JournalSourceByObject        func(childComplexity int, sourceType string, sourceID string) int
-		Location                     func(childComplexity int, id string) int
-		LocationCategories           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		LocationCategory             func(childComplexity int, id string) int
-		Locations                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		ManualJournal                func(childComplexity int, id string) int
-		ManualJournals               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		MyAdvances                   func(childComplexity int) int
-		MyComplianceProfile          func(childComplexity int) int
-		MyDisputes                   func(childComplexity int) int
-		MyEscrow                     func(childComplexity int) int
-		MyExpenses                   func(childComplexity int) int
-		MyHosDailyLogs               func(childComplexity int, startDate string, endDate string) int
-		MyHosState                   func(childComplexity int) int
-		MyHosViolations              func(childComplexity int, since *int) int
-		MyLoadComments               func(childComplexity int, shipmentID string) int
-		MyLoadPayEstimate            func(childComplexity int, shipmentID string, moveID string) int
-		MyLoads                      func(childComplexity int, scope driverportalservice.LoadScope, limit *int) int
-		MyNotificationUnreadCount    func(childComplexity int) int
-		MyNotifications              func(childComplexity int, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) int
-		MyPeriodSummary              func(childComplexity int) int
-		MyPortalFeatures             func(childComplexity int) int
-		MyPortalProfile              func(childComplexity int) int
-		MyPto                        func(childComplexity int) int
-		MyRecentPayEvents            func(childComplexity int, limit *int) int
-		MySettlement                 func(childComplexity int, id string) int
-		MySettlements                func(childComplexity int, limit *int, offset *int) int
-		MyYtdPay                     func(childComplexity int, year int) int
-		NotificationUnreadCount      func(childComplexity int) int
-		Notifications                func(childComplexity int, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) int
-		OpenSettlementDisputeCount   func(childComplexity int) int
-		Order                        func(childComplexity int, id string) int
-		Orders                       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		Organization                 func(childComplexity int, id string, includeState *bool, includeBu *bool) int
-		PayAdvance                   func(childComplexity int, id string) int
-		PayAdvances                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		PayCode                      func(childComplexity int, id string) int
-		PayCodeOptions               func(childComplexity int, direction *driverpay.PayCodeDirection) int
-		PayCodes                     func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		PayProfile                   func(childComplexity int, id string) int
-		PayProfileAssignments        func(childComplexity int, payProfileID string) int
-		PayProfiles                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		PendingDriverExpenseCount    func(childComplexity int) int
-		PreviewDriverSettlement      func(childComplexity int, workerID string, periodStart *int, periodEnd *int) int
-		PreviewReport                func(childComplexity int, definition gqlmodel.ReportIRInput, params map[string]any, supersede *bool) int
-		RateTable                    func(childComplexity int, id string) int
-		RateTables                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		RecurringDeduction           func(childComplexity int, id string) int
-		RecurringDeductions          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		RecurringEarning             func(childComplexity int, id string) int
-		RecurringEarnings            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		RecurringShipment            func(childComplexity int, id string) int
-		RecurringShipments           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		ReportCatalog                func(childComplexity int) int
-		ReportDashboard              func(childComplexity int, id string) int
-		ReportDashboards             func(childComplexity int) int
-		ReportDefinition             func(childComplexity int, id string) int
-		ReportDefinitionRevisions    func(childComplexity int, definitionID string, limit *int) int
-		ReportDefinitions            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		ReportRun                    func(childComplexity int, id string) int
-		ReportRuns                   func(childComplexity int, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.ReportRunsFilterInput) int
-		ReportSchedules              func(childComplexity int, definitionID *string) int
-		ReportView                   func(childComplexity int, id string) int
-		ReportViews                  func(childComplexity int, definitionID *string) int
-		ResolvedCostProfile          func(childComplexity int, asOfDate *string) int
-		Role                         func(childComplexity int, id string) int
-		Roles                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		ScimGroupRoleMappings        func(childComplexity int, input gqlmodel.DataTableConnectionInput, directoryID string) int
-		SelectOptions                func(childComplexity int, input gqlmodel.SelectOptionsInput) int
-		ServiceFailure               func(childComplexity int, id string) int
-		ServiceFailureReasonCode     func(childComplexity int, id string) int
-		ServiceFailureReasonCodes    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		ServiceFailures              func(childComplexity int, input gqlmodel.DataTableConnectionInput, shipmentID *string) int
-		ServiceType                  func(childComplexity int, id string) int
-		ServiceTypes                 func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		SettlementBatch              func(childComplexity int, id string) int
-		SettlementBatches            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		SettlementControl            func(childComplexity int) int
-		SettlementDispute            func(childComplexity int, id string) int
-		SettlementDisputes           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		SettlementWorkspaceSummary   func(childComplexity int, periodStart *int, periodEnd *int) int
-		Shipment                     func(childComplexity int, id string, expandShipmentDetails *bool, status *string) int
-		ShipmentAnalytics            func(childComplexity int, input gqlmodel.ShipmentAnalyticsInput) int
-		ShipmentBillingReadiness     func(childComplexity int, shipmentID string) int
-		ShipmentCommentCount         func(childComplexity int, shipmentID string) int
-		ShipmentCommentReplies       func(childComplexity int, shipmentID string, commentID string, first *int, after *string) int
-		ShipmentComments             func(childComplexity int, shipmentID string, first *int, after *string, filter *gqlmodel.ShipmentCommentsFilterInput) int
-		ShipmentDetention            func(childComplexity int, shipmentID string) int
-		ShipmentDriverFeasibility    func(childComplexity int, shipmentID string) int
-		ShipmentEvents               func(childComplexity int, input gqlmodel.ShipmentEventsInput) int
-		ShipmentFormSubmissions      func(childComplexity int, shipmentID string) int
-		ShipmentPreviousRates        func(childComplexity int, input gqlmodel.ShipmentPreviousRatesInput) int
-		ShipmentProfitability        func(childComplexity int, shipmentID string) int
-		ShipmentType                 func(childComplexity int, id string) int
-		ShipmentTypes                func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		ShipmentUIPolicy             func(childComplexity int) int
-		Shipments                    func(childComplexity int, input gqlmodel.ShipmentsInput) int
-		SidebarCustomizationOptions  func(childComplexity int) int
-		SidebarPreferences           func(childComplexity int) int
-		StoredMileage                func(childComplexity int, id string) int
-		StoredMileages               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		TableConfiguration           func(childComplexity int, id string) int
-		TableConfigurations          func(childComplexity int, input gqlmodel.DataTableConnectionInput, resource *string, visibility *tableconfiguration.Visibility) int
-		TcaSubscription              func(childComplexity int, id string) int
-		TcaSubscriptions             func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		TelematicsFormMapping        func(childComplexity int, id string) int
-		TelematicsFormMappings       func(childComplexity int) int
-		TelematicsStatus             func(childComplexity int) int
-		Tractor                      func(childComplexity int, id string) int
-		Tractors                     func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) int
-		Trailer                      func(childComplexity int, id string) int
-		Trailers                     func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) int
-		UnassignedShipments          func(childComplexity int, first *int, after *string) int
-		UnsettledPayEvents           func(childComplexity int, workerID string) int
-		UnsettledWorkerSummaries     func(childComplexity int, periodStart *int, periodEnd *int) int
-		UpcomingWorkerPto            func(childComplexity int, input gqlmodel.UpcomingWorkerPTOInput) int
-		User                         func(childComplexity int, id string) int
-		Users                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
-		VehicleInspections           func(childComplexity int, tractorID *string, workerID *string, since *int, limit *int) int
-		VehiclePositions             func(childComplexity int, maxAgeSeconds *int) int
-		WorkerEarningsSummary        func(childComplexity int, workerID string) int
-		WorkerFormSubmissions        func(childComplexity int, workerID string, startTime int, endTime int) int
-		WorkerHosDailyLogs           func(childComplexity int, workerID string, startDate string, endDate string) int
-		WorkerHosLogs                func(childComplexity int, workerID string, startTime int, endTime int) int
-		WorkerHosState               func(childComplexity int, workerID string) int
-		WorkerHosStates              func(childComplexity int, workerIds []string, limit *int) int
-		WorkerHosViolations          func(childComplexity int, workerID *string, since *int, limit *int) int
-		WorkerPTOChartData           func(childComplexity int, input gqlmodel.WorkerPTOChartInput) int
-		WorkerPTOEntries             func(childComplexity int, input gqlmodel.WorkerPTOEntriesInput) int
-		WorkerPayAssignments         func(childComplexity int, workerID string) int
-		WorkerPortalStatus           func(childComplexity int, workerID string) int
-		WorkerYtdPaySummaries        func(childComplexity int, year int, classification *driverpay.PayeeClassification) int
-		Workers                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		APIKey                              func(childComplexity int, id string) int
+		APIKeys                             func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AccessorialCharge                   func(childComplexity int, id string) int
+		AccessorialCharges                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AccountType                         func(childComplexity int, id string) int
+		AccountTypes                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentControl                        func(childComplexity int) int
+		AgentException                      func(childComplexity int, id string) int
+		AgentExceptions                     func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentProposal                       func(childComplexity int, id string) int
+		AgentProposals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentRun                            func(childComplexity int, id string) int
+		AgentRuns                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		ArAgingSummary                      func(childComplexity int, asOfDate *int) int
+		ArAgingTrend                        func(childComplexity int, weeks *int) int
+		ArCashFlowForecast                  func(childComplexity int, pastWeeks *int, futureWeeks *int) int
+		ArCollectionPerformance             func(childComplexity int, periodDays *int) int
+		ArCollectionsWorklist               func(childComplexity int, limit *int) int
+		ArCustomerLedger                    func(childComplexity int, customerID string) int
+		ArCustomerProfile                   func(childComplexity int, customerID string) int
+		ArCustomerStatement                 func(childComplexity int, customerID string, startDate *int, asOfDate *int) int
+		ArDashboardKpis                     func(childComplexity int) int
+		ArDsoTrend                          func(childComplexity int, weeks *int) int
+		ArOpenItems                         func(childComplexity int, customerID *string, asOfDate *int) int
+		ArPaymentStats                      func(childComplexity int) int
+		ArTopOverdueCustomers               func(childComplexity int, limit *int) int
+		AttentionSummary                    func(childComplexity int) int
+		AuditEntries                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AuditEntriesByResourceID            func(childComplexity int, input gqlmodel.DataTableConnectionInput, resourceID string) int
+		AuditEntry                          func(childComplexity int, id string) int
+		CannedReports                       func(childComplexity int) int
+		Commodities                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		Commodity                           func(childComplexity int, id string) int
+		CostingControl                      func(childComplexity int) int
+		CurrentSettlementPeriod             func(childComplexity int) int
+		CustomFieldDefinition               func(childComplexity int, id string) int
+		CustomFieldDefinitions              func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		Customer                            func(childComplexity int, id string) int
+		CustomerDocumentTemplateAssignments func(childComplexity int, customerID string) int
+		CustomerPayment                     func(childComplexity int, id string) int
+		CustomerPayments                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		Customers                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DashControl                         func(childComplexity int) int
+		DefaultTableConfiguration           func(childComplexity int, resource string) int
+		DetentionCustomerStats              func(childComplexity int, input gqlmodel.DetentionStatsInput) int
+		DetentionDesk                       func(childComplexity int) int
+		DetentionDisputePacket              func(childComplexity int, occurrenceID string) int
+		DetentionFacilityStats              func(childComplexity int, input gqlmodel.DetentionStatsInput) int
+		DetentionOccurrence                 func(childComplexity int, id string) int
+		DetentionPolicies                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DetentionPolicy                     func(childComplexity int, id string) int
+		DetentionPolicyPreview              func(childComplexity int, policy gqlmodel.DetentionPolicyInput, scenario gqlmodel.DetentionPreviewScenarioInput) int
+		DetentionWaiverStats                func(childComplexity int, input gqlmodel.DetentionStatsInput) int
+		DispatchAssignmentPreview           func(childComplexity int, input gqlmodel.DispatchAssignmentPreviewInput) int
+		DispatchBoard                       func(childComplexity int, input gqlmodel.DispatchBoardInput) int
+		DispatchDriverMoves                 func(childComplexity int, input gqlmodel.DispatchDriverMovesInput) int
+		DispatchMoveCandidates              func(childComplexity int, input gqlmodel.DispatchMoveCandidatesInput) int
+		DistanceOverride                    func(childComplexity int, id string) int
+		DistanceOverrides                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DistanceProfile                     func(childComplexity int, id string) int
+		DistanceProfiles                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DocumentPacketRule                  func(childComplexity int, id string) int
+		DocumentPacketRules                 func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DocumentTemplate                    func(childComplexity int, id string) int
+		DocumentTemplateAssignments         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DocumentTemplateKinds               func(childComplexity int) int
+		DocumentTemplateVersion             func(childComplexity int, id string) int
+		DocumentTemplates                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DocumentType                        func(childComplexity int, id string) int
+		DocumentTypes                       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DrillThroughReport                  func(childComplexity int, input gqlmodel.ReportDrillInput) int
+		DriverExpense                       func(childComplexity int, id string) int
+		DriverExpenses                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DriverPayEvents                     func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		DriverSettlement                    func(childComplexity int, id string) int
+		DriverSettlements                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		EdiCommunicationProfiles            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		EdiInboundFiles                     func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *edi.InboundFileStatus, partnerID *string) int
+		EdiMappingProfiles                  func(childComplexity int, input gqlmodel.DataTableConnectionInput, partnerID *string) int
+		EdiMessages                         func(childComplexity int, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edi.DocumentDirection, partnerID *string) int
+		EdiPartnerReadiness                 func(childComplexity int, partnerIds []string) int
+		EdiPartnerScorecards                func(childComplexity int, sinceHours *int) int
+		EdiPartners                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		EdiSummary                          func(childComplexity int, sinceHours *int) int
+		EdiTemplates                        func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *edi.TemplateStatus, transactionSet *string, direction *edi.DocumentDirection) int
+		EdiTestCases                        func(childComplexity int, input gqlmodel.DataTableConnectionInput, partnerDocumentProfileID *string) int
+		EdiTransfers                        func(childComplexity int, input gqlmodel.DataTableConnectionInput, direction gqlmodel.EdiTransferDirection) int
+		EdiVolumeSeries                     func(childComplexity int, sinceHours *int) int
+		EffectiveWorkerPayAssignment        func(childComplexity int, workerID string) int
+		EiaSeriesOptions                    func(childComplexity int) int
+		EmailProfile                        func(childComplexity int, id string) int
+		EmailProfiles                       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		EquipmentManufacturer               func(childComplexity int, id string) int
+		EquipmentManufacturers              func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		EquipmentType                       func(childComplexity int, id string) int
+		EquipmentTypes                      func(childComplexity int, input gqlmodel.DataTableConnectionInput, classes []equipmenttype.Class) int
+		EscrowAccount                       func(childComplexity int, id string) int
+		EscrowAccounts                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		ExportSettlementBatchCSV            func(childComplexity int, batchID string) int
+		FiscalYear                          func(childComplexity int, id string) int
+		FiscalYears                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		FleetCode                           func(childComplexity int, id string) int
+		FleetCodes                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		FleetCostSummary                    func(childComplexity int, startDate *int, endDate *int) int
+		FormulaTemplate                     func(childComplexity int, id string) int
+		FormulaTemplates                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		FuelDashboard                       func(childComplexity int) int
+		FuelIndex                           func(childComplexity int, id string) int
+		FuelIndexPriceHistory               func(childComplexity int, indexID string, from *string, to *string, limit *int) int
+		FuelIndexes                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		FuelProgramCurrentRates             func(childComplexity int) int
+		FuelSurchargeProgram                func(childComplexity int, id string) int
+		FuelSurchargePrograms               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		GenerateFuelSurchargeTable          func(childComplexity int, input gqlmodel.GenerateFuelTableInput) int
+		HazardousMaterial                   func(childComplexity int, id string) int
+		HazardousMaterials                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		HazmatSegregationRule               func(childComplexity int, id string) int
+		HazmatSegregationRules              func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		HoldReason                          func(childComplexity int, id string) int
+		HoldReasons                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		HomeLayout                          func(childComplexity int) int
+		HomeLayoutPreset                    func(childComplexity int, id string) int
+		HomeLayoutPresets                   func(childComplexity int) int
+		HomeLayoutPreview                   func(childComplexity int, presetID *string, roleID *string) int
+		HomeWidgetCatalog                   func(childComplexity int) int
+		HosCertificationSummary             func(childComplexity int, startDate string, endDate string) int
+		Invoice                             func(childComplexity int, id string) int
+		Invoices                            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		JournalEntriesBySource              func(childComplexity int, sourceType string, sourceID string) int
+		JournalEntry                        func(childComplexity int, id string) int
+		JournalReversal                     func(childComplexity int, id string) int
+		JournalReversals                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		JournalSourceByObject               func(childComplexity int, sourceType string, sourceID string) int
+		Location                            func(childComplexity int, id string) int
+		LocationCategories                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		LocationCategory                    func(childComplexity int, id string) int
+		Locations                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		ManualJournal                       func(childComplexity int, id string) int
+		ManualJournals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		MyAdvances                          func(childComplexity int) int
+		MyComplianceProfile                 func(childComplexity int) int
+		MyDisputes                          func(childComplexity int) int
+		MyEscrow                            func(childComplexity int) int
+		MyExpenses                          func(childComplexity int) int
+		MyHosDailyLogs                      func(childComplexity int, startDate string, endDate string) int
+		MyHosState                          func(childComplexity int) int
+		MyHosViolations                     func(childComplexity int, since *int) int
+		MyLoadComments                      func(childComplexity int, shipmentID string) int
+		MyLoadPayEstimate                   func(childComplexity int, shipmentID string, moveID string) int
+		MyLoads                             func(childComplexity int, scope driverportalservice.LoadScope, limit *int) int
+		MyNotificationUnreadCount           func(childComplexity int) int
+		MyNotifications                     func(childComplexity int, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) int
+		MyPeriodSummary                     func(childComplexity int) int
+		MyPortalFeatures                    func(childComplexity int) int
+		MyPortalProfile                     func(childComplexity int) int
+		MyPto                               func(childComplexity int) int
+		MyRecentPayEvents                   func(childComplexity int, limit *int) int
+		MySettlement                        func(childComplexity int, id string) int
+		MySettlements                       func(childComplexity int, limit *int, offset *int) int
+		MyYtdPay                            func(childComplexity int, year int) int
+		NotificationUnreadCount             func(childComplexity int) int
+		Notifications                       func(childComplexity int, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) int
+		OpenSettlementDisputeCount          func(childComplexity int) int
+		Order                               func(childComplexity int, id string) int
+		Orders                              func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		Organization                        func(childComplexity int, id string, includeState *bool, includeBu *bool) int
+		PayAdvance                          func(childComplexity int, id string) int
+		PayAdvances                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		PayCode                             func(childComplexity int, id string) int
+		PayCodeOptions                      func(childComplexity int, direction *driverpay.PayCodeDirection) int
+		PayCodes                            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		PayProfile                          func(childComplexity int, id string) int
+		PayProfileAssignments               func(childComplexity int, payProfileID string) int
+		PayProfiles                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		PendingDriverExpenseCount           func(childComplexity int) int
+		PreviewDriverSettlement             func(childComplexity int, workerID string, periodStart *int, periodEnd *int) int
+		PreviewReport                       func(childComplexity int, definition gqlmodel.ReportIRInput, params map[string]any, supersede *bool) int
+		RateTable                           func(childComplexity int, id string) int
+		RateTables                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		RecurringDeduction                  func(childComplexity int, id string) int
+		RecurringDeductions                 func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		RecurringEarning                    func(childComplexity int, id string) int
+		RecurringEarnings                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		RecurringShipment                   func(childComplexity int, id string) int
+		RecurringShipments                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		RenderDocumentTemplatePreview       func(childComplexity int, input gqlmodel.DocumentTemplatePreviewInput) int
+		RenderMessageTemplatePreview        func(childComplexity int, input gqlmodel.DocumentTemplatePreviewInput) int
+		ReportCatalog                       func(childComplexity int) int
+		ReportDashboard                     func(childComplexity int, id string) int
+		ReportDashboards                    func(childComplexity int) int
+		ReportDefinition                    func(childComplexity int, id string) int
+		ReportDefinitionRevisions           func(childComplexity int, definitionID string, limit *int) int
+		ReportDefinitions                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		ReportRun                           func(childComplexity int, id string) int
+		ReportRuns                          func(childComplexity int, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.ReportRunsFilterInput) int
+		ReportSchedules                     func(childComplexity int, definitionID *string) int
+		ReportView                          func(childComplexity int, id string) int
+		ReportViews                         func(childComplexity int, definitionID *string) int
+		ResolvedCostProfile                 func(childComplexity int, asOfDate *string) int
+		Role                                func(childComplexity int, id string) int
+		Roles                               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		ScimGroupRoleMappings               func(childComplexity int, input gqlmodel.DataTableConnectionInput, directoryID string) int
+		SelectOptions                       func(childComplexity int, input gqlmodel.SelectOptionsInput) int
+		ServiceFailure                      func(childComplexity int, id string) int
+		ServiceFailureReasonCode            func(childComplexity int, id string) int
+		ServiceFailureReasonCodes           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		ServiceFailures                     func(childComplexity int, input gqlmodel.DataTableConnectionInput, shipmentID *string) int
+		ServiceType                         func(childComplexity int, id string) int
+		ServiceTypes                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		SettlementBatch                     func(childComplexity int, id string) int
+		SettlementBatches                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		SettlementControl                   func(childComplexity int) int
+		SettlementDispute                   func(childComplexity int, id string) int
+		SettlementDisputes                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		SettlementWorkspaceSummary          func(childComplexity int, periodStart *int, periodEnd *int) int
+		Shipment                            func(childComplexity int, id string, expandShipmentDetails *bool, status *string) int
+		ShipmentAnalytics                   func(childComplexity int, input gqlmodel.ShipmentAnalyticsInput) int
+		ShipmentBillingReadiness            func(childComplexity int, shipmentID string) int
+		ShipmentCommentCount                func(childComplexity int, shipmentID string) int
+		ShipmentCommentReplies              func(childComplexity int, shipmentID string, commentID string, first *int, after *string) int
+		ShipmentComments                    func(childComplexity int, shipmentID string, first *int, after *string, filter *gqlmodel.ShipmentCommentsFilterInput) int
+		ShipmentDetention                   func(childComplexity int, shipmentID string) int
+		ShipmentDriverFeasibility           func(childComplexity int, shipmentID string) int
+		ShipmentEvents                      func(childComplexity int, input gqlmodel.ShipmentEventsInput) int
+		ShipmentFormSubmissions             func(childComplexity int, shipmentID string) int
+		ShipmentPreviousRates               func(childComplexity int, input gqlmodel.ShipmentPreviousRatesInput) int
+		ShipmentProfitability               func(childComplexity int, shipmentID string) int
+		ShipmentType                        func(childComplexity int, id string) int
+		ShipmentTypes                       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		ShipmentUIPolicy                    func(childComplexity int) int
+		Shipments                           func(childComplexity int, input gqlmodel.ShipmentsInput) int
+		SidebarCustomizationOptions         func(childComplexity int) int
+		SidebarPreferences                  func(childComplexity int) int
+		StoredMileage                       func(childComplexity int, id string) int
+		StoredMileages                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		TableConfiguration                  func(childComplexity int, id string) int
+		TableConfigurations                 func(childComplexity int, input gqlmodel.DataTableConnectionInput, resource *string, visibility *tableconfiguration.Visibility) int
+		TcaSubscription                     func(childComplexity int, id string) int
+		TcaSubscriptions                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		TelematicsFormMapping               func(childComplexity int, id string) int
+		TelematicsFormMappings              func(childComplexity int) int
+		TelematicsStatus                    func(childComplexity int) int
+		Tractor                             func(childComplexity int, id string) int
+		Tractors                            func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) int
+		Trailer                             func(childComplexity int, id string) int
+		Trailers                            func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) int
+		UnassignedShipments                 func(childComplexity int, first *int, after *string) int
+		UnsettledPayEvents                  func(childComplexity int, workerID string) int
+		UnsettledWorkerSummaries            func(childComplexity int, periodStart *int, periodEnd *int) int
+		UpcomingWorkerPto                   func(childComplexity int, input gqlmodel.UpcomingWorkerPTOInput) int
+		User                                func(childComplexity int, id string) int
+		Users                               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		VehicleInspections                  func(childComplexity int, tractorID *string, workerID *string, since *int, limit *int) int
+		VehiclePositions                    func(childComplexity int, maxAgeSeconds *int) int
+		WorkerEarningsSummary               func(childComplexity int, workerID string) int
+		WorkerFormSubmissions               func(childComplexity int, workerID string, startTime int, endTime int) int
+		WorkerHosDailyLogs                  func(childComplexity int, workerID string, startDate string, endDate string) int
+		WorkerHosLogs                       func(childComplexity int, workerID string, startTime int, endTime int) int
+		WorkerHosState                      func(childComplexity int, workerID string) int
+		WorkerHosStates                     func(childComplexity int, workerIds []string, limit *int) int
+		WorkerHosViolations                 func(childComplexity int, workerID *string, since *int, limit *int) int
+		WorkerPTOChartData                  func(childComplexity int, input gqlmodel.WorkerPTOChartInput) int
+		WorkerPTOEntries                    func(childComplexity int, input gqlmodel.WorkerPTOEntriesInput) int
+		WorkerPayAssignments                func(childComplexity int, workerID string) int
+		WorkerPortalStatus                  func(childComplexity int, workerID string) int
+		WorkerYtdPaySummaries               func(childComplexity int, year int, classification *driverpay.PayeeClassification) int
+		Workers                             func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 	}
 
 	RateTable struct {
@@ -6197,6 +6351,15 @@ type DashControlResolver interface {
 type DistanceProfileResolver interface {
 	Provider(ctx context.Context, obj *distanceprofile.DistanceProfile) (string, error)
 }
+type DocumentTemplateResolver interface {
+	Kind(ctx context.Context, obj *documenttemplate.DocumentTemplate) (string, error)
+}
+type DocumentTemplateAssignmentResolver interface {
+	Kind(ctx context.Context, obj *documenttemplate.DocumentTemplateAssignment) (string, error)
+}
+type DocumentTemplateVersionResolver interface {
+	StarterDrifted(ctx context.Context, obj *documenttemplate.DocumentTemplateVersion) (bool, error)
+}
 type DriverPayEventResolver interface {
 	TotalMiles(ctx context.Context, obj *driversettlement.PayEvent) (string, error)
 }
@@ -6284,6 +6447,18 @@ type MutationResolver interface {
 	DispatchAssignMoves(ctx context.Context, input []*gqlmodel.DispatchAssignMoveInput) (*gqlmodel.DispatchBulkAssignResult, error)
 	DispatchUnassignMoves(ctx context.Context, moveIds []string) (*gqlmodel.DispatchBulkAssignResult, error)
 	DispatchPlanAutoAssign(ctx context.Context, input gqlmodel.DispatchPlanInput) (*gqlmodel.DispatchPlan, error)
+	CreateDocumentTemplate(ctx context.Context, input gqlmodel.DocumentTemplateInput) (*documenttemplate.DocumentTemplate, error)
+	UpdateDocumentTemplate(ctx context.Context, id string, input gqlmodel.DocumentTemplateInput) (*documenttemplate.DocumentTemplate, error)
+	DeleteDocumentTemplate(ctx context.Context, id string) (bool, error)
+	CreateDocumentTemplateVersion(ctx context.Context, input gqlmodel.CreateDocumentTemplateVersionInput) (*documenttemplate.DocumentTemplateVersion, error)
+	UpdateDocumentTemplateVersion(ctx context.Context, id string, input gqlmodel.DocumentTemplateVersionInput) (*documenttemplate.DocumentTemplateVersion, error)
+	PublishDocumentTemplateVersion(ctx context.Context, id string, notes *string) (*documenttemplate.DocumentTemplateVersion, error)
+	ArchiveDocumentTemplateVersion(ctx context.Context, id string) (*documenttemplate.DocumentTemplateVersion, error)
+	DeleteDocumentTemplateVersion(ctx context.Context, id string) (bool, error)
+	RollbackDocumentTemplate(ctx context.Context, versionID string, notes *string) (*documenttemplate.DocumentTemplateVersion, error)
+	AssignDocumentTemplate(ctx context.Context, input gqlmodel.AssignDocumentTemplateInput) (*documenttemplate.DocumentTemplateAssignment, error)
+	UnassignDocumentTemplate(ctx context.Context, input gqlmodel.UnassignDocumentTemplateInput) (bool, error)
+	SendTestMessageTemplate(ctx context.Context, input gqlmodel.SendTestMessageTemplateInput) (bool, error)
 	InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalservice.InviteWorkerResult, error)
 	RevokeWorkerPortalAccess(ctx context.Context, workerID string) (bool, error)
 	UpdateMyContactInfo(ctx context.Context, input gqlmodel.UpdateMyContactInfoInput) (*driverportalservice.PortalComplianceProfile, error)
@@ -6527,6 +6702,14 @@ type QueryResolver interface {
 	DistanceProfile(ctx context.Context, id string) (*distanceprofile.DistanceProfile, error)
 	DocumentPacketRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentPacketRuleConnection, error)
 	DocumentPacketRule(ctx context.Context, id string) (*documentpacketrule.DocumentPacketRule, error)
+	DocumentTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentTemplateConnection, error)
+	DocumentTemplate(ctx context.Context, id string) (*documenttemplate.DocumentTemplate, error)
+	DocumentTemplateVersion(ctx context.Context, id string) (*documenttemplate.DocumentTemplateVersion, error)
+	DocumentTemplateKinds(ctx context.Context) ([]*gqlmodel.DocumentTemplateKind, error)
+	DocumentTemplateAssignments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentTemplateAssignmentConnection, error)
+	CustomerDocumentTemplateAssignments(ctx context.Context, customerID string) ([]*documenttemplate.DocumentTemplateAssignment, error)
+	RenderDocumentTemplatePreview(ctx context.Context, input gqlmodel.DocumentTemplatePreviewInput) (*gqlmodel.DocumentTemplatePreview, error)
+	RenderMessageTemplatePreview(ctx context.Context, input gqlmodel.DocumentTemplatePreviewInput) (*gqlmodel.DocumentTemplatePreview, error)
 	DocumentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentTypeConnection, error)
 	DocumentType(ctx context.Context, id string) (*documenttype.DocumentType, error)
 	WorkerPortalStatus(ctx context.Context, workerID string) (*driverportalservice.PortalStatus, error)
@@ -13676,6 +13859,599 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.DocumentPacketRuleEdge.Node(childComplexity), true
 
+	case "DocumentTemplate.activeVersion":
+		if e.ComplexityRoot.DocumentTemplate.ActiveVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.ActiveVersion(childComplexity), true
+	case "DocumentTemplate.activeVersionId":
+		if e.ComplexityRoot.DocumentTemplate.ActiveVersionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.ActiveVersionID(childComplexity), true
+	case "DocumentTemplate.assignments":
+		if e.ComplexityRoot.DocumentTemplate.Assignments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.Assignments(childComplexity), true
+	case "DocumentTemplate.businessUnitId":
+		if e.ComplexityRoot.DocumentTemplate.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.BusinessUnitID(childComplexity), true
+	case "DocumentTemplate.code":
+		if e.ComplexityRoot.DocumentTemplate.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.Code(childComplexity), true
+	case "DocumentTemplate.createdAt":
+		if e.ComplexityRoot.DocumentTemplate.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.CreatedAt(childComplexity), true
+	case "DocumentTemplate.createdById":
+		if e.ComplexityRoot.DocumentTemplate.CreatedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.CreatedByID(childComplexity), true
+	case "DocumentTemplate.description":
+		if e.ComplexityRoot.DocumentTemplate.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.Description(childComplexity), true
+	case "DocumentTemplate.id":
+		if e.ComplexityRoot.DocumentTemplate.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.ID(childComplexity), true
+	case "DocumentTemplate.isOrgDefault":
+		if e.ComplexityRoot.DocumentTemplate.IsOrgDefault == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.IsOrgDefault(childComplexity), true
+	case "DocumentTemplate.kind":
+		if e.ComplexityRoot.DocumentTemplate.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.Kind(childComplexity), true
+	case "DocumentTemplate.name":
+		if e.ComplexityRoot.DocumentTemplate.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.Name(childComplexity), true
+	case "DocumentTemplate.organizationId":
+		if e.ComplexityRoot.DocumentTemplate.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.OrganizationID(childComplexity), true
+	case "DocumentTemplate.updatedAt":
+		if e.ComplexityRoot.DocumentTemplate.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.UpdatedAt(childComplexity), true
+	case "DocumentTemplate.updatedById":
+		if e.ComplexityRoot.DocumentTemplate.UpdatedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.UpdatedByID(childComplexity), true
+	case "DocumentTemplate.version":
+		if e.ComplexityRoot.DocumentTemplate.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.Version(childComplexity), true
+	case "DocumentTemplate.versions":
+		if e.ComplexityRoot.DocumentTemplate.Versions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplate.Versions(childComplexity), true
+
+	case "DocumentTemplateAssignment.assignedById":
+		if e.ComplexityRoot.DocumentTemplateAssignment.AssignedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.AssignedByID(childComplexity), true
+	case "DocumentTemplateAssignment.businessUnitId":
+		if e.ComplexityRoot.DocumentTemplateAssignment.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.BusinessUnitID(childComplexity), true
+	case "DocumentTemplateAssignment.createdAt":
+		if e.ComplexityRoot.DocumentTemplateAssignment.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.CreatedAt(childComplexity), true
+	case "DocumentTemplateAssignment.customer":
+		if e.ComplexityRoot.DocumentTemplateAssignment.Customer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.Customer(childComplexity), true
+	case "DocumentTemplateAssignment.customerId":
+		if e.ComplexityRoot.DocumentTemplateAssignment.CustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.CustomerID(childComplexity), true
+	case "DocumentTemplateAssignment.id":
+		if e.ComplexityRoot.DocumentTemplateAssignment.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.ID(childComplexity), true
+	case "DocumentTemplateAssignment.kind":
+		if e.ComplexityRoot.DocumentTemplateAssignment.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.Kind(childComplexity), true
+	case "DocumentTemplateAssignment.organizationId":
+		if e.ComplexityRoot.DocumentTemplateAssignment.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.OrganizationID(childComplexity), true
+	case "DocumentTemplateAssignment.template":
+		if e.ComplexityRoot.DocumentTemplateAssignment.Template == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.Template(childComplexity), true
+	case "DocumentTemplateAssignment.templateId":
+		if e.ComplexityRoot.DocumentTemplateAssignment.TemplateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.TemplateID(childComplexity), true
+	case "DocumentTemplateAssignment.updatedAt":
+		if e.ComplexityRoot.DocumentTemplateAssignment.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignment.UpdatedAt(childComplexity), true
+
+	case "DocumentTemplateAssignmentConnection.edges":
+		if e.ComplexityRoot.DocumentTemplateAssignmentConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignmentConnection.Edges(childComplexity), true
+	case "DocumentTemplateAssignmentConnection.pageInfo":
+		if e.ComplexityRoot.DocumentTemplateAssignmentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignmentConnection.PageInfo(childComplexity), true
+	case "DocumentTemplateAssignmentConnection.totalCount":
+		if e.ComplexityRoot.DocumentTemplateAssignmentConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignmentConnection.TotalCount(childComplexity), true
+
+	case "DocumentTemplateAssignmentEdge.cursor":
+		if e.ComplexityRoot.DocumentTemplateAssignmentEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignmentEdge.Cursor(childComplexity), true
+	case "DocumentTemplateAssignmentEdge.node":
+		if e.ComplexityRoot.DocumentTemplateAssignmentEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateAssignmentEdge.Node(childComplexity), true
+
+	case "DocumentTemplateConnection.edges":
+		if e.ComplexityRoot.DocumentTemplateConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateConnection.Edges(childComplexity), true
+	case "DocumentTemplateConnection.pageInfo":
+		if e.ComplexityRoot.DocumentTemplateConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateConnection.PageInfo(childComplexity), true
+	case "DocumentTemplateConnection.totalCount":
+		if e.ComplexityRoot.DocumentTemplateConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateConnection.TotalCount(childComplexity), true
+
+	case "DocumentTemplateDiagnostic.code":
+		if e.ComplexityRoot.DocumentTemplateDiagnostic.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateDiagnostic.Code(childComplexity), true
+	case "DocumentTemplateDiagnostic.column":
+		if e.ComplexityRoot.DocumentTemplateDiagnostic.Column == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateDiagnostic.Column(childComplexity), true
+	case "DocumentTemplateDiagnostic.field":
+		if e.ComplexityRoot.DocumentTemplateDiagnostic.Field == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateDiagnostic.Field(childComplexity), true
+	case "DocumentTemplateDiagnostic.line":
+		if e.ComplexityRoot.DocumentTemplateDiagnostic.Line == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateDiagnostic.Line(childComplexity), true
+	case "DocumentTemplateDiagnostic.message":
+		if e.ComplexityRoot.DocumentTemplateDiagnostic.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateDiagnostic.Message(childComplexity), true
+	case "DocumentTemplateDiagnostic.severity":
+		if e.ComplexityRoot.DocumentTemplateDiagnostic.Severity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateDiagnostic.Severity(childComplexity), true
+
+	case "DocumentTemplateEdge.cursor":
+		if e.ComplexityRoot.DocumentTemplateEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateEdge.Cursor(childComplexity), true
+	case "DocumentTemplateEdge.node":
+		if e.ComplexityRoot.DocumentTemplateEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateEdge.Node(childComplexity), true
+
+	case "DocumentTemplateKind.category":
+		if e.ComplexityRoot.DocumentTemplateKind.Category == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.Category(childComplexity), true
+	case "DocumentTemplateKind.channels":
+		if e.ComplexityRoot.DocumentTemplateKind.Channels == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.Channels(childComplexity), true
+	case "DocumentTemplateKind.customerScoped":
+		if e.ComplexityRoot.DocumentTemplateKind.CustomerScoped == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.CustomerScoped(childComplexity), true
+	case "DocumentTemplateKind.description":
+		if e.ComplexityRoot.DocumentTemplateKind.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.Description(childComplexity), true
+	case "DocumentTemplateKind.displayName":
+		if e.ComplexityRoot.DocumentTemplateKind.DisplayName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.DisplayName(childComplexity), true
+	case "DocumentTemplateKind.kind":
+		if e.ComplexityRoot.DocumentTemplateKind.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.Kind(childComplexity), true
+	case "DocumentTemplateKind.paged":
+		if e.ComplexityRoot.DocumentTemplateKind.Paged == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.Paged(childComplexity), true
+	case "DocumentTemplateKind.requiredPaths":
+		if e.ComplexityRoot.DocumentTemplateKind.RequiredPaths == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.RequiredPaths(childComplexity), true
+	case "DocumentTemplateKind.source":
+		if e.ComplexityRoot.DocumentTemplateKind.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.Source(childComplexity), true
+	case "DocumentTemplateKind.template":
+		if e.ComplexityRoot.DocumentTemplateKind.Template == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.Template(childComplexity), true
+	case "DocumentTemplateKind.variables":
+		if e.ComplexityRoot.DocumentTemplateKind.Variables == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateKind.Variables(childComplexity), true
+
+	case "DocumentTemplatePreview.contentHash":
+		if e.ComplexityRoot.DocumentTemplatePreview.ContentHash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplatePreview.ContentHash(childComplexity), true
+	case "DocumentTemplatePreview.diagnostics":
+		if e.ComplexityRoot.DocumentTemplatePreview.Diagnostics == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplatePreview.Diagnostics(childComplexity), true
+	case "DocumentTemplatePreview.html":
+		if e.ComplexityRoot.DocumentTemplatePreview.HTML == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplatePreview.HTML(childComplexity), true
+	case "DocumentTemplatePreview.pdfUrl":
+		if e.ComplexityRoot.DocumentTemplatePreview.PDFURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplatePreview.PDFURL(childComplexity), true
+	case "DocumentTemplatePreview.source":
+		if e.ComplexityRoot.DocumentTemplatePreview.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplatePreview.Source(childComplexity), true
+	case "DocumentTemplatePreview.subject":
+		if e.ComplexityRoot.DocumentTemplatePreview.Subject == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplatePreview.Subject(childComplexity), true
+	case "DocumentTemplatePreview.text":
+		if e.ComplexityRoot.DocumentTemplatePreview.Text == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplatePreview.Text(childComplexity), true
+
+	case "DocumentTemplateVariable.description":
+		if e.ComplexityRoot.DocumentTemplateVariable.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVariable.Description(childComplexity), true
+	case "DocumentTemplateVariable.fields":
+		if e.ComplexityRoot.DocumentTemplateVariable.Fields == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVariable.Fields(childComplexity), true
+	case "DocumentTemplateVariable.path":
+		if e.ComplexityRoot.DocumentTemplateVariable.Path == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVariable.Path(childComplexity), true
+	case "DocumentTemplateVariable.required":
+		if e.ComplexityRoot.DocumentTemplateVariable.Required == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVariable.Required(childComplexity), true
+	case "DocumentTemplateVariable.type":
+		if e.ComplexityRoot.DocumentTemplateVariable.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVariable.Type(childComplexity), true
+
+	case "DocumentTemplateVersion.archivedAt":
+		if e.ComplexityRoot.DocumentTemplateVersion.ArchivedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.ArchivedAt(childComplexity), true
+	case "DocumentTemplateVersion.archivedById":
+		if e.ComplexityRoot.DocumentTemplateVersion.ArchivedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.ArchivedByID(childComplexity), true
+	case "DocumentTemplateVersion.bodyHtml":
+		if e.ComplexityRoot.DocumentTemplateVersion.BodyHTML == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.BodyHTML(childComplexity), true
+	case "DocumentTemplateVersion.bodyText":
+		if e.ComplexityRoot.DocumentTemplateVersion.BodyText == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.BodyText(childComplexity), true
+	case "DocumentTemplateVersion.businessUnitId":
+		if e.ComplexityRoot.DocumentTemplateVersion.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.BusinessUnitID(childComplexity), true
+	case "DocumentTemplateVersion.cssContent":
+		if e.ComplexityRoot.DocumentTemplateVersion.CSSContent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.CSSContent(childComplexity), true
+	case "DocumentTemplateVersion.contentHash":
+		if e.ComplexityRoot.DocumentTemplateVersion.ContentHash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.ContentHash(childComplexity), true
+	case "DocumentTemplateVersion.createdAt":
+		if e.ComplexityRoot.DocumentTemplateVersion.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.CreatedAt(childComplexity), true
+	case "DocumentTemplateVersion.footerHtml":
+		if e.ComplexityRoot.DocumentTemplateVersion.FooterHTML == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.FooterHTML(childComplexity), true
+	case "DocumentTemplateVersion.headerHtml":
+		if e.ComplexityRoot.DocumentTemplateVersion.HeaderHTML == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.HeaderHTML(childComplexity), true
+	case "DocumentTemplateVersion.id":
+		if e.ComplexityRoot.DocumentTemplateVersion.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.ID(childComplexity), true
+	case "DocumentTemplateVersion.marginBottom":
+		if e.ComplexityRoot.DocumentTemplateVersion.MarginBottom == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.MarginBottom(childComplexity), true
+	case "DocumentTemplateVersion.marginLeft":
+		if e.ComplexityRoot.DocumentTemplateVersion.MarginLeft == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.MarginLeft(childComplexity), true
+	case "DocumentTemplateVersion.marginRight":
+		if e.ComplexityRoot.DocumentTemplateVersion.MarginRight == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.MarginRight(childComplexity), true
+	case "DocumentTemplateVersion.marginTop":
+		if e.ComplexityRoot.DocumentTemplateVersion.MarginTop == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.MarginTop(childComplexity), true
+	case "DocumentTemplateVersion.organizationId":
+		if e.ComplexityRoot.DocumentTemplateVersion.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.OrganizationID(childComplexity), true
+	case "DocumentTemplateVersion.orientation":
+		if e.ComplexityRoot.DocumentTemplateVersion.Orientation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.Orientation(childComplexity), true
+	case "DocumentTemplateVersion.pageSize":
+		if e.ComplexityRoot.DocumentTemplateVersion.PageSize == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.PageSize(childComplexity), true
+	case "DocumentTemplateVersion.publishNotes":
+		if e.ComplexityRoot.DocumentTemplateVersion.PublishNotes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.PublishNotes(childComplexity), true
+	case "DocumentTemplateVersion.publishedAt":
+		if e.ComplexityRoot.DocumentTemplateVersion.PublishedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.PublishedAt(childComplexity), true
+	case "DocumentTemplateVersion.publishedById":
+		if e.ComplexityRoot.DocumentTemplateVersion.PublishedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.PublishedByID(childComplexity), true
+	case "DocumentTemplateVersion.sourceVersionId":
+		if e.ComplexityRoot.DocumentTemplateVersion.SourceVersionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.SourceVersionID(childComplexity), true
+	case "DocumentTemplateVersion.starterDrifted":
+		if e.ComplexityRoot.DocumentTemplateVersion.StarterDrifted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.StarterDrifted(childComplexity), true
+	case "DocumentTemplateVersion.starterHash":
+		if e.ComplexityRoot.DocumentTemplateVersion.StarterHash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.StarterHash(childComplexity), true
+	case "DocumentTemplateVersion.status":
+		if e.ComplexityRoot.DocumentTemplateVersion.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.Status(childComplexity), true
+	case "DocumentTemplateVersion.subject":
+		if e.ComplexityRoot.DocumentTemplateVersion.Subject == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.Subject(childComplexity), true
+	case "DocumentTemplateVersion.templateId":
+		if e.ComplexityRoot.DocumentTemplateVersion.TemplateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.TemplateID(childComplexity), true
+	case "DocumentTemplateVersion.updatedAt":
+		if e.ComplexityRoot.DocumentTemplateVersion.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.UpdatedAt(childComplexity), true
+	case "DocumentTemplateVersion.version":
+		if e.ComplexityRoot.DocumentTemplateVersion.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.Version(childComplexity), true
+	case "DocumentTemplateVersion.versionNumber":
+		if e.ComplexityRoot.DocumentTemplateVersion.VersionNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DocumentTemplateVersion.VersionNumber(childComplexity), true
+
 	case "DocumentType.businessUnit":
 		if e.ComplexityRoot.DocumentType.BusinessUnit == nil {
 			break
@@ -20699,6 +21475,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ApproveWorkerPto(childComplexity, args["id"].(string)), true
+	case "Mutation.archiveDocumentTemplateVersion":
+		if e.ComplexityRoot.Mutation.ArchiveDocumentTemplateVersion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_archiveDocumentTemplateVersion_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ArchiveDocumentTemplateVersion(childComplexity, args["id"].(string)), true
 	case "Mutation.assignBillingQueueBiller":
 		if e.ComplexityRoot.Mutation.AssignBillingQueueBiller == nil {
 			break
@@ -20710,6 +21497,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AssignBillingQueueBiller(childComplexity, args["id"].(string), args["input"].(gqlmodel.BillingQueueAssignInput)), true
+	case "Mutation.assignDocumentTemplate":
+		if e.ComplexityRoot.Mutation.AssignDocumentTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_assignDocumentTemplate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AssignDocumentTemplate(childComplexity, args["input"].(gqlmodel.AssignDocumentTemplateInput)), true
 	case "Mutation.assignPayProfileToWorker":
 		if e.ComplexityRoot.Mutation.AssignPayProfileToWorker == nil {
 			break
@@ -20952,6 +21750,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateDetentionPolicy(childComplexity, args["input"].(gqlmodel.DetentionPolicyInput)), true
+	case "Mutation.createDocumentTemplate":
+		if e.ComplexityRoot.Mutation.CreateDocumentTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createDocumentTemplate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateDocumentTemplate(childComplexity, args["input"].(gqlmodel.DocumentTemplateInput)), true
+	case "Mutation.createDocumentTemplateVersion":
+		if e.ComplexityRoot.Mutation.CreateDocumentTemplateVersion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createDocumentTemplateVersion_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateDocumentTemplateVersion(childComplexity, args["input"].(gqlmodel.CreateDocumentTemplateVersionInput)), true
 	case "Mutation.createEquipmentManufacturer":
 		if e.ComplexityRoot.Mutation.CreateEquipmentManufacturer == nil {
 			break
@@ -21227,6 +22047,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DeleteDetentionPolicy(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteDocumentTemplate":
+		if e.ComplexityRoot.Mutation.DeleteDocumentTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteDocumentTemplate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteDocumentTemplate(childComplexity, args["id"].(string)), true
+	case "Mutation.deleteDocumentTemplateVersion":
+		if e.ComplexityRoot.Mutation.DeleteDocumentTemplateVersion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteDocumentTemplateVersion_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteDocumentTemplateVersion(childComplexity, args["id"].(string)), true
 	case "Mutation.deleteFuelIndex":
 		if e.ComplexityRoot.Mutation.DeleteFuelIndex == nil {
 			break
@@ -21745,6 +22587,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.PostDriverSettlement(childComplexity, args["input"].(gqlmodel.DriverSettlementActionInput)), true
+	case "Mutation.publishDocumentTemplateVersion":
+		if e.ComplexityRoot.Mutation.PublishDocumentTemplateVersion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_publishDocumentTemplateVersion_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.PublishDocumentTemplateVersion(childComplexity, args["id"].(string), args["notes"].(*string)), true
 	case "Mutation.recalculateDriverSettlement":
 		if e.ComplexityRoot.Mutation.RecalculateDriverSettlement == nil {
 			break
@@ -21960,6 +22813,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RevokeWorkerPortalAccess(childComplexity, args["workerId"].(string)), true
+	case "Mutation.rollbackDocumentTemplate":
+		if e.ComplexityRoot.Mutation.RollbackDocumentTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_rollbackDocumentTemplate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RollbackDocumentTemplate(childComplexity, args["versionId"].(string), args["notes"].(*string)), true
 	case "Mutation.runReport":
 		if e.ComplexityRoot.Mutation.RunReport == nil {
 			break
@@ -21993,6 +22857,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SendDetentionNotice(childComplexity, args["occurrenceId"].(string)), true
+	case "Mutation.sendTestMessageTemplate":
+		if e.ComplexityRoot.Mutation.SendTestMessageTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_sendTestMessageTemplate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SendTestMessageTemplate(childComplexity, args["input"].(gqlmodel.SendTestMessageTemplateInput)), true
 	case "Mutation.setDefaultTableConfiguration":
 		if e.ComplexityRoot.Mutation.SetDefaultTableConfiguration == nil {
 			break
@@ -22070,6 +22945,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.TransferShipmentToBilling(childComplexity, args["input"].(gqlmodel.ShipmentTransferToBillingInput)), true
+	case "Mutation.unassignDocumentTemplate":
+		if e.ComplexityRoot.Mutation.UnassignDocumentTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unassignDocumentTemplate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UnassignDocumentTemplate(childComplexity, args["input"].(gqlmodel.UnassignDocumentTemplateInput)), true
 	case "Mutation.uncancelShipment":
 		if e.ComplexityRoot.Mutation.UncancelShipment == nil {
 			break
@@ -22169,6 +23055,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateDetentionPolicy(childComplexity, args["id"].(string), args["input"].(gqlmodel.DetentionPolicyInput)), true
+	case "Mutation.updateDocumentTemplate":
+		if e.ComplexityRoot.Mutation.UpdateDocumentTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateDocumentTemplate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateDocumentTemplate(childComplexity, args["id"].(string), args["input"].(gqlmodel.DocumentTemplateInput)), true
+	case "Mutation.updateDocumentTemplateVersion":
+		if e.ComplexityRoot.Mutation.UpdateDocumentTemplateVersion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateDocumentTemplateVersion_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateDocumentTemplateVersion(childComplexity, args["id"].(string), args["input"].(gqlmodel.DocumentTemplateVersionInput)), true
 	case "Mutation.updateEquipmentManufacturer":
 		if e.ComplexityRoot.Mutation.UpdateEquipmentManufacturer == nil {
 			break
@@ -24718,6 +25626,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Customer(childComplexity, args["id"].(string)), true
+	case "Query.customerDocumentTemplateAssignments":
+		if e.ComplexityRoot.Query.CustomerDocumentTemplateAssignments == nil {
+			break
+		}
+
+		args, err := ec.field_Query_customerDocumentTemplateAssignments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.CustomerDocumentTemplateAssignments(childComplexity, args["customerId"].(string)), true
 	case "Query.customerPayment":
 		if e.ComplexityRoot.Query.CustomerPayment == nil {
 			break
@@ -24972,6 +25891,56 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.DocumentPacketRules(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.documentTemplate":
+		if e.ComplexityRoot.Query.DocumentTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Query_documentTemplate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DocumentTemplate(childComplexity, args["id"].(string)), true
+	case "Query.documentTemplateAssignments":
+		if e.ComplexityRoot.Query.DocumentTemplateAssignments == nil {
+			break
+		}
+
+		args, err := ec.field_Query_documentTemplateAssignments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DocumentTemplateAssignments(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.documentTemplateKinds":
+		if e.ComplexityRoot.Query.DocumentTemplateKinds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.DocumentTemplateKinds(childComplexity), true
+	case "Query.documentTemplateVersion":
+		if e.ComplexityRoot.Query.DocumentTemplateVersion == nil {
+			break
+		}
+
+		args, err := ec.field_Query_documentTemplateVersion_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DocumentTemplateVersion(childComplexity, args["id"].(string)), true
+	case "Query.documentTemplates":
+		if e.ComplexityRoot.Query.DocumentTemplates == nil {
+			break
+		}
+
+		args, err := ec.field_Query_documentTemplates_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.DocumentTemplates(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.documentType":
 		if e.ComplexityRoot.Query.DocumentType == nil {
 			break
@@ -26160,6 +27129,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.RecurringShipments(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.renderDocumentTemplatePreview":
+		if e.ComplexityRoot.Query.RenderDocumentTemplatePreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_renderDocumentTemplatePreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RenderDocumentTemplatePreview(childComplexity, args["input"].(gqlmodel.DocumentTemplatePreviewInput)), true
+	case "Query.renderMessageTemplatePreview":
+		if e.ComplexityRoot.Query.RenderMessageTemplatePreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_renderMessageTemplatePreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RenderMessageTemplatePreview(childComplexity, args["input"].(gqlmodel.DocumentTemplatePreviewInput)), true
 	case "Query.reportCatalog":
 		if e.ComplexityRoot.Query.ReportCatalog == nil {
 			break
@@ -36774,6 +37765,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAgentExceptionResolveInput,
 		ec.unmarshalInputAgentProposalDecisionInput,
 		ec.unmarshalInputApplyCustomerPaymentInput,
+		ec.unmarshalInputAssignDocumentTemplateInput,
 		ec.unmarshalInputAssignPayProfileInput,
 		ec.unmarshalInputAttachPayEventsInput,
 		ec.unmarshalInputBillingQueueAssignInput,
@@ -36785,6 +37777,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBulkUpdateTrailerStatusInput,
 		ec.unmarshalInputCostCategoryUpdateInput,
 		ec.unmarshalInputCostingControlInput,
+		ec.unmarshalInputCreateDocumentTemplateVersionInput,
 		ec.unmarshalInputCreateMyLoadCommentInput,
 		ec.unmarshalInputCreatePayCodeInput,
 		ec.unmarshalInputCreatePayProfileInput,
@@ -36810,6 +37803,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDispatchMoveCandidatesInput,
 		ec.unmarshalInputDispatchPlanInput,
 		ec.unmarshalInputDisputeAdjustmentInput,
+		ec.unmarshalInputDocumentTemplateInput,
+		ec.unmarshalInputDocumentTemplatePreviewInput,
+		ec.unmarshalInputDocumentTemplateVersionInput,
 		ec.unmarshalInputDriverSettlementActionInput,
 		ec.unmarshalInputEndWorkerPayAssignmentInput,
 		ec.unmarshalInputEquipmentManufacturerInput,
@@ -36880,6 +37876,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSaveReportDefinitionInput,
 		ec.unmarshalInputSaveTelematicsFormMappingInput,
 		ec.unmarshalInputSelectOptionsInput,
+		ec.unmarshalInputSendTestMessageTemplateInput,
 		ec.unmarshalInputShipmentAdditionalChargeInput,
 		ec.unmarshalInputShipmentAnalyticsInput,
 		ec.unmarshalInputShipmentBulkTransferToBillingInput,
@@ -36915,6 +37912,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputTractorPatchInput,
 		ec.unmarshalInputTrailerInput,
 		ec.unmarshalInputTrailerPatchInput,
+		ec.unmarshalInputUnassignDocumentTemplateInput,
 		ec.unmarshalInputUpcomingWorkerPTOInput,
 		ec.unmarshalInputUpdateDashControlInput,
 		ec.unmarshalInputUpdateEscrowAccountInput,
@@ -39320,6 +40318,350 @@ type DocumentPacketRuleConnection {
 extend type Query {
   documentPacketRules(input: DataTableConnectionInput!): DocumentPacketRuleConnection!
   documentPacketRule(id: ID!): DocumentPacketRule
+}
+`, BuiltIn: false},
+	{Name: "../schema/document_template.graphqls", Input: `enum DocumentTemplateVersionStatus {
+  Draft
+  Active
+  Archived
+}
+
+enum DocumentTemplatePageSize {
+  Letter
+  A4
+  Legal
+}
+
+enum DocumentTemplateOrientation {
+  Portrait
+  Landscape
+}
+
+enum DocumentTemplateChannel {
+  PDF
+  EmailHTML
+  EmailText
+  Subject
+  NotificationTitle
+  NotificationBody
+}
+
+enum DocumentTemplateVariableType {
+  String
+  Money
+  Date
+  DateTime
+  Int
+  Decimal
+  Bool
+  Object
+  Collection
+  StringList
+}
+
+"""
+Which tier of the resolution chain produced a template: a per-customer
+assignment, the organization default, or the built-in that ships with the
+system.
+"""
+enum DocumentTemplateSource {
+  Assigned
+  OrgDefault
+  BuiltIn
+}
+
+type DocumentTemplate {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  kind: String!
+  code: String!
+  name: String!
+  description: String!
+  isOrgDefault: Boolean!
+  activeVersionId: ID
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  createdById: ID
+  updatedById: ID
+
+  activeVersion: DocumentTemplateVersion
+  versions: [DocumentTemplateVersion!]
+  assignments: [DocumentTemplateAssignment!]
+}
+
+type DocumentTemplateVersion {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  templateId: ID!
+  sourceVersionId: ID
+  versionNumber: Int!
+  status: DocumentTemplateVersionStatus!
+
+  subject: String!
+  bodyHtml: String!
+  bodyText: String!
+  cssContent: String!
+  headerHtml: String!
+  footerHtml: String!
+
+  pageSize: DocumentTemplatePageSize
+  orientation: DocumentTemplateOrientation
+  marginTop: Float
+  marginBottom: Float
+  marginLeft: Float
+  marginRight: Float
+
+  contentHash: String!
+  starterHash: String!
+  """
+  True when the built-in this version was copied from has since changed, so the
+  editor can offer to show what moved instead of leaving the copy silently
+  behind the shipped default.
+  """
+  starterDrifted: Boolean!
+
+  publishNotes: String!
+  publishedById: ID
+  publishedAt: Int
+  archivedById: ID
+  archivedAt: Int
+
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type DocumentTemplateAssignment {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  kind: String!
+  templateId: ID!
+  customerId: ID!
+  assignedById: ID
+  createdAt: Int!
+  updatedAt: Int!
+
+  template: DocumentTemplate
+  customer: Customer
+}
+
+"""
+One variable an author may reference, as the editor's autocomplete and reference
+panel present it.
+"""
+type DocumentTemplateVariable {
+  path: String!
+  type: DocumentTemplateVariableType!
+  """
+  What the value means in business terms. The editor shows it verbatim, which is
+  why the catalog carries prose rather than a type name.
+  """
+  description: String!
+  """
+  A published version must still reference this path. These are the fields whose
+  absence makes a document legally deficient rather than merely ugly.
+  """
+  required: Boolean!
+  """
+  The element shape, for Object and Collection variables.
+  """
+  fields: [DocumentTemplateVariable!]
+}
+
+"""
+A registered template kind. The catalog is driven by the Go registry, not by
+rows, so it is the same for every organization and fixed in cardinality.
+"""
+type DocumentTemplateKind {
+  kind: String!
+  displayName: String!
+  description: String!
+  category: String!
+  channels: [DocumentTemplateChannel!]!
+  paged: Boolean!
+  customerScoped: Boolean!
+  variables: [DocumentTemplateVariable!]!
+  requiredPaths: [String!]!
+
+  """
+  The template governing this kind for the organization right now, absent when
+  the built-in is still in effect.
+  """
+  template: DocumentTemplate
+  source: DocumentTemplateSource!
+}
+
+type DocumentTemplateEdge {
+  node: DocumentTemplate!
+  cursor: String!
+}
+
+type DocumentTemplateConnection {
+  edges: [DocumentTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DocumentTemplateAssignmentEdge {
+  node: DocumentTemplateAssignment!
+  cursor: String!
+}
+
+type DocumentTemplateAssignmentConnection {
+  edges: [DocumentTemplateAssignmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+One finding from parsing or rendering a template. Severity is advisory in a
+preview and blocking at publish.
+"""
+type DocumentTemplateDiagnostic {
+  severity: String!
+  code: String!
+  field: String!
+  message: String!
+  line: Int!
+  column: Int!
+}
+
+type DocumentTemplatePreview {
+  subject: String!
+  """
+  Rendered HTML as a *string*, never served as text/html on this origin. The
+  client renders it inside a sandboxed iframe; handing it back as a document
+  would let an organization's template run against the app origin.
+  """
+  html: String!
+  text: String!
+  source: DocumentTemplateSource!
+  contentHash: String!
+  diagnostics: [DocumentTemplateDiagnostic!]!
+  """
+  Where to fetch the printed PDF. The bytes stay off GraphQL: base64 in a JSON
+  envelope inflates by a third and cannot stream.
+  """
+  pdfUrl: String
+}
+
+input DocumentTemplateInput {
+  kind: String!
+  code: String!
+  name: String!
+  description: String
+  isOrgDefault: Boolean
+}
+
+input DocumentTemplateVersionInput {
+  subject: String
+  bodyHtml: String
+  bodyText: String
+  cssContent: String
+  headerHtml: String
+  footerHtml: String
+  pageSize: DocumentTemplatePageSize
+  orientation: DocumentTemplateOrientation
+  marginTop: Float
+  marginBottom: Float
+  marginLeft: Float
+  marginRight: Float
+}
+
+input CreateDocumentTemplateVersionInput {
+  templateId: ID!
+  """
+  Copy content from an existing version. This is how both "edit a copy of what
+  is live" and rollback are expressed — history is never edited in place.
+  """
+  sourceVersionId: ID
+  content: DocumentTemplateVersionInput
+}
+
+"""
+Preview unsaved editor content, a stored version, or the built-in.
+
+Content wins over versionId, because the editor previews what is on screen and
+that has by definition not been saved yet.
+"""
+input DocumentTemplatePreviewInput {
+  kind: String!
+  versionId: ID
+  content: DocumentTemplateVersionInput
+  includePdf: Boolean
+}
+
+input AssignDocumentTemplateInput {
+  templateId: ID!
+  customerId: ID!
+}
+
+input UnassignDocumentTemplateInput {
+  kind: String!
+  customerId: ID!
+}
+
+input SendTestMessageTemplateInput {
+  kind: String!
+  versionId: ID
+  content: DocumentTemplateVersionInput
+  toEmail: String!
+}
+
+extend type Query {
+  documentTemplates(input: DataTableConnectionInput!): DocumentTemplateConnection!
+  documentTemplate(id: ID!): DocumentTemplate
+  documentTemplateVersion(id: ID!): DocumentTemplateVersion
+
+  """
+  The registry catalog that powers the admin variable picker and the kind list.
+  """
+  documentTemplateKinds: [DocumentTemplateKind!]!
+
+  documentTemplateAssignments(
+    input: DataTableConnectionInput!
+  ): DocumentTemplateAssignmentConnection!
+  customerDocumentTemplateAssignments(customerId: ID!): [DocumentTemplateAssignment!]!
+
+  """
+  Preview is a query because it mutates nothing — which also lets the editor
+  cache renders by content hash and make undo an instant cache hit.
+  """
+  renderDocumentTemplatePreview(input: DocumentTemplatePreviewInput!): DocumentTemplatePreview!
+  renderMessageTemplatePreview(input: DocumentTemplatePreviewInput!): DocumentTemplatePreview!
+}
+
+extend type Mutation {
+  createDocumentTemplate(input: DocumentTemplateInput!): DocumentTemplate!
+  updateDocumentTemplate(id: ID!, input: DocumentTemplateInput!): DocumentTemplate!
+  deleteDocumentTemplate(id: ID!): Boolean!
+
+  createDocumentTemplateVersion(
+    input: CreateDocumentTemplateVersionInput!
+  ): DocumentTemplateVersion!
+  updateDocumentTemplateVersion(
+    id: ID!
+    input: DocumentTemplateVersionInput!
+  ): DocumentTemplateVersion!
+  publishDocumentTemplateVersion(id: ID!, notes: String): DocumentTemplateVersion!
+  archiveDocumentTemplateVersion(id: ID!): DocumentTemplateVersion!
+  deleteDocumentTemplateVersion(id: ID!): Boolean!
+
+  """
+  Rollback creates a new draft from the target and publishes it rather than
+  reactivating history, so a generated document never names a version that was
+  live at two different times under two different approvals.
+  """
+  rollbackDocumentTemplate(versionId: ID!, notes: String): DocumentTemplateVersion!
+
+  assignDocumentTemplate(input: AssignDocumentTemplateInput!): DocumentTemplateAssignment!
+  unassignDocumentTemplate(input: UnassignDocumentTemplateInput!): Boolean!
+
+  sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/document_type.graphqls", Input: `enum DocumentClassification {
@@ -49686,6 +51028,266 @@ func (ec *executionContext) childFields_DocumentPacketRuleEdge(ctx context.Conte
 	return nil, fmt.Errorf("no field named %q was found under type DocumentPacketRuleEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_DocumentTemplate(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_DocumentTemplate_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_DocumentTemplate_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_DocumentTemplate_organizationId(ctx, field)
+	case "kind":
+		return ec.fieldContext_DocumentTemplate_kind(ctx, field)
+	case "code":
+		return ec.fieldContext_DocumentTemplate_code(ctx, field)
+	case "name":
+		return ec.fieldContext_DocumentTemplate_name(ctx, field)
+	case "description":
+		return ec.fieldContext_DocumentTemplate_description(ctx, field)
+	case "isOrgDefault":
+		return ec.fieldContext_DocumentTemplate_isOrgDefault(ctx, field)
+	case "activeVersionId":
+		return ec.fieldContext_DocumentTemplate_activeVersionId(ctx, field)
+	case "version":
+		return ec.fieldContext_DocumentTemplate_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_DocumentTemplate_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_DocumentTemplate_updatedAt(ctx, field)
+	case "createdById":
+		return ec.fieldContext_DocumentTemplate_createdById(ctx, field)
+	case "updatedById":
+		return ec.fieldContext_DocumentTemplate_updatedById(ctx, field)
+	case "activeVersion":
+		return ec.fieldContext_DocumentTemplate_activeVersion(ctx, field)
+	case "versions":
+		return ec.fieldContext_DocumentTemplate_versions(ctx, field)
+	case "assignments":
+		return ec.fieldContext_DocumentTemplate_assignments(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplate", field.Name)
+}
+
+func (ec *executionContext) childFields_DocumentTemplateAssignment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_DocumentTemplateAssignment_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_DocumentTemplateAssignment_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_DocumentTemplateAssignment_organizationId(ctx, field)
+	case "kind":
+		return ec.fieldContext_DocumentTemplateAssignment_kind(ctx, field)
+	case "templateId":
+		return ec.fieldContext_DocumentTemplateAssignment_templateId(ctx, field)
+	case "customerId":
+		return ec.fieldContext_DocumentTemplateAssignment_customerId(ctx, field)
+	case "assignedById":
+		return ec.fieldContext_DocumentTemplateAssignment_assignedById(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_DocumentTemplateAssignment_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_DocumentTemplateAssignment_updatedAt(ctx, field)
+	case "template":
+		return ec.fieldContext_DocumentTemplateAssignment_template(ctx, field)
+	case "customer":
+		return ec.fieldContext_DocumentTemplateAssignment_customer(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplateAssignment", field.Name)
+}
+
+func (ec *executionContext) childFields_DocumentTemplateAssignmentConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_DocumentTemplateAssignmentConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_DocumentTemplateAssignmentConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_DocumentTemplateAssignmentConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplateAssignmentConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_DocumentTemplateAssignmentEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_DocumentTemplateAssignmentEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_DocumentTemplateAssignmentEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplateAssignmentEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_DocumentTemplateConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_DocumentTemplateConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_DocumentTemplateConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_DocumentTemplateConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplateConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_DocumentTemplateDiagnostic(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "severity":
+		return ec.fieldContext_DocumentTemplateDiagnostic_severity(ctx, field)
+	case "code":
+		return ec.fieldContext_DocumentTemplateDiagnostic_code(ctx, field)
+	case "field":
+		return ec.fieldContext_DocumentTemplateDiagnostic_field(ctx, field)
+	case "message":
+		return ec.fieldContext_DocumentTemplateDiagnostic_message(ctx, field)
+	case "line":
+		return ec.fieldContext_DocumentTemplateDiagnostic_line(ctx, field)
+	case "column":
+		return ec.fieldContext_DocumentTemplateDiagnostic_column(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplateDiagnostic", field.Name)
+}
+
+func (ec *executionContext) childFields_DocumentTemplateEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_DocumentTemplateEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_DocumentTemplateEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplateEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_DocumentTemplateKind(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "kind":
+		return ec.fieldContext_DocumentTemplateKind_kind(ctx, field)
+	case "displayName":
+		return ec.fieldContext_DocumentTemplateKind_displayName(ctx, field)
+	case "description":
+		return ec.fieldContext_DocumentTemplateKind_description(ctx, field)
+	case "category":
+		return ec.fieldContext_DocumentTemplateKind_category(ctx, field)
+	case "channels":
+		return ec.fieldContext_DocumentTemplateKind_channels(ctx, field)
+	case "paged":
+		return ec.fieldContext_DocumentTemplateKind_paged(ctx, field)
+	case "customerScoped":
+		return ec.fieldContext_DocumentTemplateKind_customerScoped(ctx, field)
+	case "variables":
+		return ec.fieldContext_DocumentTemplateKind_variables(ctx, field)
+	case "requiredPaths":
+		return ec.fieldContext_DocumentTemplateKind_requiredPaths(ctx, field)
+	case "template":
+		return ec.fieldContext_DocumentTemplateKind_template(ctx, field)
+	case "source":
+		return ec.fieldContext_DocumentTemplateKind_source(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplateKind", field.Name)
+}
+
+func (ec *executionContext) childFields_DocumentTemplatePreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "subject":
+		return ec.fieldContext_DocumentTemplatePreview_subject(ctx, field)
+	case "html":
+		return ec.fieldContext_DocumentTemplatePreview_html(ctx, field)
+	case "text":
+		return ec.fieldContext_DocumentTemplatePreview_text(ctx, field)
+	case "source":
+		return ec.fieldContext_DocumentTemplatePreview_source(ctx, field)
+	case "contentHash":
+		return ec.fieldContext_DocumentTemplatePreview_contentHash(ctx, field)
+	case "diagnostics":
+		return ec.fieldContext_DocumentTemplatePreview_diagnostics(ctx, field)
+	case "pdfUrl":
+		return ec.fieldContext_DocumentTemplatePreview_pdfUrl(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplatePreview", field.Name)
+}
+
+func (ec *executionContext) childFields_DocumentTemplateVariable(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "path":
+		return ec.fieldContext_DocumentTemplateVariable_path(ctx, field)
+	case "type":
+		return ec.fieldContext_DocumentTemplateVariable_type(ctx, field)
+	case "description":
+		return ec.fieldContext_DocumentTemplateVariable_description(ctx, field)
+	case "required":
+		return ec.fieldContext_DocumentTemplateVariable_required(ctx, field)
+	case "fields":
+		return ec.fieldContext_DocumentTemplateVariable_fields(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplateVariable", field.Name)
+}
+
+func (ec *executionContext) childFields_DocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_DocumentTemplateVersion_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_DocumentTemplateVersion_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_DocumentTemplateVersion_organizationId(ctx, field)
+	case "templateId":
+		return ec.fieldContext_DocumentTemplateVersion_templateId(ctx, field)
+	case "sourceVersionId":
+		return ec.fieldContext_DocumentTemplateVersion_sourceVersionId(ctx, field)
+	case "versionNumber":
+		return ec.fieldContext_DocumentTemplateVersion_versionNumber(ctx, field)
+	case "status":
+		return ec.fieldContext_DocumentTemplateVersion_status(ctx, field)
+	case "subject":
+		return ec.fieldContext_DocumentTemplateVersion_subject(ctx, field)
+	case "bodyHtml":
+		return ec.fieldContext_DocumentTemplateVersion_bodyHtml(ctx, field)
+	case "bodyText":
+		return ec.fieldContext_DocumentTemplateVersion_bodyText(ctx, field)
+	case "cssContent":
+		return ec.fieldContext_DocumentTemplateVersion_cssContent(ctx, field)
+	case "headerHtml":
+		return ec.fieldContext_DocumentTemplateVersion_headerHtml(ctx, field)
+	case "footerHtml":
+		return ec.fieldContext_DocumentTemplateVersion_footerHtml(ctx, field)
+	case "pageSize":
+		return ec.fieldContext_DocumentTemplateVersion_pageSize(ctx, field)
+	case "orientation":
+		return ec.fieldContext_DocumentTemplateVersion_orientation(ctx, field)
+	case "marginTop":
+		return ec.fieldContext_DocumentTemplateVersion_marginTop(ctx, field)
+	case "marginBottom":
+		return ec.fieldContext_DocumentTemplateVersion_marginBottom(ctx, field)
+	case "marginLeft":
+		return ec.fieldContext_DocumentTemplateVersion_marginLeft(ctx, field)
+	case "marginRight":
+		return ec.fieldContext_DocumentTemplateVersion_marginRight(ctx, field)
+	case "contentHash":
+		return ec.fieldContext_DocumentTemplateVersion_contentHash(ctx, field)
+	case "starterHash":
+		return ec.fieldContext_DocumentTemplateVersion_starterHash(ctx, field)
+	case "starterDrifted":
+		return ec.fieldContext_DocumentTemplateVersion_starterDrifted(ctx, field)
+	case "publishNotes":
+		return ec.fieldContext_DocumentTemplateVersion_publishNotes(ctx, field)
+	case "publishedById":
+		return ec.fieldContext_DocumentTemplateVersion_publishedById(ctx, field)
+	case "publishedAt":
+		return ec.fieldContext_DocumentTemplateVersion_publishedAt(ctx, field)
+	case "archivedById":
+		return ec.fieldContext_DocumentTemplateVersion_archivedById(ctx, field)
+	case "archivedAt":
+		return ec.fieldContext_DocumentTemplateVersion_archivedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_DocumentTemplateVersion_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_DocumentTemplateVersion_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_DocumentTemplateVersion_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DocumentTemplateVersion", field.Name)
+}
+
 func (ec *executionContext) childFields_DocumentType(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -58144,6 +59746,20 @@ func (ec *executionContext) field_Mutation_approveWorkerPTO_args(ctx context.Con
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_archiveDocumentTemplateVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_assignBillingQueueBiller_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -58163,6 +59779,20 @@ func (ec *executionContext) field_Mutation_assignBillingQueueBiller_args(ctx con
 		return nil, err
 	}
 	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_assignDocumentTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.AssignDocumentTemplateInput, error) {
+			return ec.unmarshalNAssignDocumentTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignDocumentTemplateInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -58490,6 +60120,34 @@ func (ec *executionContext) field_Mutation_createDetentionPolicy_args(ctx contex
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DetentionPolicyInput, error) {
 			return ec.unmarshalNDetentionPolicyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createDocumentTemplateVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CreateDocumentTemplateVersionInput, error) {
+			return ec.unmarshalNCreateDocumentTemplateVersionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateDocumentTemplateVersionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createDocumentTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DocumentTemplateInput, error) {
+			return ec.unmarshalNDocumentTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -58851,6 +60509,34 @@ func (ec *executionContext) field_Mutation_decideAgentProposal_args(ctx context.
 }
 
 func (ec *executionContext) field_Mutation_deleteDetentionPolicy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteDocumentTemplateVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteDocumentTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
@@ -59580,6 +61266,28 @@ func (ec *executionContext) field_Mutation_postDriverSettlement_args(ctx context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_publishDocumentTemplateVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "notes",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["notes"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_recalculateDriverSettlement_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -59870,6 +61578,28 @@ func (ec *executionContext) field_Mutation_revokeWorkerPortalAccess_args(ctx con
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_rollbackDocumentTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "versionId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["versionId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "notes",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["notes"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_runReport_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -59909,6 +61639,20 @@ func (ec *executionContext) field_Mutation_sendDetentionNotice_args(ctx context.
 		return nil, err
 	}
 	args["occurrenceId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_sendTestMessageTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SendTestMessageTemplateInput, error) {
+			return ec.unmarshalNSendTestMessageTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSendTestMessageTemplateInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -60018,6 +61762,20 @@ func (ec *executionContext) field_Mutation_transferShipmentToBilling_args(ctx co
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.ShipmentTransferToBillingInput, error) {
 			return ec.unmarshalNShipmentTransferToBillingInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentTransferToBillingInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unassignDocumentTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.UnassignDocumentTemplateInput, error) {
+			return ec.unmarshalNUnassignDocumentTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUnassignDocumentTemplateInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -60176,6 +61934,50 @@ func (ec *executionContext) field_Mutation_updateDetentionPolicy_args(ctx contex
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DetentionPolicyInput, error) {
 			return ec.unmarshalNDetentionPolicyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateDocumentTemplateVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DocumentTemplateVersionInput, error) {
+			return ec.unmarshalNDocumentTemplateVersionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVersionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateDocumentTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DocumentTemplateInput, error) {
+			return ec.unmarshalNDocumentTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -61188,6 +62990,20 @@ func (ec *executionContext) field_Query_customFieldDefinitions_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_customerDocumentTemplateAssignments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "customerId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["customerId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_customerPayment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -61505,6 +63321,62 @@ func (ec *executionContext) field_Query_documentPacketRule_args(ctx context.Cont
 }
 
 func (ec *executionContext) field_Query_documentPacketRules_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_documentTemplateAssignments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_documentTemplateVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_documentTemplate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_documentTemplates_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
@@ -63124,6 +64996,34 @@ func (ec *executionContext) field_Query_recurringShipments_args(ctx context.Cont
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
 			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_renderDocumentTemplatePreview_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DocumentTemplatePreviewInput, error) {
+			return ec.unmarshalNDocumentTemplatePreviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplatePreviewInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_renderMessageTemplatePreview_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DocumentTemplatePreviewInput, error) {
+			return ec.unmarshalNDocumentTemplatePreviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplatePreviewInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -91444,6 +93344,2372 @@ func (ec *executionContext) _DocumentPacketRuleEdge_cursor(ctx context.Context, 
 }
 func (ec *executionContext) fieldContext_DocumentPacketRuleEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("DocumentPacketRuleEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_id(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_organizationId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_kind(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.DocumentTemplate().Kind(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_code(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_code(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_name(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_description(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_isOrgDefault(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_isOrgDefault(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsOrgDefault, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_isOrgDefault(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_activeVersionId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_activeVersionId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ActiveVersionID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_activeVersionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_version(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_createdAt(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_updatedAt(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_createdById(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_createdById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_createdById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_updatedById(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_updatedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_updatedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplate_activeVersion(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_activeVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ActiveVersion, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+			return ec.marshalODocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_activeVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateVersion(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplate_versions(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_versions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Versions, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+			return ec.marshalODocumentTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersionᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_versions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateVersion(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplate_assignments(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplate_assignments(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Assignments, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+			return ec.marshalODocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplate_assignments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateAssignment(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_id(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_organizationId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_kind(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.DocumentTemplateAssignment().Kind(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignment", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_templateId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_templateId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TemplateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_templateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_customerId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_customerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_customerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_assignedById(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_assignedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssignedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_assignedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_createdAt(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_updatedAt(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_template(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_template(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Template, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
+			return ec.marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_template(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateAssignment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplate(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateAssignment_customer(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignment_customer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Customer, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
+			return ec.marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignment_customer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateAssignment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Customer(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateAssignmentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateAssignmentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignmentConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DocumentTemplateAssignmentEdge) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateAssignmentEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateAssignmentEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignmentConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateAssignmentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateAssignmentEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateAssignmentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateAssignmentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignmentConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignmentConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateAssignmentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateAssignmentConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateAssignmentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignmentConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignmentConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignmentConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateAssignmentEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateAssignmentEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignmentEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignmentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateAssignmentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateAssignment(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateAssignmentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateAssignmentEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateAssignmentEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateAssignmentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateAssignmentEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DocumentTemplateEdge) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateDiagnostic_severity(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateDiagnostic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateDiagnostic_severity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Severity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateDiagnostic_severity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateDiagnostic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateDiagnostic_code(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateDiagnostic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateDiagnostic_code(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateDiagnostic_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateDiagnostic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateDiagnostic_field(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateDiagnostic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateDiagnostic_field(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Field, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateDiagnostic_field(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateDiagnostic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateDiagnostic_message(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateDiagnostic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateDiagnostic_message(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateDiagnostic_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateDiagnostic", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateDiagnostic_line(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateDiagnostic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateDiagnostic_line(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Line, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateDiagnostic_line(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateDiagnostic", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateDiagnostic_column(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateDiagnostic) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateDiagnostic_column(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Column, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateDiagnostic_column(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateDiagnostic", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
+			return ec.marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplate(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateKind_kind(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateKind", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateKind_displayName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_displayName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisplayName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_displayName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateKind", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateKind_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateKind", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateKind_category(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_category(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Category, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateKind", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateKind_channels(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_channels(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Channels, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []documenttemplate.Channel) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateChannel2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannelᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_channels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateKind", field, false, false, errors.New("field of type DocumentTemplateChannel does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateKind_paged(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_paged(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Paged, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_paged(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateKind", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateKind_customerScoped(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_customerScoped(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerScoped, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_customerScoped(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateKind", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateKind_variables(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_variables(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Variables, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DocumentTemplateVariable) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateVariable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVariableᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_variables(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateKind",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateVariable(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateKind_requiredPaths(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_requiredPaths(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RequiredPaths, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_requiredPaths(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateKind", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateKind_template(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_template(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Template, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
+			return ec.marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_template(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateKind",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplate(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateKind_source(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateKind) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateKind_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v documenttemplate.TemplateSource) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐTemplateSource(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateKind_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateKind", field, false, false, errors.New("field of type DocumentTemplateSource does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplatePreview_subject(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplatePreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplatePreview_subject(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Subject, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplatePreview_subject(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplatePreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplatePreview_html(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplatePreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplatePreview_html(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HTML, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplatePreview_html(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplatePreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplatePreview_text(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplatePreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplatePreview_text(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Text, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplatePreview_text(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplatePreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplatePreview_source(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplatePreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplatePreview_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v documenttemplate.TemplateSource) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐTemplateSource(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplatePreview_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplatePreview", field, false, false, errors.New("field of type DocumentTemplateSource does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplatePreview_contentHash(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplatePreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplatePreview_contentHash(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ContentHash, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplatePreview_contentHash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplatePreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplatePreview_diagnostics(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplatePreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplatePreview_diagnostics(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Diagnostics, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DocumentTemplateDiagnostic) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateDiagnostic2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateDiagnosticᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplatePreview_diagnostics(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplatePreview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateDiagnostic(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplatePreview_pdfUrl(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplatePreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplatePreview_pdfUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PDFURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplatePreview_pdfUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplatePreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVariable_path(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateVariable) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVariable_path(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Path, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVariable_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVariable", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVariable_type(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateVariable) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVariable_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v documenttemplate.VariableType) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐVariableType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVariable_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVariable", field, false, false, errors.New("field of type DocumentTemplateVariableType does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVariable_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateVariable) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVariable_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVariable_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVariable", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVariable_required(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateVariable) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVariable_required(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Required, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVariable_required(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVariable", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVariable_fields(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DocumentTemplateVariable) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVariable_fields(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Fields, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DocumentTemplateVariable) graphql.Marshaler {
+			return ec.marshalODocumentTemplateVariable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVariableᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVariable_fields(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentTemplateVariable",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateVariable(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_id(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_organizationId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_templateId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_templateId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TemplateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_templateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_sourceVersionId(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_sourceVersionId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceVersionID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_sourceVersionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_versionNumber(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_versionNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.VersionNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_versionNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_status(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v documenttemplate.VersionStatus) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐVersionStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type DocumentTemplateVersionStatus does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_subject(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_subject(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Subject, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_subject(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_bodyHtml(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_bodyHtml(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BodyHTML, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_bodyHtml(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_bodyText(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_bodyText(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BodyText, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_bodyText(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_cssContent(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_cssContent(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CSSContent, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_cssContent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_headerHtml(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_headerHtml(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HeaderHTML, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_headerHtml(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_footerHtml(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_footerHtml(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FooterHTML, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_footerHtml(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_pageSize(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_pageSize(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageSize, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v documenttemplate.PageSize) graphql.Marshaler {
+			return ec.marshalODocumentTemplatePageSize2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐPageSize(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_pageSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type DocumentTemplatePageSize does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_orientation(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_orientation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Orientation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v documenttemplate.Orientation) graphql.Marshaler {
+			return ec.marshalODocumentTemplateOrientation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐOrientation(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_orientation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type DocumentTemplateOrientation does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_marginTop(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_marginTop(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MarginTop, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_marginTop(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_marginBottom(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_marginBottom(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MarginBottom, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_marginBottom(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_marginLeft(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_marginLeft(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MarginLeft, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_marginLeft(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_marginRight(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_marginRight(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MarginRight, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_marginRight(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_contentHash(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_contentHash(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ContentHash, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_contentHash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_starterHash(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_starterHash(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StarterHash, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_starterHash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_starterDrifted(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_starterDrifted(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.DocumentTemplateVersion().StarterDrifted(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_starterDrifted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, true, true, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_publishNotes(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_publishNotes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PublishNotes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_publishNotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_publishedById(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_publishedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PublishedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_publishedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_publishedAt(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_publishedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PublishedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_publishedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_archivedById(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_archivedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ArchivedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_archivedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_archivedAt(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_archivedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ArchivedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_archivedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_version(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_createdAt(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DocumentTemplateVersion_updatedAt(ctx context.Context, field graphql.CollectedField, obj *documenttemplate.DocumentTemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DocumentTemplateVersion_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DocumentTemplateVersion_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DocumentTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _DocumentType_id(ctx context.Context, field graphql.CollectedField, obj *documenttype.DocumentType) (ret graphql.Marshaler) {
@@ -120129,6 +124395,534 @@ func (ec *executionContext) fieldContext_Mutation_dispatchPlanAutoAssign(ctx con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createDocumentTemplate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createDocumentTemplate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.DocumentTemplateInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
+			return ec.marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createDocumentTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplate(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createDocumentTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateDocumentTemplate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateDocumentTemplate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateDocumentTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTemplateInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
+			return ec.marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateDocumentTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplate(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateDocumentTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteDocumentTemplate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_deleteDocumentTemplate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteDocumentTemplate(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_deleteDocumentTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteDocumentTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createDocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createDocumentTemplateVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateDocumentTemplateVersion(ctx, fc.Args["input"].(gqlmodel.CreateDocumentTemplateVersionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createDocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateVersion(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createDocumentTemplateVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateDocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateDocumentTemplateVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateDocumentTemplateVersion(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.DocumentTemplateVersionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateDocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateVersion(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateDocumentTemplateVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_publishDocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_publishDocumentTemplateVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().PublishDocumentTemplateVersion(ctx, fc.Args["id"].(string), fc.Args["notes"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_publishDocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateVersion(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_publishDocumentTemplateVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_archiveDocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_archiveDocumentTemplateVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ArchiveDocumentTemplateVersion(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_archiveDocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateVersion(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_archiveDocumentTemplateVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteDocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_deleteDocumentTemplateVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteDocumentTemplateVersion(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_deleteDocumentTemplateVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteDocumentTemplateVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_rollbackDocumentTemplate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_rollbackDocumentTemplate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RollbackDocumentTemplate(ctx, fc.Args["versionId"].(string), fc.Args["notes"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_rollbackDocumentTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateVersion(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_rollbackDocumentTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_assignDocumentTemplate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_assignDocumentTemplate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().AssignDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.AssignDocumentTemplateInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_assignDocumentTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateAssignment(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_assignDocumentTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unassignDocumentTemplate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_unassignDocumentTemplate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UnassignDocumentTemplate(ctx, fc.Args["input"].(gqlmodel.UnassignDocumentTemplateInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_unassignDocumentTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_unassignDocumentTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_sendTestMessageTemplate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_sendTestMessageTemplate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SendTestMessageTemplate(ctx, fc.Args["input"].(gqlmodel.SendTestMessageTemplateInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_sendTestMessageTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_sendTestMessageTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_inviteWorkerToPortal(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -136511,6 +141305,346 @@ func (ec *executionContext) fieldContext_Query_documentPacketRule(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_documentPacketRule_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_documentTemplates(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_documentTemplates(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DocumentTemplates(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DocumentTemplateConnection) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_documentTemplates(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_documentTemplates_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_documentTemplate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_documentTemplate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DocumentTemplate(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
+			return ec.marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_documentTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplate(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_documentTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_documentTemplateVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_documentTemplateVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DocumentTemplateVersion(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+			return ec.marshalODocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_documentTemplateVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateVersion(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_documentTemplateVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_documentTemplateKinds(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_documentTemplateKinds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().DocumentTemplateKinds(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DocumentTemplateKind) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateKind2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateKindᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_documentTemplateKinds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateKind(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_documentTemplateAssignments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_documentTemplateAssignments(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().DocumentTemplateAssignments(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DocumentTemplateAssignmentConnection) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateAssignmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateAssignmentConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_documentTemplateAssignments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateAssignmentConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_documentTemplateAssignments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_customerDocumentTemplateAssignments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_customerDocumentTemplateAssignments(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().CustomerDocumentTemplateAssignments(ctx, fc.Args["customerId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+			return ec.marshalNDocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_customerDocumentTemplateAssignments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplateAssignment(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_customerDocumentTemplateAssignments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_renderDocumentTemplatePreview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_renderDocumentTemplatePreview(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RenderDocumentTemplatePreview(ctx, fc.Args["input"].(gqlmodel.DocumentTemplatePreviewInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DocumentTemplatePreview) graphql.Marshaler {
+			return ec.marshalNDocumentTemplatePreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplatePreview(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_renderDocumentTemplatePreview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplatePreview(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_renderDocumentTemplatePreview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_renderMessageTemplatePreview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_renderMessageTemplatePreview(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RenderMessageTemplatePreview(ctx, fc.Args["input"].(gqlmodel.DocumentTemplatePreviewInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DocumentTemplatePreview) graphql.Marshaler {
+			return ec.marshalNDocumentTemplatePreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplatePreview(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_renderMessageTemplatePreview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DocumentTemplatePreview(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_renderMessageTemplatePreview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -184882,6 +190016,43 @@ func (ec *executionContext) unmarshalInputApplyCustomerPaymentInput(ctx context.
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAssignDocumentTemplateInput(ctx context.Context, obj any) (gqlmodel.AssignDocumentTemplateInput, error) {
+	var it gqlmodel.AssignDocumentTemplateInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"templateId", "customerId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "templateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("templateId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TemplateID = data
+		case "customerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerID = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAssignPayProfileInput(ctx context.Context, obj any) (gqlmodel.AssignPayProfileInput, error) {
 	var it gqlmodel.AssignPayProfileInput
 	if obj == nil {
@@ -185424,6 +190595,50 @@ func (ec *executionContext) unmarshalInputCostingControlInput(ctx context.Contex
 				return it, err
 			}
 			it.Version = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateDocumentTemplateVersionInput(ctx context.Context, obj any) (gqlmodel.CreateDocumentTemplateVersionInput, error) {
+	var it gqlmodel.CreateDocumentTemplateVersionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"templateId", "sourceVersionId", "content"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "templateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("templateId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TemplateID = data
+		case "sourceVersionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceVersionId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SourceVersionID = data
+		case "content":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			data, err := ec.unmarshalODocumentTemplateVersionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVersionInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Content = data
 		}
 	}
 	return it, nil
@@ -187328,6 +192543,222 @@ func (ec *executionContext) unmarshalInputDisputeAdjustmentInput(ctx context.Con
 				return it, err
 			}
 			it.PayCodeID = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDocumentTemplateInput(ctx context.Context, obj any) (gqlmodel.DocumentTemplateInput, error) {
+	var it gqlmodel.DocumentTemplateInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"kind", "code", "name", "description", "isOrgDefault"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "code":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("code"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Code = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "isOrgDefault":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isOrgDefault"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsOrgDefault = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDocumentTemplatePreviewInput(ctx context.Context, obj any) (gqlmodel.DocumentTemplatePreviewInput, error) {
+	var it gqlmodel.DocumentTemplatePreviewInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"kind", "versionId", "content", "includePdf"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "versionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionID = data
+		case "content":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			data, err := ec.unmarshalODocumentTemplateVersionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVersionInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Content = data
+		case "includePdf":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includePdf"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncludePDF = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDocumentTemplateVersionInput(ctx context.Context, obj any) (gqlmodel.DocumentTemplateVersionInput, error) {
+	var it gqlmodel.DocumentTemplateVersionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"subject", "bodyHtml", "bodyText", "cssContent", "headerHtml", "footerHtml", "pageSize", "orientation", "marginTop", "marginBottom", "marginLeft", "marginRight"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "subject":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subject"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Subject = data
+		case "bodyHtml":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bodyHtml"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BodyHTML = data
+		case "bodyText":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bodyText"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BodyText = data
+		case "cssContent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cssContent"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CSSContent = data
+		case "headerHtml":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("headerHtml"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HeaderHTML = data
+		case "footerHtml":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("footerHtml"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FooterHTML = data
+		case "pageSize":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageSize"))
+			data, err := ec.unmarshalODocumentTemplatePageSize2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐPageSize(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PageSize = data
+		case "orientation":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orientation"))
+			data, err := ec.unmarshalODocumentTemplateOrientation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐOrientation(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Orientation = data
+		case "marginTop":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("marginTop"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarginTop = data
+		case "marginBottom":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("marginBottom"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarginBottom = data
+		case "marginLeft":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("marginLeft"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarginLeft = data
+		case "marginRight":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("marginRight"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarginRight = data
 		}
 	}
 	return it, nil
@@ -191646,6 +197077,57 @@ func (ec *executionContext) unmarshalInputSelectOptionsInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSendTestMessageTemplateInput(ctx context.Context, obj any) (gqlmodel.SendTestMessageTemplateInput, error) {
+	var it gqlmodel.SendTestMessageTemplateInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"kind", "versionId", "content", "toEmail"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "versionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("versionId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VersionID = data
+		case "content":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			data, err := ec.unmarshalODocumentTemplateVersionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVersionInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Content = data
+		case "toEmail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toEmail"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ToEmail = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputShipmentAdditionalChargeInput(ctx context.Context, obj any) (gqlmodel.ShipmentAdditionalChargeInput, error) {
 	var it gqlmodel.ShipmentAdditionalChargeInput
 	if obj == nil {
@@ -194520,6 +200002,43 @@ func (ec *executionContext) unmarshalInputTrailerPatchInput(ctx context.Context,
 				return it, err
 			}
 			it.CustomFields = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUnassignDocumentTemplateInput(ctx context.Context, obj any) (gqlmodel.UnassignDocumentTemplateInput, error) {
+	var it gqlmodel.UnassignDocumentTemplateInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"kind", "customerId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "customerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("customerId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CustomerID = data
 		}
 	}
 	return it, nil
@@ -206245,6 +211764,953 @@ func (ec *executionContext) _DocumentPacketRuleEdge(ctx context.Context, sel ast
 	return out
 }
 
+var documentTemplateImplementors = []string{"DocumentTemplate"}
+
+func (ec *executionContext) _DocumentTemplate(ctx context.Context, sel ast.SelectionSet, obj *documenttemplate.DocumentTemplate) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplateImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplate")
+		case "id":
+			out.Values[i] = ec._DocumentTemplate_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._DocumentTemplate_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organizationId":
+			out.Values[i] = ec._DocumentTemplate_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "kind":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentTemplate_kind(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "code":
+			out.Values[i] = ec._DocumentTemplate_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._DocumentTemplate_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._DocumentTemplate_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "isOrgDefault":
+			out.Values[i] = ec._DocumentTemplate_isOrgDefault(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "activeVersionId":
+			out.Values[i] = ec._DocumentTemplate_activeVersionId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._DocumentTemplate_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._DocumentTemplate_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._DocumentTemplate_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdById":
+			out.Values[i] = ec._DocumentTemplate_createdById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedById":
+			out.Values[i] = ec._DocumentTemplate_updatedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "activeVersion":
+			out.Values[i] = ec._DocumentTemplate_activeVersion(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "versions":
+			out.Values[i] = ec._DocumentTemplate_versions(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "assignments":
+			out.Values[i] = ec._DocumentTemplate_assignments(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var documentTemplateAssignmentImplementors = []string{"DocumentTemplateAssignment"}
+
+func (ec *executionContext) _DocumentTemplateAssignment(ctx context.Context, sel ast.SelectionSet, obj *documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplateAssignmentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplateAssignment")
+		case "id":
+			out.Values[i] = ec._DocumentTemplateAssignment_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._DocumentTemplateAssignment_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organizationId":
+			out.Values[i] = ec._DocumentTemplateAssignment_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "kind":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentTemplateAssignment_kind(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "templateId":
+			out.Values[i] = ec._DocumentTemplateAssignment_templateId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "customerId":
+			out.Values[i] = ec._DocumentTemplateAssignment_customerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "assignedById":
+			out.Values[i] = ec._DocumentTemplateAssignment_assignedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._DocumentTemplateAssignment_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._DocumentTemplateAssignment_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "template":
+			out.Values[i] = ec._DocumentTemplateAssignment_template(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "customer":
+			out.Values[i] = ec._DocumentTemplateAssignment_customer(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var documentTemplateAssignmentConnectionImplementors = []string{"DocumentTemplateAssignmentConnection"}
+
+func (ec *executionContext) _DocumentTemplateAssignmentConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DocumentTemplateAssignmentConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplateAssignmentConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplateAssignmentConnection")
+		case "edges":
+			out.Values[i] = ec._DocumentTemplateAssignmentConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._DocumentTemplateAssignmentConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._DocumentTemplateAssignmentConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var documentTemplateAssignmentEdgeImplementors = []string{"DocumentTemplateAssignmentEdge"}
+
+func (ec *executionContext) _DocumentTemplateAssignmentEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DocumentTemplateAssignmentEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplateAssignmentEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplateAssignmentEdge")
+		case "node":
+			out.Values[i] = ec._DocumentTemplateAssignmentEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._DocumentTemplateAssignmentEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var documentTemplateConnectionImplementors = []string{"DocumentTemplateConnection"}
+
+func (ec *executionContext) _DocumentTemplateConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DocumentTemplateConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplateConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplateConnection")
+		case "edges":
+			out.Values[i] = ec._DocumentTemplateConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._DocumentTemplateConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._DocumentTemplateConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var documentTemplateDiagnosticImplementors = []string{"DocumentTemplateDiagnostic"}
+
+func (ec *executionContext) _DocumentTemplateDiagnostic(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DocumentTemplateDiagnostic) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplateDiagnosticImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplateDiagnostic")
+		case "severity":
+			out.Values[i] = ec._DocumentTemplateDiagnostic_severity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "code":
+			out.Values[i] = ec._DocumentTemplateDiagnostic_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "field":
+			out.Values[i] = ec._DocumentTemplateDiagnostic_field(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._DocumentTemplateDiagnostic_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "line":
+			out.Values[i] = ec._DocumentTemplateDiagnostic_line(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "column":
+			out.Values[i] = ec._DocumentTemplateDiagnostic_column(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var documentTemplateEdgeImplementors = []string{"DocumentTemplateEdge"}
+
+func (ec *executionContext) _DocumentTemplateEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DocumentTemplateEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplateEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplateEdge")
+		case "node":
+			out.Values[i] = ec._DocumentTemplateEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._DocumentTemplateEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var documentTemplateKindImplementors = []string{"DocumentTemplateKind"}
+
+func (ec *executionContext) _DocumentTemplateKind(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DocumentTemplateKind) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplateKindImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplateKind")
+		case "kind":
+			out.Values[i] = ec._DocumentTemplateKind_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "displayName":
+			out.Values[i] = ec._DocumentTemplateKind_displayName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._DocumentTemplateKind_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "category":
+			out.Values[i] = ec._DocumentTemplateKind_category(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "channels":
+			out.Values[i] = ec._DocumentTemplateKind_channels(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "paged":
+			out.Values[i] = ec._DocumentTemplateKind_paged(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "customerScoped":
+			out.Values[i] = ec._DocumentTemplateKind_customerScoped(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "variables":
+			out.Values[i] = ec._DocumentTemplateKind_variables(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "requiredPaths":
+			out.Values[i] = ec._DocumentTemplateKind_requiredPaths(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "template":
+			out.Values[i] = ec._DocumentTemplateKind_template(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._DocumentTemplateKind_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var documentTemplatePreviewImplementors = []string{"DocumentTemplatePreview"}
+
+func (ec *executionContext) _DocumentTemplatePreview(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DocumentTemplatePreview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplatePreviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplatePreview")
+		case "subject":
+			out.Values[i] = ec._DocumentTemplatePreview_subject(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "html":
+			out.Values[i] = ec._DocumentTemplatePreview_html(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "text":
+			out.Values[i] = ec._DocumentTemplatePreview_text(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._DocumentTemplatePreview_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "contentHash":
+			out.Values[i] = ec._DocumentTemplatePreview_contentHash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "diagnostics":
+			out.Values[i] = ec._DocumentTemplatePreview_diagnostics(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pdfUrl":
+			out.Values[i] = ec._DocumentTemplatePreview_pdfUrl(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var documentTemplateVariableImplementors = []string{"DocumentTemplateVariable"}
+
+func (ec *executionContext) _DocumentTemplateVariable(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DocumentTemplateVariable) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplateVariableImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplateVariable")
+		case "path":
+			out.Values[i] = ec._DocumentTemplateVariable_path(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._DocumentTemplateVariable_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._DocumentTemplateVariable_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "required":
+			out.Values[i] = ec._DocumentTemplateVariable_required(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fields":
+			out.Values[i] = ec._DocumentTemplateVariable_fields(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var documentTemplateVersionImplementors = []string{"DocumentTemplateVersion"}
+
+func (ec *executionContext) _DocumentTemplateVersion(ctx context.Context, sel ast.SelectionSet, obj *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentTemplateVersionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentTemplateVersion")
+		case "id":
+			out.Values[i] = ec._DocumentTemplateVersion_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._DocumentTemplateVersion_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organizationId":
+			out.Values[i] = ec._DocumentTemplateVersion_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "templateId":
+			out.Values[i] = ec._DocumentTemplateVersion_templateId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sourceVersionId":
+			out.Values[i] = ec._DocumentTemplateVersion_sourceVersionId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "versionNumber":
+			out.Values[i] = ec._DocumentTemplateVersion_versionNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "status":
+			out.Values[i] = ec._DocumentTemplateVersion_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "subject":
+			out.Values[i] = ec._DocumentTemplateVersion_subject(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "bodyHtml":
+			out.Values[i] = ec._DocumentTemplateVersion_bodyHtml(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "bodyText":
+			out.Values[i] = ec._DocumentTemplateVersion_bodyText(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "cssContent":
+			out.Values[i] = ec._DocumentTemplateVersion_cssContent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "headerHtml":
+			out.Values[i] = ec._DocumentTemplateVersion_headerHtml(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "footerHtml":
+			out.Values[i] = ec._DocumentTemplateVersion_footerHtml(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageSize":
+			out.Values[i] = ec._DocumentTemplateVersion_pageSize(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "orientation":
+			out.Values[i] = ec._DocumentTemplateVersion_orientation(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "marginTop":
+			out.Values[i] = ec._DocumentTemplateVersion_marginTop(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "marginBottom":
+			out.Values[i] = ec._DocumentTemplateVersion_marginBottom(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "marginLeft":
+			out.Values[i] = ec._DocumentTemplateVersion_marginLeft(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "marginRight":
+			out.Values[i] = ec._DocumentTemplateVersion_marginRight(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "contentHash":
+			out.Values[i] = ec._DocumentTemplateVersion_contentHash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "starterHash":
+			out.Values[i] = ec._DocumentTemplateVersion_starterHash(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "starterDrifted":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentTemplateVersion_starterDrifted(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "publishNotes":
+			out.Values[i] = ec._DocumentTemplateVersion_publishNotes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "publishedById":
+			out.Values[i] = ec._DocumentTemplateVersion_publishedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "publishedAt":
+			out.Values[i] = ec._DocumentTemplateVersion_publishedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "archivedById":
+			out.Values[i] = ec._DocumentTemplateVersion_archivedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "archivedAt":
+			out.Values[i] = ec._DocumentTemplateVersion_archivedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._DocumentTemplateVersion_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._DocumentTemplateVersion_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._DocumentTemplateVersion_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var documentTypeImplementors = []string{"DocumentType"}
 
 func (ec *executionContext) _DocumentType(ctx context.Context, sel ast.SelectionSet, obj *documenttype.DocumentType) graphql.Marshaler {
@@ -217387,6 +223853,90 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createDocumentTemplate":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createDocumentTemplate(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateDocumentTemplate":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateDocumentTemplate(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteDocumentTemplate":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteDocumentTemplate(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createDocumentTemplateVersion":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createDocumentTemplateVersion(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateDocumentTemplateVersion":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateDocumentTemplateVersion(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "publishDocumentTemplateVersion":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_publishDocumentTemplateVersion(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "archiveDocumentTemplateVersion":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_archiveDocumentTemplateVersion(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteDocumentTemplateVersion":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteDocumentTemplateVersion(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rollbackDocumentTemplate":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_rollbackDocumentTemplate(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assignDocumentTemplate":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_assignDocumentTemplate(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unassignDocumentTemplate":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unassignDocumentTemplate(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sendTestMessageTemplate":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_sendTestMessageTemplate(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "inviteWorkerToPortal":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_inviteWorkerToPortal(ctx, field)
@@ -222942,6 +229492,182 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_documentPacketRule(ctx, field)
 				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "documentTemplates":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_documentTemplates(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "documentTemplate":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_documentTemplate(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "documentTemplateVersion":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_documentTemplateVersion(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "documentTemplateKinds":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_documentTemplateKinds(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "documentTemplateAssignments":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_documentTemplateAssignments(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "customerDocumentTemplateAssignments":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_customerDocumentTemplateAssignments(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "renderDocumentTemplatePreview":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_renderDocumentTemplatePreview(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "renderMessageTemplatePreview":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_renderMessageTemplatePreview(ctx, field)
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -244006,6 +250732,11 @@ func (ec *executionContext) unmarshalNApplyCustomerPaymentInput2githubᚗcomᚋe
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNAssignDocumentTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignDocumentTemplateInput(ctx context.Context, v any) (gqlmodel.AssignDocumentTemplateInput, error) {
+	res, err := ec.unmarshalInputAssignDocumentTemplateInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNAssignPayProfileInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignPayProfileInput(ctx context.Context, v any) (gqlmodel.AssignPayProfileInput, error) {
 	res, err := ec.unmarshalInputAssignPayProfileInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -244523,6 +251254,11 @@ func (ec *executionContext) marshalNCostingControl2ᚖgithubᚗcomᚋemoss08ᚋt
 
 func (ec *executionContext) unmarshalNCostingControlInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCostingControlInput(ctx context.Context, v any) (gqlmodel.CostingControlInput, error) {
 	res, err := ec.unmarshalInputCostingControlInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateDocumentTemplateVersionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateDocumentTemplateVersionInput(ctx context.Context, v any) (gqlmodel.CreateDocumentTemplateVersionInput, error) {
+	res, err := ec.unmarshalInputCreateDocumentTemplateVersionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -246230,6 +252966,349 @@ func (ec *executionContext) marshalNDocumentPacketRuleEdge2ᚖgithubᚗcomᚋemo
 		return graphql.Null
 	}
 	return ec._DocumentPacketRuleEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplate2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx context.Context, sel ast.SelectionSet, v documenttemplate.DocumentTemplate) graphql.Marshaler {
+	return ec._DocumentTemplate(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx context.Context, sel ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplate(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateAssignment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment(ctx context.Context, sel ast.SelectionSet, v documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+	return ec._DocumentTemplateAssignment(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ(ctx context.Context, sel ast.SelectionSet, v []*documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment(ctx context.Context, sel ast.SelectionSet, v *documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplateAssignment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateAssignmentConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateAssignmentConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DocumentTemplateAssignmentConnection) graphql.Marshaler {
+	return ec._DocumentTemplateAssignmentConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateAssignmentConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateAssignmentConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DocumentTemplateAssignmentConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplateAssignmentConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateAssignmentEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateAssignmentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DocumentTemplateAssignmentEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentTemplateAssignmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateAssignmentEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocumentTemplateAssignmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateAssignmentEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DocumentTemplateAssignmentEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplateAssignmentEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDocumentTemplateChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannel(ctx context.Context, v any) (documenttemplate.Channel, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := documenttemplate.Channel(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannel(ctx context.Context, sel ast.SelectionSet, v documenttemplate.Channel) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNDocumentTemplateChannel2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannelᚄ(ctx context.Context, v any) ([]documenttemplate.Channel, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]documenttemplate.Channel, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNDocumentTemplateChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannel(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNDocumentTemplateChannel2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannelᚄ(ctx context.Context, sel ast.SelectionSet, v []documenttemplate.Channel) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentTemplateChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐChannel(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocumentTemplateConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DocumentTemplateConnection) graphql.Marshaler {
+	return ec._DocumentTemplateConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DocumentTemplateConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplateConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateDiagnostic2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateDiagnosticᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DocumentTemplateDiagnostic) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentTemplateDiagnostic2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateDiagnostic(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocumentTemplateDiagnostic2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateDiagnostic(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DocumentTemplateDiagnostic) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplateDiagnostic(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DocumentTemplateEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentTemplateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocumentTemplateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DocumentTemplateEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplateEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDocumentTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateInput(ctx context.Context, v any) (gqlmodel.DocumentTemplateInput, error) {
+	res, err := ec.unmarshalInputDocumentTemplateInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateKind2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateKindᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DocumentTemplateKind) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentTemplateKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateKind(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocumentTemplateKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateKind(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DocumentTemplateKind) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplateKind(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplatePreview2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplatePreview(ctx context.Context, sel ast.SelectionSet, v gqlmodel.DocumentTemplatePreview) graphql.Marshaler {
+	return ec._DocumentTemplatePreview(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplatePreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplatePreview(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DocumentTemplatePreview) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplatePreview(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDocumentTemplatePreviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplatePreviewInput(ctx context.Context, v any) (gqlmodel.DocumentTemplatePreviewInput, error) {
+	res, err := ec.unmarshalInputDocumentTemplatePreviewInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDocumentTemplateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐTemplateSource(ctx context.Context, v any) (documenttemplate.TemplateSource, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := documenttemplate.TemplateSource(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐTemplateSource(ctx context.Context, sel ast.SelectionSet, v documenttemplate.TemplateSource) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNDocumentTemplateVariable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVariableᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DocumentTemplateVariable) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentTemplateVariable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVariable(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocumentTemplateVariable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVariable(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DocumentTemplateVariable) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplateVariable(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐVariableType(ctx context.Context, v any) (documenttemplate.VariableType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := documenttemplate.VariableType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateVariableType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐVariableType(ctx context.Context, sel ast.SelectionSet, v documenttemplate.VariableType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNDocumentTemplateVersion2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx context.Context, sel ast.SelectionSet, v documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+	return ec._DocumentTemplateVersion(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx context.Context, sel ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentTemplateVersion(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDocumentTemplateVersionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVersionInput(ctx context.Context, v any) (gqlmodel.DocumentTemplateVersionInput, error) {
+	res, err := ec.unmarshalInputDocumentTemplateVersionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDocumentTemplateVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐVersionStatus(ctx context.Context, v any) (documenttemplate.VersionStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := documenttemplate.VersionStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentTemplateVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐVersionStatus(ctx context.Context, sel ast.SelectionSet, v documenttemplate.VersionStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttypeᚐDocumentType(ctx context.Context, sel ast.SelectionSet, v *documenttype.DocumentType) graphql.Marshaler {
@@ -252023,6 +259102,11 @@ func (ec *executionContext) unmarshalNSelectOptionsInput2githubᚗcomᚋemoss08�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNSendTestMessageTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSendTestMessageTemplateInput(ctx context.Context, v any) (gqlmodel.SendTestMessageTemplateInput, error) {
+	res, err := ec.unmarshalInputSendTestMessageTemplateInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNServiceFailure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋservicefailureᚐServiceFailure(ctx context.Context, sel ast.SelectionSet, v *servicefailure.ServiceFailure) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -254440,6 +261524,11 @@ func (ec *executionContext) unmarshalNTrailerPatchInput2githubᚗcomᚋemoss08�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNUnassignDocumentTemplateInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUnassignDocumentTemplateInput(ctx context.Context, v any) (gqlmodel.UnassignDocumentTemplateInput, error) {
+	res, err := ec.unmarshalInputUnassignDocumentTemplateInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNUnsettledWorkerSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐUnsettledWorkerSummaryᚄ(ctx context.Context, sel ast.SelectionSet, v []*repositories.UnsettledWorkerSummary) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -255705,6 +262794,149 @@ func (ec *executionContext) marshalODocumentPacketRule2ᚖgithubᚗcomᚋemoss08
 		return graphql.Null
 	}
 	return ec._DocumentPacketRule(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalODocumentTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplate(ctx context.Context, sel ast.SelectionSet, v *documenttemplate.DocumentTemplate) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DocumentTemplate(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalODocumentTemplateAssignment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignmentᚄ(ctx context.Context, sel ast.SelectionSet, v []*documenttemplate.DocumentTemplateAssignment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentTemplateAssignment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateAssignment(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalODocumentTemplateOrientation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐOrientation(ctx context.Context, v any) (documenttemplate.Orientation, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := documenttemplate.Orientation(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODocumentTemplateOrientation2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐOrientation(ctx context.Context, sel ast.SelectionSet, v documenttemplate.Orientation) graphql.Marshaler {
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func (ec *executionContext) unmarshalODocumentTemplateOrientation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐOrientation(ctx context.Context, v any) (*documenttemplate.Orientation, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := documenttemplate.Orientation(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODocumentTemplateOrientation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐOrientation(ctx context.Context, sel ast.SelectionSet, v *documenttemplate.Orientation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalODocumentTemplatePageSize2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐPageSize(ctx context.Context, v any) (documenttemplate.PageSize, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := documenttemplate.PageSize(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODocumentTemplatePageSize2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐPageSize(ctx context.Context, sel ast.SelectionSet, v documenttemplate.PageSize) graphql.Marshaler {
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func (ec *executionContext) unmarshalODocumentTemplatePageSize2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐPageSize(ctx context.Context, v any) (*documenttemplate.PageSize, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := documenttemplate.PageSize(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODocumentTemplatePageSize2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐPageSize(ctx context.Context, sel ast.SelectionSet, v *documenttemplate.PageSize) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) marshalODocumentTemplateVariable2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVariableᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DocumentTemplateVariable) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentTemplateVariable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVariable(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalODocumentTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersionᚄ(ctx context.Context, sel ast.SelectionSet, v []*documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalODocumentTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttemplateᚐDocumentTemplateVersion(ctx context.Context, sel ast.SelectionSet, v *documenttemplate.DocumentTemplateVersion) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DocumentTemplateVersion(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalODocumentTemplateVersionInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDocumentTemplateVersionInput(ctx context.Context, v any) (*gqlmodel.DocumentTemplateVersionInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDocumentTemplateVersionInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalODocumentType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttypeᚐDocumentTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []*documenttype.DocumentType) graphql.Marshaler {

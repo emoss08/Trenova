@@ -441,6 +441,33 @@ models:
   DocumentPacketRule:
     model:
       - github.com/emoss08/trenova/internal/core/domain/documentpacketrule.DocumentPacketRule
+  DocumentTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttemplate.DocumentTemplate
+  DocumentTemplateVersion:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttemplate.DocumentTemplateVersion
+  DocumentTemplateAssignment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttemplate.DocumentTemplateAssignment
+  DocumentTemplateVersionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttemplate.VersionStatus
+  DocumentTemplatePageSize:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttemplate.PageSize
+  DocumentTemplateOrientation:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttemplate.Orientation
+  DocumentTemplateChannel:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttemplate.Channel
+  DocumentTemplateVariableType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttemplate.VariableType
+  DocumentTemplateSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/documenttemplate.TemplateSource
   AccountCategory:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accounttype.Category

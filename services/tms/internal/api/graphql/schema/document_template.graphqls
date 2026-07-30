@@ -1,0 +1,343 @@
+enum DocumentTemplateVersionStatus {
+  Draft
+  Active
+  Archived
+}
+
+enum DocumentTemplatePageSize {
+  Letter
+  A4
+  Legal
+}
+
+enum DocumentTemplateOrientation {
+  Portrait
+  Landscape
+}
+
+enum DocumentTemplateChannel {
+  PDF
+  EmailHTML
+  EmailText
+  Subject
+  NotificationTitle
+  NotificationBody
+}
+
+enum DocumentTemplateVariableType {
+  String
+  Money
+  Date
+  DateTime
+  Int
+  Decimal
+  Bool
+  Object
+  Collection
+  StringList
+}
+
+"""
+Which tier of the resolution chain produced a template: a per-customer
+assignment, the organization default, or the built-in that ships with the
+system.
+"""
+enum DocumentTemplateSource {
+  Assigned
+  OrgDefault
+  BuiltIn
+}
+
+type DocumentTemplate {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  kind: String!
+  code: String!
+  name: String!
+  description: String!
+  isOrgDefault: Boolean!
+  activeVersionId: ID
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  createdById: ID
+  updatedById: ID
+
+  activeVersion: DocumentTemplateVersion
+  versions: [DocumentTemplateVersion!]
+  assignments: [DocumentTemplateAssignment!]
+}
+
+type DocumentTemplateVersion {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  templateId: ID!
+  sourceVersionId: ID
+  versionNumber: Int!
+  status: DocumentTemplateVersionStatus!
+
+  subject: String!
+  bodyHtml: String!
+  bodyText: String!
+  cssContent: String!
+  headerHtml: String!
+  footerHtml: String!
+
+  pageSize: DocumentTemplatePageSize
+  orientation: DocumentTemplateOrientation
+  marginTop: Float
+  marginBottom: Float
+  marginLeft: Float
+  marginRight: Float
+
+  contentHash: String!
+  starterHash: String!
+  """
+  True when the built-in this version was copied from has since changed, so the
+  editor can offer to show what moved instead of leaving the copy silently
+  behind the shipped default.
+  """
+  starterDrifted: Boolean!
+
+  publishNotes: String!
+  publishedById: ID
+  publishedAt: Int
+  archivedById: ID
+  archivedAt: Int
+
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type DocumentTemplateAssignment {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  kind: String!
+  templateId: ID!
+  customerId: ID!
+  assignedById: ID
+  createdAt: Int!
+  updatedAt: Int!
+
+  template: DocumentTemplate
+  customer: Customer
+}
+
+"""
+One variable an author may reference, as the editor's autocomplete and reference
+panel present it.
+"""
+type DocumentTemplateVariable {
+  path: String!
+  type: DocumentTemplateVariableType!
+  """
+  What the value means in business terms. The editor shows it verbatim, which is
+  why the catalog carries prose rather than a type name.
+  """
+  description: String!
+  """
+  A published version must still reference this path. These are the fields whose
+  absence makes a document legally deficient rather than merely ugly.
+  """
+  required: Boolean!
+  """
+  The element shape, for Object and Collection variables.
+  """
+  fields: [DocumentTemplateVariable!]
+}
+
+"""
+A registered template kind. The catalog is driven by the Go registry, not by
+rows, so it is the same for every organization and fixed in cardinality.
+"""
+type DocumentTemplateKind {
+  kind: String!
+  displayName: String!
+  description: String!
+  category: String!
+  channels: [DocumentTemplateChannel!]!
+  paged: Boolean!
+  customerScoped: Boolean!
+  variables: [DocumentTemplateVariable!]!
+  requiredPaths: [String!]!
+
+  """
+  The template governing this kind for the organization right now, absent when
+  the built-in is still in effect.
+  """
+  template: DocumentTemplate
+  source: DocumentTemplateSource!
+}
+
+type DocumentTemplateEdge {
+  node: DocumentTemplate!
+  cursor: String!
+}
+
+type DocumentTemplateConnection {
+  edges: [DocumentTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type DocumentTemplateAssignmentEdge {
+  node: DocumentTemplateAssignment!
+  cursor: String!
+}
+
+type DocumentTemplateAssignmentConnection {
+  edges: [DocumentTemplateAssignmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+One finding from parsing or rendering a template. Severity is advisory in a
+preview and blocking at publish.
+"""
+type DocumentTemplateDiagnostic {
+  severity: String!
+  code: String!
+  field: String!
+  message: String!
+  line: Int!
+  column: Int!
+}
+
+type DocumentTemplatePreview {
+  subject: String!
+  """
+  Rendered HTML as a *string*, never served as text/html on this origin. The
+  client renders it inside a sandboxed iframe; handing it back as a document
+  would let an organization's template run against the app origin.
+  """
+  html: String!
+  text: String!
+  source: DocumentTemplateSource!
+  contentHash: String!
+  diagnostics: [DocumentTemplateDiagnostic!]!
+  """
+  Where to fetch the printed PDF. The bytes stay off GraphQL: base64 in a JSON
+  envelope inflates by a third and cannot stream.
+  """
+  pdfUrl: String
+}
+
+input DocumentTemplateInput {
+  kind: String!
+  code: String!
+  name: String!
+  description: String
+  isOrgDefault: Boolean
+}
+
+input DocumentTemplateVersionInput {
+  subject: String
+  bodyHtml: String
+  bodyText: String
+  cssContent: String
+  headerHtml: String
+  footerHtml: String
+  pageSize: DocumentTemplatePageSize
+  orientation: DocumentTemplateOrientation
+  marginTop: Float
+  marginBottom: Float
+  marginLeft: Float
+  marginRight: Float
+}
+
+input CreateDocumentTemplateVersionInput {
+  templateId: ID!
+  """
+  Copy content from an existing version. This is how both "edit a copy of what
+  is live" and rollback are expressed — history is never edited in place.
+  """
+  sourceVersionId: ID
+  content: DocumentTemplateVersionInput
+}
+
+"""
+Preview unsaved editor content, a stored version, or the built-in.
+
+Content wins over versionId, because the editor previews what is on screen and
+that has by definition not been saved yet.
+"""
+input DocumentTemplatePreviewInput {
+  kind: String!
+  versionId: ID
+  content: DocumentTemplateVersionInput
+  includePdf: Boolean
+}
+
+input AssignDocumentTemplateInput {
+  templateId: ID!
+  customerId: ID!
+}
+
+input UnassignDocumentTemplateInput {
+  kind: String!
+  customerId: ID!
+}
+
+input SendTestMessageTemplateInput {
+  kind: String!
+  versionId: ID
+  content: DocumentTemplateVersionInput
+  toEmail: String!
+}
+
+extend type Query {
+  documentTemplates(input: DataTableConnectionInput!): DocumentTemplateConnection!
+  documentTemplate(id: ID!): DocumentTemplate
+  documentTemplateVersion(id: ID!): DocumentTemplateVersion
+
+  """
+  The registry catalog that powers the admin variable picker and the kind list.
+  """
+  documentTemplateKinds: [DocumentTemplateKind!]!
+
+  documentTemplateAssignments(
+    input: DataTableConnectionInput!
+  ): DocumentTemplateAssignmentConnection!
+  customerDocumentTemplateAssignments(customerId: ID!): [DocumentTemplateAssignment!]!
+
+  """
+  Preview is a query because it mutates nothing — which also lets the editor
+  cache renders by content hash and make undo an instant cache hit.
+  """
+  renderDocumentTemplatePreview(input: DocumentTemplatePreviewInput!): DocumentTemplatePreview!
+  renderMessageTemplatePreview(input: DocumentTemplatePreviewInput!): DocumentTemplatePreview!
+}
+
+extend type Mutation {
+  createDocumentTemplate(input: DocumentTemplateInput!): DocumentTemplate!
+  updateDocumentTemplate(id: ID!, input: DocumentTemplateInput!): DocumentTemplate!
+  deleteDocumentTemplate(id: ID!): Boolean!
+
+  createDocumentTemplateVersion(
+    input: CreateDocumentTemplateVersionInput!
+  ): DocumentTemplateVersion!
+  updateDocumentTemplateVersion(
+    id: ID!
+    input: DocumentTemplateVersionInput!
+  ): DocumentTemplateVersion!
+  publishDocumentTemplateVersion(id: ID!, notes: String): DocumentTemplateVersion!
+  archiveDocumentTemplateVersion(id: ID!): DocumentTemplateVersion!
+  deleteDocumentTemplateVersion(id: ID!): Boolean!
+
+  """
+  Rollback creates a new draft from the target and publishes it rather than
+  reactivating history, so a generated document never names a version that was
+  live at two different times under two different approvals.
+  """
+  rollbackDocumentTemplate(versionId: ID!, notes: String): DocumentTemplateVersion!
+
+  assignDocumentTemplate(input: AssignDocumentTemplateInput!): DocumentTemplateAssignment!
+  unassignDocumentTemplate(input: UnassignDocumentTemplateInput!): Boolean!
+
+  sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
+}

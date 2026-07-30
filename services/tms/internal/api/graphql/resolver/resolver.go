@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/documentpacketruleservice"
+	"github.com/emoss08/trenova/internal/core/services/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
@@ -130,6 +131,7 @@ type Params struct {
 	DispatchAutoAssignService    services.DispatchAutoAssignService
 	AssignmentService            services.AssignmentService
 	DocumentPacketRuleService    *documentpacketruleservice.Service
+	DocumentTemplateService      *documenttemplateservice.Service
 	DistanceOverrideService      *distanceoverrideservice.Service
 	DistanceProfileService       *distanceprofileservice.Service
 	StoredMileageService         *storedmileageservice.Service
@@ -229,6 +231,7 @@ type Resolver struct {
 	dispatchAutoAssignService    services.DispatchAutoAssignService
 	assignmentService            services.AssignmentService
 	documentPacketRuleService    *documentpacketruleservice.Service
+	documentTemplateService      *documenttemplateservice.Service
 	distanceOverrideService      *distanceoverrideservice.Service
 	distanceProfileService       *distanceprofileservice.Service
 	storedMileageService         *storedmileageservice.Service
@@ -329,6 +332,7 @@ func New(p Params) *Resolver {
 		dispatchAutoAssignService:    p.DispatchAutoAssignService,
 		assignmentService:            p.AssignmentService,
 		documentPacketRuleService:    p.DocumentPacketRuleService,
+		documentTemplateService:      p.DocumentTemplateService,
 		distanceOverrideService:      p.DistanceOverrideService,
 		distanceProfileService:       p.DistanceProfileService,
 		storedMileageService:         p.StoredMileageService,
