@@ -66,7 +66,10 @@ function normalizeSelectOptionConnection(
     pageInfo: {
       mode: "offset",
       hasNextPage: connection.pageInfo.hasNextPage,
-      endCursor: connection.pageInfo.endCursor,
+      // The response schema accepts null but not undefined, so this only held because
+      // endCursor is in the selection set. Coalescing here means dropping the field from
+      // the query is a missing cursor rather than a parse failure at the call site.
+      endCursor: connection.pageInfo.endCursor ?? null,
       totalCount: count,
     },
   };

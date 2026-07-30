@@ -5,23 +5,45 @@ import type React from "react";
 import { RootErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { ThemeProvider } from "@trenova/shared/components/theme-provider";
 import { Toaster } from "@trenova/shared/components/ui/toaster";
-// import { ApiRequestError } from "@trenova/shared/lib/api";
+import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/shared/lib/graphql";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { retryDelay, shouldRetry } from "@/lib/query-retry";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // retry: (failureCount, error) => {
-      //   if (error instanceof ApiRequestError && error.isAuthenticationError()) {
-      //     return false;
-      //   }
-      //   return failureCount < 3;
-      // },
-      retry: false,
+      retry: shouldRetry,
+      retryDelay,
       refetchOnWindowFocus: false,
       staleTime: 0,
       gcTime: 10 * 60 * 1000, // 10 minutes
     },
   },
+});
+
+// The transport cannot reach the router or the auth store, so the expiry path is wired
+// here instead. clearAuth performs the same teardown protectedLoader's 401 branch does;
+// the reload is what a loader's redirect() would have done had one been running.
+setSessionExpiryHandler(() => {
+  const { isAuthenticated } = useAuthStore.getState();
+  if (!isAuthenticated) {
+    return;
+  }
+
+  useAuthStore.getState().clearAuth();
+
+  if (window.location.pathname !== "/login") {
+    window.location.assign("/login");
+  }
+});
+
+setPartialErrorReporter((errors, { operationName }) => {
+  for (const error of errors) {
+    console.warn(
+      `[graphql] ${operationName ?? "operation"} returned partial data: ${error.message}`,
+      { code: error.code, path: error.path, traceId: error.traceId },
+    );
+  }
 });
 
 export function normalizeSearchParams(search: URLSearchParams) {
