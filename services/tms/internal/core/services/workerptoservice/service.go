@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -391,20 +392,15 @@ func (s *Service) notifyDriverPTO(
 	if s.driverNotify == nil || pto == nil {
 		return
 	}
-	title := "Time off denied"
-	message := "Your time-off request was not approved. Check Dash or talk to your manager."
-	if approved {
-		title = "Time off approved"
-		message = "Your time-off request was approved. Enjoy!"
-	}
 	s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
 		TenantInfo: tenantInfo,
 		WorkerID:   pto.WorkerID,
 		EventType:  "dash.pto_reviewed",
 		Priority:   notification.PriorityHigh,
-		Title:      title,
-		Message:    message,
-		Link:       "/dash/profile",
+		Context: documenttemplate.DriverNotificationContext{
+			Approved: approved,
+		},
+		Link: "/dash/profile",
 		RelatedEntities: map[string]any{
 			"ptoId": pto.ID.String(),
 		},

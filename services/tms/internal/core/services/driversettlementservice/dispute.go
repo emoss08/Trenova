@@ -3,6 +3,7 @@ package driversettlementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -318,20 +319,16 @@ func (s *Service) ResolveDispute(
 		ctx,
 		updated, &previous, actor.UserID, permission.OpApprove, comment)
 	if s.driverNotify != nil {
-		title := "Your pay dispute was denied"
-		message := "Dispatch reviewed your dispute and the original settlement stands. See the note in Dash."
-		if req.Approve {
-			title = "Your pay dispute was resolved"
-			message = "Dispatch resolved your dispute in your favor. See the details in Dash."
-		}
 		s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
 			TenantInfo: req.TenantInfo,
 			WorkerID:   updated.WorkerID,
 			EventType:  "dash.dispute_resolved",
 			Priority:   notification.PriorityHigh,
-			Title:      title,
-			Message:    message,
-			Link:       "/dash/money",
+			Context: documenttemplate.SettlementNotificationContext{
+				Approved: req.Approve,
+				Reason:   updated.ResolutionNote,
+			},
+			Link: "/dash/money",
 			RelatedEntities: map[string]any{
 				"disputeId": updated.ID.String(),
 			},

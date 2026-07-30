@@ -50,6 +50,17 @@ func reflectPaths(t reflect.Type, prefix string, depth int, out *[]string) {
 			if !field.IsExported() {
 				continue
 			}
+
+			// An embedded struct contributes its fields at this level, because that
+			// is how a template resolves them: {{ .FirstName }} finds a promoted
+			// field, and {{ .NotificationRecipient.FirstName }} is not what a
+			// notification family's catalog should be asking an administrator to
+			// type. Flattening here keeps the bijection honest for shared blocks.
+			if field.Anonymous && field.Type.Kind() == reflect.Struct {
+				reflectPaths(field.Type, prefix, depth+1, out)
+				continue
+			}
+
 			path := field.Name
 			if prefix != "" {
 				path = prefix + "." + field.Name
@@ -196,9 +207,18 @@ func TestRequiredPathsAreDeclared(t *testing.T) {
 			declared := registry.Paths(def.Kind)
 			required := registry.RequiredPaths(def.Kind)
 
-			assert.NotEmpty(t, required,
-				"%s declares no required paths; a customer-facing template with no "+
-					"mandatory field can be published empty", def.Kind)
+			// Notifications are exempt, and the exemption is a consequence of
+			// sharing one catalog across a family: no single field is present for
+			// every event in a family, so a required field would force a
+			// credential name into a load-assignment message. What the check
+			// protects against for a document — publishing something empty — is
+			// covered for a notification by the version gate, which refuses a
+			// version with no content in any channel.
+			if def.Category != notificationCategory {
+				assert.NotEmpty(t, required,
+					"%s declares no required paths; a customer-facing template with no "+
+						"mandatory field can be published empty", def.Kind)
+			}
 
 			for _, path := range required {
 				assert.Contains(t, declared, path)

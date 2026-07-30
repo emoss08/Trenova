@@ -1,0 +1,1 @@
+{{ if .AlertMessage }}{{ .AlertMessage }}{{ else }}Check your hours in Dash before your next stop.{{ end }}

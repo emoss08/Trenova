@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -83,10 +84,13 @@ func (s *Service) notifyCriticalHOSTransitions(
 			state.DriveRemainingMs < lowDriveThresholdMs &&
 			(prev == nil || prev.DriveRemainingMs >= lowDriveThresholdMs) {
 			s.sendHOSAlert(ctx, tenantInfo, state.WorkerID, hosAlert{
-				Kind:          "low-drive-time",
-				Title:         "Driver low on drive time",
-				Priority:      notification.PriorityHigh,
-				Message:       fmt.Sprintf("%s has less than 1 hour of drive time remaining.", name),
+				Kind:     "low-drive-time",
+				Title:    "Driver low on drive time",
+				Priority: notification.PriorityHigh,
+				Message: fmt.Sprintf(
+					"%s has less than 1 hour of drive time remaining.",
+					name,
+				),
 				DriverTitle:   "Less than 1 hour of drive time",
 				DriverMessage: "You have less than 1 hour of drive time left. Plan your next stop now.",
 			})
@@ -194,9 +198,13 @@ func (s *Service) notifyDriverOfHOSAlert(
 		WorkerID:   workerID,
 		EventType:  "dash.hos_alert",
 		Priority:   alert.Priority,
-		Title:      alert.DriverTitle,
-		Message:    alert.DriverMessage,
-		Link:       "/dash/hos",
+		// The rule composed this wording from the driver's own logs, so the
+		// template wraps it rather than replacing it.
+		Context: documenttemplate.DriverNotificationContext{
+			AlertTitle:   alert.DriverTitle,
+			AlertMessage: alert.DriverMessage,
+		},
+		Link: "/dash/hos",
 		RelatedEntities: map[string]any{
 			"workerId": workerID.String(),
 		},

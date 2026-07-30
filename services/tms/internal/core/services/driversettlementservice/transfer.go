@@ -3,6 +3,7 @@ package driversettlementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -67,9 +68,10 @@ func (s *Service) HoldPayEvent(
 			WorkerID:   updated.WorkerID,
 			EventType:  "dash.pay_held",
 			Priority:   notification.PriorityHigh,
-			Title:      "Pay on hold",
-			Message:    "Pay for one of your loads was placed on hold: " + reason,
-			Link:       "/dash",
+			Context: documenttemplate.SettlementNotificationContext{
+				Reason: reason,
+			},
+			Link: "/dash",
 			RelatedEntities: map[string]any{
 				"payEventId": updated.ID.String(),
 			},

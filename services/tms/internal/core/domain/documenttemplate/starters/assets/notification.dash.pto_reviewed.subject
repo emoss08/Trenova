@@ -1,0 +1,1 @@
+Time off {{ if .Approved }}approved{{ else }}denied{{ end }}

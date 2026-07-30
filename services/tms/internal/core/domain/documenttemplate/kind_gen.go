@@ -45,6 +45,35 @@ const (
 	// KindAgentRequestMissingDocsEmail wraps agent-written prose in the
 	// organization's own letterhead and signature.
 	KindAgentRequestMissingDocsEmail Kind = "agent.request_missing_docs.email"
+
+	// Notifications.
+	//
+	// The key is "notification." plus the exact event type already stored in
+	// notifications.event_type, so the registry and the column cannot drift. The
+	// events themselves are named by the services that emit them; do not rename
+	// one here without renaming it there.
+
+	// KindNotificationLoadAssigned tells a driver a load is on their schedule.
+	KindNotificationLoadAssigned Kind = "notification.dash.load_assigned"
+	// KindNotificationLoadUnassigned tells a driver a load was removed.
+	KindNotificationLoadUnassigned Kind = "notification.dash.load_unassigned"
+	// KindNotificationPTOReviewed answers a time-off request.
+	KindNotificationPTOReviewed Kind = "notification.dash.pto_reviewed"
+	// KindNotificationCredentialExpiring warns about a lapsing credential.
+	KindNotificationCredentialExpiring Kind = "notification.dash.credential_expiring"
+	// KindNotificationHOSAlert wraps an hours-of-service warning.
+	KindNotificationHOSAlert Kind = "notification.dash.hos_alert"
+
+	// KindNotificationSettlementPosted announces an issued settlement statement.
+	KindNotificationSettlementPosted Kind = "notification.dash.settlement_posted"
+	// KindNotificationSettlementPaid announces a paid settlement.
+	KindNotificationSettlementPaid Kind = "notification.dash.settlement_paid"
+	// KindNotificationPayHeld tells a driver pay was held, and why.
+	KindNotificationPayHeld Kind = "notification.dash.pay_held"
+	// KindNotificationExpenseReviewed answers a submitted expense.
+	KindNotificationExpenseReviewed Kind = "notification.dash.expense_reviewed"
+	// KindNotificationDisputeResolved reports the outcome of a pay dispute.
+	KindNotificationDisputeResolved Kind = "notification.dash.dispute_resolved"
 )
 
 func (k Kind) String() string { return string(k) }
@@ -61,5 +90,15 @@ func AllKinds() []Kind {
 		KindReportDeliveryEmail,
 		KindDriverPortalInvitationEmail,
 		KindAgentRequestMissingDocsEmail,
+		KindNotificationLoadAssigned,
+		KindNotificationLoadUnassigned,
+		KindNotificationPTOReviewed,
+		KindNotificationCredentialExpiring,
+		KindNotificationHOSAlert,
+		KindNotificationSettlementPosted,
+		KindNotificationSettlementPaid,
+		KindNotificationPayHeld,
+		KindNotificationExpenseReviewed,
+		KindNotificationDisputeResolved,
 	}
 }

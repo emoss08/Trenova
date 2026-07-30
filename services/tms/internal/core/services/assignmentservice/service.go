@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
@@ -122,8 +123,7 @@ func (s *service) notifyAssignedWorkers(
 			WorkerID:   workerID,
 			EventType:  "dash.load_assigned",
 			Priority:   notification.PriorityHigh,
-			Title:      "New load assigned",
-			Message:    "You've been assigned a load. Open Dash to see the stops and details.",
+			Context:    documenttemplate.DriverNotificationContext{},
 			Link:       link,
 			RelatedEntities: map[string]any{
 				"assignmentId": assignment.ID.String(),
@@ -150,8 +150,7 @@ func (s *service) notifyUnassignedWorkers(
 			WorkerID:   workerID,
 			EventType:  "dash.load_unassigned",
 			Priority:   notification.PriorityMedium,
-			Title:      "Load removed",
-			Message:    "A load was taken off your schedule. Check Dash for your current loads.",
+			Context:    documenttemplate.DriverNotificationContext{},
 			Link:       "/dash/loads",
 		})
 	}

@@ -1,0 +1,1 @@
+Pay for one of your loads was placed on hold{{ if .Reason }}: {{ .Reason }}{{ else }}. Talk to dispatch for the details{{ end }}.

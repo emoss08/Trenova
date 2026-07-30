@@ -141,6 +141,7 @@ func (r *Registry) registerAll() {
 	r.registerReportingKinds()
 	r.registerPortalKinds()
 	r.registerAgentKinds()
+	r.registerNotificationKinds()
 }
 
 // Register adds a kind, refusing a duplicate or an incoherent definition.

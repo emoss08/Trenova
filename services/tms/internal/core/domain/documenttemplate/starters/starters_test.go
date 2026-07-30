@@ -1,6 +1,7 @@
 package starters
 
 import (
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -327,14 +328,19 @@ func TestNoOrphanedAssets(t *testing.T) {
 	expected := make([]string, 0, len(names))
 	for _, def := range registry.All() {
 		stem := def.StarterKey()
-		expected = append(expected, stem+extHTML)
+		if def.HasChannel(documenttemplate.ChannelPDF) ||
+			def.HasChannel(documenttemplate.ChannelEmailHTML) {
+			expected = append(expected, stem+extHTML)
+		}
 		if def.HasChannel(documenttemplate.ChannelPDF) {
 			expected = append(expected, stem+extCSS)
 		}
-		if def.HasChannel(documenttemplate.ChannelEmailText) {
+		if def.HasChannel(documenttemplate.ChannelEmailText) ||
+			def.HasChannel(documenttemplate.ChannelNotificationBody) {
 			expected = append(expected, stem+extText)
 		}
-		if def.HasChannel(documenttemplate.ChannelSubject) {
+		if def.HasChannel(documenttemplate.ChannelSubject) ||
+			def.HasChannel(documenttemplate.ChannelNotificationTitle) {
 			expected = append(expected, stem+extSubject)
 		}
 	}
@@ -415,5 +421,127 @@ func TestStartersReferenceEveryRequiredPath(t *testing.T) {
 					"%s never references required path %q", starter.Kind, want)
 			}
 		})
+	}
+}
+
+// notificationOutcomes renders both branches of a decision notification.
+//
+// A notification whose wording does not change with the decision is the failure
+// that matters here: a driver told "time off approved" when it was denied acts on
+// the wrong answer, and the branch is one {{ if }} away from being dropped by an
+// administrator editing the template.
+func TestDecisionNotificationsSayWhichWayItWent(t *testing.T) {
+	engine := newEngine(t)
+	registry := documenttemplate.NewRegistry()
+
+	cases := []struct {
+		kind     documenttemplate.Kind
+		approved string
+		denied   string
+	}{
+		{documenttemplate.KindNotificationPTOReviewed, "approved", "not approved"},
+		{documenttemplate.KindNotificationExpenseReviewed, "approved", "rejected"},
+		{documenttemplate.KindNotificationDisputeResolved, "in your favor", "stands"},
+	}
+
+	for _, tc := range cases {
+		t.Run(string(tc.kind), func(t *testing.T) {
+			starter, err := For(tc.kind)
+			require.NoError(t, err)
+
+			render := func(approved bool) (title, body string) {
+				sample, sampleErr := registry.SampleContext(tc.kind)
+				require.NoError(t, sampleErr)
+				data := withApproved(t, sample, approved)
+
+				return renderChannel(t, engine, registry, starter,
+						documenttemplate.ChannelNotificationTitle, data),
+					renderChannel(t, engine, registry, starter,
+						documenttemplate.ChannelNotificationBody, data)
+			}
+
+			approvedTitle, approvedBody := render(true)
+			deniedTitle, deniedBody := render(false)
+
+			assert.NotEqual(t, approvedTitle, deniedTitle,
+				"the title must say which way the decision went")
+			assert.Contains(t, approvedBody, tc.approved)
+			assert.Contains(t, deniedBody, tc.denied)
+		})
+	}
+}
+
+// withApproved flips the Approved field on a copy of a sample context.
+func withApproved(t *testing.T, sample any, approved bool) any {
+	t.Helper()
+
+	value := reflect.ValueOf(sample)
+	clone := reflect.New(value.Type()).Elem()
+	clone.Set(value)
+
+	field := clone.FieldByName("Approved")
+	require.True(t, field.IsValid(), "the family context has no Approved field")
+	field.SetBool(approved)
+
+	return clone.Interface()
+}
+
+func renderChannel(
+	t *testing.T,
+	engine *templateengine.Engine,
+	registry *documenttemplate.Registry,
+	starter *Starter,
+	channel documenttemplate.Channel,
+	data any,
+) string {
+	t.Helper()
+
+	compiled, diags := engine.Parse(&templateengine.ParseRequest{
+		Field:        channel.Field(),
+		Kind:         string(starter.Kind),
+		Channel:      channel.Engine(),
+		Source:       starter.Channel(channel),
+		AllowedPaths: registry.Paths(starter.Kind),
+	})
+	require.False(t, diags.HasErrors(), diags.Summary())
+
+	out, err := engine.Render(t.Context(), compiled, data)
+	require.NoError(t, err)
+
+	return out
+}
+
+// Every notification kind must be keyed by the event type that reaches the hub.
+// A kind whose key does not match its event type renders nothing, and the
+// notification is dropped rather than sent unstyled.
+func TestNotificationKindsAreKeyedByEventType(t *testing.T) {
+	registry := documenttemplate.NewRegistry()
+
+	emitted := []string{
+		"dash.load_assigned",
+		"dash.load_unassigned",
+		"dash.pto_reviewed",
+		"dash.credential_expiring",
+		"dash.hos_alert",
+		"dash.settlement_posted",
+		"dash.settlement_paid",
+		"dash.pay_held",
+		"dash.expense_reviewed",
+		"dash.dispute_resolved",
+	}
+
+	for _, eventType := range emitted {
+		kind := documenttemplate.Kind("notification." + eventType)
+		_, ok := registry.Get(kind)
+		assert.True(t, ok,
+			"%s is emitted by a service but no template kind is registered for it",
+			eventType)
+
+		starter, err := For(kind)
+		require.NoError(t, err)
+		assert.NotEmpty(t, starter.Subject, "%s has no title", kind)
+		assert.NotEmpty(t, starter.BodyText, "%s has no message", kind)
+		assert.Empty(t, starter.BodyHTML,
+			"a notification renders as text; markup would show up as characters")
 	}
 }

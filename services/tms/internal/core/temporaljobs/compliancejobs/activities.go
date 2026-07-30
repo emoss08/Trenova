@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -168,6 +169,20 @@ func (a *Activities) driverRemindersEnabled(
 	return control.SendCredentialReminders, nil
 }
 
+// credentialExpiryDate renders the expiry for the driver's message.
+//
+// The worker's own timezone is not on the credential, and a date is what a driver
+// acts on rather than a clock time, so this formats the calendar date in UTC —
+// which is the day the compliance sweep itself used to decide the credential was
+// expiring.
+func credentialExpiryDate(cred *credential) string {
+	if cred.Expiry == nil {
+		return ""
+	}
+
+	return timeutils.FormatUnixDateIn(*cred.Expiry, "")
+}
+
 func (a *Activities) shouldRemindDriver(daysLeft int64) bool {
 	if daysLeft <= 0 {
 		return true
@@ -205,25 +220,17 @@ func (a *Activities) notifyDriver(
 		return false, nil
 	}
 
-	message := fmt.Sprintf(
-		"Your %s expires in %d days. Upload the renewed document in Dash to stay road-ready.",
-		cred.Name,
-		daysLeft,
-	)
-	if daysLeft <= 0 {
-		message = fmt.Sprintf(
-			"Your %s has expired. Upload the renewed document in Dash right away — you can't be dispatched until it's current.",
-			cred.Name,
-		)
-	}
 	a.driverNotify.NotifyWithCorrelation(ctx, &drivernotificationservice.DriverNotification{
 		TenantInfo: tenantInfo,
 		WorkerID:   wrk.ID,
 		EventType:  "dash.credential_expiring",
 		Priority:   notification.PriorityHigh,
-		Title:      cred.Name + " renewal needed",
-		Message:    message,
-		Link:       "/dash/profile",
+		Context: documenttemplate.DriverNotificationContext{
+			CredentialName: cred.Name,
+			ExpiresInDays:  int(daysLeft),
+			ExpiresAt:      credentialExpiryDate(&cred),
+		},
+		Link: "/dash/profile",
 	}, correlation)
 	return true, nil
 }

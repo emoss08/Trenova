@@ -1,0 +1,1 @@
+Settlement {{ .SettlementNumber }} has been issued{{ if .Amount }} for {{ .Amount }}{{ end }}. Open Dash to review it.

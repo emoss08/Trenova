@@ -111,11 +111,17 @@ func For(kind documenttemplate.Kind) (*Starter, error) {
 
 	stem := def.StarterKey()
 
-	body, err := readAsset(stem + extHTML)
-	if err != nil {
-		return nil, err
+	// Only a kind with an HTML channel has an HTML asset. An in-app notification
+	// is a title and a body of text; the client renders both into its own layout,
+	// and markup would show up as characters.
+	if def.HasChannel(documenttemplate.ChannelPDF) ||
+		def.HasChannel(documenttemplate.ChannelEmailHTML) {
+		body, bodyErr := readAsset(stem + extHTML)
+		if bodyErr != nil {
+			return nil, bodyErr
+		}
+		starter.BodyHTML = body
 	}
-	starter.BodyHTML = body
 
 	if def.HasChannel(documenttemplate.ChannelPDF) {
 		css, cssErr := readAsset(stem + extCSS)

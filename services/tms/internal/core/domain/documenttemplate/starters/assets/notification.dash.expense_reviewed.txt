@@ -1,0 +1,1 @@
+{{ if .Approved }}Your expense{{ if .Amount }} for {{ .Amount }}{{ end }} was approved and will be reimbursed on your next settlement.{{ else }}Your expense was rejected{{ if .Reason }}: {{ .Reason }}{{ else }}. Talk to dispatch for the details{{ end }}.{{ end }}

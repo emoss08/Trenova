@@ -1,0 +1,1 @@
+Expense {{ if .Approved }}approved{{ else }}rejected{{ end }}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -354,20 +356,18 @@ func (s *Service) notifyExpenseReviewed(
 	if s.driverNotify == nil {
 		return
 	}
-	title := "Expense rejected"
-	message := "Your expense was rejected: " + expense.ReviewNote
-	if approved {
-		title = "Expense approved"
-		message = "Your expense was approved and will be reimbursed on your next settlement."
-	}
 	s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
 		TenantInfo: tenantInfo,
 		WorkerID:   expense.WorkerID,
 		EventType:  "dash.expense_reviewed",
 		Priority:   notification.PriorityHigh,
-		Title:      title,
-		Message:    message,
-		Link:       "/dash/money",
+		Context: documenttemplate.SettlementNotificationContext{
+			Approved: approved,
+			Reason:   expense.ReviewNote,
+			Amount:   money.FormatMinor(expense.AmountMinor, expense.CurrencyCode),
+			Currency: expense.CurrencyCode,
+		},
+		Link: "/dash/money",
 		RelatedEntities: map[string]any{
 			"expenseId": expense.ID.String(),
 		},

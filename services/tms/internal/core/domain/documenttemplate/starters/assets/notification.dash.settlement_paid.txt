@@ -1,0 +1,1 @@
+Settlement {{ .SettlementNumber }}{{ if .Amount }} for {{ .Amount }}{{ end }} was paid{{ if .PaymentMethod }} via {{ .PaymentMethod }}{{ end }}.

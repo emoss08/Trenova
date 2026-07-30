@@ -3,6 +3,7 @@ package driversettlementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -235,9 +237,15 @@ func (s *Service) MarkPaid(
 			WorkerID:   updated.WorkerID,
 			EventType:  "dash.settlement_paid",
 			Priority:   notification.PriorityHigh,
-			Title:      "You've been paid",
-			Message:    "Settlement " + updated.SettlementNumber + " was paid via " + paymentMethod + ".",
-			Link:       "/dash/pay/" + updated.ID.String(),
+			Context: documenttemplate.SettlementNotificationContext{
+				SettlementNumber: updated.SettlementNumber,
+				PaymentMethod:    paymentMethod,
+				Amount: money.FormatMinor(
+					updated.NetPayMinor, updated.CurrencyCode,
+				),
+				Currency: updated.CurrencyCode,
+			},
+			Link: "/dash/pay/" + updated.ID.String(),
 			RelatedEntities: map[string]any{
 				"settlementId": updated.ID.String(),
 			},

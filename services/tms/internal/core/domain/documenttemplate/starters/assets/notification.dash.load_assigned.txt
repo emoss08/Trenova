@@ -1,0 +1,1 @@
+You've been assigned{{ if .ShipmentProNumber }} load {{ .ShipmentProNumber }}{{ else }} a load{{ end }}{{ if .StopCount }} with {{ .StopCount }} stops{{ end }}. Open Dash to see the stops and details.

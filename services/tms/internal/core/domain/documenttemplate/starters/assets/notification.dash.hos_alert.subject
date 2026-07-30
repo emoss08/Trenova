@@ -1,0 +1,1 @@
+{{ if .AlertTitle }}{{ .AlertTitle }}{{ else }}Hours of service alert{{ end }}

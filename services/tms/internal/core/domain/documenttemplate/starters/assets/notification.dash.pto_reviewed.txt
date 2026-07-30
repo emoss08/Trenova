@@ -1,0 +1,1 @@
+{{ if .Approved }}Your time-off request was approved. Enjoy!{{ else }}Your time-off request was not approved.{{ if .Reason }} {{ .Reason }}{{ else }} Check Dash or talk to your manager.{{ end }}{{ end }}
