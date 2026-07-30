@@ -124,13 +124,18 @@ export function useCommentMutations(shipmentId: string) {
     },
   });
 
+  // useMutation returns a new object every render; only its members are
+  // referentially stable. Depending on the object rebuilds these callbacks on
+  // every render, which defeats the memoization and re-renders every consumer.
+  const { mutate: mutateCreate } = createMutation;
+
   const createComment = useCallback(
     (input: ShipmentCommentCreateInput) => {
       const clientRef = nanoid();
       pendingInputsRef.current.set(clientRef, input);
-      createMutation.mutate({ ...input, clientRef });
+      mutateCreate({ ...input, clientRef });
     },
-    [createMutation],
+    [mutateCreate],
   );
 
   const retryComment = useCallback(
@@ -140,9 +145,9 @@ export function useCommentMutations(shipmentId: string) {
       const input = pendingInputsRef.current.get(clientRef);
       if (!input) return;
       applyCommentPatch(queryClient, shipmentId, comment.id, { pending: true, failed: false });
-      createMutation.mutate({ ...input, clientRef });
+      mutateCreate({ ...input, clientRef });
     },
-    [createMutation, queryClient, shipmentId],
+    [mutateCreate, queryClient, shipmentId],
   );
 
   const discardComment = useCallback(
