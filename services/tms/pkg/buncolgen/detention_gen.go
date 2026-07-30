@@ -282,6 +282,9 @@ var DetentionNoticeColumns = struct {
 	Recipients            Column // "recipients" → qualified: "dtn.recipients"
 	Subject               Column // "subject" → qualified: "dtn.subject"
 	Body                  Column // "body" → qualified: "dtn.body"
+	BodyHTML              Column // "body_html" → qualified: "dtn.body_html"
+	TemplateVersionID     Column // "template_version_id" → qualified: "dtn.template_version_id"
+	PDFDocumentID         Column // "pdf_document_id" → qualified: "dtn.pdf_document_id"
 	ScheduledFor          Column // "scheduled_for" → qualified: "dtn.scheduled_for"
 	SentAt                Column // "sent_at" → qualified: "dtn.sent_at"
 	DeliveredAt           Column // "delivered_at" → qualified: "dtn.delivered_at"
@@ -310,6 +313,9 @@ var DetentionNoticeColumns = struct {
 	Recipients:            NewColumn("recipients", "dtn"),
 	Subject:               NewColumn("subject", "dtn"),
 	Body:                  NewColumn("body", "dtn"),
+	BodyHTML:              NewColumn("body_html", "dtn"),
+	TemplateVersionID:     NewColumn("template_version_id", "dtn"),
+	PDFDocumentID:         NewColumn("pdf_document_id", "dtn"),
 	ScheduledFor:          NewColumn("scheduled_for", "dtn"),
 	SentAt:                NewColumn("sent_at", "dtn"),
 	DeliveredAt:           NewColumn("delivered_at", "dtn"),
@@ -344,6 +350,9 @@ var DetentionNoticeFieldMap = map[string]string{
 	"recipients":            "recipients",
 	"subject":               "subject",
 	"body":                  "body",
+	"bodyHtml":              "body_html",
+	"templateVersionId":     "template_version_id",
+	"pdfDocumentId":         "pdf_document_id",
 	"scheduledFor":          "scheduled_for",
 	"sentAt":                "sent_at",
 	"deliveredAt":           "delivered_at",
@@ -376,6 +385,9 @@ var DetentionNoticeInsertableColumns = []string{
 	"recipients",
 	"subject",
 	"body",
+	"body_html",
+	"template_version_id",
+	"pdf_document_id",
 	"scheduled_for",
 	"sent_at",
 	"delivered_at",
@@ -455,6 +467,9 @@ var DetentionNoticeFilter = struct {
 	Recipients            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recipients" → DB: "recipients"
 	Subject               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subject" → DB: "subject"
 	Body                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "body" → DB: "body"
+	BodyHTML              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bodyHtml" → DB: "body_html"
+	TemplateVersionID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateVersionId" → DB: "template_version_id"
+	PDFDocumentID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pdfDocumentId" → DB: "pdf_document_id"
 	ScheduledFor          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scheduledFor" → DB: "scheduled_for"
 	SentAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentAt" → DB: "sent_at"
 	DeliveredAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveredAt" → DB: "delivered_at"
@@ -504,6 +519,15 @@ var DetentionNoticeFilter = struct {
 	},
 	Body: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("body", op, value)
+	},
+	BodyHTML: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("bodyHtml", op, value)
+	},
+	TemplateVersionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("templateVersionId", op, value)
+	},
+	PDFDocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pdfDocumentId", op, value)
 	},
 	ScheduledFor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("scheduledFor", op, value)

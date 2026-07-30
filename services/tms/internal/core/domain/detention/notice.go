@@ -30,22 +30,35 @@ type DetentionNotice struct {
 	Recipients            []string             `json:"recipients"            bun:"recipients,type:JSONB,nullzero"`
 	Subject               string               `json:"subject"               bun:"subject,type:VARCHAR(255),notnull"`
 	Body                  string               `json:"body"                  bun:"body,type:TEXT,notnull"`
-	ScheduledFor          int64                `json:"scheduledFor"          bun:"scheduled_for,type:BIGINT,notnull"`
-	SentAt                *int64               `json:"sentAt"                bun:"sent_at,type:BIGINT,nullzero"`
-	DeliveredAt           *int64               `json:"deliveredAt"           bun:"delivered_at,type:BIGINT,nullzero"`
-	OpenedAt              *int64               `json:"openedAt"              bun:"opened_at,type:BIGINT,nullzero"`
-	FailedAt              *int64               `json:"failedAt"              bun:"failed_at,type:BIGINT,nullzero"`
-	FailureReason         string               `json:"failureReason"         bun:"failure_reason,type:TEXT,nullzero"`
-	ProviderMessageID     string               `json:"providerMessageId"     bun:"provider_message_id,type:VARCHAR(255),nullzero"`
-	SentByID              *pulid.ID            `json:"sentById"              bun:"sent_by_id,type:VARCHAR(100),nullzero"`
-	WasAutomatic          bool                 `json:"wasAutomatic"          bun:"was_automatic,type:BOOLEAN,notnull,default:false"`
-	SatisfiesRequirement  bool                 `json:"satisfiesRequirement"  bun:"satisfies_requirement,type:BOOLEAN,notnull,default:false"`
-	QuotedFreeMinutes     int32                `json:"quotedFreeMinutes"     bun:"quoted_free_minutes,type:INTEGER,notnull,default:0"`
-	QuotedRate            decimal.NullDecimal  `json:"quotedRate"            bun:"quoted_rate,type:NUMERIC(19,4),nullzero"`
-	QuotedAmount          decimal.NullDecimal  `json:"quotedAmount"          bun:"quoted_amount,type:NUMERIC(19,4),nullzero"`
-	Version               int64                `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt             int64                `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64                `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	// BodyHTML snapshots the rendered HTML alongside the plain text.
+	//
+	// It exists because the send path used to rebuild HTML by wrapping Body in
+	// <pre> with no escaping, which turned any angle bracket in a facility or
+	// customer name into markup. Storing what was actually rendered means the
+	// sender interpolates nothing.
+	BodyHTML string `json:"bodyHtml" bun:"body_html,type:TEXT,nullzero"`
+	// TemplateVersionID names the template that produced this notice, so a
+	// disputed charge can be traced back to the exact wording that was sent.
+	TemplateVersionID *pulid.ID `json:"templateVersionId" bun:"template_version_id,type:VARCHAR(100),nullzero"`
+	// PDFDocumentID is the stored notice PDF, when the policy attaches one.
+	PDFDocumentID *pulid.ID `json:"pdfDocumentId" bun:"pdf_document_id,type:VARCHAR(100),nullzero"`
+
+	ScheduledFor         int64               `json:"scheduledFor"          bun:"scheduled_for,type:BIGINT,notnull"`
+	SentAt               *int64              `json:"sentAt"                bun:"sent_at,type:BIGINT,nullzero"`
+	DeliveredAt          *int64              `json:"deliveredAt"           bun:"delivered_at,type:BIGINT,nullzero"`
+	OpenedAt             *int64              `json:"openedAt"              bun:"opened_at,type:BIGINT,nullzero"`
+	FailedAt             *int64              `json:"failedAt"              bun:"failed_at,type:BIGINT,nullzero"`
+	FailureReason        string              `json:"failureReason"         bun:"failure_reason,type:TEXT,nullzero"`
+	ProviderMessageID    string              `json:"providerMessageId"     bun:"provider_message_id,type:VARCHAR(255),nullzero"`
+	SentByID             *pulid.ID           `json:"sentById"              bun:"sent_by_id,type:VARCHAR(100),nullzero"`
+	WasAutomatic         bool                `json:"wasAutomatic"          bun:"was_automatic,type:BOOLEAN,notnull,default:false"`
+	SatisfiesRequirement bool                `json:"satisfiesRequirement"  bun:"satisfies_requirement,type:BOOLEAN,notnull,default:false"`
+	QuotedFreeMinutes    int32               `json:"quotedFreeMinutes"     bun:"quoted_free_minutes,type:INTEGER,notnull,default:0"`
+	QuotedRate           decimal.NullDecimal `json:"quotedRate"            bun:"quoted_rate,type:NUMERIC(19,4),nullzero"`
+	QuotedAmount         decimal.NullDecimal `json:"quotedAmount"          bun:"quoted_amount,type:NUMERIC(19,4),nullzero"`
+	Version              int64               `json:"version"               bun:"version,type:BIGINT"`
+	CreatedAt            int64               `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt            int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (n *DetentionNotice) GetID() pulid.ID { return n.ID }

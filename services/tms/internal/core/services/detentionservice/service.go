@@ -33,6 +33,8 @@ type Params struct {
 	CustomerRepo      repositories.CustomerRepository
 	CommentRepo       repositories.ShipmentCommentRepository
 	EmailService      services.EmailService
+	Templates         services.DocumentTemplateResolver
+	ContextBuilder    *ContextBuilder
 	AuditService      services.AuditService
 }
 
@@ -50,6 +52,8 @@ type Service struct {
 	customerRepo      repositories.CustomerRepository
 	commentRepo       repositories.ShipmentCommentRepository
 	emailService      services.EmailService
+	templates         services.DocumentTemplateResolver
+	contextBuilder    *ContextBuilder
 	auditService      services.AuditService
 	now               func() int64
 }
@@ -69,6 +73,8 @@ func New(p Params) *Service {
 		customerRepo:      p.CustomerRepo,
 		commentRepo:       p.CommentRepo,
 		emailService:      p.EmailService,
+		templates:         p.Templates,
+		contextBuilder:    p.ContextBuilder,
 		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,
 	}
@@ -129,10 +135,13 @@ func (s *Service) SyncShipment(
 				continue
 			}
 
-			existing, err := s.occurrenceRepo.GetByStop(ctx, &repositories.GetOccurrenceByStopRequest{
-				StopID:     stop.ID,
-				TenantInfo: tenantInfo,
-			})
+			existing, err := s.occurrenceRepo.GetByStop(
+				ctx,
+				&repositories.GetOccurrenceByStopRequest{
+					StopID:     stop.ID,
+					TenantInfo: tenantInfo,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}

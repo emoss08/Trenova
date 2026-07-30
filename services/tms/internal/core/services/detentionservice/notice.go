@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html"
 	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -25,6 +27,10 @@ type NoticeContent struct {
 	Subject string
 	Text    string
 	HTML    string
+	// VersionID names the template version that produced this wording, so a
+	// disputed charge can be traced to the exact notice text that was sent. It
+	// is nil when the built-in rendered.
+	VersionID *pulid.ID
 }
 
 // BuildNoticeParams carries everything the notice cites. Every number in the
@@ -37,137 +43,82 @@ type BuildNoticeParams struct {
 	ShipmentRef   string
 	ArrivalSource detention.EvidenceSource
 	Location      *time.Location
+	CustomerName  string
+	// CustomerID lets a customer with an assigned notice template receive it.
+	CustomerID *pulid.ID
 }
 
-// BuildNotice renders a detention notice.
+// BuildNotice renders a detention notice through the organization's template.
 //
-// The notice names the arrival timestamp and where it came from, the free time
-// the contract grants, the exact moment it expires, and the rate that applies
-// after. A customer who receives that twice while the truck is on their dock
-// rarely disputes the invoice that follows.
-func BuildNotice(p BuildNoticeParams) NoticeContent {
+// The prose that used to be assembled here with a strings.Builder now lives in
+// the built-in starter, word for word, with the per-kind wording expressed as
+// {{ if eq .Kind ... }} branches. Moving it means an organization can reword its
+// own notices — and that the HTML is produced by html/template rather than by
+// wrapping plain text in <pre>, which is what previously let an angle bracket in
+// a facility name become markup.
+//
+// A render failure falls back to the built-in rather than failing the notice: a
+// detention notice that never goes out costs the charge it was evidence for.
+func (s *Service) BuildNotice(
+	ctx context.Context,
+	p *BuildNoticeParams,
+) (NoticeContent, error) {
+	if s.templates == nil || s.contextBuilder == nil {
+		return NoticeContent{}, errortypes.NewBusinessError(
+			"Detention notice rendering is not configured on this deployment",
+		)
+	}
+
 	occ := p.Occurrence
-	loc := p.Location
-	if loc == nil {
-		loc = time.UTC
+	if occ == nil {
+		return NoticeContent{}, errortypes.NewValidationError(
+			"occurrence", errortypes.ErrRequired, "Detention occurrence is required")
 	}
 
-	snap := occ.PolicySnapshot
-	facility := p.FacilityName
-	if facility == "" {
-		facility = "the facility"
+	tenantInfo := pagination.TenantInfo{
+		OrgID: occ.OrganizationID,
+		BuID:  occ.BusinessUnitID,
 	}
 
-	ref := p.ShipmentRef
-	if ref == "" {
-		ref = occ.ShipmentID.String()
+	data, err := s.contextBuilder.BuildFrom(ctx, &buildNoticeContextParams{
+		Occurrence:    occ,
+		Kind:          p.Kind,
+		FacilityName:  p.FacilityName,
+		ShipmentRef:   p.ShipmentRef,
+		CustomerName:  p.CustomerName,
+		ArrivalSource: p.ArrivalSource,
+		TenantInfo:    tenantInfo,
+		Location:      p.Location,
+	})
+	if err != nil {
+		return NoticeContent{}, err
 	}
 
-	subject := noticeSubject(p.Kind, ref, facility)
-
-	var b strings.Builder
-
-	b.WriteString(noticeOpening(p.Kind, ref, facility))
-	b.WriteString("\n\n")
-
-	if occ.ArrivedAt != nil {
-		b.WriteString(fmt.Sprintf("Arrived: %s", formatStamp(*occ.ArrivedAt, loc)))
-		if p.ArrivalSource != "" {
-			b.WriteString(fmt.Sprintf(" (%s)", p.ArrivalSource))
-		}
-		b.WriteString("\n")
+	var customerID *pulid.ID
+	if p.CustomerID != nil && !p.CustomerID.IsNil() {
+		customerID = p.CustomerID
 	}
 
-	if snap != nil {
-		b.WriteString(fmt.Sprintf("Contracted free time: %s\n",
-			formatMinutes(snap.FreeMinutes)))
-		b.WriteString(fmt.Sprintf("Free time expires: %s\n",
-			formatStamp(occ.FreeTimeExpiresAt, loc)))
-		b.WriteString(fmt.Sprintf("Detention rate after free time: %s\n",
-			noticeRateLabel(snap)))
+	rendered, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
+		TenantInfo:  tenantInfo,
+		Kind:        documenttemplate.KindDetentionNoticeEmail,
+		CustomerID:  customerID,
+		Data:        data,
+		ReferenceID: occ.ID,
+		// A notice is evidence for a charge. Losing it to a template mistake
+		// would cost more than sending the shipped default wording.
+		FallbackToBuiltIn: true,
+	})
+	if err != nil {
+		return NoticeContent{}, err
 	}
-
-	switch p.Kind {
-	case detention.NoticeKindFinal:
-		if occ.DepartedAt != nil {
-			b.WriteString(fmt.Sprintf("Departed: %s\n", formatStamp(*occ.DepartedAt, loc)))
-		}
-		b.WriteString(fmt.Sprintf("Total time on site: %s\n",
-			formatMinutes(occ.RawDwellMinutes)))
-		b.WriteString(fmt.Sprintf("Billable detention: %s\n",
-			formatMinutes(occ.RoundedMinutes)))
-		b.WriteString(fmt.Sprintf("Detention charge: %s %s\n",
-			occ.BillableAmount.StringFixed(2), occ.Currency))
-	case detention.NoticeKindUpdate:
-		b.WriteString(fmt.Sprintf("Detention accrued so far: %s (%s %s)\n",
-			formatMinutes(occ.RoundedMinutes),
-			occ.BillableAmount.StringFixed(2), occ.Currency))
-	case detention.NoticeKindWarning, detention.NoticeKindStarted:
-		if occ.RoundedMinutes > 0 {
-			b.WriteString(fmt.Sprintf("Detention accrued so far: %s (%s %s)\n",
-				formatMinutes(occ.RoundedMinutes),
-				occ.BillableAmount.StringFixed(2), occ.Currency))
-		}
-	}
-
-	b.WriteString("\n")
-	b.WriteString(noticeClosing(p.Kind))
-
-	text := b.String()
 
 	return NoticeContent{
-		Subject: subject,
-		Text:    text,
-		HTML:    "<pre style=\"font-family:inherit;white-space:pre-wrap\">" + text + "</pre>",
-	}
-}
-
-func noticeSubject(kind detention.NoticeKind, ref, facility string) string {
-	switch kind {
-	case detention.NoticeKindWarning:
-		return fmt.Sprintf("Free time expiring soon — shipment %s at %s", ref, facility)
-	case detention.NoticeKindStarted:
-		return fmt.Sprintf("Detention has started — shipment %s at %s", ref, facility)
-	case detention.NoticeKindUpdate:
-		return fmt.Sprintf("Detention update — shipment %s at %s", ref, facility)
-	case detention.NoticeKindFinal:
-		return fmt.Sprintf("Detention summary — shipment %s at %s", ref, facility)
-	default:
-		return fmt.Sprintf("Detention notice — shipment %s at %s", ref, facility)
-	}
-}
-
-func noticeOpening(kind detention.NoticeKind, ref, facility string) string {
-	switch kind {
-	case detention.NoticeKindWarning:
-		return fmt.Sprintf(
-			"Our driver on shipment %s is approaching the end of contracted free time at %s.",
-			ref, facility)
-	case detention.NoticeKindStarted:
-		return fmt.Sprintf(
-			"Contracted free time on shipment %s at %s has been exhausted and detention is now accruing.",
-			ref, facility)
-	case detention.NoticeKindUpdate:
-		return fmt.Sprintf(
-			"Our driver on shipment %s remains at %s and detention continues to accrue.",
-			ref, facility)
-	case detention.NoticeKindFinal:
-		return fmt.Sprintf(
-			"Our driver has departed %s on shipment %s. Final detention is summarized below.",
-			facility, ref)
-	default:
-		return fmt.Sprintf("Detention notice for shipment %s at %s.", ref, facility)
-	}
-}
-
-func noticeClosing(kind detention.NoticeKind) string {
-	if kind == detention.NoticeKindFinal {
-		return "This charge will appear on the invoice for this shipment. " +
-			"Reply to this message if any detail needs review."
-	}
-
-	return "Please expedite loading or unloading to avoid further charges. " +
-		"Reply to this message if any detail needs review."
+		Subject:   rendered.Subject,
+		Text:      rendered.Text,
+		HTML:      rendered.HTML,
+		VersionID: rendered.VersionID,
+	}, nil
 }
 
 func noticeRateLabel(snap *detention.PolicySnapshot) string {
@@ -214,13 +165,16 @@ func (s *Service) ScheduleNotice(
 	occ := p.Occurrence
 	loc := s.tenantLocation(ctx, occ.OrganizationID)
 
-	content := BuildNotice(BuildNoticeParams{
+	content, err := s.BuildNotice(ctx, &BuildNoticeParams{
 		Occurrence:   occ,
 		Kind:         p.Kind,
 		FacilityName: p.FacilityName,
 		ShipmentRef:  p.ShipmentRef,
 		Location:     loc,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	notice := &detention.DetentionNotice{
 		OrganizationID:        occ.OrganizationID,
@@ -232,11 +186,15 @@ func (s *Service) ScheduleNotice(
 		Recipients:            p.Recipients,
 		Subject:               content.Subject,
 		Body:                  content.Text,
-		ScheduledFor:          p.ScheduledFor,
-		SentByID:              p.SentByID,
-		WasAutomatic:          p.Automatic,
-		QuotedFreeMinutes:     occ.FreeMinutesGranted,
-		QuotedAmount:          decimal.NewNullDecimal(occ.BillableAmount),
+		// The rendered HTML is snapshotted so the send path interpolates
+		// nothing: it mails exactly what was rendered and reviewed.
+		BodyHTML:          content.HTML,
+		TemplateVersionID: content.VersionID,
+		ScheduledFor:      p.ScheduledFor,
+		SentByID:          p.SentByID,
+		WasAutomatic:      p.Automatic,
+		QuotedFreeMinutes: occ.FreeMinutesGranted,
+		QuotedAmount:      decimal.NewNullDecimal(occ.BillableAmount),
 	}
 
 	if occ.PolicySnapshot != nil {
@@ -289,7 +247,7 @@ func (s *Service) SendNotice(
 		To:             notice.Recipients,
 		Subject:        notice.Subject,
 		Text:           notice.Body,
-		HTML:           "<pre style=\"font-family:inherit;white-space:pre-wrap\">" + notice.Body + "</pre>",
+		HTML:           noticeHTML(notice),
 		OpenTracking:   true,
 		IdempotencyKey: "detention-notice-" + notice.ID.String(),
 	})
@@ -652,4 +610,27 @@ func (s *Service) appendEvidence(
 		s.l.Warn("failed to append detention evidence",
 			zap.String("occurrenceId", occurrence.ID.String()), zap.Error(err))
 	}
+}
+
+// noticeHTML returns the HTML snapshotted when the notice was built.
+//
+// It never constructs markup from Body. The previous implementation wrapped the
+// plain text in <pre> at send time, which meant any angle bracket in a facility
+// or customer name was interpolated into the email unescaped.
+func noticeHTML(notice *detention.DetentionNotice) string {
+	if strings.TrimSpace(notice.BodyHTML) != "" {
+		return notice.BodyHTML
+	}
+
+	// A notice queued before this column existed has no snapshot. Escaping the
+	// stored text is the safe reconstruction; it renders as plain text rather
+	// than as whatever the text happens to look like.
+	return "<pre style=\"font-family:inherit;white-space:pre-wrap\">" +
+		html.EscapeString(notice.Body) + "</pre>"
+}
+
+// NoticeHTMLForTest exposes the send-path HTML reconstruction so the escaping
+// guarantee can be asserted without standing up an email provider.
+func NoticeHTMLForTest(notice *detention.DetentionNotice) string {
+	return noticeHTML(notice)
 }

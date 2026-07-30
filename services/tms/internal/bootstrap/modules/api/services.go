@@ -357,6 +357,18 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		func(b *invoiceservice.ContextBuilder) services.ContextBuilder { return b },
 		fx.ResultTags(services.ContextBuilderGroup),
 	),
+	detentionservice.NewContextBuilder,
+	fx.Annotate(
+		func(b *detentionservice.ContextBuilder) services.ContextBuilder { return b },
+		fx.ResultTags(services.ContextBuilderGroup),
+	),
+	// The notice PDF renders the same figures as the email, so it shares one
+	// builder rather than growing a second source for the numbers a dispute
+	// turns on.
+	fx.Annotate(
+		detentionservice.NewPDFContextBuilder,
+		fx.ResultTags(services.ContextBuilderGroup),
+	),
 	func(s *documenttemplateservice.Service) services.DocumentTemplateResolver { return s },
 	workerptoservice.New,
 	distancecalculationservice.New,

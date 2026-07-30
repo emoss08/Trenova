@@ -1936,7 +1936,7 @@ func (s *DetentionSeed) createNotice(
 		facility = p.location.Name
 	}
 
-	content := detentionservice.BuildNotice(detentionservice.BuildNoticeParams{
+	content, err := detentionservice.RenderBuiltInNotice(ctx, &detentionservice.BuildNoticeParams{
 		Occurrence:    p.occurrence,
 		Kind:          def.kind,
 		FacilityName:  facility,
@@ -1944,6 +1944,9 @@ func (s *DetentionSeed) createNotice(
 		ArrivalSource: p.stopDef.arrivalSource,
 		Location:      p.refs.timezone,
 	})
+	if err != nil {
+		return fmt.Errorf("render detention notice: %w", err)
+	}
 
 	recipients := p.refs.recipients[p.customerCode]
 	if len(recipients) == 0 {
@@ -1962,6 +1965,7 @@ func (s *DetentionSeed) createNotice(
 		Recipients:            recipients,
 		Subject:               content.Subject,
 		Body:                  content.Text,
+		BodyHTML:              content.HTML,
 		ScheduledFor:          sentAt - 5*detentionMinute,
 		SentAt:                &sentAt,
 		WasAutomatic:          def.automatic,

@@ -31,14 +31,18 @@ func noticeOccurrence() *detention.DetentionOccurrence {
 func TestBuildNotice_WarningCitesGoverningTerms(t *testing.T) {
 	t.Parallel()
 
-	content := detentionservice.BuildNotice(detentionservice.BuildNoticeParams{
-		Occurrence:    noticeOccurrence(),
-		Kind:          detention.NoticeKindWarning,
-		FacilityName:  "Memphis DC",
-		ShipmentRef:   "SHP-1001",
-		ArrivalSource: detention.EvidenceSourceGeofence,
-		Location:      time.UTC,
-	})
+	content, err := detentionservice.RenderBuiltInNotice(
+		t.Context(),
+		&detentionservice.BuildNoticeParams{
+			Occurrence:    noticeOccurrence(),
+			Kind:          detention.NoticeKindWarning,
+			FacilityName:  "Memphis DC",
+			ShipmentRef:   "SHP-1001",
+			ArrivalSource: detention.EvidenceSourceGeofence,
+			Location:      time.UTC,
+		},
+	)
+	require.NoError(t, err)
 
 	assert.Contains(t, content.Subject, "Free time expiring soon")
 	assert.Contains(t, content.Subject, "SHP-1001")
@@ -59,19 +63,27 @@ func TestBuildNotice_FinalIncludesTheSettledNumbers(t *testing.T) {
 	occ := noticeOccurrence()
 	occ.DepartedAt = ptr(baseTime + 5*hour)
 
-	content := detentionservice.BuildNotice(detentionservice.BuildNoticeParams{
-		Occurrence:   occ,
-		Kind:         detention.NoticeKindFinal,
-		FacilityName: "Memphis DC",
-		ShipmentRef:  "SHP-1001",
-		Location:     time.UTC,
-	})
+	content, err := detentionservice.RenderBuiltInNotice(
+		t.Context(),
+		&detentionservice.BuildNoticeParams{
+			Occurrence:   occ,
+			Kind:         detention.NoticeKindFinal,
+			FacilityName: "Memphis DC",
+			ShipmentRef:  "SHP-1001",
+			Location:     time.UTC,
+		},
+	)
+	require.NoError(t, err)
 
 	assert.Contains(t, content.Subject, "Detention summary")
 	assert.Contains(t, content.Text, "Departed:")
 	assert.Contains(t, content.Text, "Total time on site: 5h")
 	assert.Contains(t, content.Text, "Billable detention: 3h")
-	assert.Contains(t, content.Text, "Detention charge: 225.00 USD")
+	// The starter formats money with the same helper the invoice uses, so a
+	// notice and the charge it becomes now read identically. The old imperative
+	// renderer emitted "225.00 USD" here while the invoice said "USD 225.00" —
+	// that inconsistency is what this replaces.
+	assert.Contains(t, content.Text, "Detention charge: USD 225.00")
 	assert.Contains(t, content.Text, "will appear on the invoice")
 }
 
@@ -82,16 +94,30 @@ func TestBuildNotice_TieredRatesAreQuotedInFull(t *testing.T) {
 	snap := *occ.PolicySnapshot
 	snap.RateSource = detention.RateSourceTiers
 	snap.Tiers = []detention.TierSnapshot{
-		{FromMinute: 0, ToMinute: ptr(int32(120)), Rate: money("75.00"), RateUnit: detention.TierRateUnitHour},
-		{FromMinute: 120, ToMinute: nil, Rate: money("100.00"), RateUnit: detention.TierRateUnitHour},
+		{
+			FromMinute: 0,
+			ToMinute:   ptr(int32(120)),
+			Rate:       money("75.00"),
+			RateUnit:   detention.TierRateUnitHour,
+		},
+		{
+			FromMinute: 120,
+			ToMinute:   nil,
+			Rate:       money("100.00"),
+			RateUnit:   detention.TierRateUnitHour,
+		},
 	}
 	occ.PolicySnapshot = &snap
 
-	content := detentionservice.BuildNotice(detentionservice.BuildNoticeParams{
-		Occurrence: occ,
-		Kind:       detention.NoticeKindStarted,
-		Location:   time.UTC,
-	})
+	content, err := detentionservice.RenderBuiltInNotice(
+		t.Context(),
+		&detentionservice.BuildNoticeParams{
+			Occurrence: occ,
+			Kind:       detention.NoticeKindStarted,
+			Location:   time.UTC,
+		},
+	)
+	require.NoError(t, err)
 
 	assert.Contains(t, content.Text, "75.00/hr")
 	assert.Contains(t, content.Text, "100.00/hr")
@@ -104,10 +130,14 @@ func TestBuildNotice_FallsBackWhenContextIsMissing(t *testing.T) {
 
 	occ := noticeOccurrence()
 
-	content := detentionservice.BuildNotice(detentionservice.BuildNoticeParams{
-		Occurrence: occ,
-		Kind:       detention.NoticeKindUpdate,
-	})
+	content, err := detentionservice.RenderBuiltInNotice(
+		t.Context(),
+		&detentionservice.BuildNoticeParams{
+			Occurrence: occ,
+			Kind:       detention.NoticeKindUpdate,
+		},
+	)
+	require.NoError(t, err)
 
 	assert.Contains(t, content.Text, "the facility")
 	assert.Contains(t, content.Subject, occ.ShipmentID.String())
@@ -126,13 +156,17 @@ func TestBuildNotice_KindsProduceDistinctOpenings(t *testing.T) {
 	seen := map[string]bool{}
 
 	for _, kind := range kinds {
-		content := detentionservice.BuildNotice(detentionservice.BuildNoticeParams{
-			Occurrence:   noticeOccurrence(),
-			Kind:         kind,
-			FacilityName: "Memphis DC",
-			ShipmentRef:  "SHP-1001",
-			Location:     time.UTC,
-		})
+		content, err := detentionservice.RenderBuiltInNotice(
+			t.Context(),
+			&detentionservice.BuildNoticeParams{
+				Occurrence:   noticeOccurrence(),
+				Kind:         kind,
+				FacilityName: "Memphis DC",
+				ShipmentRef:  "SHP-1001",
+				Location:     time.UTC,
+			},
+		)
+		require.NoError(t, err)
 
 		require.NotEmpty(t, content.Text)
 		assert.False(t, seen[content.Subject], "subject for %s duplicates another kind", kind)
@@ -146,16 +180,24 @@ func TestBuildNotice_RespectsTimezone(t *testing.T) {
 	loc, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
 
-	central := detentionservice.BuildNotice(detentionservice.BuildNoticeParams{
-		Occurrence: noticeOccurrence(),
-		Kind:       detention.NoticeKindWarning,
-		Location:   loc,
-	})
-	utc := detentionservice.BuildNotice(detentionservice.BuildNoticeParams{
-		Occurrence: noticeOccurrence(),
-		Kind:       detention.NoticeKindWarning,
-		Location:   time.UTC,
-	})
+	central, err := detentionservice.RenderBuiltInNotice(
+		t.Context(),
+		&detentionservice.BuildNoticeParams{
+			Occurrence: noticeOccurrence(),
+			Kind:       detention.NoticeKindWarning,
+			Location:   loc,
+		},
+	)
+	require.NoError(t, err)
+	utc, err := detentionservice.RenderBuiltInNotice(
+		t.Context(),
+		&detentionservice.BuildNoticeParams{
+			Occurrence: noticeOccurrence(),
+			Kind:       detention.NoticeKindWarning,
+			Location:   time.UTC,
+		},
+	)
+	require.NoError(t, err)
 
 	assert.NotEqual(t, central.Text, utc.Text,
 		"timestamps must render in the carrier's local time")
