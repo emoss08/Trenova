@@ -651,14 +651,59 @@ Every hardcoded string **moves into** a built-in starter; nothing is duplicated.
 returning no row yields `Source: BuiltIn` from the embedded asset, so there is exactly one
 render path and no "if no template then hardcoded string" branch anywhere.
 
-| Site | Kind | Note |
+**All six email senders are done.** What each one turned out to need:
+
+| Site | Kind | Outcome |
 |---|---|---|
-| `invoiceservice/delivery.go` `resolveSubject` / `resolveBody` / `bodyHTML` (line numbers moved in Phase 5 — search by name) | `invoice.email` — **the invoice *PDF* is done; the covering *email* is not** | **Precedence preserved exactly:** `EmailSubjectSnapshot` → `CustomerEmailProfile.Subject` (both still via `renderInvoiceTemplate`) → resolved template → built-in. The template tier slots in where the hardcoded `"Invoice "+Number` fallback was. `templateWarnings` (1589) merges engine diagnostics. |
+| ~~`invoiceservice/delivery.go`~~ | `invoice.email` | **Done.** Precedence preserved exactly: draft snapshot → `CustomerEmailProfile.Subject`/`Comment` (both still via the ad-hoc `renderInvoiceTemplate`) → template → built-in. See the three traps below. |
 | ~~`detentionservice/notice.go`~~ | `detention.notice.email` | **Done in Phase 6.** |
-| `driverportalservice/invitation.go` 380 | `driverportal.invitation.email` | Delete `invitationEmailHTML` (419) and the local 4-char `htmlEscape` (435). `html/template` escapes correctly, including the currently-unescaped `inviteURL`. The hardcoded "expires in 7 days" becomes `ExpiresInDays`. |
-| `reportjobs/delivery.go` 201/515 + `digest.go` 38/96 | `report.delivery.email` | Digest table becomes `{{ range .Digest.Rows }}` with inline styles. `digestAlign`/`digestToneStyle`/`digestToneColors` become context fields. |
-| `agenttoolservice/request_missing_docs.go` | `agent.request_missing_docs.email` | **Inverted:** the LLM's `subject`/`body` params become `{{ .AgentSubject }}`/`{{ .AgentBody }}` that the org's template *wraps*, so an org enforces its own letterhead around agent prose. |
+| ~~`driverportalservice/invitation.go`~~ | `driverportal.invitation.email` | **Done.** `invitationEmailHTML` and the 4-char `htmlEscape` deleted; the unescaped `inviteURL` is closed. "Expires in 7 days" now reads the invitation row, so an extended invitation quotes its real deadline, formatted in the carrier's zone. |
+| ~~`reportjobs/delivery.go` + `digest.go`~~ | `report.delivery.email` | **Done.** Both `strings.Builder` bodies and `renderDigestHTML`/`renderDigestText`/`digestAlign`/`digestToneStyle`/`digestToneColors` are deleted. The digest is context now; the tone travels as a *name*, so the report definition decides what an exception is and the template decides how it looks. |
+| ~~`agenttoolservice/request_missing_docs.go`~~ | `agent.request_missing_docs.email` | **Done, inverted as planned.** The tool schema also grew optional `customerName`, `shipmentProNumber`, and `requestedDocuments` — a variable the schema does not declare is a variable no agent will ever fill, which a test now pins. |
 | ~30 notification sites, 18 files | `notification.<EventType>` | Not yet registered — see below. |
+
+### What the invoice email turned up
+
+Three things the plan of record did not mention, all load-bearing:
+
+- **`applySendSnapshot` would have frozen the render.** It copies the plan's
+  subject and body into `EmailSubjectSnapshot`/`EmailBodySnapshot` — which are the
+  *first* tier `resolveSubject` reads. Left alone, the first send pins that render
+  forever: a template edit never reaches a re-sent invoice, and the frozen copy
+  comes back through the ad-hoc `{number}` engine rather than html/template,
+  losing the layout. Template-sourced wording is therefore not frozen; a draft or
+  profile comment still is, because that is what makes a re-send reproduce what
+  the customer received. If you touch this, `TestSendSnapshotDoesNotFreezeTemplateWording`
+  is the guard.
+- **Only the template tier produces HTML.** `InvoiceSendPlan` gained `BodyHTML`
+  and `FromTemplate` so the send path knows which body it holds; free text still
+  goes through `bodyHTML()`'s escape-and-`<br>` wrap.
+- **A split invoice re-renders per message** so `PartLabel` is a real value. The
+  profile is re-read for that (`splitSendProfile`) rather than carried on the plan,
+  because the plan crosses a workflow boundary as JSON.
+
+Also extracted `services.ResolveLogoDataURI`: one place in the system types an
+inliner result as `template.URL`, instead of three copies of the same `//nolint:gosec`
+reasoning. Invoice, detention, and the agent email all go through it.
+
+### Newly found gap: `report.pdf` never actually cut over
+
+`report.pdf` is a registered kind with a starter, a sample context, and a variable
+catalog — and **nothing renders through it.**
+`internal/infrastructure/reporting/render/pdf.go` still holds its own
+`html/template` literal and its own `pdfTemplateData`. Phase 1 replaced `chromedp`
+with the Gotenberg port there, which is what made it look done; the *layout* was
+never exposed. An administrator editing "Report Export" in the Phase 8 UI would
+see no effect whatsoever.
+
+It was left alone deliberately rather than half-done: `services.ReportRunMeta`
+carries no tenant, so the renderer cannot resolve an organization's template
+without threading `OrgID`/`BuID` through every caller that builds a render
+request (the reporting service, `reportjobs`, the dashboard export). That is a
+real piece of work, not a one-liner, and it is the same shape as the invoice
+cutover: add the tenant to the meta, render through the resolver with the existing
+`ReportContext`, delete `pdfTemplate` and `pdfTemplateData`, and keep
+`reportPDFMargins`.
 
 Notification sites: `assignmentservice/service.go` 120/148 · `bankreceiptservice/service.go` 368
 · `driverportalservice/actions.go` 80/315 · `driversettlementservice/{expense.go 135/363,
@@ -910,14 +955,13 @@ needs them.
 ## 11. Ordered plan for the next agent
 
 1. ~~`DetentionPolicy.AttachNoticePDF`~~ — **done**, see §7. Phase 6 is closed.
-2. **Phase 7 emails** (§8.2), in this order: `driverportal.invitation.email`
-   (self-contained, and it fixes a live unescaped `inviteURL`), then
-   `report.delivery.email`, then `agent.request_missing_docs.email`, then
-   `invoice.email` — that one last because its precedence chain is the most
-   delicate thing in the phase.
+2. ~~**Phase 7 emails**~~ — **done**, all six senders. See §8.2 for what each one
+   turned up.
 3. **Phase 7 notifications** (§8.2). ~30 sites, grouped into ~6 context families
    (decided — see §8.2).
-4. **Phase 8 admin UI** (§8.3). Everything the server needs is in place; no
+4. **`report.pdf`** (§8.2). The kind, the starter, and the catalog exist and
+   nothing renders through them. Needs the tenant on `ReportRunMeta` first.
+5. **Phase 8 admin UI** (§8.3). Everything the server needs is in place; no
    client GraphQL operations exist yet.
 
 Each of 1–3 follows the same four steps: register the kind if it is missing, add
