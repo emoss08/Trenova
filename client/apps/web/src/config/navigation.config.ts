@@ -1244,7 +1244,7 @@ export const adminLinks: SidebarLink[] = [
     href: "/admin/api-keys",
     title: "API Keys",
     group: "Data & Integrations",
-    resource: Resource.ApiKey,
+    resource: Resource.APIKey,
     requiredOperation: Operation.Read,
   },
   {

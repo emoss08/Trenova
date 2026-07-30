@@ -15,7 +15,9 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "codegen:watch": "graphql-codegen --config codegen.ts --watch",
     "catalog": "node scripts/generate-graphql-catalog.mjs",
-    "codegen:check": "pnpm codegen && git diff --exit-code -- src/generated src/schema.graphql ../../../services/tms/internal/api/graphql/persisted-documents.json"
+    "enums": "node scripts/generate-error-enums.mjs",
+    "resources": "node scripts/generate-permission-resources.mjs",
+    "codegen:check": "pnpm codegen && node scripts/assert-codegen-clean.mjs"
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0"

@@ -78,12 +78,17 @@ export const usePermissionStore = create<PermissionState>()(
           return false;
         }
 
-        const resourcePerms = manifest.permissions[resource];
-        if (resourcePerms === undefined) {
+        // Own-property check, not an undefined check. permissions arrives from
+        // JSON.parse, so it inherits Object.prototype: "constructor" and "__proto__"
+        // resolve to real values and sail past an undefined guard. They currently deny
+        // anyway, but only because Function & operation coerces to 0 — the guard denies
+        // by accident rather than by decision, and would flip the moment the bitmask
+        // became a truthiness test.
+        if (!Object.hasOwn(manifest.permissions, resource)) {
           return false;
         }
 
-        return (resourcePerms & operation) !== 0;
+        return (manifest.permissions[resource] & operation) !== 0;
       },
 
       hasAnyPermission: (resource: string, operations: OperationType[]): boolean => {
@@ -100,6 +105,12 @@ export const usePermissionStore = create<PermissionState>()(
         const { manifest } = get();
 
         if (!manifest) {
+          return false;
+        }
+
+        // Same reasoning as hasPermission: `?? false` lets an inherited property through,
+        // and routeAccess["constructor"] is truthy.
+        if (!Object.hasOwn(manifest.routeAccess, route)) {
           return false;
         }
 

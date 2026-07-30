@@ -117,3 +117,93 @@ describe("createLimitOffsetResponse", () => {
     });
   });
 });
+
+describe("createLimitOffsetResponse collection shapes", () => {
+  const schema = createLimitOffsetResponse(z.object({ id: z.string() }));
+
+  it("accepts an empty page", () => {
+    expect(schema.parse({ results: [], count: 0, next: null, prev: null })).toEqual({
+      results: [],
+      count: 0,
+      next: null,
+      prev: null,
+    });
+  });
+
+  it("accepts an empty page that still reports a non-zero total", () => {
+    const parsed = schema.parse({ results: [], count: 250, next: "20", prev: null });
+
+    expect(parsed.results).toEqual([]);
+    expect(parsed.count).toBe(250);
+  });
+
+  it("accepts many rows and preserves their order", () => {
+    const parsed = schema.parse({
+      results: [{ id: "row_1" }, { id: "row_2" }, { id: "row_3" }],
+      count: 3,
+      next: null,
+      prev: null,
+    });
+
+    expect(parsed.results.map((row) => row.id)).toEqual(["row_1", "row_2", "row_3"]);
+  });
+
+  it("does not require results.length to agree with count", () => {
+    const parsed = schema.parse({
+      results: [{ id: "row_1" }, { id: "row_2" }],
+      count: 137,
+      next: "20",
+      prev: null,
+    });
+
+    expect(parsed.results).toHaveLength(2);
+    expect(parsed.count).toBe(137);
+  });
+
+  it("accepts a last page whose cursor is null", () => {
+    const parsed = schema.parse({
+      results: [{ id: "row_1" }],
+      count: 1,
+      next: null,
+      prev: "0",
+      pageInfo: { mode: "cursor", hasNextPage: false, endCursor: null, totalCount: 1 },
+    });
+
+    expect(parsed.pageInfo).toEqual({
+      mode: "cursor",
+      hasNextPage: false,
+      endCursor: null,
+      totalCount: 1,
+    });
+  });
+
+  it("rejects a pageInfo that omits endCursor", () => {
+    expect(() =>
+      schema.parse({
+        results: [{ id: "row_1" }],
+        count: 1,
+        pageInfo: { mode: "cursor", hasNextPage: false, totalCount: 1 },
+      }),
+    ).toThrow();
+  });
+
+  it("rejects a pageInfo that omits totalCount", () => {
+    expect(() =>
+      schema.parse({
+        results: [{ id: "row_1" }],
+        count: 1,
+        pageInfo: { mode: "cursor", hasNextPage: false, endCursor: null },
+      }),
+    ).toThrow();
+  });
+
+  it("rejects a pageInfo that omits mode", () => {
+    expect(() =>
+      schema.parse({
+        results: [{ id: "row_1" }],
+        count: 1,
+        pageInfo: { hasNextPage: false, endCursor: null, totalCount: 1 },
+      }),
+    ).toThrow();
+  });
+});

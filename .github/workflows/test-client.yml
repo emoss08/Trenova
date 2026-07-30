@@ -11,6 +11,12 @@ on:
       - "client/**"
       - "services/tms/internal/api/graphql/schema/**"
       - "services/tms/internal/api/graphql/persisted-documents.json"
+      # The error taxonomy is generated from these two files into
+      # client/packages/shared/src/types/generated. Without them here a Go-side enum
+      # change would never run codegen:check and the drift would land unnoticed.
+      - "services/tms/pkg/errortypes/enums.go"
+      - "services/tms/internal/api/helpers/problemtypes.go"
+      - "services/tms/internal/core/domain/permission/resource_gen.go"
       - ".github/workflows/test-client.yml"
       - ".github/actions/setup-client/**"
   pull_request:
@@ -22,6 +28,12 @@ on:
       - "client/**"
       - "services/tms/internal/api/graphql/schema/**"
       - "services/tms/internal/api/graphql/persisted-documents.json"
+      # The error taxonomy is generated from these two files into
+      # client/packages/shared/src/types/generated. Without them here a Go-side enum
+      # change would never run codegen:check and the drift would land unnoticed.
+      - "services/tms/pkg/errortypes/enums.go"
+      - "services/tms/internal/api/helpers/problemtypes.go"
+      - "services/tms/internal/core/domain/permission/resource_gen.go"
       - ".github/workflows/test-client.yml"
       - ".github/actions/setup-client/**"
   workflow_dispatch:

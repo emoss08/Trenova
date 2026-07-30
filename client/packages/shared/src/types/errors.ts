@@ -1,47 +1,20 @@
 import { z } from "zod";
 
-export const ErrorCode = z.enum([
-  "REQUIRED",
-  "INVALID",
-  "DUPLICATE",
-  "NOT_FOUND",
-  "BUSINESS_LOGIC",
-  "UNAUTHORIZED",
-  "FORBIDDEN",
-  "INVALID_FORMAT",
-  "INVALID_LENGTH",
-  "INVALID_REFERENCE",
-  "INVALID_OPERATION",
-  "SYSTEM_ERROR",
-  "ALREADY_EXISTS",
-  "ALREADY_CLEARED",
-  "VERSION_MISMATCH",
-  "TOO_MANY_REQUESTS",
-  "COMPLIANCE_VIOLATION",
-  "RESOURCE_IN_USE",
-  "BREAKING_CHANGE",
-]);
+// ErrorCode, ProblemType and the retryable set are generated from the Go declarations —
+// see types/generated/error-enums.ts. They are re-exported here so the long-standing
+// `@trenova/shared/types/errors` import path stays the one place callers reach for.
+import {
+  ErrorCode,
+  ProblemType,
+  RETRYABLE_PROBLEM_TYPES,
+  retryableProblemTypes,
+} from "@trenova/shared/types/generated/error-enums";
 
-export type ErrorCode = z.infer<typeof ErrorCode>;
+export { ErrorCode, ProblemType, RETRYABLE_PROBLEM_TYPES, retryableProblemTypes };
 
 export const ErrorLocation = z.enum(["body", "business", "rate-limit"]);
 
 export type ErrorLocation = z.infer<typeof ErrorLocation>;
-
-export const ProblemType = z.enum([
-  "validation-error",
-  "business-rule-violation",
-  "database-error",
-  "authentication-error",
-  "authorization-error",
-  "resource-not-found",
-  "rate-limit-exceeded",
-  "resource-conflict",
-  "request-timeout",
-  "internal-error",
-]);
-
-export type ProblemType = z.infer<typeof ProblemType>;
 
 export const validationErrorSchema = z.object({
   field: z.string(),
@@ -94,16 +67,14 @@ export type NormalizedApiError = ProblemClassification & {
 };
 
 export const apiProblem = {
-  isValidationError: (p: ProblemClassification): boolean =>
-    p.problemType === "validation-error",
+  isValidationError: (p: ProblemClassification): boolean => p.problemType === "validation-error",
   isBusinessError: (p: ProblemClassification): boolean =>
     p.problemType === "business-rule-violation",
   isAuthenticationError: (p: ProblemClassification): boolean =>
     p.problemType === "authentication-error",
   isAuthorizationError: (p: ProblemClassification): boolean =>
     p.problemType === "authorization-error",
-  isNotFoundError: (p: ProblemClassification): boolean =>
-    p.problemType === "resource-not-found",
+  isNotFoundError: (p: ProblemClassification): boolean => p.problemType === "resource-not-found",
   isRateLimitError: (p: ProblemClassification): boolean =>
     p.status === 429 || p.problemType === "rate-limit-exceeded",
   isConflictError: (p: ProblemClassification): boolean =>
@@ -111,6 +82,5 @@ export const apiProblem = {
   isTimeoutError: (p: ProblemClassification): boolean =>
     p.status === 504 || p.problemType === "request-timeout",
   isVersionMismatchError: (p: ProblemClassification): boolean =>
-    apiProblem.isValidationError(p) &&
-    p.fieldErrors.some((e) => e.code === "VERSION_MISMATCH"),
+    apiProblem.isValidationError(p) && p.fieldErrors.some((e) => e.code === "VERSION_MISMATCH"),
 } as const;

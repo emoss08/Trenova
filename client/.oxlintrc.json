@@ -20,7 +20,9 @@
         "node_modules/**",
         "storybook-static/**",
         "stats.html",
-        "tmp/**"
+        "tmp/**",
+        "packages/*/src/**/generated/**",
+        "packages/*/scripts/**"
     ],
     "options": {
         "typeAware": true

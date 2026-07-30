@@ -1166,7 +1166,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "api-keys",
-                loader: createPermissionLoader(Resource.ApiKey, Operation.Read),
+                loader: createPermissionLoader(Resource.APIKey, Operation.Read),
                 async lazy() {
                   const { APIKeysPage } = await import("@/routes/admin/api-keys/page");
                   return { Component: APIKeysPage };
