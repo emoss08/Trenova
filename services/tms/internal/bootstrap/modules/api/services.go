@@ -348,6 +348,15 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(s *documentparsingruleservice.Service) services.DocumentParsingRuleAdminService { return s },
 	documentpacketruleservice.New,
 	documenttemplateservice.New,
+	// The concrete builder is provided once and fed into the group separately:
+	// the invoice service uses it directly on the send path, where the invoice
+	// and profile are already loaded, while the template service reaches every
+	// builder through the group.
+	invoiceservice.NewContextBuilder,
+	fx.Annotate(
+		func(b *invoiceservice.ContextBuilder) services.ContextBuilder { return b },
+		fx.ResultTags(services.ContextBuilderGroup),
+	),
 	func(s *documenttemplateservice.Service) services.DocumentTemplateResolver { return s },
 	workerptoservice.New,
 	distancecalculationservice.New,

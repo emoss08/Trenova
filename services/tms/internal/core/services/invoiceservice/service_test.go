@@ -1,18 +1,13 @@
 package invoiceservice
 
 import (
-	"bytes"
 	"context"
 	"image"
 	"image/color"
-	"image/jpeg"
-	"image/png"
-	"io"
 	"regexp"
 	"strings"
 	"testing"
 
-	"github.com/chai2010/webp"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -27,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	portstorage "github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -36,7 +30,6 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	storagetest "github.com/emoss08/trenova/shared/testutil/storage"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -806,174 +799,6 @@ func TestBuildInvoicePDFDataChargesMatchInvoiceTotals(t *testing.T) {
 	require.Equal(t, "USD 25.00", data.ChargeRows[1].Amount)
 }
 
-func TestBuildInvoicePDFDataEmbedsStoredPNGLogo(t *testing.T) {
-	t.Parallel()
-
-	logoBytes := testPNGLogo(t)
-	storageClient := storagetest.NewMockStorageClient()
-	storageClient.DownloadFunc = func(_ context.Context, key string) (*portstorage.DownloadResult, error) {
-		require.Equal(t, "logos/org.png", key)
-		return &portstorage.DownloadResult{
-			Body:        io.NopCloser(bytes.NewReader(logoBytes)),
-			ContentType: "image/png",
-			Size:        int64(len(logoBytes)),
-		}, nil
-	}
-
-	data := buildInvoicePDFDataWithLogo(
-		t.Context(),
-		&invoice.Invoice{CurrencyCode: "USD"},
-		&invoiceDeliveryProfile{Organization: &tenant.Organization{Name: "Trenova", LogoURL: "logos/org.png"}},
-		storageClient,
-	)
-
-	require.NotNil(t, data.Logo)
-	require.Equal(t, "PNG", data.Logo.ImageType)
-	require.Equal(t, logoBytes, data.Logo.Data)
-}
-
-func TestBuildInvoicePDFDataEmbedsStoredJPEGLogo(t *testing.T) {
-	t.Parallel()
-
-	logoBytes := testJPEGLogo(t)
-	storageClient := storagetest.NewMockStorageClient()
-	storageClient.DownloadFunc = func(context.Context, string) (*portstorage.DownloadResult, error) {
-		return &portstorage.DownloadResult{
-			Body:        io.NopCloser(bytes.NewReader(logoBytes)),
-			ContentType: "image/jpeg",
-			Size:        int64(len(logoBytes)),
-		}, nil
-	}
-
-	data := buildInvoicePDFDataWithLogo(
-		t.Context(),
-		&invoice.Invoice{CurrencyCode: "USD"},
-		&invoiceDeliveryProfile{Organization: &tenant.Organization{Name: "Trenova", LogoURL: "logos/org.jpg"}},
-		storageClient,
-	)
-
-	require.NotNil(t, data.Logo)
-	require.Equal(t, "JPG", data.Logo.ImageType)
-	require.Equal(t, logoBytes, data.Logo.Data)
-}
-
-func TestBuildInvoicePDFDataConvertsStoredWebPLogoToPNG(t *testing.T) {
-	t.Parallel()
-
-	webpBytes := testWebPLogo(t)
-	storageClient := storagetest.NewMockStorageClient()
-	storageClient.DownloadFunc = func(context.Context, string) (*portstorage.DownloadResult, error) {
-		return &portstorage.DownloadResult{
-			Body:        io.NopCloser(bytes.NewReader(webpBytes)),
-			ContentType: "image/webp",
-			Size:        int64(len(webpBytes)),
-		}, nil
-	}
-
-	data := buildInvoicePDFDataWithLogo(
-		t.Context(),
-		&invoice.Invoice{CurrencyCode: "USD"},
-		&invoiceDeliveryProfile{Organization: &tenant.Organization{Name: "Trenova", LogoURL: "logos/org.webp"}},
-		storageClient,
-	)
-
-	require.NotNil(t, data.Logo)
-	require.Equal(t, "PNG", data.Logo.ImageType)
-	require.True(t, bytes.HasPrefix(data.Logo.Data, []byte{0x89, 'P', 'N', 'G'}))
-}
-
-func TestFittedImageSizePreservesAspectRatioWithinBounds(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		name           string
-		sourceWidth    float64
-		sourceHeight   float64
-		maxWidth       float64
-		maxHeight      float64
-		expectedWidth  float64
-		expectedHeight float64
-	}{
-		{
-			name:           "landscape image caps by height",
-			sourceWidth:    400,
-			sourceHeight:   100,
-			maxWidth:       78,
-			maxHeight:      15,
-			expectedWidth:  60,
-			expectedHeight: 15,
-		},
-		{
-			name:           "tall image caps by height",
-			sourceWidth:    100,
-			sourceHeight:   400,
-			maxWidth:       78,
-			maxHeight:      15,
-			expectedWidth:  3.75,
-			expectedHeight: 15,
-		},
-		{
-			name:           "square image stays inside both caps",
-			sourceWidth:    100,
-			sourceHeight:   100,
-			maxWidth:       78,
-			maxHeight:      15,
-			expectedWidth:  15,
-			expectedHeight: 15,
-		},
-		{
-			name:           "invalid source returns caps",
-			sourceWidth:    0,
-			sourceHeight:   100,
-			maxWidth:       78,
-			maxHeight:      15,
-			expectedWidth:  78,
-			expectedHeight: 15,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			width, height := fittedImageSize(
-				tc.sourceWidth,
-				tc.sourceHeight,
-				tc.maxWidth,
-				tc.maxHeight,
-			)
-
-			assert.InDelta(t, tc.expectedWidth, width, 0.001)
-			assert.InDelta(t, tc.expectedHeight, height, 0.001)
-			assert.LessOrEqual(t, width, tc.maxWidth)
-			assert.LessOrEqual(t, height, tc.maxHeight)
-		})
-	}
-}
-
-func TestBuildInvoicePDFDataFallsBackWhenLogoUnsupported(t *testing.T) {
-	t.Parallel()
-
-	storageClient := storagetest.NewMockStorageClient()
-	storageClient.DownloadFunc = func(context.Context, string) (*portstorage.DownloadResult, error) {
-		return &portstorage.DownloadResult{
-			Body:        io.NopCloser(strings.NewReader("not an image")),
-			ContentType: "text/plain",
-			Size:        int64(len("not an image")),
-		}, nil
-	}
-
-	data := buildInvoicePDFDataWithLogo(
-		t.Context(),
-		&invoice.Invoice{CurrencyCode: "USD"},
-		&invoiceDeliveryProfile{Organization: &tenant.Organization{Name: "Trenova", LogoURL: "logos/org.txt"}},
-		storageClient,
-	)
-
-	require.Nil(t, data.Logo)
-	require.Equal(t, "Trenova", data.Organization.Name)
-}
-
 func TestBuildInvoicePDFDataHeaderRowsOmitUnavailableMetadata(t *testing.T) {
 	t.Parallel()
 
@@ -1000,100 +825,6 @@ func TestBuildInvoicePDFDataHeaderRowsOmitUnavailableMetadata(t *testing.T) {
 		&invoiceDeliveryProfile{Organization: &tenant.Organization{}},
 	)
 	require.Empty(t, missing.HeaderRows)
-}
-
-func TestInvoicePreviewForEntityReturnsPDFResult(t *testing.T) {
-	t.Parallel()
-
-	invoiceID := pulid.MustNew("inv_")
-	entity := testInvoiceForPDF(invoiceID, pulid.MustNew("org_"), pulid.MustNew("bu_"))
-
-	preview, err := invoicePreviewForEntity(t.Context(), entity, &invoiceDeliveryProfile{
-		Organization: &tenant.Organization{Name: "Carrier Organization"},
-	}, nil)
-
-	require.NoError(t, err)
-	require.NotNil(t, preview)
-	require.Equal(t, "application/pdf", preview.ContentType)
-	require.Equal(t, "invoice-INV-1001.pdf", preview.FileName)
-	require.NotEmpty(t, preview.Content)
-	require.Equal(t, int64(len(preview.Content)), preview.SizeBytes)
-}
-
-func TestRenderPreviewLoadsBillingControl(t *testing.T) {
-	t.Parallel()
-
-	orgID := pulid.MustNew("org_")
-	buID := pulid.MustNew("bu_")
-	invoiceID := pulid.MustNew("inv_")
-	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
-	entity := testInvoiceForPDF(invoiceID, orgID, buID)
-
-	repo := mocks.NewMockInvoiceRepository(t)
-	repo.EXPECT().
-		GetByID(mock.Anything, repositories.GetInvoiceByIDRequest{
-			ID:         invoiceID,
-			TenantInfo: tenantInfo,
-		}).
-		Return(entity, nil).
-		Once()
-
-	billingRepo := mocks.NewMockBillingControlRepository(t)
-	billingRepo.EXPECT().
-		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.BillingControl{
-			DefaultInvoiceTerms:  "Invoice terms",
-			DefaultInvoiceFooter: "Invoice footer",
-		}, nil).
-		Once()
-
-	svc := &Service{
-		l:           zap.NewNop(),
-		repo:        repo,
-		billingRepo: billingRepo,
-	}
-
-	preview, err := svc.RenderPreview(t.Context(), &servicesports.InvoicePreviewRequest{
-		InvoiceID:  invoiceID,
-		TenantInfo: tenantInfo,
-	})
-
-	require.NoError(t, err)
-	require.NotNil(t, preview)
-	require.NotEmpty(t, preview.Content)
-}
-
-func TestInvoicePreviewWithFooterFitsSinglePage(t *testing.T) {
-	t.Parallel()
-
-	entity := testInvoiceForPDF(pulid.MustNew("inv_"), pulid.MustNew("org_"), pulid.MustNew("bu_"))
-	entity.Lines = []*invoice.InoviceLine{
-		{
-			LineNumber:  1,
-			Type:        invoice.InvoiceLineTypeFreight,
-			Description: "Freight charge",
-			Quantity:    decimal.NewFromInt(1),
-			UnitPrice:   decimal.NewFromInt(2800),
-			Amount:      decimal.NewFromInt(2800),
-		},
-		{
-			LineNumber:  2,
-			Type:        invoice.InvoiceLineTypeAccessorial,
-			Description: "Detention Fee",
-			Quantity:    decimal.NewFromInt(2),
-			UnitPrice:   decimal.NewFromInt(75),
-			Amount:      decimal.NewFromInt(150),
-		},
-	}
-	entity.SubtotalAmount = decimal.NewFromInt(2800)
-	entity.OtherAmount = decimal.NewFromInt(150)
-	entity.TotalAmount = decimal.NewFromInt(2950)
-
-	preview, err := invoicePreviewForEntity(t.Context(), entity, testInvoicePDFDeliveryProfile(), nil)
-
-	require.NoError(t, err)
-	require.NotEmpty(t, preview.Content)
-	require.Equal(t, 1, countPDFPages(preview.Content))
 }
 
 func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
@@ -1486,10 +1217,6 @@ func testInvoiceForPDF(invoiceID, orgID, buID pulid.ID) *invoice.Invoice {
 }
 
 var pdfPageObjectPattern = regexp.MustCompile(`/Type\s*/Page\b`)
-
-func countPDFPages(content []byte) int {
-	return len(pdfPageObjectPattern.FindAll(content, -1))
-}
 
 func testInvoicePDFDeliveryProfile() *invoiceDeliveryProfile {
 	state := &usstate.UsState{Abbreviation: "IL", CountryName: "USA"}
@@ -2124,30 +1851,6 @@ func TestResolveInvoicePostingPeriodUsesNextOpenPeriod(t *testing.T) {
 //go:fix inline
 func int64Ptr(v int64) *int64 {
 	return new(v)
-}
-
-func testPNGLogo(t *testing.T) []byte {
-	t.Helper()
-
-	var buf bytes.Buffer
-	require.NoError(t, png.Encode(&buf, testLogoImage()))
-	return buf.Bytes()
-}
-
-func testJPEGLogo(t *testing.T) []byte {
-	t.Helper()
-
-	var buf bytes.Buffer
-	require.NoError(t, jpeg.Encode(&buf, testLogoImage(), nil))
-	return buf.Bytes()
-}
-
-func testWebPLogo(t *testing.T) []byte {
-	t.Helper()
-
-	var buf bytes.Buffer
-	require.NoError(t, webp.Encode(&buf, testLogoImage(), nil))
-	return buf.Bytes()
 }
 
 func testLogoImage() image.Image {

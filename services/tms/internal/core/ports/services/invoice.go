@@ -62,6 +62,11 @@ type InvoicePreviewResult struct {
 	ContentType string `json:"contentType"`
 	FileName    string `json:"fileName"`
 	SizeBytes   int64  `json:"sizeBytes"`
+
+	// Rendered carries the template provenance behind these bytes so a caller
+	// that stores them can record which version produced them. Nil when the
+	// bytes did not come from the template renderer.
+	Rendered *RenderedDocument `json:"-"`
 }
 
 type GenerateInvoicePDFResult struct {

@@ -8,6 +8,7 @@ require (
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/xuri/excelize/v2 v2.11.0
+	go.uber.org/goleak v1.3.0
 )
 
 require (
@@ -36,7 +37,6 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
-	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/meilisearch/meilisearch-go v0.36.3
 	github.com/minio/minio-go/v7 v7.2.1
 	github.com/openai/openai-go/v3 v3.46.0
@@ -108,7 +108,6 @@ require (
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.69.0 // indirect
-	go.uber.org/goleak v1.3.0 // indirect
 	google.golang.org/genproto v0.0.0-20260723215102-3fe39f3c1018 // indirect
 	gopkg.in/ini.v1 v1.67.3 // indirect
 )
@@ -251,7 +250,7 @@ require (
 	golang.org/x/arch v0.29.0 // indirect
 	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/mod v0.38.0
-	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/net v0.57.0
 	golang.org/x/sync v0.22.0
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/time v0.15.0

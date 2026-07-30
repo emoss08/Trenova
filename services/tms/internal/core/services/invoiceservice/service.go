@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
@@ -63,7 +62,8 @@ type Params struct {
 	AuditService        servicesports.AuditService
 	DocumentService     servicesports.InvoiceDocumentService `optional:"true"`
 	EmailService        servicesports.EmailService
-	Storage             storage.Client
+	Templates           servicesports.DocumentTemplateResolver
+	ContextBuilder      *ContextBuilder
 	Realtime            servicesports.RealtimeService
 	WorkflowStarter     servicesports.WorkflowStarter
 	SequenceGenerator   seqgen.Generator
@@ -93,7 +93,8 @@ type Service struct {
 	auditService        servicesports.AuditService
 	documentService     servicesports.InvoiceDocumentService
 	emailService        servicesports.EmailService
-	storage             storage.Client
+	templates           servicesports.DocumentTemplateResolver
+	contextBuilder      *ContextBuilder
 	realtime            servicesports.RealtimeService
 	workflowStarter     servicesports.WorkflowStarter
 	sequenceGenerator   seqgen.Generator
@@ -143,7 +144,8 @@ func New(p Params) servicesports.InvoiceService { //nolint:gocritic // stable AP
 		auditService:        p.AuditService,
 		documentService:     p.DocumentService,
 		emailService:        p.EmailService,
-		storage:             p.Storage,
+		templates:           p.Templates,
+		contextBuilder:      p.ContextBuilder,
 		realtime:            p.Realtime,
 		workflowStarter:     p.WorkflowStarter,
 		sequenceGenerator:   p.SequenceGenerator,

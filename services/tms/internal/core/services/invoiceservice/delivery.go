@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/order"
@@ -29,7 +30,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -636,7 +636,7 @@ func (s *Service) RenderPreview(
 	if err = s.resolveDeliveryOrganization(ctx, deliveryProfile, req.TenantInfo); err != nil {
 		return nil, err
 	}
-	return invoicePreviewForEntity(ctx, entity, deliveryProfile, s.storage)
+	return s.invoicePreviewForEntity(ctx, entity, deliveryProfile, req.TenantInfo)
 }
 
 func (s *Service) GeneratePDF(
@@ -771,22 +771,53 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 	}
 }
 
-func invoicePreviewForEntity(
+// invoicePreviewForEntity prints an invoice through the organization's template.
+//
+// Which template that is — a customer assignment, the organization default, or
+// the built-in — is the resolver's decision, so a customer with a bespoke
+// invoice layout gets it here and on the send path without either caller
+// knowing the difference.
+func (s *Service) invoicePreviewForEntity(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	deliveryProfile *invoiceDeliveryProfile,
-	storageClient storage.Client,
+	tenantInfo pagination.TenantInfo,
 ) (*servicesports.InvoicePreviewResult, error) {
-	content, err := renderInvoicePDF(ctx, entity, deliveryProfile, storageClient)
+	if s.templates == nil {
+		return nil, errortypes.NewBusinessError(
+			"Invoice rendering is not configured on this deployment",
+		)
+	}
+
+	data, err := s.contextBuilder.BuildFrom(ctx, entity, deliveryProfile)
+	if err != nil {
+		return nil, err
+	}
+
+	var customerID *pulid.ID
+	if entity.CustomerID.IsNotNil() {
+		id := entity.CustomerID
+		customerID = &id
+	}
+
+	rendered, err := s.templates.RenderDocument(ctx, &servicesports.RenderDocumentRequest{
+		TenantInfo:  tenantInfo,
+		Kind:        documenttemplate.KindInvoicePDF,
+		CustomerID:  customerID,
+		Data:        data,
+		ReferenceID: entity.ID,
+		Title:       "Invoice " + entity.Number,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &servicesports.InvoicePreviewResult{
-		Content:     content,
+		Content:     rendered.PDF,
 		ContentType: "application/pdf",
 		FileName:    invoicePDFName(entity),
-		SizeBytes:   int64(len(content)),
+		SizeBytes:   int64(len(rendered.PDF)),
+		Rendered:    rendered,
 	}, nil
 }
 
@@ -1302,8 +1333,33 @@ func (s *Service) DownloadSharedDocument(
 	}, nil
 }
 
+// deliveryProfileRepos is the repository set profile resolution needs.
+//
+// It exists so the context builder can resolve a profile without taking a
+// dependency on *Service, which depends on the template resolver and would
+// therefore close an fx cycle.
+type deliveryProfileRepos struct {
+	customerRepo     repositories.CustomerRepository
+	shipmentRepo     repositories.ShipmentRepository
+	billingRepo      repositories.BillingControlRepository
+	organizationRepo repositories.OrganizationRepository
+}
+
 func (s *Service) resolveDeliveryProfile(
 	ctx context.Context,
+	params resolveDeliveryProfileParams,
+) (*invoiceDeliveryProfile, error) {
+	return resolveDeliveryProfileWith(ctx, deliveryProfileRepos{
+		customerRepo:     s.customerRepo,
+		shipmentRepo:     s.shipmentRepo,
+		billingRepo:      s.billingRepo,
+		organizationRepo: s.organizationRepo,
+	}, params)
+}
+
+func resolveDeliveryProfileWith(
+	ctx context.Context,
+	repos deliveryProfileRepos,
 	params resolveDeliveryProfileParams,
 ) (*invoiceDeliveryProfile, error) {
 	result := &invoiceDeliveryProfile{}
@@ -1322,8 +1378,8 @@ func (s *Service) resolveDeliveryProfile(
 	if entity.Shipment != nil {
 		result.Shipment = entity.Shipment
 	}
-	if params.IncludeCustomer && s.customerRepo != nil && entity.CustomerID.IsNotNil() {
-		cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+	if params.IncludeCustomer && repos.customerRepo != nil && entity.CustomerID.IsNotNil() {
+		cus, err := repos.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
 			ID:         entity.CustomerID,
 			TenantInfo: params.TenantInfo,
 			CustomerFilterOptions: repositories.CustomerFilterOptions{
@@ -1345,8 +1401,8 @@ func (s *Service) resolveDeliveryProfile(
 			}
 		}
 	}
-	if params.IncludeShipmentDetails && s.shipmentRepo != nil && entity.ShipmentID.IsNotNil() {
-		shp, err := s.shipmentRepo.GetByID(
+	if params.IncludeShipmentDetails && repos.shipmentRepo != nil && entity.ShipmentID.IsNotNil() {
+		shp, err := repos.shipmentRepo.GetByID(
 			ctx,
 			expandedShipmentByIDRequest(entity.ShipmentID, params.TenantInfo),
 		)
@@ -1357,8 +1413,8 @@ func (s *Service) resolveDeliveryProfile(
 			result.Shipment = shp
 		}
 	}
-	if params.IncludeBillingControl && s.billingRepo != nil {
-		control, err := s.billingRepo.GetByOrgID(ctx, params.TenantInfo.OrgID)
+	if params.IncludeBillingControl && repos.billingRepo != nil {
+		control, err := repos.billingRepo.GetByOrgID(ctx, params.TenantInfo.OrgID)
 		if err != nil && !errortypes.IsNotFoundError(err) {
 			return nil, err
 		}
@@ -1402,10 +1458,19 @@ func (s *Service) resolveDeliveryOrganization(
 	deliveryProfile *invoiceDeliveryProfile,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if deliveryProfile == nil || deliveryProfile.Organization != nil || s.organizationRepo == nil {
+	return resolveDeliveryOrganizationWith(ctx, s.organizationRepo, deliveryProfile, tenantInfo)
+}
+
+func resolveDeliveryOrganizationWith(
+	ctx context.Context,
+	organizationRepo repositories.OrganizationRepository,
+	deliveryProfile *invoiceDeliveryProfile,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if deliveryProfile == nil || deliveryProfile.Organization != nil || organizationRepo == nil {
 		return nil
 	}
-	org, err := s.organizationRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	org, err := organizationRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil && !errortypes.IsNotFoundError(err) {

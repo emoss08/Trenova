@@ -3,7 +3,9 @@ package billingjobs
 import (
 	"bytes"
 	"context"
+	"errors"
 
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -11,9 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -22,6 +26,7 @@ type ActivitiesParams struct {
 	fx.In
 
 	InvoiceService   services.InvoiceService
+	Templates        services.DocumentTemplateResolver
 	InvoiceRepo      repositories.InvoiceRepository
 	DocumentService  services.InvoiceDocumentService
 	UploadService    services.DocumentUploadService
@@ -32,6 +37,7 @@ type ActivitiesParams struct {
 
 type Activities struct {
 	invoiceService   services.InvoiceService
+	templates        services.DocumentTemplateResolver
 	invoiceRepo      repositories.InvoiceRepository
 	documentService  services.InvoiceDocumentService
 	uploadService    services.DocumentUploadService
@@ -43,6 +49,7 @@ type Activities struct {
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		invoiceService:   p.InvoiceService,
+		templates:        p.Templates,
 		invoiceRepo:      p.InvoiceRepo,
 		documentService:  p.DocumentService,
 		uploadService:    p.UploadService,
@@ -166,7 +173,7 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
-		return nil, err
+		return nil, classifyInvoiceRenderError(err)
 	}
 	docType, err := a.documentTypeRepo.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
 		Code:       "INVOICE",
@@ -207,6 +214,13 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 	}); err != nil {
 		return nil, err
 	}
+
+	a.recordGeneratedInvoicePDF(ctx, &recordInvoicePDFParams{
+		TenantInfo: tenantInfo,
+		Invoice:    current,
+		Preview:    preview,
+		UserID:     payload.UserID,
+	})
 
 	return &PrepareInvoicePDFUploadResult{
 		InvoiceID: payload.InvoiceID,
@@ -324,5 +338,81 @@ func invoicePDFActor(payload *GenerateInvoicePDFPayload) services.RequestActor {
 		APIKeyID:       payload.APIKeyID,
 		BusinessUnitID: payload.BusinessUnitID,
 		OrganizationID: payload.OrganizationID,
+	}
+}
+
+// classifyInvoiceRenderError tells a transient renderer outage apart from a
+// template that will never render.
+//
+// Without this both look the same to Temporal and a broken template burns five
+// attempts before surfacing, while a sidecar restart might not be retried at
+// all.
+func classifyInvoiceRenderError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// The sidecar is down or unconfigured. That is exactly what retries are for.
+	if errors.Is(err, services.ErrPDFRendererUnavailable) {
+		return temporaltype.NewRetryableError(
+			"the PDF renderer was unavailable while generating an invoice", err,
+		)
+	}
+
+	// Field-level errors from the template engine mean the template does not
+	// compile or does not render against real data. An administrator has to
+	// change it; no number of attempts will.
+	var multiErr *errortypes.MultiError
+	if errors.As(err, &multiErr) {
+		return temporaltype.NewTemplateInvalidError(
+			"the invoice template could not be rendered: "+multiErr.Error(), err,
+		)
+	}
+
+	return err
+}
+
+type recordInvoicePDFParams struct {
+	TenantInfo pagination.TenantInfo
+	Invoice    *invoice.Invoice
+	Preview    *services.InvoicePreviewResult
+	UserID     pulid.ID
+}
+
+// recordGeneratedInvoicePDF logs which template version produced the bytes just
+// uploaded.
+//
+// This is the record that answers "what exactly did we send that customer in
+// March" once a template has been edited — which is when an invoice dispute asks.
+// It is deliberately best-effort: the customer's invoice has already been
+// rendered and stored, and failing the workflow over a bookkeeping row would
+// turn a missing audit entry into a missing invoice.
+func (a *Activities) recordGeneratedInvoicePDF(
+	ctx context.Context,
+	p *recordInvoicePDFParams,
+) {
+	if a.templates == nil || p.Preview == nil || p.Preview.Rendered == nil {
+		return
+	}
+
+	if _, err := a.templates.RecordGeneratedDocument(
+		ctx,
+		&services.RecordGeneratedDocumentRequest{
+			TenantInfo:    p.TenantInfo,
+			Kind:          documenttemplate.KindInvoicePDF,
+			Rendered:      p.Preview.Rendered,
+			ReferenceType: "invoice",
+			ReferenceID:   p.Invoice.ID,
+			FileName:      p.Preview.FileName,
+			// The upload session owns the final object key; this records the
+			// logical path so the row is self-describing before finalization.
+			FilePath: "invoice/" + p.Invoice.ID.String() + "/" + p.Preview.FileName,
+			FileSize: p.Preview.SizeBytes,
+			UserID:   p.UserID,
+		},
+	); err != nil {
+		activity.GetLogger(ctx).Warn(
+			"could not record the generated invoice PDF", "error", err,
+		)
 	}
 }

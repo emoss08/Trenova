@@ -24,6 +24,10 @@ const (
 	ErrorTypeResourceNotFound = ErrorType("resource_not_found")
 	ErrorTypePermissionDenied = ErrorType("permission_denied")
 	ErrorTypeDataIntegrity    = ErrorType("data_integrity")
+	// ErrorTypeTemplateInvalid means an organization's document or message
+	// template does not compile or render. Retrying cannot help: the same
+	// template will fail identically until someone edits it.
+	ErrorTypeTemplateInvalid = ErrorType("template_invalid")
 )
 
 func (e ErrorType) String() string {
@@ -89,6 +93,20 @@ func NewRetryableErrorWithDelay(message string, cause error, retryAfter int) *Ap
 func NewNonRetryableError(message string, cause error) *ApplicationError {
 	return &ApplicationError{
 		Type:      ErrorTypeNonRetryable,
+		Message:   message,
+		Cause:     cause,
+		Retryable: false,
+	}
+}
+
+// NewTemplateInvalidError reports a template that cannot produce output.
+//
+// It is distinct from a renderer outage, which is transient and should be
+// retried; this one needs an administrator to fix the template, so burning
+// retries on it only delays the failure reaching them.
+func NewTemplateInvalidError(message string, cause error) *ApplicationError {
+	return &ApplicationError{
+		Type:      ErrorTypeTemplateInvalid,
 		Message:   message,
 		Cause:     cause,
 		Retryable: false,

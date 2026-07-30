@@ -23,6 +23,29 @@ var autoPostInvoiceActivityOptions = workflow.ActivityOptions{
 	RetryPolicy:         autoPostInvoiceRetryPolicy,
 }
 
+// Rendering has two failure modes that deserve opposite treatment. A renderer
+// outage is transient and retrying is exactly right. A template that does not
+// compile will fail identically on every attempt, so retrying it five times only
+// delays the failure reaching the administrator who has to fix it.
+var generateInvoicePDFRetryPolicy = &temporal.RetryPolicy{
+	InitialInterval:    time.Second,
+	BackoffCoefficient: 2.0,
+	MaximumAttempts:    5,
+	MaximumInterval:    30 * time.Second,
+	NonRetryableErrorTypes: []string{
+		temporaltype.ErrorTypeTemplateInvalid.String(),
+		temporaltype.ErrorTypeInvalidInput.String(),
+		temporaltype.ErrorTypeNonRetryable.String(),
+		temporaltype.ErrorTypePermissionDenied.String(),
+	},
+}
+
+var generateInvoicePDFActivityOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 5 * time.Minute,
+	HeartbeatTimeout:    30 * time.Second,
+	RetryPolicy:         generateInvoicePDFRetryPolicy,
+}
+
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
@@ -90,7 +113,7 @@ func GenerateInvoicePDFWorkflow(
 	ctx workflow.Context,
 	payload *GenerateInvoicePDFPayload,
 ) (*GenerateInvoicePDFResult, error) {
-	ctx = workflow.WithActivityOptions(ctx, autoPostInvoiceActivityOptions)
+	ctx = workflow.WithActivityOptions(ctx, generateInvoicePDFActivityOptions)
 
 	var a *Activities
 	prepared := new(PrepareInvoicePDFUploadResult)
