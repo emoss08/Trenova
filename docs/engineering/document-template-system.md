@@ -726,6 +726,35 @@ catalogs are shared, and the reflection catalog test covers 6 types instead of 3
 Draw family boundaries where the *data* differs, not where the event names do — a
 family whose catalog reads "entity name" has been drawn too wide.
 
+### Notifications: survey findings before you write any of it
+
+Read these first; they change the shape of the work from what the plan describes.
+
+- **Most driver notifications share one choke point.** Every `dash.*` event —
+  load assigned, load unassigned, PTO reviewed, settlement posted, settlement
+  paid, expense reviewed, pay held, dispute resolved, credential expiring —
+  goes through `drivernotificationservice.NotifyWithCorrelation`. Rendering there
+  covers ~10 of the ~30 sites with one change, and it is the only place that
+  already knows the worker. Do that before touching individual services.
+- **Some event types are not literals.** Several sites pass a variable or a
+  domain enum (`eventType`, `alert.EventType`, `entry.EventType`,
+  `sourceEvent.String()`). A kind key of `"notification." + EventType` needs
+  every reachable value registered, so enumerate the enum members rather than
+  assuming a literal is at the call site. Truly open sets — a telematics
+  provider's webhook `event_type` — do not create titled notifications, so they
+  are not in scope; verify that before relying on it.
+- **`kind_gen.go` has no generator.** The `_gen` suffix marks it as the flat
+  declaration list that `registry_coverage_test.go` parses by AST: every constant
+  must have a matching `Register` call or the build fails. That makes a partial
+  notification commit impossible, which is protective — land a whole family at a
+  time.
+- **The reflection catalog test cuts both ways with shared contexts.**
+  `registry_context_test.go` asserts catalog ↔ struct in both directions per kind,
+  so a family sharing one struct needs its catalog built by one helper the whole
+  family calls, not copied per kind.
+- Failure policy for the whole phase is settled: notifications render with
+  `FallbackToBuiltIn: true`. A lost notification is worse than an unstyled one.
+
 `notificationservice.Create` (line 48) is **not** changed — templates resolve at the call site
 where the domain data lives, keeping `Create` a dumb writer.
 
