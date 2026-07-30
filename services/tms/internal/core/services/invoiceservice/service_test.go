@@ -426,10 +426,52 @@ func TestResolveSubjectRendersDraftSnapshotBeforeCustomerTemplate(t *testing.T) 
 		Subject: "Customer {{invoice.number}}",
 	}
 
-	result := resolveSubject(entity, profile, invoiceTemplateContext(entity, nil))
+	result, found := resolveSubject(entity, profile, invoiceTemplateContext(entity, nil))
 
+	require.True(t, found)
 	require.Equal(t, "Draft invoice #INV-1001 for Acme Logistics", result.Value)
 	require.Empty(t, result.Unknown)
+}
+
+// With no draft and no customer profile text, the free-text tiers report nothing
+// and the caller renders the organization's template. That is where the hardcoded
+// "Invoice N" used to answer, and answering here again would mean an organization
+// could never change the subject of the invoice emails it sends.
+func TestResolveSubjectAndBodyDeferToTheTemplateWhenThereIsNoDraft(t *testing.T) {
+	t.Parallel()
+
+	entity := &invoice.Invoice{Number: "INV-1001", BillToName: "Acme Logistics"}
+	context := invoiceTemplateContext(entity, nil)
+
+	subject, subjectFound := resolveSubject(entity, nil, context)
+	require.False(t, subjectFound)
+	require.Empty(t, subject.Value)
+
+	body, bodyFound := resolveBody(entity, nil, context)
+	require.False(t, bodyFound)
+	require.Empty(t, body.Value)
+
+	// An email profile with only recipients configured is not text: it must not
+	// pre-empt the template either.
+	empty := &customer.CustomerEmailProfile{ToRecipients: "ap@example.com"}
+	_, subjectFound = resolveSubject(entity, empty, context)
+	require.False(t, subjectFound)
+	_, bodyFound = resolveBody(entity, empty, context)
+	require.False(t, bodyFound)
+}
+
+// The customer's own wording still beats the organization's template, which is
+// the precedence customers already rely on.
+func TestResolveSubjectPrefersTheCustomerProfileOverTheTemplate(t *testing.T) {
+	t.Parallel()
+
+	entity := &invoice.Invoice{Number: "INV-1001", BillToName: "Acme Logistics"}
+	profile := &customer.CustomerEmailProfile{Subject: "Customer {{invoice.number}}"}
+
+	result, found := resolveSubject(entity, profile, invoiceTemplateContext(entity, nil))
+
+	require.True(t, found)
+	require.Equal(t, "Customer INV-1001", result.Value)
 }
 
 func TestResolveBodyRendersDraftSnapshot(t *testing.T) {
@@ -441,10 +483,40 @@ func TestResolveBodyRendersDraftSnapshot(t *testing.T) {
 		EmailBodySnapshot: "Please review {number}, {customer}.",
 	}
 
-	result := resolveBody(entity, nil, invoiceTemplateContext(entity, nil))
+	result, found := resolveBody(entity, nil, invoiceTemplateContext(entity, nil))
 
+	require.True(t, found)
 	require.Equal(t, "Please review INV-1001, Acme Logistics.", result.Value)
 	require.Empty(t, result.Unknown)
+}
+
+// A template render must not become the invoice's stored draft. The snapshot
+// columns are the first tier resolveSubject reads, so freezing a render there
+// would mean a later edit to the template never reached a re-sent invoice — and
+// the frozen copy would come back through the ad-hoc engine, losing the layout.
+func TestSendSnapshotDoesNotFreezeTemplateWording(t *testing.T) {
+	t.Parallel()
+
+	fromTemplate := &invoice.Invoice{Number: "INV-1001"}
+	applySendSnapshot(fromTemplate, &servicesports.InvoiceSendPlan{
+		Subject:      "Invoice INV-1001 from Trenova Freight",
+		Body:         "Invoice INV-1001 is attached.",
+		FromTemplate: true,
+		Recipients:   servicesports.InvoiceSendRecipients{To: []string{"ap@example.com"}},
+	})
+	require.Empty(t, fromTemplate.EmailSubjectSnapshot)
+	require.Empty(t, fromTemplate.EmailBodySnapshot)
+	require.Equal(t, []string{"ap@example.com"}, fromTemplate.EmailToSnapshot)
+
+	// A draft or a customer profile comment is still frozen: that is what makes a
+	// re-send reproduce what the customer already received.
+	fromDraft := &invoice.Invoice{Number: "INV-1001"}
+	applySendSnapshot(fromDraft, &servicesports.InvoiceSendPlan{
+		Subject: "Draft invoice INV-1001",
+		Body:    "Please review.",
+	})
+	require.Equal(t, "Draft invoice INV-1001", fromDraft.EmailSubjectSnapshot)
+	require.Equal(t, "Please review.", fromDraft.EmailBodySnapshot)
 }
 
 func TestInvoicePDFAttachmentNameSanitizesAndForcesPDF(t *testing.T) {

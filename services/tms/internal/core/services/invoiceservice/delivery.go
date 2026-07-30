@@ -854,9 +854,17 @@ func (s *Service) PlanSend(
 		return nil, err
 	}
 	templateContext := invoiceTemplateContext(entity, deliveryProfile)
-	subjectResult := resolveSubject(entity, deliveryProfile.Email, templateContext)
-	bodyResult := resolveBody(entity, deliveryProfile.Email, templateContext)
-	body := bodyResult.Value
+	wording, err := s.resolveInvoiceWording(ctx, &invoiceWordingParams{
+		TenantInfo: req.TenantInfo,
+		Entity:     entity,
+		Profile:    deliveryProfile,
+		Context:    templateContext,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	body := wording.Body.Value
 	if deliveryProfile.Email != nil && deliveryProfile.Email.IncludeShipmentDetail {
 		body = appendShipmentDetail(body, entity, deliveryProfile.Shipment)
 	}
@@ -866,7 +874,7 @@ func (s *Service) PlanSend(
 	plan := &servicesports.InvoiceSendPlan{
 		InvoiceID:            entity.ID,
 		ProviderLimitBytes:   providerLimit(profile),
-		EstimatedBodyBytes:   int64(len(subjectResult.Value)+len(body)) + defaultBodyOverheadBytes,
+		EstimatedBodyBytes:   int64(len(wording.Subject.Value)+len(body)) + defaultBodyOverheadBytes,
 		Parts:                make([]*servicesports.InvoiceSendPlanPart, 0),
 		Warnings:             make([]string, 0),
 		Errors:               make([]string, 0),
@@ -874,12 +882,16 @@ func (s *Service) PlanSend(
 		FromEmail:            fromEmail,
 		Headers:              headers,
 		OpenTracking:         deliveryProfile.Email != nil && deliveryProfile.Email.ReadReceipt,
-		Subject:              subjectResult.Value,
+		Subject:              wording.Subject.Value,
 		Body:                 body,
 		InvoicePDFDocumentID: entity.PDFDocumentID,
+		// Only the template tier produces HTML. A draft or a profile comment is
+		// free text, and the send path wraps it the way it always has.
+		BodyHTML:     wording.HTML,
+		FromTemplate: wording.FromTemplate,
 	}
-	plan.Warnings = append(plan.Warnings, templateWarnings("subject", subjectResult.Unknown)...)
-	plan.Warnings = append(plan.Warnings, templateWarnings("body", bodyResult.Unknown)...)
+	plan.Warnings = append(plan.Warnings, templateWarnings("subject", wording.Subject.Unknown)...)
+	plan.Warnings = append(plan.Warnings, templateWarnings("body", wording.Body.Unknown)...)
 	if fromErr != nil {
 		plan.Errors = append(plan.Errors, fromErr.Error())
 	}
@@ -1083,6 +1095,11 @@ func (s *Service) SendFromWorkflow(
 		return nil, err
 	}
 
+	deliveryProfile, err := s.splitSendProfile(ctx, req, entity, plan)
+	if err != nil {
+		return nil, err
+	}
+
 	attempts := make([]*invoice.EmailAttempt, 0, len(plan.Parts))
 	sendErrors := make([]string, 0)
 	for _, part := range plan.Parts {
@@ -1097,6 +1114,15 @@ func (s *Service) SendFromWorkflow(
 			req.TenantInfo,
 			part.Attachments,
 		)
+		partHTML := s.partBodyHTML(ctx, &partBodyHTMLParams{
+			Request:  req,
+			Entity:   entity,
+			Profile:  deliveryProfile,
+			Plan:     plan,
+			Part:     part,
+			PartBody: partBody,
+		})
+
 		var message *email.Message
 		var sendErr error
 		if linkErr == nil && attachmentErr == nil {
@@ -1109,7 +1135,7 @@ func (s *Service) SendFromWorkflow(
 				BCC:          plan.Recipients.BCC,
 				FromEmail:    plan.FromEmail,
 				Subject:      partSubject(plan.Subject, part.PartNumber, len(plan.Parts)),
-				HTML:         bodyHTML(partBody),
+				HTML:         partHTML,
 				Text:         partBody,
 				Attachments:  emailAttachments,
 				Headers:      plan.Headers,
@@ -1503,40 +1529,169 @@ func resolveRecipients(
 	return recipients
 }
 
+// invoiceWordingParams is what deciding an invoice email's wording needs.
+type invoiceWordingParams struct {
+	TenantInfo pagination.TenantInfo
+	Entity     *invoice.Invoice
+	Profile    *invoiceDeliveryProfile
+	Context    map[string]string
+}
+
+// invoiceWording is the settled subject and body plus where they came from.
+type invoiceWording struct {
+	Subject invoiceTemplateResult
+	Body    invoiceTemplateResult
+
+	// HTML is set only when the organization's template produced the body.
+	HTML         string
+	FromTemplate bool
+}
+
+// resolveInvoiceWording walks the three tiers in order: the operator's draft, the
+// customer's email profile, then the organization's template.
+//
+// The template is asked for only when neither free-text tier has anything to say,
+// which is exactly where the hardcoded "Invoice N" / "Please find invoice N
+// attached" used to answer. The precedence a customer already relies on is
+// untouched; what changed is that the last tier is now editable.
+func (s *Service) resolveInvoiceWording(
+	ctx context.Context,
+	p *invoiceWordingParams,
+) (*invoiceWording, error) {
+	emailProfile := p.Profile.Email
+	subject, subjectFound := resolveSubject(p.Entity, emailProfile, p.Context)
+	body, bodyFound := resolveBody(p.Entity, emailProfile, p.Context)
+
+	out := &invoiceWording{Subject: subject, Body: body}
+	if subjectFound && bodyFound {
+		return out, nil
+	}
+
+	rendered, err := s.renderInvoiceEmail(ctx, &invoiceEmailRenderParams{
+		TenantInfo: p.TenantInfo,
+		Entity:     p.Entity,
+		Profile:    p.Profile,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !subjectFound {
+		out.Subject.Value = rendered.Subject
+	}
+	if !bodyFound {
+		out.Body.Value = rendered.Text
+		out.HTML = rendered.HTML
+		out.FromTemplate = true
+	}
+
+	return out, nil
+}
+
+// invoiceEmailWording is one render of the organization's invoice email template.
+type invoiceEmailWording struct {
+	Subject string
+	Text    string
+	HTML    string
+}
+
+type invoiceEmailRenderParams struct {
+	TenantInfo pagination.TenantInfo
+	Entity     *invoice.Invoice
+	Profile    *invoiceDeliveryProfile
+
+	// PartLabel is set when a split invoice re-renders per message, so the
+	// wording can say "2 of 3" instead of three identical emails arriving.
+	PartLabel      string
+	AttachmentName string
+}
+
+// renderInvoiceEmail renders the organization's invoice email.
+//
+// It resolves per customer, so a customer with an assigned invoice email template
+// receives theirs. There is deliberately no fallback to the built-in: a customer
+// must never receive a message that silently differs from the one their carrier
+// authored, so a broken template surfaces to the sender instead of being papered
+// over. That is the opposite of the notification and notice policy, and it is the
+// reason RenderMessageRequest carries the choice at all.
+func (s *Service) renderInvoiceEmail(
+	ctx context.Context,
+	p *invoiceEmailRenderParams,
+) (*invoiceEmailWording, error) {
+	if s.templates == nil {
+		return nil, errortypes.NewBusinessError(
+			"Invoice email rendering is not configured on this deployment",
+		)
+	}
+
+	var customerID *pulid.ID
+	if p.Profile != nil && p.Profile.Customer != nil && !p.Profile.Customer.ID.IsNil() {
+		customerID = &p.Profile.Customer.ID
+	}
+
+	rendered, err := s.templates.RenderMessage(ctx, &servicesports.RenderMessageRequest{
+		TenantInfo: p.TenantInfo,
+		Kind:       documenttemplate.KindInvoiceEmail,
+		CustomerID: customerID,
+		Data: emailContext(&EmailContextParams{
+			Entity:         p.Entity,
+			Profile:        p.Profile,
+			PartLabel:      p.PartLabel,
+			AttachmentName: p.AttachmentName,
+		}),
+		ReferenceID: p.Entity.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &invoiceEmailWording{
+		Subject: rendered.Subject,
+		Text:    rendered.Text,
+		HTML:    rendered.HTML,
+	}, nil
+}
+
+// resolveSubject applies the two free-text tiers: the operator's draft, then the
+// customer's email profile.
+//
+// Both are unbounded free text with {number}-style placeholders, which is why
+// they keep the ad-hoc substitution engine rather than moving into the template
+// system — there is no variable catalog that could describe them. found reports
+// whether either had anything to say; when neither does, the caller renders the
+// organization's template, which is the tier the hardcoded "Invoice N" used to
+// occupy.
 func resolveSubject(
 	entity *invoice.Invoice,
 	emailProfile *customer.CustomerEmailProfile,
 	context map[string]string,
-) invoiceTemplateResult {
+) (result invoiceTemplateResult, found bool) {
 	if strings.TrimSpace(entity.EmailSubjectSnapshot) != "" {
-		return renderInvoiceTemplate(entity.EmailSubjectSnapshot, context)
+		return renderInvoiceTemplate(entity.EmailSubjectSnapshot, context), true
 	}
 	if emailProfile != nil && strings.TrimSpace(emailProfile.Subject) != "" {
-		return renderInvoiceTemplate(emailProfile.Subject, context)
+		return renderInvoiceTemplate(emailProfile.Subject, context), true
 	}
-	return invoiceTemplateResult{Value: "Invoice " + entity.Number}
+
+	return invoiceTemplateResult{}, false
 }
 
+// resolveBody is resolveSubject for the message body. The prose the hardcoded
+// tier used to assemble — "Please find invoice N attached", plus the memo — now
+// lives in the built-in starter, so an organization can reword it.
 func resolveBody(
 	entity *invoice.Invoice,
 	emailProfile *customer.CustomerEmailProfile,
 	context map[string]string,
-) invoiceTemplateResult {
+) (result invoiceTemplateResult, found bool) {
 	if strings.TrimSpace(entity.EmailBodySnapshot) != "" {
-		return renderInvoiceTemplate(entity.EmailBodySnapshot, context)
+		return renderInvoiceTemplate(entity.EmailBodySnapshot, context), true
 	}
 	if emailProfile != nil && strings.TrimSpace(emailProfile.Comment) != "" {
-		return renderInvoiceTemplate(emailProfile.Comment, context)
+		return renderInvoiceTemplate(emailProfile.Comment, context), true
 	}
-	var b strings.Builder
-	b.WriteString("Please find invoice ")
-	b.WriteString(entity.Number)
-	b.WriteString(" attached.")
-	if entity.Memo != "" {
-		b.WriteString("\n\n")
-		b.WriteString(entity.Memo)
-	}
-	return invoiceTemplateResult{Value: b.String()}
+
+	return invoiceTemplateResult{}, false
 }
 
 func invoiceTemplateContext(
@@ -2093,12 +2248,22 @@ func normalizeRecipients(input []string) []string {
 	return result
 }
 
+// applySendSnapshot freezes what was sent onto the invoice.
+//
+// Template-rendered wording is deliberately not frozen. The snapshot columns are
+// also the first tier resolveSubject reads, so storing a render would mean a later
+// edit to the organization's template never reached a re-sent invoice — and the
+// frozen copy would come back through the ad-hoc {number} engine rather than
+// html/template, losing the layout with it. What was actually sent is still
+// recoverable from the email message and the send attempts.
 func applySendSnapshot(entity *invoice.Invoice, plan *servicesports.InvoiceSendPlan) {
 	entity.SendStatus = invoice.SendStatusSending
 	entity.LastSendError = ""
 	entity.LastSendWarning = strings.Join(plan.Warnings, "; ")
-	entity.EmailSubjectSnapshot = plan.Subject
-	entity.EmailBodySnapshot = plan.Body
+	if !plan.FromTemplate {
+		entity.EmailSubjectSnapshot = plan.Subject
+		entity.EmailBodySnapshot = plan.Body
+	}
 	entity.EmailToSnapshot = plan.Recipients.To
 	entity.EmailCCSnapshot = plan.Recipients.CC
 	entity.EmailBCCSnapshot = plan.Recipients.BCC
@@ -2164,6 +2329,87 @@ func partBodyBase(part *servicesports.InvoiceSendPlanPart) string {
 		return ""
 	}
 	return "Some supporting documents are available through secure download links below."
+}
+
+// partBodyHTML picks the HTML for one message of a send.
+//
+// A template-rendered invoice re-renders per part so the wording can name which
+// message this is; anything the part appended — secure download links — is wrapped
+// and appended after it, because those links are generated per part and cannot be
+// inside the template. A render failure here falls back to wrapping the plain text
+// rather than failing a send whose plan already validated: the recipient gets the
+// invoice, unstyled, instead of nothing.
+// splitSendProfile loads what a split send needs to re-render its wording per
+// message, and nothing when the send is a single email.
+//
+// The profile is read again rather than carried on the plan because the plan
+// crosses a workflow boundary as JSON, and one extra read on the rare invoice too
+// large for a single email is cheaper than putting a customer record in a Temporal
+// payload.
+func (s *Service) splitSendProfile(
+	ctx context.Context,
+	req *servicesports.InvoiceSendRequest,
+	entity *invoice.Invoice,
+	plan *servicesports.InvoiceSendPlan,
+) (*invoiceDeliveryProfile, error) {
+	if !plan.FromTemplate || len(plan.Parts) <= 1 {
+		return nil, nil //nolint:nilnil // no profile is needed for a single message
+	}
+
+	profile, err := s.resolveDeliveryProfile(ctx, resolveDeliveryProfileParams{
+		Entity:                      entity,
+		TenantInfo:                  req.TenantInfo,
+		IncludeShipmentDetails:      true,
+		IncludeCustomer:             true,
+		IncludeCustomerEmailProfile: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err = s.resolveDeliveryOrganization(ctx, profile, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
+	return profile, nil
+}
+
+type partBodyHTMLParams struct {
+	Request  *servicesports.InvoiceSendRequest
+	Entity   *invoice.Invoice
+	Profile  *invoiceDeliveryProfile
+	Plan     *servicesports.InvoiceSendPlan
+	Part     *servicesports.InvoiceSendPlanPart
+	PartBody string
+}
+
+func (s *Service) partBodyHTML(ctx context.Context, p *partBodyHTMLParams) string {
+	if !p.Plan.FromTemplate {
+		return bodyHTML(p.PartBody)
+	}
+
+	rendered := p.Plan.BodyHTML
+	if len(p.Plan.Parts) > 1 && p.Profile != nil {
+		wording, err := s.renderInvoiceEmail(ctx, &invoiceEmailRenderParams{
+			TenantInfo: p.Request.TenantInfo,
+			Entity:     p.Entity,
+			Profile:    p.Profile,
+			PartLabel:  fmt.Sprintf("%d of %d", p.Part.PartNumber, len(p.Plan.Parts)),
+		})
+		if err != nil {
+			s.l.Warn("could not re-render the invoice email for this part",
+				zap.String("invoiceId", p.Entity.ID.String()),
+				zap.Error(err))
+		} else {
+			rendered = wording.HTML
+		}
+	}
+
+	extra := strings.TrimSpace(strings.TrimPrefix(p.PartBody, strings.TrimSpace(p.Plan.Body)))
+	if extra != "" {
+		rendered += bodyHTML(extra)
+	}
+
+	return rendered
 }
 
 func bodyHTML(body string) string {

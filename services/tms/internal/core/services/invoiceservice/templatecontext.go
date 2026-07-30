@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 )
 
@@ -230,6 +231,82 @@ func invoiceCommodityRows(rows []invoicePDFCommodityRow) []documenttemplate.Comm
 			NMFC:             row.NMFC,
 			Class:            row.Class,
 		})
+	}
+
+	return out
+}
+
+// EmailContextParams is one invoice email's data, assembled once and rendered
+// once per message part.
+type EmailContextParams struct {
+	Entity  *invoice.Invoice
+	Profile *invoiceDeliveryProfile
+
+	// PartLabel is "2 of 3" when a large invoice is split, so the template can
+	// say so rather than sending three identical-looking emails.
+	PartLabel string
+
+	// AttachmentName is the file the recipient will see, which a template may
+	// want to name in the body so a stripped attachment is recoverable.
+	AttachmentName string
+}
+
+// emailContext maps an invoice onto the variables the invoice email template
+// declares.
+//
+// It reads the same fields the ad-hoc {number}/{customer} substitution reads, so
+// an organization moving from a customer email profile to a template gets the
+// same values under documented names. Where the two disagree the delivery profile
+// wins, exactly as it does for the ad-hoc engine.
+func emailContext(p *EmailContextParams) documenttemplate.InvoiceEmailContext {
+	entity := p.Entity
+
+	out := documenttemplate.InvoiceEmailContext{
+		InvoiceNumber: entity.Number,
+		InvoiceDate:   unixDate(entity.InvoiceDate),
+		DueDate:       unixDatePtr(entity.DueDate),
+		PaymentTerm:   string(entity.PaymentTerm),
+		Total: moneyString(
+			entity.CurrencyCode,
+			entity.TotalAmount.StringFixed(2),
+		),
+		CurrencyCode:           entity.CurrencyCode,
+		Memo:                   entity.Memo,
+		CustomerName:           entity.BillToName,
+		CustomerCode:           entity.BillToCode,
+		ShipmentProNumber:      entity.ShipmentProNumber,
+		ShipmentBOL:            entity.ShipmentBOL,
+		ShipmentServiceDate:    unixDatePtr(entity.ServiceDate),
+		RemittanceInstructions: entity.RemittanceInstructions,
+		PartLabel:              p.PartLabel,
+		AttachmentName:         p.AttachmentName,
+	}
+
+	if p.Profile == nil {
+		return out
+	}
+
+	if org := p.Profile.Organization; org != nil {
+		out.CompanyName = org.Name
+	}
+
+	if cust := p.Profile.Customer; cust != nil {
+		out.CustomerName = stringutils.FirstNonEmpty(cust.Name, out.CustomerName)
+		out.CustomerCode = stringutils.FirstNonEmpty(cust.Code, out.CustomerCode)
+		if out.CompanyName == "" && cust.Organization != nil {
+			out.CompanyName = cust.Organization.Name
+		}
+	}
+
+	if shp := p.Profile.Shipment; shp != nil {
+		out.ShipmentProNumber = stringutils.FirstNonEmpty(shp.ProNumber, out.ShipmentProNumber)
+		out.ShipmentBOL = stringutils.FirstNonEmpty(shp.BOL, out.ShipmentBOL)
+		out.ShipmentOrigin = shipmentOrigin(shp)
+		out.ShipmentDestination = shipmentDestination(shp)
+		out.ShipmentServiceDate = stringutils.FirstNonEmpty(
+			unixDatePtr(shp.ActualDeliveryDate),
+			out.ShipmentServiceDate,
+		)
 	}
 
 	return out

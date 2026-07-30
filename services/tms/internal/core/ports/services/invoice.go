@@ -108,6 +108,21 @@ type InvoiceSendPlan struct {
 	Subject              string                 `json:"subject"`
 	Body                 string                 `json:"body"`
 	InvoicePDFDocumentID pulid.ID               `json:"invoicePdfDocumentId"`
+
+	// BodyHTML is the organization's template output. It is empty when the
+	// subject and body came from an operator's draft or the customer's email
+	// profile, because those are free text and the send path wraps them itself.
+	BodyHTML string `json:"bodyHtml"`
+
+	// FromTemplate says the wording is the organization's template rather than a
+	// stored draft.
+	//
+	// The send path needs it for two decisions: whether to use BodyHTML, and
+	// whether to freeze this wording into the invoice's draft columns. Freezing a
+	// template render would mean a later edit to the template never reaches a
+	// re-sent invoice, and the frozen copy would come back through the ad-hoc
+	// engine instead of html/template.
+	FromTemplate bool `json:"fromTemplate"`
 }
 
 type InvoiceSendRecipients struct {
