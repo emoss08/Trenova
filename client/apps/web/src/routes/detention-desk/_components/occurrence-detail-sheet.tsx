@@ -285,7 +285,7 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
     resolver: zodResolver(waiveFormSchema),
     defaultValues: { reason: "CustomerGoodwill", note: "" },
   });
-  const { control, handleSubmit, reset, setError } = form;
+  const { control, handleSubmit, reset } = form;
 
   const { mutateAsync, isPending } = useApiMutation<
     DetentionOccurrence,
@@ -302,7 +302,7 @@ function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialogP
       onOpenChange(false);
       onDone();
     },
-    setFormError: setError,
+    form,
     resourceName: "Detention Occurrence",
   });
 
@@ -361,7 +361,7 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
     resolver: zodResolver(disputeFormSchema),
     defaultValues: { note: "" },
   });
-  const { control, handleSubmit, reset, setError } = form;
+  const { control, handleSubmit, reset } = form;
 
   const { mutateAsync, isPending } = useApiMutation<
     DetentionOccurrence,
@@ -378,7 +378,7 @@ function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: ActionDialo
       onOpenChange(false);
       onDone();
     },
-    setFormError: setError,
+    form,
     resourceName: "Detention Occurrence",
   });
 

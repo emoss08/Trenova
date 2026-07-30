@@ -88,12 +88,13 @@ export class ApiRequestError extends Error {
     return this.data.usageStats;
   }
 
-  getFieldErrors(): ValidationError[] {
-    return this.data.errors || [];
+  getFieldErrors(field?: string): ValidationError[] {
+    const fieldErrors = this.data.errors || [];
+    return field === undefined ? fieldErrors : fieldErrors.filter((e) => e.field === field);
   }
 
   getFieldError(field: string): ValidationError | undefined {
-    return this.getFieldErrors().find((e) => e.field === field);
+    return this.getFieldErrors(field)[0];
   }
 
   getParams(): Record<string, string> {
@@ -370,9 +371,7 @@ async function putFileWithProgress(
     headers.set("Content-Type", contentType);
   }
 
-  const uploadHeaders = endpoint
-    ? await withCsrfHeader("PUT", headers, endpoint)
-    : headers;
+  const uploadHeaders = endpoint ? await withCsrfHeader("PUT", headers, endpoint) : headers;
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();

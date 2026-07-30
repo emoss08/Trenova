@@ -70,7 +70,6 @@ export function FormCreatePanel<
   };
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -119,7 +118,7 @@ export function FormCreatePanel<
           reset();
         }
       },
-      setFormError: setError,
+      form,
       resourceName: title,
     },
   );

@@ -50,7 +50,6 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
   const queryClient = useQueryClient();
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -75,7 +74,7 @@ export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
 
       queryClient.setQueryData([queryKey], data);
     },
-    setFormError: setError,
+    form,
     resourceName: title,
   });
 

@@ -32,7 +32,7 @@ export function OpenAIIntegrationForm({
     enabled: open,
   });
 
-  const { control, reset, handleSubmit, setError } = useForm({
+  const form = useForm({
     defaultValues: {
       enabled: false,
       configuration: {
@@ -40,6 +40,7 @@ export function OpenAIIntegrationForm({
       },
     },
   });
+  const { control, reset, handleSubmit } = form;
 
   const response = configQuery.data;
   const hasApiKey =
@@ -61,7 +62,7 @@ export function OpenAIIntegrationForm({
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
       apiService.integrationService.updateConfig("OpenAI", payload),
-    setFormError: setError,
+    form,
     resourceName: "OpenAI configuration",
     onSuccess: async () => {
       toast.success("OpenAI integration updated");

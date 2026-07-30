@@ -57,7 +57,6 @@ export function AssignPayProfileDialog({
   });
   const {
     control,
-    setError,
     handleSubmit,
     reset,
     formState: { isSubmitting },
@@ -113,7 +112,7 @@ export function AssignPayProfileDialog({
       onOpenChange(false);
       onAssigned?.();
     },
-    setFormError: setError,
+    form,
     resourceName: "Pay Assignment",
   });
 

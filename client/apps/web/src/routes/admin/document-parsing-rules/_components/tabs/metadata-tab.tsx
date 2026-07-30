@@ -86,7 +86,7 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
     defaultValues: ruleSet,
   });
 
-  const { handleSubmit, reset, setError, control } = form;
+  const { handleSubmit, reset, control } = form;
   const documentKind = useWatch({ control, name: "documentKind" });
   const showDocumentKindWarning = documentKind !== ruleSet.documentKind;
 
@@ -96,7 +96,7 @@ function MetadataForm({ ruleSet }: { ruleSet: RuleSet }) {
       apiService.documentParsingRuleService.update(ruleSet.id!, values),
     resourceName: "Rule Set",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [
       queries.documentParsingRule.detail._def,
       queries.documentParsingRule.list._def,

@@ -98,7 +98,6 @@ export function BillingQueueExceptionPopover({
     control,
     handleSubmit,
     reset,
-    setError,
     formState: { isSubmitting },
   } = form;
 
@@ -110,7 +109,7 @@ export function BillingQueueExceptionPopover({
         exceptionNotes: values.exceptionNotes.trim() || null,
       }),
     resourceName: "BillingQueueItem",
-    setFormError: setError,
+    form,
     onSuccess: () => {
       onSuccess();
       toast.success(successMessage);

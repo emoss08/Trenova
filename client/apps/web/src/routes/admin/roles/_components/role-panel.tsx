@@ -52,7 +52,6 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
   });
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -91,7 +90,7 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
         onOpenChange(false);
         void queryClient.invalidateQueries({ queryKey: ["role-list"] });
       },
-      setFormError: setError,
+      form,
       resourceName: "Role",
     },
   );
@@ -185,7 +184,6 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
   });
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -221,7 +219,7 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
       onOpenChange(false);
       void queryClient.invalidateQueries({ queryKey: ["role-list"] });
     },
-    setFormError: setError,
+    form,
     resourceName: "Role",
   });
 

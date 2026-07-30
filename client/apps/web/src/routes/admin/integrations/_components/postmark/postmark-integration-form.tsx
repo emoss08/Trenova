@@ -39,7 +39,7 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
     enabled: open,
   });
 
-  const { control, reset, handleSubmit, setError } = useForm<UpdateIntegrationConfigRequest>({
+  const form = useForm<UpdateIntegrationConfigRequest>({
     defaultValues: {
       enabled: false,
       configuration: {
@@ -50,6 +50,7 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
       },
     },
   });
+  const { control, reset, handleSubmit } = form;
 
   const response = configQuery.data;
   const hasServerToken =
@@ -79,7 +80,7 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
       apiService.integrationService.updateConfig("Postmark", payload),
-    setFormError: setError,
+    form,
     resourceName: "Postmark configuration",
     onSuccess: async () => {
       toast.success("Postmark integration updated");

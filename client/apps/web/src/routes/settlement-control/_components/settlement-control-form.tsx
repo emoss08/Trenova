@@ -43,7 +43,7 @@ export default function SettlementControlForm() {
       escrowInterestFrequencyMonths: data.escrowInterestFrequencyMonths,
     },
   });
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   const mutation = useApiMutation({
     mutationFn: (values: SettlementControlFormValues) =>
@@ -68,7 +68,7 @@ export default function SettlementControlForm() {
       reset(values);
       void queryClient.invalidateQueries({ queryKey: ["settlement-control"] });
     },
-    setFormError: setError,
+    form,
     resourceName: "Settlement Control",
   });
 

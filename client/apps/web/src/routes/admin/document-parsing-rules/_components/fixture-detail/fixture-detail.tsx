@@ -95,7 +95,7 @@ function FixtureForm({
     defaultValues: fixture,
   });
 
-  const { handleSubmit, reset, setError, control } = form;
+  const { handleSubmit, reset, control } = form;
   const { fields: pageFields, append: appendPage, remove: removePage } =
     useFieldArray({ control, name: "pageSnapshots" });
 
@@ -112,7 +112,7 @@ function FixtureForm({
       apiService.documentParsingRuleService.updateFixture(fixture.id!, values),
     resourceName: "Fixture",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [
       queries.documentParsingRule.fixture._def,
       queries.documentParsingRule.fixtures._def,

@@ -266,7 +266,6 @@ export function SplitMoveDialog({
     control,
     handleSubmit,
     reset,
-    setError,
     formState: { isSubmitting },
   } = form;
 
@@ -281,7 +280,7 @@ export function SplitMoveDialog({
     mutationFn: (payload: SplitMovePayload) =>
       apiService.assignmentService.splitMove(moveId, payload),
     resourceName: "Split Move",
-    setFormError: setError,
+    form,
     onSuccess: (data: SplitMoveResponse) => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       onSplit(data);

@@ -194,7 +194,7 @@ function InvoiceAdjustmentLatestCard({
   });
 
   const rejectMutation = useApiMutation({
-    setFormError: approvalForm.setError,
+    form: approvalForm,
     resourceName: "invoice adjustment reject",
     mutationFn: async ({
       adjustmentId,

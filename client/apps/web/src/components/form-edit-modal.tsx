@@ -69,7 +69,6 @@ export function FormEditModal<T extends FieldValues>({
   const queryClient = useQueryClient();
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -283,7 +282,7 @@ export function FormEditModal<T extends FieldValues>({
       await onSuccess?.(newValues, values);
       handleClose();
     },
-    setFormError: setError,
+    form,
     resourceName: title,
   });
 

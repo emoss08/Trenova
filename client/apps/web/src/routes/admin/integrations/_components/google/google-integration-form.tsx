@@ -25,7 +25,7 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
     enabled: open,
   });
 
-  const { control, reset, handleSubmit, setError } = useForm<UpdateIntegrationConfigRequest>({
+  const form = useForm<UpdateIntegrationConfigRequest>({
     defaultValues: {
       enabled: false,
       configuration: {
@@ -33,6 +33,7 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
       },
     },
   });
+  const { control, reset, handleSubmit } = form;
 
   const response = configQuery.data;
   const hasApiKey = response?.fields?.some((f) => f.key === "apiKey" && f.hasValue) ?? false;
@@ -53,7 +54,7 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
       apiService.integrationService.updateConfig("GoogleMaps", payload),
-    setFormError: setError,
+    form,
     resourceName: "Google Maps configuration",
     onSuccess: async () => {
       toast.success("Google Maps integration updated");

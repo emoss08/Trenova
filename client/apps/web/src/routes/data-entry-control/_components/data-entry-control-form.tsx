@@ -22,7 +22,7 @@ export default function DataEntryControlForm() {
     defaultValues: data,
   });
 
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.dataEntryControl.get._def,
@@ -30,7 +30,7 @@ export default function DataEntryControlForm() {
       apiService.dataEntryControlService.update(values),
     resourceName: "Data Entry Control",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [queries.dataEntryControl.get._def],
   });
 

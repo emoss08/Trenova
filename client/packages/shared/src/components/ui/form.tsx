@@ -1,6 +1,7 @@
 import { cn } from "@trenova/shared/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
+import { useFormContext } from "react-hook-form";
 
 export type GridCols = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 export type ColSpan = GridCols | "full" | "auto";
@@ -57,14 +58,51 @@ const colSpanClasses: Record<ColSpan, string> = {
   auto: "col-auto",
 } as const;
 
+// FormRootError surfaces errors the server reported against something the form has no
+// input for — a whole-object rejection, or a field this form does not render. Without
+// somewhere to show them the user gets a save that failed for no stated reason.
+//
+// Rendered by Form automatically. Export exists for layouts that need it placed
+// somewhere other than above the fields.
+export const FormRootError = React.memo(({ className }: { className?: string }) => {
+  const form = useFormContext();
+  const message = form?.formState.errors.root?.message;
+
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <div
+      role="alert"
+      className={cn(
+        "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive",
+        className,
+      )}
+    >
+      {message}
+    </div>
+  );
+});
+
+FormRootError.displayName = "FormRootError";
+
 export const Form = React.memo(({ className, onSubmit, children, ...props }: FormProps) => {
+  const form = useFormContext();
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // react-hook-form clears root inside handleSubmit, but only for submits that go
+    // through it. Clearing here covers the ones that do not — a dialog wired straight to
+    // mutate(), for instance — so a stale server complaint never outlives the attempt
+    // that produced it.
+    form?.clearErrors("root");
     onSubmit?.(e);
   };
 
   return (
     <form onSubmit={handleSubmit} className={className} {...props}>
+      <FormRootError className="mb-4" />
       {children}
     </form>
   );

@@ -48,7 +48,6 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
   });
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -85,7 +84,7 @@ export function IndexPanel({ open, onOpenChange, entry }: IndexPanelProps) {
       reset();
       onOpenChange(false);
     },
-    setFormError: setError,
+    form,
     resourceName: "Fuel Index",
   });
 

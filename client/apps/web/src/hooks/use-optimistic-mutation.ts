@@ -1,18 +1,9 @@
 import type { ApiRequestError } from "@trenova/shared/lib/api";
 import type { GraphQLRequestError } from "@trenova/shared/lib/graphql";
-import {
-  useMutation,
-  useQueryClient,
-  type QueryKey,
-} from "@tanstack/react-query";
-import type {
-  DefaultValues,
-  FieldValues,
-  UseFormReset,
-  UseFormSetError,
-} from "react-hook-form";
+import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
+import type { DefaultValues, FieldValues, UseFormReset } from "react-hook-form";
 import { toast } from "sonner";
-import { handleMutationError } from "./use-api-mutation";
+import { handleMutationError, type MutationFormTarget } from "./use-api-mutation";
 
 type MutationError = ApiRequestError | GraphQLRequestError;
 
@@ -32,26 +23,13 @@ export type OptimisticMutationOptions<
   mutationFn: (data: TVariables) => Promise<TData>;
   successMessage?: string;
   resourceName: string;
-  setFormError?: UseFormSetError<TFormValues>;
+  form?: MutationFormTarget<TFormValues>;
   resetForm?: UseFormReset<TFormValues>;
   invalidateQueries?: QueryKey[];
-  optimisticUpdate?: (
-    variables: TVariables,
-    currentData: TQueryData | undefined,
-  ) => TQueryData;
-  onMutate?: (
-    variables: TVariables,
-  ) => Promise<TContext | undefined> | TContext | undefined;
-  onSuccess?: (
-    data: TData,
-    variables: TVariables,
-    context: TContext | undefined,
-  ) => unknown;
-  onError?: (
-    error: MutationError,
-    variables: TVariables,
-    context: TContext | undefined,
-  ) => unknown;
+  optimisticUpdate?: (variables: TVariables, currentData: TQueryData | undefined) => TQueryData;
+  onMutate?: (variables: TVariables) => Promise<TContext | undefined> | TContext | undefined;
+  onSuccess?: (data: TData, variables: TVariables, context: TContext | undefined) => unknown;
+  onError?: (error: MutationError, variables: TVariables, context: TContext | undefined) => unknown;
   onSettled?: (
     data: TData | undefined,
     error: MutationError | null,
@@ -66,17 +44,9 @@ export function useOptimisticMutation<
   TQueryData = unknown,
   TFormValues extends FieldValues = FieldValues,
   TContext = OptimisticContext<TQueryData, TVariables>,
->(
-  options: OptimisticMutationOptions<
-    TData,
-    TVariables,
-    TQueryData,
-    TFormValues,
-    TContext
-  >,
-) {
+>(options: OptimisticMutationOptions<TData, TVariables, TQueryData, TFormValues, TContext>) {
   const {
-    setFormError,
+    form,
     resourceName,
     invalidateQueries,
     optimisticUpdate,
@@ -89,12 +59,7 @@ export function useOptimisticMutation<
 
   const queryClient = useQueryClient();
 
-  return useMutation<
-    TData,
-    MutationError,
-    TVariables,
-    OptimisticContext<TQueryData, TVariables>
-  >({
+  return useMutation<TData, MutationError, TVariables, OptimisticContext<TQueryData, TVariables>>({
     mutationFn: options.mutationFn,
     onMutate: async (variables) => {
       if (onMutate) {
@@ -108,9 +73,7 @@ export function useOptimisticMutation<
         queryKey: options.queryKey,
       });
 
-      const previousData = queryClient.getQueryData<TQueryData>(
-        options.queryKey,
-      );
+      const previousData = queryClient.getQueryData<TQueryData>(options.queryKey);
 
       if (optimisticUpdate) {
         const newData = optimisticUpdate(variables, previousData);
@@ -137,7 +100,7 @@ export function useOptimisticMutation<
 
       handleMutationError({
         error,
-        setFormError,
+        form,
         resourceName,
       });
 
@@ -152,9 +115,7 @@ export function useOptimisticMutation<
 
       if (invalidateQueries && invalidateQueries.length > 0) {
         await Promise.all(
-          invalidateQueries.map((queryKey) =>
-            queryClient.invalidateQueries({ queryKey }),
-          ),
+          invalidateQueries.map((queryKey) => queryClient.invalidateQueries({ queryKey })),
         );
       }
 

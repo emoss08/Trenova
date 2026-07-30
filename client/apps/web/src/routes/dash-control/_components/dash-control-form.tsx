@@ -40,7 +40,7 @@ export default function DashControlForm() {
       detentionAlertThresholdMinutes: data.detentionAlertThresholdMinutes,
     },
   });
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   const mutation = useApiMutation({
     mutationFn: (values: DashControlFormValues) =>
@@ -53,7 +53,7 @@ export default function DashControlForm() {
       reset(values);
       void queryClient.invalidateQueries({ queryKey: ["dash-control"] });
     },
-    setFormError: setError,
+    form,
     resourceName: "Dash Control",
   });
 

@@ -67,7 +67,7 @@ export default function DistanceControlForm() {
     defaultValues: data,
   });
 
-  const { handleSubmit, reset, setError } = form;
+  const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation<
     DistanceControl,
@@ -79,7 +79,7 @@ export default function DistanceControlForm() {
     mutationFn: async (values: DistanceControl) => apiService.distanceControlService.patch(values),
     resourceName: "Distance Control",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [queries.distanceControl.get._def],
   });
 

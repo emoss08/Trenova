@@ -39,7 +39,6 @@ export function RoleCreatePage() {
   });
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
   } = form;
@@ -55,7 +54,7 @@ export function RoleCreatePage() {
       void queryClient.invalidateQueries({ queryKey: ["role-list"] });
       void navigate("/admin/roles");
     },
-    setFormError: setError,
+    form,
     resourceName: "Role",
   });
 

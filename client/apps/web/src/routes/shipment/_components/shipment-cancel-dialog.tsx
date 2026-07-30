@@ -43,7 +43,6 @@ export function ShipmentCancelDialog({
     control,
     handleSubmit,
     reset,
-    setError,
     formState: { isSubmitting },
   } = form;
 
@@ -51,7 +50,7 @@ export function ShipmentCancelDialog({
     mutationFn: (values: CancelFormValues) =>
       apiService.shipmentService.cancel(shipmentId, values.cancelReason),
     resourceName: "Shipment",
-    setFormError: setError,
+    form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       toast.success("Shipment canceled", {

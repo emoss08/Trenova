@@ -98,7 +98,6 @@ function HoldReasonEditPanel({
   };
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -149,7 +148,7 @@ function HoldReasonEditPanel({
         onOpenChange(false);
       }
     },
-    setFormError: setError,
+    form,
     resourceName: "Hold Reason",
   });
 

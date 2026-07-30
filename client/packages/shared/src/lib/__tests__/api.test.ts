@@ -345,9 +345,7 @@ describe("isVersionMismatchError", () => {
   it("returns true for validation error with VERSION_MISMATCH code", () => {
     const err = makeError({
       type: "https://x.com/problems/validation-error",
-      errors: [
-        { field: "version", message: "Version mismatch", code: "VERSION_MISMATCH" },
-      ],
+      errors: [{ field: "version", message: "Version mismatch", code: "VERSION_MISMATCH" }],
     });
     expect(err.isVersionMismatchError()).toBe(true);
   });
@@ -363,31 +361,29 @@ describe("isVersionMismatchError", () => {
   it("returns false for non-validation error", () => {
     const err = makeError({
       type: "https://x.com/problems/internal-error",
-      errors: [
-        { field: "version", message: "Mismatch", code: "VERSION_MISMATCH" },
-      ],
+      errors: [{ field: "version", message: "Mismatch", code: "VERSION_MISMATCH" }],
     });
     expect(err.isVersionMismatchError()).toBe(false);
   });
 });
 
+// The previous three cases asserted against status: 200, which no error response ever
+// carries — they pinned the predicate's OR-of-two-conditions shape rather than any
+// contract. These use the statuses the server actually returns for each branch.
 describe("isConflictError", () => {
-  it("returns true for status 409", () => {
-    const err = makeError({ status: 409 });
+  it("recognises the conflict status without help from the problem type", () => {
+    const err = makeError({ status: 409, type: "https://x.com/problems/internal-error" });
     expect(err.isConflictError()).toBe(true);
   });
 
-  it("returns false for non-409 status without resource-conflict type", () => {
-    const err = makeError({ status: 200 });
+  it("recognises the conflict problem type on a status that does not imply it", () => {
+    const err = makeError({ status: 422, type: "https://x.com/problems/resource-conflict" });
+    expect(err.isConflictError()).toBe(true);
+  });
+
+  it("is false for an unrelated validation failure", () => {
+    const err = makeError({ status: 422, type: "https://x.com/problems/validation-error" });
     expect(err.isConflictError()).toBe(false);
-  });
-
-  it("returns true for resource-conflict problem type", () => {
-    const err = makeError({
-      status: 200,
-      type: "https://x.com/problems/resource-conflict",
-    });
-    expect(err.isConflictError()).toBe(true);
   });
 });
 
@@ -396,9 +392,7 @@ describe("getFieldErrors", () => {
     const err = makeError({
       errors: [{ field: "name", message: "Required" }],
     });
-    expect(err.getFieldErrors()).toEqual([
-      { field: "name", message: "Required" },
-    ]);
+    expect(err.getFieldErrors()).toEqual([{ field: "name", message: "Required" }]);
   });
 
   it("defaults to empty array", () => {
@@ -438,5 +432,86 @@ describe("getParams", () => {
   it("defaults to empty object", () => {
     const err = makeError({ params: undefined });
     expect(err.getParams()).toEqual({});
+  });
+});
+
+// The factory used to keep status and type mutually consistent, so nothing exercised the
+// case where they disagree — which is exactly what the retry predicate has to arbitrate
+// now that it discriminates on status first.
+describe("status and problem type disagreeing", () => {
+  it("keeps both signals readable when a 500 carries a validation type", () => {
+    const err = makeError({ status: 500, type: "https://x.com/problems/validation-error" });
+
+    expect(err.status).toBe(500);
+    expect(err.getProblemType()).toBe("validation-error");
+    expect(err.isValidationError()).toBe(true);
+  });
+
+  it("keeps both signals readable when a 400 carries an internal type", () => {
+    const err = makeError({ status: 400, type: "https://x.com/problems/internal-error" });
+
+    expect(err.status).toBe(400);
+    expect(err.getProblemType()).toBe("internal-error");
+    expect(err.isValidationError()).toBe(false);
+  });
+
+  it("lets status win for rate limiting regardless of the declared type", () => {
+    const err = makeError({ status: 429, type: "https://x.com/problems/internal-error" });
+    expect(err.isRateLimitError()).toBe(true);
+  });
+});
+
+describe("field error payload shapes", () => {
+  it("returns both messages when two errors target the same field", () => {
+    const err = makeError({
+      errors: [
+        { field: "proNumber", message: "Pro number is required", code: "REQUIRED" },
+        { field: "proNumber", message: "Pro number is already in use", code: "DUPLICATE" },
+      ],
+    });
+
+    expect(err.getFieldErrors("proNumber")).toHaveLength(2);
+    expect(err.getFieldError("proNumber")?.message).toBe("Pro number is required");
+  });
+
+  it("treats an empty errors array the same as an absent one", () => {
+    expect(makeError({ errors: [] }).getFieldErrors()).toEqual([]);
+    expect(makeError({ errors: undefined }).getFieldErrors()).toEqual([]);
+    expect(makeError({ errors: [] }).normalize().fieldErrors).toEqual([]);
+    expect(makeError({ errors: undefined }).normalize().fieldErrors).toEqual([]);
+  });
+
+  // errortypes.MultiError.WithIndex produces these: a bracket-indexed path for a nested
+  // field, and the bare prefix when the whole element is rejected.
+  it("preserves an array-element field path", () => {
+    const err = makeError({
+      errors: [
+        { field: "lines[0].glAccountId", message: "GL account is required", code: "REQUIRED" },
+        { field: "lines[1]", message: "Line is required", code: "REQUIRED" },
+      ],
+    });
+
+    expect(err.getFieldError("lines[0].glAccountId")?.message).toBe("GL account is required");
+    expect(err.getFieldError("lines[1]")?.message).toBe("Line is required");
+  });
+
+  it("preserves an empty field path rather than discarding the error", () => {
+    const err = makeError({
+      errors: [{ field: "", message: "Journal is unbalanced", code: "INVALID" }],
+    });
+
+    expect(err.getFieldErrors()).toHaveLength(1);
+    expect(err.getFieldError("")?.message).toBe("Journal is unbalanced");
+  });
+
+  it("finds a version mismatch reported on a nested line", () => {
+    const err = makeError({
+      type: "https://x.com/problems/validation-error",
+      errors: [
+        { field: "lines[2].version", message: "Version mismatch", code: "VERSION_MISMATCH" },
+      ],
+    });
+
+    expect(err.isVersionMismatchError()).toBe(true);
   });
 });

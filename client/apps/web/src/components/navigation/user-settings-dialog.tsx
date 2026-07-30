@@ -96,7 +96,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
   >({
     mutationFn: (values) => apiService.userService.updateMySettings(values),
     resourceName: "User Settings",
-    setFormError: settingsForm.setError,
+    form: settingsForm,
     onSuccess: (updatedUser) => {
       useAuthStore.getState().setUser(updatedUser);
       toast.success("Settings updated", {
@@ -113,7 +113,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
   >({
     mutationFn: (values) => apiService.userService.changeMyPassword(values),
     resourceName: "Change Password",
-    setFormError: passwordForm.setError,
+    form: passwordForm,
     onSuccess: () => {
       toast.success("Password changed", {
         description: "Your password has been updated successfully.",

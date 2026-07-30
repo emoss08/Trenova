@@ -38,7 +38,7 @@ export default function InvoiceAdjustmentControlForm() {
     defaultValues: data,
   });
 
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation<
     InvoiceAdjustmentControl,
@@ -51,7 +51,7 @@ export default function InvoiceAdjustmentControlForm() {
       apiService.invoiceAdjustmentControlService.update(values),
     resourceName: "Invoice Adjustment Control",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [queries.invoiceAdjustmentControl.get._def],
   });
 

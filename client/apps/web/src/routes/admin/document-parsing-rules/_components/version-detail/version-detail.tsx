@@ -74,7 +74,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
     defaultValues: version,
   });
 
-  const { handleSubmit, reset, setError, control } = form;
+  const { handleSubmit, reset, control } = form;
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.documentParsingRule.version._def,
@@ -82,7 +82,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
       apiService.documentParsingRuleService.updateVersion(version.id!, values),
     resourceName: "Rule Version",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [
       queries.documentParsingRule.version._def,
       queries.documentParsingRule.versions._def,

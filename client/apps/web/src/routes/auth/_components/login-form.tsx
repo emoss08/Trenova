@@ -42,7 +42,7 @@ export function LoginForm({
   const hasAnySso = providers.length > 0;
   const returnTo = typeof window !== "undefined" ? `${window.location.origin}/` : "/";
 
-  const { control, handleSubmit, setError } = useForm<LoginRequest>({
+  const form = useForm<LoginRequest>({
     resolver: zodResolver(loginRequestSchema),
     defaultValues: {
       emailAddress: "",
@@ -50,10 +50,11 @@ export function LoginForm({
       organizationSlug,
     },
   });
+  const { control, handleSubmit } = form;
 
   const { mutateAsync, isPending } = useApiMutation({
     mutationFn: authService.login,
-    setFormError: setError,
+    form,
     resourceName: "Login",
     onSuccess: async (data) => {
       setUser(data.user);

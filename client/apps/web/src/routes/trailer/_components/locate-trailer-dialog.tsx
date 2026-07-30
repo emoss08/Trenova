@@ -49,7 +49,6 @@ export function LocateTrailerDialog({
     control,
     handleSubmit,
     reset,
-    setError,
     setValue,
     formState: { isSubmitting },
   } = form;
@@ -64,7 +63,7 @@ export function LocateTrailerDialog({
     mutationFn: (payload: LocateTrailerPayload) =>
       apiService.trailerService.locate(trailerId, payload),
     resourceName: "Trailer",
-    setFormError: setError,
+    form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["trailer-list"] });
       toast.success("Trailer located successfully");

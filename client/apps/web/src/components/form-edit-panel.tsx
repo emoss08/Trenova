@@ -76,7 +76,6 @@ export function FormEditPanel<
   };
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -132,7 +131,7 @@ export function FormEditPanel<
         onOpenChange(false);
       }
     },
-    setFormError: setError,
+    form,
     resourceName: title,
   });
 

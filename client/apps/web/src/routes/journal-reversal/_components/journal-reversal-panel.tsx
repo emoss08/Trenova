@@ -40,7 +40,6 @@ function CreateReversalPanel({
   });
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -67,7 +66,7 @@ function CreateReversalPanel({
       onOpenChange(false);
       reset();
     },
-    setFormError: setError,
+    form,
     resourceName: "Journal Reversal",
   });
 

@@ -95,7 +95,6 @@ function DocumentTypeEditPanel({
   };
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -146,7 +145,7 @@ function DocumentTypeEditPanel({
         onOpenChange(false);
       }
     },
-    setFormError: setError,
+    form,
     resourceName: "Document Type",
   });
 

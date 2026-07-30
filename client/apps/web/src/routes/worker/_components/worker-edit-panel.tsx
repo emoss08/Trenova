@@ -108,7 +108,6 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
 
   const {
-    setError,
     formState: { isSubmitting, errors },
     handleSubmit,
     reset,
@@ -160,7 +159,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
         void setActiveTab("general");
       }
     },
-    setFormError: setError,
+    form,
     resourceName: "Worker",
   });
 

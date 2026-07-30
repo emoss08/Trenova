@@ -103,7 +103,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
     },
   });
 
-  const { control, handleSubmit, reset, setError, setValue } = form;
+  const { control, handleSubmit, reset, setValue } = form;
   const enabled = useWatch({ control, name: "enabled" });
   const enforceSso = useWatch({ control, name: "enforceSso" });
 
@@ -138,7 +138,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
         allowedDomains: parseAllowedDomains(values.allowedDomainsText),
         redirectUrl,
       }),
-    setFormError: setError,
+    form,
     resourceName: "Microsoft Entra ID SSO",
     onSuccess: async (data) => {
       reset({

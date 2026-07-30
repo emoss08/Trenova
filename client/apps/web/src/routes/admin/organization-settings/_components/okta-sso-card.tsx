@@ -106,7 +106,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
     },
   });
 
-  const { control, handleSubmit, reset, setError, setValue } = form;
+  const { control, handleSubmit, reset, setValue } = form;
   const enabled = useWatch({ control, name: "enabled" });
   const enforceSso = useWatch({ control, name: "enforceSso" });
 
@@ -141,7 +141,7 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
         scopes: parseCommaSeparated(values.scopesText),
         redirectUrl,
       }),
-    setFormError: setError,
+    form,
     resourceName: "Okta SSO",
     onSuccess: async (data) => {
       reset({

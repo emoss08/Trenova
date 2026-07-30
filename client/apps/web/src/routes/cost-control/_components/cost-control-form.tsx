@@ -132,14 +132,14 @@ export default function CostControlForm() {
     values: defaultValues,
   });
 
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.costControl.get._def,
     mutationFn: async (values: CostControlFormValues) => submitCostControl(values, defaultValues),
     resourceName: "Cost Control",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [
       queries.costControl.get._def,
       queries.costControl.resolvedProfile._def,

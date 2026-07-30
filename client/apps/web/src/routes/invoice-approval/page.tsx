@@ -159,7 +159,7 @@ export function InvoiceApprovalPage() {
   });
 
   const rejectMutation = useApiMutation({
-    setFormError: rejectForm.setError,
+    form: rejectForm,
     resourceName: "invoice adjustment reject",
     mutationFn: async ({
       adjustmentId,

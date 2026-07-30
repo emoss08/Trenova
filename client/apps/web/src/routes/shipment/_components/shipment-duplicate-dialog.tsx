@@ -46,7 +46,6 @@ export function ShipmentDuplicateDialog({
     control,
     handleSubmit,
     reset,
-    setError,
     formState: { isSubmitting },
   } = form;
 
@@ -54,7 +53,7 @@ export function ShipmentDuplicateDialog({
     mutationFn: (payload: DuplicateShipmentRequest) =>
       apiService.shipmentService.duplicate(payload),
     resourceName: "Shipment",
-    setFormError: setError,
+    form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       toast.success("Shipment duplication started", {

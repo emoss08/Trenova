@@ -83,7 +83,6 @@ export function AssignmentDialog({
     control,
     handleSubmit,
     reset,
-    setError,
     setValue,
     getValues,
     formState: { isSubmitting },
@@ -133,7 +132,7 @@ export function AssignmentDialog({
           return;
         }
       }
-      handleMutationError({ error, setFormError: setError, resourceName: "Assignment" });
+      handleMutationError({ error, form, resourceName: "Assignment" });
     },
   });
 

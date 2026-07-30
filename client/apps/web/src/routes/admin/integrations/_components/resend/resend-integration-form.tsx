@@ -47,7 +47,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
     enabled: open,
   });
 
-  const { control, reset, handleSubmit, setError } = useForm<UpdateIntegrationConfigRequest>({
+  const form = useForm<UpdateIntegrationConfigRequest>({
     defaultValues: {
       enabled: false,
       configuration: {
@@ -58,6 +58,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
       },
     },
   });
+  const { control, reset, handleSubmit } = form;
 
   const response = configQuery.data;
   const hasApiKey = response?.fields?.some((f) => f.key === "apiKey" && f.hasValue) ?? false;
@@ -87,7 +88,7 @@ export function ResendIntegrationForm({ open, onClose }: { open: boolean; onClos
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
       apiService.integrationService.updateConfig("Resend", payload),
-    setFormError: setError,
+    form,
     resourceName: "Resend configuration",
     onSuccess: async () => {
       toast.success("Resend integration updated");

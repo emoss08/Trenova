@@ -64,7 +64,7 @@ export default function AccountingControlForm() {
     defaultValues: data,
   });
 
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.accountingControl.get._def,
@@ -72,7 +72,7 @@ export default function AccountingControlForm() {
       apiService.accountingControlService.update(values),
     resourceName: "Accounting Control",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [queries.accountingControl.get._def],
   });
 

@@ -51,7 +51,7 @@ export function DataRetentionPage() {
     },
     mode: "onChange",
   });
-  const { control, handleSubmit, reset, setError } = form;
+  const { control, handleSubmit, reset } = form;
 
   useEffect(() => {
     if (!data) return;
@@ -64,7 +64,7 @@ export function DataRetentionPage() {
 
   const mutation = useApiMutation({
     mutationFn: (values: DataRetentionFormValues) => updateDataRetention(values),
-    setFormError: setError,
+    form,
     resourceName: "Data Retention",
     onSuccess: async () => {
       toast.success("Data retention settings saved");

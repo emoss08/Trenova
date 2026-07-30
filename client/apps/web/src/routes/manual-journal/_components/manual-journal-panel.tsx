@@ -61,7 +61,7 @@ function CreatePanel({
   >({
     mutationFn: async (data: JournalFormValues) =>
       apiService.manualJournalService.createDraft(data as unknown as Partial<ManualJournal>),
-    setFormError: form.setError,
+    form,
     resourceName: "manual journal",
     onSuccess: () => {
       toast.success("Draft created");
@@ -152,7 +152,7 @@ function EditPanel({
           row!.id!,
           data as unknown as Partial<ManualJournal>,
         ),
-      setFormError: form.setError,
+      form,
       resourceName: "manual journal",
       onSuccess: () => {
         invalidateQueries();

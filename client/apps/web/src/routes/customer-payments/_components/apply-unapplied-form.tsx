@@ -46,7 +46,6 @@ export function ApplyUnappliedForm({
     },
   });
   const {
-    setError,
     setValue,
     getValues,
     handleSubmit,
@@ -93,7 +92,7 @@ export function ApplyUnappliedForm({
       void queryClient.invalidateQueries({ queryKey: queries.ar._def });
       onDone();
     },
-    setFormError: setError,
+    form,
     resourceName: "Customer Payment",
   });
 

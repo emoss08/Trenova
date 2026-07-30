@@ -84,7 +84,6 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
   });
 
   const {
-    setError,
     reset,
     formState: { isSubmitting },
   } = form;
@@ -105,7 +104,7 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
       setSuccessToken(result.token);
       setSuccessDialogOpen(true);
     },
-    setFormError: setError,
+    form,
     resourceName: "API Key",
   });
 
@@ -189,7 +188,6 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
   });
 
   const {
-    setError,
     reset,
     formState: { isSubmitting },
   } = form;
@@ -236,7 +234,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
       reset(getDefaultValues());
       onOpenChange(false);
     },
-    setFormError: setError,
+    form,
     resourceName: "API Key",
   });
 

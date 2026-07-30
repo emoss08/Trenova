@@ -112,7 +112,6 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   const defaultTab = hasFormTabs ? formTabs[0].value : "details";
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault(defaultTab));
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -164,7 +163,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
         void setActiveTab(defaultTab);
       }
     },
-    setFormError: setError,
+    form,
     resourceName: title,
   });
 

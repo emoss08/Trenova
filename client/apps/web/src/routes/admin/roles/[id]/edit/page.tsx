@@ -43,7 +43,6 @@ export function RoleEditPage() {
 
   const {
     control,
-    setError,
     setValue,
     reset,
     formState: { isSubmitting },
@@ -82,7 +81,7 @@ export function RoleEditPage() {
       void queryClient.invalidateQueries({ queryKey: ["role", id] });
       void navigate("/admin/roles");
     },
-    setFormError: setError,
+    form,
     resourceName: "Role",
   });
 

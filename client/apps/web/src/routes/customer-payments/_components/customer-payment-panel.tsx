@@ -81,7 +81,6 @@ function RecordPaymentPanel({
     defaultValues: buildDefaults(prefill.customerId ?? ""),
   });
   const {
-    setError,
     handleSubmit,
     reset,
     formState: { isSubmitting },
@@ -134,7 +133,7 @@ function RecordPaymentPanel({
       reset(buildDefaults(""));
       onOpenChange(false);
     },
-    setFormError: setError,
+    form,
     resourceName: "Customer Payment",
   });
 

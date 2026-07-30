@@ -84,7 +84,6 @@ export function WorkerCreatePanel({
   );
 
   const {
-    setError,
     formState: { isSubmitting, errors },
     handleSubmit,
     reset,
@@ -113,7 +112,7 @@ export function WorkerCreatePanel({
       onOpenChange(false);
       void setActiveTab("general");
     },
-    setFormError: setError,
+    form,
     resourceName: "Worker",
   });
 

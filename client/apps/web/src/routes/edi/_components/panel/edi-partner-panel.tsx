@@ -68,7 +68,7 @@ function CreatePartnerPanel({
   const createExternalMutation = useApiMutation({
     mutationFn: (values: EDIPartnerFormValues) =>
       apiService.ediService.createPartner(toPartnerRequest(values)),
-    setFormError: externalForm.setError,
+    form: externalForm,
     resourceName: "EDI Partner",
     onSuccess: async () => {
       toast.success("External EDI partner created");
@@ -80,7 +80,7 @@ function CreatePartnerPanel({
   const createConnectionMutation = useApiMutation({
     mutationFn: (values: CreateInternalPartnerPairFormValues) =>
       apiService.ediService.createConnection(toConnectionRequest(values)),
-    setFormError: pairForm.setError,
+    form: pairForm,
     resourceName: "EDI Connection",
     onSuccess: async () => {
       toast.success("EDI connection requested");
@@ -285,7 +285,7 @@ function PartnerEditPanel({
       }
       return apiService.ediService.updatePartner(partner.id, toPartnerRequest(values));
     },
-    setFormError: form.setError,
+    form,
     resourceName: "EDI Partner",
     onSuccess: async () => {
       toast.success("EDI partner updated");

@@ -42,7 +42,6 @@ export function BillingQueueAssignDialog({
     control,
     handleSubmit,
     reset,
-    setError,
     formState: { isSubmitting },
   } = form;
 
@@ -50,7 +49,7 @@ export function BillingQueueAssignDialog({
     mutationFn: (values: BillingQueueAssignInput) =>
       apiService.billingQueueService.assign(itemId, values),
     resourceName: "BillingQueueItem",
-    setFormError: setError,
+    form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });

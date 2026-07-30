@@ -202,7 +202,6 @@ function AssignRoleDialog({
     control,
     handleSubmit,
     reset,
-    setError,
     formState: { isSubmitting },
   } = form;
 
@@ -229,7 +228,7 @@ function AssignRoleDialog({
         expiresAt: values.expiresAt ?? null,
       }),
     resourceName: "Role Assignment",
-    setFormError: setError,
+    form,
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["user-role-assignments", userId],

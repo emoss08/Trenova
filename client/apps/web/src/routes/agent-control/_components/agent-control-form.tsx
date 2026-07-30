@@ -33,7 +33,7 @@ export default function AgentControlForm() {
     defaultValues,
     values: defaultValues,
   });
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   const mutation = useApiMutation({
     mutationFn: (values: AgentControlFormValues) => updateAgentControl(values),
@@ -42,7 +42,7 @@ export default function AgentControlForm() {
       reset(values);
       void queryClient.invalidateQueries({ queryKey: AGENT_CONTROL_QUERY_KEY });
     },
-    setFormError: setError,
+    form,
     resourceName: "Agent Control",
   });
 

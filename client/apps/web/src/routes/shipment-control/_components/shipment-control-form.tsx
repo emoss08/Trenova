@@ -27,14 +27,14 @@ export default function ShipmentControlForm() {
     defaultValues: data,
   });
 
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.shipmentControl.get._def,
     mutationFn: async (values: ShipmentControl) => apiService.shipmentControlService.update(values),
     resourceName: "Shipment Control",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [queries.shipmentControl.get._def],
   });
 

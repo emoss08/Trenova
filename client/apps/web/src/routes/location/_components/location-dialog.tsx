@@ -94,7 +94,6 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
   const { isPopout, closePopout } = usePopoutWindow();
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -131,7 +130,7 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
         reset();
       }
     },
-    setFormError: setError,
+    form,
     resourceName: TITLE,
   });
 
@@ -216,7 +215,6 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
   const user = useAuthStore((s) => s.user);
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -258,7 +256,7 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
         onOpenChange(false);
       }
     },
-    setFormError: setError,
+    form,
     resourceName: TITLE,
   });
 

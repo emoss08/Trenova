@@ -47,17 +47,17 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
     ...queries.integration.config("Samsara"),
     enabled: open,
   });
-  const { control, reset, setValue, handleSubmit, setError } =
-    useForm<UpdateIntegrationConfigRequest>({
-      defaultValues: {
-        enabled: false,
-        configuration: {
-          token: "",
-          baseUrl: "",
-          webhookSecret: "",
-        },
+  const form = useForm<UpdateIntegrationConfigRequest>({
+    defaultValues: {
+      enabled: false,
+      configuration: {
+        token: "",
+        baseUrl: "",
+        webhookSecret: "",
       },
-    });
+    },
+  });
+  const { control, reset, setValue, handleSubmit } = form;
 
   const response = configQuery.data;
   const hasToken = getFieldValue(response?.fields, "token").hasValue;
@@ -84,7 +84,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
       apiService.integrationService.updateConfig("Samsara", payload),
-    setFormError: setError,
+    form,
     resourceName: "Samsara configuration",
     onSuccess: async () => {
       setValue("configuration.token", "");

@@ -31,7 +31,7 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
     enabled: open,
   });
 
-  const { control, reset, handleSubmit, setError } = useForm<UpdateIntegrationConfigRequest>({
+  const form = useForm<UpdateIntegrationConfigRequest>({
     defaultValues: {
       enabled: false,
       configuration: {
@@ -40,6 +40,7 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
       },
     },
   });
+  const { control, reset, handleSubmit } = form;
 
   const response = configQuery.data;
   const hasApiKey = response?.fields?.some((f) => f.key === "apiKey" && f.hasValue) ?? false;
@@ -62,7 +63,7 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
       apiService.integrationService.updateConfig(INTEGRATION_TYPE, payload),
-    setFormError: setError,
+    form,
     resourceName: "EIA fuel price configuration",
     onSuccess: async () => {
       toast.success("EIA fuel price integration updated");

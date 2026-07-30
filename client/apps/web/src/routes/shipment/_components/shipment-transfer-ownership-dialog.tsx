@@ -42,7 +42,6 @@ export function ShipmentTransferOwnershipDialog({
     control,
     handleSubmit,
     reset,
-    setError,
     formState: { isSubmitting },
   } = form;
 
@@ -50,7 +49,7 @@ export function ShipmentTransferOwnershipDialog({
     mutationFn: (values: TransferOwnershipPayload) =>
       apiService.shipmentService.transferOwnership(shipmentId, values.ownerId),
     resourceName: "Shipment",
-    setFormError: setError,
+    form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       toast.success("Ownership transferred", {

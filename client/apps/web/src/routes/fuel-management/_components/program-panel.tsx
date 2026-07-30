@@ -106,7 +106,6 @@ export function ProgramPanel({ open, onOpenChange, programId }: ProgramPanelProp
   });
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -150,7 +149,7 @@ export function ProgramPanel({ open, onOpenChange, programId }: ProgramPanelProp
       reset();
       onOpenChange(false);
     },
-    setFormError: setError,
+    form,
     resourceName: "Fuel Surcharge Program",
   });
 

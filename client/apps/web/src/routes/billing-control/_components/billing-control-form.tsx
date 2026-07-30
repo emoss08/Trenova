@@ -36,7 +36,7 @@ export default function BillingControlForm() {
     defaultValues: data,
   });
 
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation<
     BillingControl,
@@ -48,7 +48,7 @@ export default function BillingControlForm() {
     mutationFn: async (values: BillingControl) => apiService.billingControlService.update(values),
     resourceName: "Billing Control",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [queries.billingControl.get._def],
   });
 

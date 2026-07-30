@@ -61,7 +61,7 @@ function CreateTestCasePanel({
   const mutation = useApiMutation({
     mutationFn: (values: EDITestCaseFormValues) =>
       apiService.ediService.createTestCase(toTestCaseRequest(values)),
-    setFormError: form.setError,
+    form,
     resourceName: "EDI Test Case",
     onSuccess: async () => {
       toast.success("EDI test case created");
@@ -156,7 +156,7 @@ function TestCaseEditPanel({
       }
       return apiService.ediService.updateTestCase(testCaseId, toTestCaseRequest(values));
     },
-    setFormError: form.setError,
+    form,
     resourceName: "EDI Test Case",
     onSuccess: async () => {
       toast.success("EDI test case updated");

@@ -53,7 +53,6 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
     register,
     handleSubmit,
     reset,
-    setError,
     formState: { isSubmitting },
   } = form;
 
@@ -64,7 +63,7 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
         filters: cleanFilters,
       }),
     resourceName: "BillingQueueFilterPreset",
-    setFormError: setError,
+    form,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-filter-presets"] });
       toast.success("Filter preset saved");

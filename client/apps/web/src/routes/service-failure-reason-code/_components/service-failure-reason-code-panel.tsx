@@ -95,7 +95,6 @@ function ServiceFailureReasonCodeEditPanel({
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -133,7 +132,7 @@ function ServiceFailureReasonCodeEditPanel({
         onOpenChange(false);
       }
     },
-    setFormError: setError,
+    form,
     resourceName: "Service Failure Reason Code",
   });
 

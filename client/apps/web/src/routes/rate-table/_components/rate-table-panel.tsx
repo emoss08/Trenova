@@ -90,7 +90,6 @@ function RateTableEditPanel({ open, onOpenChange, row, form }: RateTableEditPane
   };
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -139,7 +138,7 @@ function RateTableEditPanel({ open, onOpenChange, row, form }: RateTableEditPane
         onOpenChange(false);
       }
     },
-    setFormError: setError,
+    form,
     resourceName: "Rate Table",
   });
 

@@ -79,7 +79,6 @@ export function DataTableSaveConfigDialog({
     control,
     handleSubmit,
     reset,
-    setError,
     formState: { isSubmitting },
   } = form;
 
@@ -107,7 +106,7 @@ export function DataTableSaveConfigDialog({
     mutationFn: (data: TableConfigurationFormValues) =>
       apiService.tableConfigurationService.create(data),
     resourceName: "Table Configuration",
-    setFormError: setError,
+    form,
     onSuccess: (created) => {
       void queryClient.invalidateQueries({
         queryKey: ["tableConfiguration"],

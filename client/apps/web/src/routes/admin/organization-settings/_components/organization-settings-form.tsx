@@ -70,7 +70,7 @@ export default function OrganizationSettingsForm() {
 
   const [tab, setTab] = useQueryState("tab", organizationSettingsTabParser);
 
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   useEffect(() => {
     if (organizationQuery.data) {
@@ -84,7 +84,7 @@ export default function OrganizationSettingsForm() {
       updateOrganizationSettingsGraphQL(organizationId, values),
     resourceName: "Organization Settings",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [
       queries.organization.detail._def,
       queries.organization.logo._def,

@@ -31,7 +31,7 @@ export default function SequenceConfigForm() {
     defaultValues: data,
   });
 
-  const { handleSubmit, reset, setError } = form;
+  const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.sequenceConfig.get._def,
@@ -39,7 +39,7 @@ export default function SequenceConfigForm() {
       apiService.sequenceConfigService.update(values),
     resourceName: "Sequence Configuration",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [queries.sequenceConfig.get._def],
   });
 

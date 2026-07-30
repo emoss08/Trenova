@@ -71,7 +71,6 @@ export function ServiceFailurePanel({
     defaultValues,
   });
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -108,7 +107,7 @@ export function ServiceFailurePanel({
         onOpenChange(false);
       }
     },
-    setFormError: setError,
+    form,
     resourceName: "Service Failure",
   });
 

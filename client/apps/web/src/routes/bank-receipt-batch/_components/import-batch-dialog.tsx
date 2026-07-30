@@ -46,7 +46,6 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
   });
 
   const {
-    setError,
     formState: { isSubmitting },
     handleSubmit,
     reset,
@@ -66,7 +65,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
   >({
     mutationFn: async (data: CreateBatchRequest) =>
       apiService.bankReceiptBatchService.create(data),
-    setFormError: setError,
+    form,
     resourceName: "Import Batch",
     onSuccess: (result) => {
       toast.success("Import batch created");

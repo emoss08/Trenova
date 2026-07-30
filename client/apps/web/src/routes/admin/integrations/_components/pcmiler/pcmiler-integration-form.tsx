@@ -26,9 +26,10 @@ const INTEGRATION_TYPE = "PCMiler";
 export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
   const configQuery = useQuery({ ...queries.integration.config(INTEGRATION_TYPE), enabled: open });
-  const { control, reset, handleSubmit, setError } = useForm<UpdateIntegrationConfigRequest>({
+  const form = useForm<UpdateIntegrationConfigRequest>({
     defaultValues: defaultValues(),
   });
+  const { control, reset, handleSubmit } = form;
 
   const response = configQuery.data;
   const hasApiKey =
@@ -51,7 +52,7 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
       apiService.integrationService.updateConfig(INTEGRATION_TYPE, payload),
-    setFormError: setError,
+    form,
     resourceName: "PC*Miler configuration",
     onSuccess: async () => {
       toast.success("PC*Miler integration updated");

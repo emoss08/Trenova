@@ -121,7 +121,7 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
     unknown,
     AdjustmentFormValues
   >({
-    setFormError: form.setError,
+    form,
     resourceName: "invoice adjustment preview",
     mutationFn: async (values: AdjustmentFormValues) => {
       const currentDraft = await ensureDraft();
@@ -144,7 +144,7 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
     unknown,
     AdjustmentFormValues
   >({
-    setFormError: form.setError,
+    form,
     resourceName: "invoice adjustment submit",
     mutationFn: async (values: AdjustmentFormValues) => {
       const currentDraft = await ensureDraft();

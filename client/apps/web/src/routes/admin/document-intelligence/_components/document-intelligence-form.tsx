@@ -70,7 +70,7 @@ export default function DocumentIntelligenceForm() {
     defaultValues: data,
   });
 
-  const { handleSubmit, reset, setError } = form;
+  const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.documentControl.get._def,
@@ -78,7 +78,7 @@ export default function DocumentIntelligenceForm() {
       apiService.documentControlService.update(values),
     resourceName: "Document Intelligence",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [queries.documentControl.get._def],
   });
 

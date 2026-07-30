@@ -45,7 +45,7 @@ export default function DispatchControlForm() {
     defaultValues: data,
   });
 
-  const { handleSubmit, setError, reset } = form;
+  const { handleSubmit, reset } = form;
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.dispatchControl.get._def,
@@ -53,7 +53,7 @@ export default function DispatchControlForm() {
       apiService.dispatchControlService.update(values),
     resourceName: "Dispatch Control",
     resetForm: reset,
-    setFormError: setError,
+    form,
     invalidateQueries: [queries.dispatchControl.get._def],
   });
 
