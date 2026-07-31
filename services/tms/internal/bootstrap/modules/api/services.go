@@ -91,6 +91,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
+	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/openaidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
@@ -326,6 +327,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	recurringshipmentservice.New,
 	ratetableservice.New,
 	detentionpolicyservice.New,
+	modeprofileservice.NewService,
 	detentionservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(

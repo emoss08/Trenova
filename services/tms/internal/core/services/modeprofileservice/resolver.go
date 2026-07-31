@@ -1,0 +1,277 @@
+package modeprofileservice
+
+import (
+	"context"
+	"slices"
+
+	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+)
+
+const (
+	rejectionNotEffective  = "Profile is outside its effective date window"
+	rejectionCustomer      = "Profile targets a different customer"
+	rejectionShipmentType  = "Profile targets a different shipment type"
+	rejectionServiceType   = "Profile targets a different service type"
+	rejectionEquipmentType = "Profile targets a different equipment type"
+	rejectionOutranked     = "A higher priority profile matched first"
+)
+
+type matchResult struct {
+	matched         bool
+	matchedOn       []string
+	rejectionReason string
+}
+
+func evaluateMatch(
+	profile *modeprofile.Profile,
+	req *services.ResolveModeProfileRequest,
+	at int64,
+) matchResult {
+	if !profile.IsEffectiveAt(at) {
+		return matchResult{rejectionReason: rejectionNotEffective}
+	}
+
+	matchedOn := make([]string, 0, 4)
+
+	if profile.IsOrgDefault {
+		matchedOn = append(matchedOn, modeprofile.MatchOrgDefault)
+	}
+
+	if profile.CustomerID != nil && !profile.CustomerID.IsNil() {
+		if *profile.CustomerID != req.CustomerID {
+			return matchResult{rejectionReason: rejectionCustomer}
+		}
+		matchedOn = append(matchedOn, modeprofile.MatchCustomer)
+	}
+
+	if len(profile.ShipmentTypeIDs) > 0 {
+		if !slices.Contains(profile.ShipmentTypeIDs, req.ShipmentTypeID) {
+			return matchResult{rejectionReason: rejectionShipmentType}
+		}
+		matchedOn = append(matchedOn, modeprofile.MatchShipmentType)
+	}
+
+	if len(profile.ServiceTypeIDs) > 0 {
+		if !slices.Contains(profile.ServiceTypeIDs, req.ServiceTypeID) {
+			return matchResult{rejectionReason: rejectionServiceType}
+		}
+		matchedOn = append(matchedOn, modeprofile.MatchServiceType)
+	}
+
+	if len(profile.EquipmentTypeIDs) > 0 {
+		if !matchesEquipment(profile.EquipmentTypeIDs, req) {
+			return matchResult{rejectionReason: rejectionEquipmentType}
+		}
+		matchedOn = append(matchedOn, modeprofile.MatchEquipmentTyp)
+	}
+
+	return matchResult{matched: true, matchedOn: matchedOn}
+}
+
+func matchesEquipment(
+	equipmentTypeIDs []pulid.ID,
+	req *services.ResolveModeProfileRequest,
+) bool {
+	if req.TrailerTypeID.IsNotNil() && slices.Contains(equipmentTypeIDs, req.TrailerTypeID) {
+		return true
+	}
+	if req.TractorTypeID.IsNotNil() && slices.Contains(equipmentTypeIDs, req.TractorTypeID) {
+		return true
+	}
+	return false
+}
+
+func (s *service) resolveFromCandidates(
+	candidates []*modeprofile.Profile,
+	req *services.ResolveModeProfileRequest,
+	at int64,
+) *modeprofile.ResolvedPolicy {
+	explained := make([]modeprofile.ProfileCandidate, 0, len(candidates))
+
+	var (
+		selected      *modeprofile.Profile
+		selectedMatch matchResult
+	)
+
+	for _, candidate := range candidates {
+		if candidate == nil {
+			continue
+		}
+
+		result := evaluateMatch(candidate, req, at)
+
+		entry := modeprofile.ProfileCandidate{
+			ProfileID:        candidate.ID,
+			ProfileCode:      candidate.Code,
+			ProfileName:      candidate.Name,
+			Priority:         candidate.Priority,
+			SpecificityScore: candidate.SpecificityScore,
+			MatchedOn:        result.matchedOn,
+		}
+
+		switch {
+		case !result.matched:
+			entry.RejectionReason = result.rejectionReason
+		case selected == nil:
+			entry.Selected = true
+			selected = candidate
+			selectedMatch = result
+		default:
+			entry.RejectionReason = rejectionOutranked
+		}
+
+		explained = append(explained, entry)
+	}
+
+	if selected == nil {
+		return nil
+	}
+
+	return buildResolvedPolicy(selected, selectedMatch, explained, at)
+}
+
+func buildResolvedPolicy(
+	profile *modeprofile.Profile,
+	match matchResult,
+	candidates []modeprofile.ProfileCandidate,
+	at int64,
+) *modeprofile.ResolvedPolicy {
+	configured := make(map[modeprofile.RuleKey]*modeprofile.CapabilityRule, len(profile.Rules))
+	for _, rule := range profile.Rules {
+		if rule != nil {
+			configured[rule.RuleKey] = rule
+		}
+	}
+
+	rules := make(map[modeprofile.RuleKey]modeprofile.ResolvedRule, len(configured))
+
+	for _, def := range modeprofile.AllRuleDefinitions() {
+		if !profile.HasCapability(def.Capability) {
+			continue
+		}
+
+		resolved := modeprofile.ResolvedRule{
+			Key:         def.Key,
+			Capability:  def.Capability,
+			Label:       def.Label,
+			Enforcement: def.DefaultEnforcement,
+			Enabled:     true,
+			Fields:      def.Fields,
+			Parameters:  defaultParameters(def),
+		}
+
+		provenance := modeprofile.Provenance{
+			ProfileID:          profile.ID,
+			ProfileCode:        profile.Code,
+			ProfileName:        profile.Name,
+			IsOrgDefault:       profile.IsOrgDefault,
+			Priority:           profile.Priority,
+			SpecificityScore:   profile.SpecificityScore,
+			MatchedOn:          match.matchedOn,
+			RuleKey:            def.Key,
+			Capability:         def.Capability,
+			CapabilityLabel:    def.Capability.Label(),
+			Enforcement:        def.DefaultEnforcement,
+			DefaultEnforcement: def.DefaultEnforcement,
+			Rationale:          def.Rationale,
+		}
+
+		if rule, ok := configured[def.Key]; ok {
+			resolved.Enforcement = rule.Enforcement
+			resolved.Enabled = rule.Enabled
+			resolved.Parameters = mergeParameters(def, rule.Parameters)
+
+			provenance.Enforcement = rule.Enforcement
+			provenance.Overridden = rule.Enforcement != def.DefaultEnforcement
+			provenance.OverrideReason = rule.OverrideReason
+		}
+
+		resolved.Provenance = provenance
+		rules[def.Key] = resolved
+	}
+
+	return &modeprofile.ResolvedPolicy{
+		ProfileID:      profile.ID,
+		ProfileCode:    profile.Code,
+		ProfileName:    profile.Name,
+		ServiceModel:   profile.ServiceModel,
+		EquipmentClass: profile.EquipmentClass,
+		ExecutionParty: profile.ExecutionParty,
+		Capabilities:   profile.Capabilities,
+		Rules:          rules,
+		Candidates:     candidates,
+		ResolvedAt:     at,
+	}
+}
+
+func defaultParameters(def modeprofile.RuleDefinition) map[string]any {
+	if len(def.Parameters) == 0 {
+		return nil
+	}
+
+	params := make(map[string]any, len(def.Parameters))
+	for _, param := range def.Parameters {
+		if param.Default != nil {
+			params[param.Name] = param.Default
+		}
+	}
+
+	if len(params) == 0 {
+		return nil
+	}
+
+	return params
+}
+
+func mergeParameters(
+	def modeprofile.RuleDefinition,
+	configured map[string]any,
+) map[string]any {
+	merged := defaultParameters(def)
+	if len(configured) == 0 {
+		return merged
+	}
+
+	if merged == nil {
+		merged = make(map[string]any, len(configured))
+	}
+
+	for name, value := range configured {
+		if value != nil {
+			merged[name] = value
+		}
+	}
+
+	return merged
+}
+
+func (s *service) Resolve(
+	ctx context.Context,
+	req *services.ResolveModeProfileRequest,
+) (*modeprofile.ResolvedPolicy, error) {
+	at := req.At
+	if at == 0 {
+		at = timeutils.NowUnix()
+	}
+
+	candidates, err := s.profileRepo.GetResolutionCandidates(
+		ctx,
+		&repositories.GetModeProfileCandidatesRequest{
+			TenantInfo: req.TenantInfo,
+			CustomerID: req.CustomerID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(candidates) == 0 {
+		return nil, nil
+	}
+
+	return s.resolveFromCandidates(candidates, req, at), nil
+}

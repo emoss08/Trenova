@@ -116,6 +116,7 @@ type MultiError struct {
 	maxErrors       int
 	Context         *ErrorContext `json:"context,omitempty"`
 	Errors          []*Error      `json:"errors"`
+	Advisories      []*Advisory   `json:"advisories,omitempty"`
 }
 
 func NewMultiError() *MultiError {
@@ -291,14 +292,16 @@ func (m *MultiError) Error() string {
 }
 
 func (m *MultiError) MarshalJSON() ([]byte, error) {
-	if m == nil || len(m.Errors) == 0 {
+	if m == nil || (len(m.Errors) == 0 && len(m.Advisories) == 0) {
 		return []byte("null"), nil
 	}
 
 	return sonic.Marshal(struct {
-		Errors []*Error `json:"errors"`
+		Errors     []*Error    `json:"errors"`
+		Advisories []*Advisory `json:"advisories,omitempty"`
 	}{
-		Errors: m.Errors,
+		Errors:     m.Errors,
+		Advisories: m.Advisories,
 	})
 }
 

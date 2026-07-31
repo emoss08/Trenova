@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,6 +28,7 @@ type ValidatorParams struct {
 	CommodityRepo             repositories.CommodityRepository
 	HazmatSegregationRuleRepo repositories.HazmatSegregationRuleRepository
 	ShipmentRepo              repositories.ShipmentRepository
+	ModeProfileService        services.ModeProfileService
 }
 
 type Validator struct {
@@ -42,6 +44,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		p.CommodityRepo,
 		p.HazmatSegregationRuleRepo,
 		p.ShipmentRepo,
+		p.ModeProfileService,
 	)
 
 	return &Validator{
@@ -57,6 +60,7 @@ func newValidatorBuilder(
 	commodityRepo repositories.CommodityRepository,
 	hazmatRuleRepo repositories.HazmatSegregationRuleRepository,
 	shipmentRepo repositories.ShipmentRepository,
+	profileSvc services.ModeProfileService,
 ) *validationframework.TenantedValidatorBuilder[*shipment.Shipment] {
 	builder := validationframework.
 		NewTenantedValidatorBuilder[*shipment.Shipment]().
@@ -67,7 +71,7 @@ func newValidatorBuilder(
 		WithCustomRule(createCommodityValidationRule()).
 		WithCustomRule(createShipmentStatusCoordinationRule()).
 		WithCustomRule(createHazmatSegregationRule(controlRepo, commodityRepo, hazmatRuleRepo)).
-		WithCustomRule(createShipmentControlPolicyRule(controlRepo, shipmentRepo)).
+		WithCustomRule(createCapabilityPolicyRule(profileSvc, controlRepo, shipmentRepo)).
 		WithCustomRule(createBOLValidationRule(customerRepo))
 
 	if db == nil {
@@ -181,17 +185,32 @@ func createShipmentStatusCoordinationRule() validationframework.TenantedRule[*sh
 		})
 }
 
+func collectAdvisories(multiErrs ...*errortypes.MultiError) []*errortypes.Advisory {
+	var advisories []*errortypes.Advisory
+	for _, multiErr := range multiErrs {
+		advisories = append(advisories, multiErr.AllAdvisories()...)
+	}
+	return advisories
+}
+
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) *errortypes.MultiError {
+	multiErr, _ := v.ValidateCreateWithAdvisories(ctx, entity)
+	return multiErr
+}
+
+func (v *Validator) ValidateCreateWithAdvisories(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (*errortypes.MultiError, []*errortypes.Advisory) {
 	entity.ApplyEntryMethodDefault(nil)
 
-	multiErr := v.validator.ValidateCreate(ctx, entity)
-	return errortypes.MergeMultiErrors(
-		multiErr,
-		validateResourceActualTimeline(ctx, v.assignmentRepo, nil, entity, true),
-	)
+	base := v.validator.ValidateCreate(ctx, entity)
+	timeline := validateResourceActualTimeline(ctx, v.assignmentRepo, nil, entity, true)
+
+	return errortypes.MergeMultiErrors(base, timeline), collectAdvisories(base, timeline)
 }
 
 func (v *Validator) ValidateUpdate(
@@ -211,12 +230,21 @@ func (v *Validator) ValidateUpdateWithOriginal(
 	original *shipment.Shipment,
 	entity *shipment.Shipment,
 ) *errortypes.MultiError {
+	multiErr, _ := v.ValidateUpdateWithOriginalAndAdvisories(ctx, original, entity)
+	return multiErr
+}
+
+func (v *Validator) ValidateUpdateWithOriginalAndAdvisories(
+	ctx context.Context,
+	original *shipment.Shipment,
+	entity *shipment.Shipment,
+) (*errortypes.MultiError, []*errortypes.Advisory) {
 	entity.ApplyEntryMethodDefault(original)
 
-	return errortypes.MergeMultiErrors(
-		v.validator.ValidateUpdate(ctx, entity),
-		validateResourceActualTimeline(ctx, v.assignmentRepo, original, entity, false),
-	)
+	base := v.validator.ValidateUpdate(ctx, entity)
+	timeline := validateResourceActualTimeline(ctx, v.assignmentRepo, original, entity, false)
+
+	return errortypes.MergeMultiErrors(base, timeline), collectAdvisories(base, timeline)
 }
 
 func createBOLValidationRule(
@@ -257,65 +285,6 @@ func createBOLValidationRule(
 					errortypes.ErrInvalid,
 					fmt.Sprintf("%s requires a BOL number for invoicing", customer.Code),
 				)
-			}
-
-			return nil
-		})
-}
-
-func createShipmentControlPolicyRule(
-	controlRepo repositories.ShipmentControlRepository,
-	shipmentRepo repositories.ShipmentRepository,
-) validationframework.TenantedRule[*shipment.Shipment] {
-	return validationframework.NewTenantedRule[*shipment.Shipment]("shipment_control_policy").
-		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
-		WithValidation(func(
-			ctx context.Context,
-			entity *shipment.Shipment,
-			valCtx *validationframework.TenantedValidationContext,
-			multiErr *errortypes.MultiError,
-		) error {
-			control, err := loadShipmentControlForValidation(ctx, controlRepo, entity)
-			if err != nil {
-				multiErr.Add(
-					"shipmentControl",
-					errortypes.ErrInvalid,
-					"Unable to load shipment control",
-				)
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
-			}
-
-			if entity.Weight != nil && *entity.Weight > int64(control.MaxShipmentWeightLimit) {
-				multiErr.Add(
-					"weight",
-					errortypes.ErrInvalid,
-					fmt.Sprintf("Shipment weight cannot exceed %d", control.MaxShipmentWeightLimit),
-				)
-			}
-
-			if valCtx.IsCreate() || control.AllowMoveRemovals {
-				return nil
-			}
-
-			original, err := loadOriginalShipmentForValidation(ctx, shipmentRepo, entity)
-			if err != nil {
-				multiErr.Add(
-					"id",
-					errortypes.ErrInvalid,
-					"Unable to load the existing shipment for validation",
-				)
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
-			}
-
-			if hasRemovedShipmentMove(original, entity) {
-				multiErr.Add(
-					"moves",
-					errortypes.ErrInvalidOperation,
-					"Your organization does not allow move removals",
-				)
-				return nil
 			}
 
 			return nil

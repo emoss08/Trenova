@@ -74,6 +74,7 @@ func NewTestValidatorWithAssignmentRepo(
 			mocks.NewMockCommodityRepository(t),
 			mocks.NewMockHazmatSegregationRuleRepository(t),
 			mocks.NewMockShipmentRepository(t),
+			nil,
 		).Build(),
 		assignmentRepo: assignmentRepo,
 	}

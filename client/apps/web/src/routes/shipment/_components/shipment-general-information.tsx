@@ -1,6 +1,13 @@
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
+import { CapabilityExplainer } from "@trenova/shared/components/capability-explainer";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import {
+  CAPABILITIES,
+  getProfile,
+  isFieldRequired,
+  isCapabilitySectionVisible,
+} from "@trenova/shared/lib/capability";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -23,31 +30,47 @@ function Inner({ children }: { children: React.ReactNode }) {
 
 export default function ShipmentGeneralInformation() {
   const { control } = useFormContext<Shipment>();
+  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+
+  const profile = getProfile(shipmentUIPolicy);
+  const showTemperature = isCapabilitySectionVisible(
+    profile,
+    CAPABILITIES.temperatureControl,
+  );
+  const temperatureRequired = isFieldRequired(profile, "temperatureMin");
 
   return (
     <Inner>
       <FormGroup cols={2}>
         <BOLField />
-        <FormControl>
-          <NumberField
-            control={control}
-            name="temperatureMin"
-            description="The minimum temperature for the shipment."
-            label="Temperature Min"
-            placeholder="Enter Temperature Min"
-            sideText="°F"
-          />
-        </FormControl>
-        <FormControl>
-          <NumberField
-            control={control}
-            name="temperatureMax"
-            label="Temperature Max"
-            description="The maximum temperature for the shipment."
-            placeholder="Enter Temperature Max"
-            sideText="°F"
-          />
-        </FormControl>
+        {showTemperature && (
+          <>
+            <FormControl>
+              <NumberField
+                control={control}
+                name="temperatureMin"
+                description="The minimum temperature for the shipment."
+                label="Temperature Min"
+                placeholder="Enter Temperature Min"
+                sideText="°F"
+                rules={{ required: temperatureRequired }}
+              />
+              <CapabilityExplainer profile={profile} field="temperatureMin" />
+            </FormControl>
+            <FormControl>
+              <NumberField
+                control={control}
+                name="temperatureMax"
+                label="Temperature Max"
+                description="The maximum temperature for the shipment."
+                placeholder="Enter Temperature Max"
+                sideText="°F"
+                rules={{ required: isFieldRequired(profile, "temperatureMax") }}
+              />
+              <CapabilityExplainer profile={profile} field="temperatureMax" />
+            </FormControl>
+          </>
+        )}
       </FormGroup>
     </Inner>
   );

@@ -43,6 +43,7 @@ func TestValidatorValidateCreate_SkipsHazmatSegregationWhenDisabled(t *testing.T
 			mocks.NewMockCommodityRepository(t),
 			mocks.NewMockHazmatSegregationRuleRepository(t),
 			mocks.NewMockShipmentRepository(t),
+			nil,
 		).Build(),
 	}
 
@@ -103,6 +104,7 @@ func TestValidatorValidateCreate_RejectsProhibitedHazmatPair(t *testing.T) {
 			commodityRepo,
 			ruleRepo,
 			mocks.NewMockShipmentRepository(t),
+			nil,
 		).Build(),
 	}
 
@@ -169,6 +171,7 @@ func TestValidatorValidateCreate_RejectsDistanceRuleMatch(t *testing.T) {
 			commodityRepo,
 			ruleRepo,
 			mocks.NewMockShipmentRepository(t),
+			nil,
 		).Build(),
 	}
 
@@ -239,6 +242,7 @@ func TestValidatorValidateCreate_MatchesSpecificHazmatMaterialsUnordered(t *test
 			commodityRepo,
 			ruleRepo,
 			mocks.NewMockShipmentRepository(t),
+			nil,
 		).Build(),
 	}
 
@@ -303,6 +307,7 @@ func TestValidatorValidateCreate_IgnoresInactiveOrUnmatchedRules(t *testing.T) {
 			commodityRepo,
 			ruleRepo,
 			mocks.NewMockShipmentRepository(t),
+			nil,
 		).Build(),
 	}
 
@@ -368,6 +373,7 @@ func TestHazmatSegregationValidationAndServiceStayAligned(t *testing.T) {
 			commodityRepo,
 			ruleRepo,
 			mocks.NewMockShipmentRepository(t),
+			nil,
 		).Build(),
 	}
 
