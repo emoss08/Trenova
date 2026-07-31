@@ -20,12 +20,14 @@ type ServiceParams struct {
 	fx.In
 
 	ProfileRepo   repositories.ModeProfileRepository
+	CacheRepo     repositories.ModeProfileCacheRepository
 	DeviationRepo repositories.DeviationRepository
 	Logger        *zap.Logger
 }
 
 type service struct {
 	profileRepo   repositories.ModeProfileRepository
+	cacheRepo     repositories.ModeProfileCacheRepository
 	deviationRepo repositories.DeviationRepository
 	l             *zap.Logger
 }
@@ -33,6 +35,7 @@ type service struct {
 func NewService(p ServiceParams) services.ModeProfileService {
 	return &service{
 		profileRepo:   p.ProfileRepo,
+		cacheRepo:     p.CacheRepo,
 		deviationRepo: p.DeviationRepo,
 		l:             p.Logger.Named("mode-profile-service"),
 	}

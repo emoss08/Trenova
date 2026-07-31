@@ -20,18 +20,34 @@ type ProfileParams struct {
 	fx.In
 
 	DB     *postgres.Connection
+	Cache  repositories.ModeProfileCacheRepository
 	Logger *zap.Logger
 }
 
 type profileRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db    *postgres.Connection
+	cache repositories.ModeProfileCacheRepository
+	l     *zap.Logger
 }
 
 func NewProfileRepository(p ProfileParams) repositories.ModeProfileRepository {
 	return &profileRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.mode-profile-repository"),
+		db:    p.DB,
+		cache: p.Cache,
+		l:     p.Logger.Named("postgres.mode-profile-repository"),
+	}
+}
+
+func (r *profileRepository) invalidate(ctx context.Context, entity *modeprofile.Profile) {
+	if r.cache == nil {
+		return
+	}
+
+	if err := r.cache.Invalidate(ctx, pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}); err != nil {
+		r.l.Warn("failed to invalidate mode profile cache", zap.Error(err))
 	}
 }
 
@@ -112,11 +128,11 @@ func (r *profileRepository) GetByID(
 	return entity, nil
 }
 
-func (r *profileRepository) GetResolutionCandidates(
+func (r *profileRepository) GetActiveProfiles(
 	ctx context.Context,
-	req *repositories.GetModeProfileCandidatesRequest,
+	tenantInfo pagination.TenantInfo,
 ) ([]*modeprofile.Profile, error) {
-	log := r.l.With(zap.String("operation", "GetResolutionCandidates"))
+	log := r.l.With(zap.String("operation", "GetActiveProfiles"))
 
 	cols := buncolgen.ProfileColumns
 	entities := make([]*modeprofile.Profile, 0, 8)
@@ -126,20 +142,15 @@ func (r *profileRepository) GetResolutionCandidates(
 		Model(&entities).
 		Relation(buncolgen.ProfileRelations.Rules, orderRules).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ProfileScopeTenant(sq, req.TenantInfo).
+			return buncolgen.ProfileScopeTenant(sq, tenantInfo).
 				Where(cols.Status.Eq(), modeprofile.ProfileStatusActive)
-		}).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				WhereOr(cols.CustomerID.IsNull()).
-				WhereOr(cols.CustomerID.Eq(), req.CustomerID)
 		}).
 		Order(cols.Priority.OrderDesc()).
 		Order(cols.SpecificityScore.OrderDesc()).
 		Order(cols.CreatedAt.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
-		log.Error("failed to load mode profile candidates", zap.Error(err))
+		log.Error("failed to load active mode profiles", zap.Error(err))
 		return nil, err
 	}
 
@@ -202,6 +213,8 @@ func (r *profileRepository) Create(
 		)
 	}
 
+	r.invalidate(ctx, entity)
+
 	return entity, nil
 }
 
@@ -261,6 +274,8 @@ func (r *profileRepository) Update(
 			"Mode profile is busy. Retry the request.",
 		)
 	}
+
+	r.invalidate(ctx, entity)
 
 	return entity, nil
 }

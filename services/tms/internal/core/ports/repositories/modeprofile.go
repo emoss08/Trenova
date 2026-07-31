@@ -19,9 +19,22 @@ type GetModeProfileByIDRequest struct {
 	IncludeRules  bool
 }
 
-type GetModeProfileCandidatesRequest struct {
-	TenantInfo pagination.TenantInfo
-	CustomerID pulid.ID
+type ModeProfileCacheRepository interface {
+	GetActiveProfiles(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*modeprofile.Profile, error)
+
+	SetActiveProfiles(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		profiles []*modeprofile.Profile,
+	) error
+
+	Invalidate(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) error
 }
 
 type ModeProfileRepository interface {
@@ -30,15 +43,15 @@ type ModeProfileRepository interface {
 		req *ListModeProfilesRequest,
 	) (*pagination.ListResult[*modeprofile.Profile], error)
 
+	GetActiveProfiles(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*modeprofile.Profile, error)
+
 	GetByID(
 		ctx context.Context,
 		req *GetModeProfileByIDRequest,
 	) (*modeprofile.Profile, error)
-
-	GetResolutionCandidates(
-		ctx context.Context,
-		req *GetModeProfileCandidatesRequest,
-	) ([]*modeprofile.Profile, error)
 
 	Create(
 		ctx context.Context,

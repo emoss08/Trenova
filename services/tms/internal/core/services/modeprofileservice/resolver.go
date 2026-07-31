@@ -3,12 +3,14 @@ package modeprofileservice
 import (
 	"context"
 	"slices"
+	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
 )
 
 const (
@@ -249,6 +251,48 @@ func mergeParameters(
 	return merged
 }
 
+func sortCandidates(candidates []*modeprofile.Profile) {
+	sort.SliceStable(candidates, func(i, j int) bool {
+		left, right := candidates[i], candidates[j]
+
+		if left.Priority != right.Priority {
+			return left.Priority > right.Priority
+		}
+		if left.SpecificityScore != right.SpecificityScore {
+			return left.SpecificityScore > right.SpecificityScore
+		}
+
+		return left.CreatedAt < right.CreatedAt
+	})
+}
+
+func (s *service) loadActiveProfiles(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*modeprofile.Profile, error) {
+	if s.cacheRepo != nil {
+		cached, err := s.cacheRepo.GetActiveProfiles(ctx, tenantInfo)
+		if err == nil {
+			return cached, nil
+		}
+	}
+
+	profiles, err := s.profileRepo.GetActiveProfiles(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.cacheRepo != nil {
+		if cacheErr := s.cacheRepo.SetActiveProfiles(
+			ctx, tenantInfo, profiles,
+		); cacheErr != nil {
+			s.l.Warn("failed to populate mode profile cache", zap.Error(cacheErr))
+		}
+	}
+
+	return profiles, nil
+}
+
 func (s *service) Resolve(
 	ctx context.Context,
 	req *services.ResolveModeProfileRequest,
@@ -258,13 +302,7 @@ func (s *service) Resolve(
 		at = timeutils.NowUnix()
 	}
 
-	candidates, err := s.profileRepo.GetResolutionCandidates(
-		ctx,
-		&repositories.GetModeProfileCandidatesRequest{
-			TenantInfo: req.TenantInfo,
-			CustomerID: req.CustomerID,
-		},
-	)
+	candidates, err := s.loadActiveProfiles(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -273,5 +311,18 @@ func (s *service) Resolve(
 		return nil, nil
 	}
 
+	sortCandidates(candidates)
+
 	return s.resolveFromCandidates(candidates, req, at), nil
+}
+
+func (s *service) InvalidateCache(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if s.cacheRepo == nil {
+		return nil
+	}
+
+	return s.cacheRepo.Invalidate(ctx, tenantInfo)
 }
