@@ -105,7 +105,7 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 	}
 
 	if c.BillingProfile != nil {
-		c.BillingProfile.Validate(multiErr)
+		c.BillingProfile.Validate(multiErr.WithPrefix("billingProfile"))
 	}
 }
 

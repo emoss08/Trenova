@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -28,6 +29,9 @@ const (
 	StatusActive   = "Active"
 	StatusInactive = "Inactive"
 	SourcePCMiler  = "PCMiler"
+
+	routeHashLength    = 64
+	maxShortCodeLength = 50
 )
 
 type StopKey struct {
@@ -102,27 +106,67 @@ func (s *StoredMileage) ApplyDefaults() {
 }
 
 func (s *StoredMileage) Validate(multiErr *errortypes.MultiError) {
-	if s.Distance < 0 {
-		multiErr.Add("distance", errortypes.ErrInvalid, "Distance must be greater than or equal to 0")
-	}
-	if s.RouteHash == "" {
-		multiErr.Add("routeHash", errortypes.ErrRequired, "Route hash is required")
-	}
-	if s.DistanceUnits == "" {
-		multiErr.Add("distanceUnits", errortypes.ErrRequired, "Distance units are required")
-	}
-	if s.RoutingType == "" {
-		multiErr.Add("routingType", errortypes.ErrRequired, "Routing type is required")
-	}
-	if s.Method == "" {
-		multiErr.Add("method", errortypes.ErrRequired, "Method is required")
-	}
-	if s.LocationGranularity == "" {
-		multiErr.Add("locationGranularity", errortypes.ErrRequired, "Location granularity is required")
-	}
-	if s.DistanceProfileID.IsNil() {
-		multiErr.Add("distanceProfileId", errortypes.ErrRequired, "Distance profile is required")
-	}
+	s.ApplyDefaults()
+
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&s.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&s.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(StatusActive, StatusInactive).Error("Status is invalid"),
+		),
+		validation.Field(&s.RouteSignature,
+			validation.Required.Error("Route signature is required"),
+		),
+		validation.Field(&s.RouteHash,
+			validation.Required.Error("Route hash is required"),
+			validation.Length(routeHashLength, routeHashLength).
+				Error("Route hash must be a 64 character digest"),
+		),
+		validation.Field(&s.Distance,
+			validation.Min(0.0).Error("Distance must be greater than or equal to 0"),
+		),
+		validation.Field(&s.DistanceUnits,
+			validation.Required.Error("Distance units are required"),
+			validation.Length(1, maxShortCodeLength).
+				Error("Distance units cannot be longer than 50 characters"),
+		),
+		validation.Field(&s.Provider,
+			validation.Required.Error("Provider is required"),
+			validation.Length(1, maxShortCodeLength).
+				Error("Provider cannot be longer than 50 characters"),
+		),
+		validation.Field(&s.Source,
+			validation.Required.Error("Source is required"),
+			validation.Length(1, maxShortCodeLength).
+				Error("Source cannot be longer than 50 characters"),
+		),
+		validation.Field(&s.RoutingType,
+			validation.Required.Error("Routing type is required"),
+			validation.Length(1, maxShortCodeLength).
+				Error("Routing type cannot be longer than 50 characters"),
+		),
+		validation.Field(&s.Method,
+			validation.Required.Error("Method is required"),
+			validation.Length(1, maxShortCodeLength).
+				Error("Method cannot be longer than 50 characters"),
+		),
+		validation.Field(&s.LocationGranularity,
+			validation.Required.Error("Location granularity is required"),
+			validation.Length(1, maxShortCodeLength).
+				Error("Location granularity cannot be longer than 50 characters"),
+		),
+		validation.Field(&s.DistanceProfileID,
+			validation.Required.Error("Distance profile is required"),
+		),
+		validation.Field(&s.HitCount,
+			validation.Min(int64(0)).Error("Hit count cannot be negative"),
+		),
+	))
 }
 
 func NormalizeHazmatTypes(values []string) []string {

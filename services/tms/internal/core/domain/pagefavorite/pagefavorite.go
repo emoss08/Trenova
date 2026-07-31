@@ -2,14 +2,25 @@ package pagefavorite
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
+
+const (
+	maxPageURLLength   = 500
+	maxPageTitleLength = 255
+)
+
+// pageURLPattern keeps a favorite pointing inside the application: an absolute
+// URL here would be a redirect target rendered as if it were a page of the TMS.
+var pageURLPattern = regexp.MustCompile(`^/[^\s]*$`)
 
 var (
 	_ bun.BeforeAppendModelHook          = (*PageFavorite)(nil)
@@ -66,5 +77,28 @@ func (pf *PageFavorite) GetTableName() string {
 	return "page_favorites"
 }
 
-func (pf *PageFavorite) Validate(_ *errortypes.MultiError) {
+func (pf *PageFavorite) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(pf,
+		validation.Field(&pf.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&pf.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&pf.UserID, validation.Required.Error("User is required")),
+		// A favorite that points nowhere would render a dead entry in the
+		// sidebar, so the path is checked for shape as well as presence.
+		validation.Field(&pf.PageURL,
+			validation.Required.Error("Page URL is required"),
+			validation.Length(1, maxPageURLLength).
+				Error("Page URL cannot be longer than 500 characters"),
+			validation.Match(pageURLPattern).
+				Error("Page URL must be an application path, such as /shipments"),
+		),
+		validation.Field(&pf.PageTitle,
+			validation.Required.Error("Page title is required"),
+			validation.Length(1, maxPageTitleLength).
+				Error("Page title cannot be longer than 255 characters"),
+		),
+	))
 }

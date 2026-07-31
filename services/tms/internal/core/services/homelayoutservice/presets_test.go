@@ -199,7 +199,13 @@ func TestUpdatePreset_KeepsOrgDefaultFlag(t *testing.T) {
 
 	h.repo.EXPECT().
 		GetPreset(mock.Anything, mock.Anything).
-		Return(&homelayout.Preset{ID: presetID, Name: "Dispatch Home", Version: 2}, nil)
+		Return(&homelayout.Preset{
+			ID:             presetID,
+			OrganizationID: req.TenantInfo.OrgID,
+			BusinessUnitID: req.TenantInfo.BuID,
+			Name:           "Dispatch Home",
+			Version:        2,
+		}, nil)
 	h.repo.EXPECT().
 		UpdatePreset(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *homelayout.Preset) (*homelayout.Preset, error) {
