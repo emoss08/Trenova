@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -143,4 +144,20 @@ func (a *ProfileAssignment) BeforeAppendModel(_ context.Context, query bun.Query
 		a.UpdatedAt = now
 	}
 	return nil
+}
+
+func (a *ProfileAssignment) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&a.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&a.Purpose,
+			validation.Required.Error("Purpose is required"),
+			domainvalidation.ValidEnum[Purpose]("Purpose is invalid"),
+		),
+		validation.Field(&a.ProfileID, validation.Required.Error("Email profile is required")),
+	))
 }

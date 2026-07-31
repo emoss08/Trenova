@@ -45,3 +45,15 @@ const (
 func (a ActivityType) String() string {
 	return string(a)
 }
+
+func (v ActivityType) IsValid() bool {
+	switch v {
+	case ActivityTypeIssued,
+		ActivityTypeUpdated,
+		ActivityTypeExpired,
+		ActivityTypeCancelled:
+		return true
+	default:
+		return false
+	}
+}

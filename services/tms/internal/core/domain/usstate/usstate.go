@@ -3,8 +3,10 @@ package usstate
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -106,3 +108,27 @@ var stateAbbreviationRegions = map[string]Region{
 	"OR": RegionWest,
 	"WA": RegionWest,
 }
+
+func (s *UsState) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.Name, validation.Required.Error("Name is required")),
+		// Addresses are stored and printed with the two letter abbreviation, so
+		// anything else here would produce an undeliverable label.
+		validation.Field(&s.Abbreviation,
+			validation.Required.Error("Abbreviation is required"),
+			validation.Length(stateAbbreviationLength, stateAbbreviationLength).
+				Error("Abbreviation must be two characters"),
+		),
+		validation.Field(&s.CountryName, validation.Required.Error("Country name is required")),
+		validation.Field(&s.CountryIso3,
+			validation.Required.Error("Country ISO3 is required"),
+			validation.Length(countryISO3Length, countryISO3Length).
+				Error("Country ISO3 must be three characters"),
+		),
+	))
+}
+
+const (
+	stateAbbreviationLength = 2
+	countryISO3Length       = 3
+)

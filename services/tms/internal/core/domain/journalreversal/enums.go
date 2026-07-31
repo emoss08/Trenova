@@ -19,3 +19,17 @@ func (s Status) CanCancel() bool {
 	return s == StatusRequested || s == StatusPendingApproval || s == StatusApproved
 }
 func (s Status) CanPost() bool { return s == StatusApproved }
+
+func (v Status) IsValid() bool {
+	switch v {
+	case StatusRequested,
+		StatusPendingApproval,
+		StatusApproved,
+		StatusRejected,
+		StatusCancelled,
+		StatusPosted:
+		return true
+	default:
+		return false
+	}
+}

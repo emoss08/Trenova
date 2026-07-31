@@ -2,12 +2,15 @@ package iam
 
 import (
 	"context"
+	"regexp"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/uptrace/bun"
 )
 
@@ -388,3 +391,229 @@ func setIAMTimestamps(p iamTimestampParams) {
 		}
 	}
 }
+
+func (i *ExternalIdentity) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(i,
+		validation.Field(&i.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&i.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&i.UserID, validation.Required.Error("User is required")),
+		validation.Field(&i.IdentityProviderID,
+			validation.Required.Error("Identity provider is required"),
+		),
+		// The external subject is what a login is matched on. A blank one would
+		// match the next unidentified assertion from the same provider.
+		validation.Field(&i.ExternalSubject,
+			validation.Required.Error("External subject is required"),
+			validation.Length(1, maxIAMIdentifierLength).
+				Error("External subject cannot be longer than 255 characters"),
+		),
+		validation.Field(&i.ExternalUsername,
+			validation.Length(0, maxIAMIdentifierLength).
+				Error("External username cannot be longer than 255 characters"),
+		),
+		validation.Field(&i.ExternalEmail,
+			is.EmailFormat.Error("External email must be a valid email address"),
+			validation.Length(0, maxIAMIdentifierLength).
+				Error("External email cannot be longer than 255 characters"),
+		),
+	))
+}
+
+func (a *MFAAuthenticator) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&a.UserID, validation.Required.Error("User is required")),
+		validation.Field(&a.Type,
+			validation.Required.Error("Type is required"),
+			domainvalidation.ValidEnum[MFAAuthenticatorType]("Type is invalid"),
+		),
+		validation.Field(&a.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxIAMNameLength).
+				Error("Name cannot be longer than 120 characters"),
+		),
+		// A WebAuthn authenticator is identified by its credential; a TOTP one
+		// by the secret it derives codes from. Either kind missing its own
+		// material would accept no second factor at all.
+		validation.Field(&a.CredentialID,
+			validation.When(
+				a.Type == MFAAuthenticatorTypeWebAuthn,
+				validation.Required.Error("A WebAuthn authenticator must record its credential"),
+			),
+			validation.Length(0, maxCredentialIDLength).
+				Error("Credential cannot be longer than 512 characters"),
+		),
+		validation.Field(&a.SecretCipher,
+			validation.When(
+				a.Type == MFAAuthenticatorTypeTOTP,
+				validation.Required.Error("A TOTP authenticator must record its secret"),
+			),
+		),
+		// Enabling an unverified authenticator would let an unproven factor
+		// satisfy a challenge.
+		validation.Field(&a.VerifiedAt,
+			validation.When(
+				a.Enabled,
+				validation.Required.Error("An enabled authenticator must be verified first"),
+			),
+		),
+	))
+}
+
+func (e *AuthEvent) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.Provider,
+			validation.Required.Error("Provider is required"),
+			validation.Length(1, maxIAMNameLength).
+				Error("Provider cannot be longer than 120 characters"),
+		),
+		validation.Field(&e.Outcome,
+			validation.Required.Error("Outcome is required"),
+			domainvalidation.ValidEnum[AuthEventOutcome]("Outcome is invalid"),
+		),
+		validation.Field(&e.IPAddress, is.IP.Error("IP address must be a valid address")),
+		// The assurance levels are what a policy compares against; the scale
+		// starts at one, so a zero would read as a weaker login than any real
+		// one and pass checks it should fail.
+		validation.Field(&e.AuthenticatorAAL,
+			validation.Required.Error("Authenticator assurance level is required"),
+			validation.Min(minAssuranceLevel).
+				Error("Authenticator assurance level must be between 1 and 3"),
+			validation.Max(maxAssuranceLevel).
+				Error("Authenticator assurance level must be between 1 and 3"),
+		),
+		validation.Field(&e.FederationFAL,
+			validation.Required.Error("Federation assurance level is required"),
+			validation.Min(minAssuranceLevel).
+				Error("Federation assurance level must be between 1 and 3"),
+			validation.Max(maxAssuranceLevel).
+				Error("Federation assurance level must be between 1 and 3"),
+		),
+		validation.Field(&e.RiskOutcome,
+			validation.Required.Error("Risk outcome is required"),
+			domainvalidation.ValidEnum[RiskOutcome]("Risk outcome is invalid"),
+		),
+		validation.Field(&e.ErrorCode,
+			validation.Length(0, maxIAMNameLength).
+				Error("Error code cannot be longer than 120 characters"),
+		),
+		validation.Field(&e.OccurredAt,
+			validation.Required.Error("Occurred at is required"),
+			validation.Min(int64(1)).Error("Occurred at must be a valid timestamp"),
+		),
+	))
+}
+
+func (d *RiskDecision) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
+		validation.Field(&d.Outcome,
+			validation.Required.Error("Outcome is required"),
+			domainvalidation.ValidEnum[RiskOutcome]("Outcome is invalid"),
+		),
+		// Denying or challenging a sign-in without recording why leaves the user
+		// locked out and support with nothing to look at.
+		validation.Field(&d.Reason,
+			validation.When(
+				d.Outcome != RiskOutcomeAllow,
+				validation.Required.Error("A challenge or denial must record its reason"),
+			),
+		),
+	))
+}
+
+func (d *SCIMDirectory) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
+		validation.Field(&d.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&d.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		// The slug appears in the SCIM endpoint the identity provider posts to,
+		// so it is held to what is safe in a URL path.
+		validation.Field(&d.TenantSlug,
+			validation.Required.Error("Tenant slug is required"),
+			validation.Length(1, maxTenantSlugLength).
+				Error("Tenant slug cannot be longer than 100 characters"),
+			validation.Match(tenantSlugPattern).
+				Error("Tenant slug may contain only lowercase letters, numbers and hyphens"),
+		),
+	))
+}
+
+func (t *SCIMToken) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(t,
+		validation.Field(&t.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&t.DirectoryID, validation.Required.Error("Directory is required")),
+		validation.Field(&t.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxIAMNameLength).
+				Error("Name cannot be longer than 120 characters"),
+		),
+		// The prefix is how a presented token is located before its hash is
+		// compared, and the hash is the only stored form of the secret.
+		validation.Field(&t.Prefix,
+			validation.Required.Error("Prefix is required"),
+			validation.Length(1, maxTokenPrefixLength).
+				Error("Prefix cannot be longer than 24 characters"),
+		),
+		validation.Field(&t.TokenHash,
+			validation.Required.Error("Token hash is required"),
+			validation.Length(1, maxTokenHashLength).
+				Error("Token hash cannot be longer than 128 characters"),
+		),
+		validation.Field(&t.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[SCIMTokenStatus]("Status is invalid"),
+		),
+	))
+}
+
+func (r *ProvisioningAuditRecord) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&r.DirectoryID, validation.Required.Error("Directory is required")),
+		validation.Field(&r.Action,
+			validation.Required.Error("Action is required"),
+			domainvalidation.ValidEnum[ProvisioningAction]("Action is invalid"),
+		),
+		validation.Field(&r.ResourceType,
+			validation.Required.Error("Resource type is required"),
+			validation.Length(1, maxResourceTypeLength).
+				Error("Resource type cannot be longer than 80 characters"),
+		),
+		validation.Field(&r.ExternalID,
+			validation.Length(0, maxIAMIdentifierLength).
+				Error("External id cannot be longer than 255 characters"),
+		),
+		validation.Field(&r.Status,
+			validation.Required.Error("Status is required"),
+			validation.Length(1, maxResourceTypeLength).
+				Error("Status cannot be longer than 80 characters"),
+		),
+	))
+}
+
+var tenantSlugPattern = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
+
+const (
+	maxIAMIdentifierLength = 255
+	maxIAMNameLength       = 120
+	maxCredentialIDLength  = 512
+	maxTenantSlugLength    = 100
+	maxTokenPrefixLength   = 24
+	maxTokenHashLength     = 128
+	maxResourceTypeLength  = 80
+	minAssuranceLevel      = 1
+	maxAssuranceLevel      = 3
+)
