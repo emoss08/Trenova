@@ -3,8 +3,11 @@ package shipment
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -74,3 +77,56 @@ func (m *ShipmentMove) IsNew() bool {
 func (m *ShipmentMove) IsCanceled() bool {
 	return m.Status == MoveStatusCanceled
 }
+
+func (sm *ShipmentMove) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(sm,
+		validation.Field(&sm.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&sm.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&sm.ShipmentID, validation.Required.Error("Shipment is required")),
+		validation.Field(&sm.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[MoveStatus]("Status is invalid"),
+		),
+		validation.Field(&sm.Sequence,
+			validation.Min(int64(0)).Error("Sequence cannot be negative"),
+		),
+		// Distance is what the move is paid and billed on, so a negative one
+		// would credit mileage rather than charge it.
+		validation.Field(&sm.Distance,
+			validation.Min(0.0).Error("Distance cannot be negative"),
+		),
+		validation.Field(&sm.DistanceSource,
+			validation.Length(0, maxDistanceFieldLength).
+				Error("Distance source cannot be longer than 50 characters"),
+		),
+		validation.Field(&sm.DistanceProvider,
+			validation.Length(0, maxDistanceFieldLength).
+				Error("Distance provider cannot be longer than 50 characters"),
+		),
+		validation.Field(&sm.DistanceDataVersion,
+			validation.Length(0, maxDistanceFieldLength).
+				Error("Distance data version cannot be longer than 50 characters"),
+		),
+		validation.Field(&sm.DistanceRoutingType,
+			validation.Length(0, maxDistanceFieldLength).
+				Error("Distance routing type cannot be longer than 50 characters"),
+		),
+		validation.Field(&sm.DistanceUnits,
+			validation.Length(0, maxDistanceFieldLength).
+				Error("Distance units cannot be longer than 50 characters"),
+		),
+	))
+
+	for i, stop := range sm.Stops {
+		if stop == nil {
+			continue
+		}
+		stop.Validate(multiErr.WithIndex("stops", i))
+	}
+}
+
+const maxDistanceFieldLength = 50

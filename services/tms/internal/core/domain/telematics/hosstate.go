@@ -2,7 +2,10 @@ package telematics
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -34,4 +37,58 @@ type WorkerHOSState struct {
 	ReceivedAt              int64      `json:"receivedAt"              bun:"received_at,type:BIGINT,notnull"`
 
 	Worker *worker.Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+}
+
+func (s *WorkerHOSState) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&s.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&s.WorkerID, validation.Required.Error("Worker is required")),
+		validation.Field(&s.Provider,
+			validation.Required.Error("Provider is required"),
+			validation.Length(1, maxProviderLength).
+				Error("Provider cannot be longer than 32 characters"),
+		),
+		validation.Field(&s.ProviderDriverID,
+			validation.Required.Error("Provider driver id is required"),
+		),
+		validation.Field(&s.DutyStatus,
+			domainvalidation.ValidEnum[DutyStatus]("Duty status is invalid"),
+		),
+		// Dispatch decides whether a driver can legally take a load from these
+		// clocks, so a negative remainder would offer hours that do not exist.
+		validation.Field(&s.DriveRemainingMs,
+			validation.Min(int64(0)).Error("Drive time remaining cannot be negative"),
+		),
+		validation.Field(&s.ShiftRemainingMs,
+			validation.Min(int64(0)).Error("Shift time remaining cannot be negative"),
+		),
+		validation.Field(&s.CycleRemainingMs,
+			validation.Min(int64(0)).Error("Cycle time remaining cannot be negative"),
+		),
+		validation.Field(&s.CycleTomorrowMs,
+			validation.Min(int64(0)).Error("Cycle time tomorrow cannot be negative"),
+		),
+		validation.Field(&s.BreakRemainingMs,
+			validation.Min(int64(0)).Error("Break time remaining cannot be negative"),
+		),
+		validation.Field(&s.ShiftDrivingViolationMs,
+			validation.Min(int64(0)).Error("Shift driving violation cannot be negative"),
+		),
+		validation.Field(&s.CycleViolationMs,
+			validation.Min(int64(0)).Error("Cycle violation cannot be negative"),
+		),
+		validation.Field(&s.RecordedAt,
+			validation.Required.Error("Recorded at is required"),
+			validation.Min(int64(1)).Error("Recorded at must be a valid timestamp"),
+		),
+		validation.Field(&s.ReceivedAt,
+			validation.Required.Error("Received at is required"),
+			validation.Min(int64(1)).Error("Received at must be a valid timestamp"),
+		),
+	))
 }

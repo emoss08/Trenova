@@ -45,3 +45,34 @@ const (
 	EventTypeGeofenceExit  = EventType("GeofenceExit")
 	EventTypeAlertIncident = EventType("AlertIncident")
 )
+
+func (v EngineState) IsValid() bool {
+	switch v {
+	case EngineStateOn,
+		EngineStateOff,
+		EngineStateIdle:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v FeedType) IsValid() bool {
+	switch v {
+	case FeedTypeVehicleStats:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v EventType) IsValid() bool {
+	switch v {
+	case EventTypeGeofenceEntry,
+		EventTypeGeofenceExit,
+		EventTypeAlertIncident:
+		return true
+	default:
+		return false
+	}
+}

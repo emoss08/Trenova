@@ -245,3 +245,20 @@ func (u *User) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		},
 	}
 }
+
+func (m *OrganizationMembership) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(m,
+		validation.Field(&m.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&m.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&m.UserID, validation.Required.Error("User is required")),
+		// A membership that expires before it began grants nothing while still
+		// appearing in the user's organization list.
+		validation.Field(&m.ExpiresAt,
+			validation.Min(m.JoinedAt+1).Error("Expiry must be after the membership began"),
+		),
+	))
+}

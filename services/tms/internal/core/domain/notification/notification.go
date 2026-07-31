@@ -4,9 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -86,3 +89,64 @@ func (n *Notification) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 		},
 	}
 }
+
+func (n *Notification) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(n,
+		validation.Field(&n.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&n.EventType,
+			validation.Required.Error("Event type is required"),
+			validation.Length(1, maxEventTypeLength).
+				Error("Event type cannot be longer than 100 characters"),
+		),
+		validation.Field(&n.Priority,
+			validation.Required.Error("Priority is required"),
+			domainvalidation.ValidEnum[Priority]("Priority is invalid"),
+		),
+		validation.Field(&n.Channel,
+			validation.Required.Error("Channel is required"),
+			domainvalidation.ValidEnum[Channel]("Channel is invalid"),
+		),
+		// A user-channel notification with no recipient would be delivered to
+		// nobody while counting as sent.
+		validation.Field(&n.TargetUserID,
+			validation.When(
+				n.Channel == ChannelUser,
+				validation.Required.Error("A user notification must name its recipient"),
+			),
+		),
+		validation.Field(&n.Title,
+			validation.Required.Error("Title is required"),
+			validation.Length(1, maxNotificationTitleLength).
+				Error("Title cannot be longer than 255 characters"),
+		),
+		validation.Field(&n.Message, validation.Required.Error("Message is required")),
+		validation.Field(&n.DeliveryStatus,
+			validation.Required.Error("Delivery status is required"),
+			domainvalidation.ValidEnum[DeliveryStatus]("Delivery status is invalid"),
+		),
+		validation.Field(&n.Source,
+			validation.Required.Error("Source is required"),
+			validation.Length(1, maxNotificationSourceLength).
+				Error("Source cannot be longer than 100 characters"),
+		),
+		validation.Field(&n.RetryCount,
+			validation.Min(0).Error("Retry count cannot be negative"),
+		),
+		// Allowing more retries than the counter can reach would leave a failed
+		// notification retrying forever.
+		validation.Field(&n.MaxRetries,
+			validation.Min(0).Error("Maximum retries cannot be negative"),
+			validation.Max(maxNotificationRetries).
+				Error("Maximum retries cannot exceed 10"),
+		),
+	))
+}
+
+const (
+	maxEventTypeLength          = 100
+	maxNotificationTitleLength  = 255
+	maxNotificationSourceLength = 100
+	maxNotificationRetries      = 10
+)

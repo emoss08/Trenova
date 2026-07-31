@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -102,3 +105,70 @@ func (s *Stop) EffectiveScheduledWindowEnd() int64 {
 func (s *Stop) HasScheduledWindow() bool {
 	return s != nil && s.ScheduledWindowEnd != nil
 }
+
+func (s *Stop) Validate(multiErr *errortypes.MultiError) {
+	// Read once: the rule below is built before ozzo decides whether to run it,
+	// so the dereference cannot be left inside the condition.
+	var arrivedAt int64
+	if s.ActualArrival != nil {
+		arrivedAt = *s.ActualArrival
+	}
+
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&s.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&s.ShipmentMoveID,
+			validation.Required.Error("Shipment move is required"),
+		),
+		validation.Field(&s.LocationID, validation.Required.Error("Location is required")),
+		validation.Field(&s.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[StopStatus]("Status is invalid"),
+		),
+		validation.Field(&s.Type,
+			validation.Required.Error("Type is required"),
+			domainvalidation.ValidEnum[StopType]("Type is invalid"),
+		),
+		validation.Field(&s.ScheduleType,
+			validation.Required.Error("Schedule type is required"),
+			domainvalidation.ValidEnum[StopScheduleType]("Schedule type is invalid"),
+		),
+		validation.Field(&s.Sequence,
+			validation.Min(int64(0)).Error("Sequence cannot be negative"),
+		),
+		validation.Field(&s.Pieces,
+			validation.Min(int64(0)).Error("Pieces cannot be negative"),
+		),
+		validation.Field(&s.Weight,
+			validation.Min(int64(0)).Error("Weight cannot be negative"),
+		),
+		// The appointment window is what lateness and detention are measured
+		// against, so an inverted one would compute both against a window that
+		// closed before it opened.
+		validation.Field(&s.ScheduledWindowStart,
+			validation.Required.Error("Scheduled window start is required"),
+			validation.Min(int64(1)).Error("Scheduled window start must be a valid timestamp"),
+		),
+		validation.Field(&s.ScheduledWindowEnd,
+			validation.Min(s.ScheduledWindowStart).
+				Error("Scheduled window end cannot precede its start"),
+		),
+		// A departure before the arrival would report negative dwell, which is
+		// what a detention charge is calculated from.
+		validation.Field(&s.ActualDeparture,
+			validation.When(s.ActualArrival != nil,
+				validation.Min(arrivedAt).Error("Departure cannot precede arrival"),
+			),
+		),
+		validation.Field(&s.AddressLine,
+			validation.Length(0, maxStopAddressLineLength).
+				Error("Address line cannot be longer than 200 characters"),
+		),
+	))
+}
+
+const maxStopAddressLineLength = 200
