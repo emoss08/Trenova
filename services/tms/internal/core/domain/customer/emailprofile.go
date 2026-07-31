@@ -72,13 +72,9 @@ func (e *CustomerEmailProfile) BeforeAppendModel(_ context.Context, query bun.Qu
 }
 
 func (p *CustomerEmailProfile) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning customer are stamped when the customer is
+	// written, so they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
-		validation.Field(&p.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&p.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
 		validation.Field(&p.Subject,
 			validation.Length(0, maxEmailSubjectLength).
 				Error("Subject cannot be longer than 255 characters"),

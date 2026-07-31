@@ -2,11 +2,11 @@ package servicefailure
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -85,24 +85,12 @@ func (rc *ReasonCode) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(
 			&rc.Category,
 			validation.Required.Error("Category is required"),
-			validation.By(func(value any) error {
-				category, _ := value.(ReasonCategory)
-				if !category.IsValid() {
-					return errors.New("category is invalid")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[ReasonCategory]("category is invalid"),
 		),
 		validation.Field(
 			&rc.AppliesTo,
 			validation.Required.Error("Applies to is required"),
-			validation.By(func(value any) error {
-				appliesTo, _ := value.(ReasonCodeAppliesTo)
-				if !appliesTo.IsValid() {
-					return errors.New("applies to is invalid")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[ReasonCodeAppliesTo]("applies to is invalid"),
 		),
 		validation.Field(
 			&rc.DefaultStatusCode,

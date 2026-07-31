@@ -54,8 +54,9 @@ func (rp *ResourcePermission) GetOperationSet() OperationSet {
 }
 
 func (p *ResourcePermission) Validate(multiErr *errortypes.MultiError) {
+	// RoleID is stamped when the role is written, so it is not the caller's to
+	// supply on a permission that arrives as part of one.
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
-		validation.Field(&p.RoleID, validation.Required.Error("Role is required")),
 		validation.Field(&p.Resource,
 			validation.Required.Error("Resource is required"),
 			validation.Length(1, maxPermissionResourceLength).

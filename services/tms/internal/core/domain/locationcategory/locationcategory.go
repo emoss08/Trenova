@@ -2,10 +2,10 @@ package locationcategory
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -58,20 +58,10 @@ func (lc *LocationCategory) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&lc.Type,
 			validation.Required.Error("Type is required"),
-			validation.By(func(value any) error {
-				if v, ok := value.(Category); ok && !v.IsValid() {
-					return errors.New("invalid type")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[Category]("invalid type"),
 		),
 		validation.Field(&lc.FacilityType,
-			validation.By(func(value any) error {
-				if v, ok := value.(FacilityType); ok && v != "" && !v.IsValid() {
-					return errors.New("invalid facility type")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[FacilityType]("invalid facility type"),
 		),
 		validation.Field(&lc.Color,
 			is.HexColor.Error("Color must be a valid hex color"),

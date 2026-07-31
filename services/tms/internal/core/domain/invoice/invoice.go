@@ -2,7 +2,6 @@ package invoice
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
 
@@ -259,23 +258,11 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&i.Status,
 			validation.Required.Error("Invoice status is required"),
-			validation.By(func(value any) error {
-				status, _ := value.(Status)
-				if !status.IsValid() {
-					return errors.New("invalid invoice status")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[Status]("invalid invoice status"),
 		),
 		validation.Field(&i.PaymentTerm,
 			validation.Required.Error("Payment term is required"),
-			validation.By(func(value any) error {
-				term, _ := value.(PaymentTerm)
-				if !term.IsValid() {
-					return errors.New("invalid payment term")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[PaymentTerm]("invalid payment term"),
 		),
 		validation.Field(&i.CurrencyCode,
 			validation.Required.Error("Currency code is required"),
@@ -283,34 +270,13 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&i.InvoiceDate, validation.Required.Error("Invoice date is required")),
 		validation.Field(&i.SettlementStatus,
-			validation.By(func(value any) error {
-				status, _ := value.(SettlementStatus)
-				if !status.IsValid() {
-					return errors.New("invalid settlement status")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[SettlementStatus]("invalid settlement status"),
 		),
 		validation.Field(&i.DisputeStatus,
-			validation.By(func(value any) error {
-				status, _ := value.(DisputeStatus)
-				if !status.IsValid() {
-					return errors.New("invalid dispute status")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[DisputeStatus]("invalid dispute status"),
 		),
 		validation.Field(&i.SendStatus,
-			validation.By(func(value any) error {
-				status, _ := value.(SendStatus)
-				if status == "" {
-					return nil
-				}
-				if !status.IsValid() {
-					return errors.New("invalid invoice send status")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[SendStatus]("invalid invoice send status"),
 		),
 		validation.Field(&i.BillToName,
 			validation.Required.Error("Bill-to name is required"),
@@ -730,14 +696,9 @@ func (a *EmailAttempt) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (a *EmailAttemptAttachment) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning attempt are stamped when the parent is written, so
+	// they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(a,
-		validation.Field(&a.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&a.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&a.AttemptID, validation.Required.Error("Attempt is required")),
 		validation.Field(&a.DocumentID, validation.Required.Error("Document is required")),
 		validation.Field(&a.FileName,
 			validation.Required.Error("File name is required"),

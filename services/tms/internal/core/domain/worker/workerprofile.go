@@ -2,9 +2,9 @@ package worker
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -65,16 +65,7 @@ func (wp *WorkerProfile) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&wp.Endorsement,
 			validation.Required.Error("Endorsement type is required"),
-			validation.By(func(value any) error {
-				e, ok := value.(EndorsementType)
-				if !ok {
-					return errors.New("invalid endorsement type")
-				}
-				if !e.IsValid() {
-					return errors.New("endorsement must be one of: O, N, H, X, P, T")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[EndorsementType]("endorsement must be one of: O, N, H, X, P, T"),
 		),
 		validation.Field(&wp.LicenseExpiry,
 			validation.Required.Error("License expiry is required"),
@@ -86,18 +77,7 @@ func (wp *WorkerProfile) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&wp.ComplianceStatus,
 			validation.Required.Error("Compliance status is required"),
-			validation.By(func(value any) error {
-				cs, ok := value.(ComplianceStatus)
-				if !ok {
-					return errors.New("invalid compliance status type")
-				}
-				if !cs.IsValid() {
-					return errors.New(
-						"compliance status must be one of: Compliant, NonCompliant, Pending",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[ComplianceStatus]("compliance status must be one of: Compliant, NonCompliant, Pending"),
 		),
 	))
 

@@ -49,17 +49,9 @@ func (p *Page) BeforeAppendModel(_ context.Context, query bun.Query) error {
 }
 
 func (p *Page) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning content are stamped when the parent is written, so
+	// they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
-		validation.Field(&p.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&p.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&p.DocumentContentID,
-			validation.Required.Error("Document content is required"),
-		),
-		validation.Field(&p.DocumentID, validation.Required.Error("Document is required")),
 		validation.Field(&p.PageNumber,
 			validation.Required.Error("Page number is required"),
 			validation.Min(1).Error("Page number must be at least one"),

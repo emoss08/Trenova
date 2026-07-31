@@ -2,8 +2,8 @@ package equipmentcontinuity
 
 import (
 	"context"
-	"errors"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -75,29 +75,11 @@ func (e *EquipmentContinuity) Validate(multiErr *errortypes.MultiError) {
 		e,
 		validation.Field(&e.EquipmentType,
 			validation.Required.Error("Equipment type is required"),
-			validation.By(func(value any) error {
-				et, ok := value.(EquipmentType)
-				if !ok {
-					return errors.New("invalid equipment type")
-				}
-				if !et.IsValid() {
-					return errors.New("equipment type must be Trailer or Tractor")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[EquipmentType]("equipment type must be Trailer or Tractor"),
 		),
 		validation.Field(&e.SourceType,
 			validation.Required.Error("Source type is required"),
-			validation.By(func(value any) error {
-				st, ok := value.(SourceType)
-				if !ok {
-					return errors.New("invalid source type")
-				}
-				if !st.IsValid() {
-					return errors.New("source type must be Assignment or ManualLocate")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[SourceType]("source type must be Assignment or ManualLocate"),
 		),
 		validation.Field(&e.EquipmentID, validation.Required.Error("Equipment ID is required")),
 		validation.Field(

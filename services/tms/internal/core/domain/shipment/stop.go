@@ -114,16 +114,9 @@ func (s *Stop) Validate(multiErr *errortypes.MultiError) {
 		arrivedAt = *s.ActualArrival
 	}
 
+	// Tenancy and the owning move are stamped by the repository at write time,
+	// so a stop arriving as part of a shipment does not carry them yet.
 	multiErr.AddOzzoError(validation.ValidateStruct(s,
-		validation.Field(&s.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&s.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&s.ShipmentMoveID,
-			validation.Required.Error("Shipment move is required"),
-		),
 		validation.Field(&s.LocationID, validation.Required.Error("Location is required")),
 		validation.Field(&s.Status,
 			validation.Required.Error("Status is required"),

@@ -21,16 +21,9 @@ type DistanceOverrideStop struct {
 }
 
 func (s *DistanceOverrideStop) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning override are stamped when the override is
+	// written, so they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(s,
-		validation.Field(&s.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&s.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&s.DistanceOverrideID,
-			validation.Required.Error("Distance override is required"),
-		),
 		validation.Field(&s.LocationID, validation.Required.Error("Location is required")),
 		validation.Field(&s.StopOrder,
 			validation.Min(0).Error("Stop order cannot be negative"),

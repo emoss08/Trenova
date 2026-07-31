@@ -63,6 +63,13 @@ func (d *DistanceOverride) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(0.0).Error("Distance must be greater than or equal to 0"),
 		),
 	))
+
+	for i, stop := range d.IntermediateStops {
+		if stop == nil {
+			continue
+		}
+		stop.Validate(multiErr.WithIndex("intermediateStops", i))
+	}
 }
 
 func (d *DistanceOverride) GetID() pulid.ID {

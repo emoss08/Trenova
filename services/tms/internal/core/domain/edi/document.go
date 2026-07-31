@@ -387,16 +387,9 @@ func (v *EDITemplateVersion) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (s *EDITemplateSegment) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning version are stamped when the parent is written, so
+	// they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(s,
-		validation.Field(&s.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&s.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&s.TemplateVersionID,
-			validation.Required.Error("Template version is required"),
-		),
 		validation.Field(&s.SegmentID,
 			validation.Required.Error("Segment is required"),
 			validation.Length(1, maxSegmentIDLength).
@@ -424,16 +417,9 @@ func (s *EDITemplateSegment) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (l *EDITemplateScriptLibrary) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning version are stamped when the parent is written, so
+	// they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(l,
-		validation.Field(&l.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&l.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&l.TemplateVersionID,
-			validation.Required.Error("Template version is required"),
-		),
 		validation.Field(&l.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, maxEDINameLength).

@@ -93,6 +93,15 @@ func (r *Role) Validate(multiErr *errortypes.MultiError) {
 	); err != nil {
 		multiErr.AddOzzoError(err)
 	}
+
+	// The grants arrive with the role and are written with it, so a malformed
+	// one is reported against the role rather than failing at insert.
+	for i, permission := range r.Permissions {
+		if permission == nil {
+			continue
+		}
+		permission.Validate(multiErr.WithIndex("permissions", i))
+	}
 }
 
 func (r *Role) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {

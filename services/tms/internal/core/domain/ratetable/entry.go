@@ -136,14 +136,12 @@ func entryFieldPrefix(index int) string {
 }
 
 func (e *RateTableEntry) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning table are stamped when the rate table is written,
+	// so they are not the caller's to supply. Which of match key or range an
+	// entry needs, and how bands relate to each other, depends on the table's
+	// lookup type and is checked across the whole set above; what is left here
+	// is the shape of the entry on its own.
 	multiErr.AddOzzoError(validation.ValidateStruct(e,
-		validation.Field(&e.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&e.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&e.RateTableID, validation.Required.Error("Rate table is required")),
 		validation.Field(&e.MatchKey,
 			validation.Length(0, maxMatchKeyLength).
 				Error("Match key cannot be longer than 100 characters"),
@@ -153,18 +151,13 @@ func (e *RateTableEntry) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 
-	// An entry is chosen by either its key or the band a value falls into, so
-	// one with neither can never be selected and the rate silently falls
-	// through to whatever follows it.
-	if (e.MatchKey == nil || *e.MatchKey == "") && !e.RangeMin.Valid && !e.RangeMax.Valid {
-		multiErr.Add("matchKey", errortypes.ErrRequired,
-			"An entry must have a match key or a range")
+	if e.RangeMin.Valid && e.RangeMin.Decimal.IsNegative() {
+		multiErr.Add("rangeMin", errortypes.ErrInvalid, "Range minimum cannot be negative")
 	}
 
-	if e.RangeMin.Valid && e.RangeMax.Valid &&
-		e.RangeMax.Decimal.LessThanOrEqual(e.RangeMin.Decimal) {
-		multiErr.Add("rangeMax", errortypes.ErrInvalid,
-			"Range maximum must be greater than the range minimum")
+	// A negative rate would credit the customer for the band it matches.
+	if e.Value.IsNegative() {
+		multiErr.Add("value", errortypes.ErrInvalid, "Value cannot be negative")
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -52,7 +53,7 @@ func (d *AgentDecision) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&d.Decision,
 			validation.Required.Error("Decision is required"),
-			validation.By(isValidEnum(d.Decision.IsValid, "Invalid decision")),
+			domainvalidation.ValidEnum[DecisionType]("Invalid decision"),
 		),
 		validation.Field(&d.ReasonCode, validation.Required.Error("Reason code is required")),
 	))

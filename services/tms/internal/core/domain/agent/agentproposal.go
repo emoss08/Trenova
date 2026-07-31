@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -58,11 +59,11 @@ func (p *AgentProposal) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&p.Rationale, validation.Required.Error("Rationale is required")),
 		validation.Field(&p.AutonomyTier,
 			validation.Required.Error("Autonomy tier is required"),
-			validation.By(isValidEnum(p.AutonomyTier.IsValid, "Invalid autonomy tier")),
+			domainvalidation.ValidEnum[AutonomyTier]("Invalid autonomy tier"),
 		),
 		validation.Field(&p.Status,
 			validation.Required.Error("Status is required"),
-			validation.By(isValidEnum(p.Status.IsValid, "Invalid status")),
+			domainvalidation.ValidEnum[ProposalStatus]("Invalid status"),
 		),
 		validation.Field(&p.Confidence,
 			validation.By(func(_ any) error {

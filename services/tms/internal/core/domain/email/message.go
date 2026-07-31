@@ -248,14 +248,9 @@ func (m *Message) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (a *Attachment) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning message are stamped when the parent is written, so
+	// they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(a,
-		validation.Field(&a.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&a.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&a.MessageID, validation.Required.Error("Message is required")),
 		validation.Field(&a.FileName,
 			validation.Required.Error("File name is required"),
 			validation.Length(1, maxAttachmentNameLength).

@@ -150,17 +150,9 @@ func (p *EDIMappingProfile) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (i *EDIMappingProfileItem) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning profile are stamped when the parent is written, so
+	// they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(i,
-		validation.Field(&i.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&i.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&i.EDIPartnerID, validation.Required.Error("Partner is required")),
-		validation.Field(&i.MappingProfileID,
-			validation.Required.Error("Mapping profile is required"),
-		),
 		validation.Field(&i.EntityType,
 			validation.Required.Error("Entity type is required"),
 			domainvalidation.ValidEnum[MappingEntityType]("Entity type is invalid"),

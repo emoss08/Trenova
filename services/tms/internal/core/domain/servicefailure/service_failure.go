@@ -2,12 +2,12 @@ package servicefailure
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -96,33 +96,15 @@ func (sf *ServiceFailure) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&sf.Number, validation.Required.Error("Service failure number is required")),
 		validation.Field(&sf.Type,
 			validation.Required.Error("Service failure type is required"),
-			validation.By(func(value any) error {
-				failureType, _ := value.(Type)
-				if !failureType.IsValid() {
-					return errors.New("service failure type is invalid")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[Type]("service failure type is invalid"),
 		),
 		validation.Field(&sf.Source,
 			validation.Required.Error("Source is required"),
-			validation.By(func(value any) error {
-				source, _ := value.(Source)
-				if !source.IsValid() {
-					return errors.New("source is invalid")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[Source]("source is invalid"),
 		),
 		validation.Field(&sf.Status,
 			validation.Required.Error("Status is required"),
-			validation.By(func(value any) error {
-				status, _ := value.(Status)
-				if !status.IsValid() {
-					return errors.New("status is invalid")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[Status]("status is invalid"),
 		),
 		validation.Field(&sf.StopType,
 			validation.Required.Error("Stop type is required"),

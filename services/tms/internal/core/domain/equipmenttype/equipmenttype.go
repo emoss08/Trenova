@@ -2,10 +2,10 @@ package equipmenttype
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -53,16 +53,7 @@ func (et *EquipmentType) Validate(multiErr *errortypes.MultiError) {
 			&et.Code,
 			validation.Length(1, 10).Error("Code must be between 1 and 10 characters"),
 		),
-		validation.Field(&et.Class, validation.Required, validation.By(func(value any) error {
-			c, ok := value.(Class)
-			if !ok {
-				return errors.New("invalid class type")
-			}
-			if !c.IsValid() {
-				return errors.New("Class must be one of: Tractor, Trailer, Container, Other")
-			}
-			return nil
-		})),
+		validation.Field(&et.Class, validation.Required, domainvalidation.ValidEnum[Class]("Class must be one of: Tractor, Trailer, Container, Other")),
 	))
 }
 

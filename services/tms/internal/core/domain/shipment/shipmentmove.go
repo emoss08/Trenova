@@ -79,14 +79,10 @@ func (m *ShipmentMove) IsCanceled() bool {
 }
 
 func (sm *ShipmentMove) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning shipment are stamped by the repository when the
+	// move is written, so they are not the caller's to supply and are not
+	// checked here — a create would otherwise fail on fields it never sends.
 	multiErr.AddOzzoError(validation.ValidateStruct(sm,
-		validation.Field(&sm.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&sm.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&sm.ShipmentID, validation.Required.Error("Shipment is required")),
 		validation.Field(&sm.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[MoveStatus]("Status is invalid"),

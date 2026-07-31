@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
@@ -12,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -21,8 +21,6 @@ import (
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/uptrace/bun"
 )
-
-var usPostalCodeRegex = regexp.MustCompile(`^\d{5}(-\d{4})?$`)
 
 var (
 	_ bun.BeforeAppendModelHook          = (*Worker)(nil)
@@ -85,16 +83,7 @@ func (w *Worker) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(w,
 		validation.Field(&w.Type,
 			validation.Required.Error("Type is required"),
-			validation.By(func(value any) error {
-				t, ok := value.(WorkerType)
-				if !ok {
-					return errors.New("invalid worker type")
-				}
-				if !t.IsValid() {
-					return errors.New("type must be either Employee or Contractor")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[WorkerType]("type must be either Employee or Contractor"),
 		),
 		validation.Field(&w.FirstName,
 			validation.Required.Error("First Name is required"),
@@ -106,16 +95,7 @@ func (w *Worker) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&w.Gender,
 			validation.Required.Error("Gender is required"),
-			validation.By(func(value any) error {
-				g, ok := value.(Gender)
-				if !ok {
-					return errors.New("invalid gender type")
-				}
-				if !g.IsValid() {
-					return errors.New("Gender must be either Male or Female")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[Gender]("Gender must be either Male or Female"),
 		),
 		validation.Field(&w.AddressLine1,
 			validation.Required.Error("Address Line 1 is required"),
@@ -127,7 +107,7 @@ func (w *Worker) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&w.PostalCode,
 			validation.Required.Error("Postal Code is required"),
-			validation.By(validatePostalCode),
+			validation.By(domaintypes.ValidatePostalCode),
 		),
 		validation.Field(&w.PhoneNumber,
 			is.E164.Error("Phone number must be in E.164 format (e.g., +12025551234)"),
@@ -160,20 +140,6 @@ func (w *Worker) Validate(multiErr *errortypes.MultiError) {
 		profileErr := multiErr.WithPrefix("profile")
 		w.Profile.Validate(profileErr)
 	}
-}
-
-func validatePostalCode(value any) error {
-	pc, ok := value.(string)
-	if !ok {
-		return errors.New("postal code must be a string")
-	}
-	if pc == "" {
-		return nil
-	}
-	if !usPostalCodeRegex.MatchString(pc) {
-		return errors.New("postal code must be a valid US postal code (e.g., 12345 or 12345-6789)")
-	}
-	return nil
 }
 
 func (w *Worker) GetTableName() string {

@@ -128,8 +128,9 @@ func (s *EDISourceContextSchema) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (f *EDISourceContextField) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning schema are stamped when the parent is written, so
+	// they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(f,
-		validation.Field(&f.SchemaID, validation.Required.Error("Schema is required")),
 		validation.Field(&f.Path, validation.Required.Error("Path is required")),
 		validation.Field(&f.SourceKind,
 			validation.Required.Error("Source kind is required"),

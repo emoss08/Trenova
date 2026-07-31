@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -55,16 +56,16 @@ func (r *AgentRun) Validate(multiErr *errortypes.MultiError) {
 		r,
 		validation.Field(&r.AgentType,
 			validation.Required.Error("Agent type is required"),
-			validation.By(isValidEnum(r.AgentType.IsValid, "Invalid agent type")),
+			domainvalidation.ValidEnum[Type]("Invalid agent type"),
 		),
 		validation.Field(&r.SubjectType,
 			validation.Required.Error("Subject type is required"),
-			validation.By(isValidEnum(r.SubjectType.IsValid, "Invalid subject type")),
+			domainvalidation.ValidEnum[SubjectType]("Invalid subject type"),
 		),
 		validation.Field(&r.SubjectID, validation.Required.Error("Subject id is required")),
 		validation.Field(&r.Status,
 			validation.Required.Error("Status is required"),
-			validation.By(isValidEnum(r.Status.IsValid, "Invalid status")),
+			domainvalidation.ValidEnum[RunStatus]("Invalid status"),
 		),
 		validation.Field(&r.PromptVersion,
 			validation.Required.Error("Prompt version is required"),

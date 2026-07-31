@@ -115,14 +115,9 @@ func (m *FormMapping) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (i *FormMappingItem) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning mapping are stamped when the parent is written, so
+	// they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(i,
-		validation.Field(&i.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&i.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&i.MappingID, validation.Required.Error("Mapping is required")),
 		validation.Field(&i.SourceFieldLabel,
 			validation.Required.Error("Source field label is required"),
 		),

@@ -134,8 +134,9 @@ func (s *EDIPartnerSettingSchema) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (f *EDIPartnerSettingField) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning schema are stamped when the parent is written, so
+	// they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(f,
-		validation.Field(&f.SchemaID, validation.Required.Error("Schema is required")),
 		validation.Field(&f.Path, validation.Required.Error("Path is required")),
 		validation.Field(&f.Label,
 			validation.Required.Error("Label is required"),

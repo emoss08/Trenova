@@ -88,6 +88,13 @@ func (rt *RateTable) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (rt *RateTable) validateEntries(multiErr *errortypes.MultiError) {
+	for i, entry := range rt.Entries {
+		if entry == nil {
+			continue
+		}
+		entry.Validate(multiErr.WithIndex("entries", i))
+	}
+
 	switch rt.LookupType {
 	case LookupTypeExact:
 		validateExactEntries(rt.Entries, multiErr)

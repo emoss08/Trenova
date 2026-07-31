@@ -101,6 +101,10 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 	if c.BillingProfile != nil {
 		c.BillingProfile.Validate(multiErr.WithPrefix("billingProfile"))
 	}
+
+	if c.EmailProfile != nil {
+		c.EmailProfile.Validate(multiErr.WithPrefix("emailProfile"))
+	}
 }
 
 func (c *Customer) GetID() pulid.ID {

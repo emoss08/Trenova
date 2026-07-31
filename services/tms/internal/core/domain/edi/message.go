@@ -324,14 +324,9 @@ func (m *EDIMessage) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (e *EDIMessageValidationError) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning message are stamped when the parent is written, so
+	// they are not the caller's to supply.
 	multiErr.AddOzzoError(validation.ValidateStruct(e,
-		validation.Field(&e.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&e.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&e.MessageID, validation.Required.Error("Message is required")),
 		validation.Field(&e.Severity,
 			validation.Required.Error("Severity is required"),
 			domainvalidation.ValidEnum[ValidationSeverity]("Severity is invalid"),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -130,48 +131,15 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(dc,
 		validation.Field(&dc.AutoAssignmentStrategy,
 			validation.Required.Error("Auto assignment strategy is required"),
-			validation.By(func(value any) error {
-				a, ok := value.(AutoAssignmentStrategy)
-				if !ok {
-					return errors.New("invalid auto assignment strategy type")
-				}
-				if !a.IsValid() {
-					return errors.New(
-						"auto assignment strategy must be one of: Proximity, Availability, LoadBalancing, Performance",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[AutoAssignmentStrategy]("auto assignment strategy must be one of: Proximity, Availability, LoadBalancing, Performance"),
 		),
 		validation.Field(&dc.ComplianceEnforcementLevel,
 			validation.Required.Error("Compliance enforcement level is required"),
-			validation.By(func(value any) error {
-				c, ok := value.(ComplianceEnforcementLevel)
-				if !ok {
-					return errors.New("invalid compliance enforcement level type")
-				}
-				if !c.IsValid() {
-					return errors.New(
-						"compliance enforcement level must be one of: Warning, Block, Audit",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[ComplianceEnforcementLevel]("compliance enforcement level must be one of: Warning, Block, Audit"),
 		),
 		validation.Field(&dc.RecordServiceFailures,
 			validation.Required.Error("Record service failures is required"),
-			validation.By(func(value any) error {
-				s, ok := value.(ServiceIncidentType)
-				if !ok {
-					return errors.New("invalid service incident type")
-				}
-				if !s.IsValid() {
-					return errors.New(
-						"record service failures must be one of: Never, Pickup, Delivery, PickupDelivery, AllExceptShipper",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[ServiceIncidentType]("record service failures must be one of: Never, Pickup, Delivery, PickupDelivery, AllExceptShipper"),
 		),
 		validation.Field(&dc.ServiceFailureGracePeriod,
 			validation.When(dc.ServiceFailureGracePeriod != nil,
