@@ -129,17 +129,26 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 	dc.NormalizeAutoAssignmentSettings()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(dc,
-		validation.Field(&dc.AutoAssignmentStrategy,
+		validation.Field(
+			&dc.AutoAssignmentStrategy,
 			validation.Required.Error("Auto assignment strategy is required"),
-			domainvalidation.ValidEnum[AutoAssignmentStrategy]("auto assignment strategy must be one of: Proximity, Availability, LoadBalancing, Performance"),
+			domainvalidation.ValidEnum[AutoAssignmentStrategy](
+				"auto assignment strategy must be one of: Proximity, Availability, LoadBalancing, Performance",
+			),
 		),
-		validation.Field(&dc.ComplianceEnforcementLevel,
+		validation.Field(
+			&dc.ComplianceEnforcementLevel,
 			validation.Required.Error("Compliance enforcement level is required"),
-			domainvalidation.ValidEnum[ComplianceEnforcementLevel]("compliance enforcement level must be one of: Warning, Block, Audit"),
+			domainvalidation.ValidEnum[ComplianceEnforcementLevel](
+				"compliance enforcement level must be one of: Warning, Block, Audit",
+			),
 		),
-		validation.Field(&dc.RecordServiceFailures,
+		validation.Field(
+			&dc.RecordServiceFailures,
 			validation.Required.Error("Record service failures is required"),
-			domainvalidation.ValidEnum[ServiceIncidentType]("record service failures must be one of: Never, Pickup, Delivery, PickupDelivery, AllExceptShipper"),
+			domainvalidation.ValidEnum[ServiceIncidentType](
+				"record service failures must be one of: Never, Pickup, Delivery, PickupDelivery, AllExceptShipper",
+			),
 		),
 		validation.Field(&dc.ServiceFailureGracePeriod,
 			validation.When(dc.ServiceFailureGracePeriod != nil,

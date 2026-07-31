@@ -63,13 +63,19 @@ func (wpto *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-		validation.Field(&wpto.Status,
+		validation.Field(
+			&wpto.Status,
 			validation.Required.Error("Status is required"),
-			domainvalidation.ValidEnum[PTOStatus]("status must be one of: Requested, Approved, Rejected, Cancelled"),
+			domainvalidation.ValidEnum[PTOStatus](
+				"status must be one of: Requested, Approved, Rejected, Cancelled",
+			),
 		),
-		validation.Field(&wpto.Type,
+		validation.Field(
+			&wpto.Type,
 			validation.Required.Error("Type is required"),
-			domainvalidation.ValidEnum[PTOType]("type must be one of: Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity"),
+			domainvalidation.ValidEnum[PTOType](
+				"type must be one of: Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity",
+			),
 		),
 		validation.Field(&wpto.StartDate,
 			validation.Required.Error("Start date is required"),

@@ -53,7 +53,13 @@ func (et *EquipmentType) Validate(multiErr *errortypes.MultiError) {
 			&et.Code,
 			validation.Length(1, 10).Error("Code must be between 1 and 10 characters"),
 		),
-		validation.Field(&et.Class, validation.Required, domainvalidation.ValidEnum[Class]("Class must be one of: Tractor, Trailer, Container, Other")),
+		validation.Field(
+			&et.Class,
+			validation.Required,
+			domainvalidation.ValidEnum[Class](
+				"Class must be one of: Tractor, Trailer, Container, Other",
+			),
+		),
 	))
 }
 

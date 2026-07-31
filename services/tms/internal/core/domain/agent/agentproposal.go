@@ -67,7 +67,8 @@ func (p *AgentProposal) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&p.Confidence,
 			validation.By(func(_ any) error {
-				if p.Confidence.LessThan(decimal.Zero) || p.Confidence.GreaterThan(decimal.NewFromInt(1)) {
+				if p.Confidence.LessThan(decimal.Zero) ||
+					p.Confidence.GreaterThan(decimal.NewFromInt(1)) {
 					return errors.New("confidence must be between 0 and 1")
 				}
 				return nil

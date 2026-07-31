@@ -63,9 +63,12 @@ func (wp *WorkerProfile) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("License number is required"),
 			validation.Length(1, 50).Error("License number must be between 1 and 50 characters"),
 		),
-		validation.Field(&wp.Endorsement,
+		validation.Field(
+			&wp.Endorsement,
 			validation.Required.Error("Endorsement type is required"),
-			domainvalidation.ValidEnum[EndorsementType]("endorsement must be one of: O, N, H, X, P, T"),
+			domainvalidation.ValidEnum[EndorsementType](
+				"endorsement must be one of: O, N, H, X, P, T",
+			),
 		),
 		validation.Field(&wp.LicenseExpiry,
 			validation.Required.Error("License expiry is required"),
@@ -75,9 +78,12 @@ func (wp *WorkerProfile) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Hire date is required"),
 			validation.Min(int64(1)).Error("Hire date must be a positive value"),
 		),
-		validation.Field(&wp.ComplianceStatus,
+		validation.Field(
+			&wp.ComplianceStatus,
 			validation.Required.Error("Compliance status is required"),
-			domainvalidation.ValidEnum[ComplianceStatus]("compliance status must be one of: Compliant, NonCompliant, Pending"),
+			domainvalidation.ValidEnum[ComplianceStatus](
+				"compliance status must be one of: Compliant, NonCompliant, Pending",
+			),
 		),
 	))
 

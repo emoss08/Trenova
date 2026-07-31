@@ -112,7 +112,9 @@ func (a *Assignment) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&a.AckAt,
 			validation.When(
 				a.AckStatus != AssignmentAckPending,
-				validation.Required.Error("An answered assignment must record when it was answered"),
+				validation.Required.Error(
+					"An answered assignment must record when it was answered",
+				),
 			),
 		),
 		// A decline that records no reason leaves dispatch reassigning blind.

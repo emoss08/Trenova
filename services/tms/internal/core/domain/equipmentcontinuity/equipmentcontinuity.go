@@ -77,9 +77,12 @@ func (e *EquipmentContinuity) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Equipment type is required"),
 			domainvalidation.ValidEnum[EquipmentType]("equipment type must be Trailer or Tractor"),
 		),
-		validation.Field(&e.SourceType,
+		validation.Field(
+			&e.SourceType,
 			validation.Required.Error("Source type is required"),
-			domainvalidation.ValidEnum[SourceType]("source type must be Assignment or ManualLocate"),
+			domainvalidation.ValidEnum[SourceType](
+				"source type must be Assignment or ManualLocate",
+			),
 		),
 		validation.Field(&e.EquipmentID, validation.Required.Error("Equipment ID is required")),
 		validation.Field(

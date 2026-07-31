@@ -36,21 +36,33 @@ type DataEntryControl struct {
 
 func (dec *DataEntryControl) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(dec,
-		validation.Field(&dec.CodeCase,
+		validation.Field(
+			&dec.CodeCase,
 			validation.Required.Error("Code case is required"),
-			domainvalidation.ValidEnum[CaseFormat]("code case must be one of: AsEntered, Upper, Lower, TitleCase"),
+			domainvalidation.ValidEnum[CaseFormat](
+				"code case must be one of: AsEntered, Upper, Lower, TitleCase",
+			),
 		),
-		validation.Field(&dec.NameCase,
+		validation.Field(
+			&dec.NameCase,
 			validation.Required.Error("Name case is required"),
-			domainvalidation.ValidEnum[CaseFormat]("name case must be one of: AsEntered, Upper, Lower, TitleCase"),
+			domainvalidation.ValidEnum[CaseFormat](
+				"name case must be one of: AsEntered, Upper, Lower, TitleCase",
+			),
 		),
-		validation.Field(&dec.EmailCase,
+		validation.Field(
+			&dec.EmailCase,
 			validation.Required.Error("Email case is required"),
-			domainvalidation.ValidEnum[CaseFormat]("email case must be one of: AsEntered, Upper, Lower, TitleCase"),
+			domainvalidation.ValidEnum[CaseFormat](
+				"email case must be one of: AsEntered, Upper, Lower, TitleCase",
+			),
 		),
-		validation.Field(&dec.CityCase,
+		validation.Field(
+			&dec.CityCase,
 			validation.Required.Error("City case is required"),
-			domainvalidation.ValidEnum[CaseFormat]("city case must be one of: AsEntered, Upper, Lower, TitleCase"),
+			domainvalidation.ValidEnum[CaseFormat](
+				"city case must be one of: AsEntered, Upper, Lower, TitleCase",
+			),
 		),
 	))
 }
