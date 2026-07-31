@@ -3,8 +3,10 @@ package ailog
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -41,3 +43,63 @@ func (l *Log) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (l *Log) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(l,
+		validation.Field(&l.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&l.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&l.UserID, validation.Required.Error("User is required")),
+		validation.Field(&l.Prompt, validation.Required.Error("Prompt is required")),
+		validation.Field(&l.Model,
+			validation.Required.Error("Model is required"),
+			validation.In(
+				ModelGPT5Nano,
+				ModelGPT5Nano20250807,
+				ModelGPT5Mini,
+				ModelGPT5Mini20250807,
+				ModelModerationLatest,
+			).Error("Model is not one this system calls"),
+		),
+		validation.Field(&l.Operation,
+			validation.Required.Error("Operation is required"),
+			validation.In(
+				OperationClassifyLocation,
+				OperationDocumentIntelligenceRoute,
+				OperationDocumentIntelligenceExtract,
+				OperationShipmentImportChat,
+			).Error("Operation is not one this system records"),
+		),
+		validation.Field(&l.Object,
+			validation.Required.Error("Object is required"),
+			validation.Length(1, maxObjectLength).
+				Error("Object cannot be longer than 100 characters"),
+		),
+		validation.Field(&l.ServiceTier,
+			validation.Length(0, maxServiceTierLength).
+				Error("Service tier cannot be longer than 100 characters"),
+		),
+		// Token counts drive spend reporting, so a negative one would understate
+		// what an organization has actually used.
+		validation.Field(&l.PromptTokens,
+			validation.Min(0).Error("Prompt tokens cannot be negative"),
+		),
+		validation.Field(&l.CompletionTokens,
+			validation.Min(0).Error("Completion tokens cannot be negative"),
+		),
+		validation.Field(&l.TotalTokens,
+			validation.Min(0).Error("Total tokens cannot be negative"),
+		),
+		validation.Field(&l.ReasoningTokens,
+			validation.Min(0).Error("Reasoning tokens cannot be negative"),
+		),
+	))
+}
+
+const (
+	maxObjectLength      = 100
+	maxServiceTierLength = 100
+)

@@ -203,3 +203,11 @@ func OperationsToBitmask(ops []Operation) uint32 {
 	}
 	return bits
 }
+
+// IsValid reports whether the operation is one the system defines. Dependencies
+// is keyed by every operation, so it is the list rather than a copy of it that
+// would drift.
+func (o Operation) IsValid() bool {
+	_, ok := Dependencies[o]
+	return ok
+}

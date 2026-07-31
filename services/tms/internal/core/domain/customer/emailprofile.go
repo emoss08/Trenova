@@ -4,8 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/uptrace/bun"
 )
 
@@ -66,3 +70,46 @@ func (e *CustomerEmailProfile) BeforeAppendModel(_ context.Context, query bun.Qu
 
 	return nil
 }
+
+func (p *CustomerEmailProfile) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&p.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&p.Subject,
+			validation.Length(0, maxEmailSubjectLength).
+				Error("Subject cannot be longer than 255 characters"),
+		),
+		validation.Field(&p.FromEmail,
+			validation.Required.Error("From email is required"),
+			is.EmailFormat.Error("From email must be a valid email address"),
+			validation.Length(1, maxEmailAddressLength).
+				Error("From email cannot be longer than 255 characters"),
+		),
+		// The recipient columns are comma separated lists, so an empty element
+		// would address a message to nobody halfway down the list.
+		validation.Field(&p.ToRecipients,
+			validation.Required.Error("At least one recipient is required"),
+			validation.By(domaintypes.ValidateStringOrCommaSeparated),
+		),
+		validation.Field(&p.CCRecipients,
+			validation.By(domaintypes.ValidateStringOrCommaSeparated),
+		),
+		validation.Field(&p.BCCRecipients,
+			validation.By(domaintypes.ValidateStringOrCommaSeparated),
+		),
+		validation.Field(&p.AttachmentName,
+			validation.Length(0, maxAttachmentNameLength).
+				Error("Attachment name cannot be longer than 255 characters"),
+		),
+	))
+}
+
+const (
+	maxEmailSubjectLength   = 255
+	maxEmailAddressLength   = 255
+	maxAttachmentNameLength = 255
+)

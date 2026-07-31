@@ -5,9 +5,11 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
@@ -206,3 +208,42 @@ func validateTiers(tiers []*DetentionPolicyTier, multiErr *errortypes.MultiError
 func tierFieldPrefix(index int) string {
 	return "tiers[" + strconv.Itoa(index) + "]"
 }
+
+func (t *DetentionPolicyTier) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(t,
+		validation.Field(&t.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&t.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&t.DetentionPolicyID,
+			validation.Required.Error("Detention policy is required"),
+		),
+		validation.Field(&t.FromMinute,
+			validation.Min(int32(0)).Error("From minute cannot be negative"),
+		),
+		// A tier that ends before it starts covers no minutes at all, so the
+		// charge it describes could never apply.
+		validation.Field(&t.ToMinute,
+			validation.Min(t.FromMinute+1).Error("To minute must be after from minute"),
+		),
+		validation.Field(&t.RateUnit,
+			validation.Required.Error("Rate unit is required"),
+			domainvalidation.ValidEnumFunc(TierRateUnitFromString, "Rate unit is invalid"),
+		),
+		validation.Field(&t.Label,
+			validation.Length(0, maxTierLabelLength).
+				Error("Label cannot be longer than 100 characters"),
+		),
+		validation.Field(&t.SortOrder,
+			validation.Min(int32(0)).Error("Sort order cannot be negative"),
+		),
+	))
+
+	if t.Rate.IsNegative() {
+		multiErr.Add("rate", errortypes.ErrInvalid, "Rate cannot be negative")
+	}
+}
+
+const maxTierLabelLength = 100

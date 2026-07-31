@@ -5,8 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -131,3 +134,104 @@ func (s *DocumentUploadSession) IsNewerThan(other *DocumentUploadSession) bool {
 
 	return s.ID.String() > other.ID.String()
 }
+
+func (s *DocumentUploadSession) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&s.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&s.ResourceID,
+			validation.Required.Error("Resource is required"),
+			validation.Length(1, maxSessionCodeLength).
+				Error("Resource cannot be longer than 100 characters"),
+		),
+		validation.Field(&s.ResourceType,
+			validation.Required.Error("Resource type is required"),
+			validation.Length(1, maxSessionCodeLength).
+				Error("Resource type cannot be longer than 100 characters"),
+		),
+		validation.Field(&s.ProcessingProfile,
+			validation.Required.Error("Processing profile is required"),
+			domainvalidation.ValidEnum[document.ProcessingProfile](
+				"Processing profile is invalid",
+			),
+		),
+		validation.Field(&s.OriginalName,
+			validation.Required.Error("Original name is required"),
+			validation.Length(1, maxSessionNameLength).
+				Error("Original name cannot be longer than 255 characters"),
+		),
+		validation.Field(&s.ContentType,
+			validation.Required.Error("Content type is required"),
+			validation.Length(1, maxSessionNameLength).
+				Error("Content type cannot be longer than 255 characters"),
+		),
+		validation.Field(&s.FileSize,
+			validation.Required.Error("File size is required"),
+			validation.Min(int64(1)).Error("File size must be greater than zero"),
+		),
+		validation.Field(&s.StoragePath,
+			validation.Required.Error("Storage path is required"),
+			validation.Length(1, maxSessionPathLength).
+				Error("Storage path cannot be longer than 500 characters"),
+		),
+		validation.Field(&s.ChecksumSHA256,
+			validation.Length(sessionChecksumLength, sessionChecksumLength).
+				Error("Checksum must be a 64 character digest"),
+		),
+		validation.Field(&s.CryptoMode,
+			validation.Required.Error("Crypto mode is required"),
+			validation.Length(1, maxSessionCryptoModeLength).
+				Error("Crypto mode cannot be longer than 32 characters"),
+		),
+		validation.Field(&s.CryptoVersion,
+			validation.Required.Error("Crypto version is required"),
+			validation.Min(int16(1)).Error("Crypto version must be at least one"),
+		),
+		validation.Field(&s.Strategy,
+			validation.Required.Error("Strategy is required"),
+			domainvalidation.ValidEnum[Strategy]("Strategy is invalid"),
+		),
+		validation.Field(&s.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[Status]("Status is invalid"),
+		),
+		// A multipart upload is resumed from its provider id; without one the
+		// parts already uploaded are unreachable and the session is stuck.
+		validation.Field(&s.StorageProviderUploadID,
+			validation.When(
+				s.Strategy == StrategyMultipart,
+				validation.Required.Error("A multipart upload must record its provider id"),
+			),
+			validation.Length(0, maxSessionNameLength).
+				Error("Provider upload id cannot be longer than 255 characters"),
+		),
+		validation.Field(&s.PartSize,
+			validation.Min(int64(0)).Error("Part size cannot be negative"),
+		),
+		validation.Field(&s.Tags,
+			validation.Each(validation.Length(1, maxSessionCodeLength).
+				Error("A tag must be between 1 and 100 characters")),
+		),
+		validation.Field(&s.FailureCode,
+			validation.Length(0, maxSessionCodeLength).
+				Error("Failure code cannot be longer than 100 characters"),
+		),
+		// A session with no expiry would hold its storage reservation forever.
+		validation.Field(&s.ExpiresAt,
+			validation.Required.Error("Expiry is required"),
+			validation.Min(int64(1)).Error("Expiry must be a valid timestamp"),
+		),
+	))
+}
+
+const (
+	maxSessionCodeLength       = 100
+	maxSessionNameLength       = 255
+	maxSessionPathLength       = 500
+	maxSessionCryptoModeLength = 32
+	sessionChecksumLength      = 64
+)

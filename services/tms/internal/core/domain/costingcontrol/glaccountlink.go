@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -35,4 +37,19 @@ func (cga *CostCategoryGLAccount) BeforeAppendModel(_ context.Context, query bun
 	}
 
 	return nil
+}
+
+func (l *CostCategoryGLAccount) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(l,
+		validation.Field(&l.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&l.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&l.CostCategoryID,
+			validation.Required.Error("Cost category is required"),
+		),
+		validation.Field(&l.GLAccountID, validation.Required.Error("GL account is required")),
+	))
 }

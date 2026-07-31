@@ -2,7 +2,9 @@ package distanceoverride
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -16,4 +18,22 @@ type DistanceOverrideStop struct {
 	LocationID         pulid.ID `json:"locationId" bun:"location_id,type:VARCHAR(100),notnull"`
 
 	Location *location.Location `json:"location,omitempty" bun:"rel:belongs-to,join:location_id=id"`
+}
+
+func (s *DistanceOverrideStop) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&s.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&s.DistanceOverrideID,
+			validation.Required.Error("Distance override is required"),
+		),
+		validation.Field(&s.LocationID, validation.Required.Error("Location is required")),
+		validation.Field(&s.StopOrder,
+			validation.Min(0).Error("Stop order cannot be negative"),
+		),
+	))
 }

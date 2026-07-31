@@ -3,8 +3,10 @@ package distancecalculation
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -44,3 +46,44 @@ func (r *Run) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	r.CreatedAt = timeutils.NowUnix()
 	return nil
 }
+
+func (r *Run) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&r.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment is required")),
+		validation.Field(&r.ShipmentMoveID,
+			validation.Required.Error("Shipment move is required"),
+		),
+		validation.Field(&r.Provider,
+			validation.Length(0, maxRunCodeLength).
+				Error("Provider cannot be longer than 50 characters"),
+		),
+		validation.Field(&r.Source,
+			validation.Required.Error("Source is required"),
+			validation.Length(1, maxRunCodeLength).
+				Error("Source cannot be longer than 50 characters"),
+		),
+		validation.Field(&r.Status,
+			validation.Required.Error("Status is required"),
+			validation.Length(1, maxRunCodeLength).
+				Error("Status cannot be longer than 50 characters"),
+		),
+		validation.Field(&r.ErrorCode,
+			validation.Length(0, maxRunErrorCodeLength).
+				Error("Error code cannot be longer than 100 characters"),
+		),
+		validation.Field(&r.LatencyMillis,
+			validation.Min(int64(0)).Error("Latency cannot be negative"),
+		),
+	))
+}
+
+const (
+	maxRunCodeLength      = 50
+	maxRunErrorCodeLength = 100
+)
