@@ -7,13 +7,19 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
+
+// defaultGeneratedMimeType matches the column default, so a record validated
+// before insert is judged against the value the insert would have stored.
+const defaultGeneratedMimeType = "application/pdf"
 
 // GenerationStatus tracks one rendering attempt.
 type GenerationStatus string
@@ -234,54 +240,106 @@ func (g *GeneratedDocument) FromBuiltIn() bool {
 }
 
 func (g *GeneratedDocument) Validate(multiErr *errortypes.MultiError) {
-	if g.Kind == "" {
-		multiErr.Add("kind", errortypes.ErrRequired, "Template kind is required")
-	}
+	g.Normalize()
 
-	if strings.TrimSpace(g.ReferenceType) == "" {
-		multiErr.Add("referenceType", errortypes.ErrRequired, "Reference type is required")
-	}
-
-	if g.ReferenceID.IsNil() {
-		multiErr.Add("referenceId", errortypes.ErrRequired, "Reference is required")
-	}
-
-	if strings.TrimSpace(g.FileName) == "" {
-		multiErr.Add("fileName", errortypes.ErrRequired, "File name is required")
-	}
-
-	if !g.Status.IsValid() {
-		multiErr.Add("status", errortypes.ErrInvalid, "Status is not a valid generation status")
-	}
-
-	if !g.DeliveryMethod.IsValid() {
-		multiErr.Add("deliveryMethod", errortypes.ErrInvalid, "Delivery method is not supported")
-	}
-
-	// These mirror database CHECK constraints. Catching them here turns an opaque
-	// constraint violation into a field error a caller can act on.
-	if g.Status == GenerationStatusCompleted {
-		if g.GeneratedAt == nil {
-			multiErr.Add("generatedAt", errortypes.ErrRequired,
-				"A completed document must record when it was generated")
-		}
-		if strings.TrimSpace(g.FilePath) == "" {
-			multiErr.Add("filePath", errortypes.ErrRequired,
-				"A completed document must record where it was stored")
-		}
-	}
-
-	if g.Status == GenerationStatusFailed && strings.TrimSpace(g.ErrorMessage) == "" {
-		multiErr.Add("errorMessage", errortypes.ErrRequired,
-			"A failed document must record why")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(g,
+		validation.Field(&g.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&g.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&g.Kind,
+			validation.Required.Error("Template kind is required"),
+			validation.Length(1, MaxKindLength).
+				Error("Template kind cannot be longer than 100 characters"),
+		),
+		validation.Field(&g.ReferenceType,
+			validation.Required.Error("Reference type is required"),
+			validation.Length(1, MaxReferenceTypeLength).
+				Error("Reference type cannot be longer than 50 characters"),
+		),
+		validation.Field(&g.ReferenceID, validation.Required.Error("Reference is required")),
+		validation.Field(&g.FileName,
+			validation.Required.Error("File name is required"),
+			validation.Length(1, MaxFileNameLength).
+				Error("File name cannot be longer than 255 characters"),
+		),
+		validation.Field(&g.FilePath,
+			validation.Length(0, MaxFilePathLength).
+				Error("File path cannot be longer than 500 characters"),
+			// These mirror database CHECK constraints. Catching them here turns an
+			// opaque constraint violation into a field error a caller can act on.
+			validation.When(g.Status == GenerationStatusCompleted, validation.Required.Error(
+				"A completed document must record where it was stored",
+			)),
+		),
+		validation.Field(&g.FileSize,
+			validation.Min(int64(0)).Error("File size cannot be negative"),
+		),
+		validation.Field(&g.MimeType,
+			validation.Required.Error("Mime type is required"),
+			validation.Length(1, MaxMimeTypeLength).
+				Error("Mime type cannot be longer than 100 characters"),
+		),
+		validation.Field(&g.Checksum,
+			validation.Length(0, MaxHashLength).
+				Error("Checksum cannot be longer than 64 characters"),
+		),
+		validation.Field(&g.ContentHash,
+			validation.Length(0, MaxHashLength).
+				Error("Content hash cannot be longer than 64 characters"),
+		),
+		validation.Field(&g.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[GenerationStatus](
+				"Status is not a valid generation status",
+			),
+		),
+		validation.Field(&g.GeneratedAt,
+			validation.When(g.Status == GenerationStatusCompleted, validation.Required.Error(
+				"A completed document must record when it was generated",
+			)),
+		),
+		validation.Field(&g.ErrorMessage,
+			validation.When(g.Status == GenerationStatusFailed, validation.Required.Error(
+				"A failed document must record why",
+			)),
+		),
+		validation.Field(&g.DeliveryMethod,
+			validation.Required.Error("Delivery method is required"),
+			domainvalidation.ValidEnum[DeliveryMethod]("Delivery method is not supported"),
+		),
+		validation.Field(&g.DeliveredTo,
+			validation.Length(0, MaxDeliveredToLength).
+				Error("Recipient cannot be longer than 255 characters"),
+			validation.When(g.DeliveredAt != nil, validation.Required.Error(
+				"A delivered document must record who received it",
+			)),
+		),
+		validation.Field(&g.DeliveredAt,
+			validation.When(g.DeliveredTo != "", validation.Required.Error(
+				"A delivered document must record when it was delivered",
+			)),
+		),
+	))
 }
 
-func (g *GeneratedDocument) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+// Normalize trims the free text the render path fills in and applies the column
+// defaults.
+//
+// The defaults are applied here rather than only at insert because validation
+// runs first: a caller that leaves them unset would otherwise fail a check the
+// insert itself would have satisfied.
+func (g *GeneratedDocument) Normalize() {
+	g.ReferenceType = strings.TrimSpace(g.ReferenceType)
+	g.FileName = strings.TrimSpace(g.FileName)
+	g.FilePath = strings.TrimSpace(g.FilePath)
+	g.ErrorMessage = strings.TrimSpace(g.ErrorMessage)
+	g.DeliveredTo = strings.TrimSpace(g.DeliveredTo)
 
 	if g.MimeType == "" {
-		g.MimeType = "application/pdf"
+		g.MimeType = defaultGeneratedMimeType
 	}
 	if g.DeliveryMethod == "" {
 		g.DeliveryMethod = DeliveryMethodNone
@@ -289,6 +347,12 @@ func (g *GeneratedDocument) BeforeAppendModel(_ context.Context, query bun.Query
 	if g.Status == "" {
 		g.Status = GenerationStatusPending
 	}
+}
+
+func (g *GeneratedDocument) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+
+	g.Normalize()
 
 	switch query.(type) {
 	case *bun.InsertQuery:

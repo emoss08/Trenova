@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -81,17 +82,21 @@ func (a *DocumentTemplateAssignment) GetPostgresSearchConfig() domaintypes.Postg
 }
 
 func (a *DocumentTemplateAssignment) Validate(multiErr *errortypes.MultiError) {
-	if a.TemplateID.IsNil() {
-		multiErr.Add("templateId", errortypes.ErrRequired, "Template is required")
-	}
-
-	if a.CustomerID.IsNil() {
-		multiErr.Add("customerId", errortypes.ErrRequired, "Customer is required")
-	}
-
-	if a.Kind == "" {
-		multiErr.Add("kind", errortypes.ErrRequired, "Template kind is required")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&a.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&a.Kind,
+			validation.Required.Error("Template kind is required"),
+			validation.Length(1, MaxKindLength).
+				Error("Template kind cannot be longer than 100 characters"),
+		),
+		validation.Field(&a.TemplateID, validation.Required.Error("Template is required")),
+		validation.Field(&a.CustomerID, validation.Required.Error("Customer is required")),
+	))
 }
 
 func (a *DocumentTemplateAssignment) BeforeAppendModel(_ context.Context, query bun.Query) error {
