@@ -54,7 +54,7 @@ type WorkerProfile struct {
 }
 
 func (wp *WorkerProfile) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(wp,
+	multiErr.AddOzzoError(validation.ValidateStruct(wp,
 		validation.Field(&wp.DOB,
 			validation.Required.Error("Date of birth is required"),
 			validation.Min(int64(0)).Error("Date of birth must be a positive value"),
@@ -99,13 +99,7 @@ func (wp *WorkerProfile) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if wp.Endorsement.RequiresHazmatExpiry() && (wp.HazmatExpiry == nil || *wp.HazmatExpiry <= 0) {
 		multiErr.Add(

@@ -2,7 +2,6 @@ package driverpay
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -81,7 +80,7 @@ type Expense struct {
 }
 
 func (e *Expense) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(e,
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
 		validation.Field(&e.WorkerID,
 			validation.Required.Error("Worker is required"),
 		),
@@ -95,12 +94,7 @@ func (e *Expense) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&e.IncurredDate,
 			validation.Required.Error("Incurred date is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if e.AmountMinor <= 0 {
 		multiErr.Add("amountMinor", errortypes.ErrInvalid, "Amount must be greater than zero")

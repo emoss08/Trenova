@@ -95,7 +95,7 @@ type ShipmentHoldRepository interface {
 func (r *GetShipmentHoldByIDRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.HoldID, validation.Required.Error("Hold ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
@@ -107,12 +107,7 @@ func (r *GetShipmentHoldByIDRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -124,7 +119,7 @@ func (r *GetShipmentHoldByIDRequest) Validate() *errortypes.MultiError {
 func (r *CreateShipmentHoldRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&r.HoldReasonID, validation.Required.Error("Hold reason ID is required")),
@@ -143,12 +138,7 @@ func (r *CreateShipmentHoldRequest) Validate() *errortypes.MultiError {
 			}
 			return nil
 		})),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -160,7 +150,7 @@ func (r *CreateShipmentHoldRequest) Validate() *errortypes.MultiError {
 func (r *UpdateShipmentHoldRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.HoldID, validation.Required.Error("Hold ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
@@ -185,12 +175,7 @@ func (r *UpdateShipmentHoldRequest) Validate() *errortypes.MultiError {
 				holdreason.HoldSeverityBlocking,
 			).Error("Invalid hold severity"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -202,7 +187,7 @@ func (r *UpdateShipmentHoldRequest) Validate() *errortypes.MultiError {
 func (r *ReleaseShipmentHoldRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.HoldID, validation.Required.Error("Hold ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
@@ -214,12 +199,7 @@ func (r *ReleaseShipmentHoldRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -231,7 +211,7 @@ func (r *ReleaseShipmentHoldRequest) Validate() *errortypes.MultiError {
 func (r *ActiveShipmentHoldRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(
@@ -242,12 +222,7 @@ func (r *ActiveShipmentHoldRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr

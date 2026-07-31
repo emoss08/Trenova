@@ -2,7 +2,6 @@ package weatheralert
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -62,7 +61,7 @@ type Activity struct {
 }
 
 func (w *WeatherAlert) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		w,
 		validation.Field(&w.OrganizationID, validation.Required),
 		validation.Field(&w.BusinessUnitID, validation.Required),
@@ -73,13 +72,7 @@ func (w *WeatherAlert) Validate(multiErr *errortypes.MultiError) {
 			validation.Required,
 			validation.By(ValidateAlertCategory),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if w.Geometry == nil || w.Geometry.Geometry == nil {
 		multiErr.Add("geometry", errortypes.ErrRequired, "Geometry is required")

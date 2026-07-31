@@ -230,7 +230,7 @@ type DocumentShareToken struct {
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
 func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		i,
 		validation.Field(
 			&i.OrganizationID,
@@ -316,12 +316,7 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Bill-to name is required"),
 			validation.Length(1, 255).Error("Bill-to name must be between 1 and 255 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if i.ShipmentID.IsNil() && i.OrderID.IsNil() {
 		multiErr.Add(

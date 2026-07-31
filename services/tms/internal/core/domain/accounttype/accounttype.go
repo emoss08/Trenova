@@ -2,7 +2,6 @@ package accounttype
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -49,7 +48,7 @@ type AccountType struct {
 }
 
 func (a *AccountType) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(a,
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
 		validation.Field(&a.Code,
 			validation.Required.Error("Code is required"),
 			validation.Length(3, 10).Error("Code must be between 3 and 10 characters"),
@@ -79,13 +78,7 @@ func (a *AccountType) Validate(multiErr *errortypes.MultiError) {
 				domaintypes.StatusInactive,
 			).Error("Status must be either Active or Inactive"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (a *AccountType) GetID() pulid.ID {

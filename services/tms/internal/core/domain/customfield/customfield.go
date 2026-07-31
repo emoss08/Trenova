@@ -50,7 +50,7 @@ type CustomFieldDefinition struct {
 }
 
 func (c *CustomFieldDefinition) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		c,
 		validation.Field(&c.ResourceType, validation.Required.Error("Resource type is required")),
 		validation.Field(
@@ -80,13 +80,7 @@ func (c *CustomFieldDefinition) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&c.Color,
 			validation.Length(0, 20).Error("Color must be at most 20 characters"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if c.FieldType.RequiresOptions() && len(c.Options) == 0 {
 		multiErr.Add(

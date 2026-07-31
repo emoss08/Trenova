@@ -46,7 +46,7 @@ type CostingControl struct {
 }
 
 func (cc *CostingControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		cc,
 		validation.Field(&cc.MilesPerGallon,
 			validation.Required.Error("Miles per gallon is required"),
@@ -93,12 +93,7 @@ func (cc *CostingControl) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	for i, cat := range cc.Categories {
 		if cat == nil {

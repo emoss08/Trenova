@@ -2,7 +2,6 @@ package glaccount
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -55,7 +54,7 @@ type GLAccount struct {
 }
 
 func (g *GLAccount) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(g,
+	multiErr.AddOzzoError(validation.ValidateStruct(g,
 		validation.Field(&g.AccountCode,
 			validation.Required.Error("Account code is required"),
 			validation.Length(1, 20).Error("Account code must be between 1 and 20 characters"),
@@ -75,13 +74,7 @@ func (g *GLAccount) Validate(multiErr *errortypes.MultiError) {
 				domaintypes.StatusInactive,
 			).Error("Status must be either Active or Inactive"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (g *GLAccount) GetID() pulid.ID {

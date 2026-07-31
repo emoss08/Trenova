@@ -2,7 +2,6 @@ package recurringshipment
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -80,7 +79,7 @@ type RecurringShipment struct {
 }
 
 func (rs *RecurringShipment) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		rs,
 		validation.Field(&rs.SourceShipmentID, validation.Required.Error("Source shipment is required")),
 		validation.Field(
@@ -108,12 +107,7 @@ func (rs *RecurringShipment) Validate(multiErr *errortypes.MultiError) {
 				ExceptionPolicyNextBusinessDay,
 			).Error("Exception policy must be a valid policy"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	rs.validateSchedule(multiErr)
 }

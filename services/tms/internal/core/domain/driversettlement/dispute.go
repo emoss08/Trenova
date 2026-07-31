@@ -2,7 +2,6 @@ package driversettlement
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -101,7 +100,7 @@ type Dispute struct {
 }
 
 func (d *Dispute) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(d,
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
 		validation.Field(&d.SettlementID,
 			validation.Required.Error("Settlement is required"),
 		),
@@ -115,12 +114,7 @@ func (d *Dispute) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&d.SubmittedByUserID,
 			validation.Required.Error("Submitting user is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !d.Status.IsValid() {
 		multiErr.Add(

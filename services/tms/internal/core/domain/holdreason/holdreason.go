@@ -2,7 +2,6 @@ package holdreason
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -69,7 +68,7 @@ type HoldReason struct {
 }
 
 func (hr *HoldReason) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(hr,
+	multiErr.AddOzzoError(validation.ValidateStruct(hr,
 		validation.Field(
 			&hr.Type,
 			validation.Required.Error("Hold type is required"),
@@ -90,12 +89,7 @@ func (hr *HoldReason) Validate(multiErr *errortypes.MultiError) {
 			validation.In(HoldSeverityInformational, HoldSeverityAdvisory, HoldSeverityBlocking).
 				Error("Invalid hold severity"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (hr *HoldReason) GetID() pulid.ID {

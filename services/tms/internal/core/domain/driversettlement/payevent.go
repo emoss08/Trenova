@@ -2,7 +2,6 @@ package driversettlement
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -66,7 +65,7 @@ type PayEvent struct {
 }
 
 func (p *PayEvent) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(p,
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.WorkerID, validation.Required.Error("Worker is required")),
 		validation.Field(&p.ShipmentID, validation.Required.Error("Shipment is required")),
 		validation.Field(
@@ -74,12 +73,7 @@ func (p *PayEvent) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Idempotency key is required"),
 		),
 		validation.Field(&p.EventDate, validation.Required.Error("Event date is required")),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !p.Status.IsValid() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Pay event status is invalid")

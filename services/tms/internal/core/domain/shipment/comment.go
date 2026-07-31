@@ -113,7 +113,7 @@ func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
 		c.Source = CommentSourceUser
 	}
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		c,
 		validation.Field(
 			&c.ShipmentID,
@@ -169,12 +169,7 @@ func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (c *ShipmentComment) BeforeAppendModel(_ context.Context, query bun.Query) error {

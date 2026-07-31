@@ -46,7 +46,7 @@ type EquipmentType struct {
 }
 
 func (et *EquipmentType) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		et,
 		validation.Field(&et.Code, validation.Required),
 		validation.Field(
@@ -63,12 +63,7 @@ func (et *EquipmentType) Validate(multiErr *errortypes.MultiError) {
 			}
 			return nil
 		})),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (et *EquipmentType) BeforeAppendModel(_ context.Context, query bun.Query) error {

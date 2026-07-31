@@ -48,7 +48,7 @@ type FuelIndex struct {
 }
 
 func (fi *FuelIndex) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(fi,
+	multiErr.AddOzzoError(validation.ValidateStruct(fi,
 		validation.Field(&fi.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100),
@@ -81,12 +81,7 @@ func (fi *FuelIndex) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Currency is required"),
 			validation.Length(3, 3).Error("Currency must be 3 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func validateEIASeriesID(value any) error {

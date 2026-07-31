@@ -2,7 +2,6 @@ package tenant
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -48,7 +47,7 @@ type ShipmentControl struct {
 }
 
 func (sc *ShipmentControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		sc,
 		validation.Field(&sc.AutoDelayShipmentsThreshold,
 			validation.When(sc.AutoDelayShipments,
@@ -93,12 +92,7 @@ func (sc *ShipmentControl) Validate(multiErr *errortypes.MultiError) {
 				),
 			),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (sc *ShipmentControl) GetID() pulid.ID {

@@ -71,7 +71,7 @@ type EquipmentContinuity struct {
 }
 
 func (e *EquipmentContinuity) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		e,
 		validation.Field(&e.EquipmentType,
 			validation.Required.Error("Equipment type is required"),
@@ -104,13 +104,7 @@ func (e *EquipmentContinuity) Validate(multiErr *errortypes.MultiError) {
 			&e.CurrentLocationID,
 			validation.Required.Error("Current location is required"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (e *EquipmentContinuity) BeforeAppendModel(_ context.Context, query bun.Query) error {

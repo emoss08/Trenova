@@ -1,7 +1,6 @@
 package ediservice
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"slices"
@@ -43,7 +42,7 @@ func (v *Validator) ValidateConnection(entity *edi.EDIConnection) *errortypes.Mu
 		return multiErr
 	}
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		entity,
 		validation.Field(
 			&entity.BusinessUnitID,
@@ -98,12 +97,7 @@ func (v *Validator) ValidateConnection(entity *edi.EDIConnection) *errortypes.Mu
 			validation.Required.Error("Target partner name is required"),
 			validation.Length(1, 200),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 	if entity.SourceOrganizationID == entity.TargetOrganizationID {
 		multiErr.Add(
 			"targetOrganizationId",
@@ -127,7 +121,7 @@ func (v *Validator) ValidateCommunicationProfile(
 		return multiErr
 	}
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		entity,
 		validation.Field(
 			&entity.BusinessUnitID,
@@ -152,12 +146,7 @@ func (v *Validator) ValidateCommunicationProfile(
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 200),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 	v.validateProfileConfig(entity, multiErr)
 
 	if multiErr.HasErrors() {
@@ -498,7 +487,7 @@ func (v *Validator) ValidateMappingItems(
 			itemErr.Add("", errortypes.ErrRequired, "Mapping item is required")
 			continue
 		}
-		err := validation.ValidateStruct(
+		itemErr.AddOzzoError(validation.ValidateStruct(
 			item,
 			validation.Field(
 				&item.EntityType,
@@ -506,12 +495,7 @@ func (v *Validator) ValidateMappingItems(
 			),
 			validation.Field(&item.SourceID, validation.Required.Error("Source ID is required")),
 			validation.Field(&item.TargetID, validation.Required.Error("Target ID is required")),
-		)
-		if err != nil {
-			if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-				errortypes.FromOzzoErrors(validationErrs, itemErr)
-			}
-		}
+		))
 	}
 
 	if multiErr.HasErrors() {

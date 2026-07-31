@@ -48,7 +48,7 @@ type WorkerPTO struct {
 }
 
 func (wpto *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(wpto,
+	multiErr.AddOzzoError(validation.ValidateStruct(wpto,
 		validation.Field(&wpto.WorkerID,
 			validation.Required.Error("Worker is required"),
 			validation.By(func(value any) error {
@@ -104,13 +104,7 @@ func (wpto *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Reason is required"),
 			validation.Length(1, 255).Error("Reason must be between 1 and 255 characters"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if wpto.EndDate <= wpto.StartDate {
 		multiErr.Add("endDate", errortypes.ErrInvalid, "End date must be after start date")

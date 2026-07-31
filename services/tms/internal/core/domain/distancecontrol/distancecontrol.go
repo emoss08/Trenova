@@ -2,7 +2,6 @@ package distancecontrol
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
@@ -111,7 +110,7 @@ func (d *DistanceControl) ProfileIDForPurpose(purpose string) pulid.ID {
 }
 
 func (d *DistanceControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(d,
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
 		validation.Field(&d.StoredDistanceUnits, validation.Required.Error("Stored distance units are required")),
 		validation.Field(&d.LoadedMoveDistanceProfileID, validation.Required.Error("Loaded move distance profile is required")),
 		validation.Field(&d.EmptyMoveDistanceProfileID, validation.Required.Error("Empty move distance profile is required")),
@@ -121,13 +120,7 @@ func (d *DistanceControl) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&d.EtaOutOfRouteDistanceProfileID, validation.Required.Error("ETA/out-of-route distance profile is required")),
 		validation.Field(&d.DistanceCalculatorShortestDistanceProfileID, validation.Required.Error("Shortest calculator distance profile is required")),
 		validation.Field(&d.DistanceCalculatorPracticalDistanceProfileID, validation.Required.Error("Practical calculator distance profile is required")),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 	if d.StoredDistanceUnits != "" &&
 		d.StoredDistanceUnits != distanceprofile.DefaultDistanceUnits &&
 		d.StoredDistanceUnits != "Kilometers" {

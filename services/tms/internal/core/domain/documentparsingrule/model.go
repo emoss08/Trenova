@@ -43,7 +43,7 @@ type RuleSet struct {
 }
 
 func (r *RuleSet) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(
 			&r.Name,
@@ -56,13 +56,7 @@ func (r *RuleSet) Validate(multiErr *errortypes.MultiError) {
 			validation.In(DocumentKindRateConfirmation).Error("Document kind must be valid"),
 		),
 		validation.Field(&r.Priority, validation.Min(0).Error("Priority must be zero or greater")),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (r *RuleSet) GetID() pulid.ID { return r.ID }
@@ -135,9 +129,10 @@ func (r *RuleVersion) Validate(multiErr *errortypes.MultiError) {
 		),
 	)
 	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
+		// A non-ozzo error carries no field, so it is reported whole rather
+		// than dropped; either way the document checks below are skipped
+		// because they would be judging a shape that is already wrong.
+		if multiErr.AddOzzoError(err) {
 			return
 		}
 		multiErr.Add("", errortypes.ErrInvalid, err.Error())
@@ -213,9 +208,10 @@ func (f *Fixture) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&f.TextSnapshot, validation.Required.Error("Text snapshot is required")),
 	)
 	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
+		// A non-ozzo error carries no field, so it is reported whole rather
+		// than dropped; either way the document checks below are skipped
+		// because they would be judging a shape that is already wrong.
+		if multiErr.AddOzzoError(err) {
 			return
 		}
 		multiErr.Add("", errortypes.ErrInvalid, err.Error())

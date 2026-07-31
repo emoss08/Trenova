@@ -74,7 +74,7 @@ func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
 }
 
 func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		a,
 		validation.Field(
 			&a.AccessorialChargeID,
@@ -103,12 +103,7 @@ func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, query bun.Query) error {

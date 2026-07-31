@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -52,7 +51,7 @@ type CancelShipmentRequest struct {
 func (r *CancelShipmentRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(
@@ -63,12 +62,7 @@ func (r *CancelShipmentRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -85,7 +79,7 @@ type UncancelShipmentRequest struct {
 func (r *UncancelShipmentRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(
@@ -96,12 +90,7 @@ func (r *UncancelShipmentRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -119,7 +108,7 @@ type TransferOwnershipRequest struct {
 func (r *TransferOwnershipRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&r.OwnerID, validation.Required.Error("Owner ID is required")),
@@ -131,12 +120,7 @@ func (r *TransferOwnershipRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -154,7 +138,7 @@ type DuplicateBOLCheckRequest struct {
 func (r *DuplicateBOLCheckRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.BOL, validation.Required.Error("BOL is required")),
 		validation.Field(
@@ -165,12 +149,7 @@ func (r *DuplicateBOLCheckRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -248,7 +227,7 @@ type GetDelayedShipmentsRequest struct {
 func (r *GetDelayedShipmentsRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(
 			&r.TenantInfo.OrgID,
@@ -258,12 +237,7 @@ func (r *GetDelayedShipmentsRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -280,7 +254,7 @@ type DelayShipmentsRequest struct {
 func (r *DelayShipmentsRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(
 			&r.TenantInfo.OrgID,
@@ -290,12 +264,7 @@ func (r *DelayShipmentsRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -312,7 +281,7 @@ type GetAutoCancelableShipmentsRequest struct {
 func (r *GetAutoCancelableShipmentsRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(
 			&r.TenantInfo.OrgID,
@@ -322,12 +291,7 @@ func (r *GetAutoCancelableShipmentsRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -344,7 +308,7 @@ type AutoCancelShipmentsRequest struct {
 func (r *AutoCancelShipmentsRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(
 			&r.TenantInfo.OrgID,
@@ -354,12 +318,7 @@ func (r *AutoCancelShipmentsRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr

@@ -2,7 +2,6 @@ package servicetype
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -39,7 +38,7 @@ type ServiceType struct {
 }
 
 func (st *ServiceType) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(st,
+	multiErr.AddOzzoError(validation.ValidateStruct(st,
 		validation.Field(&st.Code,
 			validation.Required.Error("Code is required"),
 			validation.Length(1, 100).Error("Code must be between 1 and 100 characters"),
@@ -47,12 +46,7 @@ func (st *ServiceType) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&st.Color,
 			is.HexColor.Error("Color must be a valid hex color. Please try again."),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (st *ServiceType) GetID() pulid.ID {

@@ -48,7 +48,7 @@ type AccessorialCharge struct {
 }
 
 func (a *AccessorialCharge) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		a,
 		validation.Field(
 			&a.Code,
@@ -77,12 +77,7 @@ func (a *AccessorialCharge) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Method is required"),
 			validation.In(MethodFlat, MethodPerUnit, MethodPercentage).Error("Invalid method"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (a *AccessorialCharge) GetID() pulid.ID {

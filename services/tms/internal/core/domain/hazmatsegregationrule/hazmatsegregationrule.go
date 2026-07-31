@@ -2,7 +2,6 @@ package hazmatsegregationrule
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -116,12 +115,7 @@ func (hsr *HazmatSegregationRule) Validate(multiErr *errortypes.MultiError) {
 		}
 	}
 
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	multiErr.AddOzzoError(err)
 }
 
 func (hsr *HazmatSegregationRule) GetID() pulid.ID {

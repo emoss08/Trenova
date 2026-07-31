@@ -2,7 +2,6 @@ package customerpayment
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 
@@ -64,20 +63,14 @@ type Application struct {
 }
 
 func (p *Payment) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(p,
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.OrganizationID, validation.Required),
 		validation.Field(&p.BusinessUnitID, validation.Required),
 		validation.Field(&p.CustomerID, validation.Required),
 		validation.Field(&p.PaymentDate, validation.Required),
 		validation.Field(&p.AccountingDate, validation.Required),
 		validation.Field(&p.CurrencyCode, validation.Required, validation.Length(3, 3)),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if p.AmountMinor <= 0 {
 		multiErr.Add(
@@ -103,15 +96,9 @@ func (p *Payment) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (a *Application) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(a,
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
 		validation.Field(&a.InvoiceID, validation.Required),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 	if a.AppliedAmountMinor < 0 {
 		multiErr.Add(
 			"appliedAmountMinor",

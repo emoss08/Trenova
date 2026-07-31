@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -46,7 +45,7 @@ type AgentDecision struct {
 }
 
 func (d *AgentDecision) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		d,
 		validation.Field(&d.DecidedByUserID,
 			validation.Required.Error("Decisions must be attributed to a human user"),
@@ -56,12 +55,7 @@ func (d *AgentDecision) Validate(multiErr *errortypes.MultiError) {
 			validation.By(isValidEnum(d.Decision.IsValid, "Invalid decision")),
 		),
 		validation.Field(&d.ReasonCode, validation.Required.Error("Reason code is required")),
-	)
-
-	var validationErrs validation.Errors
-	if errors.As(err, &validationErrs) {
-		errortypes.FromOzzoErrors(validationErrs, multiErr)
-	}
+	))
 
 	if d.subjectCount() != 1 {
 		multiErr.Add(

@@ -127,7 +127,7 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 	dc.NormalizeServiceFailureSettings()
 	dc.NormalizeAutoAssignmentSettings()
 
-	err := validation.ValidateStruct(dc,
+	multiErr.AddOzzoError(validation.ValidateStruct(dc,
 		validation.Field(&dc.AutoAssignmentStrategy,
 			validation.Required.Error("Auto assignment strategy is required"),
 			validation.By(func(value any) error {
@@ -223,13 +223,7 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (dc *DispatchControl) GetTableName() string {

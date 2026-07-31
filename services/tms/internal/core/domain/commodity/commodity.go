@@ -2,7 +2,6 @@ package commodity
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -79,7 +78,7 @@ type Commodity struct {
 }
 
 func (c *Commodity) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(c,
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
 		validation.Field(&c.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
@@ -98,13 +97,7 @@ func (c *Commodity) Validate(multiErr *errortypes.MultiError) {
 				).Error("Freight class is invalid"),
 			),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if c.MinTemperature != nil && c.MaxTemperature != nil {
 		if *c.MinTemperature >= *c.MaxTemperature {

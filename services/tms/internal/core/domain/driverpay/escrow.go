@@ -2,7 +2,6 @@ package driverpay
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -65,19 +64,14 @@ type EscrowTransaction struct {
 }
 
 func (e *EscrowAccount) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(e,
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
 		validation.Field(&e.WorkerID, validation.Required.Error("Worker is required")),
 		validation.Field(&e.OpenedDate, validation.Required.Error("Opened date is required")),
 		validation.Field(&e.CurrencyCode,
 			validation.Required.Error("Currency code is required"),
 			validation.Length(3, 3).Error("Currency code must be 3 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !e.Status.IsValid() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Escrow account status is invalid")

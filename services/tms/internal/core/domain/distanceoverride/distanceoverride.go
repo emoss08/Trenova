@@ -2,7 +2,6 @@ package distanceoverride
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -52,7 +51,7 @@ type DistanceOverride struct {
 }
 
 func (d *DistanceOverride) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(d,
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
 		validation.Field(&d.OriginLocationID,
 			validation.Required.Error("Origin location is required"),
 		),
@@ -63,13 +62,7 @@ func (d *DistanceOverride) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Distance is required"),
 			validation.Min(0.0).Error("Distance must be greater than or equal to 0"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (d *DistanceOverride) GetID() pulid.ID {

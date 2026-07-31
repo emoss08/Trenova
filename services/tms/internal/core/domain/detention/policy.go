@@ -2,7 +2,6 @@ package detention
 
 import (
 	"context"
-	"errors"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
@@ -268,7 +267,7 @@ func containsAny(want, have []pulid.ID) bool {
 
 //nolint:funlen // a policy is a contract; every clause needs its own message
 func (p *DetentionPolicy) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(p,
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
@@ -341,12 +340,7 @@ func (p *DetentionPolicy) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Currency is required"),
 			validation.Length(3, 3).Error("Currency must be a 3-letter ISO code"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	p.validateFreeTime(multiErr)
 	p.validateIncrement(multiErr)

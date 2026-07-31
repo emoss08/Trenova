@@ -2,7 +2,6 @@ package shipment
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -37,7 +36,7 @@ type ShipmentCommodity struct {
 }
 
 func (sc *ShipmentCommodity) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		sc,
 		validation.Field(
 			&sc.Pieces,
@@ -53,12 +52,7 @@ func (sc *ShipmentCommodity) Validate(multiErr *errortypes.MultiError) {
 			&sc.CommodityID,
 			validation.Required.Error("Commodity ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (sc *ShipmentCommodity) GetID() pulid.ID {

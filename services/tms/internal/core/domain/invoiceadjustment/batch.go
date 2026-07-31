@@ -1,8 +1,6 @@
 package invoiceadjustment
 
 import (
-	"errors"
-
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,16 +53,11 @@ type InvoiceAdjustmentBatchItem struct {
 }
 
 func (b *InvoiceAdjustmentBatch) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		b,
 		validation.Field(&b.IdempotencyKey, validation.Required),
 		validation.Field(&b.Status, validation.Required),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (i *InvoiceAdjustmentBatchItem) Validate(multiErr *errortypes.MultiError) {

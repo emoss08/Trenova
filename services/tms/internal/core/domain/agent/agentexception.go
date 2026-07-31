@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -52,7 +51,7 @@ type AgentException struct {
 }
 
 func (e *AgentException) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		e,
 		validation.Field(&e.RunID, validation.Required.Error("Run id is required")),
 		validation.Field(&e.Category,
@@ -75,12 +74,7 @@ func (e *AgentException) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Resolution state is required"),
 			validation.By(isValidEnum(e.ResolutionState.IsValid, "Invalid resolution state")),
 		),
-	)
-
-	var validationErrs validation.Errors
-	if errors.As(err, &validationErrs) {
-		errortypes.FromOzzoErrors(validationErrs, multiErr)
-	}
+	))
 
 	validateEvidence("evidence", e.Evidence, multiErr)
 }

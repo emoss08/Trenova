@@ -2,7 +2,6 @@ package billingqueuefilterpreset
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -33,19 +32,14 @@ type BillingQueueFilterPreset struct {
 }
 
 func (bp *BillingQueueFilterPreset) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		bp,
 		validation.Field(&bp.Name, validation.Required.Error("Name is required")),
 		validation.Field(
 			&bp.Name,
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (bp *BillingQueueFilterPreset) BeforeAppendModel(_ context.Context, query bun.Query) error {

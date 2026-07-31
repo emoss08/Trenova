@@ -51,7 +51,7 @@ type AgentProposal struct {
 }
 
 func (p *AgentProposal) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		p,
 		validation.Field(&p.RunID, validation.Required.Error("Run id is required")),
 		validation.Field(&p.ToolName, validation.Required.Error("Tool name is required")),
@@ -72,12 +72,7 @@ func (p *AgentProposal) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-	)
-
-	var validationErrs validation.Errors
-	if errors.As(err, &validationErrs) {
-		errortypes.FromOzzoErrors(validationErrs, multiErr)
-	}
+	))
 
 	validateEvidence("evidence", p.Evidence, multiErr)
 }

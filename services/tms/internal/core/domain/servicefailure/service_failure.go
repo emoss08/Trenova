@@ -87,7 +87,7 @@ func (sf *ServiceFailure) Normalize() {
 
 func (sf *ServiceFailure) Validate(multiErr *errortypes.MultiError) {
 	sf.Normalize()
-	err := validation.ValidateStruct(sf,
+	multiErr.AddOzzoError(validation.ValidateStruct(sf,
 		validation.Field(&sf.OrganizationID, validation.Required.Error("Organization ID is required")),
 		validation.Field(&sf.BusinessUnitID, validation.Required.Error("Business unit ID is required")),
 		validation.Field(&sf.ShipmentID, validation.Required.Error("Shipment ID is required")),
@@ -158,12 +158,7 @@ func (sf *ServiceFailure) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&sf.X12ExceptionCode,
 			validation.Length(0, 3).Error("X12 exception code must be at most 3 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (sf *ServiceFailure) IsUnresolved() bool {

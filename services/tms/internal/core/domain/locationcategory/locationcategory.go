@@ -51,7 +51,7 @@ type LocationCategory struct {
 }
 
 func (lc *LocationCategory) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(lc,
+	multiErr.AddOzzoError(validation.ValidateStruct(lc,
 		validation.Field(&lc.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
@@ -76,12 +76,7 @@ func (lc *LocationCategory) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&lc.Color,
 			is.HexColor.Error("Color must be a valid hex color"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (lc *LocationCategory) BeforeAppendModel(_ context.Context, query bun.Query) error {

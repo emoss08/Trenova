@@ -2,7 +2,6 @@ package distanceprofile
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
@@ -117,20 +116,14 @@ func (d *DistanceProfile) ApplyDefaults() {
 }
 
 func (d *DistanceProfile) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(d,
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
 		validation.Field(&d.Name, validation.Required.Error("Name is required")),
 		validation.Field(&d.Provider, validation.Required.Error("Provider is required")),
 		validation.Field(&d.RoutingType, validation.Required.Error("Routing type is required")),
 		validation.Field(&d.DistanceUnits, validation.Required.Error("Distance units are required")),
 		validation.Field(&d.LocationGranularity, validation.Required.Error("Location granularity is required")),
 		validation.Field(&d.Region, validation.Required.Error("Region is required")),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 	if d.Provider != "" && d.Provider != integration.TypePCMiler {
 		multiErr.Add("provider", errortypes.ErrInvalid, "Provider must be PCMiler")
 	}

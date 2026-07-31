@@ -69,7 +69,7 @@ func (rc *ReasonCode) Normalize() {
 
 func (rc *ReasonCode) Validate(multiErr *errortypes.MultiError) {
 	rc.Normalize()
-	err := validation.ValidateStruct(rc,
+	multiErr.AddOzzoError(validation.ValidateStruct(rc,
 		validation.Field(&rc.OrganizationID, validation.Required.Error("Organization ID is required")),
 		validation.Field(&rc.BusinessUnitID, validation.Required.Error("Business unit ID is required")),
 		validation.Field(
@@ -116,12 +116,7 @@ func (rc *ReasonCode) Validate(multiErr *errortypes.MultiError) {
 			&rc.DefaultExceptionCode,
 			validation.Length(0, 3).Error("Default exception code must be at most 3 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (rc *ReasonCode) GetID() pulid.ID {

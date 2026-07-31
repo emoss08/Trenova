@@ -2,7 +2,6 @@ package documenttype
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -48,7 +47,7 @@ type DocumentType struct {
 }
 
 func (dt *DocumentType) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(dt,
+	multiErr.AddOzzoError(validation.ValidateStruct(dt,
 		validation.Field(&dt.Code,
 			validation.Required.Error("Code is required"),
 			validation.Length(1, 10).Error("Code must be between 1 and 10 characters"),
@@ -82,12 +81,7 @@ func (dt *DocumentType) Validate(multiErr *errortypes.MultiError) {
 				CategoryOther,
 			).Error("Document category must be valid"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (dt *DocumentType) BeforeAppendModel(_ context.Context, query bun.Query) error {

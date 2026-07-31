@@ -82,7 +82,7 @@ type Worker struct {
 }
 
 func (w *Worker) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(w,
+	multiErr.AddOzzoError(validation.ValidateStruct(w,
 		validation.Field(&w.Type,
 			validation.Required.Error("Type is required"),
 			validation.By(func(value any) error {
@@ -154,13 +154,7 @@ func (w *Worker) Validate(multiErr *errortypes.MultiError) {
 				Error("Status must be either Active or Inactive"),
 		),
 		validation.Field(&w.Profile, validation.Required.Error("Worker profile must be provided")),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if w.Profile != nil {
 		profileErr := multiErr.WithPrefix("profile")

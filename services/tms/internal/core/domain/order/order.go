@@ -59,7 +59,7 @@ type Order struct {
 }
 
 func (o *Order) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		o,
 		validation.Field(&o.CustomerID, validation.Required.Error("Customer is required")),
 		validation.Field(&o.OrderNumber,
@@ -93,12 +93,7 @@ func (o *Order) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&o.BaseAmount,
 			validation.By(nonNegativeNullDecimal("Base amount")),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 var currencyCodePattern = regexp.MustCompile(`^[A-Z]{3}$`)

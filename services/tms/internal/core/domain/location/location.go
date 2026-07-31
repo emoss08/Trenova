@@ -2,7 +2,6 @@ package location
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/geofence"
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
@@ -67,7 +66,7 @@ type Location struct {
 }
 
 func (l *Location) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(l,
+	multiErr.AddOzzoError(validation.ValidateStruct(l,
 		validation.Field(
 			&l.Code,
 			validation.Length(0, tenant.MaxLocationCodeLength).
@@ -95,13 +94,7 @@ func (l *Location) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Postal code is required"),
 			validation.By(domaintypes.ValidatePostalCode),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	l.validateGeofence(multiErr)
 }

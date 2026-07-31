@@ -2,7 +2,6 @@ package invoiceadjustment
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/document"
@@ -176,19 +175,14 @@ type InvoiceAdjustmentReconciliationException struct {
 }
 
 func (a *InvoiceAdjustment) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		a,
 		validation.Field(&a.OriginalInvoiceID, validation.Required),
 		validation.Field(&a.CorrectionGroupID, validation.Required),
 		validation.Field(&a.Kind, validation.Required),
 		validation.Field(&a.Status, validation.Required),
 		validation.Field(&a.IdempotencyKey, validation.Required),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if len(a.Lines) == 0 {
 		multiErr.Add("lines", errortypes.ErrRequired, "At least one adjustment line is required")

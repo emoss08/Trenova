@@ -2,7 +2,6 @@ package shipment
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
@@ -118,7 +117,7 @@ type Shipment struct {
 }
 
 func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		s,
 		validation.Field(&s.ServiceTypeID, validation.Required.Error("Service type is required")),
 		validation.Field(&s.CustomerID, validation.Required.Error("Customer is required")),
@@ -160,12 +159,7 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 			&s.FormulaTemplateID,
 			validation.Required.Error("Formula template is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (s *Shipment) ApplyEntryMethodDefault(original *Shipment) {

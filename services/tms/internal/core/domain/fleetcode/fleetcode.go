@@ -2,7 +2,6 @@ package fleetcode
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -49,7 +48,7 @@ type FleetCode struct {
 }
 
 func (fc *FleetCode) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		fc,
 		validation.Field(&fc.Code, validation.Required),
 		validation.Field(
@@ -57,13 +56,7 @@ func (fc *FleetCode) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(1, 10).Error("Code must be between 1 and 10 characters"),
 		),
 		validation.Field(&fc.ManagerID, validation.Required.Error("Manager is required")),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (fc *FleetCode) BeforeAppendModel(_ context.Context, query bun.Query) error {

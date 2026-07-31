@@ -2,7 +2,6 @@ package email
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -62,7 +61,7 @@ func (p *Profile) Validate(multiErr *errortypes.MultiError) {
 	if p.Status == "" {
 		p.Status = ProfileStatusActive
 	}
-	err := validation.ValidateStruct(p,
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.Name, validation.Required.Error("Name is required"), validation.Length(1, 100)),
 		validation.Field(&p.SenderName, validation.Required.Error("Sender name is required"), validation.Length(1, 100)),
 		validation.Field(&p.SenderEmail, validation.Required.Error("Sender email is required"), validation.Length(1, 320)),
@@ -72,12 +71,7 @@ func (p *Profile) Validate(multiErr *errortypes.MultiError) {
 			validation.In(ProviderResend, ProviderPostmark).Error("Invalid email provider"),
 		),
 		validation.Field(&p.Status, validation.Required, validation.In(ProfileStatusActive, ProfileStatusInactive).Error("Invalid status")),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 	if !strings.Contains(p.SenderEmail, "@") {
 		multiErr.Add("senderEmail", errortypes.ErrInvalid, "Sender email must be a valid email address")
 	}

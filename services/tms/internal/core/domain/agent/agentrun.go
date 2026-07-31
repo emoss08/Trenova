@@ -2,7 +2,6 @@ package agent
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -52,7 +51,7 @@ type AgentRun struct {
 }
 
 func (r *AgentRun) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.AgentType,
 			validation.Required.Error("Agent type is required"),
@@ -73,12 +72,7 @@ func (r *AgentRun) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&r.InputContextHash,
 			validation.Required.Error("Input context hash is required"),
 		),
-	)
-
-	var validationErrs validation.Errors
-	if errors.As(err, &validationErrs) {
-		errortypes.FromOzzoErrors(validationErrs, multiErr)
-	}
+	))
 }
 
 func (r *AgentRun) GetID() pulid.ID {

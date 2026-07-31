@@ -2,7 +2,6 @@ package driverpay
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -55,7 +54,7 @@ func (r *RecurringDeduction) IsEscrowContribution() bool {
 }
 
 func (r *RecurringDeduction) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(r,
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
 		validation.Field(&r.WorkerID, validation.Required.Error("Worker is required")),
 		validation.Field(&r.PayCodeID, validation.Required.Error("Pay code is required")),
 		validation.Field(&r.Description,
@@ -67,12 +66,7 @@ func (r *RecurringDeduction) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Currency code is required"),
 			validation.Length(3, 3).Error("Currency code must be 3 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !r.Status.IsValid() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Deduction status is invalid")

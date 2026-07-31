@@ -35,7 +35,7 @@ type DataEntryControl struct {
 }
 
 func (dec *DataEntryControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(dec,
+	multiErr.AddOzzoError(validation.ValidateStruct(dec,
 		validation.Field(&dec.CodeCase,
 			validation.Required.Error("Code case is required"),
 			validation.By(func(value any) error {
@@ -96,13 +96,7 @@ func (dec *DataEntryControl) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (dec *DataEntryControl) GetTableName() string {
