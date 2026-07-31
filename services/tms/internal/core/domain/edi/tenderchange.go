@@ -141,9 +141,17 @@ func (c *TenderChange) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 		TableAlias:      "etcg",
 		UseSearchVector: true,
 		SearchableFields: []domaintypes.SearchableField{
-			{Name: "change_type", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "change_type",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightB},
-			{Name: "failure_reason", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
+			{
+				Name:   "failure_reason",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightC,
+			},
 		},
 	}
 }

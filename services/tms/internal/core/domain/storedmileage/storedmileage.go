@@ -222,8 +222,16 @@ func (s *StoredMileage) GetPostgresSearchConfig() domaintypes.PostgresSearchConf
 		TableAlias:      "smg",
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
-			{Name: "route_signature", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{Name: "distance_profile_name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "route_signature",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
+			{
+				Name:   "distance_profile_name",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
 			{Name: "provider", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
 		},
 	}

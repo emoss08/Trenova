@@ -20,7 +20,7 @@ const (
 
 // pageURLPattern keeps a favorite pointing inside the application: an absolute
 // URL here would be a redirect target rendered as if it were a page of the TMS.
-var pageURLPattern = regexp.MustCompile(`^/[^\s]*$`)
+var pageURLPattern = regexp.MustCompile(`^/\S*$`)
 
 var (
 	_ bun.BeforeAppendModelHook          = (*PageFavorite)(nil)

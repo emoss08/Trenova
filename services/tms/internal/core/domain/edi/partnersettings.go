@@ -191,6 +191,6 @@ func (f *EDIPartnerSettingField) Validate(multiErr *errortypes.MultiError) {
 // errInvalidValidationPattern keeps an uncompilable pattern out of the column:
 // it would reject every value a partner could enter and the reason would only
 // surface at send time.
-var errInvalidValidationPattern = errors.New("Validation pattern is not a valid expression")
+var errInvalidValidationPattern = errors.New("validation pattern is not a valid expression")
 
 const maxGroupKeyLength = 100

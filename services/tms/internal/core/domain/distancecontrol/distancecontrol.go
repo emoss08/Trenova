@@ -59,7 +59,10 @@ type DistanceControl struct {
 	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
-func NewDefault(orgID, buID pulid.ID, practicalProfileID, shortestProfileID pulid.ID) *DistanceControl {
+func NewDefault(
+	orgID, buID pulid.ID,
+	practicalProfileID, shortestProfileID pulid.ID,
+) *DistanceControl {
 	if shortestProfileID.IsNil() {
 		shortestProfileID = practicalProfileID
 	}
@@ -110,21 +113,53 @@ func (d *DistanceControl) ProfileIDForPurpose(purpose string) pulid.ID {
 }
 
 func (d *DistanceControl) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(d,
-		validation.Field(&d.StoredDistanceUnits, validation.Required.Error("Stored distance units are required")),
-		validation.Field(&d.LoadedMoveDistanceProfileID, validation.Required.Error("Loaded move distance profile is required")),
-		validation.Field(&d.EmptyMoveDistanceProfileID, validation.Required.Error("Empty move distance profile is required")),
-		validation.Field(&d.PayDistanceProfileID, validation.Required.Error("Pay distance profile is required")),
-		validation.Field(&d.BillingDistanceProfileID, validation.Required.Error("Billing distance profile is required")),
-		validation.Field(&d.FuelDistanceProfileID, validation.Required.Error("Fuel distance profile is required")),
-		validation.Field(&d.EtaOutOfRouteDistanceProfileID, validation.Required.Error("ETA/out-of-route distance profile is required")),
-		validation.Field(&d.DistanceCalculatorShortestDistanceProfileID, validation.Required.Error("Shortest calculator distance profile is required")),
-		validation.Field(&d.DistanceCalculatorPracticalDistanceProfileID, validation.Required.Error("Practical calculator distance profile is required")),
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		d,
+		validation.Field(
+			&d.StoredDistanceUnits,
+			validation.Required.Error("Stored distance units are required"),
+		),
+		validation.Field(
+			&d.LoadedMoveDistanceProfileID,
+			validation.Required.Error("Loaded move distance profile is required"),
+		),
+		validation.Field(
+			&d.EmptyMoveDistanceProfileID,
+			validation.Required.Error("Empty move distance profile is required"),
+		),
+		validation.Field(
+			&d.PayDistanceProfileID,
+			validation.Required.Error("Pay distance profile is required"),
+		),
+		validation.Field(
+			&d.BillingDistanceProfileID,
+			validation.Required.Error("Billing distance profile is required"),
+		),
+		validation.Field(
+			&d.FuelDistanceProfileID,
+			validation.Required.Error("Fuel distance profile is required"),
+		),
+		validation.Field(
+			&d.EtaOutOfRouteDistanceProfileID,
+			validation.Required.Error("ETA/out-of-route distance profile is required"),
+		),
+		validation.Field(
+			&d.DistanceCalculatorShortestDistanceProfileID,
+			validation.Required.Error("Shortest calculator distance profile is required"),
+		),
+		validation.Field(
+			&d.DistanceCalculatorPracticalDistanceProfileID,
+			validation.Required.Error("Practical calculator distance profile is required"),
+		),
 	))
 	if d.StoredDistanceUnits != "" &&
 		d.StoredDistanceUnits != distanceprofile.DefaultDistanceUnits &&
 		d.StoredDistanceUnits != "Kilometers" {
-		multiErr.Add("storedDistanceUnits", errortypes.ErrInvalid, "Stored distance units must be Miles or Kilometers")
+		multiErr.Add(
+			"storedDistanceUnits",
+			errortypes.ErrInvalid,
+			"Stored distance units must be Miles or Kilometers",
+		)
 	}
 }
 
@@ -138,7 +173,11 @@ func (d *DistanceControl) GetPostgresSearchConfig() domaintypes.PostgresSearchCo
 		TableAlias:      "dc",
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
-			{Name: "stored_distance_units", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "stored_distance_units",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
 		},
 	}
 }

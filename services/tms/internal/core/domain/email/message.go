@@ -61,8 +61,16 @@ func (m *Message) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		UseSearchVector: true,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "subject", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{Name: "from_email", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
-			{Name: "provider_message_id", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "from_email",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{
+				Name:   "provider_message_id",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
 		},
 	}
 }

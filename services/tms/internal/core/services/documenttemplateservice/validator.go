@@ -13,6 +13,10 @@ import (
 	"go.uber.org/fx"
 )
 
+// fieldKind is the json path the kind errors are reported against and the
+// column they are checked on; goconst rightly objects to repeating it.
+const fieldKind = "kind"
+
 type ValidatorParams struct {
 	fx.In
 
@@ -72,7 +76,7 @@ func buildTemplateValidator(
 		// A template's kind is what its versions are written against. Changing it
 		// would leave every version authored for a different variable catalog.
 		WithImmutableField(
-			"kind",
+			fieldKind,
 			"A template's kind cannot change. Its versions are written against the "+
 				"variables of the original kind and would stop rendering.",
 			func(t *documenttemplate.DocumentTemplate) any { return t.Kind },
@@ -133,8 +137,8 @@ func buildAssignmentValidator(
 					CaseSensitive: true,
 				},
 				validationframework.CompositeField[*documenttemplate.DocumentTemplateAssignment]{
-					FieldName: "kind",
-					Column:    "kind",
+					FieldName: fieldKind,
+					Column:    fieldKind,
 					GetValue: func(a *documenttemplate.DocumentTemplateAssignment) any {
 						return a.Kind
 					},
@@ -182,7 +186,7 @@ func newKindRegisteredRule(
 			}
 
 			if _, ok := registry.Get(entity.Kind); !ok {
-				multiErr.Add("kind", errortypes.ErrInvalid, fmt.Sprintf(
+				multiErr.Add(fieldKind, errortypes.ErrInvalid, fmt.Sprintf(
 					"%q is not a template kind this system can render", entity.Kind,
 				))
 			}
@@ -358,7 +362,7 @@ func (v *Validator) ValidateAssignment(
 	case !def.CustomerScoped:
 		// Assigning a kind with no customer in scope would look like it worked
 		// and then never fire on any render.
-		scopeErr.Add("kind", errortypes.ErrInvalid, fmt.Sprintf(
+		scopeErr.Add(fieldKind, errortypes.ErrInvalid, fmt.Sprintf(
 			"%s is not sent per customer, so assigning it to one has no effect",
 			def.DisplayName,
 		))

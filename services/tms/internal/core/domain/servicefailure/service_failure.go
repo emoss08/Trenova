@@ -87,13 +87,26 @@ func (sf *ServiceFailure) Normalize() {
 
 func (sf *ServiceFailure) Validate(multiErr *errortypes.MultiError) {
 	sf.Normalize()
-	multiErr.AddOzzoError(validation.ValidateStruct(sf,
-		validation.Field(&sf.OrganizationID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&sf.BusinessUnitID, validation.Required.Error("Business unit ID is required")),
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		sf,
+		validation.Field(
+			&sf.OrganizationID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&sf.BusinessUnitID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 		validation.Field(&sf.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(&sf.ShipmentMoveID, validation.Required.Error("Shipment move ID is required")),
+		validation.Field(
+			&sf.ShipmentMoveID,
+			validation.Required.Error("Shipment move ID is required"),
+		),
 		validation.Field(&sf.StopID, validation.Required.Error("Stop ID is required")),
-		validation.Field(&sf.Number, validation.Required.Error("Service failure number is required")),
+		validation.Field(
+			&sf.Number,
+			validation.Required.Error("Service failure number is required"),
+		),
 		validation.Field(&sf.Type,
 			validation.Required.Error("Service failure type is required"),
 			domainvalidation.ValidEnum[Type]("service failure type is invalid"),
@@ -181,7 +194,11 @@ func (sf *ServiceFailure) GetPostgresSearchConfig() domaintypes.PostgresSearchCo
 			{Name: "source", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
 			{Name: "status", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
 			{Name: "notes", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
-			{Name: "internal_notes", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
+			{
+				Name:   "internal_notes",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightC,
+			},
 		},
 	}
 }

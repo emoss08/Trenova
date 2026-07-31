@@ -69,9 +69,16 @@ func (rc *ReasonCode) Normalize() {
 
 func (rc *ReasonCode) Validate(multiErr *errortypes.MultiError) {
 	rc.Normalize()
-	multiErr.AddOzzoError(validation.ValidateStruct(rc,
-		validation.Field(&rc.OrganizationID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&rc.BusinessUnitID, validation.Required.Error("Business unit ID is required")),
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		rc,
+		validation.Field(
+			&rc.OrganizationID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&rc.BusinessUnitID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 		validation.Field(
 			&rc.Code,
 			validation.Required.Error("Code is required"),
@@ -135,8 +142,16 @@ func (rc *ReasonCode) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 			{Name: "code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 			{Name: "label", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 			{Name: "category", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
-			{Name: "applies_to", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
-			{Name: "description", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
+			{
+				Name:   "applies_to",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightC,
+			},
 		},
 	}
 }

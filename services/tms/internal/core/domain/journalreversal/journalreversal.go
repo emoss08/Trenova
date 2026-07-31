@@ -65,8 +65,16 @@ func (r *Reversal) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		TableAlias:      "jr",
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
-			{Name: "reason_code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{Name: "reason_text", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "reason_code",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
+			{
+				Name:   "reason_text",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
 		},
 	}
 }

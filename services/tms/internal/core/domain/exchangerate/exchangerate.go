@@ -144,7 +144,8 @@ type SettlementQuote struct {
 }
 
 func (q *SettlementQuote) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(q,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		q,
 		validation.Field(&q.FromCurrency,
 			validation.Required.Error("From currency is required"),
 			validation.Length(3, 3).Error("From currency must be 3 characters"),
@@ -160,7 +161,10 @@ func (q *SettlementQuote) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&q.Amount, validation.Required.Error("Amount is required")),
 		validation.Field(&q.Rate, validation.Required.Error("Rate is required")),
-		validation.Field(&q.ConvertedAmount, validation.Required.Error("Converted amount is required")),
+		validation.Field(
+			&q.ConvertedAmount,
+			validation.Required.Error("Converted amount is required"),
+		),
 	))
 }
 

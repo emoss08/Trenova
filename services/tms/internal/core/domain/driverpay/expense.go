@@ -113,7 +113,11 @@ func (e *Expense) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		TableAlias:      "dexp",
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
-			{Name: "description", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
 		},
 	}
 }

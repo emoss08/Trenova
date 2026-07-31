@@ -61,22 +61,47 @@ func (p *Profile) Validate(multiErr *errortypes.MultiError) {
 	if p.Status == "" {
 		p.Status = ProfileStatusActive
 	}
-	multiErr.AddOzzoError(validation.ValidateStruct(p,
-		validation.Field(&p.Name, validation.Required.Error("Name is required"), validation.Length(1, 100)),
-		validation.Field(&p.SenderName, validation.Required.Error("Sender name is required"), validation.Length(1, 100)),
-		validation.Field(&p.SenderEmail, validation.Required.Error("Sender email is required"), validation.Length(1, 320)),
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		p,
+		validation.Field(
+			&p.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, 100),
+		),
+		validation.Field(
+			&p.SenderName,
+			validation.Required.Error("Sender name is required"),
+			validation.Length(1, 100),
+		),
+		validation.Field(
+			&p.SenderEmail,
+			validation.Required.Error("Sender email is required"),
+			validation.Length(1, 320),
+		),
 		validation.Field(
 			&p.Provider,
 			validation.Required,
 			validation.In(ProviderResend, ProviderPostmark).Error("Invalid email provider"),
 		),
-		validation.Field(&p.Status, validation.Required, validation.In(ProfileStatusActive, ProfileStatusInactive).Error("Invalid status")),
+		validation.Field(
+			&p.Status,
+			validation.Required,
+			validation.In(ProfileStatusActive, ProfileStatusInactive).Error("Invalid status"),
+		),
 	))
 	if !strings.Contains(p.SenderEmail, "@") {
-		multiErr.Add("senderEmail", errortypes.ErrInvalid, "Sender email must be a valid email address")
+		multiErr.Add(
+			"senderEmail",
+			errortypes.ErrInvalid,
+			"Sender email must be a valid email address",
+		)
 	}
 	if p.ReplyToEmail != "" && !strings.Contains(p.ReplyToEmail, "@") {
-		multiErr.Add("replyToEmail", errortypes.ErrInvalid, "Reply-to email must be a valid email address")
+		multiErr.Add(
+			"replyToEmail",
+			errortypes.ErrInvalid,
+			"Reply-to email must be a valid email address",
+		)
 	}
 }
 
@@ -92,7 +117,11 @@ func (p *Profile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		UseSearchVector: true,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{Name: "from_address", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "from_address",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
 			{Name: "from_name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
 		},
 	}

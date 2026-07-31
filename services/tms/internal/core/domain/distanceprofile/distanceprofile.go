@@ -116,12 +116,19 @@ func (d *DistanceProfile) ApplyDefaults() {
 }
 
 func (d *DistanceProfile) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(d,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		d,
 		validation.Field(&d.Name, validation.Required.Error("Name is required")),
 		validation.Field(&d.Provider, validation.Required.Error("Provider is required")),
 		validation.Field(&d.RoutingType, validation.Required.Error("Routing type is required")),
-		validation.Field(&d.DistanceUnits, validation.Required.Error("Distance units are required")),
-		validation.Field(&d.LocationGranularity, validation.Required.Error("Location granularity is required")),
+		validation.Field(
+			&d.DistanceUnits,
+			validation.Required.Error("Distance units are required"),
+		),
+		validation.Field(
+			&d.LocationGranularity,
+			validation.Required.Error("Location granularity is required"),
+		),
 		validation.Field(&d.Region, validation.Required.Error("Region is required")),
 	))
 	if d.Provider != "" && d.Provider != integration.TypePCMiler {
@@ -170,7 +177,11 @@ func (d *DistanceProfile) GetPostgresSearchConfig() domaintypes.PostgresSearchCo
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{Name: "description", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
 			{Name: "provider", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
 		},
 	}
