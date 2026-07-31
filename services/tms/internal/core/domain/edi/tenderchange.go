@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -144,3 +147,135 @@ func (c *TenderChange) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 		},
 	}
 }
+
+func (r *TenderRecipient) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&r.SourceOrganizationID,
+			validation.Required.Error("Source organization is required"),
+		),
+		validation.Field(&r.SourceBusinessUnitID,
+			validation.Required.Error("Source business unit is required"),
+		),
+		validation.Field(&r.SourceShipmentID,
+			validation.Required.Error("Source shipment is required"),
+		),
+		validation.Field(&r.RecipientKind,
+			validation.Required.Error("Recipient kind is required"),
+			domainvalidation.ValidEnum[TenderRecipientKind]("Recipient kind is invalid"),
+		),
+		// An internal recipient is another organization on this system; an
+		// external one is reached through an EDI partner. A recipient naming
+		// neither has no address to tender to.
+		validation.Field(&r.RecipientOrganizationID,
+			validation.When(
+				r.RecipientKind == TenderRecipientKindInternal,
+				validation.Required.Error("An internal recipient must name its organization"),
+			),
+		),
+		validation.Field(&r.EDIPartnerID,
+			validation.When(
+				r.RecipientKind == TenderRecipientKindExternal,
+				validation.Required.Error("An external recipient must name its partner"),
+			),
+		),
+		// The baseline hash is what a later revision is diffed against, so
+		// without it every change would read as a whole new tender.
+		validation.Field(&r.LatestBaselineHash,
+			validation.Required.Error("Baseline hash is required"),
+			validation.Length(1, maxTenderHashLength).
+				Error("Baseline hash cannot be longer than 128 characters"),
+		),
+		validation.Field(&r.BaselineRecordedAt,
+			validation.Required.Error("Baseline recorded at is required"),
+			validation.Min(int64(1)).Error("Baseline recorded at must be a valid timestamp"),
+		),
+		validation.Field(&r.BaselineStatus,
+			validation.Required.Error("Baseline status is required"),
+			domainvalidation.ValidEnum[TenderRecipientBaselineStatus](
+				"Baseline status is invalid",
+			),
+		),
+		validation.Field(&r.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[TenderRecipientStatus]("Status is invalid"),
+		),
+	))
+
+	r.LatestBaselinePayload.Validate(multiErr.WithPrefix("latestBaselinePayload"))
+}
+
+func (c *TenderChange) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&c.SourceOrganizationID,
+			validation.Required.Error("Source organization is required"),
+		),
+		validation.Field(&c.SourceBusinessUnitID,
+			validation.Required.Error("Source business unit is required"),
+		),
+		validation.Field(&c.SourceShipmentID,
+			validation.Required.Error("Source shipment is required"),
+		),
+		validation.Field(&c.RecipientID, validation.Required.Error("Recipient is required")),
+		validation.Field(&c.RecipientKind,
+			validation.Required.Error("Recipient kind is required"),
+			domainvalidation.ValidEnum[TenderRecipientKind]("Recipient kind is invalid"),
+		),
+		validation.Field(&c.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[TenderChangeStatus]("Status is invalid"),
+		),
+		validation.Field(&c.ChangeType,
+			validation.Required.Error("Change type is required"),
+			validation.Length(1, maxChangeTypeLength).
+				Error("Change type cannot be longer than 100 characters"),
+		),
+		validation.Field(&c.IdempotencyKey,
+			validation.Required.Error("Idempotency key is required"),
+			validation.Length(1, maxIdempotencyKeyLength).
+				Error("Idempotency key cannot be longer than 255 characters"),
+		),
+		validation.Field(&c.SourceShipmentVersion,
+			validation.Min(int64(0)).Error("Source shipment version cannot be negative"),
+		),
+		// A revision that hashes the same as the baseline is not a change, and
+		// sending it would look to the partner like a duplicate tender.
+		validation.Field(&c.PreviousBaselineHash,
+			validation.Required.Error("Previous baseline hash is required"),
+			validation.Length(1, maxTenderHashLength).
+				Error("Previous baseline hash cannot be longer than 128 characters"),
+		),
+		validation.Field(&c.NewPayloadHash,
+			validation.Required.Error("New payload hash is required"),
+			validation.Length(1, maxTenderHashLength).
+				Error("New payload hash cannot be longer than 128 characters"),
+			validation.NotIn(c.PreviousBaselineHash).
+				Error("The revised tender is identical to the one already sent"),
+		),
+		validation.Field(&c.FailureReason,
+			validation.When(
+				c.Status == TenderChangeStatusFailed,
+				validation.Required.Error("A failed change must record why"),
+			),
+		),
+		validation.Field(&c.ReviewedAt,
+			validation.When(c.ReviewedByID.IsNotNil(), validation.Required.Error(
+				"A reviewed change must record when it was reviewed",
+			)),
+		),
+		validation.Field(&c.AppliedAt,
+			validation.When(c.AppliedByID.IsNotNil(), validation.Required.Error(
+				"An applied change must record when it was applied",
+			)),
+		),
+	))
+
+	c.NewTenderPayload.Validate(multiErr.WithPrefix("newTenderPayload"))
+}
+
+const maxTenderHashLength = 128

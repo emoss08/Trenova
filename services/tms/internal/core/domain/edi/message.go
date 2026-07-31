@@ -4,9 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -221,3 +224,168 @@ func (m *EDIMessage) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 func (m *EDIMessage) GetCreatedAt() int64 {
 	return m.CreatedAt
 }
+
+func (m *EDIMessage) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(m,
+		validation.Field(&m.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&m.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&m.EDIPartnerID, validation.Required.Error("Partner is required")),
+		validation.Field(&m.DocumentTypeID,
+			validation.Required.Error("Document type is required"),
+		),
+		validation.Field(&m.Direction,
+			validation.Required.Error("Direction is required"),
+			domainvalidation.ValidEnum[DocumentDirection]("Direction is invalid"),
+		),
+		validation.Field(&m.Standard,
+			validation.Required.Error("Standard is required"),
+			domainvalidation.ValidEnum[EDIStandard]("Standard is invalid"),
+		),
+		validation.Field(&m.TransactionSet,
+			validation.Required.Error("Transaction set is required"),
+			domainvalidation.ValidEnum[TransactionSet]("Transaction set is invalid"),
+		),
+		validation.Field(&m.X12Version,
+			validation.Required.Error("X12 version is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("X12 version cannot be longer than 20 characters"),
+		),
+		validation.Field(&m.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[MessageStatus]("Status is invalid"),
+		),
+		validation.Field(&m.ValidationMode,
+			validation.Required.Error("Validation mode is required"),
+			domainvalidation.ValidEnum[ValidationMode]("Validation mode is invalid"),
+		),
+		// The three control numbers are how a partner's acknowledgment is
+		// matched back to what was sent; a message missing one cannot be
+		// reconciled against the 997 that answers it.
+		validation.Field(&m.InterchangeControlNumber,
+			validation.Required.Error("Interchange control number is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("Interchange control number cannot be longer than 20 characters"),
+		),
+		validation.Field(&m.GroupControlNumber,
+			validation.Required.Error("Group control number is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("Group control number cannot be longer than 20 characters"),
+		),
+		validation.Field(&m.TransactionControlNumber,
+			validation.Required.Error("Transaction control number is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("Transaction control number cannot be longer than 20 characters"),
+		),
+		validation.Field(&m.SegmentCount,
+			validation.Min(int64(0)).Error("Segment count cannot be negative"),
+		),
+		validation.Field(&m.DeliveryStatus,
+			domainvalidation.ValidEnum[MessageDeliveryStatus]("Delivery status is invalid"),
+		),
+		validation.Field(&m.DeliveryAttempts,
+			validation.Min(int64(0)).Error("Delivery attempts cannot be negative"),
+		),
+		validation.Field(&m.DeliveryLastError,
+			validation.When(
+				m.DeliveryStatus == MessageDeliveryStatusFailed ||
+					m.DeliveryStatus == MessageDeliveryStatusDeadLettered,
+				validation.Required.Error("A failed delivery must record why it failed"),
+			),
+		),
+		validation.Field(&m.AckStatus,
+			domainvalidation.ValidEnum[MessageAcknowledgmentStatus](
+				"Acknowledgment status is invalid",
+			),
+		),
+		validation.Field(&m.AS2MessageID,
+			validation.Length(0, maxAS2FieldLength).
+				Error("AS2 message id cannot be longer than 255 characters"),
+		),
+		validation.Field(&m.AS2MIC,
+			validation.Length(0, maxAS2FieldLength).
+				Error("AS2 MIC cannot be longer than 255 characters"),
+		),
+		validation.Field(&m.GeneratedAt,
+			validation.Required.Error("Generated at is required"),
+			validation.Min(int64(1)).Error("Generated at must be a valid timestamp"),
+		),
+	))
+
+	for i, validationErr := range m.ValidationErrors {
+		if validationErr == nil {
+			continue
+		}
+		validationErr.Validate(multiErr.WithIndex("validationErrors", i))
+	}
+}
+
+func (e *EDIMessageValidationError) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&e.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&e.MessageID, validation.Required.Error("Message is required")),
+		validation.Field(&e.Severity,
+			validation.Required.Error("Severity is required"),
+			domainvalidation.ValidEnum[ValidationSeverity]("Severity is invalid"),
+		),
+		validation.Field(&e.Code,
+			validation.Required.Error("Code is required"),
+			validation.Length(1, maxDiagnosticCodeLength).
+				Error("Code cannot be longer than 100 characters"),
+		),
+		validation.Field(&e.SegmentID,
+			validation.Length(0, maxSegmentIDLength).
+				Error("Segment cannot be longer than 10 characters"),
+		),
+		validation.Field(&e.ElementPosition,
+			validation.Min(0).Error("Element position cannot be negative"),
+		),
+		validation.Field(&e.Message, validation.Required.Error("Message is required")),
+	))
+}
+
+func (c *EDITestCase) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&c.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&c.PartnerDocumentProfileID,
+			validation.Required.Error("Document profile is required"),
+		),
+		validation.Field(&c.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		// The expectations are what the run is judged against, so a negative one
+		// could never be met and the case would fail forever.
+		validation.Field(&c.ExpectedWarnings,
+			validation.Min(0).Error("Expected warnings cannot be negative"),
+		),
+		validation.Field(&c.ExpectedErrors,
+			validation.Min(0).Error("Expected errors cannot be negative"),
+		),
+		validation.Field(&c.LastRunWarnings,
+			validation.Min(0).Error("Last run warnings cannot be negative"),
+		),
+		validation.Field(&c.LastRunErrors,
+			validation.Min(0).Error("Last run errors cannot be negative"),
+		),
+	))
+}
+
+const (
+	maxAS2FieldLength       = 255
+	maxDiagnosticCodeLength = 100
+)

@@ -5,9 +5,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -121,3 +124,60 @@ func (i *EDIMappingProfileItem) BeforeAppendModel(_ context.Context, query bun.Q
 
 	return nil
 }
+
+func (p *EDIMappingProfile) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&p.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&p.EDIPartnerID, validation.Required.Error("Partner is required")),
+		validation.Field(&p.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+	))
+
+	for i, entry := range p.Entries {
+		if entry == nil {
+			continue
+		}
+		entry.Validate(multiErr.WithIndex("entries", i))
+	}
+}
+
+func (i *EDIMappingProfileItem) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(i,
+		validation.Field(&i.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&i.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&i.EDIPartnerID, validation.Required.Error("Partner is required")),
+		validation.Field(&i.MappingProfileID,
+			validation.Required.Error("Mapping profile is required"),
+		),
+		validation.Field(&i.EntityType,
+			validation.Required.Error("Entity type is required"),
+			domainvalidation.ValidEnum[MappingEntityType]("Entity type is invalid"),
+		),
+		// A mapping with either end missing translates nothing, and an inbound
+		// document that hits it would fail with no usable explanation.
+		validation.Field(&i.SourceID, validation.Required.Error("Source is required")),
+		validation.Field(&i.TargetID, validation.Required.Error("Target is required")),
+		validation.Field(&i.SourceLabel,
+			validation.Length(0, maxMappingLabelLength).
+				Error("Source label cannot be longer than 255 characters"),
+		),
+		validation.Field(&i.TargetLabel,
+			validation.Length(0, maxMappingLabelLength).
+				Error("Target label cannot be longer than 255 characters"),
+		),
+	))
+}
+
+const maxMappingLabelLength = 255

@@ -4,9 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -92,3 +95,81 @@ func (f *EDIInboundFile) BeforeAppendModel(_ context.Context, query bun.Query) e
 func (f *EDIInboundFile) GetCreatedAt() int64 {
 	return f.CreatedAt
 }
+
+func (f *EDIInboundFile) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(f,
+		validation.Field(&f.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&f.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&f.CommunicationProfileID,
+			validation.Required.Error("Communication profile is required"),
+		),
+		validation.Field(&f.Method,
+			validation.Required.Error("Method is required"),
+			domainvalidation.ValidEnum[ConnectionMethod]("Method is invalid"),
+		),
+		validation.Field(&f.RemotePath, validation.Required.Error("Remote path is required")),
+		validation.Field(&f.FileName,
+			validation.Required.Error("File name is required"),
+			validation.Length(1, maxInboundFileNameLength).
+				Error("File name cannot be longer than 512 characters"),
+		),
+		// The checksum is what makes a redelivery recognizable as the same file
+		// rather than a second interchange.
+		validation.Field(&f.Checksum,
+			validation.Required.Error("Checksum is required"),
+			validation.Length(inboundChecksumLength, inboundChecksumLength).
+				Error("Checksum must be a 64 character digest"),
+		),
+		validation.Field(&f.SizeBytes,
+			validation.Min(int64(0)).Error("Size cannot be negative"),
+		),
+		validation.Field(&f.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[InboundFileStatus]("Status is invalid"),
+		),
+		validation.Field(&f.FailureReason,
+			validation.When(
+				f.Status == InboundFileStatusQuarantined,
+				validation.Required.Error("A quarantined file must record why"),
+			),
+		),
+		validation.Field(&f.TransactionCount,
+			validation.Min(0).Error("Transaction count cannot be negative"),
+		),
+		validation.Field(&f.InterchangeControlNumber,
+			validation.Length(0, maxEDICodeLength).
+				Error("Interchange control number cannot be longer than 20 characters"),
+		),
+		validation.Field(&f.ISASenderQualifier,
+			validation.Length(0, maxISAQualifierLength).
+				Error("Sender qualifier cannot be longer than 4 characters"),
+		),
+		validation.Field(&f.ISASenderID,
+			validation.Length(0, maxISAIDLength).
+				Error("Sender id cannot be longer than 20 characters"),
+		),
+		validation.Field(&f.ISAReceiverQualifier,
+			validation.Length(0, maxISAQualifierLength).
+				Error("Receiver qualifier cannot be longer than 4 characters"),
+		),
+		validation.Field(&f.ISAReceiverID,
+			validation.Length(0, maxISAIDLength).
+				Error("Receiver id cannot be longer than 20 characters"),
+		),
+		validation.Field(&f.ReceivedAt,
+			validation.Required.Error("Received at is required"),
+			validation.Min(int64(1)).Error("Received at must be a valid timestamp"),
+		),
+	))
+}
+
+const (
+	maxInboundFileNameLength = 512
+	inboundChecksumLength    = 64
+	maxISAQualifierLength    = 4
+	maxISAIDLength           = 20
+)

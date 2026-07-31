@@ -3,8 +3,11 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -147,4 +150,110 @@ func (c *EDIControlNumberSequence) GetOrganizationID() pulid.ID {
 
 func (c *EDIControlNumberSequence) GetBusinessUnitID() pulid.ID {
 	return c.BusinessUnitID
+}
+
+func (p *EDIPartnerDocumentProfile) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&p.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&p.EDIPartnerID, validation.Required.Error("Partner is required")),
+		validation.Field(&p.DocumentTypeID,
+			validation.Required.Error("Document type is required"),
+		),
+		validation.Field(&p.TemplateID, validation.Required.Error("Template is required")),
+		validation.Field(&p.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&p.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[DocumentStatus]("Status is invalid"),
+		),
+		validation.Field(&p.Direction,
+			validation.Required.Error("Direction is required"),
+			domainvalidation.ValidEnum[DocumentDirection]("Direction is invalid"),
+		),
+		validation.Field(&p.Standard,
+			validation.Required.Error("Standard is required"),
+			domainvalidation.ValidEnum[EDIStandard]("Standard is invalid"),
+		),
+		validation.Field(&p.TransactionSet,
+			validation.Required.Error("Transaction set is required"),
+			domainvalidation.ValidEnum[TransactionSet]("Transaction set is invalid"),
+		),
+		validation.Field(&p.X12VersionOverride,
+			validation.Length(0, maxEDICodeLength).
+				Error("X12 version cannot be longer than 20 characters"),
+		),
+		validation.Field(&p.FunctionalGroupID,
+			validation.Required.Error("Functional group is required"),
+			validation.Length(1, functionalGroupIDLength).
+				Error("Functional group must be at most 2 characters"),
+		),
+		validation.Field(&p.ValidationMode,
+			validation.Required.Error("Validation mode is required"),
+			domainvalidation.ValidEnum[ValidationMode]("Validation mode is invalid"),
+		),
+	))
+
+	p.Acknowledgment.Validate(multiErr.WithPrefix("acknowledgment"))
+}
+
+// Validate checks the acknowledgment expectations, which is where an unmet
+// service level turns into an alert rather than a silence.
+func (c *AcknowledgmentConfig) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.Type,
+			validation.When(
+				c.Expected,
+				validation.Required.Error("An expected acknowledgment must name its type"),
+				validation.NotIn(AcknowledgmentTypeNone).
+					Error("An expected acknowledgment must name its type"),
+			),
+			domainvalidation.ValidEnum[AcknowledgmentType]("Acknowledgment type is invalid"),
+		),
+		validation.Field(&c.SLAInMinutes,
+			validation.Min(int64(0)).Error("Acknowledgment SLA cannot be negative"),
+		),
+		validation.Field(&c.MissingAckSeverity,
+			domainvalidation.ValidEnum[ValidationSeverity]("Severity is invalid"),
+		),
+	))
+}
+
+func (s *EDIControlNumberSequence) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&s.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&s.EDIPartnerID, validation.Required.Error("Partner is required")),
+		validation.Field(&s.DocumentTypeID,
+			validation.Required.Error("Document type is required"),
+		),
+		validation.Field(&s.Kind,
+			validation.Required.Error("Kind is required"),
+			domainvalidation.ValidEnum[ControlNumberKind]("Kind is invalid"),
+		),
+		// Control numbers roll over between the bounds, so an inverted or empty
+		// range would either never issue a number or reissue one a partner has
+		// already seen.
+		validation.Field(&s.MinValue,
+			validation.Min(int64(1)).Error("Minimum control number must be at least one"),
+		),
+		validation.Field(&s.MaxValue,
+			validation.Min(s.MinValue+1).Error("Maximum control number must exceed the minimum"),
+		),
+		validation.Field(&s.NextValue,
+			validation.Min(s.MinValue).Error("Next control number cannot precede the minimum"),
+			validation.Max(s.MaxValue).Error("Next control number cannot exceed the maximum"),
+		),
+	))
 }

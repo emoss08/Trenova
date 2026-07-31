@@ -122,4 +122,3 @@ func (p *Preset) GetOrganizationID() pulid.ID { return p.OrganizationID }
 func (p *Preset) GetBusinessUnitID() pulid.ID { return p.BusinessUnitID }
 
 func (p *Preset) GetTableName() string { return "home_layout_presets" }
-

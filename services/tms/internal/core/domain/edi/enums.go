@@ -324,3 +324,380 @@ const (
 	PartnerSettingStatusDeprecated = PartnerSettingStatus("Deprecated")
 	PartnerSettingStatusFuture     = PartnerSettingStatus("Future")
 )
+
+func (k PartnerKind) IsValid() bool {
+	switch k {
+	case PartnerKindInternal,
+		PartnerKindExternal:
+		return true
+	default:
+		return false
+	}
+}
+
+func (r PartnerRole) IsValid() bool {
+	switch r {
+	case PartnerRoleCustomer,
+		PartnerRoleCarrier,
+		PartnerRoleBroker,
+		PartnerRoleVendor,
+		PartnerRoleShipper,
+		PartnerRoleConsignee,
+		PartnerRoleBillTo:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m ConnectionMethod) IsValid() bool {
+	switch m {
+	case ConnectionMethodInternal,
+		ConnectionMethodAS2,
+		ConnectionMethodSFTP,
+		ConnectionMethodVAN:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s ConnectionStatus) IsValid() bool {
+	switch s {
+	case ConnectionStatusPendingAcceptance,
+		ConnectionStatusActive,
+		ConnectionStatusSuspended,
+		ConnectionStatusRejected,
+		ConnectionStatusRevoked:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t MappingEntityType) IsValid() bool {
+	switch t {
+	case MappingEntityTypeCustomer,
+		MappingEntityTypeServiceType,
+		MappingEntityTypeShipmentType,
+		MappingEntityTypeFormulaTemplate,
+		MappingEntityTypeLocation,
+		MappingEntityTypeCommodity,
+		MappingEntityTypeAccessorialCharge,
+		MappingEntityTypeServiceFailureReasonCode:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s TransferStatus) IsValid() bool {
+	switch s {
+	case TransferStatusSubmitted,
+		TransferStatusMappingRequired,
+		TransferStatusPendingApproval,
+		TransferStatusProcessing,
+		TransferStatusApproved,
+		TransferStatusRejected,
+		TransferStatusExpired,
+		TransferStatusCanceled,
+		TransferStatusFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (d DocumentDirection) IsValid() bool {
+	switch d {
+	case DocumentDirectionInbound,
+		DocumentDirectionOutbound:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s EDIStandard) IsValid() bool {
+	switch s {
+	case EDIStandardX12:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t TransactionSet) IsValid() bool {
+	switch t {
+	case TransactionSet204,
+		TransactionSet210,
+		TransactionSet214,
+		TransactionSet990,
+		TransactionSet997,
+		TransactionSet999:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s DocumentStatus) IsValid() bool {
+	switch s {
+	case DocumentStatusActive,
+		DocumentStatusInactive:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s TemplateStatus) IsValid() bool {
+	switch s {
+	case TemplateStatusDraft,
+		TemplateStatusCertified,
+		TemplateStatusActive,
+		TemplateStatusDeprecated,
+		TemplateStatusArchived,
+		TemplateStatusSuperseded:
+		return true
+	default:
+		return false
+	}
+}
+
+func (l ScriptLanguage) IsValid() bool {
+	switch l {
+	case ScriptLanguageStarlark:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s MessageStatus) IsValid() bool {
+	switch s {
+	case MessageStatusGenerated,
+		MessageStatusFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s MessageDeliveryStatus) IsValid() bool {
+	switch s {
+	case MessageDeliveryStatusQueued,
+		MessageDeliveryStatusSending,
+		MessageDeliveryStatusSent,
+		MessageDeliveryStatusFailed,
+		MessageDeliveryStatusDeadLettered:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s InboundFileStatus) IsValid() bool {
+	switch s {
+	case InboundFileStatusReceived,
+		InboundFileStatusParsed,
+		InboundFileStatusProcessed,
+		InboundFileStatusPartiallyProcessed,
+		InboundFileStatusQuarantined,
+		InboundFileStatusDuplicate:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s MessageAcknowledgmentStatus) IsValid() bool {
+	switch s {
+	case MessageAcknowledgmentStatusNotExpected,
+		MessageAcknowledgmentStatusPending,
+		MessageAcknowledgmentStatusAccepted,
+		MessageAcknowledgmentStatusRejected,
+		MessageAcknowledgmentStatusFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m ValidationMode) IsValid() bool {
+	switch m {
+	case ValidationModeStrict,
+		ValidationModeWarnOnly,
+		ValidationModeDisabled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s ValidationSeverity) IsValid() bool {
+	switch s {
+	case ValidationSeverityInfo,
+		ValidationSeverityWarning,
+		ValidationSeverityError:
+		return true
+	default:
+		return false
+	}
+}
+
+func (k ControlNumberKind) IsValid() bool {
+	switch k {
+	case ControlNumberKindInterchange,
+		ControlNumberKindGroup,
+		ControlNumberKindTransaction:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t AcknowledgmentType) IsValid() bool {
+	switch t {
+	case AcknowledgmentTypeNone,
+		AcknowledgmentType997,
+		AcknowledgmentType999:
+		return true
+	default:
+		return false
+	}
+}
+
+func (c LoadTenderPurposeCode) IsValid() bool {
+	switch c {
+	case LoadTenderPurposeOriginal,
+		LoadTenderPurposeChange:
+		return true
+	default:
+		return false
+	}
+}
+
+func (k TenderRecipientKind) IsValid() bool {
+	switch k {
+	case TenderRecipientKindInternal,
+		TenderRecipientKindExternal:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s TenderRecipientStatus) IsValid() bool {
+	switch s {
+	case TenderRecipientStatusActive,
+		TenderRecipientStatusClosed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s TenderRecipientBaselineStatus) IsValid() bool {
+	switch s {
+	case TenderRecipientBaselineStatusSent,
+		TenderRecipientBaselineStatusAccepted:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s TenderChangeStatus) IsValid() bool {
+	switch s {
+	case TenderChangeStatusPendingReview,
+		TenderChangeStatusApplied,
+		TenderChangeStatusRejected,
+		TenderChangeStatusQueued,
+		TenderChangeStatusSent,
+		TenderChangeStatusFailed,
+		TenderChangeStatusIgnored,
+		TenderChangeStatusSuperseded:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t SourceContextDataType) IsValid() bool {
+	switch t {
+	case SourceContextDataTypeString,
+		SourceContextDataTypeNumber,
+		SourceContextDataTypeInteger,
+		SourceContextDataTypeBoolean,
+		SourceContextDataTypeTimestamp,
+		SourceContextDataTypeDate,
+		SourceContextDataTypeDecimal,
+		SourceContextDataTypeObject,
+		SourceContextDataTypeArray,
+		SourceContextDataTypeUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+func (k SourceContextKind) IsValid() bool {
+	switch k {
+	case SourceContextKindShipment,
+		SourceContextKindRepeat,
+		SourceContextKindPartner,
+		SourceContextKindRuntime,
+		SourceContextKindMapping,
+		SourceContextKindOrganization,
+		SourceContextKindCustomer,
+		SourceContextKindLocation,
+		SourceContextKindCommodity,
+		SourceContextKindCharge,
+		SourceContextKindEnvelope:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s SourceContextFieldStatus) IsValid() bool {
+	switch s {
+	case SourceContextFieldStatusActive,
+		SourceContextFieldStatusDeprecated,
+		SourceContextFieldStatusFuture:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t PartnerSettingDataType) IsValid() bool {
+	switch t {
+	case PartnerSettingDataTypeString,
+		PartnerSettingDataTypeNumber,
+		PartnerSettingDataTypeInteger,
+		PartnerSettingDataTypeBoolean,
+		PartnerSettingDataTypeDecimal,
+		PartnerSettingDataTypeEnum,
+		PartnerSettingDataTypeObject,
+		PartnerSettingDataTypeArray,
+		PartnerSettingDataTypeMap,
+		PartnerSettingDataTypeSecret,
+		PartnerSettingDataTypeUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s PartnerSettingStatus) IsValid() bool {
+	switch s {
+	case PartnerSettingStatusActive,
+		PartnerSettingStatusDeprecated,
+		PartnerSettingStatusFuture:
+		return true
+	default:
+		return false
+	}
+}
