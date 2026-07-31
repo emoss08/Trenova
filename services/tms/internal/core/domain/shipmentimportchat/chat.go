@@ -3,8 +3,10 @@ package shipmentimportchat
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -154,3 +156,89 @@ func (t *Turn) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (c *Conversation) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&c.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&c.DocumentID, validation.Required.Error("Document is required")),
+		validation.Field(&c.UserID, validation.Required.Error("User is required")),
+		validation.Field(&c.ExternalConversationID,
+			validation.Length(0, maxExternalConversationIDLength).
+				Error("External conversation id cannot be longer than 255 characters"),
+		),
+		validation.Field(&c.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(
+				ConversationStatusActive,
+				ConversationStatusCompleted,
+				ConversationStatusSuperseded,
+			).Error("Status is invalid"),
+		),
+		validation.Field(&c.StatusReason,
+			validation.In(
+				ConversationStatusReasonNone,
+				ConversationStatusReasonReextract,
+				ConversationStatusReasonShipmentCreated,
+				ConversationStatusReasonManualRestart,
+			).Error("Status reason is invalid"),
+		),
+		validation.Field(&c.TurnCount,
+			validation.Min(0).Error("Turn count cannot be negative"),
+		),
+	))
+}
+
+func (t *Turn) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(t,
+		validation.Field(&t.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&t.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&t.ConversationID,
+			validation.Required.Error("Conversation is required"),
+		),
+		validation.Field(&t.DocumentID, validation.Required.Error("Document is required")),
+		validation.Field(&t.UserID, validation.Required.Error("User is required")),
+		// Turns are replayed in order to rebuild the transcript, so the index
+		// has to be a real position in it.
+		validation.Field(&t.TurnIndex,
+			validation.Min(0).Error("Turn index cannot be negative"),
+		),
+		validation.Field(&t.UserMessage, validation.Required.Error("User message is required")),
+		validation.Field(&t.ResultStatus,
+			validation.Required.Error("Result status is required"),
+			validation.In(TurnResultStatusCompleted, TurnResultStatusFailed).
+				Error("Result status is invalid"),
+		),
+		validation.Field(&t.ErrorMessage,
+			validation.When(
+				t.ResultStatus == TurnResultStatusFailed,
+				validation.Required.Error("A failed turn must record why it failed"),
+			),
+		),
+		validation.Field(&t.Model,
+			validation.Length(0, maxChatModelLength).
+				Error("Model cannot be longer than 100 characters"),
+		),
+		validation.Field(&t.RequestConversationID,
+			validation.Length(0, maxExternalConversationIDLength).
+				Error("Request conversation id cannot be longer than 255 characters"),
+		),
+		validation.Field(&t.ResponseConversationID,
+			validation.Length(0, maxExternalConversationIDLength).
+				Error("Response conversation id cannot be longer than 255 characters"),
+		),
+	))
+}
+
+const (
+	maxExternalConversationIDLength = 255
+	maxChatModelLength              = 100
+)

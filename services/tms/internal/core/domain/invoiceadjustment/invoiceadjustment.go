@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/money"
@@ -319,3 +320,161 @@ func (d *InvoiceAdjustmentDocumentReference) BeforeAppendModel(
 	beforeAppendIDModel(query, &d.ID, "iadjr_", &d.CreatedAt, &d.UpdatedAt)
 	return nil
 }
+
+func (r *InvoiceAdjustmentDocumentReference) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&r.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&r.AdjustmentID, validation.Required.Error("Adjustment is required")),
+		validation.Field(&r.DocumentID, validation.Required.Error("Document is required")),
+		// The snapshot is what the supporting document looked like when it was
+		// attached, which is the evidence a disputed adjustment is defended
+		// with even after the document itself is superseded.
+		validation.Field(&r.SnapshotFileName,
+			validation.Required.Error("Snapshot file name is required"),
+			validation.Length(1, maxSnapshotNameLength).
+				Error("Snapshot file name cannot be longer than 255 characters"),
+		),
+		validation.Field(&r.SnapshotOriginalName,
+			validation.Required.Error("Snapshot original name is required"),
+			validation.Length(1, maxSnapshotNameLength).
+				Error("Snapshot original name cannot be longer than 255 characters"),
+		),
+		validation.Field(&r.SnapshotFileType,
+			validation.Required.Error("Snapshot file type is required"),
+			validation.Length(1, maxSnapshotCodeLength).
+				Error("Snapshot file type cannot be longer than 100 characters"),
+		),
+		validation.Field(&r.SnapshotResourceType,
+			validation.Required.Error("Snapshot resource type is required"),
+			validation.Length(1, maxSnapshotCodeLength).
+				Error("Snapshot resource type cannot be longer than 100 characters"),
+		),
+		validation.Field(&r.SnapshotResourceID,
+			validation.Required.Error("Snapshot resource is required"),
+			validation.Length(1, maxSnapshotCodeLength).
+				Error("Snapshot resource cannot be longer than 100 characters"),
+		),
+		validation.Field(&r.SelectedAt,
+			validation.When(r.SelectedByID.IsNotNil(), validation.Required.Error(
+				"A selected document must record when it was selected",
+			)),
+		),
+	))
+}
+
+func (l *InvoiceAdjustmentLine) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(l,
+		validation.Field(&l.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&l.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&l.AdjustmentID, validation.Required.Error("Adjustment is required")),
+		validation.Field(&l.OriginalInvoiceID,
+			validation.Required.Error("Original invoice is required"),
+		),
+		validation.Field(&l.OriginalLineID,
+			validation.Required.Error("Original line is required"),
+		),
+		validation.Field(&l.LineNumber,
+			validation.Required.Error("Line number is required"),
+			validation.Min(1).Error("Line number must be at least one"),
+		),
+		validation.Field(&l.Description, validation.Required.Error("Description is required")),
+	))
+
+	// Crediting more than the line has left is how an adjustment turns into an
+	// overpayment, so it is refused here rather than reconciled later.
+	if l.CreditAmount.IsNegative() {
+		multiErr.Add("creditAmount", errortypes.ErrInvalid, "Credit amount cannot be negative")
+	}
+
+	if l.RebillAmount.IsNegative() {
+		multiErr.Add("rebillAmount", errortypes.ErrInvalid, "Rebill amount cannot be negative")
+	}
+
+	if l.RemainingEligibleAmount.IsNegative() {
+		multiErr.Add("remainingEligibleAmount", errortypes.ErrInvalid,
+			"Remaining eligible amount cannot be negative")
+	}
+
+	if l.CreditAmount.GreaterThan(l.RemainingEligibleAmount) {
+		multiErr.Add("creditAmount", errortypes.ErrInvalid,
+			"Credit amount cannot exceed the amount still eligible on this line")
+	}
+
+	if l.CreditQuantity.IsNegative() {
+		multiErr.Add("creditQuantity", errortypes.ErrInvalid,
+			"Credit quantity cannot be negative")
+	}
+
+	if l.RebillQuantity.IsNegative() {
+		multiErr.Add("rebillQuantity", errortypes.ErrInvalid,
+			"Rebill quantity cannot be negative")
+	}
+}
+
+func (s *InvoiceAdjustmentSnapshot) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&s.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&s.AdjustmentID, validation.Required.Error("Adjustment is required")),
+		validation.Field(&s.InvoiceID, validation.Required.Error("Invoice is required")),
+		validation.Field(&s.Kind,
+			validation.Required.Error("Kind is required"),
+			domainvalidation.ValidEnum[SnapshotKind]("Kind is invalid"),
+		),
+		validation.Field(&s.Payload, validation.Required.Error("Payload is required")),
+	))
+}
+
+func (g *InvoiceAdjustmentCorrectionGroup) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(g,
+		validation.Field(&g.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&g.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		// The root is what the whole correction chain is traced back to, so a
+		// group without one cannot answer what the customer was first billed.
+		validation.Field(&g.RootInvoiceID,
+			validation.Required.Error("Root invoice is required"),
+		),
+	))
+}
+
+func (e *InvoiceAdjustmentReconciliationException) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&e.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&e.AdjustmentID, validation.Required.Error("Adjustment is required")),
+		validation.Field(&e.InvoiceID, validation.Required.Error("Invoice is required")),
+		validation.Field(&e.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[ExceptionStatus]("Status is invalid"),
+		),
+		// An exception is a number that did not reconcile; without the reason
+		// nobody downstream can decide what to do about it.
+		validation.Field(&e.Reason, validation.Required.Error("Reason is required")),
+	))
+}
+
+const (
+	maxSnapshotNameLength = 255
+	maxSnapshotCodeLength = 100
+)

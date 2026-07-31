@@ -3,8 +3,10 @@ package permission
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -49,4 +51,20 @@ func (ura *UserRoleAssignment) IsExpired() bool {
 
 func (ura *UserRoleAssignment) GetID() pulid.ID {
 	return ura.ID
+}
+
+func (a *UserRoleAssignment) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&a.UserID, validation.Required.Error("User is required")),
+		validation.Field(&a.RoleID, validation.Required.Error("Role is required")),
+		// An assignment that expires before it was made grants nothing, which
+		// reads to the user as a permission that silently never applied.
+		validation.Field(&a.ExpiresAt,
+			validation.Min(a.AssignedAt+1).
+				Error("Expiry must be after the assignment was made"),
+		),
+	))
 }

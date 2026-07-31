@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
@@ -133,3 +134,38 @@ func validateRangeEntries(entries []*RateTableEntry, multiErr *errortypes.MultiE
 func entryFieldPrefix(index int) string {
 	return "entries[" + strconv.Itoa(index) + "]"
 }
+
+func (e *RateTableEntry) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&e.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&e.RateTableID, validation.Required.Error("Rate table is required")),
+		validation.Field(&e.MatchKey,
+			validation.Length(0, maxMatchKeyLength).
+				Error("Match key cannot be longer than 100 characters"),
+		),
+		validation.Field(&e.SortOrder,
+			validation.Min(int32(0)).Error("Sort order cannot be negative"),
+		),
+	))
+
+	// An entry is chosen by either its key or the band a value falls into, so
+	// one with neither can never be selected and the rate silently falls
+	// through to whatever follows it.
+	if (e.MatchKey == nil || *e.MatchKey == "") && !e.RangeMin.Valid && !e.RangeMax.Valid {
+		multiErr.Add("matchKey", errortypes.ErrRequired,
+			"An entry must have a match key or a range")
+	}
+
+	if e.RangeMin.Valid && e.RangeMax.Valid &&
+		e.RangeMax.Decimal.LessThanOrEqual(e.RangeMin.Decimal) {
+		multiErr.Add("rangeMax", errortypes.ErrInvalid,
+			"Range maximum must be greater than the range minimum")
+	}
+}
+
+const maxMatchKeyLength = 100

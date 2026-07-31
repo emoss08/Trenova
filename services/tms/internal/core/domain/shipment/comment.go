@@ -267,3 +267,39 @@ func (c *ShipmentComment) GetOrganizationID() pulid.ID {
 func (c *ShipmentComment) GetBusinessUnitID() pulid.ID {
 	return c.BusinessUnitID
 }
+
+func (a *ShipmentCommentAcknowledgment) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&a.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&a.CommentID, validation.Required.Error("Comment is required")),
+		validation.Field(&a.ShipmentID, validation.Required.Error("Shipment is required")),
+		validation.Field(&a.UserID, validation.Required.Error("User is required")),
+		// The acknowledgment is the record that someone read a comment that
+		// required reading, so an unstamped one proves nothing.
+		validation.Field(&a.AcknowledgedAt,
+			validation.Required.Error("Acknowledged at is required"),
+			validation.Min(int64(1)).Error("Acknowledged at must be a valid timestamp"),
+		),
+	))
+}
+
+func (m *ShipmentCommentMention) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(m,
+		validation.Field(&m.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&m.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&m.CommentID, validation.Required.Error("Comment is required")),
+		validation.Field(&m.ShipmentID, validation.Required.Error("Shipment is required")),
+		validation.Field(&m.MentionedUserID,
+			validation.Required.Error("Mentioned user is required"),
+		),
+	))
+}

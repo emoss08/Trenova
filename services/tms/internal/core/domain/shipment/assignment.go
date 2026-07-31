@@ -6,8 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -58,4 +61,53 @@ func (a *Assignment) BeforeAppendModel(_ context.Context, query bun.Query) error
 
 func (a *Assignment) GetID() pulid.ID {
 	return a.ID
+}
+
+func (a *Assignment) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&a.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&a.ShipmentMoveID,
+			validation.Required.Error("Shipment move is required"),
+		),
+		validation.Field(&a.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[AssignmentStatus]("Status is invalid"),
+		),
+		validation.Field(&a.AckStatus,
+			validation.Required.Error("Acknowledgment status is required"),
+			domainvalidation.ValidEnum[AssignmentAck]("Acknowledgment status is invalid"),
+		),
+		// An assignment with no driver puts equipment on a move nobody is
+		// scheduled to run.
+		validation.Field(&a.PrimaryWorkerID,
+			validation.Required.Error("Primary worker is required"),
+		),
+		// The same person twice on one move would show as a team assignment
+		// while leaving the second seat empty.
+		validation.Field(&a.SecondaryWorkerID,
+			validation.When(
+				a.PrimaryWorkerID != nil && a.SecondaryWorkerID != nil,
+				validation.NotIn(*a.PrimaryWorkerID).
+					Error("The secondary worker cannot be the primary worker"),
+			),
+		),
+		validation.Field(&a.AckAt,
+			validation.When(
+				a.AckStatus != AssignmentAckPending,
+				validation.Required.Error("An answered assignment must record when it was answered"),
+			),
+		),
+		// A decline that records no reason leaves dispatch reassigning blind.
+		validation.Field(&a.AckReason,
+			validation.When(
+				a.AckStatus == AssignmentAckDeclined,
+				validation.Required.Error("A declined assignment must record its reason"),
+			),
+		),
+	))
 }

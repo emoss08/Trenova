@@ -3,6 +3,7 @@ package invoiceadjustment
 import (
 	"errors"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -65,3 +66,41 @@ func (b *InvoiceAdjustmentBatch) Validate(multiErr *errortypes.MultiError) {
 		}
 	}
 }
+
+func (i *InvoiceAdjustmentBatchItem) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(i,
+		validation.Field(&i.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&i.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&i.BatchID, validation.Required.Error("Batch is required")),
+		validation.Field(&i.InvoiceID, validation.Required.Error("Invoice is required")),
+		// A batch is retried as a whole, so the key is what stops an invoice
+		// being adjusted twice by the same run.
+		validation.Field(&i.IdempotencyKey,
+			validation.Required.Error("Idempotency key is required"),
+			validation.Length(1, maxBatchIdempotencyKeyLength).
+				Error("Idempotency key cannot be longer than 200 characters"),
+		),
+		validation.Field(&i.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[BatchItemStatus]("Status is invalid"),
+		),
+		validation.Field(&i.ErrorMessage,
+			validation.When(
+				i.Status == BatchItemStatusFailed,
+				validation.Required.Error("A failed item must record why it failed"),
+			),
+		),
+		validation.Field(&i.AdjustmentID,
+			validation.When(
+				i.Status == BatchItemStatusExecuted,
+				validation.Required.Error("An executed item must name the adjustment it made"),
+			),
+		),
+	))
+}
+
+const maxBatchIdempotencyKeyLength = 200
