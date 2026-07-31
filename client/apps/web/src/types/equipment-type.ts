@@ -15,6 +15,17 @@ export const equipmentClassSchema = z.enum([
 
 export type EquipmentClass = z.infer<typeof equipmentClassSchema>;
 
+export const deckTypeSchema = z.enum([
+  "Flatbed",
+  "StepDeck",
+  "DoubleDrop",
+  "RGN",
+  "Lowboy",
+  "Conestoga",
+]);
+
+export type DeckType = z.infer<typeof deckTypeSchema>;
+
 export const equipmentTypeSchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
@@ -23,6 +34,10 @@ export const equipmentTypeSchema = z.object({
   class: equipmentClassSchema,
   color: optionalStringSchema,
   interiorLength: decimalStringSchema,
+  deckType: deckTypeSchema.nullish(),
+  deckHeightInches: decimalStringSchema,
+  wellLengthFeet: decimalStringSchema,
+  axleCount: z.number().int().nullish(),
 });
 
 export type EquipmentType = z.infer<typeof equipmentTypeSchema>;

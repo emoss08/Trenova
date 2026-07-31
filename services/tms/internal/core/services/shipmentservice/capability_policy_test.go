@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -82,6 +84,18 @@ func validatorWithProfile(
 ) *Validator {
 	t.Helper()
 
+	return validatorWithProfileAndEquipment(t, entity, policy, control, nil)
+}
+
+func validatorWithProfileAndEquipment(
+	t *testing.T,
+	entity *shipment.Shipment,
+	policy *modeprofile.ResolvedPolicy,
+	control *tenant.ShipmentControl,
+	equipmentTypeRepo repositories.EquipmentTypeRepository,
+) *Validator {
+	t.Helper()
+
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, repositories.GetShipmentControlRequest{
@@ -101,6 +115,7 @@ func validatorWithProfile(
 			mocks.NewMockCommodityRepository(t),
 			mocks.NewMockHazmatSegregationRuleRepository(t),
 			mocks.NewMockShipmentRepository(t),
+			equipmentTypeRepo,
 			&stubModeProfileService{policy: policy},
 		).Build(),
 	}
@@ -289,4 +304,236 @@ func requireFieldError(
 	}
 
 	t.Fatalf("expected error on %q with message %q, got %v", field, message, multiErr.Errors)
+}
+
+func dimensionalPolicy(
+	enforcement tenant.EnforcementLevel,
+	rules ...modeprofile.RuleKey,
+) *modeprofile.ResolvedPolicy {
+	resolved := make(map[modeprofile.RuleKey]modeprofile.ResolvedRule, len(rules))
+	for _, key := range rules {
+		def, err := modeprofile.RuleDefinitionFor(key)
+		if err != nil {
+			continue
+		}
+		resolved[key] = modeprofile.ResolvedRule{
+			Key:         key,
+			Capability:  def.Capability,
+			Label:       def.Label,
+			Enforcement: enforcement,
+			Enabled:     true,
+			Fields:      def.Fields,
+		}
+	}
+
+	return &modeprofile.ResolvedPolicy{
+		ProfileCode: "FLATBED",
+		Capabilities: []modeprofile.Capability{
+			modeprofile.CapabilityCore,
+			modeprofile.CapabilityDimensionalCargo,
+		},
+		Rules: resolved,
+	}
+}
+
+func dimensionedLine(length, width, height float64) *shipment.ShipmentCommodity {
+	return &shipment.ShipmentCommodity{
+		CommodityID: pulid.MustNew("com_"),
+		Weight:      1000,
+		Pieces:      1,
+		LengthFeet:  &length,
+		WidthFeet:   &width,
+		HeightFeet:  &height,
+	}
+}
+
+func TestCapabilityPolicy_DimensionsRequiredBlocksLinesMissingDimensions(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.Commodities = []*shipment.ShipmentCommodity{
+		dimensionedLine(20, 8, 6),
+		{CommodityID: pulid.MustNew("com_"), Weight: 1000, Pieces: 1},
+	}
+
+	v := validatorWithProfile(
+		t,
+		entity,
+		dimensionalPolicy(tenant.EnforcementLevelBlock, modeprofile.RuleKeyDimensionsRequired),
+		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+	)
+
+	multiErr, _ := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	requireFieldError(
+		t, multiErr, "commodities[1]",
+		"Length, width, and height are required for open deck freight",
+	)
+}
+
+func TestCapabilityPolicy_DimensionsRequiredPassesWhenAllLinesDimensioned(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.Commodities = []*shipment.ShipmentCommodity{
+		dimensionedLine(20, 8, 6),
+		dimensionedLine(15, 7, 5),
+	}
+
+	v := validatorWithProfile(
+		t,
+		entity,
+		dimensionalPolicy(tenant.EnforcementLevelBlock, modeprofile.RuleKeyDimensionsRequired),
+		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Empty(t, advisories)
+}
+
+func TestCapabilityPolicy_DimensionsRequiredWarnRecordsAdvisory(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.Commodities = []*shipment.ShipmentCommodity{
+		{CommodityID: pulid.MustNew("com_"), Weight: 1000, Pieces: 1},
+	}
+
+	v := validatorWithProfile(
+		t,
+		entity,
+		dimensionalPolicy(tenant.EnforcementLevelWarn, modeprofile.RuleKeyDimensionsRequired),
+		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Len(t, advisories, 1)
+	require.Equal(t, "commodities[0]", advisories[0].Field)
+	require.Equal(
+		t,
+		modeprofile.RuleKeyDimensionsRequired.String(),
+		advisories[0].RuleKey,
+	)
+}
+
+func TestCapabilityPolicy_DimensionsNotCheckedWithoutCapability(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.Commodities = []*shipment.ShipmentCommodity{
+		{CommodityID: pulid.MustNew("com_"), Weight: 1000, Pieces: 1},
+	}
+
+	v := validatorWithProfile(
+		t,
+		entity,
+		policyWithWeightRule(tenant.EnforcementLevelBlock, 80000),
+		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Empty(t, advisories)
+}
+
+func equipmentRepoWithDeck(
+	t *testing.T,
+	entity *shipment.Shipment,
+	deckLengthFeet float64,
+) repositories.EquipmentTypeRepository {
+	t.Helper()
+
+	repo := mocks.NewMockEquipmentTypeRepository(t)
+	repo.EXPECT().
+		GetByID(mock.Anything, repositories.GetEquipmentTypeByIDRequest{
+			ID: entity.TrailerTypeID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+		}).
+		Return(&equipmenttype.EquipmentType{InteriorLength: &deckLengthFeet}, nil).
+		Maybe()
+
+	return repo
+}
+
+func TestCapabilityPolicy_DeckFitBlocksOverhangBeyondAllowance(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.TrailerTypeID = pulid.MustNew("et_")
+	entity.ApplyEnvelope(shipment.Envelope{LengthFeet: 62, WidthFeet: 8, HeightFeet: 6})
+
+	v := validatorWithProfileAndEquipment(
+		t,
+		entity,
+		dimensionalPolicy(
+			tenant.EnforcementLevelBlock,
+			modeprofile.RuleKeyEnvelopeExceedsEquipment,
+		),
+		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		equipmentRepoWithDeck(t, entity, 53),
+	)
+
+	multiErr, _ := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	requireFieldError(
+		t, multiErr, "commodities",
+		"Cargo overhangs the deck by 9.0 ft, more than the 4 ft allowed",
+	)
+}
+
+func TestCapabilityPolicy_DeckFitAllowsOverhangWithinAllowance(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.TrailerTypeID = pulid.MustNew("et_")
+	entity.ApplyEnvelope(shipment.Envelope{LengthFeet: 56, WidthFeet: 8, HeightFeet: 6})
+
+	v := validatorWithProfileAndEquipment(
+		t,
+		entity,
+		dimensionalPolicy(
+			tenant.EnforcementLevelBlock,
+			modeprofile.RuleKeyEnvelopeExceedsEquipment,
+		),
+		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		equipmentRepoWithDeck(t, entity, 53),
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Empty(t, advisories)
+}
+
+func TestCapabilityPolicy_DeckFitSkippedWithoutEnvelope(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.TrailerTypeID = pulid.MustNew("et_")
+
+	v := validatorWithProfileAndEquipment(
+		t,
+		entity,
+		dimensionalPolicy(
+			tenant.EnforcementLevelBlock,
+			modeprofile.RuleKeyEnvelopeExceedsEquipment,
+		),
+		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
+		equipmentRepoWithDeck(t, entity, 53),
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Empty(t, advisories)
 }

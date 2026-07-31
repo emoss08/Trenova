@@ -15,6 +15,12 @@ import (
 	"github.com/uptrace/bun"
 )
 
+const (
+	InchesPerFoot       = 12.0
+	MaxDeckHeightInches = 120.0
+	MaxAxleCount        = int16(20)
+)
+
 var (
 	_ bun.BeforeAppendModelHook          = (*EquipmentType)(nil)
 	_ validationframework.TenantedEntity = (*EquipmentType)(nil)
@@ -35,11 +41,16 @@ type EquipmentType struct {
 	Class          Class              `json:"class"          bun:"class,type:equipment_class_enum,notnull"`
 	Color          string             `json:"color"          bun:"color,type:VARCHAR(10),nullzero"`
 	InteriorLength *float64           `json:"interiorLength" bun:"interior_length,type:NUMERIC(10,2),nullzero"`
-	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
-	Version        int64              `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	DeckType         DeckType `json:"deckType"         bun:"deck_type,type:equipment_deck_type_enum,nullzero"`
+	DeckHeightInches *float64 `json:"deckHeightInches" bun:"deck_height_inches,type:NUMERIC(10,2),nullzero"`
+	WellLengthFeet   *float64 `json:"wellLengthFeet"   bun:"well_length_feet,type:NUMERIC(10,2),nullzero"`
+	AxleCount        *int16   `json:"axleCount"        bun:"axle_count,type:SMALLINT,nullzero"`
+	SearchVector     string   `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank             string   `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
+	Version          int64    `json:"version"        bun:"version,type:BIGINT"`
+	CreatedAt        int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt        int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
@@ -69,6 +80,44 @@ func (et *EquipmentType) Validate(multiErr *errortypes.MultiError) {
 			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
+
+	et.validateDeck(multiErr)
+}
+
+func (et *EquipmentType) validateDeck(multiErr *errortypes.MultiError) {
+	if et.DeckType != "" && !et.DeckType.IsValid() {
+		multiErr.Add("deckType", errortypes.ErrInvalid,
+			"Deck type must be one of: Flatbed, StepDeck, DoubleDrop, RGN, Lowboy, Conestoga")
+	}
+
+	if et.DeckHeightInches != nil &&
+		(*et.DeckHeightInches <= 0 || *et.DeckHeightInches > MaxDeckHeightInches) {
+		multiErr.Add("deckHeightInches", errortypes.ErrInvalid,
+			"Deck height must be between 0 and 120 inches")
+	}
+
+	if et.WellLengthFeet != nil && *et.WellLengthFeet <= 0 {
+		multiErr.Add("wellLengthFeet", errortypes.ErrInvalid,
+			"Well length must be greater than zero")
+	}
+
+	if et.WellLengthFeet != nil && et.DeckType != "" && !et.DeckType.HasWell() {
+		multiErr.Add("wellLengthFeet", errortypes.ErrInvalid,
+			"Well length only applies to double drop, RGN, and lowboy decks")
+	}
+
+	if et.AxleCount != nil && (*et.AxleCount < 1 || *et.AxleCount > MaxAxleCount) {
+		multiErr.Add("axleCount", errortypes.ErrInvalid,
+			"Axle count must be between 1 and 20")
+	}
+}
+
+func (et *EquipmentType) DeckHeightFeet() float64 {
+	if et == nil || et.DeckHeightInches == nil {
+		return 0
+	}
+
+	return *et.DeckHeightInches / InchesPerFoot
 }
 
 func (et *EquipmentType) BeforeAppendModel(_ context.Context, query bun.Query) error {

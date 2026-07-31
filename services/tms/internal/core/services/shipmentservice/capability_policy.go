@@ -152,6 +152,7 @@ func createCapabilityPolicyRule(
 	profileSvc services.ModeProfileService,
 	controlRepo repositories.ShipmentControlRepository,
 	shipmentRepo repositories.ShipmentRepository,
+	equipmentTypeRepo repositories.EquipmentTypeRepository,
 ) validationframework.TenantedRule[*shipment.Shipment] {
 	return validationframework.NewTenantedRule[*shipment.Shipment]("capability_policy").
 		OnBoth().
@@ -177,6 +178,8 @@ func createCapabilityPolicyRule(
 
 			validateWeight(entity, policy, control, multiErr)
 			validateTemperature(entity, policy, multiErr)
+			validateDimensions(entity, policy, multiErr)
+			validateDeckFit(ctx, entity, policy, equipmentTypeRepo, multiErr)
 
 			return validateMoveRemoval(
 				ctx, entity, valCtx, policy, control, shipmentRepo, multiErr,
@@ -271,4 +274,87 @@ func validateMoveRemoval(
 		"Your organization does not allow move removals")
 
 	return nil
+}
+
+func validateDimensions(
+	entity *shipment.Shipment,
+	policy *modeprofile.ResolvedPolicy,
+	multiErr *errortypes.MultiError,
+) {
+	rule, ok := policy.Rule(modeprofile.RuleKeyDimensionsRequired)
+	if !ok || !rule.Applies() {
+		return
+	}
+
+	for idx, line := range entity.Commodities {
+		if line == nil || line.HasDimensions() {
+			continue
+		}
+
+		emit(multiErr.WithIndex("commodities", idx), rule, "", errortypes.ErrRequired,
+			"Length, width, and height are required for open deck freight")
+	}
+}
+
+func deckLengthFeet(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	equipmentTypeRepo repositories.EquipmentTypeRepository,
+) float64 {
+	if entity.TrailerTypeID.IsNil() || equipmentTypeRepo == nil {
+		return 0
+	}
+
+	equipmentType, err := equipmentTypeRepo.GetByID(ctx, repositories.GetEquipmentTypeByIDRequest{
+		ID: entity.TrailerTypeID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+	})
+	if err != nil || equipmentType.InteriorLength == nil {
+		return 0
+	}
+
+	return *equipmentType.InteriorLength
+}
+
+func validateDeckFit(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	policy *modeprofile.ResolvedPolicy,
+	equipmentTypeRepo repositories.EquipmentTypeRepository,
+	multiErr *errortypes.MultiError,
+) {
+	rule, ok := policy.Rule(modeprofile.RuleKeyEnvelopeExceedsEquipment)
+	if !ok || !rule.Applies() {
+		return
+	}
+
+	envelope := entity.CurrentEnvelope()
+	if envelope.LengthFeet <= 0 {
+		return
+	}
+
+	deckLength := deckLengthFeet(ctx, entity, equipmentTypeRepo)
+	if deckLength <= 0 {
+		return
+	}
+
+	allowedOverhang, _ := policy.IntParam(
+		modeprofile.RuleKeyEnvelopeExceedsEquipment,
+		modeprofile.ParamMaxOverhangFeet,
+	)
+
+	overhang := envelope.LengthFeet - deckLength
+	if overhang <= float64(allowedOverhang) {
+		return
+	}
+
+	emit(multiErr, rule, "commodities", errortypes.ErrInvalid,
+		fmt.Sprintf(
+			"Cargo overhangs the deck by %.1f ft, more than the %d ft allowed",
+			overhang,
+			allowedOverhang,
+		))
 }

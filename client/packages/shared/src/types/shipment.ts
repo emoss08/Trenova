@@ -311,6 +311,9 @@ const shipmentCommodityBaseSchema = z.object({
     .int()
     .nonnegative({ error: "Weight cannot be negative" })
     .default(0),
+  lengthFeet: decimalStringSchema,
+  widthFeet: decimalStringSchema,
+  heightFeet: decimalStringSchema,
 });
 
 export const shipmentCommoditySchema = z.object({
@@ -381,6 +384,10 @@ const shipmentBaseSchema = z.object({
   totalChargeAmount: decimalStringSchema.default(0),
   pieces: nullableIntegerSchema,
   weight: nullableIntegerSchema,
+  envelopeLengthFeet: decimalStringSchema,
+  envelopeWidthFeet: decimalStringSchema,
+  envelopeHeightFeet: decimalStringSchema,
+  envelopeOverallHeightFeet: decimalStringSchema,
   temperatureMin: nullableIntegerSchema,
   temperatureMax: nullableIntegerSchema,
   actualDeliveryDate: nullableIntegerSchema,

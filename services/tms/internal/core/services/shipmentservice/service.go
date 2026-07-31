@@ -289,6 +289,8 @@ func (s *service) Create(
 		return nil, err
 	}
 
+	s.applyShipmentEnvelope(ctx, entity)
+
 	if s.distanceCalculation != nil {
 		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
 			return nil, err
@@ -417,6 +419,8 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	if err = s.hydrateShipmentCommodityDetails(ctx, entity); err != nil {
 		return nil, err
 	}
+
+	s.applyShipmentEnvelope(ctx, entity)
 
 	if s.distanceCalculation != nil {
 		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
@@ -1236,6 +1240,8 @@ func (s *service) CalculateTotals(
 	if err = s.hydrateShipmentCommodityDetails(ctx, entity); err != nil {
 		return nil, err
 	}
+
+	s.applyShipmentEnvelope(ctx, entity)
 
 	if s.distanceCalculation != nil {
 		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {

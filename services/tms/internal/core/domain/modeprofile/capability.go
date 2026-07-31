@@ -84,6 +84,9 @@ const (
 	RuleKeyMoveRemoval       = RuleKey("dispatch.moveRemoval")
 	RuleKeyMaxShipmentWeight = RuleKey("cargo.maxShipmentWeight")
 	RuleKeyTemperatureRange  = RuleKey("cargo.temperatureRange")
+
+	RuleKeyDimensionsRequired       = RuleKey("cargo.dimensionsRequired")
+	RuleKeyEnvelopeExceedsEquipment = RuleKey("cargo.envelopeExceedsEquipment")
 )
 
 func (r RuleKey) String() string { return string(r) }
@@ -91,7 +94,9 @@ func (r RuleKey) String() string { return string(r) }
 const (
 	ParamMaxWeight          = "maxWeight"
 	ParamRequireBothBounds  = "requireBothBounds"
+	ParamMaxOverhangFeet    = "maxOverhangFeet"
 	DefaultMaxShipmentLimit = 80000
+	DefaultMaxOverhangFeet  = 4
 )
 
 type RuleParameter struct {
@@ -158,6 +163,35 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 				Type:     customfield.FieldTypeNumber,
 				Required: true,
 				Default:  DefaultMaxShipmentLimit,
+			},
+		},
+	},
+	RuleKeyDimensionsRequired: {
+		Key:        RuleKeyDimensionsRequired,
+		Capability: CapabilityDimensionalCargo,
+		Label:      "Cargo Dimensions",
+		Rationale: "Open deck freight cannot be planned or permitted without length, " +
+			"width, and height on every line. Deck fit, overhang, and every " +
+			"jurisdiction permit threshold are computed from these numbers.",
+		DefaultEnforcement: tenant.EnforcementLevelBlock,
+		Fields:             []string{"commodities"},
+	},
+	RuleKeyEnvelopeExceedsEquipment: {
+		Key:        RuleKeyEnvelopeExceedsEquipment,
+		Capability: CapabilityDimensionalCargo,
+		Label:      "Cargo Exceeds Deck",
+		Rationale: "Cargo longer than the deck overhangs. Past the allowed overhang " +
+			"the load needs different equipment or an over-length permit, and " +
+			"discovering that at the shipper costs a day.",
+		DefaultEnforcement: tenant.EnforcementLevelBlock,
+		Fields:             []string{"trailerTypeId", "commodities"},
+		Parameters: []RuleParameter{
+			{
+				Name:     ParamMaxOverhangFeet,
+				Label:    "Allowed Rear Overhang (ft)",
+				Type:     customfield.FieldTypeNumber,
+				Required: false,
+				Default:  DefaultMaxOverhangFeet,
 			},
 		},
 	},

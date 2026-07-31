@@ -28,6 +28,7 @@ type ValidatorParams struct {
 	CommodityRepo             repositories.CommodityRepository
 	HazmatSegregationRuleRepo repositories.HazmatSegregationRuleRepository
 	ShipmentRepo              repositories.ShipmentRepository
+	EquipmentTypeRepo         repositories.EquipmentTypeRepository
 	ModeProfileService        services.ModeProfileService
 }
 
@@ -44,6 +45,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		p.CommodityRepo,
 		p.HazmatSegregationRuleRepo,
 		p.ShipmentRepo,
+		p.EquipmentTypeRepo,
 		p.ModeProfileService,
 	)
 
@@ -60,6 +62,7 @@ func newValidatorBuilder(
 	commodityRepo repositories.CommodityRepository,
 	hazmatRuleRepo repositories.HazmatSegregationRuleRepository,
 	shipmentRepo repositories.ShipmentRepository,
+	equipmentTypeRepo repositories.EquipmentTypeRepository,
 	profileSvc services.ModeProfileService,
 ) *validationframework.TenantedValidatorBuilder[*shipment.Shipment] {
 	builder := validationframework.
@@ -71,7 +74,9 @@ func newValidatorBuilder(
 		WithCustomRule(createCommodityValidationRule()).
 		WithCustomRule(createShipmentStatusCoordinationRule()).
 		WithCustomRule(createHazmatSegregationRule(controlRepo, commodityRepo, hazmatRuleRepo)).
-		WithCustomRule(createCapabilityPolicyRule(profileSvc, controlRepo, shipmentRepo)).
+		WithCustomRule(createCapabilityPolicyRule(
+			profileSvc, controlRepo, shipmentRepo, equipmentTypeRepo,
+		)).
 		WithCustomRule(createBOLValidationRule(customerRepo))
 
 	if db == nil {
