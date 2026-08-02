@@ -1,8 +1,11 @@
 package telematics
 
 import (
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -79,3 +82,73 @@ func NewFormMappingID() pulid.ID {
 func NewFormMappingItemID() pulid.ID {
 	return pulid.MustNew("tfmi_")
 }
+
+func (m *FormMapping) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(m,
+		validation.Field(&m.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&m.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&m.Provider,
+			validation.Required.Error("Provider is required"),
+			validation.Length(1, maxProviderLength).
+				Error("Provider cannot be longer than 32 characters"),
+		),
+		// The template id is what an incoming submission is matched on, so a
+		// mapping without one would never fire.
+		validation.Field(&m.TemplateID, validation.Required.Error("Template is required")),
+		validation.Field(&m.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxMappingNameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+	))
+
+	for i, item := range m.Items {
+		if item == nil {
+			continue
+		}
+		item.Validate(multiErr.WithIndex("items", i))
+	}
+}
+
+func (i *FormMappingItem) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning mapping are stamped when the parent is written, so
+	// they are not the caller's to supply.
+	multiErr.AddOzzoError(validation.ValidateStruct(i,
+		validation.Field(&i.SourceFieldLabel,
+			validation.Required.Error("Source field label is required"),
+		),
+		validation.Field(&i.TargetKind,
+			validation.Required.Error("Target kind is required"),
+			domainvalidation.ValidEnum[FormMappingTargetKind]("Target kind is invalid"),
+		),
+		// A mapping row that names no destination copies the answer nowhere,
+		// which reads on the form as a field that quietly never applied.
+		validation.Field(&i.TargetField,
+			validation.When(
+				i.TargetKind == FormMappingTargetShipmentField ||
+					i.TargetKind == FormMappingTargetStopField,
+				validation.Required.Error("A field mapping must name the field it writes"),
+			),
+			validation.Length(0, maxTargetFieldLength).
+				Error("Target field cannot be longer than 64 characters"),
+		),
+		validation.Field(&i.TargetCustomFieldKey,
+			validation.When(
+				i.TargetKind == FormMappingTargetShipmentCustomField,
+				validation.Required.Error("A custom field mapping must name its key"),
+			),
+			validation.Length(0, maxTargetKeyLength).
+				Error("Target custom field key cannot be longer than 100 characters"),
+		),
+	))
+}
+
+const (
+	maxMappingNameLength = 200
+	maxTargetFieldLength = 64
+	maxTargetKeyLength   = 100
+)

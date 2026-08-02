@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -135,7 +134,7 @@ type ShipmentCommentRepository interface {
 func (r *GetShipmentCommentCountRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(
@@ -146,12 +145,7 @@ func (r *GetShipmentCommentCountRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -163,7 +157,7 @@ func (r *GetShipmentCommentCountRequest) Validate() *errortypes.MultiError {
 func (r *GetShipmentCommentByIDRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
@@ -175,12 +169,7 @@ func (r *GetShipmentCommentByIDRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -192,7 +181,7 @@ func (r *GetShipmentCommentByIDRequest) Validate() *errortypes.MultiError {
 func (r *DeleteShipmentCommentRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
@@ -204,12 +193,7 @@ func (r *DeleteShipmentCommentRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -221,7 +205,7 @@ func (r *DeleteShipmentCommentRequest) Validate() *errortypes.MultiError {
 func (r *SetShipmentCommentPinnedRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
@@ -234,12 +218,7 @@ func (r *SetShipmentCommentPinnedRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -251,7 +230,7 @@ func (r *SetShipmentCommentPinnedRequest) Validate() *errortypes.MultiError {
 func (r *SetShipmentCommentResolvedRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
@@ -264,12 +243,7 @@ func (r *SetShipmentCommentResolvedRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -281,7 +255,7 @@ func (r *SetShipmentCommentResolvedRequest) Validate() *errortypes.MultiError {
 func (r *AcknowledgeShipmentCommentRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
@@ -294,12 +268,7 @@ func (r *AcknowledgeShipmentCommentRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -311,7 +280,7 @@ func (r *AcknowledgeShipmentCommentRequest) Validate() *errortypes.MultiError {
 func (r *SoftDeleteShipmentCommentRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
@@ -324,12 +293,7 @@ func (r *SoftDeleteShipmentCommentRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr

@@ -2,7 +2,6 @@ package dedicatedlane
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
@@ -80,7 +79,7 @@ type Suggestion struct {
 }
 
 func (dls *Suggestion) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		dls,
 		validation.Field(
 			&dls.CustomerID,
@@ -124,13 +123,7 @@ func (dls *Suggestion) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Suggested Name is required"),
 			validation.Length(2, 200).Error("Suggested Name must be between 2 & 200 characters"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (dls *Suggestion) GetID() pulid.ID {

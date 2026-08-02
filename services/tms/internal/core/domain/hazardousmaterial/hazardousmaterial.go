@@ -2,7 +2,6 @@ package hazardousmaterial
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -61,7 +60,7 @@ type HazardousMaterial struct {
 }
 
 func (hm *HazardousMaterial) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(hm,
+	multiErr.AddOzzoError(validation.ValidateStruct(hm,
 		validation.Field(&hm.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
@@ -127,13 +126,7 @@ func (hm *HazardousMaterial) Validate(multiErr *errortypes.MultiError) {
 				validation.By(domaintypes.ValidateStringOrCommaSeparated),
 			),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (hm *HazardousMaterial) GetID() pulid.ID {

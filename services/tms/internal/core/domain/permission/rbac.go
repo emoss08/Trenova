@@ -3,8 +3,10 @@ package permission
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -107,3 +109,66 @@ func (r *RoleConstraintRole) BeforeAppendModel(_ context.Context, q bun.Query) e
 	}
 	return nil
 }
+
+func (e *RoleHierarchyEdge) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&e.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&e.SeniorRoleID, validation.Required.Error("Senior role is required")),
+		// A role senior to itself is a one-node cycle, and inheritance resolution
+		// walks these edges.
+		validation.Field(&e.JuniorRoleID,
+			validation.Required.Error("Junior role is required"),
+			validation.NotIn(e.SeniorRoleID).Error("A role cannot inherit from itself"),
+		),
+	))
+}
+
+func (c *RoleConstraint) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&c.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&c.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxConstraintNameLength).
+				Error("Name cannot be longer than 255 characters"),
+		),
+		validation.Field(&c.Type,
+			validation.Required.Error("Type is required"),
+			validation.In(RoleConstraintTypeSSD, RoleConstraintTypeDSD).
+				Error("Type must be static or dynamic separation of duty"),
+		),
+		// A separation of duty rule permitting fewer than one role would deny
+		// every assignment, and one permitting none of the set is not a
+		// separation rule at all.
+		validation.Field(&c.MaxRoles,
+			validation.Required.Error("Maximum roles is required"),
+			validation.Min(1).Error("Maximum roles must be at least one"),
+		),
+	))
+}
+
+func (r *RoleConstraintRole) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&r.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&r.RoleConstraintID,
+			validation.Required.Error("Role constraint is required"),
+		),
+		validation.Field(&r.RoleID, validation.Required.Error("Role is required")),
+	))
+}
+
+const maxConstraintNameLength = 255

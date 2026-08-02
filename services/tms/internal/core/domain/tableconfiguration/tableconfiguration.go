@@ -2,7 +2,6 @@ package tableconfiguration
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -75,7 +74,7 @@ type TableConfiguration struct {
 }
 
 func (tc *TableConfiguration) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(tc,
+	multiErr.AddOzzoError(validation.ValidateStruct(tc,
 		validation.Field(&tc.Name, validation.Required, validation.Length(1, 255)),
 		validation.Field(&tc.Resource, validation.Required, validation.Length(1, 100)),
 		validation.Field(&tc.TableConfig, validation.Required),
@@ -84,12 +83,7 @@ func (tc *TableConfiguration) Validate(multiErr *errortypes.MultiError) {
 			VisibilityPublic,
 			VisibilityShared,
 		)),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (tc *TableConfiguration) BeforeAppendModel(_ context.Context, query bun.Query) error {

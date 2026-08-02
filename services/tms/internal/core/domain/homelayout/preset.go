@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -18,7 +19,10 @@ var (
 	_ validationframework.TenantedEntity = (*Preset)(nil)
 )
 
-const MaxPresetPriority = 1000
+const (
+	MaxPresetPriority   = 1000
+	maxPresetNameLength = 255
+)
 
 // Preset is a home screen an administrator authors once and assigns to the
 // roles that should see it. Users with similar jobs get the same starting
@@ -48,25 +52,36 @@ type Preset struct {
 }
 
 func (p *Preset) Validate(multiErr *errortypes.MultiError) {
-	if p.Name == "" {
-		multiErr.Add("name", errortypes.ErrRequired, "Name is required")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&p.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&p.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxPresetNameLength).
+				Error("Name cannot be longer than 255 characters"),
+		),
+		validation.Field(&p.Priority,
+			validation.Min(0).Error("Priority must be between 0 and 1000"),
+			validation.Max(MaxPresetPriority).Error("Priority must be between 0 and 1000"),
+		),
+		validation.Field(&p.CoreResponsibility,
+			validation.In(
+				permission.CoreResponsibilityBilling,
+				permission.CoreResponsibilityOperations,
+				permission.CoreResponsibilityFinance,
+				permission.CoreResponsibilityLeadership,
+			).Error("Unknown core responsibility"),
+		),
+		validation.Field(&p.Layout, validation.Required.Error("Layout is required")),
+	))
 
-	if p.Priority < 0 || p.Priority > MaxPresetPriority {
-		multiErr.Add("priority", errortypes.ErrInvalid,
-			"Priority must be between 0 and 1000")
+	if p.Layout != nil {
+		p.Layout.Validate(multiErr, "layout")
 	}
-
-	if p.CoreResponsibility != "" && !coreResponsibilityValid(p.CoreResponsibility) {
-		multiErr.Add("coreResponsibility", errortypes.ErrInvalid,
-			"Unknown core responsibility")
-	}
-
-	if p.Layout == nil {
-		multiErr.Add("layout", errortypes.ErrRequired, "Layout is required")
-		return
-	}
-	p.Layout.Validate(multiErr, "layout")
 }
 
 // AppliesToRole reports whether this preset was assigned to the given role,
@@ -107,15 +122,3 @@ func (p *Preset) GetOrganizationID() pulid.ID { return p.OrganizationID }
 func (p *Preset) GetBusinessUnitID() pulid.ID { return p.BusinessUnitID }
 
 func (p *Preset) GetTableName() string { return "home_layout_presets" }
-
-func coreResponsibilityValid(responsibility permission.CoreResponsibility) bool {
-	switch responsibility {
-	case permission.CoreResponsibilityBilling,
-		permission.CoreResponsibilityOperations,
-		permission.CoreResponsibilityFinance,
-		permission.CoreResponsibilityLeadership:
-		return true
-	default:
-		return false
-	}
-}

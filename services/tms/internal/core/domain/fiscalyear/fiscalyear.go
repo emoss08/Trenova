@@ -2,7 +2,6 @@ package fiscalyear
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -134,7 +133,7 @@ type FiscalYear struct {
 }
 
 func (fy *FiscalYear) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(fy,
+	multiErr.AddOzzoError(validation.ValidateStruct(fy,
 		validation.Field(&fy.Year,
 			validation.Required.Error("Year is required"),
 			validation.Min(1900).Error("Year must be at least 1900"),
@@ -159,13 +158,7 @@ func (fy *FiscalYear) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&fy.EndDate,
 			validation.Required.Error("End date is required"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (fy *FiscalYear) GetID() pulid.ID {

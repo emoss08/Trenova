@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -51,33 +52,29 @@ type AgentProposal struct {
 }
 
 func (p *AgentProposal) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		p,
 		validation.Field(&p.RunID, validation.Required.Error("Run id is required")),
 		validation.Field(&p.ToolName, validation.Required.Error("Tool name is required")),
 		validation.Field(&p.Rationale, validation.Required.Error("Rationale is required")),
 		validation.Field(&p.AutonomyTier,
 			validation.Required.Error("Autonomy tier is required"),
-			validation.By(isValidEnum(p.AutonomyTier.IsValid, "Invalid autonomy tier")),
+			domainvalidation.ValidEnum[AutonomyTier]("Invalid autonomy tier"),
 		),
 		validation.Field(&p.Status,
 			validation.Required.Error("Status is required"),
-			validation.By(isValidEnum(p.Status.IsValid, "Invalid status")),
+			domainvalidation.ValidEnum[ProposalStatus]("Invalid status"),
 		),
 		validation.Field(&p.Confidence,
 			validation.By(func(_ any) error {
-				if p.Confidence.LessThan(decimal.Zero) || p.Confidence.GreaterThan(decimal.NewFromInt(1)) {
+				if p.Confidence.LessThan(decimal.Zero) ||
+					p.Confidence.GreaterThan(decimal.NewFromInt(1)) {
 					return errors.New("confidence must be between 0 and 1")
 				}
 				return nil
 			}),
 		),
-	)
-
-	var validationErrs validation.Errors
-	if errors.As(err, &validationErrs) {
-		errortypes.FromOzzoErrors(validationErrs, multiErr)
-	}
+	))
 
 	validateEvidence("evidence", p.Evidence, multiErr)
 }

@@ -7,8 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -274,3 +277,124 @@ func (d *Document) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		},
 	}
 }
+
+func (d *Document) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
+		validation.Field(&d.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&d.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		// Versions of one document share a lineage; without it a new version
+		// would present as an unrelated document and the old one would stay
+		// current.
+		validation.Field(&d.LineageID, validation.Required.Error("Lineage is required")),
+		validation.Field(&d.VersionNumber,
+			validation.Required.Error("Version number is required"),
+			validation.Min(int64(1)).Error("Version number must be at least one"),
+		),
+		validation.Field(&d.FileName,
+			validation.Required.Error("File name is required"),
+			validation.Length(1, maxFileNameLength).
+				Error("File name cannot be longer than 255 characters"),
+		),
+		validation.Field(&d.OriginalName,
+			validation.Required.Error("Original name is required"),
+			validation.Length(1, maxFileNameLength).
+				Error("Original name cannot be longer than 255 characters"),
+		),
+		validation.Field(&d.FileSize,
+			validation.Required.Error("File size is required"),
+			validation.Min(int64(1)).Error("File size must be greater than zero"),
+		),
+		validation.Field(&d.FileType,
+			validation.Required.Error("File type is required"),
+			validation.Length(1, maxFileTypeLength).
+				Error("File type cannot be longer than 100 characters"),
+		),
+		validation.Field(&d.StoragePath,
+			validation.Required.Error("Storage path is required"),
+			validation.Length(1, maxStoragePathLength).
+				Error("Storage path cannot be longer than 500 characters"),
+		),
+		validation.Field(&d.ChecksumSHA256,
+			validation.Length(checksumLength, checksumLength).
+				Error("Checksum must be a 64 character digest"),
+		),
+		validation.Field(&d.StorageVersionID,
+			validation.Length(0, maxStorageVersionLength).
+				Error("Storage version cannot be longer than 255 characters"),
+		),
+		validation.Field(&d.CryptoMode,
+			validation.Required.Error("Crypto mode is required"),
+			validation.Length(1, maxCryptoModeLength).
+				Error("Crypto mode cannot be longer than 32 characters"),
+		),
+		validation.Field(&d.CryptoVersion,
+			validation.Required.Error("Crypto version is required"),
+			validation.Min(int16(1)).Error("Crypto version must be at least one"),
+		),
+		validation.Field(&d.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[Status]("Status is invalid"),
+		),
+		// A document with no owning resource is unreachable from every surface
+		// that lists documents.
+		validation.Field(&d.ResourceID,
+			validation.Required.Error("Resource is required"),
+			validation.Length(1, maxDocumentResourceLength).
+				Error("Resource cannot be longer than 100 characters"),
+		),
+		validation.Field(&d.ResourceType,
+			validation.Required.Error("Resource type is required"),
+			validation.Length(1, maxDocumentResourceLength).
+				Error("Resource type cannot be longer than 100 characters"),
+		),
+		validation.Field(&d.ProcessingProfile,
+			validation.Required.Error("Processing profile is required"),
+			domainvalidation.ValidEnum[ProcessingProfile]("Processing profile is invalid"),
+		),
+		validation.Field(&d.PreviewStatus,
+			domainvalidation.ValidEnum[PreviewStatus]("Preview status is invalid"),
+		),
+		validation.Field(&d.ContentStatus,
+			domainvalidation.ValidEnum[ContentStatus]("Content status is invalid"),
+		),
+		validation.Field(&d.ShipmentDraftStatus,
+			domainvalidation.ValidEnum[ShipmentDraftStatus]("Shipment draft status is invalid"),
+		),
+		validation.Field(&d.PreviewStoragePath,
+			validation.Length(0, maxStoragePathLength).
+				Error("Preview storage path cannot be longer than 500 characters"),
+		),
+		validation.Field(&d.Tags,
+			validation.Each(validation.Length(1, maxDocumentTagLength).
+				Error("A tag must be between 1 and 100 characters")),
+		),
+		validation.Field(&d.UploadedByID, validation.Required.Error("Uploaded by is required")),
+		// An approval is an accountability record: who approved it and when are
+		// both part of it or neither is.
+		validation.Field(&d.ApprovedAt,
+			validation.When(d.ApprovedByID.IsNotNil(), validation.Required.Error(
+				"An approved document must record when it was approved",
+			)),
+		),
+		validation.Field(&d.ApprovedByID,
+			validation.When(d.ApprovedAt != nil, validation.Required.Error(
+				"An approved document must record who approved it",
+			)),
+		),
+	))
+}
+
+const (
+	maxFileNameLength         = 255
+	maxFileTypeLength         = 100
+	maxStoragePathLength      = 500
+	maxStorageVersionLength   = 255
+	maxCryptoModeLength       = 32
+	maxDocumentResourceLength = 100
+	maxDocumentTagLength      = 100
+	checksumLength            = 64
+)

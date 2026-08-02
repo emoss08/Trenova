@@ -2,7 +2,6 @@ package tenant
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -88,15 +87,10 @@ type SettlementControl struct {
 }
 
 func (sc *SettlementControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(sc,
+	multiErr.AddOzzoError(validation.ValidateStruct(sc,
 		validation.Field(&sc.PayPeriodFrequency, validation.Required),
 		validation.Field(&sc.PayTrigger, validation.Required),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !sc.PayPeriodFrequency.IsValid() {
 		multiErr.Add(

@@ -2,7 +2,6 @@ package bankreceipt
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,17 +34,11 @@ type BankReceipt struct {
 }
 
 func (r *BankReceipt) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(r,
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
 		validation.Field(&r.OrganizationID, validation.Required),
 		validation.Field(&r.BusinessUnitID, validation.Required),
 		validation.Field(&r.ReceiptDate, validation.Required),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 	if r.AmountMinor <= 0 {
 		multiErr.Add(
 			"amountMinor",

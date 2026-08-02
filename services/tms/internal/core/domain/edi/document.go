@@ -3,8 +3,11 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -274,3 +277,170 @@ func (l *EDITemplateScriptLibrary) BeforeAppendModel(_ context.Context, query bu
 	}
 	return nil
 }
+
+func (t *EDIDocumentType) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(t,
+		validation.Field(&t.Code,
+			validation.Required.Error("Code is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("Code cannot be longer than 20 characters"),
+		),
+		validation.Field(&t.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&t.Standard,
+			validation.Required.Error("Standard is required"),
+			domainvalidation.ValidEnum[EDIStandard]("Standard is invalid"),
+		),
+		validation.Field(&t.TransactionSet,
+			validation.Required.Error("Transaction set is required"),
+			domainvalidation.ValidEnum[TransactionSet]("Transaction set is invalid"),
+		),
+		validation.Field(&t.TransactionSetID,
+			validation.Required.Error("Transaction set definition is required"),
+		),
+		validation.Field(&t.Direction,
+			validation.Required.Error("Direction is required"),
+			domainvalidation.ValidEnum[DocumentDirection]("Direction is invalid"),
+		),
+		validation.Field(&t.DefaultVersion,
+			validation.Required.Error("Default version is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("Default version cannot be longer than 20 characters"),
+		),
+		validation.Field(&t.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[DocumentStatus]("Status is invalid"),
+		),
+	))
+}
+
+func (v *EDITemplateVersion) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(v,
+		validation.Field(&v.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&v.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&v.TemplateID, validation.Required.Error("Template is required")),
+		validation.Field(&v.VersionNumber,
+			validation.Required.Error("Version number is required"),
+			validation.Min(int64(1)).Error("Version number must be at least one"),
+		),
+		validation.Field(&v.X12Version,
+			validation.Required.Error("X12 version is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("X12 version cannot be longer than 20 characters"),
+		),
+		// The functional group id is the two character code that goes on the GS
+		// segment, so anything wider could not be written to the envelope.
+		validation.Field(&v.FunctionalGroupID,
+			validation.Required.Error("Functional group is required"),
+			validation.Length(1, functionalGroupIDLength).
+				Error("Functional group must be at most 2 characters"),
+		),
+		validation.Field(&v.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[TemplateStatus]("Status is invalid"),
+		),
+		validation.Field(&v.CertifiedAt,
+			validation.When(v.CertifiedByID.IsNotNil(), validation.Required.Error(
+				"A certified version must record when it was certified",
+			)),
+		),
+		validation.Field(&v.ActivatedAt,
+			validation.When(v.ActivatedByID.IsNotNil(), validation.Required.Error(
+				"An activated version must record when it was activated",
+			)),
+		),
+		validation.Field(&v.ArchivedAt,
+			validation.When(v.ArchivedByID.IsNotNil(), validation.Required.Error(
+				"An archived version must record when it was archived",
+			)),
+		),
+		// Only one version of a template can be the live one, and only a
+		// certified or active version is allowed to be it.
+		validation.Field(&v.IsActive,
+			validation.When(
+				v.Status != TemplateStatusActive && v.Status != TemplateStatusCertified,
+				validation.Empty.Error("Only a certified or active version can be live"),
+			),
+		),
+	))
+
+	for i, segment := range v.Segments {
+		if segment == nil {
+			continue
+		}
+		segment.Validate(multiErr.WithIndex("segments", i))
+	}
+
+	for i, library := range v.ScriptLibraries {
+		if library == nil {
+			continue
+		}
+		library.Validate(multiErr.WithIndex("scriptLibraries", i))
+	}
+}
+
+func (s *EDITemplateSegment) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning version are stamped when the parent is written, so
+	// they are not the caller's to supply.
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.SegmentID,
+			validation.Required.Error("Segment is required"),
+			validation.Length(1, maxSegmentIDLength).
+				Error("Segment cannot be longer than 10 characters"),
+		),
+		validation.Field(&s.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&s.Sequence,
+			validation.Min(int64(0)).Error("Sequence cannot be negative"),
+		),
+		validation.Field(&s.LoopID,
+			validation.Length(0, maxLoopIDLength).
+				Error("Loop cannot be longer than 50 characters"),
+		),
+		// A segment allowed zero uses would never be written, which is a way of
+		// disabling it that leaves no trace of the intent.
+		validation.Field(&s.MaxUse,
+			validation.Required.Error("Max use is required"),
+			validation.Min(int64(1)).Error("Max use must be at least one"),
+		),
+	))
+}
+
+func (l *EDITemplateScriptLibrary) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning version are stamped when the parent is written, so
+	// they are not the caller's to supply.
+	multiErr.AddOzzoError(validation.ValidateStruct(l,
+		validation.Field(&l.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&l.Language,
+			validation.Required.Error("Language is required"),
+			domainvalidation.ValidEnum[ScriptLanguage]("Language is invalid"),
+		),
+		validation.Field(&l.Script, validation.Required.Error("Script is required")),
+		validation.Field(&l.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[TemplateStatus]("Status is invalid"),
+		),
+	))
+}
+
+const (
+	maxEDICodeLength        = 20
+	maxEDINameLength        = 200
+	functionalGroupIDLength = 2
+	maxSegmentIDLength      = 10
+	maxLoopIDLength         = 50
+)

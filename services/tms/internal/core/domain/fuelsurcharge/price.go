@@ -42,7 +42,7 @@ type FuelIndexPrice struct {
 }
 
 func (fp *FuelIndexPrice) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(fp,
+	multiErr.AddOzzoError(validation.ValidateStruct(fp,
 		validation.Field(&fp.FuelIndexID,
 			validation.Required.Error("Fuel index is required"),
 		),
@@ -58,12 +58,7 @@ func (fp *FuelIndexPrice) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Currency is required"),
 			validation.Length(3, 3).Error("Currency must be 3 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func validatePositivePrice(value any) error {

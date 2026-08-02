@@ -2,7 +2,6 @@ package shipmenttype
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -39,7 +38,7 @@ type ShipmentType struct {
 }
 
 func (sht *ShipmentType) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(sht,
+	multiErr.AddOzzoError(validation.ValidateStruct(sht,
 		validation.Field(&sht.Code,
 			validation.Required.Error("Code is required"),
 			validation.Length(1, 100).Error("Code must be between 1 and 100 characters"),
@@ -47,13 +46,7 @@ func (sht *ShipmentType) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&sht.Color,
 			is.HexColor.Error("Color must be a valid hex color. Please try again."),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (sht *ShipmentType) GetID() pulid.ID {

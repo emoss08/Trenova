@@ -164,3 +164,191 @@ const (
 	CommentSourceIntegration = CommentSource("Integration")
 	CommentSourceAI          = CommentSource("AI")
 )
+
+func (v Status) IsValid() bool {
+	switch v {
+	case StatusNew,
+		StatusPartiallyAssigned,
+		StatusAssigned,
+		StatusInTransit,
+		StatusDelayed,
+		StatusPartiallyCompleted,
+		StatusReadyToInvoice,
+		StatusCompleted,
+		StatusInvoiced,
+		StatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v TenderStatus) IsValid() bool {
+	switch v {
+	case TenderStatusTendered,
+		TenderStatusAccepted,
+		TenderStatusRejected,
+		TenderStatusExpired,
+		TenderStatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v EntryMethod) IsValid() bool {
+	switch v {
+	case EntryMethodManual,
+		EntryMethodEDI:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v BillingTransferStatus) IsValid() bool {
+	switch v {
+	case BillingTransferNone,
+		BillingTransferReadyForReview,
+		BillingTransferInReview,
+		BillingTransferOnHold,
+		BillingTransferException,
+		BillingTransferSentBackToOps,
+		BillingTransferApproved,
+		BillingTransferCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v RatingMethod) IsValid() bool {
+	switch v {
+	case RatingMethodFlatRate,
+		RatingMethodPerMile,
+		RatingMethodPerStop,
+		RatingMethodPerPallet,
+		RatingMethodPerLinearFoot,
+		RatingMethodOther,
+		RatingMethodFormulaTemplate:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v MoveStatus) IsValid() bool {
+	switch v {
+	case MoveStatusNew,
+		MoveStatusAssigned,
+		MoveStatusInTransit,
+		MoveStatusCompleted,
+		MoveStatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v AssignmentStatus) IsValid() bool {
+	switch v {
+	case AssignmentStatusNew,
+		AssignmentStatusInProgress,
+		AssignmentStatusCompleted,
+		AssignmentStatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v StopStatus) IsValid() bool {
+	switch v {
+	case StopStatusNew,
+		StopStatusInTransit,
+		StopStatusCompleted,
+		StopStatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v StopType) IsValid() bool {
+	switch v {
+	case StopTypePickup,
+		StopTypeDelivery,
+		StopTypeSplitDelivery,
+		StopTypeSplitPickup:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v StopScheduleType) IsValid() bool {
+	switch v {
+	case StopScheduleTypeOpen,
+		StopScheduleTypeAppointment:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v CommentType) IsValid() bool {
+	switch v {
+	case CommentTypeInternal,
+		CommentTypeDispatch,
+		CommentTypeDriverUpdate,
+		CommentTypePickupInstruction,
+		CommentTypeDeliveryInstruction,
+		CommentTypeStatusUpdate,
+		CommentTypeException,
+		CommentTypeCustomerUpdate,
+		CommentTypeAppointment,
+		CommentTypeDocument,
+		CommentTypeBilling,
+		CommentTypeCompliance:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v CommentVisibility) IsValid() bool {
+	switch v {
+	case CommentVisibilityInternal,
+		CommentVisibilityOperations,
+		CommentVisibilityCustomer,
+		CommentVisibilityDriver,
+		CommentVisibilityAccounting:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v CommentPriority) IsValid() bool {
+	switch v {
+	case CommentPriorityLow,
+		CommentPriorityNormal,
+		CommentPriorityHigh,
+		CommentPriorityUrgent:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v CommentSource) IsValid() bool {
+	switch v {
+	case CommentSourceUser,
+		CommentSourceSystem,
+		CommentSourceIntegration,
+		CommentSourceAI:
+		return true
+	default:
+		return false
+	}
+}

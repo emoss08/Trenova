@@ -83,3 +83,82 @@ const (
 		"Optional",
 	)
 )
+
+func (t BillingCycleType) IsValid() bool {
+	switch t {
+	case BillingCycleTypeImmediate, BillingCycleTypeDaily, BillingCycleTypeWeekly,
+		BillingCycleTypeBiWeekly, BillingCycleTypeMonthly, BillingCycleTypeQuarterly,
+		BillingCycleTypePerShipment:
+		return true
+	default:
+		return false
+	}
+}
+
+func (t PaymentTerm) IsValid() bool {
+	switch t {
+	case PaymentTermNet10, PaymentTermNet15, PaymentTermNet30, PaymentTermNet45,
+		PaymentTermNet60, PaymentTermNet90, PaymentTermDueOnReceipt:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s CreditStatus) IsValid() bool {
+	switch s {
+	case CreditStatusActive, CreditStatusWarning, CreditStatusHold,
+		CreditStatusSuspended, CreditStatusReview:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m FuelSurchargeMode) IsValid() bool {
+	switch m {
+	case FuelSurchargeModeNone, FuelSurchargeModeProgram, FuelSurchargeModeFuelIncluded:
+		return true
+	default:
+		return false
+	}
+}
+
+func (f InvoiceNumberFormat) IsValid() bool {
+	switch f {
+	case InvoiceNumberFormatDefault, InvoiceNumberFormatCustomPrefix, InvoiceNumberFormatPOBased:
+		return true
+	default:
+		return false
+	}
+}
+
+func (g ConsolidationGroupBy) IsValid() bool {
+	switch g {
+	case ConsolidationGroupByNone, ConsolidationGroupByLocation, ConsolidationGroupByPONumber,
+		ConsolidationGroupByBOL, ConsolidationGroupByDivision:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m InvoiceMethod) IsValid() bool {
+	switch m {
+	case InvoiceMethodIndividual, InvoiceMethodSummary, InvoiceMethodSummaryWithDetail:
+		return true
+	default:
+		return false
+	}
+}
+
+func (p InvoiceAdjustmentSupportingDocumentPolicy) IsValid() bool {
+	switch p {
+	case InvoiceAdjustmentSupportingDocumentPolicyInherit,
+		InvoiceAdjustmentSupportingDocumentPolicyRequired,
+		InvoiceAdjustmentSupportingDocumentPolicyOptional:
+		return true
+	default:
+		return false
+	}
+}

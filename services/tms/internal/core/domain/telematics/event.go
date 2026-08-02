@@ -1,7 +1,10 @@
 package telematics
 
 import (
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -26,3 +29,32 @@ type TelematicsEvent struct {
 func NewEventID() pulid.ID {
 	return pulid.MustNew("tlev_")
 }
+
+func (e *TelematicsEvent) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&e.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&e.Provider,
+			validation.Required.Error("Provider is required"),
+			validation.Length(1, maxProviderLength).
+				Error("Provider cannot be longer than 32 characters"),
+		),
+		// The provider's own id is what makes a redelivered event recognizable
+		// as one already recorded rather than a second occurrence.
+		validation.Field(&e.EventID, validation.Required.Error("Event id is required")),
+		validation.Field(&e.EventType,
+			validation.Required.Error("Event type is required"),
+			domainvalidation.ValidEnum[EventType]("Event type is invalid"),
+		),
+		validation.Field(&e.OccurredAt,
+			validation.Required.Error("Occurred at is required"),
+			validation.Min(int64(1)).Error("Occurred at must be a valid timestamp"),
+		),
+	))
+}
+
+const maxProviderLength = 32

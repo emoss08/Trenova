@@ -2,7 +2,6 @@ package tenant
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -79,7 +78,7 @@ type AccountingControl struct {
 }
 
 func (ac *AccountingControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		ac,
 		validation.Field(&ac.AccountingBasis, validation.Required),
 		validation.Field(&ac.RevenueRecognitionPolicy, validation.Required),
@@ -99,12 +98,7 @@ func (ac *AccountingControl) Validate(multiErr *errortypes.MultiError) {
 			validation.Required,
 			validation.Length(3, 3),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (ac *AccountingControl) GetID() pulid.ID {

@@ -3,8 +3,10 @@ package documentaiextraction
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -64,3 +66,64 @@ func (e *Extraction) BeforeAppendModel(_ context.Context, query bun.Query) error
 
 	return nil
 }
+
+func (e *Extraction) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&e.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&e.DocumentID, validation.Required.Error("Document is required")),
+		validation.Field(&e.UserID, validation.Required.Error("User is required")),
+		validation.Field(&e.RequestHash,
+			validation.Required.Error("Request hash is required"),
+			validation.Length(1, maxRequestHashLength).
+				Error("Request hash cannot be longer than 64 characters"),
+		),
+		// The workflow coordinates are how a completion is routed back to the
+		// run that is waiting on it, so a record missing one strands the run.
+		validation.Field(&e.WorkflowID,
+			validation.Required.Error("Workflow is required"),
+			validation.Length(1, maxWorkflowFieldLength).
+				Error("Workflow cannot be longer than 255 characters"),
+		),
+		validation.Field(&e.WorkflowRunID,
+			validation.Required.Error("Workflow run is required"),
+			validation.Length(1, maxWorkflowFieldLength).
+				Error("Workflow run cannot be longer than 255 characters"),
+		),
+		validation.Field(&e.ActivityID,
+			validation.Required.Error("Activity is required"),
+			validation.Length(1, maxWorkflowFieldLength).
+				Error("Activity cannot be longer than 255 characters"),
+		),
+		validation.Field(&e.TaskToken, validation.Required.Error("Task token is required")),
+		validation.Field(&e.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(
+				StatusPending,
+				StatusCompleted,
+				StatusFailed,
+				StatusApplied,
+				StatusSkipped,
+			).Error("Status is invalid"),
+		),
+		validation.Field(&e.FailureMessage,
+			validation.When(e.Status == StatusFailed, validation.Required.Error(
+				"A failed extraction must record why it failed",
+			)),
+		),
+		validation.Field(&e.CompletedAt,
+			validation.When(e.Status == StatusCompleted, validation.Required.Error(
+				"A completed extraction must record when it completed",
+			)),
+		),
+	))
+}
+
+const (
+	maxRequestHashLength   = 64
+	maxWorkflowFieldLength = 255
+)

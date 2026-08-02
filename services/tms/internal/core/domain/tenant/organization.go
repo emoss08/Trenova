@@ -2,7 +2,6 @@ package tenant
 
 import (
 	"context"
-	"errors"
 	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -50,7 +49,7 @@ type Organization struct {
 }
 
 func (o *Organization) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(o,
+	multiErr.AddOzzoError(validation.ValidateStruct(o,
 		validation.Field(&o.Name,
 			validation.Required.Error("Name is required. Please try again"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters")),
@@ -75,12 +74,7 @@ func (o *Organization) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&o.Timezone,
 			validation.Required.Error("Timezone is required. Please try again"),
 			validation.By(domainvalidation.ValidateTimezone)),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (o *Organization) GetID() pulid.ID {

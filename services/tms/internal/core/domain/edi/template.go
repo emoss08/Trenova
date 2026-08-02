@@ -4,9 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -83,4 +86,39 @@ func (t *EDITemplate) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 			{Name: "description", Type: domaintypes.FieldTypeText},
 		},
 	}
+}
+
+func (t *EDITemplate) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(t,
+		validation.Field(&t.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&t.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&t.DocumentTypeID,
+			validation.Required.Error("Document type is required"),
+		),
+		validation.Field(&t.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&t.Direction,
+			validation.Required.Error("Direction is required"),
+			domainvalidation.ValidEnum[DocumentDirection]("Direction is invalid"),
+		),
+		validation.Field(&t.Standard,
+			validation.Required.Error("Standard is required"),
+			domainvalidation.ValidEnum[EDIStandard]("Standard is invalid"),
+		),
+		validation.Field(&t.TransactionSet,
+			validation.Required.Error("Transaction set is required"),
+			domainvalidation.ValidEnum[TransactionSet]("Transaction set is invalid"),
+		),
+		validation.Field(&t.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[TemplateStatus]("Status is invalid"),
+		),
+	))
 }

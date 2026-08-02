@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -76,3 +78,64 @@ func (p *Projection) BeforeAppendModel(_ context.Context, query bun.Query) error
 
 	return nil
 }
+
+func (p *Projection) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&p.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		// The projection is what search returns, so a row that cannot be traced
+		// back to its document would surface a result nobody can open.
+		validation.Field(&p.ResourceID,
+			validation.Required.Error("Resource is required"),
+			validation.Length(1, maxProjectionCodeLength).
+				Error("Resource cannot be longer than 100 characters"),
+		),
+		validation.Field(&p.ResourceType,
+			validation.Required.Error("Resource type is required"),
+			validation.Length(1, maxProjectionCodeLength).
+				Error("Resource type cannot be longer than 100 characters"),
+		),
+		validation.Field(&p.FileName,
+			validation.Required.Error("File name is required"),
+			validation.Length(1, maxProjectionNameLength).
+				Error("File name cannot be longer than 255 characters"),
+		),
+		validation.Field(&p.OriginalName,
+			validation.Required.Error("Original name is required"),
+			validation.Length(1, maxProjectionNameLength).
+				Error("Original name cannot be longer than 255 characters"),
+		),
+		validation.Field(&p.Status,
+			validation.Required.Error("Status is required"),
+			validation.Length(1, maxProjectionCodeLength).
+				Error("Status cannot be longer than 100 characters"),
+		),
+		validation.Field(&p.ContentStatus,
+			validation.Required.Error("Content status is required"),
+			validation.Length(1, maxProjectionCodeLength).
+				Error("Content status cannot be longer than 100 characters"),
+		),
+		validation.Field(&p.ShipmentDraftStatus,
+			validation.Required.Error("Shipment draft status is required"),
+			validation.Length(1, maxProjectionCodeLength).
+				Error("Shipment draft status cannot be longer than 100 characters"),
+		),
+		validation.Field(&p.DetectedKind,
+			validation.Length(0, maxProjectionCodeLength).
+				Error("Detected kind cannot be longer than 100 characters"),
+		),
+		validation.Field(&p.Tags,
+			validation.Each(validation.Length(1, maxProjectionCodeLength).
+				Error("A tag must be between 1 and 100 characters")),
+		),
+	))
+}
+
+const (
+	maxProjectionCodeLength = 100
+	maxProjectionNameLength = 255
+)

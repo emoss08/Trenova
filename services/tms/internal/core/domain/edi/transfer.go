@@ -4,9 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
@@ -185,3 +188,137 @@ func (t *EDITransfer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 func (t *EDITransfer) GetCreatedAt() int64 {
 	return t.CreatedAt
 }
+
+func (t *EDITransfer) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(t,
+		validation.Field(&t.SourceOrganizationID,
+			validation.Required.Error("Source organization is required"),
+		),
+		validation.Field(&t.SourceBusinessUnitID,
+			validation.Required.Error("Source business unit is required"),
+		),
+		validation.Field(&t.TargetOrganizationID,
+			validation.Required.Error("Target organization is required"),
+		),
+		validation.Field(&t.TargetBusinessUnitID,
+			validation.Required.Error("Target business unit is required"),
+		),
+		validation.Field(&t.SourcePartnerID,
+			validation.Required.Error("Source partner is required"),
+		),
+		validation.Field(&t.TargetPartnerID,
+			validation.Required.Error("Target partner is required"),
+		),
+		validation.Field(&t.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[TransferStatus]("Status is invalid"),
+		),
+		// A rejection or a failure that records no reason leaves the other side
+		// of the tender with nothing to act on.
+		validation.Field(&t.RejectionReason,
+			validation.When(
+				t.Status == TransferStatusRejected,
+				validation.Required.Error("A rejected transfer must record why"),
+			),
+		),
+		validation.Field(&t.FailureReason,
+			validation.When(
+				t.Status == TransferStatusFailed,
+				validation.Required.Error("A failed transfer must record why"),
+			),
+		),
+		validation.Field(&t.ApprovalWorkflowID,
+			validation.Length(0, maxAS2FieldLength).
+				Error("Approval workflow cannot be longer than 255 characters"),
+		),
+		validation.Field(&t.ApprovalWorkflowRunID,
+			validation.Length(0, maxAS2FieldLength).
+				Error("Approval workflow run cannot be longer than 255 characters"),
+		),
+		validation.Field(&t.SubmittedAt,
+			validation.Required.Error("Submitted at is required"),
+			validation.Min(int64(1)).Error("Submitted at must be a valid timestamp"),
+		),
+		validation.Field(&t.ApprovedAt,
+			validation.When(t.ApprovedByID.IsNotNil(), validation.Required.Error(
+				"An approved transfer must record when it was approved",
+			)),
+		),
+		validation.Field(&t.RejectedAt,
+			validation.When(t.RejectedByID.IsNotNil(), validation.Required.Error(
+				"A rejected transfer must record when it was rejected",
+			)),
+		),
+		validation.Field(&t.CanceledAt,
+			validation.When(t.CanceledByID.IsNotNil(), validation.Required.Error(
+				"A canceled transfer must record when it was canceled",
+			)),
+		),
+	))
+
+	t.TenderPayload.Validate(multiErr.WithPrefix("tenderPayload"))
+}
+
+// Validate checks the tender itself. The payload is the shipment the other
+// organization will build from, so a missing stop or an unpriced move becomes
+// their problem rather than ours once it is accepted.
+func (p *LoadTenderPayload) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.PurposeCode,
+			domainvalidation.ValidEnum[LoadTenderPurposeCode]("Purpose code is invalid"),
+		),
+		validation.Field(&p.ShipmentID, validation.Required.Error("Shipment is required")),
+		validation.Field(&p.CustomerID, validation.Required.Error("Customer is required")),
+		validation.Field(&p.ServiceTypeID, validation.Required.Error("Service type is required")),
+		validation.Field(&p.Moves, validation.Required.Error("At least one move is required")),
+	))
+
+	for i := range p.Moves {
+		p.Moves[i].Validate(multiErr.WithIndex("moves", i))
+	}
+}
+
+func (m *LoadTenderMove) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(m,
+		validation.Field(&m.Sequence,
+			validation.Min(int64(0)).Error("Sequence cannot be negative"),
+		),
+		validation.Field(&m.Distance,
+			validation.Min(0.0).Error("Distance cannot be negative"),
+		),
+		// A move with one stop has an origin or a destination but not both, so
+		// there is no leg for the receiving system to plan.
+		validation.Field(&m.Stops,
+			validation.Required.Error("A move must have stops"),
+			validation.Length(minStopsPerMove, 0).
+				Error("A move must have at least two stops"),
+		),
+	))
+
+	for i := range m.Stops {
+		m.Stops[i].Validate(multiErr.WithIndex("stops", i))
+	}
+}
+
+func (s *LoadTenderStop) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.LocationID, validation.Required.Error("Location is required")),
+		validation.Field(&s.Type, validation.Required.Error("Stop type is required")),
+		validation.Field(&s.ScheduleType,
+			validation.Required.Error("Schedule type is required"),
+		),
+		validation.Field(&s.Sequence,
+			validation.Min(int64(0)).Error("Sequence cannot be negative"),
+		),
+		validation.Field(&s.ScheduledWindowStart,
+			validation.Required.Error("Scheduled window start is required"),
+			validation.Min(int64(1)).Error("Scheduled window start must be a valid timestamp"),
+		),
+		validation.Field(&s.ScheduledWindowEnd,
+			validation.Min(s.ScheduledWindowStart).
+				Error("Scheduled window end cannot precede its start"),
+		),
+	))
+}
+
+const minStopsPerMove = 2

@@ -3,8 +3,10 @@ package dothazmatreference
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -47,4 +49,16 @@ func (d *DotHazmatReference) BeforeAppendModel(_ context.Context, q bun.Query) e
 	}
 
 	return nil
+}
+
+func (r *DotHazmatReference) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		// This table is the regulatory reference the hazmat surfaces read from,
+		// so a row missing its identity would answer a lookup with nothing.
+		validation.Field(&r.UnNumber, validation.Required.Error("UN number is required")),
+		validation.Field(&r.ProperShippingName,
+			validation.Required.Error("Proper shipping name is required"),
+		),
+		validation.Field(&r.HazardClass, validation.Required.Error("Hazard class is required")),
+	))
 }

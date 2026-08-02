@@ -2,10 +2,13 @@ package tablechangealert
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -46,3 +49,36 @@ func (a *TCAAllowlistedTable) BeforeAppendModel(_ context.Context, query bun.Que
 func (a *TCAAllowlistedTable) GetID() pulid.ID {
 	return a.ID
 }
+
+func (t *TCAAllowlistedTable) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(t,
+		validation.Field(&t.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&t.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		// The name is interpolated into the trigger definition the alert
+		// installs, so it is held to what Postgres accepts as an identifier
+		// rather than to anything a caller cares to send.
+		validation.Field(&t.TableName,
+			validation.Required.Error("Table name is required"),
+			validation.Length(1, maxTableNameLength).
+				Error("Table name cannot be longer than 100 characters"),
+			validation.Match(tableNamePattern).
+				Error("Table name must be a lowercase identifier"),
+		),
+		validation.Field(&t.DisplayName,
+			validation.Required.Error("Display name is required"),
+			validation.Length(1, maxDisplayNameLength).
+				Error("Display name cannot be longer than 255 characters"),
+		),
+	))
+}
+
+var tableNamePattern = regexp.MustCompile(`^[a-z_][a-z0-9_]*$`)
+
+const (
+	maxTableNameLength   = 100
+	maxDisplayNameLength = 255
+)

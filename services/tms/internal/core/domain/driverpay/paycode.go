@@ -2,7 +2,6 @@ package driverpay
 
 import (
 	"context"
-	"errors"
 	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
@@ -67,7 +66,7 @@ type PayCode struct {
 }
 
 func (p *PayCode) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(p,
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.Code,
 			validation.Required.Error("Code is required"),
 			validation.Length(1, 20).Error("Code must be between 1 and 20 characters"),
@@ -76,12 +75,7 @@ func (p *PayCode) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if p.Code != "" && !payCodePattern.MatchString(p.Code) {
 		multiErr.Add(

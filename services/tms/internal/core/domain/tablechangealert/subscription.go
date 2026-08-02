@@ -2,7 +2,6 @@ package tablechangealert
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -53,7 +52,7 @@ type TCASubscription struct {
 }
 
 func (s *TCASubscription) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		s,
 		validation.Field(&s.Name, validation.Required, validation.Length(1, 255)),
 		validation.Field(&s.TableName, validation.Required, validation.Length(1, 100)),
@@ -71,13 +70,7 @@ func (s *TCASubscription) Validate(multiErr *errortypes.MultiError) {
 			SubscriptionStatusActive,
 			SubscriptionStatusPaused,
 		)),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	for _, et := range s.EventTypes {
 		if !ValidEventType(et) {

@@ -2,7 +2,6 @@ package order
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,7 +59,7 @@ type Order struct {
 }
 
 func (o *Order) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		o,
 		validation.Field(&o.CustomerID, validation.Required.Error("Customer is required")),
 		validation.Field(&o.OrderNumber,
@@ -68,13 +68,7 @@ func (o *Order) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&o.Status,
 			validation.Required.Error("Status is required"),
-			validation.By(func(value any) error {
-				status, _ := value.(Status)
-				if !status.IsValid() {
-					return errors.New("invalid order status")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[Status]("invalid order status"),
 		),
 		validation.Field(&o.CurrencyCode,
 			validation.Required.Error("Currency code is required"),
@@ -93,12 +87,7 @@ func (o *Order) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&o.BaseAmount,
 			validation.By(nonNegativeNullDecimal("Base amount")),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 var currencyCodePattern = regexp.MustCompile(`^[A-Z]{3}$`)

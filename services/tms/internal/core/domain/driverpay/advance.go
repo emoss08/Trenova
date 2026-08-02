@@ -2,7 +2,6 @@ package driverpay
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -50,19 +49,14 @@ type PayAdvance struct {
 }
 
 func (a *PayAdvance) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(a,
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
 		validation.Field(&a.WorkerID, validation.Required.Error("Worker is required")),
 		validation.Field(&a.IssuedDate, validation.Required.Error("Issued date is required")),
 		validation.Field(&a.CurrencyCode,
 			validation.Required.Error("Currency code is required"),
 			validation.Length(3, 3).Error("Currency code must be 3 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !a.Status.IsValid() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Advance status is invalid")

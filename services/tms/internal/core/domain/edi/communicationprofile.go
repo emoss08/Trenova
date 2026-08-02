@@ -5,9 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -106,4 +109,36 @@ func (p *EDICommunicationProfile) GetPostgresSearchConfig() domaintypes.Postgres
 
 func (p *EDICommunicationProfile) GetCreatedAt() int64 {
 	return p.CreatedAt
+}
+
+func (p *EDICommunicationProfile) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&p.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&p.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&p.Method,
+			validation.Required.Error("Method is required"),
+			domainvalidation.ValidEnum[ConnectionMethod]("Method is invalid"),
+		),
+		validation.Field(&p.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(domaintypes.StatusActive, domaintypes.StatusInactive).
+				Error("Status is invalid"),
+		),
+		// A profile that names neither a connection nor a partner has nothing to
+		// poll on behalf of.
+		validation.Field(&p.EDIPartnerID,
+			validation.When(p.EDIConnectionID.IsNil(), validation.Required.Error(
+				"A communication profile must name a connection or a partner",
+			)),
+		),
+	))
 }

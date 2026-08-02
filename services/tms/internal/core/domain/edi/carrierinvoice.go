@@ -4,9 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
@@ -135,3 +138,69 @@ func (i *CarrierInvoice) BeforeAppendModel(_ context.Context, query bun.Query) e
 func (i *CarrierInvoice) GetCreatedAt() int64 {
 	return i.CreatedAt
 }
+
+func (v CarrierInvoiceReconciliationStatus) IsValid() bool {
+	switch v {
+	case CarrierInvoiceReconciliationStatusUnmatched,
+		CarrierInvoiceReconciliationStatusMappingRequired,
+		CarrierInvoiceReconciliationStatusMatched,
+		CarrierInvoiceReconciliationStatusVariance:
+		return true
+	default:
+		return false
+	}
+}
+
+func (i *CarrierInvoice) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(i,
+		validation.Field(&i.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&i.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&i.EDIPartnerID, validation.Required.Error("Partner is required")),
+		// The inbound message is the evidence for what the carrier billed, so a
+		// disputed charge stays traceable to the interchange that carried it.
+		validation.Field(&i.InboundMessageID,
+			validation.Required.Error("Inbound message is required"),
+		),
+		validation.Field(&i.InvoiceNumber,
+			validation.Required.Error("Invoice number is required"),
+			validation.Length(1, maxInvoiceFieldLength).
+				Error("Invoice number cannot be longer than 100 characters"),
+		),
+		validation.Field(&i.ShipmentReference,
+			validation.Length(0, maxInvoiceFieldLength).
+				Error("Shipment reference cannot be longer than 100 characters"),
+		),
+		validation.Field(&i.BOL,
+			validation.Length(0, maxInvoiceFieldLength).
+				Error("BOL cannot be longer than 100 characters"),
+		),
+		validation.Field(&i.ProNumber,
+			validation.Length(0, maxInvoiceFieldLength).
+				Error("Pro number cannot be longer than 100 characters"),
+		),
+		validation.Field(&i.BillToName,
+			validation.Length(0, maxBillToNameLength).
+				Error("Bill to name cannot be longer than 200 characters"),
+		),
+		validation.Field(&i.CurrencyCode,
+			validation.Length(0, invoiceCurrencyCodeLength).
+				Error("Currency must be a three letter code"),
+		),
+		validation.Field(&i.ReconciliationStatus,
+			validation.Required.Error("Reconciliation status is required"),
+			domainvalidation.ValidEnum[CarrierInvoiceReconciliationStatus](
+				"Reconciliation status is invalid",
+			),
+		),
+	))
+}
+
+const (
+	maxInvoiceFieldLength     = 100
+	maxBillToNameLength       = 200
+	invoiceCurrencyCodeLength = 3
+)

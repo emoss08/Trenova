@@ -4,8 +4,11 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -49,3 +52,29 @@ func (rp *ResourcePermission) HasOperation(op Operation) bool {
 func (rp *ResourcePermission) GetOperationSet() OperationSet {
 	return NewOperationSet(rp.Operations...)
 }
+
+func (p *ResourcePermission) Validate(multiErr *errortypes.MultiError) {
+	// RoleID is stamped when the role is written, so it is not the caller's to
+	// supply on a permission that arrives as part of one.
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.Resource,
+			validation.Required.Error("Resource is required"),
+			validation.Length(1, maxPermissionResourceLength).
+				Error("Resource cannot be longer than 100 characters"),
+		),
+		// A grant with no operations authorizes nothing while still appearing in
+		// the role, and one naming an undefined operation can never be evaluated.
+		validation.Field(&p.Operations,
+			validation.Required.Error("At least one operation is required"),
+			validation.Each(domainvalidation.ValidEnum[Operation](
+				"Operation is not one this system defines",
+			)),
+		),
+		validation.Field(&p.DataScope,
+			validation.Required.Error("Data scope is required"),
+			domainvalidation.ValidEnum[DataScope]("Data scope is invalid"),
+		),
+	))
+}
+
+const maxPermissionResourceLength = 100

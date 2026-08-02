@@ -2,10 +2,10 @@ package agent
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -52,20 +52,20 @@ type AgentException struct {
 }
 
 func (e *AgentException) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		e,
 		validation.Field(&e.RunID, validation.Required.Error("Run id is required")),
 		validation.Field(&e.Category,
 			validation.Required.Error("Category is required"),
-			validation.By(isValidEnum(e.Category.IsValid, "Invalid category")),
+			domainvalidation.ValidEnum[ExceptionCategory]("Invalid category"),
 		),
 		validation.Field(&e.Severity,
 			validation.Required.Error("Severity is required"),
-			validation.By(isValidEnum(e.Severity.IsValid, "Invalid severity")),
+			domainvalidation.ValidEnum[Severity]("Invalid severity"),
 		),
 		validation.Field(&e.SubjectType,
 			validation.Required.Error("Subject type is required"),
-			validation.By(isValidEnum(e.SubjectType.IsValid, "Invalid subject type")),
+			domainvalidation.ValidEnum[SubjectType]("Invalid subject type"),
 		),
 		validation.Field(&e.SubjectID, validation.Required.Error("Subject id is required")),
 		validation.Field(&e.AttemptSummary,
@@ -73,14 +73,9 @@ func (e *AgentException) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&e.ResolutionState,
 			validation.Required.Error("Resolution state is required"),
-			validation.By(isValidEnum(e.ResolutionState.IsValid, "Invalid resolution state")),
+			domainvalidation.ValidEnum[ResolutionState]("Invalid resolution state"),
 		),
-	)
-
-	var validationErrs validation.Errors
-	if errors.As(err, &validationErrs) {
-		errortypes.FromOzzoErrors(validationErrs, multiErr)
-	}
+	))
 
 	validateEvidence("evidence", e.Evidence, multiErr)
 }

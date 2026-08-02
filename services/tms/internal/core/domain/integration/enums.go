@@ -31,3 +31,40 @@ const (
 	CategoryFinancialData          = Category("FinancialData")
 	CategoryEmail                  = Category("Email")
 )
+
+func (v Type) IsValid() bool {
+	switch v {
+	case TypeGoogleMaps,
+		TypeSamsara,
+		TypeHERE,
+		TypeOpenAI,
+		TypeAnthropic,
+		TypeOpenWeatherMap,
+		TypeOANDAExchangeRates,
+		TypeEIAFuelPrices,
+		TypePCMiler,
+		TypeResend,
+		TypeAmazonSES,
+		TypeSendGrid,
+		TypeMailgun,
+		TypePostmark:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v Category) IsValid() bool {
+	switch v {
+	case CategoryMappingRouting,
+		CategoryFreightLogistics,
+		CategoryTelematics,
+		CategoryArtificialIntelligence,
+		CategoryWeather,
+		CategoryFinancialData,
+		CategoryEmail:
+		return true
+	default:
+		return false
+	}
+}

@@ -2,7 +2,6 @@ package driversettlement
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -117,7 +116,7 @@ type SettlementLine struct {
 }
 
 func (s *Settlement) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(s,
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
 		validation.Field(&s.WorkerID, validation.Required.Error("Worker is required")),
 		validation.Field(&s.PeriodStart, validation.Required.Error("Period start is required")),
 		validation.Field(&s.PeriodEnd, validation.Required.Error("Period end is required")),
@@ -126,12 +125,7 @@ func (s *Settlement) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Currency code is required"),
 			validation.Length(3, 3).Error("Currency code must be 3 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !s.Status.IsValid() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Settlement status is invalid")

@@ -4,8 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/uptrace/bun"
 )
 
@@ -51,3 +55,46 @@ func (i *Integration) BeforeAppendModel(_ context.Context, query bun.Query) erro
 
 	return nil
 }
+
+func (i *Integration) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(i,
+		validation.Field(&i.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&i.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&i.Type,
+			validation.Required.Error("Type is required"),
+			domainvalidation.ValidEnum[Type]("Type is not an integration this system supports"),
+		),
+		validation.Field(&i.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxIntegrationNameLength).
+				Error("Name cannot be longer than 100 characters"),
+		),
+		validation.Field(&i.Category,
+			validation.Required.Error("Category is required"),
+			domainvalidation.ValidEnum[Category]("Category is invalid"),
+		),
+		validation.Field(&i.BuiltBy,
+			validation.Length(0, maxIntegrationNameLength).
+				Error("Built by cannot be longer than 100 characters"),
+		),
+		// These are rendered as links on the integrations page, so a relative or
+		// malformed one would send an administrator nowhere.
+		validation.Field(&i.DocsURL, is.URL.Error("Docs URL must be a valid URL")),
+		validation.Field(&i.LogoURL, is.URL.Error("Logo URL must be a valid URL")),
+		validation.Field(&i.WebsiteURL, is.URL.Error("Website URL must be a valid URL")),
+		// Turning an integration on is an accountable act: it starts calling a
+		// third party with the organization's credentials.
+		validation.Field(&i.EnabledByID,
+			validation.When(
+				i.Enabled,
+				validation.Required.Error("An enabled integration must record who enabled it"),
+			),
+		),
+	))
+}
+
+const maxIntegrationNameLength = 100

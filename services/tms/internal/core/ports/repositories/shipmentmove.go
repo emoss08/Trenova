@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -79,7 +78,7 @@ func (r *RecordStopActualRequest) Validate() *errortypes.MultiError {
 func (r *UpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.MoveID, validation.Required.Error("Move ID is required")),
 		validation.Field(
@@ -101,12 +100,7 @@ func (r *UpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 				shipment.MoveStatusCanceled,
 			).Error("Status must be a valid move status"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -124,7 +118,7 @@ type BulkUpdateMoveStatusRequest struct {
 func (r *BulkUpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(
 			&r.MoveIDs,
@@ -150,12 +144,7 @@ func (r *BulkUpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 				shipment.MoveStatusCanceled,
 			).Error("Status must be a valid move status"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -182,7 +171,7 @@ type SplitMoveRequest struct {
 func (r *SplitMoveRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.MoveID, validation.Required.Error("Move ID is required")),
 		validation.Field(
@@ -205,12 +194,7 @@ func (r *SplitMoveRequest) Validate() *errortypes.MultiError {
 			&r.NewDeliveryTimes.ScheduledWindowStart,
 			validation.Required.Error("New delivery scheduled window start is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr

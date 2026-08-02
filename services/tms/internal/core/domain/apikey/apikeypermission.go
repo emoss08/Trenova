@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -45,3 +48,34 @@ func (p *Permission) BeforeAppendModel(_ context.Context, query bun.Query) error
 
 	return nil
 }
+
+func (p *Permission) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&p.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&p.APIKeyID, validation.Required.Error("API key is required")),
+		validation.Field(&p.Resource,
+			validation.Required.Error("Resource is required"),
+			validation.Length(1, maxResourceLength).
+				Error("Resource cannot be longer than 100 characters"),
+		),
+		// A grant with no operations authorizes nothing, and one naming an
+		// operation the system does not define can never be evaluated.
+		validation.Field(&p.Operations,
+			validation.Required.Error("At least one operation is required"),
+			validation.Each(domainvalidation.ValidEnum[permission.Operation](
+				"Operation is not one this system defines",
+			)),
+		),
+		validation.Field(&p.DataScope,
+			validation.Required.Error("Data scope is required"),
+			domainvalidation.ValidEnum[permission.DataScope]("Data scope is invalid"),
+		),
+	))
+}
+
+const maxResourceLength = 100

@@ -3,8 +3,11 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -167,3 +170,178 @@ func (d *EDICodeListDefinition) BeforeAppendModel(_ context.Context, query bun.Q
 	}
 	return nil
 }
+
+func (s *EDITransactionSet) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.Standard,
+			validation.Required.Error("Standard is required"),
+			domainvalidation.ValidEnum[EDIStandard]("Standard is invalid"),
+		),
+		validation.Field(&s.Code,
+			validation.Required.Error("Code is required"),
+			domainvalidation.ValidEnum[TransactionSet]("Code is invalid"),
+		),
+		validation.Field(&s.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&s.DefaultVersion,
+			validation.Required.Error("Default version is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("Default version cannot be longer than 20 characters"),
+		),
+		validation.Field(&s.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[DocumentStatus]("Status is invalid"),
+		),
+	))
+}
+
+func (l *EDITransactionLoopDefinition) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(l,
+		validation.Field(&l.TransactionSetID,
+			validation.Required.Error("Transaction set is required"),
+		),
+		validation.Field(&l.Direction,
+			validation.Required.Error("Direction is required"),
+			domainvalidation.ValidEnum[DocumentDirection]("Direction is invalid"),
+		),
+		validation.Field(&l.X12Version,
+			validation.Required.Error("X12 version is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("X12 version cannot be longer than 20 characters"),
+		),
+		validation.Field(&l.LoopID,
+			validation.Required.Error("Loop is required"),
+			validation.Length(1, maxLoopIDLength).
+				Error("Loop cannot be longer than 50 characters"),
+		),
+		// A loop nested inside itself would never terminate when the template
+		// walks the definition tree.
+		validation.Field(&l.ParentLoopID,
+			validation.Length(0, maxLoopIDLength).
+				Error("Parent loop cannot be longer than 50 characters"),
+			validation.NotIn(l.LoopID).Error("A loop cannot be its own parent"),
+		),
+		validation.Field(&l.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&l.Sequence,
+			validation.Min(int64(0)).Error("Sequence cannot be negative"),
+		),
+	))
+}
+
+func (s *EDITransactionSegmentDefinition) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.TransactionSetID,
+			validation.Required.Error("Transaction set is required"),
+		),
+		validation.Field(&s.Direction,
+			validation.Required.Error("Direction is required"),
+			domainvalidation.ValidEnum[DocumentDirection]("Direction is invalid"),
+		),
+		validation.Field(&s.X12Version,
+			validation.Required.Error("X12 version is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("X12 version cannot be longer than 20 characters"),
+		),
+		validation.Field(&s.SegmentID,
+			validation.Required.Error("Segment is required"),
+			validation.Length(1, maxSegmentIDLength).
+				Error("Segment cannot be longer than 10 characters"),
+		),
+		validation.Field(&s.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&s.LoopID,
+			validation.Length(0, maxLoopIDLength).
+				Error("Loop cannot be longer than 50 characters"),
+		),
+		validation.Field(&s.Sequence,
+			validation.Min(int64(0)).Error("Sequence cannot be negative"),
+		),
+		validation.Field(&s.MaxUse,
+			validation.Required.Error("Max use is required"),
+			validation.Min(int64(1)).Error("Max use must be at least one"),
+		),
+	))
+}
+
+func (e *EDITransactionElementDefinition) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.TransactionSetID,
+			validation.Required.Error("Transaction set is required"),
+		),
+		validation.Field(&e.Direction,
+			validation.Required.Error("Direction is required"),
+			domainvalidation.ValidEnum[DocumentDirection]("Direction is invalid"),
+		),
+		validation.Field(&e.X12Version,
+			validation.Required.Error("X12 version is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("X12 version cannot be longer than 20 characters"),
+		),
+		validation.Field(&e.SegmentID,
+			validation.Required.Error("Segment is required"),
+			validation.Length(1, maxSegmentIDLength).
+				Error("Segment cannot be longer than 10 characters"),
+		),
+		// Element positions are one-based in X12; a zero would address the
+		// segment id itself.
+		validation.Field(&e.Position,
+			validation.Required.Error("Position is required"),
+			validation.Min(1).Error("Position must be at least one"),
+		),
+		validation.Field(&e.ElementID,
+			validation.Length(0, maxEDICodeLength).
+				Error("Element cannot be longer than 20 characters"),
+		),
+		validation.Field(&e.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxEDINameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&e.MinLength,
+			validation.Min(0).Error("Minimum length cannot be negative"),
+		),
+		validation.Field(&e.MaxLength,
+			validation.Min(e.MinLength).Error("Maximum length cannot be less than the minimum"),
+		),
+	))
+}
+
+func (c *EDICodeListDefinition) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.TransactionSetID,
+			validation.Required.Error("Transaction set is required"),
+		),
+		validation.Field(&c.Direction,
+			validation.Required.Error("Direction is required"),
+			domainvalidation.ValidEnum[DocumentDirection]("Direction is invalid"),
+		),
+		validation.Field(&c.X12Version,
+			validation.Required.Error("X12 version is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("X12 version cannot be longer than 20 characters"),
+		),
+		validation.Field(&c.ElementID,
+			validation.Required.Error("Element is required"),
+			validation.Length(1, maxEDICodeLength).
+				Error("Element cannot be longer than 20 characters"),
+		),
+		validation.Field(&c.Code,
+			validation.Required.Error("Code is required"),
+			validation.Length(1, maxCodeListCodeLength).
+				Error("Code cannot be longer than 40 characters"),
+		),
+		validation.Field(&c.Description, validation.Required.Error("Description is required")),
+	))
+}
+
+const maxCodeListCodeLength = 40

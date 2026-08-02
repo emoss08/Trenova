@@ -2,11 +2,11 @@ package servicefailure
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -69,9 +69,16 @@ func (rc *ReasonCode) Normalize() {
 
 func (rc *ReasonCode) Validate(multiErr *errortypes.MultiError) {
 	rc.Normalize()
-	err := validation.ValidateStruct(rc,
-		validation.Field(&rc.OrganizationID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&rc.BusinessUnitID, validation.Required.Error("Business unit ID is required")),
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		rc,
+		validation.Field(
+			&rc.OrganizationID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&rc.BusinessUnitID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 		validation.Field(
 			&rc.Code,
 			validation.Required.Error("Code is required"),
@@ -85,24 +92,12 @@ func (rc *ReasonCode) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(
 			&rc.Category,
 			validation.Required.Error("Category is required"),
-			validation.By(func(value any) error {
-				category, _ := value.(ReasonCategory)
-				if !category.IsValid() {
-					return errors.New("category is invalid")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[ReasonCategory]("category is invalid"),
 		),
 		validation.Field(
 			&rc.AppliesTo,
 			validation.Required.Error("Applies to is required"),
-			validation.By(func(value any) error {
-				appliesTo, _ := value.(ReasonCodeAppliesTo)
-				if !appliesTo.IsValid() {
-					return errors.New("applies to is invalid")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[ReasonCodeAppliesTo]("applies to is invalid"),
 		),
 		validation.Field(
 			&rc.DefaultStatusCode,
@@ -116,12 +111,7 @@ func (rc *ReasonCode) Validate(multiErr *errortypes.MultiError) {
 			&rc.DefaultExceptionCode,
 			validation.Length(0, 3).Error("Default exception code must be at most 3 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (rc *ReasonCode) GetID() pulid.ID {
@@ -152,8 +142,16 @@ func (rc *ReasonCode) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 			{Name: "code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 			{Name: "label", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
 			{Name: "category", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
-			{Name: "applies_to", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
-			{Name: "description", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
+			{
+				Name:   "applies_to",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightC,
+			},
 		},
 	}
 }

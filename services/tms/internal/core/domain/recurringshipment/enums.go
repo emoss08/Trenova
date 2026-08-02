@@ -48,3 +48,24 @@ const (
 	RunTriggerAuto   = RunTrigger("Auto")
 	RunTriggerManual = RunTrigger("Manual")
 )
+
+func (v RunStatus) IsValid() bool {
+	switch v {
+	case RunStatusGenerated,
+		RunStatusSkipped,
+		RunStatusFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v RunTrigger) IsValid() bool {
+	switch v {
+	case RunTriggerAuto,
+		RunTriggerManual:
+		return true
+	default:
+		return false
+	}
+}

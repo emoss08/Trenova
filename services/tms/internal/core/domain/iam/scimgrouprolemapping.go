@@ -2,7 +2,6 @@ package iam
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -42,7 +41,7 @@ type SCIMGroupRoleMapping struct {
 }
 
 func (m *SCIMGroupRoleMapping) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		m,
 		validation.Field(&m.RoleID, validation.Required.Error("Role is required")),
 		validation.Field(
@@ -53,12 +52,7 @@ func (m *SCIMGroupRoleMapping) Validate(multiErr *errortypes.MultiError) {
 			&m.DirectoryID,
 			validation.Required.Error("Directory ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (m *SCIMGroupRoleMapping) BeforeAppendModel(_ context.Context, q bun.Query) error {

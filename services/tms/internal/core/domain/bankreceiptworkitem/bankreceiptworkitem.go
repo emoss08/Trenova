@@ -2,7 +2,6 @@ package bankreceiptworkitem
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,17 +32,11 @@ type WorkItem struct {
 }
 
 func (w *WorkItem) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(w,
+	multiErr.AddOzzoError(validation.ValidateStruct(w,
 		validation.Field(&w.OrganizationID, validation.Required),
 		validation.Field(&w.BusinessUnitID, validation.Required),
 		validation.Field(&w.BankReceiptID, validation.Required),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (w *WorkItem) BeforeAppendModel(_ context.Context, query bun.Query) error {

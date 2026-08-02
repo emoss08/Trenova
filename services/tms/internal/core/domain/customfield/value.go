@@ -3,8 +3,10 @@ package customfield
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -55,3 +57,35 @@ func (v *CustomFieldValue) GetOrganizationID() pulid.ID {
 func (v *CustomFieldValue) GetBusinessUnitID() pulid.ID {
 	return v.BusinessUnitID
 }
+
+func (v *CustomFieldValue) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(v,
+		validation.Field(&v.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&v.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&v.DefinitionID,
+			validation.Required.Error("Custom field definition is required"),
+		),
+		// A value with no owner is unreachable: nothing would ever load it and
+		// nothing would ever delete it.
+		validation.Field(&v.ResourceType,
+			validation.Required.Error("Resource type is required"),
+			validation.Length(1, maxResourceTypeLength).
+				Error("Resource type cannot be longer than 100 characters"),
+		),
+		validation.Field(&v.ResourceID,
+			validation.Required.Error("Resource is required"),
+			validation.Length(1, maxResourceIDLength).
+				Error("Resource cannot be longer than 100 characters"),
+		),
+		validation.Field(&v.Value, validation.NotNil.Error("Value is required")),
+	))
+}
+
+const (
+	maxResourceTypeLength = 100
+	maxResourceIDLength   = 100
+)

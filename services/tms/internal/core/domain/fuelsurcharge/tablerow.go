@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
@@ -120,4 +121,38 @@ func validateTableRows(rows []*FuelSurchargeTableRow, multiErr *errortypes.Multi
 
 func tableRowFieldPrefix(index int) string {
 	return "tableRows[" + strconv.Itoa(index) + "]"
+}
+
+func (r *FuelSurchargeTableRow) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&r.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&r.FuelSurchargeProgramID,
+			validation.Required.Error("Fuel surcharge program is required"),
+		),
+		validation.Field(&r.SortOrder,
+			validation.Min(int32(0)).Error("Sort order cannot be negative"),
+		),
+	))
+
+	// The row is selected by where the fuel price falls, so a band whose top is
+	// below its bottom can never be reached and the surcharge silently drops to
+	// whichever band happens to match instead.
+	if r.PriceMin.Valid && r.PriceMax.Valid &&
+		r.PriceMax.Decimal.LessThanOrEqual(r.PriceMin.Decimal) {
+		multiErr.Add("priceMax", errortypes.ErrInvalid,
+			"Maximum price must be greater than the minimum price")
+	}
+
+	if r.PriceMin.Valid && r.PriceMin.Decimal.IsNegative() {
+		multiErr.Add("priceMin", errortypes.ErrInvalid, "Minimum price cannot be negative")
+	}
+
+	if r.Value.IsNegative() {
+		multiErr.Add("value", errortypes.ErrInvalid, "Value cannot be negative")
+	}
 }

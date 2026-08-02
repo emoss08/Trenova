@@ -2,7 +2,6 @@ package edi
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -68,7 +67,7 @@ type InternalPartnerPair struct {
 }
 
 func (p *EDIPartner) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		p,
 		validation.Field(&p.BusinessUnitID, validation.Required.Error("Business unit is required")),
 		validation.Field(&p.OrganizationID, validation.Required.Error("Organization is required")),
@@ -92,12 +91,7 @@ func (p *EDIPartner) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Country is required"),
 			validation.Length(2, 2),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if p.Kind == PartnerKindInternal && p.InternalOrganizationID.IsNil() {
 		multiErr.Add(

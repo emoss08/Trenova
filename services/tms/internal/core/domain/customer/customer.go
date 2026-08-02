@@ -2,7 +2,6 @@ package customer
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -63,7 +62,7 @@ type Customer struct {
 }
 
 func (c *Customer) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		c,
 		validation.Field(&c.Code,
 			validation.Required.Error("Code is required"),
@@ -97,15 +96,14 @@ func (c *Customer) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Postal code is required"),
 			validation.By(domaintypes.ValidatePostalCode),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if c.BillingProfile != nil {
-		c.BillingProfile.Validate(multiErr)
+		c.BillingProfile.Validate(multiErr.WithPrefix("billingProfile"))
+	}
+
+	if c.EmailProfile != nil {
+		c.EmailProfile.Validate(multiErr.WithPrefix("emailProfile"))
 	}
 }
 

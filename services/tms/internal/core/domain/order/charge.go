@@ -40,7 +40,7 @@ type OrderCharge struct {
 }
 
 func (c *OrderCharge) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		c,
 		validation.Field(&c.OrderID, validation.Required.Error("Order is required")),
 		validation.Field(&c.Description,
@@ -54,12 +54,7 @@ func (c *OrderCharge) Validate(multiErr *errortypes.MultiError) {
 			}
 			return nil
 		})),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (c *OrderCharge) GetID() pulid.ID {

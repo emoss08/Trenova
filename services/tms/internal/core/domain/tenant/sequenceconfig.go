@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -282,3 +284,112 @@ type Sequence struct {
 	CreatedAt       int64        `bun:"created_at,notnull"`
 	UpdatedAt       int64        `bun:"updated_at,notnull"`
 }
+
+func (c *SequenceConfig) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&c.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&c.SequenceType,
+			validation.Required.Error("Sequence type is required"),
+			domainvalidation.ValidEnum[SequenceType]("Sequence type is invalid"),
+		),
+		validation.Field(&c.Prefix,
+			validation.Length(0, maxSequencePrefixLength).
+				Error("Prefix cannot be longer than 20 characters"),
+		),
+		// The digit counts decide how many numbers the sequence can ever issue,
+		// so a zero width would produce a number with no counter in it at all.
+		validation.Field(&c.SequenceDigits,
+			validation.Required.Error("Sequence digits is required"),
+			validation.Min(minSequenceDigits).Error("Sequence digits must be between 1 and 10"),
+			validation.Max(maxSequenceDigits).Error("Sequence digits must be between 1 and 10"),
+		),
+		validation.Field(&c.YearDigits,
+			validation.When(c.IncludeYear,
+				validation.Required.Error("Year digits must be 2 or 4"),
+				validation.Min(minYearDigits).Error("Year digits must be between 2 and 4"),
+				validation.Max(maxYearDigits).Error("Year digits must be between 2 and 4"),
+			),
+		),
+		validation.Field(&c.RandomDigitsCount,
+			validation.When(c.IncludeRandomDigits,
+				validation.Required.Error("Random digits count is required"),
+				validation.Min(minSequenceDigits).
+					Error("Random digits count must be between 1 and 10"),
+				validation.Max(maxSequenceDigits).
+					Error("Random digits count must be between 1 and 10"),
+			),
+		),
+		// A separator the formatter does not know would be dropped, silently
+		// producing numbers in a shape nobody chose.
+		validation.Field(&c.SeparatorChar,
+			validation.When(c.UseSeparators,
+				validation.Required.Error("Separator character is required"),
+				validation.In(separatorValues()...).Error("Separator character is not allowed"),
+			),
+		),
+		validation.Field(&c.CustomFormat,
+			validation.When(
+				c.AllowCustomFormat,
+				validation.Required.Error("Custom format is required"),
+			),
+		),
+	))
+
+	if c.LocationCodeStrategy != nil {
+		if err := c.LocationCodeStrategy.Validate(); err != nil {
+			multiErr.Add("locationCodeStrategy", errortypes.ErrInvalid, err.Error())
+		}
+	}
+}
+
+// separatorValues adapts the allowed list to what ozzo compares against, so the
+// two cannot drift apart.
+func separatorValues() []any {
+	values := make([]any, 0, len(AllowedSeparators))
+	for _, separator := range AllowedSeparators {
+		values = append(values, separator)
+	}
+
+	return values
+}
+
+func (s *Sequence) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&s.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&s.SequenceType,
+			validation.Required.Error("Sequence type is required"),
+			domainvalidation.ValidEnum[SequenceType]("Sequence type is invalid"),
+		),
+		validation.Field(&s.Year,
+			validation.Min(int16(0)).Error("Year cannot be negative"),
+		),
+		validation.Field(&s.Month,
+			validation.Min(int16(0)).Error("Month must be between 0 and 12"),
+			validation.Max(monthsInYear).Error("Month must be between 0 and 12"),
+		),
+		// The counter is what the next number is drawn from, so winding it
+		// backwards past zero would reissue numbers already on documents.
+		validation.Field(&s.CurrentSequence,
+			validation.Min(int64(0)).Error("Current sequence cannot be negative"),
+		),
+	))
+}
+
+const (
+	maxSequencePrefixLength = 20
+	minSequenceDigits       = int16(1)
+	maxSequenceDigits       = int16(10)
+	minYearDigits           = int16(2)
+	maxYearDigits           = int16(4)
+	monthsInYear            = int16(12)
+)

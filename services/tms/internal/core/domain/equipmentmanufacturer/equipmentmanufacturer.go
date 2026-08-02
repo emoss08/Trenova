@@ -2,7 +2,6 @@ package equipmentmanufacturer
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -44,20 +43,14 @@ type EquipmentManufacturer struct {
 }
 
 func (em *EquipmentManufacturer) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		em,
 		validation.Field(&em.Name, validation.Required),
 		validation.Field(
 			&em.Name,
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (em *EquipmentManufacturer) BeforeAppendModel(_ context.Context, query bun.Query) error {

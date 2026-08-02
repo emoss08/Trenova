@@ -70,7 +70,7 @@ type RateTable struct {
 }
 
 func (rt *RateTable) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(rt,
+	multiErr.AddOzzoError(validation.ValidateStruct(rt,
 		validation.Field(&rt.Name, validation.Required, validation.Length(1, 100)),
 		validation.Field(&rt.Key,
 			validation.Required,
@@ -82,18 +82,19 @@ func (rt *RateTable) Validate(multiErr *errortypes.MultiError) {
 			LookupTypeExact,
 			LookupTypeRange,
 		)),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	rt.validateEntries(multiErr)
 }
 
 func (rt *RateTable) validateEntries(multiErr *errortypes.MultiError) {
+	for i, entry := range rt.Entries {
+		if entry == nil {
+			continue
+		}
+		entry.Validate(multiErr.WithIndex("entries", i))
+	}
+
 	switch rt.LookupType {
 	case LookupTypeExact:
 		validateExactEntries(rt.Entries, multiErr)

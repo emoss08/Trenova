@@ -2,7 +2,6 @@ package dedicatedlane
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/bytedance/sonic"
@@ -44,7 +43,7 @@ type PatternConfig struct {
 }
 
 func (pc *PatternConfig) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(pc,
+	multiErr.AddOzzoError(validation.ValidateStruct(pc,
 		validation.Field(&pc.MinFrequency,
 			validation.Required.Error("Minimum frequency is required"),
 			validation.Min(int64(1)).Error("Minimum frequency must be at least 1"),
@@ -73,13 +72,7 @@ func (pc *PatternConfig) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(int64(1)).Error("Suggestion TTL days must be at least 1"),
 			validation.Max(int64(365)).Error("Suggestion TTL days must be at most 365"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (pc *PatternConfig) GetID() pulid.ID {

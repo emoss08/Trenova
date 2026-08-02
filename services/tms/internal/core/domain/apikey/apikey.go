@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -93,3 +95,63 @@ func (k *Key) BeforeAppendModel(_ context.Context, query bun.Query) error {
 func (k *Key) IsExpired(now int64) bool {
 	return k.ExpiresAt > 0 && k.ExpiresAt <= now
 }
+
+func (k *Key) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(k,
+		validation.Field(&k.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&k.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&k.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxKeyNameLength).
+				Error("Name cannot be longer than 255 characters"),
+		),
+		validation.Field(&k.KeyPrefix,
+			validation.Required.Error("Key prefix is required"),
+			validation.Length(1, maxKeyPrefixLength).
+				Error("Key prefix cannot be longer than 32 characters"),
+		),
+		// The secret is never stored in the clear, so a key with no digest or no
+		// salt would authenticate nobody and could not be repaired.
+		validation.Field(&k.SecretHash, validation.Required.Error("Secret hash is required")),
+		validation.Field(&k.SecretSalt, validation.Required.Error("Secret salt is required")),
+		validation.Field(&k.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(StatusActive, StatusRevoked).Error("Status is invalid"),
+		),
+		validation.Field(&k.CreatedByID, validation.Required.Error("Created by is required")),
+		// A revocation is an authorization record: who revoked it and when are
+		// both part of it or neither is.
+		validation.Field(&k.RevokedByID,
+			validation.When(k.RevokedAt != 0, validation.Required.Error(
+				"A revoked key must record who revoked it",
+			)),
+		),
+		validation.Field(&k.RevokedAt,
+			validation.When(k.RevokedByID.IsNotNil(), validation.Required.Error(
+				"A revoked key must record when it was revoked",
+			)),
+			validation.When(k.Status == StatusRevoked, validation.Required.Error(
+				"A revoked key must record when it was revoked",
+			)),
+		),
+		validation.Field(&k.LastUsedIP,
+			validation.Length(0, maxIPLength).
+				Error("Last used IP cannot be longer than 45 characters"),
+		),
+		validation.Field(&k.LastUsedUserAgent,
+			validation.Length(0, maxUserAgentLength).
+				Error("Last used user agent cannot be longer than 255 characters"),
+		),
+	))
+}
+
+const (
+	maxKeyNameLength   = 255
+	maxKeyPrefixLength = 32
+	maxIPLength        = 45
+	maxUserAgentLength = 255
+)

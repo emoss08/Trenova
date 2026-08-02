@@ -2,7 +2,6 @@ package documentpacketrule
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -70,7 +69,7 @@ type DocumentPacketRule struct {
 }
 
 func (r *DocumentPacketRule) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(
 			&r.ResourceType,
@@ -82,12 +81,7 @@ func (r *DocumentPacketRule) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&r.ExpirationWarningDays,
 			validation.Min(0).Error("Expiration warning days must be zero or greater"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (r *DocumentPacketRule) GetID() pulid.ID {

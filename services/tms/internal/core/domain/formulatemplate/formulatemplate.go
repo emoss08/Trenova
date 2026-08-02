@@ -2,7 +2,6 @@ package formulatemplate
 
 import (
 	"context"
-	"errors"
 	"reflect"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -64,7 +63,7 @@ type FormulaTemplate struct {
 }
 
 func (ft *FormulaTemplate) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(ft,
+	multiErr.AddOzzoError(validation.ValidateStruct(ft,
 		validation.Field(&ft.Name, validation.Required, validation.Length(1, 100)),
 		validation.Field(&ft.Expression, validation.Required),
 		validation.Field(&ft.Type, validation.Required, validation.In(
@@ -77,13 +76,7 @@ func (ft *FormulaTemplate) Validate(multiErr *errortypes.MultiError) {
 			StatusDraft,
 			StatusInReview,
 		)),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	ft.validateGuardrails(multiErr)
 	formulatypes.ValidateBreakdownDefinitions(ft.BreakdownDefinitions, multiErr)

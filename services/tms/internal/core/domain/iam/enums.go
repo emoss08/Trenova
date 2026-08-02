@@ -62,3 +62,68 @@ const (
 	PolicyEffectAllow PolicyEffect = "allow"
 	PolicyEffectDeny  PolicyEffect = "deny"
 )
+
+func (v MFAAuthenticatorType) IsValid() bool {
+	switch v {
+	case MFAAuthenticatorTypeWebAuthn,
+		MFAAuthenticatorTypeTOTP:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v AuthEventOutcome) IsValid() bool {
+	switch v {
+	case AuthEventOutcomeSuccess,
+		AuthEventOutcomeChallenge,
+		AuthEventOutcomeDenied,
+		AuthEventOutcomeFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v RiskOutcome) IsValid() bool {
+	switch v {
+	case RiskOutcomeAllow,
+		RiskOutcomeChallenge,
+		RiskOutcomeDeny:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v SCIMTokenStatus) IsValid() bool {
+	switch v {
+	case SCIMTokenStatusActive,
+		SCIMTokenStatusRevoked:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ProvisioningAction) IsValid() bool {
+	switch v {
+	case ProvisioningActionCreate,
+		ProvisioningActionUpdate,
+		ProvisioningActionDeactivate,
+		ProvisioningActionDelete:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v PolicyEffect) IsValid() bool {
+	switch v {
+	case PolicyEffectAllow,
+		PolicyEffectDeny:
+		return true
+	default:
+		return false
+	}
+}

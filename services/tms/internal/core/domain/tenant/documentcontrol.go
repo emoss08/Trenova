@@ -58,7 +58,7 @@ func NewDefaultDocumentControl(orgID, buID pulid.ID) *DocumentControl {
 }
 
 func (dc *DocumentControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		dc,
 		validation.Field(
 			&dc.ShipmentDraftAllowedResources,
@@ -73,13 +73,7 @@ func (dc *DocumentControl) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			})),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func isAllowedDocumentControlResource(resourceType string) bool {

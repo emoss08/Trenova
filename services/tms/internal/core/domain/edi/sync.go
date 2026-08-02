@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -234,5 +237,161 @@ func DefaultShipmentFieldOwnership() map[string]string {
 		"driverAssignment":           "target",
 		"operationalNotes":           "target",
 		"arrivalsDepartures":         "target",
+	}
+}
+
+func (v ShipmentSyncPolicy) IsValid() bool {
+	switch v {
+	case ShipmentSyncPolicyManualReview,
+		ShipmentSyncPolicyAutoOperational,
+		ShipmentSyncPolicyAutoAllSafe,
+		ShipmentSyncPolicyReadOnly:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ShipmentLinkStatus) IsValid() bool {
+	switch v {
+	case ShipmentLinkStatusActive,
+		ShipmentLinkStatusSuspended,
+		ShipmentLinkStatusClosed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v TransferChangeDirection) IsValid() bool {
+	switch v {
+	case TransferChangeDirectionSourceToTarget,
+		TransferChangeDirectionTargetToSource:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v TransferChangeConflictStatus) IsValid() bool {
+	switch v {
+	case TransferChangeConflictNone,
+		TransferChangeConflictConflict,
+		TransferChangeConflictResolved:
+		return true
+	default:
+		return false
+	}
+}
+
+func (l *ShipmentLink) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(l,
+		validation.Field(&l.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&l.SourceOrganizationID,
+			validation.Required.Error("Source organization is required"),
+		),
+		validation.Field(&l.TargetOrganizationID,
+			validation.Required.Error("Target organization is required"),
+		),
+		// The link is what keeps two copies of one load in step; either side
+		// missing would leave changes with nowhere to go.
+		validation.Field(&l.SourceShipmentID,
+			validation.Required.Error("Source shipment is required"),
+		),
+		validation.Field(&l.TargetShipmentID,
+			validation.Required.Error("Target shipment is required"),
+			validation.NotIn(l.SourceShipmentID).
+				Error("A link cannot join a shipment to itself"),
+		),
+		validation.Field(&l.TenderTransferID,
+			validation.Required.Error("Tender transfer is required"),
+		),
+		validation.Field(&l.SyncPolicy,
+			validation.Required.Error("Sync policy is required"),
+			domainvalidation.ValidEnum[ShipmentSyncPolicy]("Sync policy is invalid"),
+		),
+		validation.Field(&l.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[ShipmentLinkStatus]("Status is invalid"),
+		),
+	))
+}
+
+func (c *TransferChange) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&c.ShipmentLinkID,
+			validation.Required.Error("Shipment link is required"),
+		),
+		validation.Field(&c.Direction,
+			validation.Required.Error("Direction is required"),
+			domainvalidation.ValidEnum[TransferChangeDirection]("Direction is invalid"),
+		),
+		validation.Field(&c.ChangeType,
+			validation.Required.Error("Change type is required"),
+			validation.Length(1, maxChangeTypeLength).
+				Error("Change type cannot be longer than 100 characters"),
+		),
+		validation.Field(&c.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[TransferChangeStatus]("Status is invalid"),
+		),
+		validation.Field(&c.ConflictStatus,
+			validation.Required.Error("Conflict status is required"),
+			domainvalidation.ValidEnum[TransferChangeConflictStatus](
+				"Conflict status is invalid",
+			),
+		),
+		validation.Field(&c.ConflictReason,
+			validation.When(
+				c.ConflictStatus == TransferChangeConflictConflict,
+				validation.Required.Error("A conflict must record what conflicted"),
+			),
+		),
+		// The idempotency key is what stops one change being applied twice when
+		// a delivery is retried.
+		validation.Field(&c.IdempotencyKey,
+			validation.Required.Error("Idempotency key is required"),
+			validation.Length(1, maxIdempotencyKeyLength).
+				Error("Idempotency key cannot be longer than 255 characters"),
+		),
+		validation.Field(&c.SourceShipmentVersion,
+			validation.Min(int64(0)).Error("Source shipment version cannot be negative"),
+		),
+		validation.Field(&c.TargetShipmentVersion,
+			validation.Min(int64(0)).Error("Target shipment version cannot be negative"),
+		),
+		validation.Field(&c.ReviewedAt,
+			validation.When(c.ReviewedByID.IsNotNil(), validation.Required.Error(
+				"A reviewed change must record when it was reviewed",
+			)),
+		),
+		validation.Field(&c.AppliedAt,
+			validation.When(c.AppliedByID.IsNotNil(), validation.Required.Error(
+				"An applied change must record when it was applied",
+			)),
+		),
+	))
+}
+
+const (
+	maxChangeTypeLength     = 100
+	maxIdempotencyKeyLength = 255
+)
+
+func (v TransferChangeStatus) IsValid() bool {
+	switch v {
+	case TransferChangeStatusPendingReview,
+		TransferChangeStatusApplied,
+		TransferChangeStatusRejected,
+		TransferChangeStatusFailed,
+		TransferChangeStatusIgnored:
+		return true
+	default:
+		return false
 	}
 }

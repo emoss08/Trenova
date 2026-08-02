@@ -2,10 +2,10 @@ package locationcategory
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -51,37 +51,22 @@ type LocationCategory struct {
 }
 
 func (lc *LocationCategory) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(lc,
+	multiErr.AddOzzoError(validation.ValidateStruct(lc,
 		validation.Field(&lc.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
 		),
 		validation.Field(&lc.Type,
 			validation.Required.Error("Type is required"),
-			validation.By(func(value any) error {
-				if v, ok := value.(Category); ok && !v.IsValid() {
-					return errors.New("invalid type")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[Category]("invalid type"),
 		),
 		validation.Field(&lc.FacilityType,
-			validation.By(func(value any) error {
-				if v, ok := value.(FacilityType); ok && v != "" && !v.IsValid() {
-					return errors.New("invalid facility type")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[FacilityType]("invalid facility type"),
 		),
 		validation.Field(&lc.Color,
 			is.HexColor.Error("Color must be a valid hex color"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (lc *LocationCategory) BeforeAppendModel(_ context.Context, query bun.Query) error {

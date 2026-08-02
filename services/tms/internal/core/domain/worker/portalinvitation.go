@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -65,7 +64,7 @@ type PortalInvitation struct {
 }
 
 func (i *PortalInvitation) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(i,
+	multiErr.AddOzzoError(validation.ValidateStruct(i,
 		validation.Field(&i.WorkerID,
 			validation.Required.Error("Worker is required"),
 		),
@@ -82,12 +81,7 @@ func (i *PortalInvitation) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&i.InvitedByID,
 			validation.Required.Error("Inviting user is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !i.Status.IsValid() {
 		multiErr.Add(
