@@ -110,6 +110,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/permitrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pushsubscriptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratetablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
@@ -312,6 +313,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	distanceprofilerepository.New,
 	storedmileagerepository.New,
 	exchangeraterepository.New,
+	permitrepository.New,
+	permitrepository.NewJurisdictionRuleRepository,
 	modeprofilerepository.NewProfileRepository,
 	modeprofilerepository.NewDeviationRepository,
 	detentionrepository.NewPolicyRepository,

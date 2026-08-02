@@ -3,15 +3,18 @@ package shipmentservice
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"go.uber.org/zap"
 
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
+	"github.com/emoss08/trenova/internal/core/services/permitservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -153,6 +156,7 @@ func createCapabilityPolicyRule(
 	controlRepo repositories.ShipmentControlRepository,
 	shipmentRepo repositories.ShipmentRepository,
 	equipmentTypeRepo repositories.EquipmentTypeRepository,
+	permitSvc services.PermitService,
 ) validationframework.TenantedRule[*shipment.Shipment] {
 	return validationframework.NewTenantedRule[*shipment.Shipment]("capability_policy").
 		OnBoth().
@@ -180,6 +184,11 @@ func createCapabilityPolicyRule(
 			validateTemperature(entity, policy, multiErr)
 			validateDimensions(entity, policy, multiErr)
 			validateDeckFit(ctx, entity, policy, equipmentTypeRepo, multiErr)
+			validatePermits(
+				entity, policy,
+				permitAssessmentFor(ctx, permitSvc, policy, entity),
+				multiErr,
+			)
 
 			return validateMoveRemoval(
 				ctx, entity, valCtx, policy, control, shipmentRepo, multiErr,
@@ -357,4 +366,151 @@ func validateDeckFit(
 			overhang,
 			allowedOverhang,
 		))
+}
+
+func permitAssessmentFor(
+	ctx context.Context,
+	permitSvc services.PermitService,
+	policy *modeprofile.ResolvedPolicy,
+	entity *shipment.Shipment,
+) *services.PermitAssessment {
+	if permitSvc == nil || policy == nil {
+		return nil
+	}
+
+	if !policy.HasCapability(modeprofile.CapabilityPermitting) {
+		return nil
+	}
+
+	assessment, err := permitSvc.Assess(ctx, entity)
+	if err != nil {
+		return nil
+	}
+
+	return assessment
+}
+
+func jurisdictionList(requirements []*permit.Requirement) string {
+	codes := make([]string, 0, len(requirements))
+	for _, requirement := range requirements {
+		if code := requirement.StateCode(); code != "" {
+			codes = append(codes, code)
+		}
+	}
+	return strings.Join(codes, ", ")
+}
+
+func validatePermits(
+	entity *shipment.Shipment,
+	policy *modeprofile.ResolvedPolicy,
+	assessment *services.PermitAssessment,
+	multiErr *errortypes.MultiError,
+) {
+	if assessment == nil {
+		return
+	}
+
+	validatePermitRequired(policy, assessment, multiErr)
+	validatePermitExpiry(policy, assessment, multiErr)
+	validatePermitEscorts(policy, assessment, multiErr)
+	validatePermitLeadTime(entity, policy, assessment, multiErr)
+	validatePermitCurfew(policy, assessment, multiErr)
+}
+
+func validatePermitRequired(
+	policy *modeprofile.ResolvedPolicy,
+	assessment *services.PermitAssessment,
+	multiErr *errortypes.MultiError,
+) {
+	rule, ok := policy.Rule(modeprofile.RuleKeyPermitRequired)
+	if !ok || !rule.Applies() || !assessment.HasOpen() {
+		return
+	}
+
+	emit(multiErr, rule, "permits", errortypes.ErrRequired,
+		fmt.Sprintf("Permits are required and not recorded for %s",
+			jurisdictionList(assessment.Open)))
+}
+
+func validatePermitExpiry(
+	policy *modeprofile.ResolvedPolicy,
+	assessment *services.PermitAssessment,
+	multiErr *errortypes.MultiError,
+) {
+	rule, ok := policy.Rule(modeprofile.RuleKeyPermitExpiry)
+	if !ok || !rule.Applies() || len(assessment.ExpiringBeforeDelivery) == 0 {
+		return
+	}
+
+	emit(multiErr, rule, "permits", errortypes.ErrInvalid,
+		fmt.Sprintf("Permits for %s expire before the final scheduled arrival",
+			jurisdictionList(assessment.ExpiringBeforeDelivery)))
+}
+
+func validatePermitEscorts(
+	policy *modeprofile.ResolvedPolicy,
+	assessment *services.PermitAssessment,
+	multiErr *errortypes.MultiError,
+) {
+	rule, ok := policy.Rule(modeprofile.RuleKeyPermitEscorts)
+	if !ok || !rule.Applies() || !assessment.RequiresEscorts() {
+		return
+	}
+
+	emit(multiErr, rule, "permits", errortypes.ErrInvalidOperation,
+		fmt.Sprintf("This route requires %d escort vehicle(s); confirm they are booked",
+			assessment.TotalEscorts))
+}
+
+func validatePermitLeadTime(
+	entity *shipment.Shipment,
+	policy *modeprofile.ResolvedPolicy,
+	assessment *services.PermitAssessment,
+	multiErr *errortypes.MultiError,
+) {
+	rule, ok := policy.Rule(modeprofile.RuleKeyPermitLeadTime)
+	if !ok || !rule.Applies() || assessment.MaxLeadTimeDays == 0 {
+		return
+	}
+
+	pickup := permitservice.FirstPickupAt(entity)
+	if pickup == 0 || pickup >= assessment.EarliestPickup {
+		return
+	}
+
+	emit(multiErr, rule, "moves", errortypes.ErrInvalid,
+		fmt.Sprintf(
+			"Pickup is scheduled sooner than the %d day permit lead time on this route",
+			assessment.MaxLeadTimeDays))
+}
+
+// validatePermitCurfew reports that movement restrictions apply rather than
+// asserting a computed conflict. The seeded reference data records which
+// restrictions a jurisdiction imposes but not the exact windows, and claiming a
+// precise conflict from a boolean would be worse than saying nothing.
+func validatePermitCurfew(
+	policy *modeprofile.ResolvedPolicy,
+	assessment *services.PermitAssessment,
+	multiErr *errortypes.MultiError,
+) {
+	rule, ok := policy.Rule(modeprofile.RuleKeyPermitCurfewConflict)
+	if !ok || !rule.Applies() {
+		return
+	}
+
+	restricted := make([]*permit.Requirement, 0, len(assessment.Requirements))
+	for _, requirement := range assessment.Requirements {
+		if len(requirement.Restrictions) > 0 {
+			restricted = append(restricted, requirement)
+		}
+	}
+
+	if len(restricted) == 0 {
+		return
+	}
+
+	emit(multiErr, rule, "moves", errortypes.ErrInvalid,
+		fmt.Sprintf(
+			"Movement restrictions apply in %s; confirm the appointment windows are permitted",
+			jurisdictionList(restricted)))
 }

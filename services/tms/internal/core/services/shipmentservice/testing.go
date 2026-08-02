@@ -76,6 +76,7 @@ func NewTestValidatorWithAssignmentRepo(
 			mocks.NewMockShipmentRepository(t),
 			nil,
 			nil,
+			nil,
 		).Build(),
 		assignmentRepo: assignmentRepo,
 	}

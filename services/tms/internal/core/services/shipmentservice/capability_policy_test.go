@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -117,6 +119,7 @@ func validatorWithProfileAndEquipment(
 			mocks.NewMockShipmentRepository(t),
 			equipmentTypeRepo,
 			&stubModeProfileService{policy: policy},
+			nil,
 		).Build(),
 	}
 }
@@ -530,6 +533,322 @@ func TestCapabilityPolicy_DeckFitSkippedWithoutEnvelope(t *testing.T) {
 		),
 		&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000},
 		equipmentRepoWithDeck(t, entity, 53),
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Empty(t, advisories)
+}
+
+type stubPermitService struct {
+	assessment *services.PermitAssessment
+}
+
+func (s *stubPermitService) Assess(
+	_ context.Context, _ *shipment.Shipment,
+) (*services.PermitAssessment, error) {
+	return s.assessment, nil
+}
+
+func (s *stubPermitService) Sync(
+	_ context.Context, _ *shipment.Shipment, _ *services.RequestActor,
+) (*services.PermitAssessment, error) {
+	return s.assessment, nil
+}
+
+func (s *stubPermitService) ListPermits(
+	_ context.Context, _ pulid.ID, _ pagination.TenantInfo,
+) ([]*permit.Permit, error) {
+	return nil, nil
+}
+
+func (s *stubPermitService) CreatePermit(
+	_ context.Context, e *permit.Permit,
+) (*permit.Permit, error) {
+	return e, nil
+}
+
+func (s *stubPermitService) UpdatePermit(
+	_ context.Context, e *permit.Permit,
+) (*permit.Permit, error) {
+	return e, nil
+}
+
+func (s *stubPermitService) WaiveRequirement(
+	_ context.Context, _ *services.WaiveRequirementRequest,
+) (*permit.Requirement, error) {
+	return nil, nil
+}
+
+func permittingPolicy(
+	enforcement tenant.EnforcementLevel,
+	keys ...modeprofile.RuleKey,
+) *modeprofile.ResolvedPolicy {
+	rules := make(map[modeprofile.RuleKey]modeprofile.ResolvedRule, len(keys))
+	for _, key := range keys {
+		def, err := modeprofile.RuleDefinitionFor(key)
+		if err != nil {
+			continue
+		}
+		rules[key] = modeprofile.ResolvedRule{
+			Key:         key,
+			Capability:  def.Capability,
+			Label:       def.Label,
+			Enforcement: enforcement,
+			Enabled:     true,
+			Fields:      def.Fields,
+		}
+	}
+
+	return &modeprofile.ResolvedPolicy{
+		ProfileCode: "HEAVYHAUL",
+		Capabilities: []modeprofile.Capability{
+			modeprofile.CapabilityCore,
+			modeprofile.CapabilityPermitting,
+		},
+		Rules: rules,
+	}
+}
+
+func openRequirement(code string) *permit.Requirement {
+	return &permit.Requirement{
+		Status:     permit.RequirementOpen,
+		Provenance: &permit.RuleProvenance{StateCode: code},
+	}
+}
+
+func validatorWithPermits(
+	t *testing.T,
+	entity *shipment.Shipment,
+	policy *modeprofile.ResolvedPolicy,
+	assessment *services.PermitAssessment,
+) *Validator {
+	t.Helper()
+
+	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo.EXPECT().
+		Get(mock.Anything, repositories.GetShipmentControlRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+		}).
+		Return(&tenant.ShipmentControl{MaxShipmentWeightLimit: 80000}, nil).
+		Maybe()
+
+	return &Validator{
+		validator: newValidatorBuilder(
+			nil,
+			controlRepo,
+			NewTestCustomerRepository(t),
+			mocks.NewMockCommodityRepository(t),
+			mocks.NewMockHazmatSegregationRuleRepository(t),
+			mocks.NewMockShipmentRepository(t),
+			nil,
+			&stubModeProfileService{policy: policy},
+			&stubPermitService{assessment: assessment},
+		).Build(),
+	}
+}
+
+func TestPermitRule_MissingPermitBlocks(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	open := []*permit.Requirement{openRequirement("GA"), openRequirement("OH")}
+
+	v := validatorWithPermits(t, entity,
+		permittingPolicy(tenant.EnforcementLevelBlock, modeprofile.RuleKeyPermitRequired),
+		&services.PermitAssessment{Requirements: open, Open: open},
+	)
+
+	multiErr, _ := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	requireFieldError(t, multiErr, "permits",
+		"Permits are required and not recorded for GA, OH")
+}
+
+func TestPermitRule_WarnRecordsAdvisoryInsteadOfBlocking(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	open := []*permit.Requirement{openRequirement("NE")}
+
+	v := validatorWithPermits(t, entity,
+		permittingPolicy(tenant.EnforcementLevelWarn, modeprofile.RuleKeyPermitRequired),
+		&services.PermitAssessment{Requirements: open, Open: open},
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Len(t, advisories, 1)
+	require.Equal(t, modeprofile.RuleKeyPermitRequired.String(), advisories[0].RuleKey)
+}
+
+func TestPermitRule_SatisfiedRequirementsDoNotFire(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	satisfied := []*permit.Requirement{{
+		Status:     permit.RequirementSatisfied,
+		Provenance: &permit.RuleProvenance{StateCode: "GA"},
+	}}
+
+	v := validatorWithPermits(t, entity,
+		permittingPolicy(tenant.EnforcementLevelBlock, modeprofile.RuleKeyPermitRequired),
+		&services.PermitAssessment{Requirements: satisfied},
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Empty(t, advisories)
+}
+
+func TestPermitRule_ExpiryBeforeDeliveryBlocks(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	expiring := []*permit.Requirement{openRequirement("UT")}
+
+	v := validatorWithPermits(t, entity,
+		permittingPolicy(tenant.EnforcementLevelBlock, modeprofile.RuleKeyPermitExpiry),
+		&services.PermitAssessment{ExpiringBeforeDelivery: expiring},
+	)
+
+	multiErr, _ := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	requireFieldError(t, multiErr, "permits",
+		"Permits for UT expire before the final scheduled arrival")
+}
+
+func TestPermitRule_EscortsDefaultToReview(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+
+	v := validatorWithPermits(t, entity,
+		permittingPolicy(
+			tenant.EnforcementLevelRequireReview, modeprofile.RuleKeyPermitEscorts,
+		),
+		&services.PermitAssessment{TotalEscorts: 2},
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Len(t, advisories, 1)
+	require.Equal(t, errortypes.SeverityRequireReview, advisories[0].Severity)
+	require.Contains(t, advisories[0].Message, "2 escort vehicle(s)")
+}
+
+func TestPermitRule_CurfewReportsRestrictionsWithoutClaimingAConflict(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	restricted := openRequirement("OH")
+	restricted.Restrictions = []jurisdictionrule.RestrictionKind{
+		jurisdictionrule.RestrictionRushHour,
+	}
+
+	v := validatorWithPermits(t, entity,
+		permittingPolicy(
+			tenant.EnforcementLevelWarn, modeprofile.RuleKeyPermitCurfewConflict,
+		),
+		&services.PermitAssessment{Requirements: []*permit.Requirement{restricted}},
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Len(t, advisories, 1)
+	require.Contains(t, advisories[0].Message, "Movement restrictions apply in OH")
+	require.Contains(t, advisories[0].Message, "confirm the appointment windows")
+}
+
+// The policy carries the permit rules but does not declare the Permitting
+// capability, so the assessment must never be consulted. Without this the
+// capability gate could be deleted and nothing would notice.
+func TestPermitRule_IgnoredWithoutPermittingCapability(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	open := []*permit.Requirement{openRequirement("GA")}
+
+	policy := permittingPolicy(
+		tenant.EnforcementLevelBlock, modeprofile.RuleKeyPermitRequired,
+	)
+	policy.Capabilities = []modeprofile.Capability{modeprofile.CapabilityCore}
+
+	v := validatorWithPermits(t, entity, policy,
+		&services.PermitAssessment{Requirements: open, Open: open},
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Empty(t, advisories)
+}
+
+func TestPermitRule_NoEscortsRequiredProducesNothing(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+
+	v := validatorWithPermits(t, entity,
+		permittingPolicy(
+			tenant.EnforcementLevelRequireReview, modeprofile.RuleKeyPermitEscorts,
+		),
+		&services.PermitAssessment{TotalEscorts: 0},
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Empty(t, advisories)
+}
+
+func TestPermitRule_LeadTimeWarnsWhenPickupIsTooSoon(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	pickup := entity.Moves[0].Stops[0].ScheduledWindowStart
+
+	v := validatorWithPermits(t, entity,
+		permittingPolicy(
+			tenant.EnforcementLevelWarn, modeprofile.RuleKeyPermitLeadTime,
+		),
+		&services.PermitAssessment{
+			MaxLeadTimeDays: 5,
+			EarliestPickup:  pickup + 1,
+		},
+	)
+
+	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	require.Len(t, advisories, 1)
+	require.Contains(t, advisories[0].Message, "5 day permit lead time")
+}
+
+func TestPermitRule_LeadTimeSilentWhenPickupIsFarEnoughOut(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	pickup := entity.Moves[0].Stops[0].ScheduledWindowStart
+
+	v := validatorWithPermits(t, entity,
+		permittingPolicy(
+			tenant.EnforcementLevelWarn, modeprofile.RuleKeyPermitLeadTime,
+		),
+		&services.PermitAssessment{
+			MaxLeadTimeDays: 5,
+			EarliestPickup:  pickup - 1,
+		},
 	)
 
 	multiErr, advisories := v.ValidateCreateWithAdvisories(t.Context(), entity)

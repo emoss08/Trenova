@@ -87,16 +87,23 @@ const (
 
 	RuleKeyDimensionsRequired       = RuleKey("cargo.dimensionsRequired")
 	RuleKeyEnvelopeExceedsEquipment = RuleKey("cargo.envelopeExceedsEquipment")
+
+	RuleKeyPermitRequired       = RuleKey("permit.requiredBeforeDispatch")
+	RuleKeyPermitExpiry         = RuleKey("permit.expiresBeforeDelivery")
+	RuleKeyPermitEscorts        = RuleKey("permit.escortsArranged")
+	RuleKeyPermitLeadTime       = RuleKey("permit.leadTimeInsufficient")
+	RuleKeyPermitCurfewConflict = RuleKey("permit.curfewConflict")
 )
 
 func (r RuleKey) String() string { return string(r) }
 
 const (
-	ParamMaxWeight          = "maxWeight"
-	ParamRequireBothBounds  = "requireBothBounds"
-	ParamMaxOverhangFeet    = "maxOverhangFeet"
-	DefaultMaxShipmentLimit = 80000
-	DefaultMaxOverhangFeet  = 4
+	ParamMaxWeight           = "maxWeight"
+	ParamRequireBothBounds   = "requireBothBounds"
+	ParamMaxOverhangFeet     = "maxOverhangFeet"
+	ParamAttachDerivedCharge = "attachDerivedCharges"
+	DefaultMaxShipmentLimit  = 80000
+	DefaultMaxOverhangFeet   = 4
 )
 
 type RuleParameter struct {
@@ -194,6 +201,65 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 				Default:  DefaultMaxOverhangFeet,
 			},
 		},
+	},
+	RuleKeyPermitRequired: {
+		Key:        RuleKeyPermitRequired,
+		Capability: CapabilityPermitting,
+		Label:      "Permit Before Dispatch",
+		Rationale: "Moving an oversize or overweight load through a jurisdiction " +
+			"without its permit risks a citation at the scale and an out-of-service " +
+			"order that strands the load and the driver.",
+		DefaultEnforcement: tenant.EnforcementLevelBlock,
+		Fields:             []string{"permits"},
+		Parameters: []RuleParameter{
+			{
+				Name:     ParamAttachDerivedCharge,
+				Label:    "Attach Derived Permit and Escort Charges",
+				Type:     customfield.FieldTypeBoolean,
+				Required: false,
+				Default:  false,
+			},
+		},
+	},
+	RuleKeyPermitExpiry: {
+		Key:        RuleKeyPermitExpiry,
+		Capability: CapabilityPermitting,
+		Label:      "Permit Expiry Before Delivery",
+		Rationale: "A permit that covers dispatch but lapses before the final stop " +
+			"leaves the load illegal mid-route, which is worse than never having " +
+			"left: the truck is already loaded and committed.",
+		DefaultEnforcement: tenant.EnforcementLevelBlock,
+		Fields:             []string{"permits"},
+	},
+	RuleKeyPermitEscorts: {
+		Key:        RuleKeyPermitEscorts,
+		Capability: CapabilityPermitting,
+		Label:      "Escorts Arranged",
+		Rationale: "Escort vehicles are scarce and booked days ahead. Discovering at " +
+			"dispatch that a jurisdiction requires one is a missed pickup, not a " +
+			"phone call.",
+		DefaultEnforcement: tenant.EnforcementLevelRequireReview,
+		Fields:             []string{"permits"},
+	},
+	RuleKeyPermitLeadTime: {
+		Key:        RuleKeyPermitLeadTime,
+		Capability: CapabilityPermitting,
+		Label:      "Permit Lead Time",
+		Rationale: "Permit processing runs about a day where states issue online and " +
+			"three to five where review is manual. Quoting a pickup sooner than the " +
+			"slowest jurisdiction can issue is a missed appointment already booked.",
+		DefaultEnforcement: tenant.EnforcementLevelWarn,
+		Fields:             []string{"moves"},
+	},
+	RuleKeyPermitCurfewConflict: {
+		Key:        RuleKeyPermitCurfewConflict,
+		Capability: CapabilityPermitting,
+		Label:      "Curfew Conflict",
+		Rationale: "Most states confine oversize movement to daylight and bar it " +
+			"through metro areas at rush hour. An appointment inside a restricted " +
+			"window cannot legally be met.",
+		DefaultEnforcement: tenant.EnforcementLevelWarn,
+		Fields:             []string{"moves"},
 	},
 	RuleKeyTemperatureRange: {
 		Key:        RuleKeyTemperatureRange,

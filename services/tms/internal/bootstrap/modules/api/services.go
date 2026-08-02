@@ -99,6 +99,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
 	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/core/services/permission"
+	"github.com/emoss08/trenova/internal/core/services/permitservice"
 	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
@@ -328,6 +329,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	ratetableservice.New,
 	detentionpolicyservice.New,
 	modeprofileservice.NewService,
+	permitservice.NewService,
 	detentionservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(

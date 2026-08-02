@@ -30,6 +30,7 @@ type ValidatorParams struct {
 	ShipmentRepo              repositories.ShipmentRepository
 	EquipmentTypeRepo         repositories.EquipmentTypeRepository
 	ModeProfileService        services.ModeProfileService
+	PermitService             services.PermitService
 }
 
 type Validator struct {
@@ -47,6 +48,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		p.ShipmentRepo,
 		p.EquipmentTypeRepo,
 		p.ModeProfileService,
+		p.PermitService,
 	)
 
 	return &Validator{
@@ -64,6 +66,7 @@ func newValidatorBuilder(
 	shipmentRepo repositories.ShipmentRepository,
 	equipmentTypeRepo repositories.EquipmentTypeRepository,
 	profileSvc services.ModeProfileService,
+	permitSvc services.PermitService,
 ) *validationframework.TenantedValidatorBuilder[*shipment.Shipment] {
 	builder := validationframework.
 		NewTenantedValidatorBuilder[*shipment.Shipment]().
@@ -75,7 +78,7 @@ func newValidatorBuilder(
 		WithCustomRule(createShipmentStatusCoordinationRule()).
 		WithCustomRule(createHazmatSegregationRule(controlRepo, commodityRepo, hazmatRuleRepo)).
 		WithCustomRule(createCapabilityPolicyRule(
-			profileSvc, controlRepo, shipmentRepo, equipmentTypeRepo,
+			profileSvc, controlRepo, shipmentRepo, equipmentTypeRepo, permitSvc,
 		)).
 		WithCustomRule(createBOLValidationRule(customerRepo))
 
