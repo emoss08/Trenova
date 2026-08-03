@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { decimalStringSchema, nullableStringSchema, optionalStringSchema } from "./helpers";
+import {
+  decimalStringSchema,
+  nullableArraySchema,
+  nullableStringSchema,
+  optionalStringSchema,
+} from "./helpers";
 
 export const permitStatusSchema = z.enum(["Pending", "Active", "Expired", "Void"]);
 export type PermitStatus = z.infer<typeof permitStatusSchema>;
@@ -80,6 +85,64 @@ export const permitRequirementSchema = z.object({
   derivedAt: z.number(),
 });
 export type PermitRequirement = z.infer<typeof permitRequirementSchema>;
+
+export const permitRequirementListSchema = nullableArraySchema(permitRequirementSchema);
+
+export const permitSchema = z.object({
+  id: z.string(),
+  shipmentId: z.string(),
+  stateId: z.string(),
+  permitNumber: z.string(),
+  status: permitStatusSchema,
+  issuedAt: z.number().nullish(),
+  expiresAt: z.number().nullish(),
+  cost: decimalStringSchema,
+  documentId: nullableStringSchema,
+  notes: optionalStringSchema,
+  version: z.number().int().optional(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+  state: z.custom<{ id: string; abbreviation: string; name: string }>().nullish(),
+});
+export type Permit = z.infer<typeof permitSchema>;
+
+export const permitListSchema = nullableArraySchema(permitSchema);
+
+export const permitCreateSchema = z
+  .object({
+    stateId: z.string().min(1, { error: "Issuing state is required" }),
+    permitNumber: z
+      .string()
+      .min(1, { error: "Permit number is required" })
+      .max(100, { error: "Permit number must be between 1 and 100 characters" }),
+    status: permitStatusSchema.default("Active"),
+    issuedAt: z.number().int().nullish(),
+    expiresAt: z.number().int().nullish(),
+    cost: decimalStringSchema,
+    notes: optionalStringSchema,
+  })
+  // Mirrors permit.Permit.Validate on the server. Checking here as well means an
+  // operator sees "expiry must be after the issue date" against the field that
+  // is wrong instead of a round trip that returns a whole-form error.
+  .refine((value) => !value.issuedAt || !value.expiresAt || value.expiresAt > value.issuedAt, {
+    error: "Expiry must be after the issue date",
+    path: ["expiresAt"],
+  })
+  .refine((value) => value.status !== "Active" || !!value.expiresAt, {
+    error: "An active permit must record when it expires",
+    path: ["expiresAt"],
+  });
+export type PermitCreateInput = z.input<typeof permitCreateSchema>;
+
+/** Mirrors permit.MinWaiverReasonLength on the server. */
+export const MIN_WAIVER_REASON_LENGTH = 10;
+
+export const waiveRequirementSchema = z.object({
+  reason: z.string().min(MIN_WAIVER_REASON_LENGTH, {
+    error: "Provide a reason of at least 10 characters explaining the waiver",
+  }),
+});
+export type WaiveRequirementInput = z.infer<typeof waiveRequirementSchema>;
 
 export const assessedMeasurementsSchema = z.object({
   widthFeet: z.number(),

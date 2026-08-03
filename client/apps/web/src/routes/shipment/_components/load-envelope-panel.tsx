@@ -1,5 +1,6 @@
 import { queries } from "@/lib/queries";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -33,7 +34,9 @@ import {
   TriangleAlertIcon,
   TruckIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { PermitRecordDialog, PermitWaiveDialog } from "./permit-dialogs";
 
 export default function LoadEnvelopePanel() {
   const { control } = useFormContext<Shipment>();
@@ -64,7 +67,11 @@ export default function LoadEnvelopePanel() {
       {isPending ? (
         <Skeleton className="h-40 w-full rounded-lg" />
       ) : assessment ? (
-        <EnvelopeBody assessment={assessment} scheduledPickupAt={scheduledPickupAt} />
+        <EnvelopeBody
+          assessment={assessment}
+          scheduledPickupAt={scheduledPickupAt}
+          shipmentId={shipmentId as string}
+        />
       ) : (
         <EmptyNotice>The permit assessment could not be loaded for this shipment.</EmptyNotice>
       )}
@@ -89,16 +96,34 @@ function EnvelopeStatusBadge({ assessment }: { assessment: PermitAssessment }) {
 function EnvelopeBody({
   assessment,
   scheduledPickupAt,
+  shipmentId,
 }: {
   assessment: PermitAssessment;
   scheduledPickupAt: number | null | undefined;
+  shipmentId: string;
 }) {
   const rows = dimensionRows(assessment);
-  const requirements = assessment.requirements ?? [];
+  // The assessment's requirements are freshly derived and carry no ID, so the
+  // per-row actions read the persisted set instead. Falling back to the derived
+  // list keeps the summary honest on a shipment saved before the engine ran.
+  const { data: persisted } = useQuery({
+    ...queries.shipment.permitRequirements(shipmentId),
+    enabled: !!shipmentId,
+  });
+  const { data: permits } = useQuery({
+    ...queries.shipment.permits(shipmentId),
+    enabled: !!shipmentId,
+  });
+
+  const derived = assessment.requirements ?? [];
+  const requirements = persisted?.length ? persisted : derived;
   const escorts = escortSummary(requirements);
   const restrictions = restrictionSummary(assessment.jurisdictions);
   const unverified = unverifiedJurisdictions(assessment);
   const pickupTooSoon = pickupIsTooSoon(assessment, scheduledPickupAt);
+
+  const [recording, setRecording] = useState<PermitRequirement | null>(null);
+  const [waiving, setWaiving] = useState<PermitRequirement | null>(null);
 
   if (assessment.measurements.widthFeet === 0 && assessment.measurements.lengthFeet === 0) {
     return (
@@ -140,7 +165,45 @@ function EnvelopeBody({
           </div>
           <ul className="divide-y">
             {requirements.map((requirement) => (
-              <RequirementRow key={requirement.id} requirement={requirement} />
+              <RequirementRow
+                // Derived requirements have no ID, so the jurisdiction and its
+                // place on the route are what actually identify a row.
+                key={`${requirement.stateId}-${requirement.routeSequence}`}
+                requirement={requirement}
+                shipmentId={shipmentId}
+                onRecord={() => setRecording(requirement)}
+                onWaive={() => setWaiving(requirement)}
+              />
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!!permits?.length && (
+        <div className="rounded-lg border">
+          <div className="border-b border-border px-4 py-2 text-2xs text-muted-foreground uppercase">
+            Permits on file ({permits.length})
+          </div>
+          <ul className="divide-y">
+            {permits.map((entry) => (
+              <li key={entry.id} className="flex items-start justify-between gap-3 px-4 py-2">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-medium">
+                    {entry.state?.abbreviation ?? ""} {entry.permitNumber}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {entry.expiresAt
+                      ? `Expires ${formatToUserTimezone(entry.expiresAt, {
+                          showTimeZone: false,
+                          showTime: false,
+                        })}`
+                      : "No expiry recorded"}
+                  </p>
+                </div>
+                <Badge variant={entry.status === "Active" ? "active" : "outline"}>
+                  {entry.status}
+                </Badge>
+              </li>
             ))}
           </ul>
         </div>
@@ -238,6 +301,19 @@ function EnvelopeBody({
           </div>
         </div>
       )}
+
+      <PermitRecordDialog
+        open={recording !== null}
+        onOpenChange={(next) => !next && setRecording(null)}
+        shipmentId={shipmentId}
+        requirement={recording}
+      />
+      <PermitWaiveDialog
+        open={waiving !== null}
+        onOpenChange={(next) => !next && setWaiving(null)}
+        shipmentId={shipmentId}
+        requirement={waiving}
+      />
     </div>
   );
 }
@@ -282,9 +358,22 @@ function DimensionRowView({ row }: { row: DimensionRow }) {
   );
 }
 
-function RequirementRow({ requirement }: { requirement: PermitRequirement }) {
+function RequirementRow({
+  requirement,
+  onRecord,
+  onWaive,
+}: {
+  requirement: PermitRequirement;
+  shipmentId: string;
+  onRecord: () => void;
+  onWaive: () => void;
+}) {
   const satisfied = requirement.status === "Satisfied";
   const waived = requirement.status === "Waived";
+  // Actions need a persisted row to act on. A derived requirement has no ID yet
+  // because the shipment has not been saved since the engine ran, and offering
+  // a button that cannot resolve a target would be worse than offering none.
+  const actionable = requirement.status === "Open" && !!requirement.id;
 
   return (
     <li className="flex items-start justify-between gap-3 px-4 py-2">
@@ -300,9 +389,21 @@ function RequirementRow({ requirement }: { requirement: PermitRequirement }) {
           <p className="text-xs text-muted-foreground">Waived: {requirement.waiverReason}</p>
         )}
       </div>
-      <Badge variant={satisfied ? "active" : waived ? "outline" : "inactive"}>
-        {requirement.status}
-      </Badge>
+      <div className="flex shrink-0 items-center gap-1.5">
+        {actionable && (
+          <>
+            <Button type="button" variant="outline" size="xxs" onClick={onRecord}>
+              Record permit
+            </Button>
+            <Button type="button" variant="ghost" size="xxs" onClick={onWaive}>
+              Waive
+            </Button>
+          </>
+        )}
+        <Badge variant={satisfied ? "active" : waived ? "outline" : "inactive"}>
+          {requirement.status}
+        </Badge>
+      </div>
     </li>
   );
 }

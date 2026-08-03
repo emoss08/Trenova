@@ -25,6 +25,14 @@ export const shipment = createQueryKeys("shipment", {
     queryKey: ["permit-assessment", shipmentId, version],
     queryFn: async () => apiService.shipmentService.getPermitAssessment(shipmentId),
   }),
+  permits: (shipmentId: NonNullable<Shipment["id"]>) => ({
+    queryKey: ["permits", shipmentId],
+    queryFn: async () => apiService.shipmentService.listPermits(shipmentId),
+  }),
+  permitRequirements: (shipmentId: NonNullable<Shipment["id"]>) => ({
+    queryKey: ["permit-requirements", shipmentId],
+    queryFn: async () => apiService.shipmentService.listPermitRequirements(shipmentId),
+  }),
   profitability: (shipmentId: Shipment["id"]) => ({
     queryKey: ["profitability", shipmentId],
     queryFn: async () => getShipmentProfitabilityGraphQL(shipmentId),

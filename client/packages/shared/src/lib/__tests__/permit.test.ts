@@ -12,10 +12,12 @@ import {
   restrictionSummary,
   unverifiedJurisdictions,
 } from "@trenova/shared/lib/permit";
-import type {
-  AssessedJurisdiction,
-  PermitAssessment,
-  PermitRequirement,
+import {
+  permitCreateSchema,
+  waiveRequirementSchema,
+  type AssessedJurisdiction,
+  type PermitAssessment,
+  type PermitRequirement,
 } from "@trenova/shared/types/permit";
 
 function jurisdiction(
@@ -91,6 +93,47 @@ function requirement(
     ...rest,
   };
 }
+
+describe("permitCreateSchema", () => {
+  const base = { stateId: "us_1", permitNumber: "GA-1234", status: "Active" as const };
+
+  it("rejects an expiry that lands on or before the issue date", () => {
+    expect(permitCreateSchema.safeParse({ ...base, issuedAt: 2000, expiresAt: 1000 }).success).toBe(
+      false,
+    );
+    expect(permitCreateSchema.safeParse({ ...base, issuedAt: 2000, expiresAt: 2000 }).success).toBe(
+      false,
+    );
+    expect(permitCreateSchema.safeParse({ ...base, issuedAt: 1000, expiresAt: 2000 }).success).toBe(
+      true,
+    );
+  });
+
+  // Mirrors Permit.validateDates on the server: an active permit with no expiry
+  // would satisfy a requirement forever.
+  it("requires an expiry on an active permit", () => {
+    expect(permitCreateSchema.safeParse({ ...base, expiresAt: null }).success).toBe(false);
+    expect(
+      permitCreateSchema.safeParse({ ...base, status: "Pending", expiresAt: null }).success,
+    ).toBe(true);
+  });
+
+  it("requires a permit number and an issuing state", () => {
+    expect(
+      permitCreateSchema.safeParse({ ...base, permitNumber: "", expiresAt: 2000 }).success,
+    ).toBe(false);
+    expect(permitCreateSchema.safeParse({ ...base, stateId: "", expiresAt: 2000 }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe("waiveRequirementSchema", () => {
+  it("holds the reason to the server's minimum length", () => {
+    expect(waiveRequirementSchema.safeParse({ reason: "too short" }).success).toBe(false);
+    expect(waiveRequirementSchema.safeParse({ reason: "a".repeat(10) }).success).toBe(true);
+  });
+});
 
 describe("formatFeetInches", () => {
   it("renders whole feet without an inches component", () => {
