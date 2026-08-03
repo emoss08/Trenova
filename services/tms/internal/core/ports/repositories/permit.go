@@ -44,7 +44,7 @@ type JurisdictionRuleCacheRepository interface {
 }
 
 type ListPermitsRequest struct {
-	Filter     *pagination.QueryOptions
+	TenantInfo pagination.TenantInfo
 	ShipmentID pulid.ID
 	Status     string
 }
@@ -55,7 +55,7 @@ type GetPermitByIDRequest struct {
 }
 
 type ListRequirementsRequest struct {
-	Filter     *pagination.QueryOptions
+	TenantInfo pagination.TenantInfo
 	ShipmentID pulid.ID
 	Status     string
 }

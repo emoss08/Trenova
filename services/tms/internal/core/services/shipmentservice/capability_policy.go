@@ -75,6 +75,32 @@ func (s *service) recordCapabilityDeviations(
 	}
 }
 
+// syncPermits persists the permit derivation and reconciles the dispatch hold
+// after the shipment row is written. It runs post-persist because a hold
+// references the shipment, and because validation advisories cannot stop a
+// dispatch — only a hold can.
+//
+// A failure here is logged and swallowed rather than returned: the shipment is
+// already committed by this point, so surfacing an error would report a failed
+// save that actually succeeded. The log is at Error because the consequence is
+// an oversize load left dispatchable.
+func (s *service) syncPermits(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	actor *services.RequestActor,
+) {
+	if s.permitService == nil || entity == nil {
+		return
+	}
+
+	if _, err := s.permitService.Sync(ctx, entity, actor); err != nil {
+		s.l.Error("failed to sync permit requirements; dispatch may not be blocked",
+			zap.String("shipmentId", entity.ID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
 func emit(
 	multiErr *errortypes.MultiError,
 	rule modeprofile.ResolvedRule,

@@ -51,6 +51,7 @@ type Params struct {
 	UserRepo            repositories.UserRepository
 	ControlRepo         repositories.ShipmentControlRepository
 	ModeProfileService  services.ModeProfileService
+	PermitService       services.PermitService
 	ContinuityRepo      repositories.EquipmentContinuityRepository
 	CommodityRepo       repositories.CommodityRepository
 	HazmatRuleRepo      repositories.HazmatSegregationRuleRepository
@@ -84,6 +85,7 @@ type service struct {
 	userRepo            repositories.UserRepository
 	controlRepo         repositories.ShipmentControlRepository
 	modeProfileService  services.ModeProfileService
+	permitService       services.PermitService
 	continuityRepo      repositories.EquipmentContinuityRepository
 	commodityRepo       repositories.CommodityRepository
 	hazmatRuleRepo      repositories.HazmatSegregationRuleRepository
@@ -119,6 +121,7 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		userRepo:            p.UserRepo,
 		controlRepo:         p.ControlRepo,
 		modeProfileService:  p.ModeProfileService,
+		permitService:       p.PermitService,
 		continuityRepo:      p.ContinuityRepo,
 		commodityRepo:       p.CommodityRepo,
 		hazmatRuleRepo:      p.HazmatRuleRepo,
@@ -322,6 +325,7 @@ func (s *service) Create(
 	}
 
 	s.recordCapabilityDeviations(ctx, createdEntity, advisories)
+	s.syncPermits(ctx, createdEntity, actor)
 
 	if err = s.logShipmentAction(
 		createdEntity,
@@ -457,6 +461,7 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	}
 
 	s.recordCapabilityDeviations(ctx, updatedEntity, advisories)
+	s.syncPermits(ctx, updatedEntity, actor)
 
 	if err = s.advanceContinuityForCompletedMoves(ctx, original, updatedEntity); err != nil {
 		return nil, err

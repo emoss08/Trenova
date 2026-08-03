@@ -563,14 +563,20 @@ func (s *stubPermitService) ListPermits(
 	return nil, nil
 }
 
+func (s *stubPermitService) ListRequirements(
+	_ context.Context, _ pulid.ID, _ pagination.TenantInfo,
+) ([]*permit.Requirement, error) {
+	return nil, nil
+}
+
 func (s *stubPermitService) CreatePermit(
-	_ context.Context, e *permit.Permit,
+	_ context.Context, e *permit.Permit, _ *services.RequestActor,
 ) (*permit.Permit, error) {
 	return e, nil
 }
 
 func (s *stubPermitService) UpdatePermit(
-	_ context.Context, e *permit.Permit,
+	_ context.Context, e *permit.Permit, _ *services.RequestActor,
 ) (*permit.Permit, error) {
 	return e, nil
 }

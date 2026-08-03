@@ -916,6 +916,29 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:       ResourcePermit.String(),
+		DisplayName:    "Oversize Permit",
+		Description:    "Oversize and overweight permits and their derived requirements",
+		Category:       "Operations",
+		ParentResource: ResourceShipment.String(),
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View permits and permit requirements",
+			},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Record permits"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify recorded permits"},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Waive",
+				Description: "Waive a permit requirement, accepting the compliance risk",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceServiceFailure.String(),
 		DisplayName: "Service Failure",
 		Description: "Service failure investigation and approval records",

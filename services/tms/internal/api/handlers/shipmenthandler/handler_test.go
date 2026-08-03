@@ -103,9 +103,18 @@ func (s *permitServiceStub) ListPermits(
 	panic("unexpected ListPermits call")
 }
 
+func (s *permitServiceStub) ListRequirements(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) ([]*permit.Requirement, error) {
+	panic("unexpected ListRequirements call")
+}
+
 func (s *permitServiceStub) CreatePermit(
 	context.Context,
 	*permit.Permit,
+	*servicesport.RequestActor,
 ) (*permit.Permit, error) {
 	panic("unexpected CreatePermit call")
 }
@@ -113,6 +122,7 @@ func (s *permitServiceStub) CreatePermit(
 func (s *permitServiceStub) UpdatePermit(
 	context.Context,
 	*permit.Permit,
+	*servicesport.RequestActor,
 ) (*permit.Permit, error) {
 	panic("unexpected UpdatePermit call")
 }

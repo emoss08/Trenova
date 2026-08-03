@@ -95,6 +95,92 @@ func TestAssessJurisdictions_PreservesTravelOrderAndCarriesProvenance(t *testing
 	)
 }
 
+func waivedRequirement(stateID pulid.ID, by pulid.ID, reason string) *permit.Requirement {
+	return &permit.Requirement{
+		StateID:      stateID,
+		Status:       permit.RequirementWaived,
+		WaivedByID:   &by,
+		WaiverReason: reason,
+	}
+}
+
+func TestCarryWaiversForward_ReattachesAWaiverToTheReDerivedRequirement(t *testing.T) {
+	georgia := pulid.MustNew("us_")
+	waiver := pulid.MustNew("usr_")
+
+	derived := []*permit.Requirement{
+		{StateID: georgia, Status: permit.RequirementOpen},
+	}
+
+	carryWaiversForward(derived, []*permit.Requirement{
+		waivedRequirement(georgia, waiver, "Escort booked, moving under state escort authority"),
+	})
+
+	assert.Equal(t, permit.RequirementWaived, derived[0].Status)
+	require.NotNil(t, derived[0].WaivedByID)
+	assert.Equal(t, waiver, *derived[0].WaivedByID)
+	assert.Equal(
+		t,
+		"Escort booked, moving under state escort authority",
+		derived[0].WaiverReason,
+	)
+}
+
+func TestCarryWaiversForward_LeavesOtherJurisdictionsOpen(t *testing.T) {
+	georgia, tennessee := pulid.MustNew("us_"), pulid.MustNew("us_")
+	waiver := pulid.MustNew("usr_")
+
+	derived := []*permit.Requirement{
+		{StateID: georgia, Status: permit.RequirementOpen},
+		{StateID: tennessee, Status: permit.RequirementOpen},
+	}
+
+	carryWaiversForward(derived, []*permit.Requirement{
+		waivedRequirement(georgia, waiver, "Accepted risk, documented with the shipper"),
+	})
+
+	assert.Equal(t, permit.RequirementWaived, derived[0].Status)
+	assert.Equal(t, permit.RequirementOpen, derived[1].Status)
+	assert.Nil(t, derived[1].WaivedByID)
+}
+
+// A satisfied requirement must not carry forward. MatchPermits recomputes
+// satisfaction from the permit rows every time, so copying the old status would
+// let a permit that has since expired keep discharging the requirement.
+func TestCarryWaiversForward_DoesNotCarrySatisfaction(t *testing.T) {
+	georgia := pulid.MustNew("us_")
+	permitID := pulid.MustNew("pmt_")
+
+	derived := []*permit.Requirement{
+		{StateID: georgia, Status: permit.RequirementOpen},
+	}
+
+	carryWaiversForward(derived, []*permit.Requirement{
+		{
+			StateID:             georgia,
+			Status:              permit.RequirementSatisfied,
+			SatisfiedByPermitID: &permitID,
+		},
+	})
+
+	assert.Equal(t, permit.RequirementOpen, derived[0].Status)
+	assert.Nil(t, derived[0].SatisfiedByPermitID)
+}
+
+func TestCarryWaiversForward_ToleratesNilEntries(t *testing.T) {
+	georgia := pulid.MustNew("us_")
+	waiver := pulid.MustNew("usr_")
+
+	derived := []*permit.Requirement{nil, {StateID: georgia, Status: permit.RequirementOpen}}
+
+	carryWaiversForward(derived, []*permit.Requirement{
+		nil,
+		waivedRequirement(georgia, waiver, "Documented exception approved by compliance"),
+	})
+
+	assert.Equal(t, permit.RequirementWaived, derived[1].Status)
+}
+
 // A state with no rule row must be omitted rather than reported with zero
 // limits: a zero limit reads as "everything is oversize here", and an omitted
 // state reads as "we have no data", which is the truth.

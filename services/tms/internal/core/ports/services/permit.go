@@ -95,6 +95,7 @@ type WaiveRequirementRequest struct {
 	RequirementID pulid.ID
 	WaivedByID    pulid.ID
 	Reason        string
+	Actor         *RequestActor
 }
 
 type PermitService interface {
@@ -113,9 +114,26 @@ type PermitService interface {
 		[]*permit.Permit, error,
 	)
 
-	CreatePermit(ctx context.Context, entity *permit.Permit) (*permit.Permit, error)
+	// ListRequirements returns the persisted derivation. Assess returns freshly
+	// derived requirements that carry no ID, so anything offering per-row
+	// actions has to read them from here instead.
+	ListRequirements(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) ([]*permit.Requirement, error)
 
-	UpdatePermit(ctx context.Context, entity *permit.Permit) (*permit.Permit, error)
+	CreatePermit(
+		ctx context.Context,
+		entity *permit.Permit,
+		actor *RequestActor,
+	) (*permit.Permit, error)
+
+	UpdatePermit(
+		ctx context.Context,
+		entity *permit.Permit,
+		actor *RequestActor,
+	) (*permit.Permit, error)
 
 	WaiveRequirement(
 		ctx context.Context,

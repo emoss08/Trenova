@@ -50,7 +50,10 @@ func (r *repository) ListByShipment(
 		NewSelect().
 		Model(&entities).
 		Relation(buncolgen.PermitRelations.State).
-		Where(cols.ShipmentID.Eq(), req.ShipmentID)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.PermitScopeTenant(sq, req.TenantInfo).
+				Where(cols.ShipmentID.Eq(), req.ShipmentID)
+		})
 
 	if req.Status != "" {
 		q = q.Where(cols.Status.Eq(), req.Status)
@@ -141,7 +144,10 @@ func (r *repository) ListRequirements(
 		NewSelect().
 		Model(&entities).
 		Relation(buncolgen.RequirementRelations.State).
-		Where(cols.ShipmentID.Eq(), req.ShipmentID)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.RequirementScopeTenant(sq, req.TenantInfo).
+				Where(cols.ShipmentID.Eq(), req.ShipmentID)
+		})
 
 	if req.Status != "" {
 		q = q.Where(cols.Status.Eq(), req.Status)
@@ -157,6 +163,12 @@ func (r *repository) ListRequirements(
 
 // ReplaceForShipment supersedes the prior derivation and inserts the new one in
 // one transaction, so a shipment is never observed carrying a mix of two.
+//
+// Every live row is superseded, not only the open ones. Leaving waived and
+// satisfied rows in place while inserting a fresh row for the same jurisdiction
+// would accumulate a duplicate per save and resurrect a requirement an operator
+// had already waived. The caller carries a waiver forward onto the replacement
+// row instead.
 func (r *repository) ReplaceForShipment(
 	ctx context.Context,
 	req *repositories.ReplaceRequirementsRequest,
@@ -170,7 +182,7 @@ func (r *repository) ReplaceForShipment(
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return buncolgen.RequirementScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID).
-					Where(cols.Status.Eq(), permit.RequirementOpen)
+					Where(cols.Status.NotEq(), permit.RequirementSuperseded)
 			}).
 			Set(cols.Status.Set(), permit.RequirementSuperseded).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).

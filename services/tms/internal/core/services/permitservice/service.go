@@ -24,6 +24,7 @@ type ServiceParams struct {
 	PermitRepo       repositories.PermitRepository
 	JurisdictionRepo repositories.JurisdictionRuleRepository
 	HoldRepo         repositories.ShipmentHoldRepository
+	ShipmentRepo     repositories.ShipmentRepository
 	Logger           *zap.Logger
 }
 
@@ -31,6 +32,7 @@ type service struct {
 	permitRepo       repositories.PermitRepository
 	jurisdictionRepo repositories.JurisdictionRuleRepository
 	holdRepo         repositories.ShipmentHoldRepository
+	shipmentRepo     repositories.ShipmentRepository
 	l                *zap.Logger
 }
 
@@ -39,6 +41,7 @@ func NewService(p ServiceParams) services.PermitService {
 		permitRepo:       p.PermitRepo,
 		jurisdictionRepo: p.JurisdictionRepo,
 		holdRepo:         p.HoldRepo,
+		shipmentRepo:     p.ShipmentRepo,
 		l:                p.Logger.Named("permit-service"),
 	}
 }
@@ -304,6 +307,7 @@ func (s *service) Assess(
 	}
 
 	permits, err := s.permitRepo.ListByShipment(ctx, &repositories.ListPermitsRequest{
+		TenantInfo: tenantOf(entity),
 		ShipmentID: entity.ID,
 	})
 	if err != nil {
@@ -326,18 +330,72 @@ func (s *service) Assess(
 	return assessment, nil
 }
 
+// carryWaiversForward copies a live waiver onto the re-derived requirement for
+// the same jurisdiction. Re-deriving rather than preserving the old row is
+// deliberate: the exceedance that justified the waiver can change between saves,
+// and an operator needs to see the waiver attached to the load's current
+// numbers rather than to the ones it was granted against.
+//
+// Satisfaction is not carried forward. MatchPermits recomputes it from the
+// permit rows on every assessment, so copying a stale SatisfiedByPermitID would
+// let a permit that has since expired keep discharging a requirement.
+func carryWaiversForward(derived, existing []*permit.Requirement) {
+	waived := make(map[pulid.ID]*permit.Requirement, len(existing))
+
+	for _, requirement := range existing {
+		if requirement != nil && requirement.Status == permit.RequirementWaived {
+			waived[requirement.StateID] = requirement
+		}
+	}
+
+	if len(waived) == 0 {
+		return
+	}
+
+	for _, requirement := range derived {
+		if requirement == nil {
+			continue
+		}
+
+		prior, ok := waived[requirement.StateID]
+		if !ok {
+			continue
+		}
+
+		requirement.Status = permit.RequirementWaived
+		requirement.WaivedByID = prior.WaivedByID
+		requirement.WaiverReason = prior.WaiverReason
+	}
+}
+
 func (s *service) Sync(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	actor *services.RequestActor,
 ) (*services.PermitAssessment, error) {
+	tenantInfo := tenantOf(entity)
+
+	existing, err := s.permitRepo.ListRequirements(ctx, &repositories.ListRequirementsRequest{
+		TenantInfo: tenantInfo,
+		ShipmentID: entity.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	assessment, err := s.Assess(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
 
+	carryWaiversForward(assessment.Requirements, existing)
+
+	// Recompute after the carry-forward: a waived requirement no longer blocks
+	// dispatch, so the open set the hold is built from has to reflect it.
+	assessment.Open = permit.UnsatisfiedRequirements(assessment.Requirements)
+
 	if err = s.permitRepo.ReplaceForShipment(ctx, &repositories.ReplaceRequirementsRequest{
-		TenantInfo:   tenantOf(entity),
+		TenantInfo:   tenantInfo,
 		ShipmentID:   entity.ID,
 		Requirements: assessment.Requirements,
 	}); err != nil {
@@ -352,16 +410,65 @@ func (s *service) Sync(
 func (s *service) ListPermits(
 	ctx context.Context,
 	shipmentID pulid.ID,
-	_ pagination.TenantInfo,
+	tenantInfo pagination.TenantInfo,
 ) ([]*permit.Permit, error) {
 	return s.permitRepo.ListByShipment(ctx, &repositories.ListPermitsRequest{
+		TenantInfo: tenantInfo,
 		ShipmentID: shipmentID,
 	})
+}
+
+func (s *service) ListRequirements(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) ([]*permit.Requirement, error) {
+	return s.permitRepo.ListRequirements(ctx, &repositories.ListRequirementsRequest{
+		TenantInfo: tenantInfo,
+		ShipmentID: shipmentID,
+	})
+}
+
+// resync re-derives and reconciles the hold after a permit write. Recording the
+// permit that discharges a requirement has to clear the block in the same
+// request; leaving it until the next shipment save would mean an operator files
+// a permit, sees nothing change, and files it again.
+//
+// A failure is logged rather than returned: the permit itself is already
+// written, and reporting an error would invite the operator to record it twice.
+func (s *service) resync(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+	actor *services.RequestActor,
+) {
+	if s.shipmentRepo == nil {
+		return
+	}
+
+	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         shipmentID,
+		TenantInfo: tenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		s.l.Error("failed to reload shipment after permit write",
+			zap.String("shipmentId", shipmentID.String()), zap.Error(err))
+		return
+	}
+
+	if _, err = s.Sync(ctx, entity, actor); err != nil {
+		s.l.Error("failed to resync permits after permit write",
+			zap.String("shipmentId", shipmentID.String()), zap.Error(err))
+	}
 }
 
 func (s *service) CreatePermit(
 	ctx context.Context,
 	entity *permit.Permit,
+	actor *services.RequestActor,
 ) (*permit.Permit, error) {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -369,12 +476,23 @@ func (s *service) CreatePermit(
 		return nil, multiErr
 	}
 
-	return s.permitRepo.Create(ctx, entity)
+	created, err := s.permitRepo.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.resync(ctx, created.ShipmentID, pagination.TenantInfo{
+		OrgID: created.OrganizationID,
+		BuID:  created.BusinessUnitID,
+	}, actor)
+
+	return created, nil
 }
 
 func (s *service) UpdatePermit(
 	ctx context.Context,
 	entity *permit.Permit,
+	actor *services.RequestActor,
 ) (*permit.Permit, error) {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -382,7 +500,17 @@ func (s *service) UpdatePermit(
 		return nil, multiErr
 	}
 
-	return s.permitRepo.Update(ctx, entity)
+	updated, err := s.permitRepo.Update(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.resync(ctx, updated.ShipmentID, pagination.TenantInfo{
+		OrgID: updated.OrganizationID,
+		BuID:  updated.BusinessUnitID,
+	}, actor)
+
+	return updated, nil
 }
 
 func (s *service) WaiveRequirement(
@@ -402,10 +530,17 @@ func (s *service) WaiveRequirement(
 		return nil, multiErr
 	}
 
-	return s.permitRepo.WaiveRequirement(ctx, &repositories.WaiveRequirementRepoRequest{
+	waived, err := s.permitRepo.WaiveRequirement(ctx, &repositories.WaiveRequirementRepoRequest{
 		TenantInfo:    req.TenantInfo,
 		RequirementID: req.RequirementID,
 		WaivedByID:    req.WaivedByID,
 		Reason:        req.Reason,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.resync(ctx, waived.ShipmentID, req.TenantInfo, req.Actor)
+
+	return waived, nil
 }

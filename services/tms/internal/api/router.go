@@ -75,6 +75,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
@@ -178,6 +179,7 @@ type RouterParams struct {
 	ShipmentControlHandler          *shipmentcontrolhandler.Handler
 	ShipmentMoveHandler             *shipmentmovehandler.Handler
 	ShipmentHandler                 *shipmenthandler.Handler
+	PermitHandler                   *permithandler.Handler
 	ShipmentEventHandler            *shipmenteventhandler.Handler
 	ShipmentTypeHandler             *shipmenttypehandler.Handler
 	HazardousMaterialHandler        *hazardousmaterialhandler.Handler
@@ -262,6 +264,7 @@ type Router struct {
 	shipmentControlHandler          *shipmentcontrolhandler.Handler
 	shipmentMoveHandler             *shipmentmovehandler.Handler
 	shipmentHandler                 *shipmenthandler.Handler
+	permitHandler                   *permithandler.Handler
 	shipmentEventHandler            *shipmenteventhandler.Handler
 	equipmentManufacturerHandler    *equipmentmanufacturerhandler.Handler
 	equipmentTypeHandler            *equipmenttypehandler.Handler
@@ -375,6 +378,7 @@ func NewRouter(p RouterParams) *Router {
 		shipmentControlHandler:          p.ShipmentControlHandler,
 		shipmentMoveHandler:             p.ShipmentMoveHandler,
 		shipmentHandler:                 p.ShipmentHandler,
+		permitHandler:                   p.PermitHandler,
 		shipmentEventHandler:            p.ShipmentEventHandler,
 		equipmentManufacturerHandler:    p.EquipmentManufacturerHandler,
 		equipmentTypeHandler:            p.EquipmentTypeHandler,
@@ -581,6 +585,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.shipmentControlHandler.RegisterRoutes(protected)
 	r.shipmentMoveHandler.RegisterRoutes(protected)
 	r.shipmentHandler.RegisterRoutes(protected)
+	r.permitHandler.RegisterRoutes(protected)
 	r.shipmentEventHandler.RegisterRoutes(protected)
 	r.shipmentTypeHandler.RegisterRoutes(protected)
 	r.hazardousMaterialHandler.RegisterRoutes(protected)
