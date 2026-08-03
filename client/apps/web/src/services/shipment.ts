@@ -29,6 +29,7 @@ import {
 } from "@/types/loading-optimization";
 import { createLimitOffsetResponse, type PaginationInfo } from "@trenova/shared/types/server";
 import type { BillType } from "@trenova/shared/types/bill-type";
+import { permitAssessmentSchema } from "@trenova/shared/types/permit";
 import {
   bulkTransferToBillingResponseSchema,
   duplicateShipmentResponseSchema,
@@ -172,5 +173,10 @@ export class ShipmentService {
   public async getBillingReadiness(shipmentId: Shipment["id"]) {
     const response = await getShipmentBillingReadinessGraphQL(shipmentId);
     return safeParse(shipmentBillingReadinessSchema, response, "Shipment Billing Readiness");
+  }
+
+  public async getPermitAssessment(shipmentId: NonNullable<Shipment["id"]>) {
+    const response = await api.get<unknown>(`/shipments/${shipmentId}/permit-assessment/`);
+    return safeParse(permitAssessmentSchema, response, "Shipment Permit Assessment");
   }
 }

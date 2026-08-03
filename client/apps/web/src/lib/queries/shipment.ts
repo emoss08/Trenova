@@ -17,6 +17,14 @@ export const shipment = createQueryKeys("shipment", {
     queryKey: ["billing-readiness", shipmentId],
     queryFn: async () => apiService.shipmentService.getBillingReadiness(shipmentId),
   }),
+  // The version participates in the key so a save refetches the assessment.
+  // The shipment panel invalidates under "shipment-list", not this namespace,
+  // so without it the panel would keep rendering the pre-save envelope while
+  // looking authoritative.
+  permitAssessment: (shipmentId: NonNullable<Shipment["id"]>, version?: number) => ({
+    queryKey: ["permit-assessment", shipmentId, version],
+    queryFn: async () => apiService.shipmentService.getPermitAssessment(shipmentId),
+  }),
   profitability: (shipmentId: Shipment["id"]) => ({
     queryKey: ["profitability", shipmentId],
     queryFn: async () => getShipmentProfitabilityGraphQL(shipmentId),

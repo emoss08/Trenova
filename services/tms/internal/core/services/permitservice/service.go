@@ -216,13 +216,66 @@ func FirstPickupAt(entity *shipment.Shipment) int64 {
 	return stops[0].ScheduledWindowStart
 }
 
+// assessJurisdictions projects the resolved rules back onto the route in travel
+// order, carrying the headroom for every state rather than only the exceeded
+// ones. A jurisdiction with no rule row is skipped rather than reported as
+// unlimited, because silence about a state is not permission to enter it.
+func assessJurisdictions(
+	route []permit.RouteJurisdiction,
+	rules map[pulid.ID]*jurisdictionrule.Resolved,
+	measurements jurisdictionrule.Measurements,
+) []services.AssessedJurisdiction {
+	assessed := make([]services.AssessedJurisdiction, 0, len(route))
+
+	for _, jurisdiction := range route {
+		resolved, ok := rules[jurisdiction.StateID]
+		if !ok || resolved == nil {
+			continue
+		}
+
+		assessed = append(assessed, services.AssessedJurisdiction{
+			StateID:              jurisdiction.StateID,
+			StateCode:            resolved.StateCode,
+			StateName:            resolved.StateName,
+			Sequence:             jurisdiction.Sequence,
+			VerificationState:    resolved.VerificationState,
+			SourceNote:           resolved.SourceNote,
+			SourceURL:            resolved.SourceURL,
+			MaxWidthFeet:         resolved.MaxWidthFeet,
+			MaxHeightFeet:        resolved.MaxHeightFeet,
+			MaxLengthFeet:        resolved.MaxLengthFeet,
+			MaxWeightPounds:      resolved.MaxWeightPounds,
+			WidthHeadroomFeet:    resolved.MaxWidthFeet - measurements.WidthFeet,
+			HeightHeadroomFeet:   resolved.MaxHeightFeet - measurements.HeightFeet,
+			LengthHeadroomFeet:   resolved.MaxLengthFeet - measurements.LengthFeet,
+			WeightHeadroomPounds: resolved.MaxWeightPounds - measurements.WeightPounds,
+			RequiresPermit:       resolved.RequiresPermit(measurements),
+			Restrictions:         resolved.Restrictions(),
+		})
+	}
+
+	return assessed
+}
+
 func (s *service) Assess(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) (*services.PermitAssessment, error) {
 	assessment := &services.PermitAssessment{FeeIsBaseOnly: true}
 
-	if entity == nil || !entity.HasEnvelope() {
+	if entity == nil {
+		return assessment, nil
+	}
+
+	measurements := measurementsFor(entity)
+	assessment.Measurements = services.AssessedMeasurements{
+		WidthFeet:    measurements.WidthFeet,
+		HeightFeet:   measurements.HeightFeet,
+		LengthFeet:   measurements.LengthFeet,
+		WeightPounds: measurements.WeightPounds,
+	}
+
+	if !entity.HasEnvelope() {
 		return assessment, nil
 	}
 
@@ -236,10 +289,13 @@ func (s *service) Assess(
 		return nil, err
 	}
 
+	assessment.Jurisdictions = assessJurisdictions(route, rules, measurements)
+	assessment.RouteResolved = len(assessment.Jurisdictions) > 0
+
 	requirements := permit.Derive(permit.DeriveInput{
 		Jurisdictions: route,
 		Rules:         rules,
-		Measurements:  measurementsFor(entity),
+		Measurements:  measurements,
 		DerivedAt:     timeutils.NowUnix(),
 	})
 

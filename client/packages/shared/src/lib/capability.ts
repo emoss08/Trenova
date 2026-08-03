@@ -11,9 +11,23 @@ export const RULE_KEYS = {
   moveRemoval: "dispatch.moveRemoval",
   maxShipmentWeight: "cargo.maxShipmentWeight",
   temperatureRange: "cargo.temperatureRange",
+  dimensionsRequired: "cargo.dimensionsRequired",
+  envelopeExceedsEquipment: "cargo.envelopeExceedsEquipment",
+  permitRequired: "permit.requiredBeforeDispatch",
+  permitExpiry: "permit.expiresBeforeDelivery",
+  permitEscorts: "permit.escortsArranged",
+  permitLeadTime: "permit.leadTimeInsufficient",
+  permitCurfewConflict: "permit.curfewConflict",
 } as const;
 
 export type RuleKey = (typeof RULE_KEYS)[keyof typeof RULE_KEYS];
+
+export const RULE_PARAMETERS = {
+  maxWeight: "maxWeight",
+  requireBothBounds: "requireBothBounds",
+  maxOverhangFeet: "maxOverhangFeet",
+  attachDerivedCharges: "attachDerivedCharges",
+} as const;
 
 export const CAPABILITIES = {
   core: "Core",

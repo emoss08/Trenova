@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesport "github.com/emoss08/trenova/internal/core/ports/services"
@@ -71,6 +72,58 @@ func (s *importAssistantStub) CompleteHistory(
 	return nil
 }
 
+type permitServiceStub struct {
+	assessFn func(context.Context, *shipment.Shipment) (*servicesport.PermitAssessment, error)
+}
+
+func (s *permitServiceStub) Assess(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (*servicesport.PermitAssessment, error) {
+	if s.assessFn != nil {
+		return s.assessFn(ctx, entity)
+	}
+
+	panic("unexpected Assess call")
+}
+
+func (s *permitServiceStub) Sync(
+	context.Context,
+	*shipment.Shipment,
+	*servicesport.RequestActor,
+) (*servicesport.PermitAssessment, error) {
+	panic("unexpected Sync call")
+}
+
+func (s *permitServiceStub) ListPermits(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) ([]*permit.Permit, error) {
+	panic("unexpected ListPermits call")
+}
+
+func (s *permitServiceStub) CreatePermit(
+	context.Context,
+	*permit.Permit,
+) (*permit.Permit, error) {
+	panic("unexpected CreatePermit call")
+}
+
+func (s *permitServiceStub) UpdatePermit(
+	context.Context,
+	*permit.Permit,
+) (*permit.Permit, error) {
+	panic("unexpected UpdatePermit call")
+}
+
+func (s *permitServiceStub) WaiveRequirement(
+	context.Context,
+	*servicesport.WaiveRequirementRequest,
+) (*permit.Requirement, error) {
+	panic("unexpected WaiveRequirement call")
+}
+
 func setupShipmentHandler(
 	t *testing.T,
 	service *mocks.MockShipmentService,
@@ -101,6 +154,30 @@ func setupShipmentHandlerWithSubresources(
 ) *shipmenthandler.Handler {
 	t.Helper()
 
+	var assistant servicesport.ShipmentImportAssistantService
+	if len(importAssistant) > 0 {
+		assistant = importAssistant[0]
+	}
+
+	return buildShipmentHandler(t, handlerDeps{
+		service:         service,
+		commentService:  commentService,
+		holdService:     holdService,
+		importAssistant: assistant,
+	})
+}
+
+type handlerDeps struct {
+	service         servicesport.ShipmentService
+	commentService  servicesport.ShipmentCommentService
+	holdService     servicesport.ShipmentHoldService
+	importAssistant servicesport.ShipmentImportAssistantService
+	permitService   servicesport.PermitService
+}
+
+func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handler {
+	t.Helper()
+
 	logger := zap.NewNop()
 	cfg := &config.Config{
 		App: config.AppConfig{
@@ -118,16 +195,12 @@ func setupShipmentHandlerWithSubresources(
 		ErrorHandler:     errorHandler,
 	})
 
-	var assistant servicesport.ShipmentImportAssistantService
-	if len(importAssistant) > 0 {
-		assistant = importAssistant[0]
-	}
-
 	return shipmenthandler.New(shipmenthandler.Params{
-		Service:              service,
-		CommentService:       commentService,
-		HoldService:          holdService,
-		ImportAssistant:      assistant,
+		Service:              deps.service,
+		CommentService:       deps.commentService,
+		HoldService:          deps.holdService,
+		ImportAssistant:      deps.importAssistant,
+		PermitService:        deps.permitService,
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,
 		Logger:               logger,
@@ -411,6 +484,100 @@ func TestShipmentHandler_GetUnassigned_Success(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+}
+
+func TestShipmentHandler_GetPermitAssessment_Success(t *testing.T) {
+	t.Parallel()
+
+	shipmentID := pulid.MustNew("shp_")
+	entity := &shipment.Shipment{ID: shipmentID}
+
+	service := mocks.NewMockShipmentService(t)
+	service.EXPECT().
+		Get(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+			return req.ID == shipmentID &&
+				req.TenantInfo.OrgID == testutil.TestOrgID &&
+				req.TenantInfo.BuID == testutil.TestBuID &&
+				req.ExpandShipmentDetails
+		})).
+		Return(entity, nil).
+		Once()
+
+	var assessed *shipment.Shipment
+	permitService := &permitServiceStub{
+		assessFn: func(
+			_ context.Context,
+			passed *shipment.Shipment,
+		) (*servicesport.PermitAssessment, error) {
+			assessed = passed
+			return &servicesport.PermitAssessment{
+				Measurements: servicesport.AssessedMeasurements{
+					WidthFeet:    12.5,
+					HeightFeet:   13,
+					LengthFeet:   48,
+					WeightPounds: 74000,
+				},
+				Jurisdictions: []servicesport.AssessedJurisdiction{
+					{StateCode: "GA", MaxWidthFeet: 8.5, WidthHeadroomFeet: -4, RequiresPermit: true},
+				},
+				TotalEscorts:    2,
+				MaxLeadTimeDays: 5,
+				RouteResolved:   true,
+				FeeIsBaseOnly:   true,
+			}, nil
+		},
+	}
+
+	handler := buildShipmentHandler(t, handlerDeps{
+		service:        service,
+		commentService: mocks.NewMockShipmentCommentService(t),
+		holdService:    mocks.NewMockShipmentHoldService(t),
+		permitService:  permitService,
+	})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/shipments/" + shipmentID.String() + "/permit-assessment/").
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	assert.Same(t, entity, assessed)
+
+	var resp servicesport.PermitAssessment
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.True(t, resp.RouteResolved)
+	assert.True(t, resp.FeeIsBaseOnly)
+	assert.Equal(t, 2, resp.TotalEscorts)
+	assert.Equal(t, int16(5), resp.MaxLeadTimeDays)
+	assert.InDelta(t, 12.5, resp.Measurements.WidthFeet, 0.0001)
+	require.Len(t, resp.Jurisdictions, 1)
+	assert.Equal(t, "GA", resp.Jurisdictions[0].StateCode)
+	assert.InDelta(t, -4, resp.Jurisdictions[0].WidthHeadroomFeet, 0.0001)
+	assert.True(t, resp.Jurisdictions[0].RequiresPermit)
+}
+
+func TestShipmentHandler_GetPermitAssessment_InvalidShipmentID(t *testing.T) {
+	t.Parallel()
+
+	handler := buildShipmentHandler(t, handlerDeps{
+		service:        mocks.NewMockShipmentService(t),
+		commentService: mocks.NewMockShipmentCommentService(t),
+		holdService:    mocks.NewMockShipmentHoldService(t),
+		permitService:  &permitServiceStub{},
+	})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/shipments/not-a-pulid/permit-assessment/").
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 }
 
 func TestShipmentHandler_Get_Success(t *testing.T) {

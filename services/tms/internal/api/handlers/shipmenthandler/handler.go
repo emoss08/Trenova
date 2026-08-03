@@ -29,6 +29,7 @@ type Params struct {
 	CommentService       services.ShipmentCommentService
 	HoldService          services.ShipmentHoldService
 	ImportAssistant      services.ShipmentImportAssistantService
+	PermitService        services.PermitService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -39,6 +40,7 @@ type Handler struct {
 	commentService  services.ShipmentCommentService
 	holdService     services.ShipmentHoldService
 	importAssistant services.ShipmentImportAssistantService
+	permitService   services.PermitService
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
 	logger          *zap.Logger
@@ -50,6 +52,7 @@ func New(p Params) *Handler {
 		commentService:  p.CommentService,
 		holdService:     p.HoldService,
 		importAssistant: p.ImportAssistant,
+		permitService:   p.PermitService,
 		eh:              p.ErrorHandler,
 		pm:              p.PermissionMiddleware,
 		logger:          p.Logger.Named("api.shipment-handler"),
@@ -72,6 +75,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legac
 		"/:shipmentID/billing-readiness/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.getBillingReadiness,
+	)
+	api.GET(
+		"/:shipmentID/permit-assessment/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
+		h.getPermitAssessment,
 	)
 	api.POST(
 		"/:shipmentID/recalculate-distance/",
@@ -377,6 +385,56 @@ func (h *Handler) getBillingReadiness(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, readiness)
+}
+
+// @Summary Get shipment permit assessment
+// @Description Returns the oversize/overweight assessment for a shipment: the measured envelope, every jurisdiction on the route with its limits and headroom, derived permit requirements, escorts, restrictions, estimated fees and the earliest feasible pickup.
+// @ID getShipmentPermitAssessment
+// @Tags Shipments
+// @Produce json
+// @Param shipmentID path string true "Shipment ID"
+// @Success 200 {object} services.PermitAssessment
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /shipments/{shipmentID}/permit-assessment/ [get]
+func (h *Handler) getPermitAssessment(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		&repositories.GetShipmentByIDRequest{
+			ID: shipmentID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+			ShipmentOptions: repositories.ShipmentOptions{
+				ExpandShipmentDetails: true,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	assessment, err := h.permitService.Assess(c.Request.Context(), entity)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, assessment)
 }
 
 // @Summary Get a shipment
