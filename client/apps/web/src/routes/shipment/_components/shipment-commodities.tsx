@@ -26,9 +26,12 @@ import {
   CAPABILITIES,
   getProfile,
   isCapabilitySectionVisible,
-  isFieldRequired,
 } from "@trenova/shared/lib/capability";
 import { describeCommodityDimensions } from "@trenova/shared/lib/permit";
+import {
+  CapabilityFields,
+  type FieldDescriptor,
+} from "@trenova/shared/components/capability-form-section";
 import { apiService } from "@/services/api";
 import type { Commodity } from "@trenova/shared/types/commodity";
 import type { ResolvedModeProfile, Shipment } from "@trenova/shared/types/shipment";
@@ -71,7 +74,35 @@ function CommodityDialog({
   const { control, setValue, getValues, setError, clearErrors } = useFormContext<Shipment>();
   const [saving, setSaving] = useState(false);
   const showDimensions = isCapabilitySectionVisible(profile, CAPABILITIES.dimensionalCargo);
-  const dimensionsRequired = isFieldRequired(profile, "commodities");
+
+  // The three sides share one rule, one capability gate and one explainer, so
+  // they are described once and rendered by the shared renderer rather than
+  // hand-wired three times.
+  const dimensionDescriptors: FieldDescriptor[] = (
+    [
+      ["lengthFeet", "Length"],
+      ["widthFeet", "Width"],
+      ["heightFeet", "Height"],
+    ] as const
+  ).map(([field, label]) => ({
+    name: `commodities.${index}.${field}`,
+    // The mode profile's dimension rule names `commodities`, not the individual
+    // sides, so that is what resolves the required state.
+    ruleField: "commodities",
+    capability: CAPABILITIES.dimensionalCargo,
+    // One explainer under the group rather than three identical popovers.
+    hideExplainer: true,
+    render: ({ required }) => (
+      <NumberField
+        control={control}
+        name={`commodities.${index}.${field}`}
+        label={label}
+        placeholder="0"
+        sideText="ft"
+        rules={{ required }}
+      />
+    ),
+  }));
 
   function handleCommoditySelected(option: Commodity | null) {
     setValue(`commodities.${index}.commodity`, option ?? undefined);
@@ -178,43 +209,8 @@ function CommodityDialog({
             />
           </FormControl>
         </FormGroup>
-        {showDimensions && (
-          <FormGroup cols={3}>
-            <FormControl>
-              <NumberField
-                control={control}
-                name={`commodities.${index}.lengthFeet`}
-                label="Length"
-                placeholder="0"
-                sideText="ft"
-                rules={{ required: dimensionsRequired }}
-              />
-            </FormControl>
-            <FormControl>
-              <NumberField
-                control={control}
-                name={`commodities.${index}.widthFeet`}
-                label="Width"
-                placeholder="0"
-                sideText="ft"
-                rules={{ required: dimensionsRequired }}
-              />
-            </FormControl>
-            <FormControl>
-              <NumberField
-                control={control}
-                name={`commodities.${index}.heightFeet`}
-                label="Height"
-                placeholder="0"
-                sideText="ft"
-                rules={{ required: dimensionsRequired }}
-              />
-            </FormControl>
-            <FormControl cols="full">
-              <CapabilityExplainer profile={profile} field="commodities" />
-            </FormControl>
-          </FormGroup>
-        )}
+        <CapabilityFields descriptors={dimensionDescriptors} profile={profile} cols={3} />
+        {showDimensions && <CapabilityExplainer profile={profile} field="commodities" />}
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
             Cancel

@@ -1,13 +1,11 @@
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
-import { CapabilityExplainer } from "@trenova/shared/components/capability-explainer";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
-  CAPABILITIES,
-  getProfile,
-  isFieldRequired,
-  isCapabilitySectionVisible,
-} from "@trenova/shared/lib/capability";
+  CapabilityFields,
+  type FieldDescriptor,
+} from "@trenova/shared/components/capability-form-section";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { CAPABILITIES, getProfile } from "@trenova/shared/lib/capability";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -33,45 +31,49 @@ export default function ShipmentGeneralInformation() {
   const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
 
   const profile = getProfile(shipmentUIPolicy);
-  const showTemperature = isCapabilitySectionVisible(
-    profile,
-    CAPABILITIES.temperatureControl,
-  );
-  const temperatureRequired = isFieldRequired(profile, "temperatureMin");
+
+  const descriptors: FieldDescriptor[] = [
+    {
+      name: "temperatureMin",
+      capability: CAPABILITIES.temperatureControl,
+      render: ({ required }) => (
+        <NumberField
+          control={control}
+          name="temperatureMin"
+          description="The minimum temperature for the shipment."
+          label="Temperature Min"
+          placeholder="Enter Temperature Min"
+          sideText="°F"
+          rules={{ required }}
+        />
+      ),
+    },
+    {
+      name: "temperatureMax",
+      capability: CAPABILITIES.temperatureControl,
+      render: ({ required }) => (
+        <NumberField
+          control={control}
+          name="temperatureMax"
+          label="Temperature Max"
+          description="The maximum temperature for the shipment."
+          placeholder="Enter Temperature Max"
+          sideText="°F"
+          rules={{ required }}
+        />
+      ),
+    },
+  ];
 
   return (
     <Inner>
+      {/* The BOL field stays outside the descriptor list: its required state
+          comes from the customer's billing profile, not from the mode profile,
+          so it has nothing for the renderer to resolve. */}
       <FormGroup cols={2}>
         <BOLField />
-        {showTemperature && (
-          <>
-            <FormControl>
-              <NumberField
-                control={control}
-                name="temperatureMin"
-                description="The minimum temperature for the shipment."
-                label="Temperature Min"
-                placeholder="Enter Temperature Min"
-                sideText="°F"
-                rules={{ required: temperatureRequired }}
-              />
-              <CapabilityExplainer profile={profile} field="temperatureMin" />
-            </FormControl>
-            <FormControl>
-              <NumberField
-                control={control}
-                name="temperatureMax"
-                label="Temperature Max"
-                description="The maximum temperature for the shipment."
-                placeholder="Enter Temperature Max"
-                sideText="°F"
-                rules={{ required: isFieldRequired(profile, "temperatureMax") }}
-              />
-              <CapabilityExplainer profile={profile} field="temperatureMax" />
-            </FormControl>
-          </>
-        )}
       </FormGroup>
+      <CapabilityFields descriptors={descriptors} profile={profile} />
     </Inner>
   );
 }
@@ -120,7 +122,14 @@ export function BOLField() {
     return () => {
       if (bolCheckTimer.current != null) clearTimeout(bolCheckTimer.current);
     };
-  }, [bol, shipmentId, shipmentUIPolicy?.checkForDuplicateBols, setError, clearErrors, getFieldState]);
+  }, [
+    bol,
+    shipmentId,
+    shipmentUIPolicy?.checkForDuplicateBols,
+    setError,
+    clearErrors,
+    getFieldState,
+  ]);
 
   const bolRequired = billingProfile?.enforceCustomerBillingReq && billingProfile?.requireBOLNumber;
 
