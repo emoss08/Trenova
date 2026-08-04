@@ -28,6 +28,11 @@ type ListJurisdictionRulesRequest struct {
 	Status            jurisdictionrule.Status
 }
 
+type ListJurisdictionRuleConnectionRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"-"`
+}
+
 type GetJurisdictionRuleByIDRequest struct {
 	RuleID           pulid.ID
 	ExpandThresholds bool
@@ -56,6 +61,11 @@ type JurisdictionRuleRepository interface {
 		ctx context.Context,
 		req *ListJurisdictionRulesRequest,
 	) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error)
+
+	ListConnection(
+		ctx context.Context,
+		req *ListJurisdictionRuleConnectionRequest,
+	) (*pagination.CursorListResult[*jurisdictionrule.JurisdictionRule], error)
 
 	GetByID(
 		ctx context.Context,

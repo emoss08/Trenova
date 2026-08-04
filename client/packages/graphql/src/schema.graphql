@@ -4700,6 +4700,75 @@ type JournalSourceInfo {
   status: String!
 }
 
+"""
+Shared oversize and overweight limits for a jurisdiction.
+
+This data is global. It carries no organization or business unit, because the
+legal width of a load in a given state does not vary by carrier — a carrier
+expressing a stricter posture records a JurisdictionRuleOverride instead. A
+change here is visible to every organization on the platform.
+"""
+type JurisdictionRule {
+  createdAt: Int!
+  daylightOnly: Boolean!
+  effectiveEndDate: Int
+  effectiveStartDate: Int
+  holidayRestricted: Boolean!
+  id: ID!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+  maxWidthFeet: Float!
+  permitBaseFee: String
+  permitLeadTimeDays: Int!
+  permitPerMileFee: String
+  permitValidityDays: Int!
+  rushHourRestricted: Boolean!
+  """
+  What this row was checked against. Seeded rows carry a note saying which
+  fields are a federal baseline and which are simply not populated.
+  """
+  sourceNote: String
+  sourceUrl: String
+  state: UsState
+  stateId: ID!
+  status: JurisdictionRuleStatus!
+  superloadWeightPounds: Int
+  superloadWidthFeet: Float
+  updatedAt: Int!
+  """
+  Whether anyone has confirmed this row against the issuing state. Requirements
+  derived from an unverified row carry that state through to the operator.
+  """
+  verificationState: JurisdictionVerificationState!
+  verifiedAt: Int
+  version: Int!
+  weekendRestricted: Boolean!
+}
+
+type JurisdictionRuleConnection {
+  edges: [JurisdictionRuleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type JurisdictionRuleEdge {
+  cursor: String!
+  node: JurisdictionRule!
+}
+
+enum JurisdictionRuleStatus {
+  Active
+  Draft
+  Inactive
+}
+
+enum JurisdictionVerificationState {
+  Disputed
+  Unverified
+  Verified
+}
+
 input LocateTractorInput {
   newLocationId: ID!
   tractorId: ID!
@@ -6031,6 +6100,8 @@ type Query {
   journalReversal(id: ID!): JournalReversal
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
   journalSourceByObject(sourceId: String!, sourceType: String!): JournalSourceInfo
+  jurisdictionRule(id: ID!): JurisdictionRule
+  jurisdictionRules(input: DataTableConnectionInput!): JurisdictionRuleConnection!
   location(id: ID!): Location
   locationCategories(input: DataTableConnectionInput!): LocationCategoryConnection!
   locationCategory(id: ID!): LocationCategory

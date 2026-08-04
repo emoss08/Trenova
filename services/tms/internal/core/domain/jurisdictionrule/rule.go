@@ -79,6 +79,8 @@ type JurisdictionRule struct {
 
 func (r *JurisdictionRule) GetID() pulid.ID { return r.ID }
 
+func (r *JurisdictionRule) GetCreatedAt() int64 { return r.CreatedAt }
+
 func (r *JurisdictionRule) GetTableName() string { return "jurisdiction_rules" }
 
 func (r *JurisdictionRule) IsEffectiveAt(timestamp int64) bool {

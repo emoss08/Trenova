@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -522,4 +523,47 @@ func (r *jurisdictionRepository) Verify(
 	}
 
 	return r.GetByID(ctx, &repositories.GetJurisdictionRuleByIDRequest{RuleID: req.RuleID})
+}
+
+// ListConnection backs the admin table.
+//
+// No tenant scoping and no tenant filter in the cursor: this table is global
+// reference data, so every organization's admin table shows the same rows.
+func (r *jurisdictionRepository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListJurisdictionRuleConnectionRequest,
+) (*pagination.CursorListResult[*jurisdictionrule.JurisdictionRule], error) {
+	dba := r.db.DBForContext(ctx)
+
+	total, err := dba.
+		NewSelect().
+		Model((*jurisdictionrule.JurisdictionRule)(nil)).
+		Count(ctx)
+	if err != nil {
+		r.l.Error("failed to count jurisdiction rules", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*jurisdictionrule.JurisdictionRule]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*jurisdictionrule.JurisdictionRule) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					Relation(buncolgen.JurisdictionRuleRelations.State)
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return sq, nil
+			},
+		})
+	if err != nil {
+		r.l.Error("failed to scan jurisdiction rules", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }

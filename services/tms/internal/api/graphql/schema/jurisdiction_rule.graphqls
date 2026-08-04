@@ -1,0 +1,82 @@
+enum JurisdictionRuleStatus {
+  Active
+  Inactive
+  Draft
+}
+
+enum JurisdictionVerificationState {
+  Unverified
+  Verified
+  Disputed
+}
+
+"""
+Shared oversize and overweight limits for a jurisdiction.
+
+This data is global. It carries no organization or business unit, because the
+legal width of a load in a given state does not vary by carrier — a carrier
+expressing a stricter posture records a JurisdictionRuleOverride instead. A
+change here is visible to every organization on the platform.
+"""
+type JurisdictionRule {
+  id: ID!
+  stateId: ID!
+  status: JurisdictionRuleStatus!
+
+  maxWidthFeet: Float!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+
+  superloadWidthFeet: Float
+  superloadWeightPounds: Int
+
+  daylightOnly: Boolean!
+  rushHourRestricted: Boolean!
+  weekendRestricted: Boolean!
+  holidayRestricted: Boolean!
+
+  permitLeadTimeDays: Int!
+  permitValidityDays: Int!
+  permitBaseFee: String
+  permitPerMileFee: String
+
+  """
+  What this row was checked against. Seeded rows carry a note saying which
+  fields are a federal baseline and which are simply not populated.
+  """
+  sourceNote: String
+  sourceUrl: String
+
+  """
+  Whether anyone has confirmed this row against the issuing state. Requirements
+  derived from an unverified row carry that state through to the operator.
+  """
+  verificationState: JurisdictionVerificationState!
+  verifiedAt: Int
+
+  effectiveStartDate: Int
+  effectiveEndDate: Int
+
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+
+  state: UsState
+}
+
+type JurisdictionRuleEdge {
+  node: JurisdictionRule!
+  cursor: String!
+}
+
+type JurisdictionRuleConnection {
+  edges: [JurisdictionRuleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  jurisdictionRules(input: DataTableConnectionInput!): JurisdictionRuleConnection!
+  jurisdictionRule(id: ID!): JurisdictionRule
+}

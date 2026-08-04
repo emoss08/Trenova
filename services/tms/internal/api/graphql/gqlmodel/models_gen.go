@@ -41,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
@@ -2202,6 +2203,17 @@ type JournalReversalConnection struct {
 type JournalReversalEdge struct {
 	Node   *journalreversal.Reversal `json:"node"`
 	Cursor string                    `json:"cursor"`
+}
+
+type JurisdictionRuleConnection struct {
+	Edges      []*JurisdictionRuleEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type JurisdictionRuleEdge struct {
+	Node   *jurisdictionrule.JurisdictionRule `json:"node"`
+	Cursor string                             `json:"cursor"`
 }
 
 type LocateTractorInput struct {
