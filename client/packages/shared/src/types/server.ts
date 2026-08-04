@@ -84,6 +84,7 @@ export type BaseEndpoint =
   | "/document-types/"
   | "/documents/"
   | "/hold-reasons/"
+  | "/jurisdiction-rules/"
   | "/recurring-shipments/"
   | "/rate-tables/"
   | "/service-failures/"

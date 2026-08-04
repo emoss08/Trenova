@@ -1266,6 +1266,16 @@ export type JournalReversalStatus =
   | 'Rejected'
   | 'Requested';
 
+export type JurisdictionRuleStatus =
+  | 'Active'
+  | 'Draft'
+  | 'Inactive';
+
+export type JurisdictionVerificationState =
+  | 'Disputed'
+  | 'Unverified'
+  | 'Verified';
+
 export type LocationCategoryType =
   | 'CustomerLocation'
   | 'DistributionCenter'
@@ -4374,6 +4384,15 @@ export type JournalReversalTableQueryVariables = Exact<{
 
 export type JournalReversalTableQuery = { journalReversals: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'JournalReversalTableRowFieldsFragment': JournalReversalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type JurisdictionRuleTableRowFieldsFragment = { id: string, stateId: string, status: JurisdictionRuleStatus, maxWidthFeet: number, maxHeightFeet: number, maxLengthFeet: number, maxWeightPounds: number, superloadWidthFeet: number | null, superloadWeightPounds: number | null, daylightOnly: boolean, rushHourRestricted: boolean, weekendRestricted: boolean, holidayRestricted: boolean, permitLeadTimeDays: number, permitValidityDays: number, permitBaseFee: string | null, permitPerMileFee: string | null, sourceNote: string | null, sourceUrl: string | null, verificationState: JurisdictionVerificationState, verifiedAt: number | null, effectiveStartDate: number | null, effectiveEndDate: number | null, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null } & { ' $fragmentName'?: 'JurisdictionRuleTableRowFieldsFragment' };
+
+export type JurisdictionRuleTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type JurisdictionRuleTableQuery = { jurisdictionRules: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'JurisdictionRuleTableRowFieldsFragment': JurisdictionRuleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type LocationCategoryTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, type: LocationCategoryType, facilityType: FacilityType | null, color: string, hasSecureParking: boolean, requiresAppointment: boolean, allowsOvernight: boolean, hasRestroom: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'LocationCategoryTableRowFieldsFragment' };
 
 export type LocationCategoryTableQueryVariables = Exact<{
@@ -7187,6 +7206,41 @@ export const JournalReversalTableRowFieldsFragmentDoc = new TypedDocumentString(
   updatedAt
 }
     `, {"fragmentName":"JournalReversalTableRowFields"}) as unknown as TypedDocumentString<JournalReversalTableRowFieldsFragment, unknown>;
+export const JurisdictionRuleTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment JurisdictionRuleTableRowFields on JurisdictionRule {
+  id
+  stateId
+  status
+  maxWidthFeet
+  maxHeightFeet
+  maxLengthFeet
+  maxWeightPounds
+  superloadWidthFeet
+  superloadWeightPounds
+  daylightOnly
+  rushHourRestricted
+  weekendRestricted
+  holidayRestricted
+  permitLeadTimeDays
+  permitValidityDays
+  permitBaseFee
+  permitPerMileFee
+  sourceNote
+  sourceUrl
+  verificationState
+  verifiedAt
+  effectiveStartDate
+  effectiveEndDate
+  version
+  createdAt
+  updatedAt
+  state {
+    id
+    name
+    abbreviation
+  }
+}
+    `, {"fragmentName":"JurisdictionRuleTableRowFields"}) as unknown as TypedDocumentString<JurisdictionRuleTableRowFieldsFragment, unknown>;
 export const LocationCategoryTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment LocationCategoryTableRowFields on LocationCategory {
   id
@@ -15633,6 +15687,57 @@ fragment JournalReversalTableRowFields on JournalReversal {
   createdAt
   updatedAt
 }`, {"hash":"sha256:24e728ee31f68aae6a69d417eef59bab9bd326df315025eb96e50213d737aa49"}) as unknown as TypedDocumentString<JournalReversalTableQuery, JournalReversalTableQueryVariables>;
+export const JurisdictionRuleTableDocument = new TypedDocumentString(`
+    query JurisdictionRuleTable($input: DataTableConnectionInput!) {
+  jurisdictionRules(input: $input) {
+    edges {
+      node {
+        ...JurisdictionRuleTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment JurisdictionRuleTableRowFields on JurisdictionRule {
+  id
+  stateId
+  status
+  maxWidthFeet
+  maxHeightFeet
+  maxLengthFeet
+  maxWeightPounds
+  superloadWidthFeet
+  superloadWeightPounds
+  daylightOnly
+  rushHourRestricted
+  weekendRestricted
+  holidayRestricted
+  permitLeadTimeDays
+  permitValidityDays
+  permitBaseFee
+  permitPerMileFee
+  sourceNote
+  sourceUrl
+  verificationState
+  verifiedAt
+  effectiveStartDate
+  effectiveEndDate
+  version
+  createdAt
+  updatedAt
+  state {
+    id
+    name
+    abbreviation
+  }
+}`, {"hash":"sha256:2a608c9295be683a2c81a47bc04a06e4db7397ad8fa19cc18f337d5045a951e9"}) as unknown as TypedDocumentString<JurisdictionRuleTableQuery, JurisdictionRuleTableQueryVariables>;
 export const LocationCategoryTableDocument = new TypedDocumentString(`
     query LocationCategoryTable($input: DataTableConnectionInput!) {
   locationCategories(input: $input) {

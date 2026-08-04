@@ -892,6 +892,16 @@ export const navigationConfig: NavigationConfig = {
       keywords: ["hold", "reason"],
     },
     {
+      id: "create-jurisdiction-rule",
+      label: "Create Jurisdiction Rule",
+      description: "Add oversize limits for a state",
+      path: "/admin/jurisdiction-rules",
+      resource: Resource.JurisdictionRule,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["jurisdiction", "oversize", "permit", "state", "limits"],
+    },
+    {
       id: "create-service-failure-reason-code",
       label: "Create Service Failure Reason",
       description: "Add a service failure reason code",
@@ -1151,6 +1161,13 @@ export const adminLinks: SidebarLink[] = [
     title: "Hold Reasons",
     group: "Organization",
     resource: Resource.HoldReason,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/jurisdiction-rules/",
+    title: "Jurisdiction Rules",
+    group: "Organization",
+    resource: Resource.JurisdictionRule,
     requiredOperation: Operation.Read,
   },
   {
