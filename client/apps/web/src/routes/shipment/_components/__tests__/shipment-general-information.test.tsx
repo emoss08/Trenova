@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { FormProvider, useForm } from "react-hook-form";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { BOLField } from "../shipment-general-information";
+import ShipmentGeneralInformation, { BOLField } from "../shipment-general-information";
 
 const { checkForDuplicateBOLs, getUIPolicy, getBillingProfile } = vi.hoisted(() => ({
   checkForDuplicateBOLs: vi.fn(),
@@ -64,6 +64,20 @@ function TestForm() {
   );
 }
 
+function TestSection({ customerId = "" }: { customerId?: string }) {
+  const form = useForm({
+    defaultValues: { id: undefined, bol: "", customerId },
+  });
+
+  return (
+    <QueryClientProvider client={createQueryClient()}>
+      <FormProvider {...form}>
+        <ShipmentGeneralInformation />
+      </FormProvider>
+    </QueryClientProvider>
+  );
+}
+
 describe("BOLField", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -87,5 +101,87 @@ describe("BOLField", () => {
     );
 
     expect(screen.queryByText(/BOL is already in use/i)).not.toBeInTheDocument();
+  });
+
+  // isFieldRequired reports true whenever any Block rule names the field, and
+  // documentation.duplicateBol names `bol` at Block by default. That rule means
+  // "do not reuse a BOL", not "a BOL is mandatory", so BOL must never take its
+  // required state from the profile — only from the customer's billing profile.
+  //
+  // This fails the moment someone "fixes" the descriptor's ignored `required`
+  // parameter in shipment-general-information.tsx.
+  it("is not required merely because a blocking rule names the bol field", async () => {
+    getUIPolicy.mockResolvedValue({
+      checkForDuplicateBols: true,
+      profile: {
+        profileId: "mpf_1",
+        profileCode: "OTR",
+        profileName: "OTR Truckload",
+        serviceModel: "Truckload",
+        equipmentClass: "DryVan",
+        executionParty: "CompanyAsset",
+        capabilities: ["Core"],
+        rules: {
+          "documentation.duplicateBol": {
+            key: "documentation.duplicateBol",
+            capability: "Core",
+            label: "Duplicate Bill of Lading",
+            enforcement: "Block",
+            enabled: true,
+            fields: ["bol"],
+            parameters: {},
+            provenance: {
+              profileId: "mpf_1",
+              profileCode: "OTR",
+              profileName: "OTR Truckload",
+              isOrgDefault: true,
+              priority: 0,
+              specificityScore: 0,
+              matchedOn: ["organizationDefault"],
+              ruleKey: "documentation.duplicateBol",
+              capability: "Core",
+              capabilityLabel: "Core Operations",
+              enforcement: "Block",
+              defaultEnforcement: "Block",
+              overridden: false,
+              rationale: "A reused bill of lading usually indicates a double-entered load.",
+            },
+          },
+        },
+        candidates: [],
+        resolvedAt: 0,
+      },
+    });
+    // The billing profile is what actually decides, and it does not require one.
+    getBillingProfile.mockResolvedValue({
+      enforceCustomerBillingReq: true,
+      requireBOLNumber: false,
+    });
+
+    // Renders the whole section, not BOLField alone: the guard is on the
+    // descriptor wiring in CapabilityFields, so the descriptor path has to run.
+    render(<TestSection />);
+
+    await screen.findByPlaceholderText("Enter BOL");
+    await waitFor(() => expect(getUIPolicy).toHaveBeenCalled());
+
+    // InputField routes `required` to a class on the label rather than to the
+    // DOM input, so that class is the only observable signal. Asserting on
+    // toBeRequired() here would pass no matter what the field decided.
+    expect(screen.getByText("BOL")).not.toHaveClass("required");
+  });
+
+  it("still marks BOL required when the customer's billing profile demands one", async () => {
+    getUIPolicy.mockResolvedValue({ checkForDuplicateBols: true, profile: null });
+    getBillingProfile.mockResolvedValue({
+      enforceCustomerBillingReq: true,
+      requireBOLNumber: true,
+    });
+
+    render(<TestSection customerId="cus_1" />);
+
+    await screen.findByPlaceholderText("Enter BOL");
+
+    await waitFor(() => expect(screen.getByText("BOL")).toHaveClass("required"));
   });
 });

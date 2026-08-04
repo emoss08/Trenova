@@ -1,6 +1,8 @@
 import { Button } from "@trenova/shared/components/ui/button";
+import { CapabilityExplainer } from "@trenova/shared/components/capability-explainer";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { TruckIcon } from "@trenova/shared/components/ui/truck";
+import { getProfile, isMoveRemovalAllowed } from "@trenova/shared/lib/capability";
 import { queries } from "@/lib/queries";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
@@ -28,10 +30,15 @@ export default function ShipmentMoveDetails() {
   const [moveDialog, setMoveDialog] = useState<MoveDialogState>({
     open: false,
   });
-  const { data: shipmentControl } = useQuery({
+  const { data: shipmentUIPolicy } = useQuery({
     ...queries.shipment.uiPolicy(),
   });
-  const allowPersistedMoveRemoval = !shipmentID || shipmentControl?.allowMoveRemovals === true;
+  const profile = getProfile(shipmentUIPolicy);
+  // An unsaved shipment has no persisted moves to detach history from, so removal
+  // is always allowed there. Past that, the decision has to match the server's:
+  // the profile rule wins, the org flag is only a fallback.
+  const allowPersistedMoveRemoval =
+    !shipmentID || isMoveRemovalAllowed(profile, shipmentUIPolicy?.allowMoveRemovals);
 
   function handleDialogClose() {
     setMoveDialog({ open: false });
@@ -81,10 +88,17 @@ export default function ShipmentMoveDetails() {
         description="Execution legs and stop sequences for this shipment"
         className="border-t border-border pt-4"
         action={
-          <Button type="button" variant="outline" size="xxs" onClick={handleAddMove}>
-            <PlusIcon className="size-3" />
-            Add Move
-          </Button>
+          <div className="flex items-center gap-1.5">
+            {/* Three rules name `moves` — move removal, permit lead time and curfew
+                conflict — and the pickup date that drives the latter two is edited
+                in a modal that covers the Load Envelope panel. The explainer
+                self-hides when no rule applies. */}
+            <CapabilityExplainer profile={profile} field="moves" />
+            <Button type="button" variant="outline" size="xxs" onClick={handleAddMove}>
+              <PlusIcon className="size-3" />
+              Add Move
+            </Button>
+          </div>
         }
       >
         {moveFields.map((field, moveIndex) => (

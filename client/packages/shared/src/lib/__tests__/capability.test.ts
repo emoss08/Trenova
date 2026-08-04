@@ -11,6 +11,7 @@ import {
   hasCapability,
   isCapabilitySectionVisible,
   isFieldRequired,
+  isMoveRemovalAllowed,
   ruleApplies,
   ruleBlocks,
   rulesForField,
@@ -83,6 +84,78 @@ describe("getProfile", () => {
 
   it("returns null for an undefined policy", () => {
     expect(getProfile(undefined)).toBeNull();
+  });
+});
+
+// Mirrors moveRemovalRuleFor in services/tms/internal/core/services/shipmentservice/
+// capability_policy.go: the profile's dispatch.moveRemoval rule decides when it is
+// present, and the org's allowMoveRemovals flag is consulted only as a fallback.
+//
+// Fixtures are written from that Go source, not from what the client did before.
+// The two cells where profile and flag disagree are exactly the divergence: the
+// client used to read the flag alone, so it permitted a removal the server would
+// reject and forbade one the server would accept.
+describe("isMoveRemovalAllowed", () => {
+  function moveRemovalRule(enforcement: EnforcementLevel) {
+    return makeRule({
+      key: RULE_KEYS.moveRemoval,
+      enforcement,
+      fields: ["moves"],
+    });
+  }
+
+  it.each<[EnforcementLevel, boolean, boolean]>([
+    ["Block", true, false],
+    ["Block", false, false],
+    ["Ignore", true, true],
+    ["Ignore", false, true],
+    ["Warn", true, true],
+    ["Warn", false, true],
+  ])(
+    "lets the %s rule decide over an allowMoveRemovals of %s",
+    (enforcement, allowMoveRemovals, expected) => {
+      expect(
+        isMoveRemovalAllowed(makeProfile([moveRemovalRule(enforcement)]), allowMoveRemovals),
+      ).toBe(expected);
+    },
+  );
+
+  // A disabled rule is not a decision. ruleBlocks already requires enabled, so a
+  // disabled Block rule must not read as blocking.
+  it("treats a disabled rule as permitting removal", () => {
+    const disabled = makeRule({
+      key: RULE_KEYS.moveRemoval,
+      enforcement: "Block",
+      enabled: false,
+      fields: ["moves"],
+    });
+
+    expect(isMoveRemovalAllowed(makeProfile([disabled]), false)).toBe(true);
+  });
+
+  it.each([true, false])(
+    "falls back to an allowMoveRemovals of %s when the profile carries no such rule",
+    (allowMoveRemovals) => {
+      const unrelated = makeRule({ key: RULE_KEYS.duplicateBol, fields: ["bol"] });
+
+      expect(isMoveRemovalAllowed(makeProfile([unrelated]), allowMoveRemovals)).toBe(
+        allowMoveRemovals,
+      );
+    },
+  );
+
+  it.each([true, false])(
+    "falls back to an allowMoveRemovals of %s when the profile is unresolved",
+    (allowMoveRemovals) => {
+      expect(isMoveRemovalAllowed(null, allowMoveRemovals)).toBe(allowMoveRemovals);
+      expect(isMoveRemovalAllowed(undefined, allowMoveRemovals)).toBe(allowMoveRemovals);
+    },
+  );
+
+  // The flag is nullish while the UI policy query is in flight. Defaulting to
+  // "allowed" there would flash an enabled remove button that then disables.
+  it("denies removal when the flag has not loaded and no rule decides", () => {
+    expect(isMoveRemovalAllowed(null, undefined)).toBe(false);
   });
 });
 

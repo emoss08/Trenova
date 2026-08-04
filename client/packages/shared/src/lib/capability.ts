@@ -83,6 +83,34 @@ export function isFieldRequired(
   );
 }
 
+/**
+ * Whether a persisted move may be removed.
+ *
+ * Mirrors `moveRemovalRuleFor` in
+ * `services/tms/internal/core/services/shipmentservice/capability_policy.go`:
+ * the profile's `dispatch.moveRemoval` rule decides whenever it is present, and
+ * the organization's `allowMoveRemovals` flag is a fallback for profiles that
+ * carry no such rule.
+ *
+ * The precedence is the whole point. Reading the flag alone lets the form permit
+ * a removal the server will reject on save — the operator deletes a move, submits,
+ * and gets a validation failure against a rule the form never showed them.
+ *
+ * Keep this in step with the Go function; a change to one without the other
+ * reopens exactly that divergence.
+ */
+export function isMoveRemovalAllowed(
+  profile: ResolvedModeProfile | null | undefined,
+  allowMoveRemovals: boolean | undefined,
+): boolean {
+  const rule = getRule(profile, RULE_KEYS.moveRemoval);
+  if (rule) {
+    return !ruleBlocks(rule);
+  }
+
+  return allowMoveRemovals === true;
+}
+
 export function rulesForField(
   profile: ResolvedModeProfile | null | undefined,
   field: string,

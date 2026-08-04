@@ -4,7 +4,7 @@ import {
   CapabilityFields,
   type FieldDescriptor,
 } from "@trenova/shared/components/capability-form-section";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { FormSection } from "@trenova/shared/components/ui/form";
 import { CAPABILITIES, getProfile } from "@trenova/shared/lib/capability";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { queries } from "@/lib/queries";
@@ -33,6 +33,18 @@ export default function ShipmentGeneralInformation() {
   const profile = getProfile(shipmentUIPolicy);
 
   const descriptors: FieldDescriptor[] = [
+    {
+      name: "bol",
+      cols: "full",
+      // Deliberately ignores the resolved `required`. isFieldRequired reports
+      // true whenever any *Block* rule names the field, and documentation.duplicateBol
+      // names `bol` at Block by default — but that rule means "do not reuse a BOL",
+      // not "a BOL is mandatory". Wiring it through would mark BOL required on
+      // every profile that checks for duplicates. BOLField resolves its own
+      // required state from the customer's billing profile, which is the only
+      // thing that actually decides it.
+      render: () => <BOLField />,
+    },
     {
       name: "temperatureMin",
       capability: CAPABILITIES.temperatureControl,
@@ -67,12 +79,6 @@ export default function ShipmentGeneralInformation() {
 
   return (
     <Inner>
-      {/* The BOL field stays outside the descriptor list: its required state
-          comes from the customer's billing profile, not from the mode profile,
-          so it has nothing for the renderer to resolve. */}
-      <FormGroup cols={2}>
-        <BOLField />
-      </FormGroup>
       <CapabilityFields descriptors={descriptors} profile={profile} />
     </Inner>
   );
@@ -133,17 +139,17 @@ export function BOLField() {
 
   const bolRequired = billingProfile?.enforceCustomerBillingReq && billingProfile?.requireBOLNumber;
 
+  // No FormControl wrapper: CapabilityFields supplies one per descriptor, and
+  // nesting a second would offset the field from every sibling in the group.
   return (
-    <FormControl cols="full">
-      <InputField
-        control={control}
-        name="bol"
-        label="BOL"
-        rules={{ required: bolRequired }}
-        description="The BOL is the bill of lading number for the shipment."
-        placeholder="Enter BOL"
-        maxLength={100}
-      />
-    </FormControl>
+    <InputField
+      control={control}
+      name="bol"
+      label="BOL"
+      rules={{ required: bolRequired }}
+      description="The BOL is the bill of lading number for the shipment."
+      placeholder="Enter BOL"
+      maxLength={100}
+    />
   );
 }
