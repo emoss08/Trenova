@@ -4,7 +4,7 @@ import { InputField } from "@/components/fields/input-field";
 import { MoneyField } from "@/components/fields/money-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { queries } from "@/lib/queries";
+import { permitViewQueryKeys } from "@/lib/queries/shipment";
 import { apiService } from "@/services/api";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -31,22 +31,13 @@ import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-/**
- * Invalidates everything the permit engine feeds. The server re-syncs on every
- * permit write — recording a permit can release the dispatch hold — so the
- * assessment, the requirement list and the shipment itself are all stale
- * afterwards, not just the permits.
- */
 function useInvalidatePermitViews(shipmentId: string) {
   const queryClient = useQueryClient();
 
   return () => {
-    void queryClient.invalidateQueries({ queryKey: queries.shipment.permits(shipmentId).queryKey });
-    void queryClient.invalidateQueries({
-      queryKey: queries.shipment.permitRequirements(shipmentId).queryKey,
-    });
-    void queryClient.invalidateQueries({ queryKey: ["shipment", "permit-assessment"] });
-    void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+    for (const queryKey of permitViewQueryKeys(shipmentId)) {
+      void queryClient.invalidateQueries({ queryKey });
+    }
   };
 }
 

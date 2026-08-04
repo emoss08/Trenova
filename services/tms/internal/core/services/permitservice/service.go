@@ -4,12 +4,15 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -25,6 +28,7 @@ type ServiceParams struct {
 	JurisdictionRepo repositories.JurisdictionRuleRepository
 	HoldRepo         repositories.ShipmentHoldRepository
 	ShipmentRepo     repositories.ShipmentRepository
+	AuditService     services.AuditService
 	Logger           *zap.Logger
 }
 
@@ -33,6 +37,7 @@ type service struct {
 	jurisdictionRepo repositories.JurisdictionRuleRepository
 	holdRepo         repositories.ShipmentHoldRepository
 	shipmentRepo     repositories.ShipmentRepository
+	auditService     services.AuditService
 	l                *zap.Logger
 }
 
@@ -42,6 +47,7 @@ func NewService(p ServiceParams) services.PermitService {
 		jurisdictionRepo: p.JurisdictionRepo,
 		holdRepo:         p.HoldRepo,
 		shipmentRepo:     p.ShipmentRepo,
+		auditService:     p.AuditService,
 		l:                p.Logger.Named("permit-service"),
 	}
 }
@@ -429,6 +435,72 @@ func (s *service) ListRequirements(
 	})
 }
 
+// logPermitAction records a permit write in the audit trail.
+//
+// This is not optional bookkeeping for this resource. A permit is the evidence
+// that an oversize movement was legal, and a waiver is a named person accepting
+// the compliance risk of moving without one. When a load is stopped at a scale
+// or a claim is worked months later, the audit entry is what establishes who
+// decided what and when.
+//
+// Marked Critical for the same reason: these entries must survive retention
+// trimming that ordinary edits are subject to.
+func (s *service) logPermitAction(
+	params *permitAuditParams,
+) {
+	if s.auditService == nil {
+		return
+	}
+
+	logParams := &services.LogActionParams{
+		Resource:       permission.ResourcePermit,
+		ResourceID:     params.ResourceID,
+		Operation:      params.Operation,
+		UserID:         params.Actor.UserID,
+		APIKeyID:       params.Actor.APIKeyID,
+		PrincipalType:  params.Actor.PrincipalType,
+		PrincipalID:    params.Actor.PrincipalID,
+		OrganizationID: params.OrganizationID,
+		BusinessUnitID: params.BusinessUnitID,
+		Critical:       true,
+	}
+	if params.Current != nil {
+		logParams.CurrentState = jsonutils.MustToJSON(params.Current)
+	}
+	if params.Previous != nil {
+		logParams.PreviousState = jsonutils.MustToJSON(params.Previous)
+	}
+
+	opts := []services.LogOption{
+		auditservice.WithComment(params.Comment),
+		auditservice.WithMetadata(map[string]any{
+			"shipmentId": params.ShipmentID.String(),
+		}),
+	}
+	if params.Previous != nil && params.Current != nil {
+		opts = append(opts, auditservice.WithDiff(params.Previous, params.Current))
+	}
+
+	if err := s.auditService.LogAction(logParams, opts...); err != nil {
+		s.l.Error("failed to log permit action",
+			zap.String("resourceId", params.ResourceID),
+			zap.Error(err),
+		)
+	}
+}
+
+type permitAuditParams struct {
+	ResourceID     string
+	ShipmentID     pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	Operation      permission.Operation
+	Actor          services.AuditActor
+	Previous       any
+	Current        any
+	Comment        string
+}
+
 // resync re-derives and reconciles the hold after a permit write. Recording the
 // permit that discharges a requirement has to clear the block in the same
 // request; leaving it until the next shipment save would mean an operator files
@@ -481,6 +553,17 @@ func (s *service) CreatePermit(
 		return nil, err
 	}
 
+	s.logPermitAction(&permitAuditParams{
+		ResourceID:     created.ID.String(),
+		ShipmentID:     created.ShipmentID,
+		OrganizationID: created.OrganizationID,
+		BusinessUnitID: created.BusinessUnitID,
+		Operation:      permission.OpCreate,
+		Actor:          actor.AuditActorOrSystem(),
+		Current:        created,
+		Comment:        "Permit recorded",
+	})
+
 	s.resync(ctx, created.ShipmentID, pagination.TenantInfo{
 		OrgID: created.OrganizationID,
 		BuID:  created.BusinessUnitID,
@@ -500,10 +583,40 @@ func (s *service) UpdatePermit(
 		return nil, multiErr
 	}
 
+	// Read the row before overwriting it so the audit entry carries a real diff.
+	// "Permit updated" without a before-state is close to useless when the
+	// question months later is whether an expiry was extended after the fact.
+	// A read failure loses the diff, not the write or the audit entry.
+	var previous *permit.Permit
+	if existing, readErr := s.permitRepo.GetByID(ctx, &repositories.GetPermitByIDRequest{
+		PermitID: entity.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+	}); readErr != nil {
+		s.l.Warn("failed to read permit before update; audit entry will carry no diff",
+			zap.String("permitId", entity.ID.String()), zap.Error(readErr))
+	} else {
+		previous = existing
+	}
+
 	updated, err := s.permitRepo.Update(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
+
+	s.logPermitAction(&permitAuditParams{
+		ResourceID:     updated.ID.String(),
+		ShipmentID:     updated.ShipmentID,
+		OrganizationID: updated.OrganizationID,
+		BusinessUnitID: updated.BusinessUnitID,
+		Operation:      permission.OpUpdate,
+		Actor:          actor.AuditActorOrSystem(),
+		Previous:       previous,
+		Current:        updated,
+		Comment:        "Permit updated",
+	})
 
 	s.resync(ctx, updated.ShipmentID, pagination.TenantInfo{
 		OrgID: updated.OrganizationID,
@@ -539,6 +652,19 @@ func (s *service) WaiveRequirement(
 	if err != nil {
 		return nil, err
 	}
+
+	// OpApprove, not OpUpdate: the waiver is an authorization act, and the
+	// reason is the record of why the risk was accepted.
+	s.logPermitAction(&permitAuditParams{
+		ResourceID:     waived.ID.String(),
+		ShipmentID:     waived.ShipmentID,
+		OrganizationID: waived.OrganizationID,
+		BusinessUnitID: waived.BusinessUnitID,
+		Operation:      permission.OpApprove,
+		Actor:          req.Actor.AuditActorOrSystem(),
+		Current:        waived,
+		Comment:        "Permit requirement waived: " + req.Reason,
+	})
 
 	s.resync(ctx, waived.ShipmentID, req.TenantInfo, req.Actor)
 

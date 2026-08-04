@@ -46,3 +46,27 @@ export const shipment = createQueryKeys("shipment", {
     queryFn: async () => apiService.shipmentService.getComments(req),
   }),
 });
+
+/**
+ * Every cache entry the permit engine feeds, for invalidating after a permit
+ * write. The server re-syncs on each write — recording a permit can release the
+ * dispatch hold — so the assessment and the shipment itself go stale too, not
+ * just the permit list.
+ *
+ * The keys are derived from the query definitions rather than written out.
+ * createQueryKeys prepends ["shipment", <methodName>] to each declared array, so
+ * a hand-written key has to restate an internal naming convention and silently
+ * matches nothing when it gets it wrong — which is exactly what happened here.
+ */
+export function permitViewQueryKeys(shipmentId: NonNullable<Shipment["id"]>) {
+  return [
+    shipment.permits(shipmentId).queryKey,
+    shipment.permitRequirements(shipmentId).queryKey,
+    // The version is the last element of the assessment key. Dropping it leaves
+    // a prefix that matches every cached version for this shipment; keeping it
+    // would match only the one whose version happens to be undefined.
+    shipment.permitAssessment(shipmentId).queryKey.slice(0, -1),
+    // The shipment row itself carries the hold badge.
+    ["shipment-list"],
+  ];
+}
