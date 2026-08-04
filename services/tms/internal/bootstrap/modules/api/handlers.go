@@ -65,6 +65,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalentryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
@@ -160,6 +161,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	shipmentmovehandler.New,
 	shipmenthandler.New,
 	permithandler.New,
+	jurisdictionrulehandler.New,
 	shipmenttypehandler.New,
 	hazardousmaterialhandler.New,
 	hazmatsegregationrulehandler.New,
