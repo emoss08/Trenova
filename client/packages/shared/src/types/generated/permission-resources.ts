@@ -56,6 +56,7 @@ export const Resource = {
   ShipmentMove: "shipment_move",
   ShipmentStop: "shipment_stop",
   ShipmentHold: "shipment_hold",
+  Permit: "permit",
   ServiceFailure: "service_failure",
   ServiceFailureReasonCode: "service_failure_reason_code",
   DispatchControl: "dispatch_control",

@@ -5044,7 +5044,7 @@ export type ShipmentBillingReadinessQuery = { shipmentBillingReadiness: { shipme
 export type ShipmentUiPolicyQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ShipmentUiPolicyQuery = { shipmentUIPolicy: { allowMoveRemovals: boolean, checkForDuplicateBols: boolean, checkHazmatSegregation: boolean, maxShipmentWeightLimit: number } };
+export type ShipmentUiPolicyQuery = { shipmentUIPolicy: { allowMoveRemovals: boolean, checkForDuplicateBols: boolean, checkHazmatSegregation: boolean, maxShipmentWeightLimit: number, profile: unknown } };
 
 export type ShipmentPreviousRatesQueryVariables = Exact<{
   input: ShipmentPreviousRatesInput;
@@ -19396,9 +19396,10 @@ export const ShipmentUiPolicyDocument = new TypedDocumentString(`
     checkForDuplicateBols
     checkHazmatSegregation
     maxShipmentWeightLimit
+    profile
   }
 }
-    `, {"hash":"sha256:fb8f36ec1209a13f87cfda6fda2017e70e17c899f6b2f5b22fc8b4fe8bdbace7"}) as unknown as TypedDocumentString<ShipmentUiPolicyQuery, ShipmentUiPolicyQueryVariables>;
+    `, {"hash":"sha256:31816c9ef557fefb9f366f7c6de4a496827f84f1ce406e42f21e1444ddefb7a1"}) as unknown as TypedDocumentString<ShipmentUiPolicyQuery, ShipmentUiPolicyQueryVariables>;
 export const ShipmentPreviousRatesDocument = new TypedDocumentString(`
     query ShipmentPreviousRates($input: ShipmentPreviousRatesInput!) {
   shipmentPreviousRates(input: $input) {

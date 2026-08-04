@@ -6665,14 +6665,14 @@
       "kind": "query",
       "domain": "shipment",
       "sourceFile": "src/operations/shipment/page.graphql",
-      "hash": "sha256:fb8f36ec1209a13f87cfda6fda2017e70e17c899f6b2f5b22fc8b4fe8bdbace7",
+      "hash": "sha256:31816c9ef557fefb9f366f7c6de4a496827f84f1ce406e42f21e1444ddefb7a1",
       "rootFields": [
         "shipmentUIPolicy"
       ],
       "variables": [],
       "fragments": [],
       "usages": [],
-      "sdl": "query ShipmentUIPolicy {\n  shipmentUIPolicy {\n    allowMoveRemovals\n    checkForDuplicateBols\n    checkHazmatSegregation\n    maxShipmentWeightLimit\n  }\n}"
+      "sdl": "query ShipmentUIPolicy {\n  shipmentUIPolicy {\n    allowMoveRemovals\n    checkForDuplicateBols\n    checkHazmatSegregation\n    maxShipmentWeightLimit\n    profile\n  }\n}"
     },
     {
       "name": "SidebarCustomizationOptions",

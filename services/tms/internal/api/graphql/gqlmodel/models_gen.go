@@ -4183,6 +4183,15 @@ type ShipmentUIPolicy struct {
 	CheckForDuplicateBols  bool `json:"checkForDuplicateBols"`
 	CheckHazmatSegregation bool `json:"checkHazmatSegregation"`
 	MaxShipmentWeightLimit int  `json:"maxShipmentWeightLimit"`
+	// The mode profile resolved for this tenant, carrying its capabilities and the
+	// resolved state of every rule. Null when no profile matched.
+	//
+	// Sent as JSON rather than a typed selection because `rules` is keyed by rule
+	// key, and GraphQL has no map type. Modelling it would mean a list of key/value
+	// pairs plus a second schema to keep in step with the Go structs; the client
+	// validates the payload against resolvedModeProfileSchema instead, so the
+	// `json` tags on modeprofile.ResolvedPolicy are the single contract.
+	Profile map[string]any `json:"profile,omitempty"`
 }
 
 type ShipmentUnassignedAnalytics struct {

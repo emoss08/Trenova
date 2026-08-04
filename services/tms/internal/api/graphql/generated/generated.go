@@ -5653,6 +5653,7 @@ type ComplexityRoot struct {
 		CheckForDuplicateBols  func(childComplexity int) int
 		CheckHazmatSegregation func(childComplexity int) int
 		MaxShipmentWeightLimit func(childComplexity int) int
+		Profile                func(childComplexity int) int
 	}
 
 	ShipmentUnassignedAnalytics struct {
@@ -34782,6 +34783,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentUIPolicy.MaxShipmentWeightLimit(childComplexity), true
+	case "ShipmentUIPolicy.profile":
+		if e.ComplexityRoot.ShipmentUIPolicy.Profile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentUIPolicy.Profile(childComplexity), true
 
 	case "ShipmentUnassignedAnalytics.count":
 		if e.ComplexityRoot.ShipmentUnassignedAnalytics.Count == nil {
@@ -46162,6 +46169,17 @@ type ShipmentUIPolicy {
   checkForDuplicateBols: Boolean!
   checkHazmatSegregation: Boolean!
   maxShipmentWeightLimit: Int!
+  """
+  The mode profile resolved for this tenant, carrying its capabilities and the
+  resolved state of every rule. Null when no profile matched.
+
+  Sent as JSON rather than a typed selection because ` + "`" + `rules` + "`" + ` is keyed by rule
+  key, and GraphQL has no map type. Modelling it would mean a list of key/value
+  pairs plus a second schema to keep in step with the Go structs; the client
+  validates the payload against resolvedModeProfileSchema instead, so the
+  ` + "`" + `json` + "`" + ` tags on modeprofile.ResolvedPolicy are the single contract.
+  """
+  profile: JSON
 }
 
 type ShipmentBillingReadinessPolicy {
@@ -58195,6 +58213,8 @@ func (ec *executionContext) childFields_ShipmentUIPolicy(ctx context.Context, fi
 		return ec.fieldContext_ShipmentUIPolicy_checkHazmatSegregation(ctx, field)
 	case "maxShipmentWeightLimit":
 		return ec.fieldContext_ShipmentUIPolicy_maxShipmentWeightLimit(ctx, field)
+	case "profile":
+		return ec.fieldContext_ShipmentUIPolicy_profile(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentUIPolicy", field.Name)
 }
@@ -176830,6 +176850,29 @@ func (ec *executionContext) fieldContext_ShipmentUIPolicy_maxShipmentWeightLimit
 	return graphql.NewScalarFieldContext("ShipmentUIPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _ShipmentUIPolicy_profile(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentUIPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentUIPolicy_profile(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Profile, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentUIPolicy_profile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentUIPolicy", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
 func (ec *executionContext) _ShipmentUnassignedAnalytics_count(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentUnassignedAnalytics) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -244454,6 +244497,11 @@ func (ec *executionContext) _ShipmentUIPolicy(ctx context.Context, sel ast.Selec
 		case "maxShipmentWeightLimit":
 			out.Values[i] = ec._ShipmentUIPolicy_maxShipmentWeightLimit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "profile":
+			out.Values[i] = ec._ShipmentUIPolicy_profile(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:
