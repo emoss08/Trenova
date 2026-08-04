@@ -377,3 +377,149 @@ func (r *jurisdictionRepository) GetOverrides(
 
 	return entities, nil
 }
+
+func (r *jurisdictionRepository) List(
+	ctx context.Context,
+	req *repositories.ListJurisdictionRulesRequest,
+) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
+	cols := buncolgen.JurisdictionRuleColumns
+	entities := make([]*jurisdictionrule.JurisdictionRule, 0, req.Filter.Pagination.SafeLimit())
+
+	total, err := r.db.DB().
+		NewSelect().
+		Model(&entities).
+		Relation(buncolgen.JurisdictionRuleRelations.State).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			if req.VerificationState != "" {
+				sq = sq.Where(cols.VerificationState.Eq(), req.VerificationState)
+			}
+			if req.Status != "" {
+				sq = sq.Where(cols.Status.Eq(), req.Status)
+			}
+			return sq.
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset())
+		}).
+		ScanAndCount(ctx)
+	if err != nil {
+		r.l.Error("failed to list jurisdiction rules", zap.Error(err))
+		return nil, err
+	}
+
+	return &pagination.ListResult[*jurisdictionrule.JurisdictionRule]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
+func (r *jurisdictionRepository) GetByID(
+	ctx context.Context,
+	req *repositories.GetJurisdictionRuleByIDRequest,
+) (*jurisdictionrule.JurisdictionRule, error) {
+	entity := new(jurisdictionrule.JurisdictionRule)
+
+	q := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Relation(buncolgen.JurisdictionRuleRelations.State).
+		Where(buncolgen.JurisdictionRuleColumns.ID.Eq(), req.RuleID)
+
+	if req.ExpandThresholds {
+		q = q.Relation(buncolgen.JurisdictionRuleRelations.EscortThresholds)
+	}
+
+	if err := q.Scan(ctx); err != nil {
+		r.l.Error("failed to get jurisdiction rule", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *jurisdictionRepository) Create(
+	ctx context.Context,
+	entity *jurisdictionrule.JurisdictionRule,
+) (*jurisdictionrule.JurisdictionRule, error) {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
+		r.l.Error("failed to create jurisdiction rule", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *jurisdictionRepository) Update(
+	ctx context.Context,
+	entity *jurisdictionrule.JurisdictionRule,
+) (*jurisdictionrule.JurisdictionRule, error) {
+	ov := entity.Version
+	entity.Version++
+
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(entity).
+		WherePK().
+		Where("version = ?", ov).
+		OmitZero().
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to update jurisdiction rule", zap.Error(err))
+		return nil, err
+	}
+
+	if err = dberror.CheckRowsAffected(
+		results, "JurisdictionRule", entity.ID.String(),
+	); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+// Verify writes only the verification columns.
+//
+// Deliberately not a full Update: confirming a row against the statute is an
+// assertion about the numbers already there, so it must not be able to change
+// them in the same operation. An operator who wants different limits edits the
+// row, which resets it to Unverified.
+func (r *jurisdictionRepository) Verify(
+	ctx context.Context,
+	req *repositories.VerifyJurisdictionRuleRequest,
+) (*jurisdictionrule.JurisdictionRule, error) {
+	cols := buncolgen.JurisdictionRuleColumns
+
+	q := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*jurisdictionrule.JurisdictionRule)(nil)).
+		Set("verification_state = ?", req.State).
+		Set("verified_at = ?", req.VerifiedAt).
+		Set("version = version + 1").
+		Set("updated_at = ?", timeutils.NowUnix()).
+		Where(cols.ID.Eq(), req.RuleID)
+
+	if req.SourceNote != "" {
+		q = q.Set("source_note = ?", req.SourceNote)
+	}
+	if req.SourceURL != "" {
+		q = q.Set("source_url = ?", req.SourceURL)
+	}
+
+	results, err := q.Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to verify jurisdiction rule", zap.Error(err))
+		return nil, err
+	}
+
+	if err = dberror.CheckRowsAffected(
+		results, "JurisdictionRule", req.RuleID.String(),
+	); err != nil {
+		return nil, err
+	}
+
+	return r.GetByID(ctx, &repositories.GetJurisdictionRuleByIDRequest{RuleID: req.RuleID})
+}

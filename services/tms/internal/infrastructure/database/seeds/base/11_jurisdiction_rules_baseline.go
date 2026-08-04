@@ -10,26 +10,18 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// Federal limits that do not vary by state. 23 CFR 658.15 fixes the width of a
-// vehicle on the National Network at 102 inches, and 23 U.S.C. 127 fixes the
-// Interstate gross weight at 80,000 lb subject to the bridge formula. A load
-// beyond either of these needs a permit in every jurisdiction, which is enough
-// for the engine to do its job.
-const (
-	federalMaxWidthFeet    = 8.5
-	federalMaxWeightPounds = 80_000
-)
-
-// Height and length are NOT federally fixed for these purposes — states set
-// their own, commonly 13'6" to 14' for height. The lower bound is used
-// deliberately: a baseline that is too permissive lets an illegal load dispatch
-// unflagged, while one that is too strict raises a requirement an operator can
-// see, check against the real statute, and clear. Over-flagging is recoverable;
+// The baseline reuses the federal constants the domain already defines rather
+// than restating them. 23 CFR 658.15 fixes width on the National Network at 102
+// inches and 23 U.S.C. 127 fixes the Interstate gross at 80,000 lb; a load
+// beyond either needs a permit in every jurisdiction, which is enough for the
+// engine to do its job.
+//
+// Height and length are NOT federally fixed for this purpose — states commonly
+// set 13'6" to 14'. The domain's federal constants sit at the low end of that
+// range, which is the safe direction: a limit set too high lets an illegal load
+// dispatch unflagged, while one set too low raises a requirement an operator can
+// check against the statute and clear. Over-flagging is recoverable;
 // under-flagging is a load stopped at a scale.
-const (
-	conservativeMaxHeightFeet = 13.5
-	conservativeMaxLengthFeet = 53.0
-)
 
 const baselineSourceNote = "Federal baseline only: 102in width (23 CFR 658.15) and " +
 	"80,000lb Interstate gross (23 U.S.C. 127). Height and length are the conservative " +
@@ -102,10 +94,10 @@ func (s *JurisdictionRulesBaselineSeed) Run(ctx context.Context, tx bun.Tx) erro
 		rules = append(rules, jurisdictionrule.JurisdictionRule{
 			StateID:           states[i].ID,
 			Status:            jurisdictionrule.StatusActive,
-			MaxWidthFeet:      federalMaxWidthFeet,
-			MaxHeightFeet:     conservativeMaxHeightFeet,
-			MaxLengthFeet:     conservativeMaxLengthFeet,
-			MaxWeightPounds:   federalMaxWeightPounds,
+			MaxWidthFeet:      jurisdictionrule.FederalMaxWidthFeet,
+			MaxHeightFeet:     jurisdictionrule.FederalMaxHeightFeet,
+			MaxLengthFeet:     jurisdictionrule.FederalMaxLengthFeet,
+			MaxWeightPounds:   jurisdictionrule.FederalMaxWeightPounds,
 			SourceNote:        baselineSourceNote,
 			SourceURL:         baselineSourceURL,
 			VerificationState: jurisdictionrule.VerificationUnverified,

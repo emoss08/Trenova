@@ -24,6 +24,11 @@ const (
 	MaxReasonableLengthFeet = 300.0
 	MaxLeadTimeDays         = 60
 	MaxValidityDays         = 365
+
+	// MinSourceNoteLength is what a verification has to say about itself. A
+	// confirmation with no traceable note is indistinguishable from a guess to
+	// the next person who reads the row.
+	MinSourceNoteLength = 10
 )
 
 var _ bun.BeforeAppendModelHook = (*JurisdictionRule)(nil)

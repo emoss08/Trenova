@@ -54,6 +54,7 @@ const (
 	ResourceShipmentStop             Resource = "shipment_stop"
 	ResourceShipmentHold             Resource = "shipment_hold"
 	ResourcePermit                   Resource = "permit"
+	ResourceJurisdictionRule         Resource = "jurisdiction_rule"
 	ResourceServiceFailure           Resource = "service_failure"
 	ResourceServiceFailureReasonCode Resource = "service_failure_reason_code"
 	ResourceDispatchControl          Resource = "dispatch_control"

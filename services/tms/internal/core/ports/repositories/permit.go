@@ -16,6 +16,31 @@ type GetJurisdictionRulesRequest struct {
 	At         int64
 }
 
+// ListJurisdictionRulesRequest drives the admin table.
+//
+// There is no TenantInfo here, and its absence is the point: jurisdiction_rules
+// carries no organization or business unit column because the legal width of a
+// load in Nebraska does not vary by carrier. Adding a tenant filter would imply
+// an isolation this table does not have.
+type ListJurisdictionRulesRequest struct {
+	Filter            *pagination.QueryOptions
+	VerificationState jurisdictionrule.VerificationState
+	Status            jurisdictionrule.Status
+}
+
+type GetJurisdictionRuleByIDRequest struct {
+	RuleID           pulid.ID
+	ExpandThresholds bool
+}
+
+type VerifyJurisdictionRuleRequest struct {
+	RuleID     pulid.ID
+	VerifiedAt int64
+	SourceNote string
+	SourceURL  string
+	State      jurisdictionrule.VerificationState
+}
+
 type JurisdictionRuleRepository interface {
 	GetActiveByStateIDs(
 		ctx context.Context,
@@ -26,6 +51,36 @@ type JurisdictionRuleRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]*jurisdictionrule.Override, error)
+
+	List(
+		ctx context.Context,
+		req *ListJurisdictionRulesRequest,
+	) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error)
+
+	GetByID(
+		ctx context.Context,
+		req *GetJurisdictionRuleByIDRequest,
+	) (*jurisdictionrule.JurisdictionRule, error)
+
+	// Create and Update write globally visible reference data. Every tenant on
+	// the platform reads the result, so authorization for these is not an
+	// ordinary tenant-admin concern.
+	Create(
+		ctx context.Context,
+		entity *jurisdictionrule.JurisdictionRule,
+	) (*jurisdictionrule.JurisdictionRule, error)
+
+	Update(
+		ctx context.Context,
+		entity *jurisdictionrule.JurisdictionRule,
+	) (*jurisdictionrule.JurisdictionRule, error)
+
+	// Verify moves a row's verification state without touching its limits, so
+	// confirming a row against the statute cannot silently alter it.
+	Verify(
+		ctx context.Context,
+		req *VerifyJurisdictionRuleRequest,
+	) (*jurisdictionrule.JurisdictionRule, error)
 }
 
 type JurisdictionRuleCacheRepository interface {

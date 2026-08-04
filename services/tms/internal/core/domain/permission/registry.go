@@ -916,6 +916,39 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceJurisdictionRule.String(),
+		DisplayName: "Jurisdiction Rule",
+		Description: "Shared oversize and overweight limits per state. " +
+			"This data is global: it has no organization column and every tenant " +
+			"reads the same rows, so a change here alters what the whole platform " +
+			"is told is legal. Carrier-specific posture belongs in an override.",
+		Category: "Operations",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View jurisdiction limits and their verification state",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Add a jurisdiction rule, visible to every organization",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Change limits every organization is held to",
+			},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Verify",
+				Description: "Confirm a rule against the issuing state, or mark it disputed",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:       ResourcePermit.String(),
 		DisplayName:    "Oversize Permit",
 		Description:    "Oversize and overweight permits and their derived requirements",

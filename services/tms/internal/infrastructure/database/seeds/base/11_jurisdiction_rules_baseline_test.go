@@ -15,9 +15,9 @@ import (
 // before it leaves, so the safe direction matters more than the exact value.
 func TestJurisdictionBaseline_UsesOnlyFederallyUniformLimits(t *testing.T) {
 	// 23 CFR 658.15 — 102 inches on the National Network.
-	assert.InDelta(t, 8.5, federalMaxWidthFeet, 0.001)
+	assert.InDelta(t, 8.5, jurisdictionrule.FederalMaxWidthFeet, 0.001)
 	// 23 U.S.C. 127 — Interstate gross, subject to the bridge formula.
-	assert.Equal(t, 80_000, federalMaxWeightPounds)
+	assert.Equal(t, 80_000, jurisdictionrule.FederalMaxWeightPounds)
 }
 
 // Height and length vary by state, so the baseline takes the low end. A limit
@@ -25,11 +25,11 @@ func TestJurisdictionBaseline_UsesOnlyFederallyUniformLimits(t *testing.T) {
 // is the failure this engine exists to prevent; too low raises a requirement an
 // operator can check and clear.
 func TestJurisdictionBaseline_ErrsStrictOnStateVariableLimits(t *testing.T) {
-	assert.LessOrEqual(t, conservativeMaxHeightFeet, 14.0,
+	assert.LessOrEqual(t, jurisdictionrule.FederalMaxHeightFeet, 14.0,
 		"states commonly permit 13'6\" to 14'; the baseline must not exceed the top of that range")
-	assert.GreaterOrEqual(t, conservativeMaxHeightFeet, 13.5,
+	assert.GreaterOrEqual(t, jurisdictionrule.FederalMaxHeightFeet, 13.5,
 		"below 13'6\" every standard dry van would raise a permit requirement")
-	assert.LessOrEqual(t, conservativeMaxLengthFeet, 53.0,
+	assert.LessOrEqual(t, jurisdictionrule.FederalMaxLengthFeet, 53.0,
 		"53ft is the common single-trailer maximum; above it over-length loads go unflagged")
 }
 
