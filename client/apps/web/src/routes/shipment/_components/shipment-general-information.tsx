@@ -36,13 +36,12 @@ export default function ShipmentGeneralInformation() {
     {
       name: "bol",
       cols: "full",
-      // Deliberately ignores the resolved `required`. isFieldRequired reports
-      // true whenever any *Block* rule names the field, and documentation.duplicateBol
-      // names `bol` at Block by default — but that rule means "do not reuse a BOL",
-      // not "a BOL is mandatory". Wiring it through would mark BOL required on
-      // every profile that checks for duplicates. BOLField resolves its own
-      // required state from the customer's billing profile, which is the only
-      // thing that actually decides it.
+      // Ignores the resolved `required` on purpose. The only rule that names
+      // `bol` is documentation.duplicateBol, which forbids reusing a number
+      // rather than demanding one — so the mode profile has nothing to say
+      // about whether a BOL is mandatory, and the catalog reflects that by
+      // leaving `bol` out of the rule's requiredFields. What decides is the
+      // customer's billing profile, which BOLField resolves for itself.
       render: () => <BOLField />,
     },
     {

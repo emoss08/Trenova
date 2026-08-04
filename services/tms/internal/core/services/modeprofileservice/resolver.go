@@ -165,6 +165,7 @@ func buildResolvedPolicy(
 			Fields:      def.Fields,
 			Parameters:  defaultParameters(def),
 		}
+		resolved.RequiredFields = requiredFieldsFor(def, resolved.Parameters)
 
 		provenance := modeprofile.Provenance{
 			ProfileID:          profile.ID,
@@ -186,6 +187,7 @@ func buildResolvedPolicy(
 			resolved.Enforcement = rule.Enforcement
 			resolved.Enabled = rule.Enabled
 			resolved.Parameters = mergeParameters(def, rule.Parameters)
+			resolved.RequiredFields = requiredFieldsFor(def, resolved.Parameters)
 
 			provenance.Enforcement = rule.Enforcement
 			provenance.Overridden = rule.Enforcement != def.DefaultEnforcement
@@ -208,6 +210,37 @@ func buildResolvedPolicy(
 		Candidates:     candidates,
 		ResolvedAt:     at,
 	}
+}
+
+// requiredFieldsFor narrows a definition's RequiredFields using the parameters
+// the profile actually resolved to.
+//
+// The narrowing exists because a requirement can be switched off by a parameter
+// without disabling the rule. Temperature range always demands a minimum, but
+// only demands a maximum when requireBothBounds is on — and validateTemperature
+// enforces exactly that. Reporting both unconditionally would mark a field
+// required in the form that the server would happily accept as empty.
+func requiredFieldsFor(
+	def modeprofile.RuleDefinition,
+	parameters map[string]any,
+) []string {
+	if len(def.RequiredFields) == 0 {
+		return nil
+	}
+
+	if def.Key != modeprofile.RuleKeyTemperatureRange {
+		return def.RequiredFields
+	}
+
+	requireBoth, _ := parameters[modeprofile.ParamRequireBothBounds].(bool)
+	if requireBoth {
+		return def.RequiredFields
+	}
+
+	return slices.DeleteFunc(
+		slices.Clone(def.RequiredFields),
+		func(field string) bool { return field == "temperatureMax" },
+	)
 }
 
 func defaultParameters(def modeprofile.RuleDefinition) map[string]any {

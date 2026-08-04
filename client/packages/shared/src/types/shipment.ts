@@ -415,9 +415,7 @@ export const shipmentProfitabilityEstimateSchema = z.object({
   targetMarginPercent: z.string().nullish(),
   missingDistance: z.boolean(),
 });
-export type ShipmentProfitabilityEstimate = z.infer<
-  typeof shipmentProfitabilityEstimateSchema
->;
+export type ShipmentProfitabilityEstimate = z.infer<typeof shipmentProfitabilityEstimateSchema>;
 
 export const shipmentSchema = z.object({
   ...tenantInfoSchema.shape,
@@ -561,6 +559,7 @@ export const resolvedCapabilityRuleSchema = z.object({
   enforcement: enforcementLevelSchema,
   enabled: z.boolean(),
   fields: z.array(z.string()).nullish(),
+  requiredFields: z.array(z.string()).nullish(),
   parameters: z.record(z.string(), z.unknown()).nullish(),
   provenance: capabilityProvenanceSchema,
 });

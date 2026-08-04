@@ -190,12 +190,13 @@ describe("rule predicates", () => {
 });
 
 describe("isFieldRequired", () => {
-  it("is true only when a blocking rule covers the field", () => {
+  it("is true only when a blocking rule requires the field", () => {
     const profile = makeProfile([
       makeRule({
         key: RULE_KEYS.temperatureRange,
         enforcement: "Block",
         fields: ["temperatureMin", "temperatureMax"],
+        requiredFields: ["temperatureMin", "temperatureMax"],
       }),
     ]);
 
@@ -209,6 +210,7 @@ describe("isFieldRequired", () => {
         key: RULE_KEYS.temperatureRange,
         enforcement: "Warn",
         fields: ["temperatureMin"],
+        requiredFields: ["temperatureMin"],
       }),
     ]);
 
@@ -217,6 +219,54 @@ describe("isFieldRequired", () => {
 
   it("is false when no profile resolved", () => {
     expect(isFieldRequired(null, "temperatureMin")).toBe(false);
+  });
+
+  // Targeting a field is not requiring it. The catalog marks bol, moves and
+  // weight as targeted-only: a duplicate check constrains a BOL rather than
+  // demanding one, forbidding a removal does not make moves mandatory, and
+  // validateWeight returns early when weight is absent instead of requiring it.
+  //
+  // Reading `fields` here — which is what this did before requiredFields
+  // existed — marks all three required on any profile that carries the rule.
+  it.each([
+    [RULE_KEYS.duplicateBol, "bol"],
+    [RULE_KEYS.moveRemoval, "moves"],
+    [RULE_KEYS.maxShipmentWeight, "weight"],
+  ])("does not require %s's field %s, which it only targets", (key, field) => {
+    const profile = makeProfile([
+      makeRule({ key, enforcement: "Block", fields: [field], requiredFields: [] }),
+    ]);
+
+    expect(rulesForField(profile, field)).toHaveLength(1);
+    expect(isFieldRequired(profile, field)).toBe(false);
+  });
+
+  // The server drops temperatureMax from requiredFields when requireBothBounds
+  // is off, leaving it in fields. The form must follow, or it marks a field
+  // mandatory that the server accepts empty.
+  it("follows the server's parameter narrowing rather than the targeted list", () => {
+    const profile = makeProfile([
+      makeRule({
+        key: RULE_KEYS.temperatureRange,
+        enforcement: "Block",
+        fields: ["temperatureMin", "temperatureMax"],
+        requiredFields: ["temperatureMin"],
+        parameters: { requireBothBounds: false },
+      }),
+    ]);
+
+    expect(isFieldRequired(profile, "temperatureMin")).toBe(true);
+    expect(isFieldRequired(profile, "temperatureMax")).toBe(false);
+    // Still explained, just not demanded.
+    expect(rulesForField(profile, "temperatureMax")).toHaveLength(1);
+  });
+
+  it("treats a rule with no required fields as requiring nothing", () => {
+    const profile = makeProfile([
+      makeRule({ key: RULE_KEYS.hazmatSegregation, fields: ["commodities"] }),
+    ]);
+
+    expect(isFieldRequired(profile, "commodities")).toBe(false);
   });
 });
 

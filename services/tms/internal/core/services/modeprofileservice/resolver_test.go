@@ -215,3 +215,129 @@ func TestResolvedPolicy_NilReceiverIsSafe(t *testing.T) {
 		policy.EnforcementFor(modeprofile.RuleKeyMaxShipmentWeight),
 	)
 }
+
+// The catalog distinguishes fields a rule targets from fields it makes
+// mandatory. These assertions are written against what capability_policy.go
+// actually emits: only validateDimensions and validateTemperature raise
+// ErrRequired, and validateWeight/validateDeckFit return early when their
+// field is absent rather than demanding it.
+func TestResolve_RequiredFieldsAreNarrowerThanTargetedFields(t *testing.T) {
+	svc := &service{}
+	policy := svc.resolveFromCandidates(
+		[]*modeprofile.Profile{coreProfile("OTR", true)},
+		&services.ResolveModeProfileRequest{},
+		100,
+	)
+	require.NotNil(t, policy)
+
+	duplicateBOL, ok := policy.Rule(modeprofile.RuleKeyDuplicateBOL)
+	require.True(t, ok)
+	assert.Contains(t, duplicateBOL.Fields, "bol")
+	assert.Empty(t, duplicateBOL.RequiredFields,
+		"a duplicate check constrains a BOL, it does not demand one")
+	assert.False(t, duplicateBOL.RequiresField("bol"))
+
+	moveRemoval, ok := policy.Rule(modeprofile.RuleKeyMoveRemoval)
+	require.True(t, ok)
+	assert.Contains(t, moveRemoval.Fields, "moves")
+	assert.False(t, moveRemoval.RequiresField("moves"),
+		"forbidding a removal does not make moves a required field")
+
+	maxWeight, ok := policy.Rule(modeprofile.RuleKeyMaxShipmentWeight)
+	require.True(t, ok)
+	assert.False(t, maxWeight.RequiresField("weight"),
+		"validateWeight returns early when weight is nil rather than requiring it")
+}
+
+func TestResolve_TemperatureMaxIsRequiredOnlyWhenBothBoundsAre(t *testing.T) {
+	svc := &service{}
+
+	// requireBothBounds defaults to true in the catalog, so an unconfigured
+	// profile demands both. validateTemperature agrees: with requireBoth set it
+	// raises ErrRequired on temperatureMax.
+	policy := svc.resolveFromCandidates(
+		[]*modeprofile.Profile{coreProfile("OTR", true)},
+		&services.ResolveModeProfileRequest{},
+		100,
+	)
+	require.NotNil(t, policy)
+
+	rule, ok := policy.Rule(modeprofile.RuleKeyTemperatureRange)
+	require.True(t, ok)
+	assert.True(t, rule.RequiresField("temperatureMin"))
+	assert.True(t, rule.RequiresField("temperatureMax"))
+
+	// Turning the parameter off leaves the rule enabled and blocking, but
+	// validateTemperature then only demands a minimum — so the maximum must drop
+	// out of the required set rather than riding along with the rule.
+	minOnly := coreProfile("OTR-MIN", true)
+	minOnly.Rules = []*modeprofile.CapabilityRule{{
+		RuleKey:     modeprofile.RuleKeyTemperatureRange,
+		Enforcement: tenant.EnforcementLevelBlock,
+		Enabled:     true,
+		Parameters:  map[string]any{modeprofile.ParamRequireBothBounds: false},
+	}}
+
+	policy = svc.resolveFromCandidates(
+		[]*modeprofile.Profile{minOnly},
+		&services.ResolveModeProfileRequest{},
+		100,
+	)
+	require.NotNil(t, policy)
+
+	rule, ok = policy.Rule(modeprofile.RuleKeyTemperatureRange)
+	require.True(t, ok)
+	assert.True(t, rule.RequiresField("temperatureMin"))
+	assert.False(t, rule.RequiresField("temperatureMax"),
+		"the maximum is only demanded under requireBothBounds")
+
+	// The explainer still has something to say about the field either way.
+	assert.Contains(t, rule.Fields, "temperatureMax")
+}
+
+// A rule that only warns records a deviation rather than refusing the save, so
+// nothing it names is actually mandatory.
+func TestResolve_AWarningRuleRequiresNothing(t *testing.T) {
+	warning := coreProfile("OTR-WARN", true)
+	warning.Capabilities = append(warning.Capabilities, modeprofile.CapabilityDimensionalCargo)
+	warning.Rules = []*modeprofile.CapabilityRule{{
+		RuleKey:     modeprofile.RuleKeyDimensionsRequired,
+		Enforcement: tenant.EnforcementLevelWarn,
+		Enabled:     true,
+	}}
+
+	svc := &service{}
+	policy := svc.resolveFromCandidates(
+		[]*modeprofile.Profile{warning},
+		&services.ResolveModeProfileRequest{},
+		100,
+	)
+	require.NotNil(t, policy)
+
+	rule, ok := policy.Rule(modeprofile.RuleKeyDimensionsRequired)
+	require.True(t, ok)
+	assert.Contains(t, rule.RequiredFields, "commodities")
+	assert.False(t, rule.RequiresField("commodities"))
+}
+
+func TestResolve_ADisabledRuleRequiresNothing(t *testing.T) {
+	disabled := coreProfile("OTR-OFF", true)
+	disabled.Capabilities = append(disabled.Capabilities, modeprofile.CapabilityDimensionalCargo)
+	disabled.Rules = []*modeprofile.CapabilityRule{{
+		RuleKey:     modeprofile.RuleKeyDimensionsRequired,
+		Enforcement: tenant.EnforcementLevelBlock,
+		Enabled:     false,
+	}}
+
+	svc := &service{}
+	policy := svc.resolveFromCandidates(
+		[]*modeprofile.Profile{disabled},
+		&services.ResolveModeProfileRequest{},
+		100,
+	)
+	require.NotNil(t, policy)
+
+	rule, ok := policy.Rule(modeprofile.RuleKeyDimensionsRequired)
+	require.True(t, ok)
+	assert.False(t, rule.RequiresField("commodities"))
+}

@@ -103,13 +103,13 @@ describe("BOLField", () => {
     expect(screen.queryByText(/BOL is already in use/i)).not.toBeInTheDocument();
   });
 
-  // isFieldRequired reports true whenever any Block rule names the field, and
-  // documentation.duplicateBol names `bol` at Block by default. That rule means
-  // "do not reuse a BOL", not "a BOL is mandatory", so BOL must never take its
-  // required state from the profile — only from the customer's billing profile.
+  // documentation.duplicateBol names `bol` at Block, but it forbids reusing a
+  // number rather than demanding one, so the catalog leaves `bol` out of the
+  // rule's requiredFields. This asserts the whole chain agrees: the fixture
+  // carries the rule targeting bol, and the field still comes out optional.
   //
-  // This fails the moment someone "fixes" the descriptor's ignored `required`
-  // parameter in shipment-general-information.tsx.
+  // It fails if the catalog ever marks bol required, or if the descriptor
+  // starts passing the resolved `required` down.
   it("is not required merely because a blocking rule names the bol field", async () => {
     getUIPolicy.mockResolvedValue({
       checkForDuplicateBols: true,

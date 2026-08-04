@@ -72,6 +72,20 @@ export function ruleBlocks(rule: ResolvedCapabilityRule | null): boolean {
   return !!rule && rule.enabled && rule.enforcement === "Block";
 }
 
+/**
+ * Whether the profile makes a field mandatory.
+ *
+ * Reads `requiredFields`, not `fields`. A rule targets every field it has
+ * something to say about — that is what drives the explainer — but most rules
+ * constrain a value that is already there rather than demanding one. The
+ * duplicate-BOL rule targets `bol` and forbids reusing it; move removal targets
+ * `moves` and forbids deleting one; the weight cap returns early when weight is
+ * absent. None of them make their field required.
+ *
+ * The server computes `requiredFields` from the resolved parameters, so a
+ * requirement switched off by a parameter — temperatureMax without
+ * requireBothBounds — is already absent here.
+ */
 export function isFieldRequired(
   profile: ResolvedModeProfile | null | undefined,
   field: string,
@@ -79,7 +93,7 @@ export function isFieldRequired(
   if (!profile?.rules) return false;
 
   return Object.values(profile.rules).some(
-    (rule) => ruleBlocks(rule) && (rule.fields?.includes(field) ?? false),
+    (rule) => ruleBlocks(rule) && (rule.requiredFields?.includes(field) ?? false),
   );
 }
 

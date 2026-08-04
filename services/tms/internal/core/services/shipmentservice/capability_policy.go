@@ -158,6 +158,10 @@ func fallbackRule(key modeprofile.RuleKey) modeprofile.ResolvedRule {
 		Enforcement: def.DefaultEnforcement,
 		Enabled:     true,
 		Fields:      def.Fields,
+		// The fallback carries no resolved parameters, so it takes the
+		// definition's unnarrowed list. Only move removal is built this way and
+		// it requires nothing, so there is no narrowing to lose.
+		RequiredFields: def.RequiredFields,
 	}
 }
 

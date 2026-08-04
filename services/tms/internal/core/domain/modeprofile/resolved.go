@@ -1,6 +1,8 @@
 package modeprofile
 
 import (
+	"slices"
+
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -37,9 +39,29 @@ type ResolvedRule struct {
 	Label       string                  `json:"label"`
 	Enforcement tenant.EnforcementLevel `json:"enforcement"`
 	Enabled     bool                    `json:"enabled"`
-	Fields      []string                `json:"fields,omitempty"`
-	Parameters  map[string]any          `json:"parameters,omitempty"`
-	Provenance  Provenance              `json:"provenance"`
+
+	// Fields the rule targets, for explaining why a field behaves as it does.
+	// Not the same as the fields it makes mandatory — see RequiredFields.
+	Fields []string `json:"fields,omitempty"`
+
+	// Fields this rule makes mandatory under its resolved parameters. Narrower
+	// than the definition's list where a parameter turns a requirement off.
+	RequiredFields []string `json:"requiredFields,omitempty"`
+
+	Parameters map[string]any `json:"parameters,omitempty"`
+	Provenance Provenance     `json:"provenance"`
+}
+
+// RequiresField reports whether this rule makes the given field mandatory.
+//
+// Blocking is part of the question: a rule that only warns records a deviation
+// rather than refusing the save, so the field is not actually required.
+func (r ResolvedRule) RequiresField(field string) bool {
+	if !r.Blocks() {
+		return false
+	}
+
+	return slices.Contains(r.RequiredFields, field)
 }
 
 func (r ResolvedRule) Blocks() bool {

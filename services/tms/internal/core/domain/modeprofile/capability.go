@@ -120,8 +120,26 @@ type RuleDefinition struct {
 	Label              string                  `json:"label"`
 	Rationale          string                  `json:"rationale"`
 	DefaultEnforcement tenant.EnforcementLevel `json:"defaultEnforcement"`
-	Fields             []string                `json:"fields,omitempty"`
-	Parameters         []RuleParameter         `json:"parameters,omitempty"`
+
+	// Fields the rule concerns itself with. This drives the "why does this field
+	// behave this way" explanation, so it is deliberately broad: the duplicate-BOL
+	// rule targets bol, the move-removal rule targets moves.
+	//
+	// Targeting a field is not the same as making it mandatory. Most rules here
+	// constrain a value that is already present — a maximum, a uniqueness check, a
+	// forbidden operation — and several explicitly do nothing when the field is
+	// absent. Read RequiredFields for that question.
+	Fields []string `json:"fields,omitempty"`
+
+	// Fields this rule can make mandatory, meaning it emits ErrRequired when they
+	// are missing. A subset of Fields, empty for most rules.
+	//
+	// "Can" rather than "does": a rule parameter may narrow it further at
+	// resolution time, which is why the resolved form is computed rather than
+	// copied. See requiredFieldsFor.
+	RequiredFields []string `json:"requiredFields,omitempty"`
+
+	Parameters []RuleParameter `json:"parameters,omitempty"`
 }
 
 var ruleDefinitions = map[RuleKey]RuleDefinition{
@@ -182,6 +200,8 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 			"jurisdiction permit threshold are computed from these numbers.",
 		DefaultEnforcement: tenant.EnforcementLevelBlock,
 		Fields:             []string{"commodities"},
+		// validateDimensions emits ErrRequired per commodity line missing a side.
+		RequiredFields: []string{"commodities"},
 	},
 	RuleKeyEnvelopeExceedsEquipment: {
 		Key:        RuleKeyEnvelopeExceedsEquipment,
@@ -270,6 +290,9 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 			"require the agreed temperature to be recorded before pickup.",
 		DefaultEnforcement: tenant.EnforcementLevelBlock,
 		Fields:             []string{"temperatureMin", "temperatureMax"},
+		// validateTemperature always requires a minimum; the maximum is required
+		// only when requireBothBounds is on, which requiredFieldsFor applies.
+		RequiredFields: []string{"temperatureMin", "temperatureMax"},
 		Parameters: []RuleParameter{
 			{
 				Name:     ParamRequireBothBounds,
