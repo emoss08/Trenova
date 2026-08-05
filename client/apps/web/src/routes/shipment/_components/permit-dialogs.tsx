@@ -3,6 +3,7 @@ import { DateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { MoneyField } from "@/components/fields/money-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { DocumentUploadSection } from "@/components/document-upload-section";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { permitViewQueryKeys } from "@/lib/queries/shipment";
 import { apiService } from "@/services/api";
@@ -135,7 +136,7 @@ export function PermitRecordDialog({
         onOpenChange(next);
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Permit" : "Record Permit"}</DialogTitle>
           <DialogDescription>
@@ -200,6 +201,18 @@ export function PermitRecordDialog({
             </FormControl>
           </FormGroup>
         </FormProvider>
+
+        {/* Only once the permit exists: documents attach to a resource by id,
+            and a new permit has none until it is saved. Attaching through the
+            general document system rather than a field on the permit is what
+            gives these the same retention, versioning and access rules as every
+            other document on the load. */}
+        {isEdit && permit?.id && (
+          <div className="border-t pt-3">
+            <p className="mb-2 text-xs font-medium">Permit Document</p>
+            <DocumentUploadSection resourceType="permit" resourceId={permit.id} />
+          </div>
+        )}
         <DialogFooter>
           <Button
             type="button"

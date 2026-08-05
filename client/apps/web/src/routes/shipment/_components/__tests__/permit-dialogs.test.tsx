@@ -29,7 +29,6 @@ const EXISTING: Permit = {
   issuedAt: 1_700_000_000,
   expiresAt: 1_800_000_000,
   cost: null,
-  documentId: null,
   notes: "Escort booked",
 };
 

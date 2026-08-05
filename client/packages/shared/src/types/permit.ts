@@ -97,7 +97,6 @@ export const permitSchema = z.object({
   issuedAt: z.number().nullish(),
   expiresAt: z.number().nullish(),
   cost: decimalStringSchema,
-  documentId: nullableStringSchema,
   notes: optionalStringSchema,
   version: z.number().int().optional(),
   createdAt: z.number().optional(),
