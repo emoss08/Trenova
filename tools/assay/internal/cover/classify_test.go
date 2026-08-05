@@ -288,6 +288,32 @@ func TestExecutableRangesReportsBodySpans(t *testing.T) {
 	assert.False(t, leaked, "the span must stop before the closing brace")
 }
 
+// TestMinimalBodyIsNarrowable pins the boundary in functionBodyRanges, which
+// mutation testing caught the moment ExecutableRanges stopped calling it: a
+// function holding exactly one statement has two lines between its braces, and
+// treating that as too small to be a body would send narrowing back to the whole
+// package for the commonest shape in Go. Nothing here asserted it before, because
+// the existing tests check that narrowing is *sound*, never that it is tight.
+func TestMinimalBodyIsNarrowable(t *testing.T) {
+	source := "package demo\n\nfunc F() int {\n\treturn 1\n}\n"
+
+	got, err := classifySource("minimal.go", []byte(source), []int{4})
+	require.NoError(t, err)
+
+	assert.Equal(t, []int{4}, got.Executable)
+	assert.True(t, got.Narrowable())
+}
+
+func TestBodyWithNoRoomForAStatementIsNotExecutable(t *testing.T) {
+	source := "package demo\n\nfunc F() {\n}\n"
+
+	got, err := classifySource("empty.go", []byte(source), []int{3, 4})
+	require.NoError(t, err)
+
+	assert.Empty(t, got.Executable,
+		"there is no line between the braces, so there is nothing coverage could attribute")
+}
+
 // TestExecutableRangesCoversSingleLineBodies pins the difference between what
 // mutation may touch and what narrowing may narrow. Coverage attributes a one-line
 // body to the function's own line, so refusing to mutate it would leave every
