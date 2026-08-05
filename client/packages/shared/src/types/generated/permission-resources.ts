@@ -58,6 +58,7 @@ export const Resource = {
   ShipmentHold: "shipment_hold",
   Permit: "permit",
   JurisdictionRule: "jurisdiction_rule",
+  JurisdictionRuleOverride: "jurisdiction_rule_override",
   ServiceFailure: "service_failure",
   ServiceFailureReasonCode: "service_failure_reason_code",
   DispatchControl: "dispatch_control",

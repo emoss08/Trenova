@@ -1059,6 +1059,18 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "jurisdiction-rule-overrides",
+                loader: combineLoaders(
+                  protectedLoader,
+                  createPermissionLoader(Resource.JurisdictionRuleOverride),
+                ),
+                async lazy() {
+                  const { JurisdictionRuleOverridesPage } =
+                    await import("@/routes/jurisdiction-rule-override/page");
+                  return { Component: JurisdictionRuleOverridesPage };
+                },
+              },
+              {
                 path: "service-failure-reason-codes",
                 loader: combineLoaders(
                   protectedLoader,

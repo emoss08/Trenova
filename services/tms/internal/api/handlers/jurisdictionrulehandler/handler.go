@@ -65,6 +65,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceJurisdictionRule.String(), permission.OpApprove),
 		h.verify,
 	)
+
+	h.registerOverrideRoutes(rg)
 }
 
 // @Summary List jurisdiction rules
@@ -258,4 +260,152 @@ func (h *Handler) verify(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, verified)
+}
+
+func (h *Handler) registerOverrideRoutes(rg *gin.RouterGroup) {
+	api := rg.Group("/jurisdiction-rule-overrides")
+	resource := permission.ResourceJurisdictionRuleOverride.String()
+
+	api.GET("/:overrideID/",
+		h.pm.RequirePermission(resource, permission.OpRead), h.getOverride)
+	api.POST("/",
+		h.pm.RequirePermission(resource, permission.OpCreate), h.createOverride)
+	api.PUT("/:overrideID/",
+		h.pm.RequirePermission(resource, permission.OpUpdate), h.updateOverride)
+	api.DELETE("/:overrideID/",
+		h.pm.RequirePermission(resource, permission.OpDelete), h.deleteOverride)
+}
+
+func tenantOf(authCtx *authctx.AuthContext) pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}
+}
+
+// @Summary Get a carrier override
+// @ID getJurisdictionRuleOverride
+// @Tags Jurisdiction Rules
+// @Produce json
+// @Param overrideID path string true "Override ID"
+// @Success 200 {object} jurisdictionrule.Override
+// @Security BearerAuth
+// @Router /jurisdiction-rule-overrides/{overrideID}/ [get]
+func (h *Handler) getOverride(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	overrideID, err := pulid.MustParse(c.Param("overrideID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	entity, err := h.service.GetOverrideByID(c.Request.Context(), overrideID, tenantOf(authCtx))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, entity)
+}
+
+// @Summary Create a carrier override
+// @Description Holds this organization to a stricter limit than a state requires. An override that would loosen a statutory limit is rejected.
+// @ID createJurisdictionRuleOverride
+// @Tags Jurisdiction Rules
+// @Accept json
+// @Produce json
+// @Param request body jurisdictionrule.Override true "Override payload"
+// @Success 201 {object} jurisdictionrule.Override
+// @Security BearerAuth
+// @Router /jurisdiction-rule-overrides/ [post]
+func (h *Handler) createOverride(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	entity := new(jurisdictionrule.Override)
+	if err := c.ShouldBindJSON(entity); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	// The session owns the tenant. Taking it from the body would let a caller
+	// write an override into another organization.
+	entity.OrganizationID = authCtx.OrganizationID
+	entity.BusinessUnitID = authCtx.BusinessUnitID
+
+	created, err := h.service.CreateOverride(
+		c.Request.Context(), entity, actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, created)
+}
+
+// @Summary Update a carrier override
+// @ID updateJurisdictionRuleOverride
+// @Tags Jurisdiction Rules
+// @Accept json
+// @Produce json
+// @Param overrideID path string true "Override ID"
+// @Param request body jurisdictionrule.Override true "Override payload"
+// @Success 200 {object} jurisdictionrule.Override
+// @Security BearerAuth
+// @Router /jurisdiction-rule-overrides/{overrideID}/ [put]
+func (h *Handler) updateOverride(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	overrideID, err := pulid.MustParse(c.Param("overrideID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	entity := new(jurisdictionrule.Override)
+	if err = c.ShouldBindJSON(entity); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	entity.ID = overrideID
+	entity.OrganizationID = authCtx.OrganizationID
+	entity.BusinessUnitID = authCtx.BusinessUnitID
+
+	updated, err := h.service.UpdateOverride(
+		c.Request.Context(), entity, actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, updated)
+}
+
+// @Summary Remove a carrier override
+// @Description Returns this jurisdiction to its statutory limits.
+// @ID deleteJurisdictionRuleOverride
+// @Tags Jurisdiction Rules
+// @Produce json
+// @Param overrideID path string true "Override ID"
+// @Success 204
+// @Security BearerAuth
+// @Router /jurisdiction-rule-overrides/{overrideID}/ [delete]
+func (h *Handler) deleteOverride(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	overrideID, err := pulid.MustParse(c.Param("overrideID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err = h.service.DeleteOverride(
+		c.Request.Context(), overrideID, tenantOf(authCtx), actorutil.FromAuthContext(authCtx),
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }

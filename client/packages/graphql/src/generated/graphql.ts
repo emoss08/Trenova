@@ -4384,6 +4384,15 @@ export type JournalReversalTableQueryVariables = Exact<{
 
 export type JournalReversalTableQuery = { journalReversals: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'JournalReversalTableRowFieldsFragment': JournalReversalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type JurisdictionRuleOverrideTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, maxWidthFeet: number | null, maxHeightFeet: number | null, maxLengthFeet: number | null, maxWeightPounds: number | null, permitLeadTimeDays: number | null, daylightOnly: boolean | null, holidayRestricted: boolean | null, reason: string, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null } & { ' $fragmentName'?: 'JurisdictionRuleOverrideTableRowFieldsFragment' };
+
+export type JurisdictionRuleOverrideTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type JurisdictionRuleOverrideTableQuery = { jurisdictionRuleOverrides: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'JurisdictionRuleOverrideTableRowFieldsFragment': JurisdictionRuleOverrideTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type JurisdictionRuleTableRowFieldsFragment = { id: string, stateId: string, status: JurisdictionRuleStatus, maxWidthFeet: number, maxHeightFeet: number, maxLengthFeet: number, maxWeightPounds: number, superloadWidthFeet: number | null, superloadWeightPounds: number | null, daylightOnly: boolean, rushHourRestricted: boolean, weekendRestricted: boolean, holidayRestricted: boolean, permitLeadTimeDays: number, permitValidityDays: number, permitBaseFee: string | null, permitPerMileFee: string | null, sourceNote: string | null, sourceUrl: string | null, verificationState: JurisdictionVerificationState, verifiedAt: number | null, effectiveStartDate: number | null, effectiveEndDate: number | null, version: number, createdAt: number, updatedAt: number, state: { id: string, name: string, abbreviation: string } | null } & { ' $fragmentName'?: 'JurisdictionRuleTableRowFieldsFragment' };
 
 export type JurisdictionRuleTableQueryVariables = Exact<{
@@ -7206,6 +7215,30 @@ export const JournalReversalTableRowFieldsFragmentDoc = new TypedDocumentString(
   updatedAt
 }
     `, {"fragmentName":"JournalReversalTableRowFields"}) as unknown as TypedDocumentString<JournalReversalTableRowFieldsFragment, unknown>;
+export const JurisdictionRuleOverrideTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment JurisdictionRuleOverrideTableRowFields on JurisdictionRuleOverride {
+  id
+  businessUnitId
+  organizationId
+  stateId
+  maxWidthFeet
+  maxHeightFeet
+  maxLengthFeet
+  maxWeightPounds
+  permitLeadTimeDays
+  daylightOnly
+  holidayRestricted
+  reason
+  version
+  createdAt
+  updatedAt
+  state {
+    id
+    name
+    abbreviation
+  }
+}
+    `, {"fragmentName":"JurisdictionRuleOverrideTableRowFields"}) as unknown as TypedDocumentString<JurisdictionRuleOverrideTableRowFieldsFragment, unknown>;
 export const JurisdictionRuleTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment JurisdictionRuleTableRowFields on JurisdictionRule {
   id
@@ -15687,6 +15720,46 @@ fragment JournalReversalTableRowFields on JournalReversal {
   createdAt
   updatedAt
 }`, {"hash":"sha256:24e728ee31f68aae6a69d417eef59bab9bd326df315025eb96e50213d737aa49"}) as unknown as TypedDocumentString<JournalReversalTableQuery, JournalReversalTableQueryVariables>;
+export const JurisdictionRuleOverrideTableDocument = new TypedDocumentString(`
+    query JurisdictionRuleOverrideTable($input: DataTableConnectionInput!) {
+  jurisdictionRuleOverrides(input: $input) {
+    edges {
+      node {
+        ...JurisdictionRuleOverrideTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment JurisdictionRuleOverrideTableRowFields on JurisdictionRuleOverride {
+  id
+  businessUnitId
+  organizationId
+  stateId
+  maxWidthFeet
+  maxHeightFeet
+  maxLengthFeet
+  maxWeightPounds
+  permitLeadTimeDays
+  daylightOnly
+  holidayRestricted
+  reason
+  version
+  createdAt
+  updatedAt
+  state {
+    id
+    name
+    abbreviation
+  }
+}`, {"hash":"sha256:2de143006b12e5f214983705e5f380ba12d8b8b92faf1ef074afba903e1df9db"}) as unknown as TypedDocumentString<JurisdictionRuleOverrideTableQuery, JurisdictionRuleOverrideTableQueryVariables>;
 export const JurisdictionRuleTableDocument = new TypedDocumentString(`
     query JurisdictionRuleTable($input: DataTableConnectionInput!) {
   jurisdictionRules(input: $input) {

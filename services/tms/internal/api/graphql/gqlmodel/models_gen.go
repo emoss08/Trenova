@@ -2216,6 +2216,17 @@ type JurisdictionRuleEdge struct {
 	Cursor string                             `json:"cursor"`
 }
 
+type JurisdictionRuleOverrideConnection struct {
+	Edges      []*JurisdictionRuleOverrideEdge `json:"edges"`
+	PageInfo   *PageInfo                       `json:"pageInfo"`
+	TotalCount *int                            `json:"totalCount,omitempty"`
+}
+
+type JurisdictionRuleOverrideEdge struct {
+	Node   *jurisdictionrule.Override `json:"node"`
+	Cursor string                     `json:"cursor"`
+}
+
 type LocateTractorInput struct {
 	TractorID     string `json:"tractorId"`
 	NewLocationID string `json:"newLocationId"`

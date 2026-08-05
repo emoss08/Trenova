@@ -902,6 +902,16 @@ export const navigationConfig: NavigationConfig = {
       keywords: ["jurisdiction", "oversize", "permit", "state", "limits"],
     },
     {
+      id: "create-jurisdiction-rule-override",
+      label: "Create Carrier Override",
+      description: "Hold this fleet to a stricter limit than a state requires",
+      path: "/admin/jurisdiction-rule-overrides",
+      resource: Resource.JurisdictionRuleOverride,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["override", "carrier", "jurisdiction", "stricter", "limits"],
+    },
+    {
       id: "create-service-failure-reason-code",
       label: "Create Service Failure Reason",
       description: "Add a service failure reason code",
@@ -1168,6 +1178,13 @@ export const adminLinks: SidebarLink[] = [
     title: "Jurisdiction Rules",
     group: "Organization",
     resource: Resource.JurisdictionRule,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/jurisdiction-rule-overrides/",
+    title: "Carrier Overrides",
+    group: "Organization",
+    resource: Resource.JurisdictionRuleOverride,
     requiredOperation: Operation.Read,
   },
   {

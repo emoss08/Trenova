@@ -80,3 +80,54 @@ extend type Query {
   jurisdictionRules(input: DataTableConnectionInput!): JurisdictionRuleConnection!
   jurisdictionRule(id: ID!): JurisdictionRule
 }
+
+"""
+One organization's stricter posture on a jurisdiction.
+
+Unlike JurisdictionRule these rows are tenant data. Every field is optional —
+an unset field defers to the statutory rule — and the engine applies a value
+only when it is stricter than the statute, so a permissive override cannot make
+an illegal load look legal.
+"""
+type JurisdictionRuleOverride {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  stateId: ID!
+
+  maxWidthFeet: Float
+  maxHeightFeet: Float
+  maxLengthFeet: Float
+  maxWeightPounds: Int
+
+  permitLeadTimeDays: Int
+
+  daylightOnly: Boolean
+  holidayRestricted: Boolean
+
+  """Why this organization runs tighter than the statute. Required, minimum ten characters."""
+  reason: String!
+
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+
+  state: UsState
+}
+
+type JurisdictionRuleOverrideEdge {
+  node: JurisdictionRuleOverride!
+  cursor: String!
+}
+
+type JurisdictionRuleOverrideConnection {
+  edges: [JurisdictionRuleOverrideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  jurisdictionRuleOverrides(
+    input: DataTableConnectionInput!
+  ): JurisdictionRuleOverrideConnection!
+}

@@ -1,0 +1,36 @@
+fragment JurisdictionRuleOverrideTableRowFields on JurisdictionRuleOverride {
+  id
+  businessUnitId
+  organizationId
+  stateId
+  maxWidthFeet
+  maxHeightFeet
+  maxLengthFeet
+  maxWeightPounds
+  permitLeadTimeDays
+  daylightOnly
+  holidayRestricted
+  reason
+  version
+  createdAt
+  updatedAt
+  state {
+    id
+    name
+    abbreviation
+  }
+}
+
+query JurisdictionRuleOverrideTable($input: DataTableConnectionInput!) {
+  jurisdictionRuleOverrides(input: $input) {
+    edges {
+      node {
+        ...JurisdictionRuleOverrideTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

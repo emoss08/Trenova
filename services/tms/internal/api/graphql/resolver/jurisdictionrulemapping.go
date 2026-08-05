@@ -32,3 +32,27 @@ func jurisdictionRuleConnectionToModel(
 		TotalCount: page.TotalCount,
 	}, nil
 }
+
+func jurisdictionOverrideConnectionToModel(
+	result *pagination.CursorListResult[*jurisdictionrule.Override],
+) (*gqlmodel.JurisdictionRuleOverrideConnection, error) {
+	page, err := entityCursorConnection(
+		result,
+		func(
+			node *jurisdictionrule.Override,
+			cursor string,
+		) *gqlmodel.JurisdictionRuleOverrideEdge {
+			return &gqlmodel.JurisdictionRuleOverrideEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.JurisdictionRuleOverrideEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.JurisdictionRuleOverrideConnection{
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}

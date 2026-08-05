@@ -4757,6 +4757,47 @@ type JurisdictionRuleEdge {
   node: JurisdictionRule!
 }
 
+"""
+One organization's stricter posture on a jurisdiction.
+
+Unlike JurisdictionRule these rows are tenant data. Every field is optional —
+an unset field defers to the statutory rule — and the engine applies a value
+only when it is stricter than the statute, so a permissive override cannot make
+an illegal load look legal.
+"""
+type JurisdictionRuleOverride {
+  businessUnitId: ID!
+  createdAt: Int!
+  daylightOnly: Boolean
+  holidayRestricted: Boolean
+  id: ID!
+  maxHeightFeet: Float
+  maxLengthFeet: Float
+  maxWeightPounds: Int
+  maxWidthFeet: Float
+  organizationId: ID!
+  permitLeadTimeDays: Int
+  """
+  Why this organization runs tighter than the statute. Required, minimum ten characters.
+  """
+  reason: String!
+  state: UsState
+  stateId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+type JurisdictionRuleOverrideConnection {
+  edges: [JurisdictionRuleOverrideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type JurisdictionRuleOverrideEdge {
+  cursor: String!
+  node: JurisdictionRuleOverride!
+}
+
 enum JurisdictionRuleStatus {
   Active
   Draft
@@ -6101,6 +6142,7 @@ type Query {
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
   journalSourceByObject(sourceId: String!, sourceType: String!): JournalSourceInfo
   jurisdictionRule(id: ID!): JurisdictionRule
+  jurisdictionRuleOverrides(input: DataTableConnectionInput!): JurisdictionRuleOverrideConnection!
   jurisdictionRules(input: DataTableConnectionInput!): JurisdictionRuleConnection!
   location(id: ID!): Location
   locationCategories(input: DataTableConnectionInput!): LocationCategoryConnection!

@@ -75,6 +75,9 @@ models:
   JurisdictionRule:
     model:
       - github.com/emoss08/trenova/internal/core/domain/jurisdictionrule.JurisdictionRule
+  JurisdictionRuleOverride:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/jurisdictionrule.Override
   JurisdictionRuleStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/jurisdictionrule.Status

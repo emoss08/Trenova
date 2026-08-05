@@ -36,6 +36,16 @@ func (r *jurisdictionRuleResolver) PermitPerMileFee(ctx context.Context, obj *ju
 	return nullDecimalToString(obj.PermitPerMileFee), nil
 }
 
+// PermitLeadTimeDays is the resolver for the permitLeadTimeDays field.
+func (r *jurisdictionRuleOverrideResolver) PermitLeadTimeDays(ctx context.Context, obj *jurisdictionrule.Override) (*int, error) {
+	if obj.PermitLeadTimeDays == nil {
+		return nil, nil
+	}
+
+	days := int(*obj.PermitLeadTimeDays)
+	return &days, nil
+}
+
 // JurisdictionRules is the resolver for the jurisdictionRules field.
 func (r *queryResolver) JurisdictionRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleConnection, error) {
 	authCtx, err := r.requirePermission(
@@ -82,9 +92,48 @@ func (r *queryResolver) JurisdictionRule(ctx context.Context, id string) (*juris
 	return r.jurisdictionRuleService.GetByID(ctx, ruleID)
 }
 
+// JurisdictionRuleOverrides is the resolver for the jurisdictionRuleOverrides field.
+func (r *queryResolver) JurisdictionRuleOverrides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleOverrideConnection, error) {
+	authCtx, err := r.requirePermission(
+		ctx, permission.ResourceJurisdictionRuleOverride, permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tableInput, err := dataTableConnectionFromGraphQL(&input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	// Overrides are tenant data, so unlike the rules they narrow this read is
+	// scoped as well as authorized.
+	result, err := r.jurisdictionRuleRepo.ListOverridesConnection(
+		ctx,
+		&repositories.ListOverridesRequest{
+			Filter: tableInput.Filter,
+			Cursor: tableInput.Cursor,
+		},
+		tenantInfo(authCtx),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return jurisdictionOverrideConnectionToModel(result)
+}
+
 // JurisdictionRule returns generated.JurisdictionRuleResolver implementation.
 func (r *Resolver) JurisdictionRule() generated.JurisdictionRuleResolver {
 	return &jurisdictionRuleResolver{r}
 }
 
-type jurisdictionRuleResolver struct{ *Resolver }
+// JurisdictionRuleOverride returns generated.JurisdictionRuleOverrideResolver implementation.
+func (r *Resolver) JurisdictionRuleOverride() generated.JurisdictionRuleOverrideResolver {
+	return &jurisdictionRuleOverrideResolver{r}
+}
+
+type (
+	jurisdictionRuleResolver         struct{ *Resolver }
+	jurisdictionRuleOverrideResolver struct{ *Resolver }
+)
