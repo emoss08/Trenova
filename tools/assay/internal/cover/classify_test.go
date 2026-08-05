@@ -186,3 +186,120 @@ func TestLineKindString(t *testing.T) {
 	assert.Equal(t, "in-function", LineInFunction.String())
 	assert.Equal(t, "declaration", LineDeclaration.String())
 }
+
+// The tests below exist because `assay mutate` found them missing: each one kills
+// a mutant that survived a run over this package.
+
+const boundarySample = `package demo
+
+func First() int {
+	total := 1
+
+	return total
+}
+
+const AfterFirst = 5
+
+func External() int
+
+func Last() int {
+	return 2
+}
+`
+
+func classifyBoundary(t *testing.T, lines ...int) FileClassification {
+	t.Helper()
+
+	got, err := classifySource("boundary.go", []byte(boundarySample), lines)
+	require.NoError(t, err)
+
+	return got
+}
+
+func boundaryLineOf(t *testing.T, needle string) int {
+	t.Helper()
+
+	for i, line := range strings.Split(boundarySample, "\n") {
+		if strings.Contains(line, needle) {
+			return i + 1
+		}
+	}
+	t.Fatalf("needle %q not found", needle)
+
+	return 0
+}
+
+func TestLineAfterClosingBraceIsNotExecutable(t *testing.T) {
+	closing := boundaryLineOf(t, "return total") + 1
+
+	assert.False(t, classifyBoundary(t, closing).Narrowable(),
+		"the closing brace line is outside the body; treating it as executable would let "+
+			"narrowing trust a declaration")
+	assert.False(t, classifyBoundary(t, boundaryLineOf(t, "const AfterFirst")).Narrowable(),
+		"a declaration following a body must stay a declaration")
+}
+
+func TestFirstAndLastBodyLinesAreExecutable(t *testing.T) {
+	assert.True(t, classifyBoundary(t, boundaryLineOf(t, "total := 1")).Narrowable(),
+		"the first statement of a body is executable")
+	assert.True(t, classifyBoundary(t, boundaryLineOf(t, "return total")).Narrowable(),
+		"the last statement of a body is executable")
+}
+
+func TestBodylessFunctionDeclarationIsHandled(t *testing.T) {
+	got := classifyBoundary(t, boundaryLineOf(t, "func External() int"))
+
+	assert.False(t, got.Narrowable(),
+		"a declaration with no body has nothing executable and must not panic")
+}
+
+func TestTrailingCommentOnTheLastLineIsIgnorable(t *testing.T) {
+	source := "package demo\n\nfunc F() int {\n\treturn 1\n}\n\n// trailing"
+	got, err := classifySource("trailing.go", []byte(source), []int{7})
+	require.NoError(t, err)
+
+	assert.True(t, got.Narrowable())
+	assert.Empty(t, got.Declaration,
+		"the ignorable-text check must cover the final line of the file")
+}
+
+func TestExecutableRangesReportsBodySpans(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "boundary.go")
+	require.NoError(t, os.WriteFile(path, []byte(boundarySample), 0o644))
+
+	ranges, err := ExecutableRanges(path)
+	require.NoError(t, err)
+	require.NotEmpty(t, ranges)
+
+	first := boundaryLineOf(t, "total := 1")
+	closing := boundaryLineOf(t, "return total") + 1
+
+	var covered, leaked bool
+	for _, span := range ranges {
+		if span.Contains(first) {
+			covered = true
+		}
+		if span.Contains(closing) || span.Contains(boundaryLineOf(t, "const AfterFirst")) {
+			leaked = true
+		}
+	}
+	assert.True(t, covered, "the body's statements must be reported")
+	assert.False(t, leaked, "the span must stop before the closing brace")
+}
+
+func TestExecutableRangesFailsOnMissingFile(t *testing.T) {
+	_, err := ExecutableRanges(filepath.Join(t.TempDir(), "absent.go"))
+
+	require.Error(t, err)
+}
+
+func TestExecutableRangesFailsOnUnparseableSource(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "broken.go")
+	require.NoError(t, os.WriteFile(path, []byte("package demo\n\nfunc ("), 0o644))
+
+	_, err := ExecutableRanges(path)
+
+	require.Error(t, err, "an unparseable file must not silently report no executable lines")
+}
