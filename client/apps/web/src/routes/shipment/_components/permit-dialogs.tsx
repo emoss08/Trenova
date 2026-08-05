@@ -20,6 +20,7 @@ import { describeRequirement } from "@trenova/shared/lib/permit";
 import {
   permitCreateSchema,
   waiveRequirementSchema,
+  type Permit,
   type PermitCreateInput,
   type PermitRequirement,
   type WaiveRequirementInput,
@@ -42,11 +43,29 @@ function useInvalidatePermitViews(shipmentId: string) {
 }
 
 /**
- * A blank permit seeded with the jurisdiction of the requirement it was opened
- * from. Defaulting the state is the point of opening the dialog from a row —
- * the operator already told us which jurisdiction by clicking it.
+ * The dialog's starting values.
+ *
+ * Editing an existing permit fills from it. Recording a new one seeds the
+ * jurisdiction from the requirement it was opened from — that is the point of
+ * opening the dialog from a row, since the operator already told us which
+ * jurisdiction by clicking it.
  */
-function emptyPermit(requirement: PermitRequirement | null): PermitCreateInput {
+function permitDefaults(
+  requirement: PermitRequirement | null,
+  permit: Permit | null,
+): PermitCreateInput {
+  if (permit) {
+    return {
+      stateId: permit.stateId,
+      permitNumber: permit.permitNumber,
+      status: permit.status,
+      issuedAt: permit.issuedAt ?? null,
+      expiresAt: permit.expiresAt ?? null,
+      cost: permit.cost ?? null,
+      notes: permit.notes ?? "",
+    };
+  }
+
   return {
     stateId: requirement?.stateId ?? "",
     permitNumber: "",
@@ -63,35 +82,42 @@ export function PermitRecordDialog({
   onOpenChange,
   shipmentId,
   requirement,
+  permit = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   shipmentId: string;
   requirement: PermitRequirement | null;
+  /** When set the dialog edits this permit instead of recording a new one. */
+  permit?: Permit | null;
 }) {
   const invalidate = useInvalidatePermitViews(shipmentId);
+  const isEdit = permit !== null;
 
   const form = useForm<PermitCreateInput>({
     resolver: zodResolver(permitCreateSchema),
-    defaultValues: emptyPermit(requirement),
+    defaultValues: permitDefaults(requirement, permit),
   });
 
   const { control, handleSubmit, reset } = form;
 
   // defaultValues only apply on mount, and this dialog stays mounted while the
-  // operator moves between requirement rows. Without this, opening it for
-  // Georgia and then for Tennessee would file the Tennessee permit against
-  // Georgia.
+  // operator moves between rows. Without this, opening it for Georgia and then
+  // for Tennessee would file the Tennessee permit against Georgia.
   useEffect(() => {
-    if (open) reset(emptyPermit(requirement));
-  }, [open, requirement, reset]);
+    if (open) reset(permitDefaults(requirement, permit));
+  }, [open, requirement, permit, reset]);
 
   const mutation = useApiMutation({
     mutationFn: async (values: PermitCreateInput) =>
-      apiService.shipmentService.createPermit(shipmentId, values),
+      isEdit && permit?.id
+        ? apiService.shipmentService.updatePermit(shipmentId, permit.id, values)
+        : apiService.shipmentService.createPermit(shipmentId, values),
     onSuccess: () => {
-      toast.success("Permit recorded", {
-        description: "The requirement will clear if this permit covers the load.",
+      toast.success(isEdit ? "Permit updated" : "Permit recorded", {
+        // Both paths re-derive server-side, so a correction can release a hold
+        // just as recording one can — or re-raise it, if the expiry moved in.
+        description: "Requirements are re-checked against this permit.",
       });
       invalidate();
       reset();
@@ -111,11 +137,13 @@ export function PermitRecordDialog({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Record Permit</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Permit" : "Record Permit"}</DialogTitle>
           <DialogDescription>
             {requirement
               ? describeRequirement(requirement)
-              : "Record a permit against this shipment"}
+              : isEdit
+                ? `${permit?.state?.abbreviation ?? ""} ${permit?.permitNumber ?? ""}`.trim()
+                : "Record a permit against this shipment"}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -186,7 +214,13 @@ export function PermitRecordDialog({
             onClick={handleSubmit((values) => mutation.mutate(values))}
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? "Recording..." : "Record Permit"}
+            {mutation.isPending
+              ? isEdit
+                ? "Saving..."
+                : "Recording..."
+              : isEdit
+                ? "Save Permit"
+                : "Record Permit"}
           </Button>
         </DialogFooter>
       </DialogContent>

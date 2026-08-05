@@ -23,7 +23,7 @@ import {
   type DimensionRow,
 } from "@trenova/shared/lib/permit";
 import { cn } from "@trenova/shared/lib/utils";
-import type { PermitAssessment, PermitRequirement } from "@trenova/shared/types/permit";
+import type { Permit, PermitAssessment, PermitRequirement } from "@trenova/shared/types/permit";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -124,6 +124,7 @@ function EnvelopeBody({
 
   const [recording, setRecording] = useState<PermitRequirement | null>(null);
   const [waiving, setWaiving] = useState<PermitRequirement | null>(null);
+  const [editing, setEditing] = useState<Permit | null>(null);
 
   if (assessment.measurements.widthFeet === 0 && assessment.measurements.lengthFeet === 0) {
     return (
@@ -200,9 +201,22 @@ function EnvelopeBody({
                       : "No expiry recorded"}
                   </p>
                 </div>
-                <Badge variant={entry.status === "Active" ? "active" : "outline"}>
-                  {entry.status}
-                </Badge>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {/* A permit number keyed wrong, or an expiry that turns out to
+                      fall short of the last stop, is corrected here rather than
+                      by recording a second permit beside the first. */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="xxs"
+                    onClick={() => setEditing(entry)}
+                  >
+                    Edit
+                  </Button>
+                  <Badge variant={entry.status === "Active" ? "active" : "outline"}>
+                    {entry.status}
+                  </Badge>
+                </div>
               </li>
             ))}
           </ul>
@@ -313,6 +327,13 @@ function EnvelopeBody({
         onOpenChange={(next) => !next && setWaiving(null)}
         shipmentId={shipmentId}
         requirement={waiving}
+      />
+      <PermitRecordDialog
+        open={editing !== null}
+        onOpenChange={(next) => !next && setEditing(null)}
+        shipmentId={shipmentId}
+        requirement={null}
+        permit={editing}
       />
     </div>
   );

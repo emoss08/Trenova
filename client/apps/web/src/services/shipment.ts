@@ -206,6 +206,18 @@ export class ShipmentService {
     return safeParse(permitSchema, response, "Permit");
   }
 
+  public async updatePermit(
+    shipmentId: NonNullable<Shipment["id"]>,
+    permitId: string,
+    payload: PermitCreateInput,
+  ) {
+    const response = await api.put<unknown>(
+      `/shipments/${shipmentId}/permits/${permitId}/`,
+      permitCreateSchema.parse(payload),
+    );
+    return safeParse(permitSchema, response, "Permit");
+  }
+
   public async waivePermitRequirement(
     shipmentId: NonNullable<Shipment["id"]>,
     requirementId: string,
