@@ -288,6 +288,49 @@ func TestExecutableRangesReportsBodySpans(t *testing.T) {
 	assert.False(t, leaked, "the span must stop before the closing brace")
 }
 
+// TestExecutableRangesCoversSingleLineBodies pins the difference between what
+// mutation may touch and what narrowing may narrow. Coverage attributes a one-line
+// body to the function's own line, so refusing to mutate it would leave every
+// accessor and one-line helper in a Go codebase untested by the mutation engine.
+func TestExecutableRangesCoversSingleLineBodies(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "oneline.go")
+	source := "package demo\n\nconst Limit = 3\n\nfunc Add(a, b int) int { return a + b }\n\nfunc Empty() {}\n"
+	require.NoError(t, os.WriteFile(path, []byte(source), 0o644))
+
+	ranges, err := ExecutableRanges(path)
+	require.NoError(t, err)
+
+	assert.True(t, containsLine(ranges, 5), "the body of a one-line function is executable")
+	assert.False(t, containsLine(ranges, 3), "a const declaration is not")
+	assert.False(t, containsLine(ranges, 7), "an empty body has no statement to mutate")
+}
+
+func TestExecutableRangesStopsAtTheClosingBrace(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "multiline.go")
+	source := "package demo\n\nfunc Add(a, b int) int {\n\treturn a + b\n}\n\nvar X = 1\n"
+	require.NoError(t, os.WriteFile(path, []byte(source), 0o644))
+
+	ranges, err := ExecutableRanges(path)
+	require.NoError(t, err)
+
+	assert.True(t, containsLine(ranges, 4))
+	assert.False(t, containsLine(ranges, 3), "the signature line carries no statement")
+	assert.False(t, containsLine(ranges, 5), "nor does the closing brace")
+	assert.False(t, containsLine(ranges, 7))
+}
+
+func containsLine(ranges []Block, line int) bool {
+	for _, span := range ranges {
+		if span.Contains(line) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func TestExecutableRangesFailsOnMissingFile(t *testing.T) {
 	_, err := ExecutableRanges(filepath.Join(t.TempDir(), "absent.go"))
 

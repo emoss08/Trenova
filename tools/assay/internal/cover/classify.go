@@ -39,8 +39,16 @@ func (c FileClassification) Narrowable() bool {
 	return len(c.Declaration) == 0
 }
 
-// ExecutableRanges returns the line spans inside function bodies — the only lines
-// coverage can attribute, and therefore the only ones worth mutating.
+// ExecutableRanges returns the lines that carry statements, which are the lines a
+// coverage profile can attribute and therefore the only ones worth mutating.
+//
+// This deliberately differs from the spans narrowing uses. Narrowing has to treat
+// the line a function's opening brace sits on as a declaration, because a signature
+// change lands there and can break callers that no test of this line covers.
+// Mutation has no such exposure — it rewrites expressions in place — so it wants
+// every attributable line, including the body of `func F() int { return a + b }`,
+// which coverage reports against the function's own line. Sharing one definition
+// would either make narrowing unsound or leave every one-line function unmutated.
 func ExecutableRanges(absPath string) ([]Block, error) {
 	source, err := os.ReadFile(absPath)
 	if err != nil {
@@ -53,7 +61,38 @@ func ExecutableRanges(absPath string) ([]Block, error) {
 		return nil, fmt.Errorf("parse %s: %w", absPath, err)
 	}
 
-	return functionBodyRanges(fset, file), nil
+	return statementRanges(fset, file), nil
+}
+
+// statementRanges spans each statement of every function body. Nested statements
+// need no separate entry: a block statement's own range already encloses them.
+func statementRanges(fset *token.FileSet, file *ast.File) []Block {
+	var blocks []Block
+
+	add := func(body *ast.BlockStmt) {
+		if body == nil {
+			return
+		}
+		for _, stmt := range body.List {
+			blocks = append(blocks, Block{
+				StartLine: fset.Position(stmt.Pos()).Line,
+				EndLine:   fset.Position(stmt.End()).Line,
+			})
+		}
+	}
+
+	ast.Inspect(file, func(node ast.Node) bool {
+		switch decl := node.(type) {
+		case *ast.FuncDecl:
+			add(decl.Body)
+		case *ast.FuncLit:
+			add(decl.Body)
+		}
+
+		return true
+	})
+
+	return mergeBlocksOrEmpty(blocks)
 }
 
 func ClassifyFile(absPath string, lines []int) (FileClassification, error) {
