@@ -10,9 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.uber.org/zap"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 func (s *service) ListOverrides(
@@ -53,14 +52,18 @@ func (s *service) validateAgainstStatute(
 	rules, err := s.repo.GetActiveByStateIDs(ctx, &repositories.GetJurisdictionRulesRequest{
 		StateIDs: []pulid.ID{entity.StateID},
 	})
-	if err != nil || len(rules) == 0 || rules[0] == nil {
-		// No statute on file to compare against. The engine still clamps, so a
-		// looser value cannot take effect; failing the save here would block a
-		// carrier from recording a posture for a state nobody has configured.
+	if err != nil {
 		return
 	}
 
-	rule := rules[0]
+	rule := ruleInEffect(rules, timeutils.NowUnix())
+	if rule == nil {
+		// Nothing in force to compare against, which is the same position as no
+		// rule on file. The engine still clamps, so a looser value cannot take
+		// effect; failing the save here would block a carrier from recording a
+		// posture for a state nobody has configured.
+		return
+	}
 
 	if entity.MaxWidthFeet != nil && *entity.MaxWidthFeet > rule.MaxWidthFeet {
 		multiErr.Add("maxWidthFeet", errortypes.ErrInvalid,
@@ -97,6 +100,26 @@ func (s *service) validateAgainstStatute(
 	}
 }
 
+// ruleInEffect picks the rule the engine will actually use.
+//
+// GetActiveByStateIDs filters on status, not on the effective window, and
+// nothing orders the query — so a state mid-transition between two rules can
+// return them in either order. Validation has to narrow the same way
+// resolveRules does, or it measures an override against a rule that is not in
+// force and rejects a perfectly good one.
+func ruleInEffect(
+	rules []*jurisdictionrule.JurisdictionRule,
+	at int64,
+) *jurisdictionrule.JurisdictionRule {
+	for _, rule := range rules {
+		if rule != nil && rule.IsEffectiveAt(at) {
+			return rule
+		}
+	}
+
+	return nil
+}
+
 func (s *service) CreateOverride(
 	ctx context.Context,
 	entity *jurisdictionrule.Override,
@@ -114,8 +137,13 @@ func (s *service) CreateOverride(
 		return nil, err
 	}
 
-	s.logOverrideAction(created, permission.OpCreate, actor, nil, created,
-		"Carrier override created")
+	s.logOverrideAction(&overrideAuditParams{
+		Override:  created,
+		Operation: permission.OpCreate,
+		Actor:     actor,
+		Current:   created,
+		Comment:   "Carrier override created",
+	})
 
 	return created, nil
 }
@@ -148,8 +176,14 @@ func (s *service) UpdateOverride(
 		return nil, err
 	}
 
-	s.logOverrideAction(updated, permission.OpUpdate, actor, previous, updated,
-		"Carrier override updated")
+	s.logOverrideAction(&overrideAuditParams{
+		Override:  updated,
+		Operation: permission.OpUpdate,
+		Actor:     actor,
+		Previous:  previous,
+		Current:   updated,
+		Comment:   "Carrier override updated",
+	})
 
 	return updated, nil
 }
@@ -177,10 +211,27 @@ func (s *service) DeleteOverride(
 		return err
 	}
 
-	s.logOverrideAction(previous, permission.OpDelete, actor, previous, nil,
-		"Carrier override removed; this jurisdiction reverts to its statutory limits")
+	s.logOverrideAction(&overrideAuditParams{
+		Override:  previous,
+		Operation: permission.OpDelete,
+		Actor:     actor,
+		Previous:  previous,
+		Comment:   "Carrier override removed; this jurisdiction reverts to its statutory limits",
+	})
 
 	return nil
+}
+
+// overrideAuditParams groups what an override audit entry needs. Passed as a
+// struct rather than positionally: the previous and current states share a type,
+// and a transposed pair produces a diff that reads backwards.
+type overrideAuditParams struct {
+	Override  *jurisdictionrule.Override
+	Operation permission.Operation
+	Actor     *services.RequestActor
+	Previous  any
+	Current   any
+	Comment   string
 }
 
 // logOverrideAction records an override change against the tenant that owns it.
@@ -188,52 +239,25 @@ func (s *service) DeleteOverride(
 // Unlike a jurisdiction rule, an override is tenant data, so the entry carries
 // the organization and business unit. It is Critical for the same reason the
 // rule entries are: the row decides whether a load is flagged before it leaves.
-func (s *service) logOverrideAction(
-	entity *jurisdictionrule.Override,
-	op permission.Operation,
-	actor *services.RequestActor,
-	previous any,
-	current any,
-	comment string,
-) {
-	if s.auditService == nil || entity == nil {
+func (s *service) logOverrideAction(params *overrideAuditParams) {
+	if params.Override == nil {
 		return
 	}
 
-	auditActor := actor.AuditActorOrSystem()
-
-	params := &services.LogActionParams{
+	auditservice.Record(s.auditService, s.l, &auditservice.RecordParams{
 		Resource:       permission.ResourceJurisdictionRuleOverride,
-		ResourceID:     entity.ID.String(),
-		Operation:      op,
-		UserID:         auditActor.UserID,
-		APIKeyID:       auditActor.APIKeyID,
-		PrincipalType:  auditActor.PrincipalType,
-		PrincipalID:    auditActor.PrincipalID,
-		OrganizationID: entity.OrganizationID,
-		BusinessUnitID: entity.BusinessUnitID,
+		ResourceID:     params.Override.ID.String(),
+		Operation:      params.Operation,
+		Actor:          params.Actor.AuditActorOrSystem(),
+		OrganizationID: params.Override.OrganizationID,
+		BusinessUnitID: params.Override.BusinessUnitID,
 		Critical:       true,
-	}
-	if current != nil {
-		params.CurrentState = jsonutils.MustToJSON(current)
-	}
-	if previous != nil {
-		params.PreviousState = jsonutils.MustToJSON(previous)
-	}
-
-	opts := []services.LogOption{
-		auditservice.WithComment(comment),
-		auditservice.WithMetadata(map[string]any{
-			"stateId": entity.StateID.String(),
-			"reason":  entity.Reason,
-		}),
-	}
-	if previous != nil && current != nil {
-		opts = append(opts, auditservice.WithDiff(previous, current))
-	}
-
-	if err := s.auditService.LogAction(params, opts...); err != nil {
-		s.l.Error("failed to log jurisdiction override action",
-			zap.String("overrideId", entity.ID.String()), zap.Error(err))
-	}
+		Previous:       params.Previous,
+		Current:        params.Current,
+		Comment:        params.Comment,
+		Metadata: map[string]any{
+			"stateId": params.Override.StateID.String(),
+			"reason":  params.Override.Reason,
+		},
+	})
 }

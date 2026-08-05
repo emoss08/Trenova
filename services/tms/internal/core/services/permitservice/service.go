@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -142,11 +141,7 @@ func (s *service) resolveRules(
 
 	rules, err := s.jurisdictionRepo.GetActiveByStateIDs(
 		ctx,
-		&repositories.GetJurisdictionRulesRequest{
-			TenantInfo: tenantInfo,
-			StateIDs:   stateIDs,
-			At:         timeutils.NowUnix(),
-		},
+		&repositories.GetJurisdictionRulesRequest{StateIDs: stateIDs},
 	)
 	if err != nil {
 		return nil, err
@@ -442,51 +437,20 @@ func (s *service) ListRequirements(
 // the compliance risk of moving without one. When a load is stopped at a scale
 // or a claim is worked months later, the audit entry is what establishes who
 // decided what and when.
-//
-// Marked Critical for the same reason: these entries must survive retention
-// trimming that ordinary edits are subject to.
-func (s *service) logPermitAction(
-	params *permitAuditParams,
-) {
-	if s.auditService == nil {
-		return
-	}
-
-	logParams := &services.LogActionParams{
+func (s *service) logPermitAction(params *permitAuditParams) {
+	auditservice.Record(s.auditService, s.l, &auditservice.RecordParams{
 		Resource:       permission.ResourcePermit,
 		ResourceID:     params.ResourceID,
 		Operation:      params.Operation,
-		UserID:         params.Actor.UserID,
-		APIKeyID:       params.Actor.APIKeyID,
-		PrincipalType:  params.Actor.PrincipalType,
-		PrincipalID:    params.Actor.PrincipalID,
+		Actor:          params.Actor,
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		Critical:       true,
-	}
-	if params.Current != nil {
-		logParams.CurrentState = jsonutils.MustToJSON(params.Current)
-	}
-	if params.Previous != nil {
-		logParams.PreviousState = jsonutils.MustToJSON(params.Previous)
-	}
-
-	opts := []services.LogOption{
-		auditservice.WithComment(params.Comment),
-		auditservice.WithMetadata(map[string]any{
-			"shipmentId": params.ShipmentID.String(),
-		}),
-	}
-	if params.Previous != nil && params.Current != nil {
-		opts = append(opts, auditservice.WithDiff(params.Previous, params.Current))
-	}
-
-	if err := s.auditService.LogAction(logParams, opts...); err != nil {
-		s.l.Error("failed to log permit action",
-			zap.String("resourceId", params.ResourceID),
-			zap.Error(err),
-		)
-	}
+		Previous:       params.Previous,
+		Current:        params.Current,
+		Comment:        params.Comment,
+		Metadata:       map[string]any{"shipmentId": params.ShipmentID.String()},
+	})
 }
 
 type permitAuditParams struct {

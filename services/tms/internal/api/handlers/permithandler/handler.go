@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permit"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -76,13 +75,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 }
 
-func tenantOf(authCtx *authctx.AuthContext) pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID: authCtx.OrganizationID,
-		BuID:  authCtx.BusinessUnitID,
-	}
-}
-
 // @Summary List permits for a shipment
 // @ID listShipmentPermits
 // @Tags Permits
@@ -104,7 +96,7 @@ func (h *Handler) listPermits(c *gin.Context) {
 		return
 	}
 
-	permits, err := h.service.ListPermits(c.Request.Context(), shipmentID, tenantOf(authCtx))
+	permits, err := h.service.ListPermits(c.Request.Context(), shipmentID, actorutil.TenantInfoFrom(authCtx))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -239,7 +231,7 @@ func (h *Handler) listRequirements(c *gin.Context) {
 	}
 
 	requirements, err := h.service.ListRequirements(
-		c.Request.Context(), shipmentID, tenantOf(authCtx),
+		c.Request.Context(), shipmentID, actorutil.TenantInfoFrom(authCtx),
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -286,7 +278,7 @@ func (h *Handler) waiveRequirement(c *gin.Context) {
 	}
 
 	waived, err := h.service.WaiveRequirement(c.Request.Context(), &services.WaiveRequirementRequest{
-		TenantInfo:    tenantOf(authCtx),
+		TenantInfo:    actorutil.TenantInfoFrom(authCtx),
 		RequirementID: requirementID,
 		// The waiving user comes from the session, never the payload: the point
 		// of the record is who accepted the risk.

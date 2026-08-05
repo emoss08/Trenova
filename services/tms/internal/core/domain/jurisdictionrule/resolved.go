@@ -82,12 +82,18 @@ func (r *JurisdictionRule) Resolve(override *Override) *Resolved {
 	resolved.OverrideReason = override.Reason
 	resolved.OverriddenFields = make([]string, 0, 7)
 
-	tightenMax(&resolved.MaxWidthFeet, override.MaxWidthFeet,
-		"maxWidthFeet", &resolved.OverriddenFields)
-	tightenMax(&resolved.MaxHeightFeet, override.MaxHeightFeet,
-		"maxHeightFeet", &resolved.OverriddenFields)
-	tightenMax(&resolved.MaxLengthFeet, override.MaxLengthFeet,
-		"maxLengthFeet", &resolved.OverriddenFields)
+	if v, ok := tightenedMax(resolved.MaxWidthFeet, override.MaxWidthFeet); ok {
+		resolved.MaxWidthFeet = v
+		resolved.OverriddenFields = append(resolved.OverriddenFields, "maxWidthFeet")
+	}
+	if v, ok := tightenedMax(resolved.MaxHeightFeet, override.MaxHeightFeet); ok {
+		resolved.MaxHeightFeet = v
+		resolved.OverriddenFields = append(resolved.OverriddenFields, "maxHeightFeet")
+	}
+	if v, ok := tightenedMax(resolved.MaxLengthFeet, override.MaxLengthFeet); ok {
+		resolved.MaxLengthFeet = v
+		resolved.OverriddenFields = append(resolved.OverriddenFields, "maxLengthFeet")
+	}
 
 	if override.MaxWeightPounds != nil && *override.MaxWeightPounds < resolved.MaxWeightPounds {
 		resolved.MaxWeightPounds = *override.MaxWeightPounds
@@ -103,10 +109,14 @@ func (r *JurisdictionRule) Resolve(override *Override) *Resolved {
 		resolved.OverriddenFields = append(resolved.OverriddenFields, "permitLeadTimeDays")
 	}
 
-	tightenRestriction(&resolved.DaylightOnly, override.DaylightOnly,
-		"daylightOnly", &resolved.OverriddenFields)
-	tightenRestriction(&resolved.HolidayRestricted, override.HolidayRestricted,
-		"holidayRestricted", &resolved.OverriddenFields)
+	if addsRestriction(resolved.DaylightOnly, override.DaylightOnly) {
+		resolved.DaylightOnly = true
+		resolved.OverriddenFields = append(resolved.OverriddenFields, "daylightOnly")
+	}
+	if addsRestriction(resolved.HolidayRestricted, override.HolidayRestricted) {
+		resolved.HolidayRestricted = true
+		resolved.OverriddenFields = append(resolved.OverriddenFields, "holidayRestricted")
+	}
 
 	if len(resolved.OverriddenFields) == 0 {
 		resolved.OverriddenFields = nil
@@ -116,36 +126,32 @@ func (r *JurisdictionRule) Resolve(override *Override) *Resolved {
 	return resolved
 }
 
-// tightenMax lowers a statutory maximum, and only ever lowers it.
+// tightenedMax reports the narrower of a statutory maximum and an override,
+// and whether the override was the narrower one.
 //
 // An override exists so a carrier can run a tighter posture than the statute
 // without editing shared reference data. A permissive one would tell the engine
 // an illegal load is legal — no requirement derived, no hold raised, and the
-// load leaves — so a value at or above the statutory limit is discarded rather
-// than applied.
+// load leaves — so a value at or above the statutory limit is discarded.
 //
-// Discarded values are also left out of OverriddenFields: reporting one would
-// tell an operator their stricter posture is in force when the statutory number
-// is what the engine actually used.
-func tightenMax(target *float64, override *float64, field string, applied *[]string) {
-	if override == nil || *override >= *target {
-		return
+// Returning rather than mutating keeps the "was it applied" answer next to the
+// value at the call site, which is what decides whether the field is reported in
+// OverriddenFields. Reporting a discarded value would tell an operator their
+// stricter posture is in force when the statutory number is what the engine used.
+func tightenedMax(statutory float64, override *float64) (float64, bool) {
+	if override == nil || *override >= statutory {
+		return statutory, false
 	}
 
-	*target = *override
-	*applied = append(*applied, field)
+	return *override, true
 }
 
-// tightenRestriction turns a travel restriction on, and never off. A carrier may
-// decline to move at night where the state permits it; it may not move at night
-// where the state forbids it.
-func tightenRestriction(target *bool, override *bool, field string, applied *[]string) {
-	if override == nil || !*override || *target {
-		return
-	}
-
-	*target = true
-	*applied = append(*applied, field)
+// addsRestriction reports whether an override turns a travel restriction on that
+// the statute leaves off. A carrier may decline to move at night where the state
+// permits it; it may not move at night where the state forbids it, so a
+// restriction already imposed is never cleared here.
+func addsRestriction(statutory bool, override *bool) bool {
+	return !statutory && override != nil && *override
 }
 
 // Measurements is the load presented to a jurisdiction for evaluation.

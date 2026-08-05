@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -237,50 +236,29 @@ type auditParams struct {
 // logAction records a change to shared reference data.
 //
 // Critical because the blast radius is every organization on the platform: a
-// row that silently gained 4 feet of legal width is the kind of thing that only
-// surfaces when a load is stopped, and the audit trail is what makes it
-// answerable.
+// row that silently gained four feet of legal width only surfaces when a load
+// is stopped, and the audit trail is what makes it answerable.
 //
-// The organization and business unit are deliberately zero. This table has no
-// tenant columns, and stamping the acting user's tenant onto the entry would
-// imply the change was scoped to them.
+// The organization and business unit are deliberately left zero — this table has
+// no tenant columns, and stamping the acting user's tenant onto a global change
+// would imply it was scoped to them.
 func (s *service) logAction(params *auditParams) {
-	if s.auditService == nil || params.Rule == nil {
+	if params.Rule == nil {
 		return
 	}
 
-	actor := params.Actor.AuditActorOrSystem()
-
-	logParams := &services.LogActionParams{
-		Resource:      permission.ResourceJurisdictionRule,
-		ResourceID:    params.Rule.ID.String(),
-		Operation:     params.Operation,
-		UserID:        actor.UserID,
-		APIKeyID:      actor.APIKeyID,
-		PrincipalType: actor.PrincipalType,
-		PrincipalID:   actor.PrincipalID,
-		Critical:      true,
-	}
-	if params.Current != nil {
-		logParams.CurrentState = jsonutils.MustToJSON(params.Current)
-	}
-	if params.Previous != nil {
-		logParams.PreviousState = jsonutils.MustToJSON(params.Previous)
-	}
-
-	opts := []services.LogOption{
-		auditservice.WithComment(params.Comment),
-		auditservice.WithMetadata(map[string]any{
+	auditservice.Record(s.auditService, s.l, &auditservice.RecordParams{
+		Resource:   permission.ResourceJurisdictionRule,
+		ResourceID: params.Rule.ID.String(),
+		Operation:  params.Operation,
+		Actor:      params.Actor.AuditActorOrSystem(),
+		Critical:   true,
+		Previous:   params.Previous,
+		Current:    params.Current,
+		Comment:    params.Comment,
+		Metadata: map[string]any{
 			"stateId": params.Rule.StateID.String(),
 			"scope":   "global",
-		}),
-	}
-	if params.Previous != nil && params.Current != nil {
-		opts = append(opts, auditservice.WithDiff(params.Previous, params.Current))
-	}
-
-	if err := s.auditService.LogAction(logParams, opts...); err != nil {
-		s.l.Error("failed to log jurisdiction rule action",
-			zap.String("ruleId", params.Rule.ID.String()), zap.Error(err))
-	}
+		},
+	})
 }

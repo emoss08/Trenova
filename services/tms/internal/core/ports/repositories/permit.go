@@ -10,10 +10,18 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+// GetJurisdictionRulesRequest selects active rules for a set of jurisdictions.
+//
+// There is no TenantInfo and no point-in-time here, and both absences are
+// deliberate. These rows are global, so there is no tenant to scope by; and the
+// effective window is applied by the caller rather than the query, because the
+// permit engine and override validation need to agree on which rule is in force
+// and that decision belongs in one place — see ruleInEffect and resolveRules.
+//
+// Carrying either as an ignored field would be worse than omitting it: a caller
+// reading `At` would reasonably assume the query filtered on it.
 type GetJurisdictionRulesRequest struct {
-	TenantInfo pagination.TenantInfo
-	StateIDs   []pulid.ID
-	At         int64
+	StateIDs []pulid.ID
 }
 
 // ListJurisdictionRulesRequest drives the admin table.

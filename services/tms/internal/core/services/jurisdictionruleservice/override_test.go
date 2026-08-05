@@ -22,12 +22,16 @@ type overrideRepoStub struct {
 	repositories.JurisdictionRuleRepository
 
 	rule    *jurisdictionrule.JurisdictionRule
+	rules   []*jurisdictionrule.JurisdictionRule
 	created *jurisdictionrule.Override
 }
 
 func (s *overrideRepoStub) GetActiveByStateIDs(
 	_ context.Context, _ *repositories.GetJurisdictionRulesRequest,
 ) ([]*jurisdictionrule.JurisdictionRule, error) {
+	if s.rules != nil {
+		return s.rules, nil
+	}
 	if s.rule == nil {
 		return nil, nil
 	}
@@ -186,4 +190,50 @@ func TestCreateOverride_RequiresAReason(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, fieldsOf(t, err), "reason")
+}
+
+// GetActiveByStateIDs filters on status, not on the effective window — the
+// engine narrows to the rule in effect itself, in resolveRules. Validation has
+// to make the same choice, or it measures an override against a rule the engine
+// will never use.
+//
+// The lapsed rule is first in the fixture, which is what the repository can
+// legitimately return: nothing orders that query.
+func TestCreateOverride_ValidatesAgainstTheRuleInEffect(t *testing.T) {
+	lapsedEnd := int64(1_000)
+	lapsed := statuteRule()
+	lapsed.MaxWidthFeet = 8.5
+	lapsed.EffectiveEndDate = &lapsedEnd
+
+	current := statuteRule()
+	current.MaxWidthFeet = 10
+
+	svc := overrideService(&overrideRepoStub{
+		rules: []*jurisdictionrule.JurisdictionRule{lapsed, current},
+	})
+
+	// Stricter than the rule in effect, looser than the lapsed one.
+	_, err := svc.CreateOverride(t.Context(), overrideFor(func(o *jurisdictionrule.Override) {
+		o.MaxWidthFeet = fptr(9)
+	}), nil)
+
+	require.NoError(t, err, "validated against a rule that is no longer in effect")
+}
+
+// With every rule for the state outside its effective window there is nothing
+// in force to compare against, which is the same position as no rule on file.
+func TestCreateOverride_AllowsAnOverrideWhereNoRuleIsInEffect(t *testing.T) {
+	future := int64(9_000_000_000)
+	notYet := statuteRule()
+	notYet.EffectiveStartDate = &future
+
+	svc := overrideService(&overrideRepoStub{
+		rules: []*jurisdictionrule.JurisdictionRule{notYet},
+	})
+
+	_, err := svc.CreateOverride(t.Context(), overrideFor(func(o *jurisdictionrule.Override) {
+		o.MaxWidthFeet = fptr(20)
+	}), nil)
+
+	require.NoError(t, err)
 }
