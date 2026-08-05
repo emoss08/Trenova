@@ -13,13 +13,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/emoss08/assay/internal/cache"
-	"github.com/emoss08/assay/internal/graph"
-	"github.com/emoss08/assay/internal/report"
-	"github.com/emoss08/assay/internal/selection"
 	"github.com/emoss08/assay/internal/vcs"
 )
 
-const Version = "0.1.0-m0"
+const Version = "0.2.0-m2"
 
 type ExitError struct {
 	Code int
@@ -37,6 +34,7 @@ type options struct {
 	tags     []string
 	all      bool
 	noCache  bool
+	noIndex  bool
 	asJSON   bool
 	verbose  bool
 	noColor  bool
@@ -54,7 +52,8 @@ func NewRootCommand() *cobra.Command {
 		Short: "Test intelligence for Go",
 		Long: "assay runs the tests a change can actually affect, instead of all of them.\n\n" +
 			"It builds the workspace package graph, attributes changed files to packages, and\n" +
-			"walks reverse dependency edges to find every test package a diff can reach.",
+			"narrows each affected package to the individual tests that cover the changed\n" +
+			"lines — falling back to the whole package whenever that cannot be proven safe.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
@@ -66,11 +65,20 @@ func NewRootCommand() *cobra.Command {
 	flags.StringSliceVar(&opts.tags, "tags", nil, "build tags")
 	flags.BoolVar(&opts.all, "all", false, "skip selection and use every testable package")
 	flags.BoolVar(&opts.noCache, "no-cache", false, "reload the package graph instead of reusing a cached one")
-	flags.StringVar(&opts.cacheDir, "cache-dir", os.Getenv("ASSAY_CACHE"), "graph cache directory (default: user cache dir)")
+	flags.BoolVar(&opts.noIndex, "no-index", false, "skip line-level narrowing and select whole packages")
+	flags.StringVar(&opts.cacheDir, "cache-dir", os.Getenv("ASSAY_CACHE"),
+		"cache directory for the graph and coverage index (default: user cache dir)")
 	flags.BoolVarP(&opts.verbose, "verbose", "v", false, "list every selected package and ignored file")
 	flags.BoolVar(&opts.noColor, "no-color", false, "disable colored output")
 
-	root.AddCommand(newSelectCommand(opts), newRunCommand(opts), newVersionCommand())
+	root.AddCommand(
+		newSelectCommand(opts),
+		newRunCommand(opts),
+		newIndexCommand(opts),
+		newExplainCommand(opts),
+		newVerifyCommand(opts),
+		newVersionCommand(),
+	)
 
 	return root
 }
@@ -84,41 +92,6 @@ func newVersionCommand() *cobra.Command {
 			cmd.Println("assay " + Version)
 		},
 	}
-}
-
-func (o *options) summarize(ctx context.Context) (report.Summary, selection.Result, error) {
-	if err := o.validate(); err != nil {
-		return report.Summary{}, selection.Result{}, err
-	}
-
-	root, err := resolveRoot(ctx, o.root)
-	if err != nil {
-		return report.Summary{}, selection.Result{}, err
-	}
-
-	g, err := graph.Load(ctx, graph.LoadOptions{Root: root, Tags: o.tags, Cache: o.store()})
-	if err != nil {
-		return report.Summary{}, selection.Result{}, err
-	}
-
-	var result selection.Result
-	var note string
-	if o.all {
-		result = selection.All(g, "--all requested")
-	} else {
-		changes, changeErr := o.changeSet(ctx, root)
-		if changeErr != nil {
-			return report.Summary{}, selection.Result{}, changeErr
-		}
-		note = changes.Note
-		result = selection.Select(selection.Options{Graph: g, Changes: changes.Changes})
-	}
-
-	summary := report.NewSummary(result, g.Len(), len(g.TestablePackages()))
-	summary.GraphFromCache = g.FromCache
-	summary.Note = note
-
-	return summary, result, nil
 }
 
 func (o *options) store() *cache.Store {

@@ -90,10 +90,10 @@ func TestRunReportsSuccess(t *testing.T) {
 
 	var out strings.Builder
 	code, err := Run(t.Context(), Options{
-		Root:     root,
-		Packages: packagePaths("ok", 2),
-		Stdout:   &out,
-		Stderr:   io.Discard,
+		Root:   root,
+		Groups: []Group{{Packages: packagePaths("ok", 2)}},
+		Stdout: &out,
+		Stderr: io.Discard,
 	})
 
 	require.NoError(t, err)
@@ -106,10 +106,10 @@ func TestRunPropagatesFailureExitCode(t *testing.T) {
 	root := writeModule(t, 1, 1)
 
 	code, err := Run(t.Context(), Options{
-		Root:     root,
-		Packages: append(packagePaths("ok", 1), packagePaths("bad", 1)...),
-		Stdout:   io.Discard,
-		Stderr:   io.Discard,
+		Root:   root,
+		Groups: []Group{{Packages: append(packagePaths("ok", 1), packagePaths("bad", 1)...)}},
+		Stdout: io.Discard,
+		Stderr: io.Discard,
 	})
 
 	require.NoError(t, err, "a failing test suite is a non-zero exit code, not a runner error")
@@ -124,10 +124,10 @@ func TestRunSurfacesWorstCodeAcrossChunks(t *testing.T) {
 	slices.Sort(packages)
 
 	code, err := Run(t.Context(), Options{
-		Root:     root,
-		Packages: packages,
-		Stdout:   io.Discard,
-		Stderr:   io.Discard,
+		Root:   root,
+		Groups: []Group{{Packages: packages}},
+		Stdout: io.Discard,
+		Stderr: io.Discard,
 	})
 
 	require.NoError(t, err)
@@ -141,7 +141,7 @@ func TestRunForwardsExtraArguments(t *testing.T) {
 	var out strings.Builder
 	code, err := Run(t.Context(), Options{
 		Root:      root,
-		Packages:  packagePaths("ok", 1),
+		Groups:    []Group{{Packages: packagePaths("ok", 1)}},
 		ExtraArgs: []string{"-v", "-count=1"},
 		Stdout:    &out,
 		Stderr:    io.Discard,

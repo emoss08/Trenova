@@ -13,8 +13,21 @@ import (
 )
 
 type SelectedPackage struct {
-	ImportPath string `json:"importPath"`
-	Reason     string `json:"reason"`
+	ImportPath string   `json:"importPath"`
+	Reason     string   `json:"reason"`
+	Tests      []string `json:"tests,omitempty"`
+	FullReason string   `json:"fullReason,omitempty"`
+}
+
+func (p SelectedPackage) Mode() string {
+	switch {
+	case p.FullReason != "":
+		return "full"
+	case len(p.Tests) > 0:
+		return "narrowed"
+	default:
+		return "dropped"
+	}
 }
 
 type Summary struct {
@@ -28,32 +41,72 @@ type Summary struct {
 	ReductionPercent float64           `json:"reductionPercent"`
 	GraphFromCache   bool              `json:"graphFromCache"`
 	Note             string            `json:"note,omitempty"`
+
+	NarrowingEnabled  bool     `json:"narrowingEnabled"`
+	NarrowingDisabled string   `json:"narrowingDisabled,omitempty"`
+	FullPackages      int      `json:"fullPackages"`
+	NarrowedPackages  int      `json:"narrowedPackages"`
+	DroppedPackages   int      `json:"droppedPackages"`
+	SelectedTests     int      `json:"selectedTests"`
+	BlockingFiles     []string `json:"blockingFiles,omitempty"`
+	BaseCommit        string   `json:"baseCommit,omitempty"`
 }
 
-func NewSummary(res selection.Result, totalPackages, testablePackages int) Summary {
-	selected := make([]SelectedPackage, 0, len(res.Packages))
-	for _, importPath := range res.Packages {
+type Inputs struct {
+	Narrowed         selection.Narrowed
+	TotalPackages    int
+	TestablePackages int
+	GraphFromCache   bool
+	Note             string
+	BaseCommit       string
+}
+
+func NewSummary(in Inputs) Summary {
+	res := in.Narrowed.Result
+
+	selected := make([]SelectedPackage, 0, len(in.Narrowed.Plans))
+	for _, plan := range in.Narrowed.Plans {
 		selected = append(selected, SelectedPackage{
-			ImportPath: importPath,
-			Reason:     string(res.Reasons[importPath]),
+			ImportPath: plan.ImportPath,
+			Reason:     string(plan.Reason),
+			Tests:      plan.Tests,
+			FullReason: plan.FullReason,
 		})
 	}
 	sort.Slice(selected, func(i, j int) bool { return selected[i].ImportPath < selected[j].ImportPath })
 
+	full := 0
+	for _, plan := range selected {
+		if plan.Mode() == "full" {
+			full++
+		}
+	}
+
+	effective := full + in.Narrowed.NarrowedPackages
 	reduction := 0.0
-	if testablePackages > 0 {
-		reduction = 100 * (1 - float64(len(selected))/float64(testablePackages))
+	if in.TestablePackages > 0 {
+		reduction = 100 * (1 - float64(effective)/float64(in.TestablePackages))
 	}
 
 	return Summary{
-		TotalPackages:    totalPackages,
-		TestablePackages: testablePackages,
-		SelectedPackages: selected,
-		ChangedPackages:  res.ChangedPackages,
-		IgnoredFiles:     res.Unattributed,
-		SelectAll:        res.SelectAll,
-		SelectAllReason:  res.SelectAllReason,
-		ReductionPercent: reduction,
+		TotalPackages:     in.TotalPackages,
+		TestablePackages:  in.TestablePackages,
+		SelectedPackages:  selected,
+		ChangedPackages:   res.ChangedPackages,
+		IgnoredFiles:      res.Unattributed,
+		SelectAll:         res.SelectAll,
+		SelectAllReason:   res.SelectAllReason,
+		ReductionPercent:  reduction,
+		GraphFromCache:    in.GraphFromCache,
+		Note:              in.Note,
+		NarrowingEnabled:  in.Narrowed.Enabled,
+		NarrowingDisabled: in.Narrowed.DisabledReason,
+		FullPackages:      full,
+		NarrowedPackages:  in.Narrowed.NarrowedPackages,
+		DroppedPackages:   in.Narrowed.DroppedPackages,
+		SelectedTests:     in.Narrowed.SelectedTests,
+		BlockingFiles:     in.Narrowed.Blocked,
+		BaseCommit:        in.BaseCommit,
 	}
 }
 
@@ -69,7 +122,7 @@ type Printer struct {
 	warn     func(...any) string
 	muted    func(...any) string
 	emphasis func(...any) string
-	reason   map[string]func(...any) string
+	mode     map[string]func(...any) string
 }
 
 func NewPrinter(out io.Writer, useColor bool) *Printer {
@@ -89,10 +142,10 @@ func NewPrinter(out io.Writer, useColor bool) *Printer {
 		warn:     tint(color.FgYellow),
 		muted:    tint(color.Faint),
 		emphasis: tint(color.Bold),
-		reason: map[string]func(...any) string{
-			string(selection.ReasonDirect):    tint(color.FgCyan),
-			string(selection.ReasonDependent): tint(color.FgBlue),
-			string(selection.ReasonFallback):  tint(color.FgYellow),
+		mode: map[string]func(...any) string{
+			"narrowed": tint(color.FgCyan),
+			"full":     tint(color.FgYellow),
+			"dropped":  tint(color.Faint),
 		},
 	}
 }
@@ -115,19 +168,48 @@ func (p *Printer) Summary(s Summary, verbose bool) error {
 		origin = "graph cached"
 	}
 
+	effective := s.FullPackages + s.NarrowedPackages
 	if err := p.line("%d packages %s %d with tests %s %s selected %s %s skipped %s %s",
 		s.TotalPackages, p.muted("·"),
 		s.TestablePackages, p.muted("·"),
-		p.emphasis(len(s.SelectedPackages)), p.muted("·"),
+		p.emphasis(effective), p.muted("·"),
 		p.emphasis(fmt.Sprintf("%.1f%%", s.ReductionPercent)), p.muted("·"),
 		p.muted(origin),
 	); err != nil {
 		return err
 	}
 
+	if s.NarrowingEnabled {
+		if err := p.line("%s %d full %s %d narrowed to %s tests %s %d dropped",
+			p.muted("line-level:"),
+			s.FullPackages, p.muted("·"),
+			s.NarrowedPackages, p.emphasis(s.SelectedTests), p.muted("·"),
+			s.DroppedPackages,
+		); err != nil {
+			return err
+		}
+	} else if s.NarrowingDisabled != "" {
+		if err := p.line("%s %s", p.muted("line-level: off —"), s.NarrowingDisabled); err != nil {
+			return err
+		}
+	}
+
 	if len(s.ChangedPackages) > 0 {
 		if err := p.line("%s %d", p.muted("changed packages:"), len(s.ChangedPackages)); err != nil {
 			return err
+		}
+	}
+
+	if len(s.BlockingFiles) > 0 {
+		if err := p.line("%s %d files", p.muted("no line attribution:"), len(s.BlockingFiles)); err != nil {
+			return err
+		}
+		if verbose {
+			for _, f := range s.BlockingFiles {
+				if err := p.line("  %s", p.muted(f)); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
@@ -149,11 +231,20 @@ func (p *Printer) Summary(s Summary, verbose bool) error {
 	}
 
 	for _, pkg := range s.SelectedPackages {
-		paint := p.reason[pkg.Reason]
+		mode := pkg.Mode()
+		paint := p.mode[mode]
 		if paint == nil {
 			paint = p.muted
 		}
-		if err := p.line("  %s %s", paint(fmt.Sprintf("%-10s", pkg.Reason)), shorten(pkg.ImportPath)); err != nil {
+		detail := pkg.Reason
+		switch mode {
+		case "full":
+			detail += " · " + pkg.FullReason
+		case "narrowed":
+			detail += fmt.Sprintf(" · %d tests", len(pkg.Tests))
+		}
+		if err := p.line("  %s %s %s",
+			paint(fmt.Sprintf("%-9s", mode)), shorten(pkg.ImportPath), p.muted(detail)); err != nil {
 			return err
 		}
 	}

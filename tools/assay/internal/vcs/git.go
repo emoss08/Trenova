@@ -21,9 +21,10 @@ func (r LineRange) Contains(line int) bool {
 }
 
 type Change struct {
-	Path   string
-	Status string
-	Lines  []LineRange
+	Path      string
+	Status    string
+	Lines     []LineRange
+	BaseLines []LineRange
 }
 
 func (c Change) WholeFile() bool {
@@ -38,6 +39,25 @@ func (c Change) Touches(start, end int) bool {
 	}
 
 	return false
+}
+
+func (c Change) LineNumbers() []int {
+	return expand(c.Lines)
+}
+
+func (c Change) BaseLineNumbers() []int {
+	return expand(c.BaseLines)
+}
+
+func expand(ranges []LineRange) []int {
+	var out []int
+	for _, r := range ranges {
+		for line := r.Start; line <= r.End; line++ {
+			out = append(out, line)
+		}
+	}
+
+	return out
 }
 
 type BaseMode string
@@ -55,9 +75,10 @@ type Options struct {
 }
 
 type Result struct {
-	Changes  []Change
-	BaseMode BaseMode
-	Note     string
+	Changes    []Change
+	BaseMode   BaseMode
+	BaseCommit string
+	Note       string
 }
 
 func RepoRoot(ctx context.Context, dir string) (string, error) {
@@ -84,18 +105,18 @@ func Changes(ctx context.Context, opts Options) (Result, error) {
 		return Result{}, fmt.Errorf("resolve root: %w", err)
 	}
 
-	spec, mode, note, err := resolveBase(ctx, root, opts.Base)
+	base, err := resolveBase(ctx, root, opts.Base)
 	if err != nil {
 		return Result{}, err
 	}
 
-	statusOut, err := runGit(ctx, root, append([]string{"diff", "--name-status", "-z"}, spec...)...)
+	statusOut, err := runGit(ctx, root, append([]string{"diff", "--name-status", "-z"}, base.spec...)...)
 	if err != nil {
 		return Result{}, fmt.Errorf("git diff: %w", err)
 	}
 	changes := parseNameStatusZ(string(statusOut), root)
 
-	applyHunks(ctx, root, spec, changes)
+	applyHunks(ctx, root, base.spec, changes)
 
 	if opts.IncludeUntracked {
 		untracked, utErr := runGit(ctx, root, "ls-files", "--others", "--exclude-standard", "-z")
@@ -107,26 +128,52 @@ func Changes(ctx context.Context, opts Options) (Result, error) {
 		}
 	}
 
-	return Result{Changes: dedupeChanges(changes), BaseMode: mode, Note: note}, nil
+	return Result{
+		Changes:    dedupeChanges(changes),
+		BaseMode:   base.mode,
+		BaseCommit: base.commit,
+		Note:       base.note,
+	}, nil
 }
 
-func resolveBase(ctx context.Context, root, base string) ([]string, BaseMode, string, error) {
+type baseSpec struct {
+	spec   []string
+	mode   BaseMode
+	commit string
+	note   string
+}
+
+func resolveBase(ctx context.Context, root, base string) (baseSpec, error) {
 	if base == "" {
-		return []string{"HEAD"}, BaseWorkingTree, "", nil
+		head, err := runGit(ctx, root, "rev-parse", "HEAD")
+		if err != nil {
+			return baseSpec{}, fmt.Errorf("resolve HEAD: %w", err)
+		}
+
+		return baseSpec{
+			spec:   []string{"HEAD"},
+			mode:   BaseWorkingTree,
+			commit: strings.TrimSpace(string(head)),
+		}, nil
 	}
 
-	if _, err := runGit(ctx, root, "rev-parse", "--verify", "--quiet", base+"^{commit}"); err != nil {
+	resolved, err := runGit(ctx, root, "rev-parse", "--verify", "--quiet", base+"^{commit}")
+	if err != nil {
 		hint := "check the ref name"
 		if IsShallow(ctx, root) {
 			hint = "this is a shallow clone; fetch the ref (git fetch --depth=... origin <branch>) " +
 				"or pass --files with a precomputed change list"
 		}
 
-		return nil, "", "", fmt.Errorf("cannot resolve base ref %q: %s", base, hint)
+		return baseSpec{}, fmt.Errorf("cannot resolve base ref %q: %s", base, hint)
 	}
 
-	if _, err := runGit(ctx, root, "merge-base", base, "HEAD"); err == nil {
-		return []string{"--merge-base", base}, BaseMergeBase, "", nil
+	if mergeBase, mbErr := runGit(ctx, root, "merge-base", base, "HEAD"); mbErr == nil {
+		return baseSpec{
+			spec:   []string{"--merge-base", base},
+			mode:   BaseMergeBase,
+			commit: strings.TrimSpace(string(mergeBase)),
+		}, nil
 	}
 
 	note := fmt.Sprintf("no merge base with %q; comparing directly, which over-selects", base)
@@ -135,7 +182,74 @@ func resolveBase(ctx context.Context, root, base string) ([]string, BaseMode, st
 			"which over-selects (git fetch --deepen to narrow)", base)
 	}
 
-	return []string{base}, BaseTwoDot, note, nil
+	return baseSpec{
+		spec:   []string{base},
+		mode:   BaseTwoDot,
+		commit: strings.TrimSpace(string(resolved)),
+		note:   note,
+	}, nil
+}
+
+func TreeDigests(ctx context.Context, root, commit string) (map[string]string, error) {
+	out, err := runGit(ctx, root,
+		"-c", "core.quotePath=false", "ls-tree", "-r", "-z",
+		"--format=%(objectname) %(path)", commit)
+	if err != nil {
+		return nil, fmt.Errorf("list tree for %s: %w", commit, err)
+	}
+
+	digests := make(map[string]string)
+	for entry := range strings.SplitSeq(string(out), "\x00") {
+		if entry == "" {
+			continue
+		}
+		space := strings.IndexByte(entry, ' ')
+		if space <= 0 || space == len(entry)-1 {
+			continue
+		}
+		digests[entry[space+1:]] = entry[:space]
+	}
+
+	return digests, nil
+}
+
+func DirtyPaths(ctx context.Context, root string) ([]string, error) {
+	out, err := runGit(ctx, root, "status", "--porcelain=v1", "-z", "--untracked-files=normal")
+	if err != nil {
+		return nil, fmt.Errorf("git status: %w", err)
+	}
+
+	var dirty []string
+	for entry := range strings.SplitSeq(string(out), "\x00") {
+		if len(entry) < 4 {
+			continue
+		}
+		path := entry[3:]
+		if strings.HasSuffix(path, ".go") || isModuleFileName(filepath.Base(path)) {
+			dirty = append(dirty, path)
+		}
+	}
+	sort.Strings(dirty)
+
+	return dirty, nil
+}
+
+func isModuleFileName(name string) bool {
+	switch name {
+	case "go.mod", "go.sum", "go.work", "go.work.sum":
+		return true
+	default:
+		return false
+	}
+}
+
+func HeadCommit(ctx context.Context, root string) (string, error) {
+	out, err := runGit(ctx, root, "rev-parse", "HEAD")
+	if err != nil {
+		return "", fmt.Errorf("resolve HEAD: %w", err)
+	}
+
+	return strings.TrimSpace(string(out)), nil
 }
 
 func applyHunks(ctx context.Context, root string, spec []string, changes []Change) {
@@ -151,9 +265,15 @@ func applyHunks(ctx context.Context, root string, spec []string, changes []Chang
 			continue
 		}
 		if found, ok := ranges[changes[i].Path]; ok {
-			changes[i].Lines = found
+			changes[i].Lines = found.new
+			changes[i].BaseLines = found.base
 		}
 	}
+}
+
+type hunkSides struct {
+	base []LineRange
+	new  []LineRange
 }
 
 func isWholeFileStatus(status string) bool {
@@ -168,8 +288,8 @@ func isWholeFileStatus(status string) bool {
 	}
 }
 
-func parseUnifiedHunks(payload, root string) map[string][]LineRange {
-	out := make(map[string][]LineRange)
+func parseUnifiedHunks(payload, root string) map[string]hunkSides {
+	out := make(map[string]hunkSides)
 
 	var current string
 	for line := range strings.SplitSeq(payload, "\n") {
@@ -177,9 +297,14 @@ func parseUnifiedHunks(payload, root string) map[string][]LineRange {
 		case strings.HasPrefix(line, "+++ "):
 			current = newFilePath(line, root)
 		case strings.HasPrefix(line, "@@ ") && current != "":
-			if r, ok := parseHunkHeader(line); ok {
-				out[current] = append(out[current], r)
+			base, added, ok := parseHunkSides(line)
+			if !ok {
+				continue
 			}
+			sides := out[current]
+			sides.base = append(sides.base, base)
+			sides.new = append(sides.new, added)
+			out[current] = sides
 		case strings.HasPrefix(line, "diff --git "):
 			current = ""
 		}
@@ -202,30 +327,50 @@ func newFilePath(line, root string) string {
 }
 
 func parseHunkHeader(line string) (LineRange, bool) {
-	rest, ok := strings.CutPrefix(line, "@@ ")
-	if !ok {
-		return LineRange{}, false
+	_, added, ok := parseHunkSides(line)
+
+	return added, ok
+}
+
+func parseHunkSides(line string) (base, added LineRange, ok bool) {
+	rest, found := strings.CutPrefix(line, "@@ ")
+	if !found {
+		return LineRange{}, LineRange{}, false
 	}
 	end := strings.Index(rest, " @@")
 	if end < 0 {
-		return LineRange{}, false
+		return LineRange{}, LineRange{}, false
 	}
 
-	var added string
+	var oldSpec, newSpec string
 	for field := range strings.SplitSeq(rest[:end], " ") {
-		if strings.HasPrefix(field, "+") {
-			added = strings.TrimPrefix(field, "+")
-
-			break
+		switch {
+		case strings.HasPrefix(field, "-") && oldSpec == "":
+			oldSpec = strings.TrimPrefix(field, "-")
+		case strings.HasPrefix(field, "+") && newSpec == "":
+			newSpec = strings.TrimPrefix(field, "+")
 		}
 	}
-	if added == "" {
-		return LineRange{}, false
+	if oldSpec == "" || newSpec == "" {
+		return LineRange{}, LineRange{}, false
 	}
 
-	start, count := added, "1"
-	if comma := strings.IndexByte(added, ','); comma >= 0 {
-		start, count = added[:comma], added[comma+1:]
+	base, ok = parseSpec(oldSpec)
+	if !ok {
+		return LineRange{}, LineRange{}, false
+	}
+	added, ok = parseSpec(newSpec)
+	if !ok {
+		return LineRange{}, LineRange{}, false
+	}
+
+	return base, added, true
+}
+
+func parseSpec(spec string) (LineRange, bool) {
+	start, count := spec, "1"
+	if comma := strings.IndexByte(spec, ','); comma >= 0 {
+		start, count = spec[:comma], spec[comma+1:]
 	}
 
 	startLine, err := strconv.Atoi(start)

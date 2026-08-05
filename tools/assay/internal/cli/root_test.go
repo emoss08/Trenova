@@ -174,7 +174,7 @@ func TestSelectCommandVerboseText(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Contains(t, stdout, "with tests")
-	assert.Contains(t, stdout, "direct")
+	assert.Contains(t, stdout, "full")
 	assert.Contains(t, stdout, testfixture.Module+"/repo")
 	assert.NotContains(t, stdout, "\x1b[", "--no-color must suppress ANSI escapes")
 }

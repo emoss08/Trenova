@@ -1,6 +1,9 @@
 package testfixture
 
 import (
+	"crypto/sha256"
+	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,7 +35,53 @@ var files = map[string]string{
 		"\n\nfunc TestUse(t *testing.T) { _ = Use() }\n",
 
 	"docs/design.md": "# design\n",
+
+	"calc/calc.go": `package calc
+
+type Options struct {
+	Scale int
 }
+
+func Add(a, b int) int {
+	sum := a + b
+
+	return sum
+}
+
+func Sub(a, b int) int {
+	diff := a - b
+
+	return diff
+}
+`,
+	"calc/calc_test.go": `package calc
+
+import "testing"
+
+func TestAdd(t *testing.T) {
+	if Add(1, 2) != 3 {
+		t.Fatal("bad sum")
+	}
+}
+
+func TestSub(t *testing.T) {
+	if Sub(3, 1) != 2 {
+		t.Fatal("bad difference")
+	}
+}
+
+func TestSkipped(t *testing.T) {
+	t.Skip("never runs")
+}
+`,
+}
+
+const (
+	CalcAddBodyLine     = 8
+	CalcSubBodyLine     = 14
+	CalcStructFieldLine = 4
+	CalcSignatureLine   = 7
+)
 
 func Write(t *testing.T) string {
 	t.Helper()
@@ -53,4 +102,31 @@ func Write(t *testing.T) string {
 
 func Env() []string {
 	return append(os.Environ(), "GOWORK=off")
+}
+
+func Digests(t *testing.T, root string) map[string]string {
+	t.Helper()
+
+	digests := make(map[string]string)
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil || entry.IsDir() {
+			return walkErr
+		}
+		content, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		rel, relErr := filepath.Rel(root, path)
+		if relErr != nil {
+			return relErr
+		}
+		digests[filepath.ToSlash(rel)] = fmt.Sprintf("%x", sha256.Sum256(content))
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("digest tree: %v", err)
+	}
+
+	return digests
 }

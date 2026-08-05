@@ -101,7 +101,7 @@ func Scan(ctx context.Context, in Inputs) (*Manifest, error) {
 
 	h := blake3.New()
 	writeField(h, schemaVersion)
-	writeField(h, buildIdentity())
+	writeField(h, BuildIdentity())
 	writeField(h, root)
 	writeField(h, runtime.Version())
 
@@ -138,7 +138,7 @@ func Scan(ctx context.Context, in Inputs) (*Manifest, error) {
 	return manifest, nil
 }
 
-func buildIdentity() string {
+func BuildIdentity() string {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return "unknown" + executableIdentity()

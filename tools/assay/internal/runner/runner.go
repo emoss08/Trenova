@@ -5,14 +5,20 @@ import (
 	"errors"
 	"io"
 	"os/exec"
+	"sort"
 	"strings"
 )
 
 const maxPackagesPerInvocation = 400
 
+type Group struct {
+	Packages []string
+	Run      string
+}
+
 type Options struct {
 	Root      string
-	Packages  []string
+	Groups    []Group
 	Tags      []string
 	ExtraArgs []string
 	Stdout    io.Writer
@@ -20,28 +26,60 @@ type Options struct {
 }
 
 func Run(ctx context.Context, opts Options) (int, error) {
-	if len(opts.Packages) == 0 {
-		return 0, nil
-	}
-
 	worst := 0
-	for chunk := range chunks(opts.Packages, maxPackagesPerInvocation) {
-		code, err := runChunk(ctx, opts, chunk)
-		if err != nil {
-			return code, err
+	for _, group := range opts.Groups {
+		if len(group.Packages) == 0 {
+			continue
 		}
-		if code > worst {
-			worst = code
+		for chunk := range chunks(group.Packages, maxPackagesPerInvocation) {
+			code, err := runChunk(ctx, opts, group.Run, chunk)
+			if err != nil {
+				return code, err
+			}
+			if code > worst {
+				worst = code
+			}
 		}
 	}
 
 	return worst, nil
 }
 
-func runChunk(ctx context.Context, opts Options, packages []string) (int, error) {
+func GroupByRun(full []string, narrowed map[string]string) []Group {
+	groups := make([]Group, 0, 1+len(narrowed))
+	if len(full) > 0 {
+		packages := append([]string(nil), full...)
+		sort.Strings(packages)
+		groups = append(groups, Group{Packages: packages})
+	}
+
+	byPattern := make(map[string][]string, len(narrowed))
+	for pkg, pattern := range narrowed {
+		byPattern[pattern] = append(byPattern[pattern], pkg)
+	}
+
+	patterns := make([]string, 0, len(byPattern))
+	for pattern := range byPattern {
+		patterns = append(patterns, pattern)
+	}
+	sort.Strings(patterns)
+
+	for _, pattern := range patterns {
+		packages := byPattern[pattern]
+		sort.Strings(packages)
+		groups = append(groups, Group{Packages: packages, Run: pattern})
+	}
+
+	return groups
+}
+
+func runChunk(ctx context.Context, opts Options, run string, packages []string) (int, error) {
 	args := []string{"test"}
 	if len(opts.Tags) > 0 {
 		args = append(args, "-tags", strings.Join(opts.Tags, ","))
+	}
+	if run != "" {
+		args = append(args, "-run", run)
 	}
 	args = append(args, opts.ExtraArgs...)
 	args = append(args, packages...)

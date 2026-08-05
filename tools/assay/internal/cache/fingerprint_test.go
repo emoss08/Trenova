@@ -152,7 +152,7 @@ func TestFingerprintStringIsHex(t *testing.T) {
 }
 
 func TestBuildIdentityIsNonEmptyAndPinsDevBuilds(t *testing.T) {
-	got := buildIdentity()
+	got := BuildIdentity()
 
 	assert.NotEmpty(t, got)
 	assert.Contains(t, got, "exe=",

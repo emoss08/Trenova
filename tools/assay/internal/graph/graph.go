@@ -311,6 +311,66 @@ func (g *Graph) ProductionClosure(seeds []string) map[string]bool {
 	return closure
 }
 
+func (g *Graph) DependencyClosure(seeds []string) []string {
+	closure := make(map[string]bool, len(seeds))
+	queue := make([]string, 0, len(seeds))
+
+	for _, seed := range seeds {
+		if _, known := g.pkgs[seed]; !known || closure[seed] {
+			continue
+		}
+		closure[seed] = true
+		queue = append(queue, seed)
+	}
+
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+
+		pkg, ok := g.pkgs[current]
+		if !ok {
+			continue
+		}
+		for _, deps := range [][]string{pkg.Imports, pkg.TestImports} {
+			for _, dep := range deps {
+				if closure[dep] {
+					continue
+				}
+				if _, known := g.pkgs[dep]; !known {
+					continue
+				}
+				closure[dep] = true
+				queue = append(queue, dep)
+			}
+		}
+	}
+
+	out := make([]string, 0, len(closure))
+	for path := range closure {
+		out = append(out, path)
+	}
+	sort.Strings(out)
+
+	return out
+}
+
+func (g *Graph) Modules() []string {
+	seen := make(map[string]struct{})
+	for _, pkg := range g.pkgs {
+		if pkg.Module != "" {
+			seen[pkg.Module] = struct{}{}
+		}
+	}
+
+	out := make([]string, 0, len(seen))
+	for module := range seen {
+		out = append(out, module)
+	}
+	sort.Strings(out)
+
+	return out
+}
+
 func (g *Graph) AffectedTestPackages(seeds []string) []string {
 	closure := g.ProductionClosure(seeds)
 

@@ -23,10 +23,11 @@ const loadMode = packages.NeedName |
 	packages.NeedModule
 
 type LoadOptions struct {
-	Root  string
-	Tags  []string
-	Env   []string
-	Cache *cache.Store
+	Root     string
+	Tags     []string
+	Env      []string
+	Cache    *cache.Store
+	Manifest *cache.Manifest
 }
 
 type mainModule struct {
@@ -68,6 +69,10 @@ func Load(ctx context.Context, opts LoadOptions) (*Graph, error) {
 func cacheKey(ctx context.Context, root string, opts LoadOptions) (cache.Fingerprint, bool) {
 	if opts.Cache == nil {
 		return cache.Fingerprint{}, false
+	}
+
+	if opts.Manifest != nil {
+		return opts.Manifest.Key, true
 	}
 
 	key, err := cache.Compute(ctx, cache.Inputs{Root: root, Tags: opts.Tags, Env: opts.Env})

@@ -119,10 +119,40 @@ deleted file mode 100644
 
 	got := parseUnifiedHunks(payload, root)
 
-	assert.Equal(t, []LineRange{{Start: 10, End: 11}, {Start: 32, End: 32}},
-		got[filepath.Join(root, "svc/svc.go")])
-	assert.Empty(t, got[filepath.Join(root, "gone.go")],
-		"a file whose new side is /dev/null has no current lines")
+	svc := got[filepath.Join(root, "svc/svc.go")]
+	assert.Equal(t, []LineRange{{Start: 10, End: 11}, {Start: 32, End: 32}}, svc.new)
+	assert.Equal(t, []LineRange{{Start: 10, End: 10}, {Start: 30, End: 31}}, svc.base,
+		"index lookups need base-commit coordinates, not working-tree ones")
+
+	gone := got[filepath.Join(root, "gone.go")]
+	assert.Empty(t, gone.new, "a file whose new side is /dev/null has no current lines")
+}
+
+func TestParseHunkSidesReportsBothCoordinateSystems(t *testing.T) {
+	base, added, ok := parseHunkSides("@@ -40,3 +50,5 @@ func Do() {")
+
+	require.True(t, ok)
+	assert.Equal(t, LineRange{Start: 40, End: 42}, base)
+	assert.Equal(t, LineRange{Start: 50, End: 54}, added)
+}
+
+func TestParseHunkSidesWidensZeroLengthSides(t *testing.T) {
+	base, added, ok := parseHunkSides("@@ -12,0 +13,2 @@")
+
+	require.True(t, ok)
+	assert.Equal(t, LineRange{Start: 12, End: 13}, base,
+		"a pure insertion has no base lines, so the insertion point is widened")
+	assert.Equal(t, LineRange{Start: 13, End: 14}, added)
+}
+
+func TestChangeExposesBothLineNumberSets(t *testing.T) {
+	c := Change{
+		Lines:     []LineRange{{Start: 10, End: 12}},
+		BaseLines: []LineRange{{Start: 7, End: 8}},
+	}
+
+	assert.Equal(t, []int{10, 11, 12}, c.LineNumbers())
+	assert.Equal(t, []int{7, 8}, c.BaseLineNumbers())
 }
 
 func TestChangeWholeFileAndTouches(t *testing.T) {

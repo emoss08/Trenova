@@ -10,11 +10,11 @@ import (
 func newRunCommand(opts *options) *cobra.Command {
 	return &cobra.Command{
 		Use:   "run [-- go test flags]",
-		Short: "Run only the affected test packages",
-		Long: "run resolves the affected test packages and hands them to go test.\n" +
-			"Everything after -- is forwarded to go test unchanged.",
+		Short: "Run only the affected tests",
+		Long: "run resolves the affected packages, narrows them to individual tests where that is\n" +
+			"provably safe, and hands the result to go test. Everything after -- is forwarded.",
 		Args: cobra.ArbitraryArgs,
-		Example: "  assay run --since origin/main -- -count=1 -race\n" +
+		Example: "  assay run --since \"$BASE\" -- -count=1 -race\n" +
 			"  assay run --tags integration --since HEAD~1",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			passthrough, err := goTestArgs(cmd, args)
@@ -22,7 +22,7 @@ func newRunCommand(opts *options) *cobra.Command {
 				return err
 			}
 
-			summary, result, err := opts.summarize(cmd.Context())
+			summary, p, err := resolvePlan(cmd.Context(), opts)
 			if err != nil {
 				return err
 			}
@@ -32,8 +32,9 @@ func newRunCommand(opts *options) *cobra.Command {
 				return err
 			}
 
-			if len(result.Packages) == 0 {
-				cmd.PrintErrln("no affected test packages")
+			full, narrowed := p.groups()
+			if len(full) == 0 && len(narrowed) == 0 {
+				cmd.PrintErrln("no affected tests")
 
 				return nil
 			}
@@ -45,7 +46,7 @@ func newRunCommand(opts *options) *cobra.Command {
 
 			code, err := runner.Run(cmd.Context(), runner.Options{
 				Root:      root,
-				Packages:  result.Packages,
+				Groups:    runner.GroupByRun(full, narrowed),
 				Tags:      opts.tags,
 				ExtraArgs: passthrough,
 				Stdout:    cmd.OutOrStdout(),
