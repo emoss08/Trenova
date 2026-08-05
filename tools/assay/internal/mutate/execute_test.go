@@ -1,6 +1,7 @@
 package mutate_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -594,4 +595,26 @@ func TestExcludeLeavesMutantsWithNoTestsAsUncovered(t *testing.T) {
 		assert.Equal(t, mutate.OutcomeNoCoverage, r.Outcome,
 			"a mutant whose only judge was excluded must not be scored as killed")
 	}
+}
+
+func TestExecuteStopsOnCancelledContext(t *testing.T) {
+	c := newCorpus(t)
+
+	mutants, err := mutate.Generate(t.Context(), mutate.GenerateOptions{
+		Root:     c.root,
+		Package:  fixtureModule + "/strong",
+		Env:      append(os.Environ(), "GOWORK=off"),
+		Eligible: c.scope.Eligible,
+		Tests:    c.scope.Tests,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, mutants)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	_, err = mutate.Execute(ctx, mutants, mutate.ExecuteOptions{Root: c.root})
+
+	require.ErrorIs(t, err, context.Canceled,
+		"cancelling must abort rather than return results for mutants that never ran")
 }

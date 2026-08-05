@@ -4,9 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"sync"
 	"testing"
 
+	"github.com/sourcegraph/conc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -80,15 +80,13 @@ func TestStoreConcurrentPutsAreSafe(t *testing.T) {
 	store, err := NewStore(t.TempDir())
 	require.NoError(t, err)
 
-	var wg sync.WaitGroup
+	var writers conc.WaitGroup
 	for i := range 16 {
-		wg.Add(1)
-		go func(n int) {
-			defer wg.Done()
-			assert.NoError(t, store.Put(key(1), []byte("payload-"+strconv.Itoa(n))))
-		}(i)
+		writers.Go(func() {
+			assert.NoError(t, store.Put(key(1), []byte("payload-"+strconv.Itoa(i))))
+		})
 	}
-	wg.Wait()
+	writers.Wait()
 
 	got, ok := store.Get(key(1))
 	require.True(t, ok)

@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"sync"
 
+	"github.com/sourcegraph/conc/iter"
 	"golang.org/x/tools/go/packages"
 
 	"github.com/emoss08/assay/internal/cache"
@@ -89,29 +89,21 @@ func loadFresh(ctx context.Context, root string, opts LoadOptions) (*Graph, erro
 		return nil, err
 	}
 
-	type result struct {
-		pkgs []*packages.Package
-		err  error
-	}
+	loaded, err := iter.MapErr(modules, func(mod *mainModule) ([]*packages.Package, error) {
+		pkgs, loadErr := loadModule(ctx, mod.Dir, opts)
+		if loadErr != nil {
+			return nil, fmt.Errorf("load packages in %s: %w", mod.Dir, loadErr)
+		}
 
-	results := make([]result, len(modules))
-	var wg sync.WaitGroup
-	for i, mod := range modules {
-		wg.Add(1)
-		go func(i int, dir string) {
-			defer wg.Done()
-			pkgs, loadErr := loadModule(ctx, dir, opts)
-			results[i] = result{pkgs: pkgs, err: loadErr}
-		}(i, mod.Dir)
+		return pkgs, nil
+	})
+	if err != nil {
+		return nil, err
 	}
-	wg.Wait()
 
 	g := newGraph(root)
-	for i, res := range results {
-		if res.err != nil {
-			return nil, fmt.Errorf("load packages in %s: %w", modules[i].Dir, res.err)
-		}
-		g.ingest(res.pkgs)
+	for _, pkgs := range loaded {
+		g.ingest(pkgs)
 	}
 	g.index()
 

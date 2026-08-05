@@ -13,8 +13,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
+
+	"github.com/sourcegraph/conc/pool"
 
 	"github.com/emoss08/assay/internal/proc"
 )
@@ -85,43 +87,33 @@ func Execute(ctx context.Context, mutants []Mutant, opts ExecuteOptions) ([]Resu
 	buildParallelism := max(1, cores/jobs)
 
 	results := make([]Result, len(mutants))
-	next := make(chan int)
+	var done atomic.Int64
 
-	var mu sync.Mutex
-	var done int
-
-	var wg sync.WaitGroup
-	for range jobs {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for i := range next {
-				results[i] = evaluate(ctx, mutants[i], opts, buildParallelism)
-
-				mu.Lock()
-				done++
-				current := done
-				mu.Unlock()
-
-				if opts.Progress != nil {
-					opts.Progress(current, len(mutants))
-				}
-			}
-		}()
-	}
+	judging := pool.New().
+		WithMaxGoroutines(jobs).
+		WithContext(ctx).
+		WithFirstError().
+		WithCancelOnError()
 
 	for i := range mutants {
-		select {
-		case <-ctx.Done():
-			close(next)
-			wg.Wait()
+		judging.Go(func(ctx context.Context) error {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 
-			return nil, ctx.Err()
-		case next <- i:
-		}
+			results[i] = evaluate(ctx, mutants[i], opts, buildParallelism)
+
+			if opts.Progress != nil {
+				opts.Progress(int(done.Add(1)), len(mutants))
+			}
+
+			return nil
+		})
 	}
-	close(next)
-	wg.Wait()
+
+	if err := judging.Wait(); err != nil {
+		return nil, err
+	}
 
 	return results, nil
 }

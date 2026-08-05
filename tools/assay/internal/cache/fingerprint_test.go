@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -216,4 +217,16 @@ func TestComputeFailsOnMissingRoot(t *testing.T) {
 	_, err := Compute(t.Context(), Inputs{Root: filepath.Join(t.TempDir(), "absent")})
 
 	require.Error(t, err)
+}
+
+func TestScanStopsOnCancelledContext(t *testing.T) {
+	root := writeTree(t, baseTree())
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	_, err := Scan(ctx, Inputs{Root: root})
+
+	require.ErrorIs(t, err, context.Canceled,
+		"a cancelled run must surface the cancellation, not a partial fingerprint")
 }

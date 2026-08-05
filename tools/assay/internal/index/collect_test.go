@@ -1,6 +1,7 @@
 package index_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -216,4 +217,23 @@ func TestLoaderIsNilSafe(t *testing.T) {
 	_, ok := loader.Record("anything")
 
 	assert.False(t, ok)
+}
+
+func TestBuildStopsOnCancelledContext(t *testing.T) {
+	h := setup(t)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	_, err := index.Build(ctx, index.Options{
+		Root:        h.root,
+		Commit:      commit,
+		Graph:       h.graph,
+		TreeDigests: h.digests,
+		Store:       h.store,
+		Env:         testfixture.Env(),
+	})
+
+	require.ErrorIs(t, err, context.Canceled,
+		"cancelling must abort rather than quietly return partial statistics")
 }

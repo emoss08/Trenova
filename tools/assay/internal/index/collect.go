@@ -13,8 +13,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
+
+	"github.com/sourcegraph/conc/pool"
 
 	"github.com/emoss08/assay/internal/cache"
 	"github.com/emoss08/assay/internal/cover"
@@ -85,43 +87,33 @@ func Build(ctx context.Context, opts Options) (Stats, error) {
 	buildParallelism := max(1, cores/jobs)
 
 	outcomes := make([]PackageOutcome, len(targets))
-	next := make(chan int)
+	var done atomic.Int64
 
-	var mu sync.Mutex
-	var done int
-
-	var wg sync.WaitGroup
-	for range jobs {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for i := range next {
-				outcomes[i] = indexPackage(ctx, opts, fingerprinter, coverPkg, targets[i], buildParallelism)
-
-				mu.Lock()
-				done++
-				current := done
-				mu.Unlock()
-
-				if opts.Progress != nil {
-					opts.Progress(targets[i], current, len(targets))
-				}
-			}
-		}()
-	}
+	indexing := pool.New().
+		WithMaxGoroutines(jobs).
+		WithContext(ctx).
+		WithFirstError().
+		WithCancelOnError()
 
 	for i := range targets {
-		select {
-		case <-ctx.Done():
-			close(next)
-			wg.Wait()
+		indexing.Go(func(ctx context.Context) error {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 
-			return Stats{}, ctx.Err()
-		case next <- i:
-		}
+			outcomes[i] = indexPackage(ctx, opts, fingerprinter, coverPkg, targets[i], buildParallelism)
+
+			if opts.Progress != nil {
+				opts.Progress(targets[i], int(done.Add(1)), len(targets))
+			}
+
+			return nil
+		})
 	}
-	close(next)
-	wg.Wait()
+
+	if err := indexing.Wait(); err != nil {
+		return Stats{}, err
+	}
 
 	stats := Stats{Total: len(targets), Duration: time.Since(started)}
 	for _, outcome := range outcomes {

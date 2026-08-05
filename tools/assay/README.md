@@ -332,6 +332,7 @@ their subject instead of appearing as phantom `_test` packages.
 | `github.com/spf13/cobra` | Subcommands, flag handling, generated help and completions |
 | `github.com/fatih/color` | Terminal color with `NO_COLOR` and TTY detection |
 | `github.com/zeebo/blake3` | Cache fingerprinting. Its AVX2/SSE4.1 assembly hashes at 2.8 GB/s — 2.06× SHA-256 and 5.1× a pure-Go hash |
+| `github.com/sourcegraph/conc` | Structured concurrency. Its pools propagate panics through `Wait()` instead of letting one worker take the process down with an unrelated stack, and handle context cancellation and first-error for free |
 | `github.com/stretchr/testify` | Test assertions |
 
 `assay` deliberately shells out to `git` rather than embedding `go-git`: the
