@@ -164,7 +164,15 @@ func TestTracker_RecordFailure_Integration(t *testing.T) {
 	assert.Equal(t, seedErr.Error(), record.Error)
 }
 
-func TestTracker_RecordFailure_OverwritesSuccess_Integration(t *testing.T) {
+// A seed that already applied successfully stays applied when a later run of it
+// fails. The first application's rows are still in the database, so demoting the
+// record would make the next run apply the same seed a second time. The failure
+// is recorded against the row instead of replacing its status.
+//
+// This is narrower than it looks: a seed whose *first* run fails is recorded
+// Inactive and retried, which TestTracker_RecordFailure_Integration covers. Only
+// an already-successful record is protected.
+func TestTracker_RecordFailure_KeepsAnAlreadyAppliedSeedApplied_Integration(t *testing.T) {
 	testutil.RequireIntegration(t)
 
 	tc, db := testutil.SetupTestDB(t)
@@ -188,7 +196,18 @@ func TestTracker_RecordFailure_OverwritesSuccess_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	applied, _ = tracker.IsApplied(tc.Ctx, seed, common.EnvDevelopment)
-	assert.False(t, applied, "seed should not be applied after failure")
+	assert.True(t, applied,
+		"an applied seed must survive a later failure, or the next run re-applies it")
+
+	var record SeedRecord
+	err = db.NewSelect().
+		Model(&record).
+		Where("name = ?", "FlakySeed").
+		Scan(tc.Ctx)
+	require.NoError(t, err)
+
+	assert.Equal(t, SeedStatusActive, record.Status, "status must not be demoted")
+	assert.Equal(t, seedErr.Error(), record.Error, "the failure must still be recorded")
 }
 
 func TestTracker_GetStatus_Integration(t *testing.T) {
