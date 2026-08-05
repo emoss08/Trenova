@@ -28,21 +28,40 @@ go install github.com/emoss08/assay/cmd/assay@latest
 ## Use
 
 ```bash
-# What would run?
-assay select --since origin/main -v
+# What would run? (BASE is your default branch: origin/main, origin/master, ...)
+assay select --since "$BASE" -v
 
 # Run it
-assay run --since origin/main -- -count=1 -race
+assay run --since "$BASE" -- -count=1 -race
 
 # Integration suites gated behind a build tag
-assay run --tags integration --since origin/main
+assay run --tags integration --since "$BASE"
 
 # Skip git entirely when CI already knows the changed paths
-git diff --name-only origin/main | assay select --files - --json
+git diff --name-only "$BASE" | assay select --files - --json
 ```
 
 With no `--since`, `assay` diffs the working tree against `HEAD` — useful locally
-while you edit. In CI, pass the base branch.
+while you edit. In CI, pass the base branch. `--since`, `--files` and `--all` are
+mutually exclusive; passing more than one is an error rather than a silent
+precedence rule.
+
+### Shallow clones
+
+`--since <ref>` needs `<ref>` to exist locally and to share history with `HEAD`.
+CI checkouts are frequently shallow (`actions/checkout` defaults to `depth=1`),
+which breaks both:
+
+- **Ref missing** → `assay` fails with an error naming the shallow clone and the
+  remedies. It never degrades to an empty change set, because selecting nothing
+  is the one wrong answer.
+- **Ref present but no shared history** → `assay` falls back to a direct
+  comparison, prints a `warning:` explaining that this over-selects, and carries
+  on. Over-selecting is safe; skipping is not.
+
+Fetch enough history (`git fetch --deepen=50 origin <branch>`, or
+`fetch-depth: 0`) to get exact selection, or pass `--files` with a change list
+your CI already has.
 
 ## How selection works
 

@@ -289,6 +289,40 @@ func TestSelectCommandNoCacheAlwaysReloads(t *testing.T) {
 	assert.Empty(t, entries, "--no-cache must not write cache entries either")
 }
 
+func TestConflictingChangeSourcesAreRejected(t *testing.T) {
+	cases := [][]string{
+		{"--since", "main", "--files", "-"},
+		{"--since", "main", "--all"},
+		{"--files", "-", "--all"},
+		{"--since", "main", "--files", "-", "--all"},
+	}
+
+	for _, flags := range cases {
+		t.Run(strings.Join(flags, " "), func(t *testing.T) {
+			_, _, err := execute(t, append([]string{"select", "--root", t.TempDir()}, flags...)...)
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "mutually exclusive")
+		})
+	}
+}
+
+func TestSingleChangeSourceIsAccepted(t *testing.T) {
+	t.Setenv("GOWORK", "off")
+	root := testfixture.Write(t)
+
+	for _, flags := range [][]string{
+		{"--files", writeChangeList(t, "repo/repo.go")},
+		{"--all"},
+	} {
+		t.Run(flags[0], func(t *testing.T) {
+			_, _, err := execute(t, append([]string{"select", "--root", root, "--json"}, flags...)...)
+
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestRunCommandRejectsPositionalArguments(t *testing.T) {
 	_, _, err := execute(t, "run", "./...")
 

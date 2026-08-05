@@ -27,6 +27,7 @@ type Summary struct {
 	SelectAllReason  string            `json:"selectAllReason,omitempty"`
 	ReductionPercent float64           `json:"reductionPercent"`
 	GraphFromCache   bool              `json:"graphFromCache"`
+	Note             string            `json:"note,omitempty"`
 }
 
 func NewSummary(res selection.Result, totalPackages, testablePackages int) Summary {
@@ -97,6 +98,12 @@ func NewPrinter(out io.Writer, useColor bool) *Printer {
 }
 
 func (p *Printer) Summary(s Summary, verbose bool) error {
+	if s.Note != "" {
+		if err := p.line("%s %s", p.warn("warning:"), s.Note); err != nil {
+			return err
+		}
+	}
+
 	if s.SelectAll {
 		if err := p.line("%s %s", p.warn("select-all:"), s.SelectAllReason); err != nil {
 			return err

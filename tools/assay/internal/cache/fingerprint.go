@@ -10,17 +10,42 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/zeebo/blake3"
 )
 
+const schemaVersion = "assay-graph-v1"
+
 type Fingerprint [32]byte
 
 func (f Fingerprint) String() string {
 	return hex.EncodeToString(f[:])
+}
+
+type Digest [32]byte
+
+type FileDigest struct {
+	AbsPath string
+	RelPath string
+	Digest  Digest
+}
+
+type Manifest struct {
+	Root   string
+	Key    Fingerprint
+	Files  []FileDigest
+	byPath map[string]Digest
+}
+
+func (m *Manifest) DigestFor(absPath string) (Digest, bool) {
+	d, ok := m.byPath[filepath.Clean(absPath)]
+
+	return d, ok
 }
 
 type Inputs struct {
@@ -44,23 +69,39 @@ var moduleFiles = map[string]struct{}{
 var toolchainEnv = []string{"GOOS", "GOARCH", "GOFLAGS", "GOEXPERIMENT", "CGO_ENABLED", "GOWORK"}
 
 func Compute(ctx context.Context, in Inputs) (Fingerprint, error) {
+	manifest, err := Scan(ctx, in)
+	if err != nil {
+		return Fingerprint{}, err
+	}
+
+	return manifest.Key, nil
+}
+
+func Scan(ctx context.Context, in Inputs) (*Manifest, error) {
 	root, err := filepath.Abs(in.Root)
 	if err != nil {
-		return Fingerprint{}, fmt.Errorf("resolve root: %w", err)
+		return nil, fmt.Errorf("resolve root: %w", err)
 	}
 
 	paths, err := collect(root)
 	if err != nil {
-		return Fingerprint{}, err
+		return nil, err
 	}
 
 	digests, err := hashFiles(ctx, paths)
 	if err != nil {
-		return Fingerprint{}, err
+		return nil, err
+	}
+
+	manifest := &Manifest{
+		Root:   root,
+		Files:  make([]FileDigest, 0, len(paths)),
+		byPath: make(map[string]Digest, len(paths)),
 	}
 
 	h := blake3.New()
-	writeField(h, "assay-graph-v1")
+	writeField(h, schemaVersion)
+	writeField(h, buildIdentity())
 	writeField(h, root)
 	writeField(h, runtime.Version())
 
@@ -77,16 +118,63 @@ func Compute(ctx context.Context, in Inputs) (Fingerprint, error) {
 	for i, path := range paths {
 		rel, relErr := filepath.Rel(root, path)
 		if relErr != nil {
-			return Fingerprint{}, fmt.Errorf("relativise %s: %w", path, relErr)
+			return nil, fmt.Errorf("relativise %s: %w", path, relErr)
 		}
-		writeField(h, filepath.ToSlash(rel))
+		rel = filepath.ToSlash(rel)
+
+		writeField(h, rel)
 		h.Write(digests[i][:])
+
+		manifest.Files = append(manifest.Files, FileDigest{
+			AbsPath: path,
+			RelPath: rel,
+			Digest:  digests[i],
+		})
+		manifest.byPath[path] = digests[i]
 	}
 
-	var out Fingerprint
-	copy(out[:], h.Sum(nil))
+	copy(manifest.Key[:], h.Sum(nil))
 
-	return out, nil
+	return manifest, nil
+}
+
+func buildIdentity() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "unknown" + executableIdentity()
+	}
+
+	parts := []string{info.Main.Path, info.Main.Version}
+	var revision string
+	for _, setting := range info.Settings {
+		switch setting.Key {
+		case "vcs.revision", "vcs.modified":
+			parts = append(parts, setting.Key+"="+setting.Value)
+			if setting.Key == "vcs.revision" {
+				revision = setting.Value
+			}
+		}
+	}
+
+	identity := strings.Join(parts, " ")
+	if revision == "" || info.Main.Version == "" || info.Main.Version == "(devel)" {
+		identity += executableIdentity()
+	}
+
+	return identity
+}
+
+func executableIdentity() string {
+	path, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		return ""
+	}
+
+	return " exe=" + strconv.FormatInt(info.Size(), 10) + ":" + strconv.FormatInt(info.ModTime().UnixNano(), 10)
 }
 
 func writeField(h io.Writer, value string) {
@@ -158,8 +246,8 @@ func isRelevant(name string) bool {
 	return strings.HasSuffix(name, ".go")
 }
 
-func hashFiles(ctx context.Context, paths []string) ([][32]byte, error) {
-	digests := make([][32]byte, len(paths))
+func hashFiles(ctx context.Context, paths []string) ([]Digest, error) {
+	digests := make([]Digest, len(paths))
 	if len(paths) == 0 {
 		return digests, nil
 	}
@@ -206,7 +294,7 @@ func hashFiles(ctx context.Context, paths []string) ([][32]byte, error) {
 	return digests, nil
 }
 
-func hashFile(hasher *blake3.Hasher, buf []byte, path string, out *[32]byte) error {
+func hashFile(hasher *blake3.Hasher, buf []byte, path string, out *Digest) error {
 	file, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {

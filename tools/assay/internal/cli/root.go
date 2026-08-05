@@ -87,6 +87,10 @@ func newVersionCommand() *cobra.Command {
 }
 
 func (o *options) summarize(ctx context.Context) (report.Summary, selection.Result, error) {
+	if err := o.validate(); err != nil {
+		return report.Summary{}, selection.Result{}, err
+	}
+
 	root, err := resolveRoot(ctx, o.root)
 	if err != nil {
 		return report.Summary{}, selection.Result{}, err
@@ -97,13 +101,22 @@ func (o *options) summarize(ctx context.Context) (report.Summary, selection.Resu
 		return report.Summary{}, selection.Result{}, err
 	}
 
-	result, err := o.selectPackages(ctx, g, root)
-	if err != nil {
-		return report.Summary{}, selection.Result{}, err
+	var result selection.Result
+	var note string
+	if o.all {
+		result = selection.All(g, "--all requested")
+	} else {
+		changes, changeErr := o.changeSet(ctx, root)
+		if changeErr != nil {
+			return report.Summary{}, selection.Result{}, changeErr
+		}
+		note = changes.Note
+		result = selection.Select(selection.Options{Graph: g, Changes: changes.Changes})
 	}
 
 	summary := report.NewSummary(result, g.Len(), len(g.TestablePackages()))
 	summary.GraphFromCache = g.FromCache
+	summary.Note = note
 
 	return summary, result, nil
 }
@@ -121,30 +134,39 @@ func (o *options) store() *cache.Store {
 	return store
 }
 
-func (o *options) selectPackages(ctx context.Context, g *graph.Graph, root string) (selection.Result, error) {
+func (o *options) validate() error {
+	var sources []string
 	if o.all {
-		return selection.All(g, "--all requested"), nil
+		sources = append(sources, "--all")
+	}
+	if o.files != "" {
+		sources = append(sources, "--files")
+	}
+	if o.since != "" {
+		sources = append(sources, "--since")
+	}
+	if len(sources) > 1 {
+		return fmt.Errorf("%s are mutually exclusive; pick one change source", strings.Join(sources, " and "))
 	}
 
+	return nil
+}
+
+func (o *options) changeSet(ctx context.Context, root string) (vcs.Result, error) {
 	if o.files != "" {
 		changes, err := readFileList(o.files, root, os.Stdin)
 		if err != nil {
-			return selection.Result{}, err
+			return vcs.Result{}, err
 		}
 
-		return selection.Select(selection.Options{Graph: g, Changes: changes}), nil
+		return vcs.Result{Changes: changes, BaseMode: vcs.BaseWorkingTree}, nil
 	}
 
-	changes, err := vcs.Changes(ctx, vcs.Options{
+	return vcs.Changes(ctx, vcs.Options{
 		Root:             root,
 		Base:             o.since,
 		IncludeUntracked: true,
 	})
-	if err != nil {
-		return selection.Result{}, err
-	}
-
-	return selection.Select(selection.Options{Graph: g, Changes: changes}), nil
 }
 
 func readFileList(source, root string, stdin io.Reader) ([]vcs.Change, error) {

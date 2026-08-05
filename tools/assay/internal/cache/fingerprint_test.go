@@ -151,6 +151,67 @@ func TestFingerprintStringIsHex(t *testing.T) {
 	assert.Len(t, compute(t, root).String(), 64)
 }
 
+func TestBuildIdentityIsNonEmptyAndPinsDevBuilds(t *testing.T) {
+	got := buildIdentity()
+
+	assert.NotEmpty(t, got)
+	assert.Contains(t, got, "exe=",
+		"a dev build has no release version, so the executable itself must pin the key")
+}
+
+func TestScanExposesPerFileDigests(t *testing.T) {
+	root := writeTree(t, baseTree())
+
+	manifest, err := Scan(t.Context(), Inputs{Root: root, Env: []string{"GOOS=linux"}})
+	require.NoError(t, err)
+
+	rels := make([]string, 0, len(manifest.Files))
+	for _, f := range manifest.Files {
+		rels = append(rels, f.RelPath)
+	}
+	assert.Equal(t, []string{"go.mod", "repo/repo.go", "svc/svc.go"}, rels,
+		"only graph-relevant files are digested, in sorted order")
+
+	svc := filepath.Join(root, "svc", "svc.go")
+	digest, ok := manifest.DigestFor(svc)
+	require.True(t, ok)
+	assert.NotEqual(t, Digest{}, digest)
+
+	_, ok = manifest.DigestFor(filepath.Join(root, "README.md"))
+	assert.False(t, ok)
+}
+
+func TestScanDigestsTrackContent(t *testing.T) {
+	root := writeTree(t, baseTree())
+	svc := filepath.Join(root, "svc", "svc.go")
+
+	before, err := Scan(t.Context(), Inputs{Root: root})
+	require.NoError(t, err)
+	beforeDigest, ok := before.DigestFor(svc)
+	require.True(t, ok)
+
+	require.NoError(t, os.WriteFile(svc, []byte("package svc\n\nfunc F() {}\n"), 0o644))
+
+	after, err := Scan(t.Context(), Inputs{Root: root})
+	require.NoError(t, err)
+	afterDigest, ok := after.DigestFor(svc)
+	require.True(t, ok)
+
+	assert.NotEqual(t, beforeDigest, afterDigest)
+	repoDigestBefore, _ := before.DigestFor(filepath.Join(root, "repo", "repo.go"))
+	repoDigestAfter, _ := after.DigestFor(filepath.Join(root, "repo", "repo.go"))
+	assert.Equal(t, repoDigestBefore, repoDigestAfter, "untouched files keep their digest")
+}
+
+func TestScanKeyMatchesCompute(t *testing.T) {
+	root := writeTree(t, baseTree())
+
+	manifest, err := Scan(t.Context(), Inputs{Root: root, Env: []string{"GOOS=linux"}})
+	require.NoError(t, err)
+
+	assert.Equal(t, compute(t, root), manifest.Key)
+}
+
 func TestComputeFailsOnMissingRoot(t *testing.T) {
 	_, err := Compute(t.Context(), Inputs{Root: filepath.Join(t.TempDir(), "absent")})
 
