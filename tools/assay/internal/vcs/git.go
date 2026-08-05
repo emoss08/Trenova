@@ -230,14 +230,30 @@ func DirtyPaths(ctx context.Context, root string) ([]string, error) {
 	}
 
 	var dirty []string
-	for entry := range strings.SplitSeq(string(out), "\x00") {
-		if len(entry) < 4 {
-			continue
-		}
-		path := entry[3:]
+	appendRelevant := func(path string) {
 		if strings.HasSuffix(path, ".go") || isModuleFileName(filepath.Base(path)) {
 			dirty = append(dirty, path)
 		}
+	}
+
+	// In `--porcelain=v1 -z`, a rename or copy is two NUL-separated fields: the
+	// `XY new` entry, then the origin path bare, with no status prefix. Slicing
+	// three bytes off the origin used to garble it into a non-path.
+	originNext := false
+	for entry := range strings.SplitSeq(string(out), "\x00") {
+		if originNext {
+			originNext = false
+			appendRelevant(entry)
+
+			continue
+		}
+		if len(entry) < 4 {
+			continue
+		}
+		if entry[0] == 'R' || entry[0] == 'C' || entry[1] == 'R' || entry[1] == 'C' {
+			originNext = true
+		}
+		appendRelevant(entry[3:])
 	}
 	sort.Strings(dirty)
 
@@ -263,7 +279,14 @@ func HeadCommit(ctx context.Context, root string) (string, error) {
 }
 
 func applyHunks(ctx context.Context, root string, spec []string, changes []Change) {
-	args := []string{"-c", "core.quotePath=false", "diff", "-U0", "--no-color", "--no-renames"}
+	// The prefixes are pinned because parsing depends on them: with
+	// diff.mnemonicPrefix=true git emits `+++ w/path`, the b/ trim silently
+	// no-ops, and every file degrades to whole-file selection.
+	args := []string{
+		"-c", "core.quotePath=false",
+		"diff", "-U0", "--no-color", "--no-renames",
+		"--src-prefix=a/", "--dst-prefix=b/",
+	}
 	out, err := runGit(ctx, root, append(args, spec...)...)
 	if err != nil {
 		return
@@ -301,12 +324,27 @@ func isWholeFileStatus(status string) bool {
 func parseUnifiedHunks(payload, root string) map[string]hunkSides {
 	out := make(map[string]hunkSides)
 
+	// Header lines are only trusted between `diff --git` and that file's first
+	// `@@`. Past the first hunk, every line starting `+++ ` is *content* — an
+	// added line whose text begins `++ `, such as an edited SQL comment — and
+	// treating it as a header sends every following hunk to a bogus path while
+	// the real file silently loses changed lines: under-selection, the one unsafe
+	// direction. `diff --git` itself cannot be forged, because content lines
+	// always carry a +/- prefix.
 	var current string
+	inHeader := false
 	for line := range strings.SplitSeq(payload, "\n") {
 		switch {
-		case strings.HasPrefix(line, "+++ "):
+		case strings.HasPrefix(line, "diff --git "):
+			current = ""
+			inHeader = true
+		case inHeader && strings.HasPrefix(line, "+++ "):
 			current = newFilePath(line, root)
-		case strings.HasPrefix(line, "@@ ") && current != "":
+		case strings.HasPrefix(line, "@@ "):
+			inHeader = false
+			if current == "" {
+				continue
+			}
 			base, added, ok := parseHunkSides(line)
 			if !ok {
 				continue
@@ -315,8 +353,6 @@ func parseUnifiedHunks(payload, root string) map[string]hunkSides {
 			sides.base = append(sides.base, base)
 			sides.new = append(sides.new, added)
 			out[current] = sides
-		case strings.HasPrefix(line, "diff --git "):
-			current = ""
 		}
 	}
 

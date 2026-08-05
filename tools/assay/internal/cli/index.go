@@ -2,6 +2,9 @@ package cli
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -103,32 +106,85 @@ func newIndexCommand(opts *options) *cobra.Command {
 	return cmd
 }
 
+// resolveIndexTargets expands --packages patterns against the graph. Relative
+// patterns resolve against the caller's working directory the way go's own
+// package patterns do — `./internal/...` typed inside a module must mean that
+// module's packages, not a prefix of some import path. Matching is on whole path
+// segments, so `.../cover` cannot quietly include `.../coverage`, and a package
+// matched by several patterns is indexed once.
 func resolveIndexTargets(s *session, requested []string) ([]string, error) {
 	if len(requested) == 0 {
 		return nil, nil
 	}
 
-	testable := make(map[string]struct{})
-	for _, pkg := range s.graph.TestablePackages() {
-		testable[pkg] = struct{}{}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("resolve working directory: %w", err)
 	}
 
+	seen := make(map[string]struct{})
 	var targets []string
+
 	for _, want := range requested {
-		trimmed := strings.TrimSuffix(strings.TrimSuffix(want, "..."), "/")
 		matched := false
-		for pkg := range testable {
-			if pkg == want || strings.HasPrefix(pkg, trimmed) {
-				targets = append(targets, pkg)
-				matched = true
+		for _, importPath := range s.graph.TestablePackages() {
+			pkg, ok := s.graph.Package(importPath)
+			if !ok {
+				continue
 			}
+			if !patternMatches(want, cwd, importPath, pkg.Dir) {
+				continue
+			}
+			matched = true
+			if _, dup := seen[importPath]; dup {
+				continue
+			}
+			seen[importPath] = struct{}{}
+			targets = append(targets, importPath)
 		}
 		if !matched {
 			return nil, fmt.Errorf("no testable package matches %q", want)
 		}
 	}
+	sort.Strings(targets)
 
 	return targets, nil
+}
+
+func patternMatches(pattern, cwd, importPath, dir string) bool {
+	if pattern == "..." {
+		return true
+	}
+
+	if isRelativePattern(pattern) {
+		base, wild := cutWildcard(pattern)
+		absBase := filepath.Clean(filepath.Join(cwd, base))
+		if wild {
+			return dir == absBase || strings.HasPrefix(dir, absBase+string(filepath.Separator))
+		}
+
+		return dir == absBase
+	}
+
+	base, wild := cutWildcard(pattern)
+	if wild {
+		return importPath == base || strings.HasPrefix(importPath, base+"/")
+	}
+
+	return importPath == pattern
+}
+
+func isRelativePattern(pattern string) bool {
+	return pattern == "." || pattern == ".." ||
+		strings.HasPrefix(pattern, "./") || strings.HasPrefix(pattern, "../")
+}
+
+func cutWildcard(pattern string) (string, bool) {
+	if base, ok := strings.CutSuffix(pattern, "/..."); ok {
+		return base, true
+	}
+
+	return pattern, false
 }
 
 func printIndexStats(cmd *cobra.Command, stats index.Stats, commit string) error {

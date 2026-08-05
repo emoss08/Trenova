@@ -128,6 +128,33 @@ deleted file mode 100644
 	assert.Empty(t, gone.new, "a file whose new side is /dev/null has no current lines")
 }
 
+// TestParseUnifiedHunksIgnoresForgedHeadersInContent pins the anchor rule. Under
+// -U0 an added line whose text begins `++ ` — an edited SQL comment, a diff
+// quoted in a doc — renders as `+++ ...`, and the old parser took it as a file
+// header: every hunk after it was attributed to a bogus path and the real file
+// silently lost changed lines. Under-selection is the one unsafe direction.
+func TestParseUnifiedHunksIgnoresForgedHeadersInContent(t *testing.T) {
+	root := filepath.Join(string(filepath.Separator), "repo")
+	payload := `diff --git a/notes.sql b/notes.sql
+index 111..222 100644
+--- a/notes.sql
++++ b/notes.sql
+@@ -1,1 +1,1 @@
++++ forged header content
+@@ -8,1 +9,1 @@
+--- also content, not a header
+@@ -20,1 +21,1 @@
++plain
+`
+
+	got := parseUnifiedHunks(payload, root)
+
+	require.Len(t, got, 1, "the forged headers must not have opened phantom files")
+	notes := got[filepath.Join(root, "notes.sql")]
+	assert.Equal(t, []LineRange{{Start: 1, End: 1}, {Start: 9, End: 9}, {Start: 21, End: 21}}, notes.new,
+		"every hunk after the forged header still belongs to the real file")
+}
+
 func TestParseHunkSidesReportsBothCoordinateSystems(t *testing.T) {
 	base, added, ok := parseHunkSides("@@ -40,3 +50,5 @@ func Do() {")
 
@@ -288,6 +315,37 @@ func findChange(t *testing.T, res Result, root, rel string) Change {
 	t.Fatalf("change for %s not found in %v", rel, relPaths(t, root, res.Changes))
 
 	return Change{}
+}
+
+func TestDirtyPathsListsGoAndModuleChanges(t *testing.T) {
+	r := initRepo(t)
+
+	dirty, err := DirtyPaths(t.Context(), r.root)
+	require.NoError(t, err)
+
+	assert.Contains(t, dirty, "dirty.go")
+	assert.NotContains(t, dirty, "untracked.txt",
+		"only files that can change the package graph gate indexing")
+}
+
+// TestDirtyPathsParsesStagedRenames pins the porcelain -z rename shape: the
+// origin path arrives as a bare second field with no status prefix, and slicing
+// three bytes off it turned src/x.go into the non-path x.go-minus-three-chars in
+// the dirty-tree error message.
+func TestDirtyPathsParsesStagedRenames(t *testing.T) {
+	r := initRepo(t)
+	r.git("commit", "-m", "settle the staged file")
+	r.git("mv", "base.go", "renamed.go")
+
+	dirty, err := DirtyPaths(t.Context(), r.root)
+	require.NoError(t, err)
+
+	assert.Contains(t, dirty, "renamed.go")
+	assert.Contains(t, dirty, "base.go",
+		"the rename origin is a real deleted path, not three bytes short of one")
+	for _, path := range dirty {
+		assert.True(t, strings.HasSuffix(path, ".go"), "garbled entry %q", path)
+	}
 }
 
 func TestChangesAgainstMergeBase(t *testing.T) {
