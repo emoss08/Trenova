@@ -3,10 +3,12 @@ package runner
 import (
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -132,6 +134,108 @@ func TestRunSurfacesWorstCodeAcrossChunks(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.NotZero(t, code, "a failure in any chunk must surface")
+}
+
+// TestSignalDeathIsAnAbortNotAVerdict pins the fix for the worst pair of
+// misreadings in the tool: a signal-killed go test reported ExitCode -1, which
+// `assay run` folded into "worst code 0" (success) and `assay verify` read as a
+// failing excluded test — printing its UNSOUND banner for a Ctrl-C.
+func TestSignalDeathIsAnAbortNotAVerdict(t *testing.T) {
+	killed := exec.Command("sh", "-c", "kill -KILL $$")
+	runErr := killed.Run()
+	require.Error(t, runErr, "the shell must have died by signal for this test to mean anything")
+
+	code, err := exitVerdict(runErr)
+
+	require.Error(t, err, "signal death is an abort, not a test verdict")
+	assert.Zero(t, code)
+}
+
+func TestExitVerdictKeepsRealFailureCodes(t *testing.T) {
+	failing := exec.Command("sh", "-c", "exit 3")
+
+	code, err := exitVerdict(failing.Run())
+
+	require.NoError(t, err)
+	assert.Equal(t, 3, code)
+}
+
+// TestConcurrentInvocationsKeepOrderedOutput pins both halves of the parallel
+// runner: distinct -run groups actually overlap in time, and their output still
+// reads as one sequential log because later invocations buffer until the front
+// finishes.
+func TestConcurrentInvocationsKeepOrderedOutput(t *testing.T) {
+	t.Setenv("GOWORK", "off")
+	root := t.TempDir()
+
+	write := func(rel, content string) {
+		t.Helper()
+		full := filepath.Join(root, rel)
+		require.NoError(t, os.MkdirAll(filepath.Dir(full), 0o755))
+		require.NoError(t, os.WriteFile(full, []byte(content), 0o644))
+	}
+	write("go.mod", "module example.com/run\n\ngo 1.26\n")
+	write("slow/slow_test.go", "package slow\n\nimport (\n\t\"testing\"\n\t\"time\"\n)\n\n"+
+		"func TestSlow(t *testing.T) { time.Sleep(700 * time.Millisecond) }\n")
+	write("fast/fast_test.go", "package fast\n\nimport \"testing\"\n\nfunc TestFast(t *testing.T) {}\n")
+
+	var out safeBuilder
+	code, err := Run(t.Context(), Options{
+		Root: root,
+		Groups: []Group{
+			{Packages: []string{"example.com/run/slow"}, Run: "^TestSlow$"},
+			{Packages: []string{"example.com/run/fast"}, Run: "^TestFast$"},
+		},
+		Jobs:   2,
+		Stdout: &out,
+		Stderr: io.Discard,
+	})
+
+	require.NoError(t, err)
+	assert.Zero(t, code)
+
+	text := out.String()
+	slowAt := strings.Index(text, "example.com/run/slow")
+	fastAt := strings.Index(text, "example.com/run/fast")
+	require.GreaterOrEqual(t, slowAt, 0)
+	require.GreaterOrEqual(t, fastAt, 0)
+	assert.Less(t, slowAt, fastAt,
+		"the fast invocation finishes first but must not print before the slower front")
+}
+
+type safeBuilder struct {
+	mu sync.Mutex
+	b  strings.Builder
+}
+
+func (s *safeBuilder) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.b.Write(p)
+}
+
+func (s *safeBuilder) String() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.b.String()
+}
+
+func TestPromotedWriterFlushesBufferInOrder(t *testing.T) {
+	var out strings.Builder
+	w := &promotedWriter{out: &out}
+
+	_, err := w.Write([]byte("buffered "))
+	require.NoError(t, err)
+	assert.Empty(t, out.String(), "nothing may reach the shared writer before promotion")
+
+	w.promote()
+	assert.Equal(t, "buffered ", out.String())
+
+	_, err = w.Write([]byte("live"))
+	require.NoError(t, err)
+	assert.Equal(t, "buffered live", out.String())
 }
 
 func TestRunForwardsExtraArguments(t *testing.T) {

@@ -3,9 +3,13 @@ package mutate
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/sourcegraph/conc/pool"
 )
 
 // Preflight runs the tests that mutants will be judged by, against unmutated
@@ -61,18 +65,46 @@ func RunPreflight(ctx context.Context, mutants []Mutant, opts ExecuteOptions) (P
 
 	result := Preflight{Failing: make(map[string][]string)}
 
-	for _, pkg := range sortedSetKeys(wanted) {
-		tests := setToSorted(wanted[pkg])
-		if len(tests) == 0 {
-			continue
-		}
+	pkgs := sortedSetKeys(wanted)
+	failures := make([][]string, len(pkgs))
 
-		failing, err := failingTests(ctx, opts, pkg, tests)
-		if err != nil {
-			return Preflight{}, err
-		}
+	jobs := opts.jobs(len(pkgs))
+	buildParallelism := max(1, runtime.GOMAXPROCS(0)/jobs)
+
+	checking := pool.New().
+		WithMaxGoroutines(jobs).
+		WithContext(ctx).
+		WithFirstError().
+		WithCancelOnError()
+
+	for i := range pkgs {
+		checking.Go(func(ctx context.Context) error {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+
+			tests := setToSorted(wanted[pkgs[i]])
+			if len(tests) == 0 {
+				return nil
+			}
+
+			failing, err := failingTests(ctx, opts, pkgs[i], tests, buildParallelism)
+			if err != nil {
+				return err
+			}
+			failures[i] = failing
+
+			return nil
+		})
+	}
+
+	if err := checking.Wait(); err != nil {
+		return Preflight{}, err
+	}
+
+	for i, failing := range failures {
 		if len(failing) > 0 {
-			result.Failing[pkg] = failing
+			result.Failing[pkgs[i]] = failing
 		}
 	}
 
@@ -81,8 +113,14 @@ func RunPreflight(ctx context.Context, mutants []Mutant, opts ExecuteOptions) (P
 	return result, nil
 }
 
-func failingTests(ctx context.Context, opts ExecuteOptions, pkg string, tests []string) ([]string, error) {
-	args := []string{"test", "-count=1", "-run", RunPattern(tests)}
+func failingTests(
+	ctx context.Context,
+	opts ExecuteOptions,
+	pkg string,
+	tests []string,
+	buildParallelism int,
+) ([]string, error) {
+	args := []string{"test", "-count=1", "-p", strconv.Itoa(buildParallelism), "-run", RunPattern(tests)}
 	if len(opts.Tags) > 0 {
 		args = append(args, "-tags", strings.Join(opts.Tags, ","))
 	}
