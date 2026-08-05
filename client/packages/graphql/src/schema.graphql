@@ -4700,6 +4700,116 @@ type JournalSourceInfo {
   status: String!
 }
 
+"""
+Shared oversize and overweight limits for a jurisdiction.
+
+This data is global. It carries no organization or business unit, because the
+legal width of a load in a given state does not vary by carrier — a carrier
+expressing a stricter posture records a JurisdictionRuleOverride instead. A
+change here is visible to every organization on the platform.
+"""
+type JurisdictionRule {
+  createdAt: Int!
+  daylightOnly: Boolean!
+  effectiveEndDate: Int
+  effectiveStartDate: Int
+  holidayRestricted: Boolean!
+  id: ID!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+  maxWidthFeet: Float!
+  permitBaseFee: String
+  permitLeadTimeDays: Int!
+  permitPerMileFee: String
+  permitValidityDays: Int!
+  rushHourRestricted: Boolean!
+  """
+  What this row was checked against. Seeded rows carry a note saying which
+  fields are a federal baseline and which are simply not populated.
+  """
+  sourceNote: String
+  sourceUrl: String
+  state: UsState
+  stateId: ID!
+  status: JurisdictionRuleStatus!
+  superloadWeightPounds: Int
+  superloadWidthFeet: Float
+  updatedAt: Int!
+  """
+  Whether anyone has confirmed this row against the issuing state. Requirements
+  derived from an unverified row carry that state through to the operator.
+  """
+  verificationState: JurisdictionVerificationState!
+  verifiedAt: Int
+  version: Int!
+  weekendRestricted: Boolean!
+}
+
+type JurisdictionRuleConnection {
+  edges: [JurisdictionRuleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type JurisdictionRuleEdge {
+  cursor: String!
+  node: JurisdictionRule!
+}
+
+"""
+One organization's stricter posture on a jurisdiction.
+
+Unlike JurisdictionRule these rows are tenant data. Every field is optional —
+an unset field defers to the statutory rule — and the engine applies a value
+only when it is stricter than the statute, so a permissive override cannot make
+an illegal load look legal.
+"""
+type JurisdictionRuleOverride {
+  businessUnitId: ID!
+  createdAt: Int!
+  daylightOnly: Boolean
+  holidayRestricted: Boolean
+  id: ID!
+  maxHeightFeet: Float
+  maxLengthFeet: Float
+  maxWeightPounds: Int
+  maxWidthFeet: Float
+  organizationId: ID!
+  permitLeadTimeDays: Int
+  """
+  Why this organization runs tighter than the statute. Required, minimum ten characters.
+  """
+  reason: String!
+  state: UsState
+  stateId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+type JurisdictionRuleOverrideConnection {
+  edges: [JurisdictionRuleOverrideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type JurisdictionRuleOverrideEdge {
+  cursor: String!
+  node: JurisdictionRuleOverride!
+}
+
+enum JurisdictionRuleStatus {
+  Active
+  Draft
+  Inactive
+}
+
+enum JurisdictionVerificationState {
+  Disputed
+  Unverified
+  Verified
+}
+
 input LocateTractorInput {
   newLocationId: ID!
   tractorId: ID!
@@ -6031,6 +6141,9 @@ type Query {
   journalReversal(id: ID!): JournalReversal
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
   journalSourceByObject(sourceId: String!, sourceType: String!): JournalSourceInfo
+  jurisdictionRule(id: ID!): JurisdictionRule
+  jurisdictionRuleOverrides(input: DataTableConnectionInput!): JurisdictionRuleOverrideConnection!
+  jurisdictionRules(input: DataTableConnectionInput!): JurisdictionRuleConnection!
   location(id: ID!): Location
   locationCategories(input: DataTableConnectionInput!): LocationCategoryConnection!
   locationCategory(id: ID!): LocationCategory
@@ -8608,6 +8721,17 @@ type ShipmentUIPolicy {
   checkForDuplicateBols: Boolean!
   checkHazmatSegregation: Boolean!
   maxShipmentWeightLimit: Int!
+  """
+  The mode profile resolved for this tenant, carrying its capabilities and the
+  resolved state of every rule. Null when no profile matched.
+  
+  Sent as JSON rather than a typed selection because `rules` is keyed by rule
+  key, and GraphQL has no map type. Modelling it would mean a list of key/value
+  pairs plus a second schema to keep in step with the Go structs; the client
+  validates the payload against resolvedModeProfileSchema instead, so the
+  `json` tags on modeprofile.ResolvedPolicy are the single contract.
+  """
+  profile: JSON
 }
 
 type ShipmentUnassignedAnalytics {

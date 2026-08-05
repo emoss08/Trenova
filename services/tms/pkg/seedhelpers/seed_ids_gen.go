@@ -21,6 +21,7 @@ const (
 	SeedFormulaTemplate SeedID = "FormulaTemplate" // from 01_formulatemplate.go
 	SeedFuelSurcharge SeedID = "FuelSurcharge" // from 10_fuelsurcharge.go
 	SeedGLAccount SeedID = "GLAccount" // from 04_gl_account.go
+	SeedJurisdictionRulesBaseline SeedID = "JurisdictionRulesBaseline" // from 11_jurisdiction_rules_baseline.go
 	SeedLocation SeedID = "Location" // from 05_location.go
 	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
 	SeedNormalAccount SeedID = "NormalAccount" // from 02_normalaccount.go
@@ -49,6 +50,7 @@ var AllSeedIDs = []SeedID{
 	SeedFormulaTemplate,
 	SeedFuelSurcharge,
 	SeedGLAccount,
+	SeedJurisdictionRulesBaseline,
 	SeedLocation,
 	SeedLocationCategory,
 	SeedNormalAccount,
@@ -71,6 +73,7 @@ var BaseSeedIDs = []SeedID{
 	SeedDocumentType,
 	SeedDotHazmatReferences,
 	SeedGLAccount,
+	SeedJurisdictionRulesBaseline,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
 	SeedServiceFailureReasonCode,

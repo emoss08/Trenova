@@ -49,35 +49,43 @@ var EquipmentTypeTable = TableInfo{
 //	q.Where(EquipmentTypeColumns.ID.Eq(), id)           // WHERE et.id = ?
 //	q.Order(EquipmentTypeColumns.CreatedAt.OrderDesc())  // ORDER BY et.created_at DESC
 var EquipmentTypeColumns = struct {
-	ID             Column // "id" → qualified: "et.id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "et.business_unit_id"
-	OrganizationID Column // "organization_id" → qualified: "et.organization_id"
-	Status         Column // "status" → qualified: "et.status"
-	Code           Column // "code" → qualified: "et.code"
-	Description    Column // "description" → qualified: "et.description"
-	Class          Column // "class" → qualified: "et.class"
-	Color          Column // "color" → qualified: "et.color"
-	InteriorLength Column // "interior_length" → qualified: "et.interior_length"
-	SearchVector   Column // "search_vector" → qualified: "et.search_vector"
-	Rank           Column // "rank" → qualified: "et.rank"
-	Version        Column // "version" → qualified: "et.version"
-	CreatedAt      Column // "created_at" → qualified: "et.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "et.updated_at"
+	ID               Column // "id" → qualified: "et.id"
+	BusinessUnitID   Column // "business_unit_id" → qualified: "et.business_unit_id"
+	OrganizationID   Column // "organization_id" → qualified: "et.organization_id"
+	Status           Column // "status" → qualified: "et.status"
+	Code             Column // "code" → qualified: "et.code"
+	Description      Column // "description" → qualified: "et.description"
+	Class            Column // "class" → qualified: "et.class"
+	Color            Column // "color" → qualified: "et.color"
+	InteriorLength   Column // "interior_length" → qualified: "et.interior_length"
+	DeckType         Column // "deck_type" → qualified: "et.deck_type"
+	DeckHeightInches Column // "deck_height_inches" → qualified: "et.deck_height_inches"
+	WellLengthFeet   Column // "well_length_feet" → qualified: "et.well_length_feet"
+	AxleCount        Column // "axle_count" → qualified: "et.axle_count"
+	SearchVector     Column // "search_vector" → qualified: "et.search_vector"
+	Rank             Column // "rank" → qualified: "et.rank"
+	Version          Column // "version" → qualified: "et.version"
+	CreatedAt        Column // "created_at" → qualified: "et.created_at"
+	UpdatedAt        Column // "updated_at" → qualified: "et.updated_at"
 }{
-	ID:             NewColumn("id", "et"),
-	BusinessUnitID: NewColumn("business_unit_id", "et"),
-	OrganizationID: NewColumn("organization_id", "et"),
-	Status:         NewColumn("status", "et"),
-	Code:           NewColumn("code", "et"),
-	Description:    NewColumn("description", "et"),
-	Class:          NewColumn("class", "et"),
-	Color:          NewColumn("color", "et"),
-	InteriorLength: NewColumn("interior_length", "et"),
-	SearchVector:   NewColumn("search_vector", "et"),
-	Rank:           NewColumn("rank", "et"),
-	Version:        NewColumn("version", "et"),
-	CreatedAt:      NewColumn("created_at", "et"),
-	UpdatedAt:      NewColumn("updated_at", "et"),
+	ID:               NewColumn("id", "et"),
+	BusinessUnitID:   NewColumn("business_unit_id", "et"),
+	OrganizationID:   NewColumn("organization_id", "et"),
+	Status:           NewColumn("status", "et"),
+	Code:             NewColumn("code", "et"),
+	Description:      NewColumn("description", "et"),
+	Class:            NewColumn("class", "et"),
+	Color:            NewColumn("color", "et"),
+	InteriorLength:   NewColumn("interior_length", "et"),
+	DeckType:         NewColumn("deck_type", "et"),
+	DeckHeightInches: NewColumn("deck_height_inches", "et"),
+	WellLengthFeet:   NewColumn("well_length_feet", "et"),
+	AxleCount:        NewColumn("axle_count", "et"),
+	SearchVector:     NewColumn("search_vector", "et"),
+	Rank:             NewColumn("rank", "et"),
+	Version:          NewColumn("version", "et"),
+	CreatedAt:        NewColumn("created_at", "et"),
+	UpdatedAt:        NewColumn("updated_at", "et"),
 }
 
 // EquipmentTypeFieldMap maps JSON API field names to database column names.
@@ -85,18 +93,22 @@ var EquipmentTypeColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by EquipmentType.GetStaticFieldMap().
 var EquipmentTypeFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"status":         "status",
-	"code":           "code",
-	"description":    "description",
-	"class":          "class",
-	"color":          "color",
-	"interiorLength": "interior_length",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":               "id",
+	"businessUnitId":   "business_unit_id",
+	"organizationId":   "organization_id",
+	"status":           "status",
+	"code":             "code",
+	"description":      "description",
+	"class":            "class",
+	"color":            "color",
+	"interiorLength":   "interior_length",
+	"deckType":         "deck_type",
+	"deckHeightInches": "deck_height_inches",
+	"wellLengthFeet":   "well_length_feet",
+	"axleCount":        "axle_count",
+	"version":          "version",
+	"createdAt":        "created_at",
+	"updatedAt":        "updated_at",
 }
 
 // EquipmentTypeInsertableColumns lists column names suitable for INSERT statements on the "equipment_types" table.
@@ -111,6 +123,10 @@ var EquipmentTypeInsertableColumns = []string{
 	"class",
 	"color",
 	"interior_length",
+	"deck_type",
+	"deck_height_inches",
+	"well_length_feet",
+	"axle_count",
 	"version",
 	"created_at",
 	"updated_at",
@@ -179,18 +195,22 @@ func EquipmentTypeApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *
 //	EquipmentTypeFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var EquipmentTypeFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Code           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
-	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Class          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "class" → DB: "class"
-	Color          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "color" → DB: "color"
-	InteriorLength func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "interiorLength" → DB: "interior_length"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Status           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Code             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Description      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Class            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "class" → DB: "class"
+	Color            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "color" → DB: "color"
+	InteriorLength   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "interiorLength" → DB: "interior_length"
+	DeckType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deckType" → DB: "deck_type"
+	DeckHeightInches func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deckHeightInches" → DB: "deck_height_inches"
+	WellLengthFeet   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "wellLengthFeet" → DB: "well_length_feet"
+	AxleCount        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "axleCount" → DB: "axle_count"
+	Version          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -218,6 +238,18 @@ var EquipmentTypeFilter = struct {
 	},
 	InteriorLength: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("interiorLength", op, value)
+	},
+	DeckType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("deckType", op, value)
+	},
+	DeckHeightInches: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("deckHeightInches", op, value)
+	},
+	WellLengthFeet: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("wellLengthFeet", op, value)
+	},
+	AxleCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("axleCount", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

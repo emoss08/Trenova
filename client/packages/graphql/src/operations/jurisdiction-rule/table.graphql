@@ -1,0 +1,47 @@
+fragment JurisdictionRuleTableRowFields on JurisdictionRule {
+  id
+  stateId
+  status
+  maxWidthFeet
+  maxHeightFeet
+  maxLengthFeet
+  maxWeightPounds
+  superloadWidthFeet
+  superloadWeightPounds
+  daylightOnly
+  rushHourRestricted
+  weekendRestricted
+  holidayRestricted
+  permitLeadTimeDays
+  permitValidityDays
+  permitBaseFee
+  permitPerMileFee
+  sourceNote
+  sourceUrl
+  verificationState
+  verifiedAt
+  effectiveStartDate
+  effectiveEndDate
+  version
+  createdAt
+  updatedAt
+  state {
+    id
+    name
+    abbreviation
+  }
+}
+
+query JurisdictionRuleTable($input: DataTableConnectionInput!) {
+  jurisdictionRules(input: $input) {
+    edges {
+      node {
+        ...JurisdictionRuleTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

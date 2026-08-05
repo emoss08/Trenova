@@ -101,6 +101,8 @@ type Params struct {
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HazmatSegregationRuleService *hazmatsegregationruleservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	JurisdictionRuleService      services.JurisdictionRuleService
+	JurisdictionRuleRepo         repositories.JurisdictionRuleRepository
 	RecurringShipmentService     *recurringshipmentservice.Service
 	LocationService              *locationservice.Service
 	LocationCategoryService      *locationcategoryservice.Service
@@ -200,6 +202,8 @@ type Resolver struct {
 	hazardousMaterialService     *hazardousmaterialservice.Service
 	hazmatSegregationRuleService *hazmatsegregationruleservice.Service
 	holdReasonService            *holdreasonservice.Service
+	jurisdictionRuleService      services.JurisdictionRuleService
+	jurisdictionRuleRepo         repositories.JurisdictionRuleRepository
 	recurringShipmentService     *recurringshipmentservice.Service
 	locationService              *locationservice.Service
 	locationCategoryService      *locationcategoryservice.Service
@@ -301,6 +305,8 @@ func New(p Params) *Resolver {
 		hazardousMaterialService:     p.HazardousMaterialService,
 		hazmatSegregationRuleService: p.HazmatSegregationRuleService,
 		holdReasonService:            p.HoldReasonService,
+		jurisdictionRuleService:      p.JurisdictionRuleService,
+		jurisdictionRuleRepo:         p.JurisdictionRuleRepo,
 		recurringShipmentService:     p.RecurringShipmentService,
 		locationService:              p.LocationService,
 		locationCategoryService:      p.LocationCategoryService,

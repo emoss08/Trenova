@@ -1,6 +1,11 @@
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import {
+  CapabilityFields,
+  type FieldDescriptor,
+} from "@trenova/shared/components/capability-form-section";
+import { FormSection } from "@trenova/shared/components/ui/form";
+import { CAPABILITIES, getProfile } from "@trenova/shared/lib/capability";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -23,32 +28,57 @@ function Inner({ children }: { children: React.ReactNode }) {
 
 export default function ShipmentGeneralInformation() {
   const { control } = useFormContext<Shipment>();
+  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+
+  const profile = getProfile(shipmentUIPolicy);
+
+  const descriptors: FieldDescriptor[] = [
+    {
+      name: "bol",
+      cols: "full",
+      // Ignores the resolved `required` on purpose. The only rule that names
+      // `bol` is documentation.duplicateBol, which forbids reusing a number
+      // rather than demanding one — so the mode profile has nothing to say
+      // about whether a BOL is mandatory, and the catalog reflects that by
+      // leaving `bol` out of the rule's requiredFields. What decides is the
+      // customer's billing profile, which BOLField resolves for itself.
+      render: () => <BOLField />,
+    },
+    {
+      name: "temperatureMin",
+      capability: CAPABILITIES.temperatureControl,
+      render: ({ required }) => (
+        <NumberField
+          control={control}
+          name="temperatureMin"
+          description="The minimum temperature for the shipment."
+          label="Temperature Min"
+          placeholder="Enter Temperature Min"
+          sideText="°F"
+          rules={{ required }}
+        />
+      ),
+    },
+    {
+      name: "temperatureMax",
+      capability: CAPABILITIES.temperatureControl,
+      render: ({ required }) => (
+        <NumberField
+          control={control}
+          name="temperatureMax"
+          label="Temperature Max"
+          description="The maximum temperature for the shipment."
+          placeholder="Enter Temperature Max"
+          sideText="°F"
+          rules={{ required }}
+        />
+      ),
+    },
+  ];
 
   return (
     <Inner>
-      <FormGroup cols={2}>
-        <BOLField />
-        <FormControl>
-          <NumberField
-            control={control}
-            name="temperatureMin"
-            description="The minimum temperature for the shipment."
-            label="Temperature Min"
-            placeholder="Enter Temperature Min"
-            sideText="°F"
-          />
-        </FormControl>
-        <FormControl>
-          <NumberField
-            control={control}
-            name="temperatureMax"
-            label="Temperature Max"
-            description="The maximum temperature for the shipment."
-            placeholder="Enter Temperature Max"
-            sideText="°F"
-          />
-        </FormControl>
-      </FormGroup>
+      <CapabilityFields descriptors={descriptors} profile={profile} />
     </Inner>
   );
 }
@@ -97,21 +127,28 @@ export function BOLField() {
     return () => {
       if (bolCheckTimer.current != null) clearTimeout(bolCheckTimer.current);
     };
-  }, [bol, shipmentId, shipmentUIPolicy?.checkForDuplicateBols, setError, clearErrors, getFieldState]);
+  }, [
+    bol,
+    shipmentId,
+    shipmentUIPolicy?.checkForDuplicateBols,
+    setError,
+    clearErrors,
+    getFieldState,
+  ]);
 
   const bolRequired = billingProfile?.enforceCustomerBillingReq && billingProfile?.requireBOLNumber;
 
+  // No FormControl wrapper: CapabilityFields supplies one per descriptor, and
+  // nesting a second would offset the field from every sibling in the group.
   return (
-    <FormControl cols="full">
-      <InputField
-        control={control}
-        name="bol"
-        label="BOL"
-        rules={{ required: bolRequired }}
-        description="The BOL is the bill of lading number for the shipment."
-        placeholder="Enter BOL"
-        maxLength={100}
-      />
-    </FormControl>
+    <InputField
+      control={control}
+      name="bol"
+      label="BOL"
+      rules={{ required: bolRequired }}
+      description="The BOL is the bill of lading number for the shipment."
+      placeholder="Enter BOL"
+      maxLength={100}
+    />
   );
 }

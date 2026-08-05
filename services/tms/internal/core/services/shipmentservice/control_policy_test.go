@@ -38,6 +38,9 @@ func TestValidatorValidateCreate_RejectsWeightAboveShipmentControlLimit(t *testi
 			mocks.NewMockCommodityRepository(t),
 			mocks.NewMockHazmatSegregationRuleRepository(t),
 			mocks.NewMockShipmentRepository(t),
+			nil,
+			nil,
+			nil,
 		).Build(),
 	}
 
@@ -89,6 +92,9 @@ func TestValidatorValidateUpdate_RejectsMoveRemovalWhenDisallowed(t *testing.T) 
 			mocks.NewMockCommodityRepository(t),
 			mocks.NewMockHazmatSegregationRuleRepository(t),
 			shipmentRepo,
+			nil,
+			nil,
+			nil,
 		).Build(),
 	}
 

@@ -87,10 +87,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
+	"github.com/emoss08/trenova/internal/core/services/jurisdictionruleservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
+	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/openaidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
@@ -98,6 +100,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
 	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/core/services/permission"
+	"github.com/emoss08/trenova/internal/core/services/permitservice"
 	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
@@ -326,6 +329,9 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	recurringshipmentservice.New,
 	ratetableservice.New,
 	detentionpolicyservice.New,
+	modeprofileservice.NewService,
+	permitservice.NewService,
+	jurisdictionruleservice.NewService,
 	detentionservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(
