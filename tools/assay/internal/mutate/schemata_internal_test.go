@@ -1,6 +1,7 @@
 package mutate
 
 import (
+	"context"
 	"go/format"
 	"os"
 	"os/exec"
@@ -104,6 +105,9 @@ func writeSchemataFixture(t *testing.T) string {
 	dir := filepath.Join(root, "target")
 	require.NoError(t, os.MkdirAll(dir, 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "target.go"), []byte(schemataFixture), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "target_test.go"),
+		[]byte("package target\n\nimport \"testing\"\n\nfunc TestPlaceholder(t *testing.T) {\n\tif Sum(1, 2) != 3 {\n\t\tt.Fatal(\"bad\")\n\t}\n}\n"),
+		0o644))
 
 	return root
 }
@@ -181,6 +185,36 @@ func TestSchemataBuildsOnlyTheBinariesItUses(t *testing.T) {
 		assert.Empty(t, slot.path)
 		assert.NoError(t, slot.err)
 	}
+}
+
+// TestBinarySlotIsNotPoisonedByCancellation pins the recovery property: a build
+// killed by Ctrl-C says nothing about whether the package compiles, so a later
+// caller with a live context must get a real build, not the cached corpse of the
+// cancelled one. A sync.Once here would fail this test.
+func TestBinarySlotIsNotPoisonedByCancellation(t *testing.T) {
+	root := writeSchemataFixture(t)
+	mutants := generateSchemataFixture(t, root)
+
+	batches, _ := planBatches(mutants)
+	require.Len(t, batches, 1)
+
+	batch := batches[0]
+	t.Cleanup(batch.cleanup)
+	require.NoError(t, batch.prepare())
+
+	opts := ExecuteOptions{Root: root, Env: append(os.Environ(), "GOWORK=off")}
+	testPkg := schemataModule + "/target"
+	require.Contains(t, batch.binaries, testPkg)
+
+	cancelled, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	_, err := batch.binaryFor(cancelled, opts, testPkg, 1)
+	require.ErrorIs(t, err, context.Canceled)
+
+	path, err := batch.binaryFor(t.Context(), opts, testPkg, 1)
+	require.NoError(t, err, "a cancelled attempt must not be remembered as a compile failure")
+	assert.FileExists(t, path)
 }
 
 func TestSchemataCoversEveryMutatorKind(t *testing.T) {

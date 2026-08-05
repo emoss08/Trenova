@@ -56,11 +56,15 @@ const (
 )
 
 type Result struct {
-	Mutant   Mutant        `json:"mutant"`
-	Outcome  Outcome       `json:"outcome"`
-	Mode     Mode          `json:"mode,omitempty"`
-	KilledBy string        `json:"killedBy,omitempty"`
-	Detail   string        `json:"detail,omitempty"`
+	Mutant   Mutant  `json:"mutant"`
+	Outcome  Outcome `json:"outcome"`
+	Mode     Mode    `json:"mode,omitempty"`
+	KilledBy string  `json:"killedBy,omitempty"`
+	Detail   string  `json:"detail,omitempty"`
+	// Fallback records why a schemata-capable mutant was judged on a binary of its
+	// own. A silent fallback costs a compile per mutant, which is exactly the
+	// slowdown the shared binary exists to remove, so the reason must surface.
+	Fallback string        `json:"fallback,omitempty"`
 	Tests    int           `json:"tests"`
 	Duration time.Duration `json:"durationNanos"`
 }
@@ -143,9 +147,20 @@ func Execute(ctx context.Context, mutants []Mutant, opts ExecuteOptions) ([]Resu
 					return err
 				}
 
-				result, judged := batch.judge(ctx, index, mutants[index], opts, buildParallelism)
-				if !judged {
+				result, judgeErr := batch.judge(ctx, index, mutants[index], opts, buildParallelism)
+				if judgeErr != nil {
+					if err := ctx.Err(); err != nil {
+						return err
+					}
 					result = evaluate(ctx, mutants[index], opts, buildParallelism)
+					result.Fallback = "schemata binary unavailable: " + judgeErr.Error()
+				}
+
+				// A cancelled run must abort, not record. runTests reports a plain error
+				// for a killed process, and a mutant "killed" by cancellation would
+				// silently inflate the score of a run the user aborted.
+				if err := ctx.Err(); err != nil {
+					return err
 				}
 				results[index] = result
 				progress.tick()
@@ -161,7 +176,12 @@ func Execute(ctx context.Context, mutants []Mutant, opts ExecuteOptions) ([]Resu
 				return err
 			}
 
-			results[index] = evaluate(ctx, mutants[index], opts, buildParallelism)
+			result := evaluate(ctx, mutants[index], opts, buildParallelism)
+
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			results[index] = result
 			progress.tick()
 
 			return nil
@@ -243,8 +263,6 @@ func evaluate(ctx context.Context, m Mutant, opts ExecuteOptions, buildParalleli
 		return result
 	}
 
-	budget := opts.budgetFor(m.tests)
-
 	for _, testPackage := range sortedKeys(m.tests) {
 		tests := m.tests[testPackage]
 		if len(tests) == 0 {
@@ -280,7 +298,7 @@ func evaluate(ctx context.Context, m Mutant, opts ExecuteOptions, buildParalleli
 			binary: binary,
 			dir:    opts.dirFor(testPackage),
 			env:    opts.Env,
-			budget: budget,
+			budget: opts.PackageBudget(m.tests, testPackage),
 			tests:  tests,
 		})
 		if outcome.Killed() {
@@ -313,6 +331,13 @@ func (o ExecuteOptions) budgetFor(plan TestPlan) time.Duration {
 	}
 
 	return min(max(budget, floor), maxMutantBudgetCap)
+}
+
+// PackageBudget derives the timeout for one test package's run from that
+// package's own tests. Handing every package the whole plan's budget lets a
+// mutant judged by N packages consume N times its allowance.
+func (o ExecuteOptions) PackageBudget(plan TestPlan, testPkg string) time.Duration {
+	return o.budgetFor(TestPlan{testPkg: plan[testPkg]})
 }
 
 func writeOverlay(workdir string, m Mutant) (string, error) {

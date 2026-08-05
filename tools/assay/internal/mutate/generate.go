@@ -123,7 +123,9 @@ func Generate(ctx context.Context, opts GenerateOptions) ([]Mutant, error) {
 		out = append(out, mutantsInFile(pkg, file, path, source, opts)...)
 	}
 
-	sort.Slice(out, func(i, j int) bool {
+	// The order fixes the schemata ids and the JSON output, so it must be total and
+	// stable: an incomplete key under an unstable sort let identical runs disagree.
+	sort.SliceStable(out, func(i, j int) bool {
 		if out[i].File != out[j].File {
 			return out[i].File < out[j].File
 		}
@@ -132,6 +134,9 @@ func Generate(ctx context.Context, opts GenerateOptions) ([]Mutant, error) {
 		}
 		if out[i].Kind != out[j].Kind {
 			return out[i].Kind < out[j].Kind
+		}
+		if out[i].Original != out[j].Original {
+			return out[i].Original < out[j].Original
 		}
 
 		return out[i].Replacement < out[j].Replacement

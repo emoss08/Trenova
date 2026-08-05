@@ -37,10 +37,14 @@ type schemataBatch struct {
 	binaries map[string]*batchBinary
 }
 
-// batchBinary is one test package's shared binary. The Once means concurrent
-// mutants needing the same binary compile it exactly once and the rest wait for it.
+// batchBinary is one test package's shared binary. The mutex means concurrent
+// mutants needing the same binary compile it exactly once and the rest wait for
+// it. A plain sync.Once would also do that, but it would cache a
+// cancellation-time failure forever — and a slot poisoned by Ctrl-C is
+// indistinguishable from a real compile failure.
 type batchBinary struct {
-	once sync.Once
+	mu   sync.Mutex
+	done bool
 	path string
 	err  error
 }
@@ -177,32 +181,45 @@ func (b *schemataBatch) binaryFor(
 		return "", fmt.Errorf("no schemata binary planned for %s", testPkg)
 	}
 
-	slot.once.Do(func() {
-		path := filepath.Join(b.workdir, "bin", sanitisePath(testPkg)+".test")
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			slot.err = fmt.Errorf("create binary directory: %w", err)
+	slot.mu.Lock()
+	defer slot.mu.Unlock()
 
-			return
+	if slot.done {
+		return slot.path, slot.err
+	}
+
+	path := filepath.Join(b.workdir, "bin", sanitisePath(testPkg)+".test")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		slot.done = true
+		slot.err = fmt.Errorf("create binary directory: %w", err)
+
+		return "", slot.err
+	}
+
+	if err := buildTestBinary(ctx, buildRequest{
+		root:             opts.Root,
+		env:              opts.Env,
+		tags:             opts.Tags,
+		overlay:          b.overlay,
+		testPackage:      testPkg,
+		output:           path,
+		buildParallelism: buildParallelism,
+	}); err != nil {
+		// A build killed by cancellation says nothing about whether the package
+		// compiles, so it must not be remembered as a failure.
+		if ctx.Err() != nil {
+			return "", ctx.Err()
 		}
+		slot.done = true
+		slot.err = err
 
-		if err := buildTestBinary(ctx, buildRequest{
-			root:             opts.Root,
-			env:              opts.Env,
-			tags:             opts.Tags,
-			overlay:          b.overlay,
-			testPackage:      testPkg,
-			output:           path,
-			buildParallelism: buildParallelism,
-		}); err != nil {
-			slot.err = err
+		return "", slot.err
+	}
 
-			return
-		}
+	slot.done = true
+	slot.path = path
 
-		slot.path = path
-	})
-
-	return slot.path, slot.err
+	return path, nil
 }
 
 func (b *schemataBatch) cleanup() {
@@ -213,20 +230,24 @@ func (b *schemataBatch) cleanup() {
 
 // judge runs the shared binary once, with this mutant selected.
 //
-// The false return asks the caller to judge this mutant on a binary of its own: a
+// A non-nil error asks the caller to judge this mutant on a binary of its own: a
 // package that will not compile under the shared rewrite still deserves a real
-// verdict, and only the mutants that needed that package should pay for it.
+// verdict, and only the mutants that needed that package should pay for it. The
+// error carries the reason, which the caller records — a silent fallback is a
+// silent 100× slowdown.
+//
+// Duration counts only this mutant's own test runs. Waiting for a shared binary
+// someone else is compiling is not this mutant's cost, and charging it here made
+// the JSON output useless for finding slow mutants.
 func (b *schemataBatch) judge(
 	ctx context.Context,
 	index int,
 	m Mutant,
 	opts ExecuteOptions,
 	buildParallelism int,
-) (Result, bool) {
-	started := time.Now()
+) (Result, error) {
 	result := Result{Mutant: m, Tests: m.tests.count(), Mode: ModeSchemata}
 
-	budget := opts.budgetFor(m.tests)
 	env := mutantEnv(opts.Env, b.ids[index])
 
 	for _, testPkg := range sortedKeys(m.tests) {
@@ -237,30 +258,31 @@ func (b *schemataBatch) judge(
 
 		binary, err := b.binaryFor(ctx, opts, testPkg, buildParallelism)
 		if err != nil {
-			return Result{}, false
+			return Result{}, err
 		}
 
+		started := time.Now()
 		outcome, detail := runTests(ctx, testRun{
 			binary: binary,
 			dir:    opts.dirFor(testPkg),
 			env:    env,
-			budget: budget,
+			budget: opts.PackageBudget(m.tests, testPkg),
 			tests:  tests,
 		})
+		result.Duration += time.Since(started)
+
 		if outcome.Killed() {
 			result.Outcome = outcome
 			result.KilledBy = testPkg
 			result.Detail = detail
-			result.Duration = time.Since(started)
 
-			return result, true
+			return result, nil
 		}
 	}
 
 	result.Outcome = OutcomeSurvived
-	result.Duration = time.Since(started)
 
-	return result, true
+	return result, nil
 }
 
 // prepareBatches renders each batch's overlay, moving any batch that cannot be

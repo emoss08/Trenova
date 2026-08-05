@@ -624,6 +624,61 @@ func TestExcludeLeavesMutantsWithNoTestsAsUncovered(t *testing.T) {
 	}
 }
 
+// TestBudgetIsPerPackageNotPerPlan pins a double-spend: the budget derived from a
+// mutant's whole plan used to be handed to every package's run, so a mutant judged
+// by two packages could consume twice its allowance before timing out.
+func TestBudgetIsPerPackageNotPerPlan(t *testing.T) {
+	perTest := 10 * time.Second
+	opts := mutate.ExecuteOptions{
+		Budget: func(plan mutate.TestPlan) time.Duration {
+			var total time.Duration
+			for _, tests := range plan {
+				total += time.Duration(len(tests)) * perTest
+			}
+
+			return total
+		},
+	}
+
+	plan := mutate.TestPlan{
+		"example.com/a": {"TestOne"},
+		"example.com/b": {"TestTwo", "TestThree"},
+	}
+
+	assert.Equal(t, 30*time.Second, opts.PackageBudget(plan, "example.com/a"),
+		"package a's timeout must come from package a's tests alone")
+	assert.Equal(t, 60*time.Second, opts.PackageBudget(plan, "example.com/b"))
+}
+
+// TestExecuteAbortsWhenCancelledMidFlight pins the sharper half of cancellation:
+// not the pre-check, but Ctrl-C landing while mutants are being judged. A test
+// binary killed by cancellation exits non-zero, which looks exactly like a kill —
+// and an aborted run that reports fabricated kills exits 0 with an inflated score.
+func TestExecuteAbortsWhenCancelledMidFlight(t *testing.T) {
+	c := newCorpusFrom(t, schemataCorpusFiles())
+
+	mutants := c.generate(t, "kinds")
+	require.Greater(t, len(mutants), 2)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	opts := c.executeOptions()
+	opts.Jobs = 2
+	opts.Progress = func(_ string, done, _ int) {
+		if done == 1 {
+			cancel()
+		}
+	}
+
+	results, err := mutate.Execute(ctx, mutants, opts)
+
+	require.ErrorIs(t, err, context.Canceled,
+		"an aborted run must return the cancellation, not a result set")
+	assert.Nil(t, results,
+		"partial results from an aborted run would be scored as if the run completed")
+}
+
 func TestExecuteStopsOnCancelledContext(t *testing.T) {
 	c := newCorpus(t)
 

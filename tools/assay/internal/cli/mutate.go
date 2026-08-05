@@ -301,6 +301,10 @@ func printMutationSummary(
 			modes[mutate.ModeSchemata], modes[mutate.ModeOverlay])
 	}
 
+	for _, reason := range fallbackReasons(results, 3) {
+		out.Warn("schemata fallback: %s", reason)
+	}
+
 	if score.NotBuilt > 0 {
 		out.Warn("%d mutants failed to compile; that is an assay defect, not a gap in your tests",
 			score.NotBuilt)
@@ -323,6 +327,32 @@ func printMutationSummary(
 			r.Mutant.Replacement, r.Tests)
 	}
 	out.Muted("a survivor means no test with known coverage of that line objected")
+}
+
+// fallbackReasons collects the distinct reasons schemata-capable mutants were
+// judged on binaries of their own. A fallback multiplies that mutant's cost by a
+// full compile, so hiding the reason turns a diagnosable failure into a mystery
+// slowdown.
+func fallbackReasons(results []mutate.Result, limit int) []string {
+	seen := make(map[string]struct{})
+	var out []string
+	for _, r := range results {
+		if r.Fallback == "" {
+			continue
+		}
+		if _, dup := seen[r.Fallback]; dup {
+			continue
+		}
+		seen[r.Fallback] = struct{}{}
+		if len(out) < limit {
+			out = append(out, r.Fallback)
+		}
+	}
+	if extra := len(seen) - len(out); extra > 0 {
+		out = append(out, fmt.Sprintf("… and %d more distinct reasons", extra))
+	}
+
+	return out
 }
 
 func functionOrPackage(r mutate.Result) string {
