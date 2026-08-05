@@ -289,8 +289,10 @@ func runTest(
 	profilePath := filepath.Join(workdir, "profile.out")
 	_ = os.Remove(profilePath)
 
+	started := time.Now()
 	_, runErr := runCommand(ctx, dir, opts.Env, opts.timeout(),
 		binary, "-test.run", "^"+regexp.QuoteMeta(name)+"$", "-test.coverprofile", profilePath)
+	elapsed := time.Since(started)
 
 	file, openErr := os.Open(profilePath)
 	if openErr != nil {
@@ -299,13 +301,13 @@ func runTest(
 			note += ": " + runErr.Error()
 		}
 
-		return TestCoverage{Name: name, AlwaysRun: true, Note: note}, ""
+		return TestCoverage{Name: name, AlwaysRun: true, Note: note, Duration: elapsed}, ""
 	}
 	defer file.Close()
 
 	blocks, parseErr := cover.ParseProfile(file)
 	if parseErr != nil {
-		return TestCoverage{Name: name, AlwaysRun: true, Note: parseErr.Error()}, ""
+		return TestCoverage{Name: name, AlwaysRun: true, Note: parseErr.Error(), Duration: elapsed}, ""
 	}
 
 	var ranges []Range
@@ -334,10 +336,11 @@ func runTest(
 			Name:      name,
 			AlwaysRun: true,
 			Note:      "no executed statements attributed; the test may have skipped",
+			Duration:  elapsed,
 		}, unresolved
 	}
 
-	return TestCoverage{Name: name, Ranges: ranges}, unresolved
+	return TestCoverage{Name: name, Ranges: ranges, Duration: elapsed}, unresolved
 }
 
 func profileResolver(g *graph.Graph) cover.Resolver {

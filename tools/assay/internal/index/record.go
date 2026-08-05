@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"time"
 )
 
-const recordVersion = 2
+const recordVersion = 3
 
 type Range struct {
 	FileID uint32
@@ -25,6 +26,7 @@ type TestCoverage struct {
 	Ranges    []Range
 	AlwaysRun bool
 	Note      string
+	Duration  time.Duration
 }
 
 type Record struct {
@@ -38,6 +40,22 @@ type Record struct {
 
 func (r *Record) Usable() bool {
 	return r != nil && r.Degraded == "" && len(r.Tests) > 0
+}
+
+func (r *Record) DurationOf(tests []string) time.Duration {
+	wanted := make(map[string]struct{}, len(tests))
+	for _, name := range tests {
+		wanted[name] = struct{}{}
+	}
+
+	var total time.Duration
+	for _, test := range r.Tests {
+		if _, ok := wanted[test.Name]; ok {
+			total += test.Duration
+		}
+	}
+
+	return total
 }
 
 func (r *Record) Knows(absPath string) bool {

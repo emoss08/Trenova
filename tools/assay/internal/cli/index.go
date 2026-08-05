@@ -72,13 +72,6 @@ func newIndexCommand(opts *options) *cobra.Command {
 				return err
 			}
 
-			progress := func(pkg string, done, total int) {
-				if quiet {
-					return
-				}
-				cmd.PrintErrf("\r\033[2Kindexing %d/%d %s", done, total, shortenTail(pkg, 60))
-			}
-
 			stats, err := index.Build(cmd.Context(), index.Options{
 				Root:        session.root,
 				Commit:      commit,
@@ -89,14 +82,12 @@ func newIndexCommand(opts *options) *cobra.Command {
 				Jobs:        jobs,
 				Timeout:     timeout,
 				Packages:    targets,
-				Progress:    progress,
+				Progress:    newProgress(cmd.ErrOrStderr(), quiet),
 			})
 			if err != nil {
 				return err
 			}
-			if !quiet {
-				cmd.PrintErrln()
-			}
+			finishProgress(cmd.ErrOrStderr(), quiet)
 
 			return printIndexStats(cmd, stats, commit)
 		},
