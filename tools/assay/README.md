@@ -5,19 +5,23 @@ all of them.
 
 ## Status
 
-**M0 — package-graph test impact analysis.** `assay` builds the workspace package
-graph, attributes changed files to packages, and walks reverse dependency edges to
-find every test package a diff can reach.
+Two layers, both live:
 
-Later milestones (per-test coverage index, line-level selection, mutation testing)
-build on this foundation.
+**Package-graph selection.** Builds the workspace package graph, attributes
+changed files to packages, and walks reverse dependency edges to find every test
+package a diff can reach. Always available, no setup.
 
-On the Trenova workspace (688 packages, 351 with tests), M0 gives a median 32%
-reduction in test packages run — 98.6% on commits touching five files or fewer,
-21.8% on commits touching more than twenty. Selection itself takes **~49 ms** on
-a warm graph cache, down from ~1,480 ms. See [BENCHMARKS.md](BENCHMARKS.md) for
-the method, the profile, and why the large-commit case is the argument for the
-line-level index.
+**Line-level narrowing.** With a coverage index built by `assay index`, each
+affected package is narrowed to the individual tests that execute the changed
+lines — and dropped entirely if none do. Only engages when it can be proven safe;
+otherwise the package runs in full.
+
+Mutation testing is the next milestone and reuses the same index.
+
+A one-line edit inside a function in this repo selects **3 packages / 20 tests**
+where package-level selection selects 5 whole packages, dropping two packages
+outright. A struct-field edit one line away correctly falls back to all 5 in full.
+See [BENCHMARKS.md](BENCHMARKS.md).
 
 ## Install
 

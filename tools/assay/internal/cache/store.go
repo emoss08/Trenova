@@ -9,12 +9,16 @@ import (
 )
 
 const (
-	entrySuffix = ".graph"
-	maxEntries  = 32
+	entrySuffix = ".entry"
+
+	// GraphCapacity bounds the graph cache: a handful of recent workspace states is
+	// plenty. Unbounded stores pass 0.
+	GraphCapacity = 32
 )
 
 type Store struct {
-	dir string
+	dir      string
+	capacity int
 }
 
 func NewStore(dir string) (*Store, error) {
@@ -26,11 +30,27 @@ func NewStore(dir string) (*Store, error) {
 		dir = filepath.Join(base, "assay")
 	}
 
+	return newStore(dir, GraphCapacity)
+}
+
+// Namespace returns a sibling store under its own subdirectory with its own
+// capacity. A capacity of 0 means unbounded, which is what the coverage index
+// needs: it holds one entry per package, so a small cap would silently evict
+// records as fast as they were written.
+func (s *Store) Namespace(name string, capacity int) (*Store, error) {
+	if s == nil {
+		return nil, errors.New("cannot namespace a nil store")
+	}
+
+	return newStore(filepath.Join(s.dir, name), capacity)
+}
+
+func newStore(dir string, capacity int) (*Store, error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("create cache directory: %w", err)
 	}
 
-	return &Store{dir: dir}, nil
+	return &Store{dir: dir, capacity: capacity}, nil
 }
 
 func (s *Store) Dir() string { return s.dir }
@@ -81,6 +101,10 @@ func (s *Store) path(key Fingerprint) string {
 }
 
 func (s *Store) prune() {
+	if s.capacity <= 0 {
+		return
+	}
+
 	entries, err := os.ReadDir(s.dir)
 	if err != nil {
 		return
@@ -103,12 +127,12 @@ func (s *Store) prune() {
 		kept = append(kept, aged{name: entry.Name(), modTime: info.ModTime().UnixNano()})
 	}
 
-	if len(kept) <= maxEntries {
+	if len(kept) <= s.capacity {
 		return
 	}
 
 	sort.Slice(kept, func(i, j int) bool { return kept[i].modTime > kept[j].modTime })
-	for _, entry := range kept[maxEntries:] {
+	for _, entry := range kept[s.capacity:] {
 		os.Remove(filepath.Join(s.dir, entry.name))
 	}
 }

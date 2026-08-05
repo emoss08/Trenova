@@ -100,7 +100,7 @@ func TestStorePrunesOldestEntries(t *testing.T) {
 	store, err := NewStore(dir)
 	require.NoError(t, err)
 
-	for i := range maxEntries + 8 {
+	for i := range GraphCapacity + 8 {
 		var fp Fingerprint
 		fp[0] = byte(i)
 		fp[1] = byte(i >> 8)
@@ -116,7 +116,62 @@ func TestStorePrunesOldestEntries(t *testing.T) {
 			kept++
 		}
 	}
-	assert.LessOrEqual(t, kept, maxEntries)
+	assert.LessOrEqual(t, kept, GraphCapacity)
+}
+
+func TestNamespaceWithZeroCapacityNeverPrunes(t *testing.T) {
+	root, err := NewStore(t.TempDir())
+	require.NoError(t, err)
+
+	store, err := root.Namespace("index", 0)
+	require.NoError(t, err)
+
+	const want = GraphCapacity + 40
+	for i := range want {
+		var fp Fingerprint
+		fp[0] = byte(i)
+		fp[1] = byte(i >> 8)
+		require.NoError(t, store.Put(fp, []byte("payload")))
+	}
+
+	entries, err := os.ReadDir(store.Dir())
+	require.NoError(t, err)
+
+	var kept int
+	for _, entry := range entries {
+		if filepath.Ext(entry.Name()) == entrySuffix {
+			kept++
+		}
+	}
+	assert.Equal(t, want, kept,
+		"the coverage index holds one entry per package, so a capped store would evict records as fast as they are written")
+}
+
+func TestNamespaceIsIsolatedFromItsParent(t *testing.T) {
+	root, err := NewStore(t.TempDir())
+	require.NoError(t, err)
+	child, err := root.Namespace("index", 0)
+	require.NoError(t, err)
+
+	require.NoError(t, root.Put(key(1), []byte("graph")))
+	require.NoError(t, child.Put(key(1), []byte("record")))
+
+	fromRoot, ok := root.Get(key(1))
+	require.True(t, ok)
+	fromChild, ok := child.Get(key(1))
+	require.True(t, ok)
+
+	assert.Equal(t, []byte("graph"), fromRoot)
+	assert.Equal(t, []byte("record"), fromChild,
+		"the same fingerprint must address different payloads in different namespaces")
+}
+
+func TestNamespaceOnNilStoreFails(t *testing.T) {
+	var store *Store
+
+	_, err := store.Namespace("index", 0)
+
+	require.Error(t, err)
 }
 
 func TestStoreIgnoresUnreadableEntry(t *testing.T) {

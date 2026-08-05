@@ -44,9 +44,18 @@ func (o *options) open(ctx context.Context) (*session, error) {
 	return &session{root: root, manifest: manifest, graph: g, store: store}, nil
 }
 
-func (s *session) loaderFor(ctx context.Context, commit string, tags []string) (*index.Loader, error) {
-	if s.store == nil || commit == "" {
+func (s *session) indexStore() (*cache.Store, error) {
+	if s.store == nil {
 		return nil, nil
+	}
+
+	return s.store.Namespace("index", 0)
+}
+
+func (s *session) loaderFor(ctx context.Context, commit string, tags []string) (*index.Loader, error) {
+	store, err := s.indexStore()
+	if err != nil || store == nil || commit == "" {
+		return nil, err
 	}
 
 	digests, err := vcs.TreeDigests(ctx, s.root, commit)
@@ -54,7 +63,7 @@ func (s *session) loaderFor(ctx context.Context, commit string, tags []string) (
 		return nil, err
 	}
 
-	return index.NewLoader(s.store, index.NewFingerprinter(s.graph, digests, tags)), nil
+	return index.NewLoader(store, index.NewFingerprinter(s.graph, digests, tags)), nil
 }
 
 type plan struct {

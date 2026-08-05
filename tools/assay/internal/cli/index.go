@@ -62,6 +62,11 @@ func newIndexCommand(opts *options) *cobra.Command {
 				return err
 			}
 
+			store, err := session.indexStore()
+			if err != nil {
+				return err
+			}
+
 			targets, err := resolveIndexTargets(session, packages)
 			if err != nil {
 				return err
@@ -79,7 +84,7 @@ func newIndexCommand(opts *options) *cobra.Command {
 				Commit:      commit,
 				Graph:       session.graph,
 				TreeDigests: digests,
-				Store:       session.store,
+				Store:       store,
 				Tags:        opts.tags,
 				Jobs:        jobs,
 				Timeout:     timeout,
