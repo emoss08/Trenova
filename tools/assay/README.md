@@ -3,8 +3,6 @@
 Test intelligence for Go. Runs the tests a change can actually affect, instead of
 all of them.
 
-Zero dependencies — `assay` imports nothing outside the standard library.
-
 ## Status
 
 **M0 — package-graph test impact analysis.** `assay` builds the workspace package
@@ -14,9 +12,9 @@ find every test package a diff can reach.
 Later milestones (per-test coverage index, line-level selection, mutation testing)
 build on this foundation.
 
-On the Trenova workspace (685 packages, 348 with tests), M0 gives a median 32%
+On the Trenova workspace (687 packages, 349 with tests), M0 gives a median 32%
 reduction in test packages run — 98.6% on commits touching five files or fewer,
-21.6% on commits touching more than twenty. See [BENCHMARKS.md](BENCHMARKS.md)
+21.8% on commits touching more than twenty. See [BENCHMARKS.md](BENCHMARKS.md)
 for the method and for why the large-commit case is the argument for the
 line-level index.
 
@@ -90,12 +88,34 @@ testable, so `--tags integration` runs never silently skip them.
 | `--tags list` | Comma-separated build tags |
 | `--all` | Skip selection; use every testable package |
 | `--json` | Machine-readable output (`select` only) |
-| `-v` | List every selected package and ignored file |
+| `-v`, `--verbose` | List every selected package and ignored file |
+| `--no-color` | Disable colored output (also honours `NO_COLOR`) |
 
 Arguments after `--` pass through to `go test`.
 
 ## Workspaces
 
-`assay` reads `go list -m -json` to find every main module, then lists packages in
-each. Multi-module `go.work` setups work without configuration; reverse
-dependency edges cross module boundaries.
+`assay` reads `go list -m -json` to find every main module, then loads each
+module's packages with `golang.org/x/tools/go/packages`. Multi-module `go.work`
+setups work without configuration; reverse dependency edges cross module
+boundaries.
+
+Packages load with `Tests: true`, so `assay` sees the real test variants the Go
+toolchain builds — the in-package variant `pkg [pkg.test]` and the external test
+package `pkg_test [pkg.test]` — and derives each package's test-only imports by
+subtracting its production imports. That is why a package consisting solely of
+`_test.go` files is still reachable, and why external test packages attach to
+their subject instead of appearing as phantom `_test` packages.
+
+## Dependencies
+
+| Module | Why |
+|---|---|
+| `golang.org/x/tools/go/packages` | Package loading. Handles workspaces, build tags, test variants and `GOPACKAGESDRIVER`, and its `Overlay` support is what the mutation milestones will build on |
+| `github.com/spf13/cobra` | Subcommands, flag handling, generated help and completions |
+| `github.com/fatih/color` | Terminal color with `NO_COLOR` and TTY detection |
+| `github.com/stretchr/testify` | Test assertions |
+
+`assay` deliberately shells out to `git` rather than embedding `go-git`: the
+porcelain commands used here are stable, and `go-git`'s diff is markedly slower
+on large repositories.

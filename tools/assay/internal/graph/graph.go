@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
 type Package struct {
@@ -34,38 +36,138 @@ func newGraph(root string) *Graph {
 	}
 }
 
-func (g *Graph) add(lp listPackage) {
-	if lp.ImportPath == "" || lp.Dir == "" {
-		return
+func (g *Graph) ingest(pkgs []*packages.Package) {
+	variants := make(map[string][]*packages.Package)
+
+	for _, p := range pkgs {
+		if p == nil || p.PkgPath == "" {
+			continue
+		}
+		if isGeneratedTestMain(p) {
+			continue
+		}
+		if owner, isVariant := testVariantOwner(p.ID); isVariant {
+			variants[owner] = append(variants[owner], p)
+
+			continue
+		}
+		g.addProduction(p)
 	}
-	if _, exists := g.pkgs[lp.ImportPath]; exists {
+
+	owners := make([]string, 0, len(variants))
+	for owner := range variants {
+		owners = append(owners, owner)
+	}
+	sort.Strings(owners)
+
+	for _, owner := range owners {
+		g.attachTestVariants(owner, variants[owner])
+	}
+}
+
+func (g *Graph) addProduction(p *packages.Package) {
+	if _, exists := g.pkgs[p.PkgPath]; exists {
 		return
 	}
 
 	module := ""
-	if lp.Module != nil {
-		module = lp.Module.Path
+	if p.Module != nil {
+		module = p.Module.Path
 	}
 
-	pkg := &Package{
-		ImportPath:  lp.ImportPath,
-		Dir:         filepath.Clean(lp.Dir),
-		Module:      module,
-		Imports:     dedupe(lp.Imports),
-		TestImports: dedupe(append(append([]string{}, lp.TestImports...), lp.XTestImports...)),
-		HasTests:    hasTestFiles(lp),
-		Broken:      lp.Error != nil,
+	g.pkgs[p.PkgPath] = &Package{
+		ImportPath: p.PkgPath,
+		Dir:        packageDir(p),
+		Module:     module,
+		Imports:    importPaths(p),
+		HasTests:   hasBuildTaggedTestFile(p),
+		Broken:     len(p.Errors) > 0,
 	}
-
-	g.pkgs[pkg.ImportPath] = pkg
 }
 
-func hasTestFiles(lp listPackage) bool {
-	if len(lp.TestGoFiles) > 0 || len(lp.XTestGoFiles) > 0 {
-		return true
+func (g *Graph) attachTestVariants(owner string, variants []*packages.Package) {
+	pkg, ok := g.pkgs[owner]
+	if !ok {
+		pkg = &Package{ImportPath: owner}
+		for _, variant := range variants {
+			if dir := packageDir(variant); dir != "" {
+				pkg.Dir = dir
+
+				break
+			}
+		}
+		if pkg.Dir == "" {
+			return
+		}
+		g.pkgs[owner] = pkg
 	}
-	for _, f := range lp.IgnoredGoFiles {
-		if strings.HasSuffix(f, "_test.go") {
+
+	pkg.HasTests = true
+
+	production := make(map[string]struct{}, len(pkg.Imports))
+	for _, imp := range pkg.Imports {
+		production[imp] = struct{}{}
+	}
+
+	seen := make(map[string]struct{})
+	var testOnly []string
+	for _, variant := range variants {
+		if len(variant.Errors) > 0 {
+			pkg.Broken = true
+		}
+		for _, imp := range importPaths(variant) {
+			if imp == owner {
+				continue
+			}
+			if _, isProduction := production[imp]; isProduction {
+				continue
+			}
+			if _, dup := seen[imp]; dup {
+				continue
+			}
+			seen[imp] = struct{}{}
+			testOnly = append(testOnly, imp)
+		}
+	}
+
+	sort.Strings(testOnly)
+	pkg.TestImports = testOnly
+}
+
+func isGeneratedTestMain(p *packages.Package) bool {
+	return p.ID == p.PkgPath && strings.HasSuffix(p.PkgPath, ".test")
+}
+
+func testVariantOwner(id string) (string, bool) {
+	open := strings.LastIndex(id, " [")
+	if open < 0 || !strings.HasSuffix(id, "]") {
+		return "", false
+	}
+
+	binary := id[open+2 : len(id)-1]
+	owner, ok := strings.CutSuffix(binary, ".test")
+	if !ok || owner == "" {
+		return "", false
+	}
+
+	return owner, true
+}
+
+func packageDir(p *packages.Package) string {
+	for _, list := range [][]string{p.GoFiles, p.IgnoredFiles, p.OtherFiles, p.CompiledGoFiles} {
+		for _, file := range list {
+			if filepath.IsAbs(file) {
+				return filepath.Clean(filepath.Dir(file))
+			}
+		}
+	}
+
+	return ""
+}
+
+func hasBuildTaggedTestFile(p *packages.Package) bool {
+	for _, file := range p.IgnoredFiles {
+		if strings.HasSuffix(file, "_test.go") {
 			return true
 		}
 	}
@@ -73,10 +175,29 @@ func hasTestFiles(lp listPackage) bool {
 	return false
 }
 
+func importPaths(p *packages.Package) []string {
+	if len(p.Imports) == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, len(p.Imports))
+	for path := range p.Imports {
+		if path == "" || path == "C" {
+			continue
+		}
+		out = append(out, path)
+	}
+	sort.Strings(out)
+
+	return out
+}
+
 func (g *Graph) index() {
 	g.dirs = make([]*Package, 0, len(g.pkgs))
 	for _, pkg := range g.pkgs {
-		g.dirs = append(g.dirs, pkg)
+		if pkg.Dir != "" {
+			g.dirs = append(g.dirs, pkg)
+		}
 
 		for _, imp := range pkg.Imports {
 			if imp == pkg.ImportPath {
@@ -113,6 +234,18 @@ func (g *Graph) Package(importPath string) (*Package, bool) {
 	return pkg, ok
 }
 
+func (g *Graph) BrokenPackages() []string {
+	var out []string
+	for path, pkg := range g.pkgs {
+		if pkg.Broken {
+			out = append(out, path)
+		}
+	}
+	sort.Strings(out)
+
+	return out
+}
+
 func (g *Graph) TestablePackages() []string {
 	out := make([]string, 0, len(g.pkgs))
 	for path, pkg := range g.pkgs {
@@ -137,6 +270,9 @@ func (g *Graph) PackageForFile(absPath string) (*Package, bool) {
 }
 
 func underDir(dir, path string) bool {
+	if dir == "" {
+		return false
+	}
 	if path == dir {
 		return true
 	}
@@ -192,28 +328,6 @@ func (g *Graph) AffectedTestPackages(seeds []string) []string {
 	out := make([]string, 0, len(affected))
 	for path := range affected {
 		out = append(out, path)
-	}
-	sort.Strings(out)
-
-	return out
-}
-
-func dedupe(in []string) []string {
-	if len(in) == 0 {
-		return nil
-	}
-
-	seen := make(map[string]struct{}, len(in))
-	out := make([]string, 0, len(in))
-	for _, v := range in {
-		if v == "" || v == "C" {
-			continue
-		}
-		if _, ok := seen[v]; ok {
-			continue
-		}
-		seen[v] = struct{}{}
-		out = append(out, v)
 	}
 	sort.Strings(out)
 

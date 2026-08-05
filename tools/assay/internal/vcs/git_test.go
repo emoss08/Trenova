@@ -1,12 +1,14 @@
 package vcs
 
 import (
-	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseNameStatusZ(t *testing.T) {
@@ -60,25 +62,19 @@ func TestParseNameStatusZ(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := parseNameStatusZ(tc.payload, root)
-			if !slices.Equal(got, tc.want) {
-				t.Errorf("parseNameStatusZ = %v, want %v", got, tc.want)
-			}
+			assert.Equal(t, tc.want, parseNameStatusZ(tc.payload, root))
 		})
 	}
 }
 
-func TestDedupeChangesSortsAndDrops(t *testing.T) {
+func TestDedupeChangesSortsAndDropsDuplicates(t *testing.T) {
 	got := dedupeChanges([]Change{
 		{Path: "/b", Status: "M"},
 		{Path: "/a", Status: "A"},
 		{Path: "/b", Status: "D"},
 	})
 
-	want := []Change{{Path: "/a", Status: "A"}, {Path: "/b", Status: "M"}}
-	if !slices.Equal(got, want) {
-		t.Errorf("dedupeChanges = %v, want %v", got, want)
-	}
+	assert.Equal(t, []Change{{Path: "/a", Status: "A"}, {Path: "/b", Status: "M"}}, got)
 }
 
 func initRepo(t *testing.T) string {
@@ -93,20 +89,15 @@ func initRepo(t *testing.T) string {
 			"GIT_AUTHOR_NAME=assay", "GIT_AUTHOR_EMAIL=assay@example.com",
 			"GIT_COMMITTER_NAME=assay", "GIT_COMMITTER_EMAIL=assay@example.com",
 		)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("git %v: %v: %s", args, err, out)
-		}
+		out, err := cmd.CombinedOutput()
+		require.NoErrorf(t, err, "git %v: %s", args, out)
 	}
 
 	write := func(rel, content string) {
 		t.Helper()
 		full := filepath.Join(root, rel)
-		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
-			t.Fatalf("mkdir: %v", err)
-		}
-		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
-			t.Fatalf("write: %v", err)
-		}
+		require.NoError(t, os.MkdirAll(filepath.Dir(full), 0o755))
+		require.NoError(t, os.WriteFile(full, []byte(content), 0o644))
 	}
 
 	run("init", "--initial-branch=main")
@@ -132,9 +123,7 @@ func relPaths(t *testing.T, root string, changes []Change) []string {
 	out := make([]string, 0, len(changes))
 	for _, c := range changes {
 		rel, err := filepath.Rel(root, c.Path)
-		if err != nil {
-			t.Fatalf("rel: %v", err)
-		}
+		require.NoError(t, err)
 		out = append(out, filepath.ToSlash(rel))
 	}
 	slices.Sort(out)
@@ -145,65 +134,49 @@ func relPaths(t *testing.T, root string, changes []Change) []string {
 func TestChangesAgainstMergeBase(t *testing.T) {
 	root := initRepo(t)
 
-	got, err := Changes(context.Background(), Options{Root: root, Base: "main", IncludeUntracked: true})
-	if err != nil {
-		t.Fatalf("Changes: %v", err)
-	}
+	got, err := Changes(t.Context(), Options{Root: root, Base: "main", IncludeUntracked: true})
+	require.NoError(t, err)
 
-	want := []string{"dirty.go", "feature.go", "untracked.txt"}
-	if diff := relPaths(t, root, got); !slices.Equal(diff, want) {
-		t.Errorf("Changes = %v, want %v", diff, want)
-	}
+	assert.Equal(t, []string{"dirty.go", "feature.go", "untracked.txt"}, relPaths(t, root, got))
 }
 
 func TestChangesWithoutBaseSeesWorkingTreeOnly(t *testing.T) {
 	root := initRepo(t)
 
-	got, err := Changes(context.Background(), Options{Root: root, IncludeUntracked: true})
-	if err != nil {
-		t.Fatalf("Changes: %v", err)
-	}
+	got, err := Changes(t.Context(), Options{Root: root, IncludeUntracked: true})
+	require.NoError(t, err)
 
-	want := []string{"dirty.go", "untracked.txt"}
-	if diff := relPaths(t, root, got); !slices.Equal(diff, want) {
-		t.Errorf("Changes = %v, want %v", diff, want)
-	}
+	assert.Equal(t, []string{"dirty.go", "untracked.txt"}, relPaths(t, root, got))
 }
 
 func TestChangesExcludesUntrackedWhenDisabled(t *testing.T) {
 	root := initRepo(t)
 
-	got, err := Changes(context.Background(), Options{Root: root, Base: "main"})
-	if err != nil {
-		t.Fatalf("Changes: %v", err)
-	}
+	got, err := Changes(t.Context(), Options{Root: root, Base: "main"})
+	require.NoError(t, err)
 
-	if diff := relPaths(t, root, got); slices.Contains(diff, "untracked.txt") {
-		t.Errorf("Changes = %v, want no untracked files", diff)
-	}
+	assert.NotContains(t, relPaths(t, root, got), "untracked.txt")
+}
+
+func TestChangesFailsOnUnknownRef(t *testing.T) {
+	root := initRepo(t)
+
+	_, err := Changes(t.Context(), Options{Root: root, Base: "no-such-ref"})
+
+	require.Error(t, err)
 }
 
 func TestRepoRootResolvesFromSubdirectory(t *testing.T) {
 	root := initRepo(t)
 	sub := filepath.Join(root, "nested", "deep")
-	if err := os.MkdirAll(sub, 0o755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
+	require.NoError(t, os.MkdirAll(sub, 0o755))
 
-	got, err := RepoRoot(context.Background(), sub)
-	if err != nil {
-		t.Fatalf("RepoRoot: %v", err)
-	}
+	got, err := RepoRoot(t.Context(), sub)
+	require.NoError(t, err)
 
 	wantResolved, err := filepath.EvalSymlinks(root)
-	if err != nil {
-		t.Fatalf("eval symlinks: %v", err)
-	}
+	require.NoError(t, err)
 	gotResolved, err := filepath.EvalSymlinks(got)
-	if err != nil {
-		t.Fatalf("eval symlinks: %v", err)
-	}
-	if gotResolved != wantResolved {
-		t.Errorf("RepoRoot = %q, want %q", gotResolved, wantResolved)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, wantResolved, gotResolved)
 }

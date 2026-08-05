@@ -7,6 +7,8 @@ import (
 	"path"
 	"sort"
 
+	"github.com/fatih/color"
+
 	"github.com/emoss08/assay/internal/selection"
 )
 
@@ -60,33 +62,68 @@ func WriteJSON(w io.Writer, s Summary) error {
 	return enc.Encode(s)
 }
 
-func WriteText(w io.Writer, s Summary, verbose bool) error {
+type Printer struct {
+	out      io.Writer
+	warn     func(...any) string
+	muted    func(...any) string
+	emphasis func(...any) string
+	reason   map[string]func(...any) string
+}
+
+func NewPrinter(out io.Writer, useColor bool) *Printer {
+	tint := func(attrs ...color.Attribute) func(...any) string {
+		c := color.New(attrs...)
+		if useColor {
+			c.EnableColor()
+		} else {
+			c.DisableColor()
+		}
+
+		return c.SprintFunc()
+	}
+
+	return &Printer{
+		out:      out,
+		warn:     tint(color.FgYellow),
+		muted:    tint(color.Faint),
+		emphasis: tint(color.Bold),
+		reason: map[string]func(...any) string{
+			string(selection.ReasonDirect):    tint(color.FgCyan),
+			string(selection.ReasonDependent): tint(color.FgBlue),
+			string(selection.ReasonFallback):  tint(color.FgYellow),
+		},
+	}
+}
+
+func (p *Printer) Summary(s Summary, verbose bool) error {
 	if s.SelectAll {
-		if _, err := fmt.Fprintf(w, "select-all: %s\n", s.SelectAllReason); err != nil {
+		if err := p.line("%s %s", p.warn("select-all:"), s.SelectAllReason); err != nil {
 			return err
 		}
 	}
 
-	if _, err := fmt.Fprintf(w,
-		"packages: %d total, %d with tests, %d selected (%.1f%% skipped)\n",
-		s.TotalPackages, s.TestablePackages, len(s.SelectedPackages), s.ReductionPercent,
+	if err := p.line("%d packages %s %d with tests %s %s selected %s %s skipped",
+		s.TotalPackages, p.muted("·"),
+		s.TestablePackages, p.muted("·"),
+		p.emphasis(len(s.SelectedPackages)), p.muted("·"),
+		p.emphasis(fmt.Sprintf("%.1f%%", s.ReductionPercent)),
 	); err != nil {
 		return err
 	}
 
 	if len(s.ChangedPackages) > 0 {
-		if _, err := fmt.Fprintf(w, "changed packages: %d\n", len(s.ChangedPackages)); err != nil {
+		if err := p.line("%s %d", p.muted("changed packages:"), len(s.ChangedPackages)); err != nil {
 			return err
 		}
 	}
 
 	if len(s.IgnoredFiles) > 0 {
-		if _, err := fmt.Fprintf(w, "ignored (no owning package): %d files\n", len(s.IgnoredFiles)); err != nil {
+		if err := p.line("%s %d files", p.muted("ignored (no owning package):"), len(s.IgnoredFiles)); err != nil {
 			return err
 		}
 		if verbose {
 			for _, f := range s.IgnoredFiles {
-				if _, err := fmt.Fprintf(w, "  - %s\n", f); err != nil {
+				if err := p.line("  %s", p.muted(f)); err != nil {
 					return err
 				}
 			}
@@ -98,12 +135,22 @@ func WriteText(w io.Writer, s Summary, verbose bool) error {
 	}
 
 	for _, pkg := range s.SelectedPackages {
-		if _, err := fmt.Fprintf(w, "  %-10s %s\n", pkg.Reason, shorten(pkg.ImportPath)); err != nil {
+		paint := p.reason[pkg.Reason]
+		if paint == nil {
+			paint = p.muted
+		}
+		if err := p.line("  %s %s", paint(fmt.Sprintf("%-10s", pkg.Reason)), shorten(pkg.ImportPath)); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (p *Printer) line(format string, args ...any) error {
+	_, err := fmt.Fprintf(p.out, format+"\n", args...)
+
+	return err
 }
 
 func shorten(importPath string) string {

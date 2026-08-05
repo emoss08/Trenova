@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/emoss08/assay/internal/selection"
 )
 
@@ -21,29 +24,29 @@ func sampleResult() selection.Result {
 	}
 }
 
+func render(t *testing.T, s Summary, verbose bool) string {
+	t.Helper()
+
+	var buf bytes.Buffer
+	require.NoError(t, NewPrinter(&buf, false).Summary(s, verbose))
+
+	return buf.String()
+}
+
 func TestNewSummaryComputesReduction(t *testing.T) {
 	s := NewSummary(sampleResult(), 40, 10)
 
-	if len(s.SelectedPackages) != 2 {
-		t.Fatalf("SelectedPackages = %d, want 2", len(s.SelectedPackages))
-	}
-	if s.ReductionPercent != 80 {
-		t.Errorf("ReductionPercent = %v, want 80", s.ReductionPercent)
-	}
-	if s.TotalPackages != 40 || s.TestablePackages != 10 {
-		t.Errorf("counts = (%d, %d), want (40, 10)", s.TotalPackages, s.TestablePackages)
-	}
+	require.Len(t, s.SelectedPackages, 2)
+	assert.InDelta(t, 80.0, s.ReductionPercent, 0.001)
+	assert.Equal(t, 40, s.TotalPackages)
+	assert.Equal(t, 10, s.TestablePackages)
 }
 
 func TestNewSummaryHandlesNoTestablePackages(t *testing.T) {
 	s := NewSummary(selection.Result{}, 0, 0)
 
-	if s.ReductionPercent != 0 {
-		t.Errorf("ReductionPercent = %v, want 0", s.ReductionPercent)
-	}
-	if len(s.SelectedPackages) != 0 {
-		t.Errorf("SelectedPackages = %v, want empty", s.SelectedPackages)
-	}
+	assert.Zero(t, s.ReductionPercent)
+	assert.Empty(t, s.SelectedPackages)
 }
 
 func TestNewSummaryCarriesReasons(t *testing.T) {
@@ -54,86 +57,81 @@ func TestNewSummaryCarriesReasons(t *testing.T) {
 		byPath[pkg.ImportPath] = pkg.Reason
 	}
 
-	if byPath["example.com/repo"] != string(selection.ReasonDirect) {
-		t.Errorf("repo reason = %q, want %q", byPath["example.com/repo"], selection.ReasonDirect)
-	}
-	if byPath["example.com/app"] != string(selection.ReasonDependent) {
-		t.Errorf("app reason = %q, want %q", byPath["example.com/app"], selection.ReasonDependent)
-	}
+	assert.Equal(t, string(selection.ReasonDirect), byPath["example.com/repo"])
+	assert.Equal(t, string(selection.ReasonDependent), byPath["example.com/app"])
 }
 
-func TestWriteTextSummarizesCounts(t *testing.T) {
-	var buf bytes.Buffer
-	if err := WriteText(&buf, NewSummary(sampleResult(), 40, 10), false); err != nil {
-		t.Fatalf("WriteText: %v", err)
-	}
+func TestPrinterSummarizesCounts(t *testing.T) {
+	out := render(t, NewSummary(sampleResult(), 40, 10), false)
 
-	out := buf.String()
-	for _, want := range []string{"40 total", "10 with tests", "2 selected", "80.0% skipped", "1 files"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("output missing %q:\n%s", want, out)
-		}
+	for _, want := range []string{"40 packages", "10 with tests", "2 selected", "80.0% skipped", "1 files"} {
+		assert.Contains(t, out, want)
 	}
-	if strings.Contains(out, "example.com/app") {
-		t.Error("non-verbose output must not list individual packages")
-	}
+	assert.NotContains(t, out, "example.com/app", "non-verbose output must not list packages")
 }
 
-func TestWriteTextVerboseListsPackagesAndIgnoredFiles(t *testing.T) {
-	var buf bytes.Buffer
-	if err := WriteText(&buf, NewSummary(sampleResult(), 40, 10), true); err != nil {
-		t.Fatalf("WriteText: %v", err)
-	}
+func TestPrinterVerboseListsPackagesAndIgnoredFiles(t *testing.T) {
+	out := render(t, NewSummary(sampleResult(), 40, 10), true)
 
-	out := buf.String()
 	for _, want := range []string{"example.com/app", "example.com/repo", "dependent", "direct", "design.md"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("verbose output missing %q:\n%s", want, out)
-		}
+		assert.Contains(t, out, want)
 	}
 }
 
-func TestWriteTextReportsSelectAll(t *testing.T) {
+func TestPrinterReportsSelectAll(t *testing.T) {
 	res := selection.Result{SelectAll: true, SelectAllReason: "module definition changed: go.mod"}
 
-	var buf bytes.Buffer
-	if err := WriteText(&buf, NewSummary(res, 40, 10), false); err != nil {
-		t.Fatalf("WriteText: %v", err)
+	out := render(t, NewSummary(res, 40, 10), false)
+
+	assert.Contains(t, out, "select-all: module definition changed: go.mod")
+}
+
+func TestPrinterEmitsAnsiOnlyWhenColorEnabled(t *testing.T) {
+	s := NewSummary(sampleResult(), 40, 10)
+
+	var plain, tinted bytes.Buffer
+	require.NoError(t, NewPrinter(&plain, false).Summary(s, true))
+	require.NoError(t, NewPrinter(&tinted, true).Summary(s, true))
+
+	assert.NotContains(t, plain.String(), "\x1b[")
+	assert.Contains(t, tinted.String(), "\x1b[")
+	assert.Equal(t, stripANSI(tinted.String()), plain.String())
+}
+
+func stripANSI(s string) string {
+	var out strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] != 0x1b {
+			out.WriteByte(s[i])
+
+			continue
+		}
+		for i < len(s) && s[i] != 'm' {
+			i++
+		}
 	}
 
-	if !strings.Contains(buf.String(), "select-all: module definition changed: go.mod") {
-		t.Errorf("output missing select-all explanation:\n%s", buf.String())
-	}
+	return out.String()
 }
 
 func TestWriteJSONRoundTrips(t *testing.T) {
 	var buf bytes.Buffer
-	if err := WriteJSON(&buf, NewSummary(sampleResult(), 40, 10)); err != nil {
-		t.Fatalf("WriteJSON: %v", err)
-	}
+	require.NoError(t, WriteJSON(&buf, NewSummary(sampleResult(), 40, 10)))
 
 	var decoded Summary
-	if err := json.Unmarshal(buf.Bytes(), &decoded); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if len(decoded.SelectedPackages) != 2 || decoded.ReductionPercent != 80 {
-		t.Errorf("decoded = %+v, want 2 packages and 80%% reduction", decoded)
-	}
+	require.NoError(t, json.Unmarshal(buf.Bytes(), &decoded))
+	assert.Len(t, decoded.SelectedPackages, 2)
+	assert.InDelta(t, 80.0, decoded.ReductionPercent, 0.001)
 }
 
 func TestShortenTrimsLongImportPaths(t *testing.T) {
-	cases := []struct {
-		in   string
-		want string
-	}{
-		{"example.com/app", "example.com/app"},
-		{"a/b/c/d/e", "a/b/c/d/e"},
-		{"github.com/emoss08/trenova/internal/core/services/shipment", ".../trenova/internal/core/services/shipment"},
+	cases := map[string]string{
+		"example.com/app": "example.com/app",
+		"a/b/c/d/e":       "a/b/c/d/e",
+		"github.com/emoss08/trenova/internal/core/services/shipment": ".../trenova/internal/core/services/shipment",
 	}
 
-	for _, tc := range cases {
-		if got := shorten(tc.in); got != tc.want {
-			t.Errorf("shorten(%q) = %q, want %q", tc.in, got, tc.want)
-		}
+	for in, want := range cases {
+		assert.Equal(t, want, shorten(in), "shorten(%q)", in)
 	}
 }
