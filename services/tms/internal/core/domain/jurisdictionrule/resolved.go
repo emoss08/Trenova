@@ -82,29 +82,31 @@ func (r *JurisdictionRule) Resolve(override *Override) *Resolved {
 	resolved.OverrideReason = override.Reason
 	resolved.OverriddenFields = make([]string, 0, 7)
 
-	applyFloat(&resolved.MaxWidthFeet, override.MaxWidthFeet,
+	tightenMax(&resolved.MaxWidthFeet, override.MaxWidthFeet,
 		"maxWidthFeet", &resolved.OverriddenFields)
-	applyFloat(&resolved.MaxHeightFeet, override.MaxHeightFeet,
+	tightenMax(&resolved.MaxHeightFeet, override.MaxHeightFeet,
 		"maxHeightFeet", &resolved.OverriddenFields)
-	applyFloat(&resolved.MaxLengthFeet, override.MaxLengthFeet,
+	tightenMax(&resolved.MaxLengthFeet, override.MaxLengthFeet,
 		"maxLengthFeet", &resolved.OverriddenFields)
 
-	if override.MaxWeightPounds != nil {
+	if override.MaxWeightPounds != nil && *override.MaxWeightPounds < resolved.MaxWeightPounds {
 		resolved.MaxWeightPounds = *override.MaxWeightPounds
 		resolved.OverriddenFields = append(resolved.OverriddenFields, "maxWeightPounds")
 	}
-	if override.PermitLeadTimeDays != nil {
+
+	// Lead time runs the other way: needing more notice is the conservative
+	// direction, so an override may lengthen it and never shorten it. Letting a
+	// carrier shorten it would quote a pickup sooner than the state can issue.
+	if override.PermitLeadTimeDays != nil &&
+		*override.PermitLeadTimeDays > resolved.PermitLeadTimeDays {
 		resolved.PermitLeadTimeDays = *override.PermitLeadTimeDays
 		resolved.OverriddenFields = append(resolved.OverriddenFields, "permitLeadTimeDays")
 	}
-	if override.DaylightOnly != nil {
-		resolved.DaylightOnly = *override.DaylightOnly
-		resolved.OverriddenFields = append(resolved.OverriddenFields, "daylightOnly")
-	}
-	if override.HolidayRestricted != nil {
-		resolved.HolidayRestricted = *override.HolidayRestricted
-		resolved.OverriddenFields = append(resolved.OverriddenFields, "holidayRestricted")
-	}
+
+	tightenRestriction(&resolved.DaylightOnly, override.DaylightOnly,
+		"daylightOnly", &resolved.OverriddenFields)
+	tightenRestriction(&resolved.HolidayRestricted, override.HolidayRestricted,
+		"holidayRestricted", &resolved.OverriddenFields)
 
 	if len(resolved.OverriddenFields) == 0 {
 		resolved.OverriddenFields = nil
@@ -114,11 +116,35 @@ func (r *JurisdictionRule) Resolve(override *Override) *Resolved {
 	return resolved
 }
 
-func applyFloat(target *float64, override *float64, field string, applied *[]string) {
-	if override == nil {
+// tightenMax lowers a statutory maximum, and only ever lowers it.
+//
+// An override exists so a carrier can run a tighter posture than the statute
+// without editing shared reference data. A permissive one would tell the engine
+// an illegal load is legal — no requirement derived, no hold raised, and the
+// load leaves — so a value at or above the statutory limit is discarded rather
+// than applied.
+//
+// Discarded values are also left out of OverriddenFields: reporting one would
+// tell an operator their stricter posture is in force when the statutory number
+// is what the engine actually used.
+func tightenMax(target *float64, override *float64, field string, applied *[]string) {
+	if override == nil || *override >= *target {
 		return
 	}
+
 	*target = *override
+	*applied = append(*applied, field)
+}
+
+// tightenRestriction turns a travel restriction on, and never off. A carrier may
+// decline to move at night where the state permits it; it may not move at night
+// where the state forbids it.
+func tightenRestriction(target *bool, override *bool, field string, applied *[]string) {
+	if override == nil || !*override || *target {
+		return
+	}
+
+	*target = true
 	*applied = append(*applied, field)
 }
 

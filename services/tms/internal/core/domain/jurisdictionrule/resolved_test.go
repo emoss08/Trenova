@@ -285,3 +285,121 @@ func TestSeededDataIsUnverifiedByDefault(t *testing.T) {
 	assert.Equal(t, jurisdictionrule.VerificationUnverified, rule.VerificationState)
 	assert.False(t, rule.VerificationState.IsTrusted())
 }
+
+func iptr(v int64) *int64   { return &v }
+func i16ptr(v int16) *int16 { return &v }
+func bptr(v bool) *bool     { return &v }
+
+// An override exists so a carrier can run a tighter posture than the statute
+// without editing shared reference data. It must not be able to run a looser
+// one: a permissive override would tell the engine an illegal load is legal, so
+// no requirement is derived, no hold is raised, and the load leaves.
+//
+// These assertions are written from that contract, not from what Resolve
+// currently does.
+func TestResolve_AnOverrideCannotRaiseALimit(t *testing.T) {
+	rule := stateRule("GA", 12)
+
+	resolved := rule.Resolve(&jurisdictionrule.Override{
+		Reason:          "Attempt to permit a wider load than the state allows",
+		MaxWidthFeet:    fptr(20),
+		MaxHeightFeet:   fptr(18),
+		MaxLengthFeet:   fptr(90),
+		MaxWeightPounds: iptr(120000),
+	})
+
+	assert.InDelta(t, 8.5, resolved.MaxWidthFeet, 0.001)
+	assert.InDelta(t, 13.5, resolved.MaxHeightFeet, 0.001)
+	assert.InDelta(t, 53, resolved.MaxLengthFeet, 0.001)
+	assert.Equal(t, int64(80000), resolved.MaxWeightPounds)
+}
+
+func TestResolve_AnOverrideCanLowerALimit(t *testing.T) {
+	rule := stateRule("GA", 12)
+
+	resolved := rule.Resolve(&jurisdictionrule.Override{
+		Reason:          "Our trailers are narrower than the state maximum",
+		MaxWidthFeet:    fptr(8),
+		MaxWeightPounds: iptr(70000),
+	})
+
+	assert.InDelta(t, 8, resolved.MaxWidthFeet, 0.001)
+	assert.Equal(t, int64(70000), resolved.MaxWeightPounds)
+	assert.Contains(t, resolved.OverriddenFields, "maxWidthFeet")
+	assert.Contains(t, resolved.OverriddenFields, "maxWeightPounds")
+}
+
+// A limit the override tried and failed to raise is not an applied override.
+// Listing it would tell an operator their stricter posture is in force when the
+// statutory number is what the engine used.
+func TestResolve_ARejectedLoosenIsNotReportedAsApplied(t *testing.T) {
+	rule := stateRule("GA", 12)
+
+	resolved := rule.Resolve(&jurisdictionrule.Override{
+		Reason:        "Mixed: one tighter, one looser",
+		MaxWidthFeet:  fptr(20),
+		MaxHeightFeet: fptr(12),
+	})
+
+	assert.NotContains(t, resolved.OverriddenFields, "maxWidthFeet")
+	assert.Contains(t, resolved.OverriddenFields, "maxHeightFeet")
+}
+
+// An override equal to the statutory limit changes nothing. Reporting it as an
+// applied override would tell an operator a stricter posture is in force when
+// the engine is using the statutory number either way.
+func TestResolve_AnOverrideEqualToTheLimitIsNotApplied(t *testing.T) {
+	rule := stateRule("GA", 12)
+
+	resolved := rule.Resolve(&jurisdictionrule.Override{
+		Reason:       "Restates the statutory width without changing it",
+		MaxWidthFeet: fptr(8.5),
+	})
+
+	assert.InDelta(t, 8.5, resolved.MaxWidthFeet, 0.001)
+	assert.NotContains(t, resolved.OverriddenFields, "maxWidthFeet")
+	// Nothing was applied, so the reason must not surface either.
+	assert.Empty(t, resolved.OverrideReason)
+}
+
+// Lead time runs the other way: needing more notice is the conservative
+// direction, so an override may lengthen it but not shorten it.
+func TestResolve_LeadTimeOnlyLengthens(t *testing.T) {
+	rule := stateRule("GA", 12)
+
+	longer := rule.Resolve(&jurisdictionrule.Override{
+		Reason:             "Our permit desk needs a week",
+		PermitLeadTimeDays: i16ptr(7),
+	})
+	assert.Equal(t, int16(7), longer.PermitLeadTimeDays)
+
+	shorter := rule.Resolve(&jurisdictionrule.Override{
+		Reason:             "Attempt to quote a sooner pickup than the state can issue",
+		PermitLeadTimeDays: i16ptr(0),
+	})
+	assert.Equal(t, int16(2), shorter.PermitLeadTimeDays)
+}
+
+// A restriction the state imposes cannot be cleared by an override; a carrier
+// may only add one the state does not impose.
+func TestResolve_RestrictionsCanBeAddedButNotCleared(t *testing.T) {
+	rule := stateRule("GA", 12)
+	rule.DaylightOnly = true
+	rule.HolidayRestricted = true
+
+	cleared := rule.Resolve(&jurisdictionrule.Override{
+		Reason:            "Attempt to move at night against the state restriction",
+		DaylightOnly:      bptr(false),
+		HolidayRestricted: bptr(false),
+	})
+	assert.True(t, cleared.DaylightOnly)
+	assert.True(t, cleared.HolidayRestricted)
+
+	unrestricted := stateRule("TN", 12)
+	added := unrestricted.Resolve(&jurisdictionrule.Override{
+		Reason:       "We do not run oversize at night regardless of the state",
+		DaylightOnly: bptr(true),
+	})
+	assert.True(t, added.DaylightOnly)
+	assert.Contains(t, added.OverriddenFields, "daylightOnly")
+}
