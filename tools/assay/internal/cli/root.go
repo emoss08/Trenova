@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/assay/internal/vcs"
 )
 
-const Version = "0.3.0-m3"
+const Version = "0.4.0-m4"
 
 type ExitError struct {
 	Code int

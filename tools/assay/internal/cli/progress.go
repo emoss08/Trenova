@@ -26,18 +26,24 @@ func newProgress(out io.Writer, quiet bool) func(item string, done, total int) {
 		}
 	}
 
-	var mu sync.Mutex
-	last := time.Now()
+	var (
+		mu    sync.Mutex
+		last  time.Time
+		phase string
+	)
 
-	return func(_ string, done, total int) {
+	return func(item string, done, total int) {
 		mu.Lock()
 		defer mu.Unlock()
 
-		if done < total && time.Since(last) < plainProgressInterval {
+		// A new phase always announces itself; otherwise the first line of a short
+		// phase can be swallowed by the previous phase's interval.
+		if item == phase && done < total && time.Since(last) < plainProgressInterval {
 			return
 		}
 		last = time.Now()
-		fmt.Fprintf(out, "%d/%d\n", done, total)
+		phase = item
+		fmt.Fprintf(out, "%s %d/%d\n", item, done, total)
 	}
 }
 

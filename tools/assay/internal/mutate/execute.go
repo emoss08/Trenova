@@ -3,7 +3,6 @@ package mutate
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -47,9 +46,19 @@ func (o Outcome) Scored() bool {
 	return o.Killed() || o == OutcomeSurvived
 }
 
+// Mode records how a mutant was judged. Both modes must reach the same verdict;
+// schemata is simply the one that does not pay for a compile per mutant.
+type Mode string
+
+const (
+	ModeSchemata Mode = "schemata"
+	ModeOverlay  Mode = "overlay"
+)
+
 type Result struct {
 	Mutant   Mutant        `json:"mutant"`
 	Outcome  Outcome       `json:"outcome"`
+	Mode     Mode          `json:"mode,omitempty"`
 	KilledBy string        `json:"killedBy,omitempty"`
 	Detail   string        `json:"detail,omitempty"`
 	Tests    int           `json:"tests"`
@@ -63,7 +72,16 @@ type ExecuteOptions struct {
 	Jobs       int
 	Budget     func(plan TestPlan) time.Duration
 	MinTimeout time.Duration
-	Progress   func(done, total int)
+	Progress   func(phase string, done, total int)
+
+	// PackageDir resolves a test package's directory. Test binaries have to run
+	// there, the way `go test` does, or a test that opens testdata/ fails for
+	// reasons that have nothing to do with the mutant.
+	PackageDir func(importPath string) string
+
+	// NoSchemata forces every mutant to compile its own binary. Slow, and the only
+	// way to cross-check the shared-binary path.
+	NoSchemata bool
 }
 
 const (
@@ -73,21 +91,47 @@ const (
 	maxMutantBudgetCap = 5 * time.Minute
 )
 
+// Execute judges every mutant, sharing one compile across all the mutants of a
+// package wherever the schemata rewrite is provably type-correct and falling back
+// to a compile per mutant where it is not.
 func Execute(ctx context.Context, mutants []Mutant, opts ExecuteOptions) ([]Result, error) {
-	cores := runtime.GOMAXPROCS(0)
-
-	jobs := opts.Jobs
-	if jobs <= 0 {
-		jobs = max(1, cores/2)
+	results := make([]Result, len(mutants))
+	if len(mutants) == 0 {
+		return results, nil
 	}
-	jobs = min(jobs, max(1, len(mutants)))
+
+	cores := runtime.GOMAXPROCS(0)
+	jobs := opts.jobs(len(mutants))
 
 	// Same trap as indexing: each `go test -c` fans out its own compile actions, so
 	// unbounded inner parallelism multiplies with jobs and buries the machine.
 	buildParallelism := max(1, cores/jobs)
 
-	results := make([]Result, len(mutants))
-	var done atomic.Int64
+	var batches []*schemataBatch
+	direct := make([]int, 0, len(mutants))
+
+	if opts.NoSchemata {
+		for i := range mutants {
+			direct = append(direct, i)
+		}
+	} else {
+		batches, direct = planBatches(mutants)
+	}
+
+	ready, declined, err := compileBatches(ctx, batches, opts, buildParallelism)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		for _, batch := range ready {
+			batch.cleanup()
+		}
+	}()
+
+	direct = append(direct, declined...)
+	sort.Ints(direct)
+
+	progress := newTicker(opts.Progress, "mutants", len(mutants))
 
 	judging := pool.New().
 		WithMaxGoroutines(jobs).
@@ -95,17 +139,29 @@ func Execute(ctx context.Context, mutants []Mutant, opts ExecuteOptions) ([]Resu
 		WithFirstError().
 		WithCancelOnError()
 
-	for i := range mutants {
+	for _, batch := range ready {
+		for _, index := range batch.indices {
+			judging.Go(func(ctx context.Context) error {
+				if err := ctx.Err(); err != nil {
+					return err
+				}
+
+				results[index] = batch.judge(ctx, index, mutants[index], opts)
+				progress.tick()
+
+				return nil
+			})
+		}
+	}
+
+	for _, index := range direct {
 		judging.Go(func(ctx context.Context) error {
 			if err := ctx.Err(); err != nil {
 				return err
 			}
 
-			results[i] = evaluate(ctx, mutants[i], opts, buildParallelism)
-
-			if opts.Progress != nil {
-				opts.Progress(int(done.Add(1)), len(mutants))
-			}
+			results[index] = evaluate(ctx, mutants[index], opts, buildParallelism)
+			progress.tick()
 
 			return nil
 		})
@@ -118,6 +174,41 @@ func Execute(ctx context.Context, mutants []Mutant, opts ExecuteOptions) ([]Resu
 	return results, nil
 }
 
+// Modes counts how each mutant was judged, so a run can report how much of it took
+// the fast path.
+func Modes(results []Result) map[Mode]int {
+	out := make(map[Mode]int, 2)
+	for _, r := range results {
+		if r.Mode != "" {
+			out[r.Mode]++
+		}
+	}
+
+	return out
+}
+
+func (o ExecuteOptions) jobs(work int) int {
+	jobs := o.Jobs
+	if jobs <= 0 {
+		jobs = max(1, runtime.GOMAXPROCS(0)/2)
+	}
+
+	return min(jobs, max(1, work))
+}
+
+func (o ExecuteOptions) dirFor(importPath string) string {
+	if o.PackageDir != nil {
+		if dir := o.PackageDir(importPath); dir != "" {
+			return dir
+		}
+	}
+
+	return o.Root
+}
+
+// evaluate judges one mutant by compiling a binary that contains only that
+// mutation. This is the path for candidates the schemata rewrite declined, and the
+// reference implementation the shared-binary path is checked against.
 func evaluate(ctx context.Context, m Mutant, opts ExecuteOptions, buildParallelism int) Result {
 	started := time.Now()
 	result := Result{Mutant: m, Tests: m.tests.count()}
@@ -129,6 +220,8 @@ func evaluate(ctx context.Context, m Mutant, opts ExecuteOptions, buildParalleli
 
 		return result
 	}
+
+	result.Mode = ModeOverlay
 
 	workdir, err := os.MkdirTemp("", "assay-mutant-")
 	if err != nil {
@@ -157,28 +250,41 @@ func evaluate(ctx context.Context, m Mutant, opts ExecuteOptions, buildParalleli
 			continue
 		}
 
-		outcome, detail := runAgainst(ctx, runRequest{
-			root:             opts.Root,
-			env:              opts.Env,
-			tags:             opts.Tags,
-			workdir:          workdir,
-			overlay:          overlay,
-			testPackage:      testPackage,
-			tests:            tests,
-			budget:           budget,
-			buildParallelism: buildParallelism,
-		})
-
-		switch outcome {
-		case OutcomeKilled, OutcomeTimeout:
-			result.Outcome = outcome
-			result.KilledBy = testPackage
-			result.Detail = detail
+		binary := filepath.Join(workdir, "bin", sanitisePath(testPackage)+".test")
+		if mkErr := os.MkdirAll(filepath.Dir(binary), 0o755); mkErr != nil {
+			result.Outcome = OutcomeNotBuilt
+			result.Detail = mkErr.Error()
 			result.Duration = time.Since(started)
 
 			return result
-		case OutcomeNotBuilt:
+		}
+
+		if buildErr := buildTestBinary(ctx, buildRequest{
+			root:             opts.Root,
+			env:              opts.Env,
+			tags:             opts.Tags,
+			overlay:          overlay,
+			testPackage:      testPackage,
+			output:           binary,
+			buildParallelism: buildParallelism,
+		}); buildErr != nil {
 			result.Outcome = OutcomeNotBuilt
+			result.Detail = buildErr.Error()
+			result.Duration = time.Since(started)
+
+			return result
+		}
+
+		outcome, detail := runTests(ctx, testRun{
+			binary: binary,
+			dir:    opts.dirFor(testPackage),
+			env:    opts.Env,
+			budget: budget,
+			tests:  tests,
+		})
+		if outcome.Killed() {
+			result.Outcome = outcome
+			result.KilledBy = testPackage
 			result.Detail = detail
 			result.Duration = time.Since(started)
 
@@ -209,67 +315,63 @@ func (o ExecuteOptions) budgetFor(plan TestPlan) time.Duration {
 }
 
 func writeOverlay(workdir string, m Mutant) (string, error) {
-	replacement := filepath.Join(workdir, "mutant.go")
-	if err := os.WriteFile(replacement, m.Source(), 0o644); err != nil {
-		return "", fmt.Errorf("write mutant source: %w", err)
-	}
-
-	payload, err := json.Marshal(map[string]map[string]string{
-		"Replace": {m.File: replacement},
-	})
+	replacement, err := writeUnderBasename(workdir, "mutant", m.File, m.Source())
 	if err != nil {
-		return "", fmt.Errorf("encode overlay: %w", err)
+		return "", err
 	}
 
-	overlay := filepath.Join(workdir, "overlay.json")
-	if err := os.WriteFile(overlay, payload, 0o644); err != nil {
-		return "", fmt.Errorf("write overlay: %w", err)
-	}
-
-	return overlay, nil
+	return writeOverlayFile(workdir, map[string]string{m.File: replacement})
 }
 
-type runRequest struct {
+type buildRequest struct {
 	root             string
 	env              []string
 	tags             []string
-	workdir          string
 	overlay          string
 	testPackage      string
-	tests            []string
-	budget           time.Duration
+	output           string
 	buildParallelism int
 }
 
-// runAgainst builds the mutated test binary and runs only the covering tests.
+// buildTestBinary compiles a test binary with the overlay applied.
 //
-// It compiles with `go test -c` and executes the binary rather than using
-// `go test` directly. Overlay support for build operations is unambiguous, and
-// this is the same path the indexer uses; `go test`'s own docs still claim
-// overlays do not reach tests, which is stale but not worth betting on.
-func runAgainst(ctx context.Context, req runRequest) (Outcome, string) {
-	binary := filepath.Join(req.workdir, "mutant.test")
-
-	buildArgs := []string{
+// It uses `go test -c` and then executes the binary rather than running `go test`
+// directly. Overlay support for build operations is unambiguous, and this is the
+// same path the indexer uses; `go test`'s own docs still claim overlays do not
+// reach tests, which is stale but not worth betting on.
+func buildTestBinary(ctx context.Context, req buildRequest) error {
+	args := []string{
 		"test", "-c",
 		"-overlay=" + req.overlay,
 		"-p", strconv.Itoa(req.buildParallelism),
-		"-o", binary,
+		"-o", req.output,
 	}
 	if len(req.tags) > 0 {
-		buildArgs = append(buildArgs, "-tags", strings.Join(req.tags, ","))
+		args = append(args, "-tags", strings.Join(req.tags, ","))
 	}
-	buildArgs = append(buildArgs, req.testPackage)
+	args = append(args, req.testPackage)
 
-	if _, _, err := run(ctx, req.root, req.env, 0, "go", buildArgs...); err != nil {
-		return OutcomeNotBuilt, "compile mutant: " + err.Error()
+	if _, _, err := run(ctx, req.root, req.env, 0, "go", args...); err != nil {
+		return fmt.Errorf("compile %s: %w", req.testPackage, err)
 	}
-	if _, err := os.Stat(binary); err != nil {
-		return OutcomeNotBuilt, "mutant produced no test binary"
+	if _, err := os.Stat(req.output); err != nil {
+		return fmt.Errorf("compiling %s produced no test binary", req.testPackage)
 	}
 
-	out, timedOut, err := run(ctx, req.root, req.env, req.budget,
-		binary, "-test.run", RunPattern(req.tests), "-test.count=1")
+	return nil
+}
+
+type testRun struct {
+	binary string
+	dir    string
+	env    []string
+	budget time.Duration
+	tests  []string
+}
+
+func runTests(ctx context.Context, req testRun) (Outcome, string) {
+	out, timedOut, err := run(ctx, req.dir, req.env, req.budget,
+		req.binary, "-test.run", RunPattern(req.tests), "-test.count=1")
 
 	switch {
 	case timedOut:
@@ -279,6 +381,40 @@ func runAgainst(ctx context.Context, req runRequest) (Outcome, string) {
 	default:
 		return OutcomeSurvived, ""
 	}
+}
+
+// mutantEnv selects a mutant inside a shared binary. The variable has to be added
+// to a full environment rather than passed alone, because a test binary with a
+// one-entry environment loses PATH, HOME and the whole toolchain configuration.
+func mutantEnv(base []string, id int) []string {
+	env := base
+	if len(env) == 0 {
+		env = os.Environ()
+	}
+
+	out := make([]string, 0, len(env)+1)
+	out = append(out, env...)
+
+	return append(out, SchemataEnvVar+"="+strconv.Itoa(id))
+}
+
+type ticker struct {
+	report func(phase string, done, total int)
+	phase  string
+	total  int
+	done   atomic.Int64
+}
+
+func newTicker(report func(phase string, done, total int), phase string, total int) *ticker {
+	return &ticker{report: report, phase: phase, total: total}
+}
+
+func (t *ticker) tick() {
+	if t == nil || t.report == nil {
+		return
+	}
+
+	t.report(t.phase, int(t.done.Add(1)), t.total)
 }
 
 func firstFailure(out []byte) string {

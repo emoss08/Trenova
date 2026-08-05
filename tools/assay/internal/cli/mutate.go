@@ -24,6 +24,7 @@ type mutateFlags struct {
 	quiet        bool
 	asJSON       bool
 	allowFailing bool
+	noSchemata   bool
 }
 
 func newMutateCommand(opts *options) *cobra.Command {
@@ -60,6 +61,8 @@ func newMutateCommand(opts *options) *cobra.Command {
 	cmd.Flags().BoolVar(&flags.asJSON, "json", false, "emit machine-readable output")
 	cmd.Flags().BoolVar(&flags.allowFailing, "allow-failing-tests", false,
 		"proceed when a covering test already fails, excluding it from every mutant plan")
+	cmd.Flags().BoolVar(&flags.noSchemata, "no-schemata", false,
+		"compile a separate binary per mutant instead of sharing one per package (much slower)")
 
 	return cmd
 }
@@ -102,10 +105,12 @@ func runMutate(cmd *cobra.Command, opts *options, flags *mutateFlags) error {
 	}
 
 	execOpts := mutate.ExecuteOptions{
-		Root:   session.root,
-		Tags:   opts.tags,
-		Jobs:   flags.jobs,
-		Budget: scope.Budget,
+		Root:       session.root,
+		Tags:       opts.tags,
+		Jobs:       flags.jobs,
+		Budget:     scope.Budget,
+		PackageDir: packageDirResolver(session),
+		NoSchemata: flags.noSchemata,
 	}
 
 	preflight, err := mutate.RunPreflight(ctx, mutants, execOpts)
@@ -121,18 +126,9 @@ func runMutate(cmd *cobra.Command, opts *options, flags *mutateFlags) error {
 		mutants = mutate.Exclude(mutants, preflight.Failing)
 	}
 
-	progress := newProgress(cmd.ErrOrStderr(), flags.quiet)
-	results, err := mutate.Execute(ctx, mutants, mutate.ExecuteOptions{
-		Root:   session.root,
-		Tags:   opts.tags,
-		Jobs:   flags.jobs,
-		Budget: scope.Budget,
-		Progress: func(done, total int) {
-			if progress != nil {
-				progress("mutants", done, total)
-			}
-		},
-	})
+	execOpts.Progress = newProgress(cmd.ErrOrStderr(), flags.quiet)
+
+	results, err := mutate.Execute(ctx, mutants, execOpts)
 	if err != nil {
 		return err
 	}
@@ -297,6 +293,13 @@ func printMutationSummary(
 
 	out.Line("%d mutants · %d killed · %d survived · %d no-coverage · MSI %.1f%%",
 		len(results), score.Killed+score.Timeout, score.Survived, score.NoCoverage, score.MSI())
+
+	// A run dominated by the overlay path is minutes slower than one that shares
+	// binaries, so the split is worth saying out loud rather than leaving to guesswork.
+	if modes := mutate.Modes(results); modes[mutate.ModeOverlay] > 0 {
+		out.Muted("%d mutants shared a compiled binary, %d needed one of their own",
+			modes[mutate.ModeSchemata], modes[mutate.ModeOverlay])
+	}
 
 	if score.NotBuilt > 0 {
 		out.Warn("%d mutants failed to compile; that is an assay defect, not a gap in your tests",

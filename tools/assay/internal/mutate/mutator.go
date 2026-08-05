@@ -43,6 +43,10 @@ type candidate struct {
 	Original    string
 	Replacement string
 	Edits       []edit
+	// Schema is the mutant-schema rewrite for this candidate, when one can be
+	// proven type-correct. Nil means the candidate is only reachable by compiling
+	// its own binary.
+	Schema *schemaForm
 }
 
 type mutator interface {
@@ -54,10 +58,33 @@ type fileContext struct {
 	fset   *token.FileSet
 	info   *types.Info
 	source []byte
+	// stack is the chain of enclosing nodes, innermost last. It answers questions
+	// the node alone cannot, such as whether the language demands a constant here.
+	stack []ast.Node
 }
 
 func (c *fileContext) offset(pos token.Pos) int {
 	return c.fset.Position(pos).Offset
+}
+
+// constantContext reports whether the enclosing syntax requires a constant, in
+// which case no rewrite into a function call can compile. Reaching a function
+// body first settles it: nothing inside one is constant-only.
+func (c *fileContext) constantContext() bool {
+	for i := len(c.stack) - 1; i >= 0; i-- {
+		switch node := c.stack[i].(type) {
+		case *ast.GenDecl:
+			if node.Tok == token.CONST {
+				return true
+			}
+		case *ast.ArrayType:
+			return true
+		case *ast.FuncDecl, *ast.FuncLit:
+			return false
+		}
+	}
+
+	return false
 }
 
 func (c *fileContext) text(from, to token.Pos) string {
@@ -105,6 +132,14 @@ var arithmeticSwaps = map[token.Token]token.Token{
 	token.REM: token.MUL,
 }
 
+var arithmeticHelpers = map[token.Token]string{
+	token.ADD: helperAddSub,
+	token.SUB: helperSubAdd,
+	token.MUL: helperMulQuo,
+	token.QUO: helperQuoMul,
+	token.REM: helperRemMul,
+}
+
 func (m arithmeticMutator) candidates(ctx *fileContext, node ast.Node) []candidate {
 	expr, ok := node.(*ast.BinaryExpr)
 	if !ok {
@@ -122,7 +157,34 @@ func (m arithmeticMutator) candidates(ctx *fileContext, node ast.Node) []candida
 		return nil
 	}
 
-	return []candidate{replaceToken(m.Kind(), ctx, expr.OpPos, expr.Op, to)}
+	out := replaceToken(m.Kind(), ctx, expr.OpPos, expr.Op, to)
+	out.Schema = arithmeticSchema(ctx, expr)
+
+	return []candidate{out}
+}
+
+// arithmeticSchema declines whenever the helper's return type would not match
+// what the expression's context expects. The helper returns its type parameter, so
+// the operands' joint type has to be the expression's own type.
+func arithmeticSchema(ctx *fileContext, expr *ast.BinaryExpr) *schemaForm {
+	if ctx.constantContext() || constantExpr(ctx.info, expr) {
+		return nil
+	}
+
+	joint, ok := schemaOperandType(ctx.info, expr.X, expr.Y)
+	if !ok || !types.Identical(ctx.info.TypeOf(expr), joint) {
+		return nil
+	}
+
+	if expr.Op == token.REM {
+		if !integerType(joint) {
+			return nil
+		}
+	} else if !numericType(joint) {
+		return nil
+	}
+
+	return binarySchema(ctx, expr, arithmeticHelpers[expr.Op])
 }
 
 type boundaryMutator struct{}
@@ -136,6 +198,13 @@ var boundarySwaps = map[token.Token]token.Token{
 	token.GEQ: token.GTR,
 }
 
+var boundaryHelpers = map[token.Token]string{
+	token.LSS: helperLssLeq,
+	token.LEQ: helperLeqLss,
+	token.GTR: helperGtrGeq,
+	token.GEQ: helperGeqGtr,
+}
+
 func (m boundaryMutator) candidates(ctx *fileContext, node ast.Node) []candidate {
 	expr, ok := node.(*ast.BinaryExpr)
 	if !ok {
@@ -147,7 +216,30 @@ func (m boundaryMutator) candidates(ctx *fileContext, node ast.Node) []candidate
 		return nil
 	}
 
-	return []candidate{replaceToken(m.Kind(), ctx, expr.OpPos, expr.Op, to)}
+	out := replaceToken(m.Kind(), ctx, expr.OpPos, expr.Op, to)
+	out.Schema = boundarySchema(ctx, expr)
+
+	return []candidate{out}
+}
+
+// boundarySchema needs a helper rather than the XOR trick, because `<` and `<=`
+// differ only where the operands are equal and no boolean rewrite of the result
+// can recover that. The helper returns `bool`, so a comparison whose context
+// converts it to a named boolean type is declined.
+func boundarySchema(ctx *fileContext, expr *ast.BinaryExpr) *schemaForm {
+	if ctx.constantContext() || constantExpr(ctx.info, expr) {
+		return nil
+	}
+	if !plainBool(ctx.info.TypeOf(expr)) {
+		return nil
+	}
+
+	joint, ok := schemaOperandType(ctx.info, expr.X, expr.Y)
+	if !ok || !orderedType(joint) {
+		return nil
+	}
+
+	return binarySchema(ctx, expr, boundaryHelpers[expr.Op])
 }
 
 type equalityMutator struct{}
@@ -160,14 +252,23 @@ func (m equalityMutator) candidates(ctx *fileContext, node ast.Node) []candidate
 		return nil
 	}
 
+	var out candidate
 	switch expr.Op {
 	case token.EQL:
-		return []candidate{replaceToken(m.Kind(), ctx, expr.OpPos, token.EQL, token.NEQ)}
+		out = replaceToken(m.Kind(), ctx, expr.OpPos, token.EQL, token.NEQ)
 	case token.NEQ:
-		return []candidate{replaceToken(m.Kind(), ctx, expr.OpPos, token.NEQ, token.EQL)}
+		out = replaceToken(m.Kind(), ctx, expr.OpPos, token.NEQ, token.EQL)
 	default:
 		return nil
 	}
+
+	// Negating the result is the same mutation as swapping the operator, and needs
+	// no type analysis at all: operands of any comparable type are untouched.
+	if !ctx.constantContext() && !constantExpr(ctx.info, expr) {
+		out.Schema = xorSchema(ctx, expr)
+	}
+
+	return []candidate{out}
 }
 
 type connectorMutator struct{}
@@ -180,14 +281,38 @@ func (m connectorMutator) candidates(ctx *fileContext, node ast.Node) []candidat
 		return nil
 	}
 
+	var (
+		out    candidate
+		helper string
+	)
 	switch expr.Op {
 	case token.LAND:
-		return []candidate{replaceToken(m.Kind(), ctx, expr.OpPos, token.LAND, token.LOR)}
+		out, helper = replaceToken(m.Kind(), ctx, expr.OpPos, token.LAND, token.LOR), helperLandLor
 	case token.LOR:
-		return []candidate{replaceToken(m.Kind(), ctx, expr.OpPos, token.LOR, token.LAND)}
+		out, helper = replaceToken(m.Kind(), ctx, expr.OpPos, token.LOR, token.LAND), helperLorLand
 	default:
 		return nil
 	}
+
+	out.Schema = connectorSchemaFor(ctx, expr, helper)
+
+	return []candidate{out}
+}
+
+// connectorSchemaFor requires plain `bool` throughout: the helper's parameters and
+// its thunk are spelled `bool`, and a named boolean type would neither be
+// accepted nor returned.
+func connectorSchemaFor(ctx *fileContext, expr *ast.BinaryExpr, helper string) *schemaForm {
+	if ctx.constantContext() || constantExpr(ctx.info, expr) {
+		return nil
+	}
+	if !plainBool(ctx.info.TypeOf(expr)) ||
+		!plainBool(ctx.info.TypeOf(expr.X)) ||
+		!plainBool(ctx.info.TypeOf(expr.Y)) {
+		return nil
+	}
+
+	return connectorSchema(ctx, expr, helper)
 }
 
 type booleanMutator struct{}
@@ -216,7 +341,7 @@ func (m booleanMutator) candidates(ctx *fileContext, node ast.Node) []candidate 
 		return nil
 	}
 
-	return []candidate{{
+	out := candidate{
 		Kind:        m.Kind(),
 		Pos:         ident.NamePos,
 		Original:    ident.Name,
@@ -226,7 +351,16 @@ func (m booleanMutator) candidates(ctx *fileContext, node ast.Node) []candidate 
 			Length: len(ident.Name),
 			Text:   to,
 		}},
-	}}
+	}
+
+	// A boolean literal is always a constant, so the value gate the other mutators
+	// use would reject every one of them. Only the syntax that actually demands a
+	// constant disqualifies the rewrite.
+	if !ctx.constantContext() {
+		out.Schema = xorSchema(ctx, ident)
+	}
+
+	return []candidate{out}
 }
 
 type branchMutator struct{}
@@ -254,8 +388,13 @@ func (m branchMutator) candidates(ctx *fileContext, node ast.Node) []candidate {
 	start := ctx.offset(stmt.Cond.Pos())
 	length := ctx.offset(stmt.Cond.End()) - start
 
-	force := func(suffix string) candidate {
-		return candidate{
+	// The two directions rewrite the same byte range, which the renderer resolves by
+	// nesting them: forcing one direction wraps the other, and each still answers to
+	// its own id.
+	schemable := !ctx.constantContext() && plainBool(ctx.info.TypeOf(stmt.Cond))
+
+	force := func(suffix string, taken bool) candidate {
+		out := candidate{
 			Kind:        m.Kind(),
 			Pos:         stmt.Cond.Pos(),
 			Original:    condText,
@@ -266,9 +405,14 @@ func (m branchMutator) candidates(ctx *fileContext, node ast.Node) []candidate {
 				Text:   "(" + condText + ")" + suffix,
 			}},
 		}
+		if schemable {
+			out.Schema = wrapSchema(ctx, stmt.Cond, taken)
+		}
+
+		return out
 	}
 
-	return []candidate{force(" && false"), force(" || true")}
+	return []candidate{force(" && false", false), force(" || true", true)}
 }
 
 type incDecMutator struct{}
@@ -284,12 +428,29 @@ func (m incDecMutator) candidates(ctx *fileContext, node ast.Node) []candidate {
 		return nil
 	}
 
-	to := token.INC
+	to, helper := token.INC, helperDecInc
 	if stmt.Tok == token.INC {
-		to = token.DEC
+		to, helper = token.DEC, helperIncDec
 	}
 
-	return []candidate{replaceToken(m.Kind(), ctx, stmt.TokPos, stmt.Tok, to)}
+	out := replaceToken(m.Kind(), ctx, stmt.TokPos, stmt.Tok, to)
+	out.Schema = incDecSchema(ctx, stmt, helper)
+
+	return []candidate{out}
+}
+
+// incDecSchema gates on addressability, because the helper steps the operand
+// through a pointer and `m[k]++` — legal Go — has no address to take.
+func incDecSchema(ctx *fileContext, stmt *ast.IncDecStmt, helper string) *schemaForm {
+	tv, ok := ctx.info.Types[stmt.X]
+	if !ok || !tv.Addressable() || !numericType(tv.Type) {
+		return nil
+	}
+	if _, isParam := types.Unalias(tv.Type).(*types.TypeParam); isParam {
+		return nil
+	}
+
+	return stepSchema(ctx, stmt, helper)
 }
 
 func isNumeric(info *types.Info, expr ast.Expr) bool {

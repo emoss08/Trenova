@@ -162,11 +162,8 @@ type corpus struct {
 	scope  *mutate.Scope
 }
 
-func writeCorpus(t *testing.T) string {
-	t.Helper()
-
-	root := t.TempDir()
-	files := map[string]string{
+func corpusFiles() map[string]string {
+	return map[string]string{
 		"go.mod":                        "module " + fixtureModule + "\n\ngo 1.26\n",
 		"strong/strong.go":              strongSource,
 		"strong/strong_test.go":         strongTest,
@@ -177,6 +174,12 @@ func writeCorpus(t *testing.T) string {
 		"loop/loop.go":                  loopSource,
 		"loop/loop_test.go":             loopTest,
 	}
+}
+
+func writeCorpus(t *testing.T, files map[string]string) string {
+	t.Helper()
+
+	root := t.TempDir()
 
 	for rel, content := range files {
 		full := filepath.Join(root, filepath.FromSlash(rel))
@@ -213,9 +216,15 @@ func digestsOf(t *testing.T, root string) map[string]string {
 
 func newCorpus(t *testing.T) corpus {
 	t.Helper()
+
+	return newCorpusFrom(t, corpusFiles())
+}
+
+func newCorpusFrom(t *testing.T, files map[string]string) corpus {
+	t.Helper()
 	t.Setenv("GOWORK", "off")
 
-	root := writeCorpus(t)
+	root := writeCorpus(t, files)
 	env := append(os.Environ(), "GOWORK=off")
 
 	g, err := graph.Load(t.Context(), graph.LoadOptions{Root: root, Env: env})
@@ -250,7 +259,7 @@ func newCorpus(t *testing.T) corpus {
 	return corpus{root: root, graph: g, loader: loader, scope: scope}
 }
 
-func (c corpus) run(t *testing.T, pkg string) ([]mutate.Result, mutate.Score) {
+func (c corpus) generate(t *testing.T, pkg string) []mutate.Mutant {
 	t.Helper()
 
 	mutants, err := mutate.Generate(t.Context(), mutate.GenerateOptions{
@@ -263,13 +272,31 @@ func (c corpus) run(t *testing.T, pkg string) ([]mutate.Result, mutate.Score) {
 	require.NoError(t, err)
 	require.NotEmpty(t, mutants, "the corpus must produce mutants for %s", pkg)
 
-	results, err := mutate.Execute(t.Context(), mutants, mutate.ExecuteOptions{
+	return mutants
+}
+
+func (c corpus) executeOptions() mutate.ExecuteOptions {
+	return mutate.ExecuteOptions{
 		Root:       c.root,
 		Env:        append(os.Environ(), "GOWORK=off"),
 		Jobs:       2,
 		Budget:     c.scope.Budget,
 		MinTimeout: 3 * time.Second,
-	})
+		PackageDir: func(importPath string) string {
+			pkg, ok := c.graph.Package(importPath)
+			if !ok {
+				return ""
+			}
+
+			return pkg.Dir
+		},
+	}
+}
+
+func (c corpus) run(t *testing.T, pkg string) ([]mutate.Result, mutate.Score) {
+	t.Helper()
+
+	results, err := mutate.Execute(t.Context(), c.generate(t, pkg), c.executeOptions())
 	require.NoError(t, err)
 
 	return results, mutate.Evaluate(results, mutate.NewBaseline())

@@ -142,6 +142,19 @@ func (p plan) groups() ([]string, map[string]string) {
 	return full, narrowed
 }
 
+// packageDirResolver locates a package on disk so a compiled test binary can be
+// run from the directory `go test` would have used.
+func packageDirResolver(s *session) func(importPath string) string {
+	return func(importPath string) string {
+		pkg, ok := s.graph.Package(importPath)
+		if !ok {
+			return ""
+		}
+
+		return pkg.Dir
+	}
+}
+
 func (s *session) requireIndexCommit(ctx context.Context) (string, error) {
 	commit, err := vcs.HeadCommit(ctx, s.root)
 	if err != nil {

@@ -24,18 +24,24 @@ const loadMode = packages.NeedName |
 	packages.NeedTypesInfo
 
 type Mutant struct {
-	ID          string   `json:"id"`
-	Kind        Kind     `json:"kind"`
-	Package     string   `json:"package"`
-	File        string   `json:"file"`
-	Line        int      `json:"line"`
-	Function    string   `json:"function"`
-	Original    string   `json:"original"`
-	Replacement string   `json:"replacement"`
-	source      []byte   `json:"-"`
-	edits       []edit   `json:"-"`
-	tests       TestPlan `json:"-"`
+	ID          string      `json:"id"`
+	Kind        Kind        `json:"kind"`
+	Package     string      `json:"package"`
+	File        string      `json:"file"`
+	Line        int         `json:"line"`
+	Function    string      `json:"function"`
+	Original    string      `json:"original"`
+	Replacement string      `json:"replacement"`
+	source      []byte      `json:"-"`
+	edits       []edit      `json:"-"`
+	tests       TestPlan    `json:"-"`
+	packageName string      `json:"-"`
+	schema      *schemaForm `json:"-"`
 }
+
+// Schemata reports whether this mutant can be selected at run time inside a shared
+// binary. When it cannot, judging it costs a compile of its own.
+func (m Mutant) Schemata() bool { return m.schema != nil }
 
 func (m Mutant) Location() string {
 	return fmt.Sprintf("%s:%d", filepath.Base(m.File), m.Line)
@@ -164,8 +170,11 @@ func mutantsInFile(
 
 	ast.Inspect(file, func(node ast.Node) bool {
 		if node == nil {
+			ctx.stack = ctx.stack[:len(ctx.stack)-1]
+
 			return false
 		}
+		ctx.stack = append(ctx.stack, node)
 
 		for _, m := range mutators {
 			for _, cand := range m.candidates(ctx, node) {
@@ -195,6 +204,8 @@ func mutantsInFile(
 					Replacement: cand.Replacement,
 					source:      source,
 					edits:       cand.Edits,
+					packageName: pkg.Name,
+					schema:      cand.Schema,
 				}
 				mutant.ID = mutantID(opts.Root, mutant, occurrence)
 
