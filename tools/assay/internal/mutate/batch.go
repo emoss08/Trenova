@@ -10,16 +10,15 @@ import (
 	"strconv"
 	"sync"
 	"time"
-
-	"github.com/sourcegraph/conc/pool"
 )
 
 // schemataBatch is every schema-capable mutant in one package, compiled together.
 //
-// The batch is the unit of both sharing and blast radius. All its sites live in
-// one binary per test package, so N mutants cost one compile instead of N; and if
-// that compile fails the batch as a whole steps aside for the overlay path rather
-// than dragging unrelated packages down with it.
+// All its sites live in one binary per test package, so N mutants cost one compile
+// instead of N. Those binaries are built on first use rather than up front: a
+// mutant stops at the first test package that kills it, so eagerly compiling every
+// package a batch might reach costs more than it saves whenever kills are common —
+// which, on a diff-scoped run, is nearly always.
 type schemataBatch struct {
 	pkg     string
 	pkgName string
@@ -35,9 +34,15 @@ type schemataBatch struct {
 	workdir string
 	overlay string
 
-	mu       sync.Mutex
-	binaries map[string]string
-	failure  string
+	binaries map[string]*batchBinary
+}
+
+// batchBinary is one test package's shared binary. The Once means concurrent
+// mutants needing the same binary compile it exactly once and the rest wait for it.
+type batchBinary struct {
+	once sync.Once
+	path string
+	err  error
 }
 
 // planBatches splits mutants into batches that can share a binary and the ones
@@ -59,13 +64,12 @@ func planBatches(mutants []Mutant) ([]*schemataBatch, []int) {
 		batch := byPackage[m.Package]
 		if batch == nil {
 			batch = &schemataBatch{
-				pkg:      m.Package,
-				pkgName:  m.packageName,
-				dir:      filepath.Dir(m.File),
-				ids:      make(map[int]int),
-				sites:    make(map[string][]*schemaSite),
-				sources:  make(map[string][]byte),
-				binaries: make(map[string]string),
+				pkg:     m.Package,
+				pkgName: m.packageName,
+				dir:     filepath.Dir(m.File),
+				ids:     make(map[int]int),
+				sites:   make(map[string][]*schemaSite),
+				sources: make(map[string][]byte),
 			}
 			byPackage[m.Package] = batch
 			order = append(order, m.Package)
@@ -111,6 +115,11 @@ func (b *schemataBatch) assign(mutants []Mutant) {
 
 	b.helpers = setToSorted(helpers)
 	b.testPkgs = setToSorted(testPkgs)
+
+	b.binaries = make(map[string]*batchBinary, len(b.testPkgs))
+	for _, testPkg := range b.testPkgs {
+		b.binaries[testPkg] = &batchBinary{}
+	}
 }
 
 // prepare renders the batch's files and the injected runtime into an overlay.
@@ -155,56 +164,45 @@ func (b *schemataBatch) prepare() error {
 	return err
 }
 
-func (b *schemataBatch) compile(ctx context.Context, opts ExecuteOptions, testPkg string, buildParallelism int) {
-	binary := filepath.Join(b.workdir, "bin", sanitisePath(testPkg)+".test")
-	if err := os.MkdirAll(filepath.Dir(binary), 0o755); err != nil {
-		b.fail(err.Error())
-
-		return
+// binaryFor compiles this test package's shared binary the first time a mutant
+// needs it, and hands every later caller the same path.
+func (b *schemataBatch) binaryFor(
+	ctx context.Context,
+	opts ExecuteOptions,
+	testPkg string,
+	buildParallelism int,
+) (string, error) {
+	slot, ok := b.binaries[testPkg]
+	if !ok {
+		return "", fmt.Errorf("no schemata binary planned for %s", testPkg)
 	}
 
-	if err := buildTestBinary(ctx, buildRequest{
-		root:             opts.Root,
-		env:              opts.Env,
-		tags:             opts.Tags,
-		overlay:          b.overlay,
-		testPackage:      testPkg,
-		output:           binary,
-		buildParallelism: buildParallelism,
-	}); err != nil {
-		b.fail(err.Error())
+	slot.once.Do(func() {
+		path := filepath.Join(b.workdir, "bin", sanitisePath(testPkg)+".test")
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			slot.err = fmt.Errorf("create binary directory: %w", err)
 
-		return
-	}
+			return
+		}
 
-	b.mu.Lock()
-	b.binaries[testPkg] = binary
-	b.mu.Unlock()
-}
+		if err := buildTestBinary(ctx, buildRequest{
+			root:             opts.Root,
+			env:              opts.Env,
+			tags:             opts.Tags,
+			overlay:          b.overlay,
+			testPackage:      testPkg,
+			output:           path,
+			buildParallelism: buildParallelism,
+		}); err != nil {
+			slot.err = err
 
-func (b *schemataBatch) fail(reason string) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
+			return
+		}
 
-	if b.failure == "" {
-		b.failure = reason
-	}
-}
+		slot.path = path
+	})
 
-func (b *schemataBatch) failed() (string, bool) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	return b.failure, b.failure != ""
-}
-
-func (b *schemataBatch) binary(testPkg string) (string, bool) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	path, ok := b.binaries[testPkg]
-
-	return path, ok
+	return slot.path, slot.err
 }
 
 func (b *schemataBatch) cleanup() {
@@ -214,7 +212,17 @@ func (b *schemataBatch) cleanup() {
 }
 
 // judge runs the shared binary once, with this mutant selected.
-func (b *schemataBatch) judge(ctx context.Context, index int, m Mutant, opts ExecuteOptions) Result {
+//
+// The false return asks the caller to judge this mutant on a binary of its own: a
+// package that will not compile under the shared rewrite still deserves a real
+// verdict, and only the mutants that needed that package should pay for it.
+func (b *schemataBatch) judge(
+	ctx context.Context,
+	index int,
+	m Mutant,
+	opts ExecuteOptions,
+	buildParallelism int,
+) (Result, bool) {
 	started := time.Now()
 	result := Result{Mutant: m, Tests: m.tests.count(), Mode: ModeSchemata}
 
@@ -227,13 +235,9 @@ func (b *schemataBatch) judge(ctx context.Context, index int, m Mutant, opts Exe
 			continue
 		}
 
-		binary, ok := b.binary(testPkg)
-		if !ok {
-			result.Outcome = OutcomeNotBuilt
-			result.Detail = "no schemata binary for " + testPkg
-			result.Duration = time.Since(started)
-
-			return result
+		binary, err := b.binaryFor(ctx, opts, testPkg, buildParallelism)
+		if err != nil {
+			return Result{}, false
 		}
 
 		outcome, detail := runTests(ctx, testRun{
@@ -249,26 +253,26 @@ func (b *schemataBatch) judge(ctx context.Context, index int, m Mutant, opts Exe
 			result.Detail = detail
 			result.Duration = time.Since(started)
 
-			return result
+			return result, true
 		}
 	}
 
 	result.Outcome = OutcomeSurvived
 	result.Duration = time.Since(started)
 
-	return result
+	return result, true
 }
 
-// compileBatches builds every batch's binaries, moving any batch that cannot be
-// prepared or compiled onto the direct path.
-func compileBatches(
-	ctx context.Context,
-	batches []*schemataBatch,
-	opts ExecuteOptions,
-	buildParallelism int,
-) ([]*schemataBatch, []int, error) {
+// prepareBatches renders each batch's overlay, moving any batch that cannot be
+// prepared onto the direct path.
+//
+// Only preparation is wholesale. Whether a rewritten package can be rendered at all
+// is a property of the package, so a failure there disqualifies every mutant in it;
+// a failure to *compile* is discovered later, per test package, and costs only the
+// mutants that needed it.
+func prepareBatches(batches []*schemataBatch) ([]*schemataBatch, []int) {
 	declined := make([]int, 0, len(batches))
-	pending := make([]*schemataBatch, 0, len(batches))
+	ready := make([]*schemataBatch, 0, len(batches))
 
 	for _, batch := range batches {
 		if err := batch.prepare(); err != nil {
@@ -277,63 +281,10 @@ func compileBatches(
 
 			continue
 		}
-		pending = append(pending, batch)
-	}
-
-	type buildJob struct {
-		batch   *schemataBatch
-		testPkg string
-	}
-
-	var jobs []buildJob
-	for _, batch := range pending {
-		for _, testPkg := range batch.testPkgs {
-			jobs = append(jobs, buildJob{batch: batch, testPkg: testPkg})
-		}
-	}
-
-	if len(jobs) > 0 {
-		progress := newTicker(opts.Progress, "compiling", len(jobs))
-		building := pool.New().
-			WithMaxGoroutines(opts.jobs(len(jobs))).
-			WithContext(ctx).
-			WithFirstError().
-			WithCancelOnError()
-
-		for i := range jobs {
-			building.Go(func(ctx context.Context) error {
-				if err := ctx.Err(); err != nil {
-					return err
-				}
-
-				jobs[i].batch.compile(ctx, opts, jobs[i].testPkg, buildParallelism)
-				progress.tick()
-
-				return nil
-			})
-		}
-
-		if err := building.Wait(); err != nil {
-			for _, batch := range pending {
-				batch.cleanup()
-			}
-
-			return nil, nil, err
-		}
-	}
-
-	ready := make([]*schemataBatch, 0, len(pending))
-	for _, batch := range pending {
-		if _, bad := batch.failed(); bad {
-			batch.cleanup()
-			declined = append(declined, batch.indices...)
-
-			continue
-		}
 		ready = append(ready, batch)
 	}
 
-	return ready, declined, nil
+	return ready, declined
 }
 
 // writeUnderBasename keeps the original file name, because the go command decides

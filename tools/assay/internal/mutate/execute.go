@@ -118,10 +118,7 @@ func Execute(ctx context.Context, mutants []Mutant, opts ExecuteOptions) ([]Resu
 		batches, direct = planBatches(mutants)
 	}
 
-	ready, declined, err := compileBatches(ctx, batches, opts, buildParallelism)
-	if err != nil {
-		return nil, err
-	}
+	ready, declined := prepareBatches(batches)
 	defer func() {
 		for _, batch := range ready {
 			batch.cleanup()
@@ -146,7 +143,11 @@ func Execute(ctx context.Context, mutants []Mutant, opts ExecuteOptions) ([]Resu
 					return err
 				}
 
-				results[index] = batch.judge(ctx, index, mutants[index], opts)
+				result, judged := batch.judge(ctx, index, mutants[index], opts, buildParallelism)
+				if !judged {
+					result = evaluate(ctx, mutants[index], opts, buildParallelism)
+				}
+				results[index] = result
 				progress.tick()
 
 				return nil

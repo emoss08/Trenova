@@ -156,6 +156,33 @@ func TestSchemataPackageCompiles(t *testing.T) {
 	}
 }
 
+// TestSchemataBuildsOnlyTheBinariesItUses pins the laziness. Building a binary for
+// every test package a batch might reach costs more than it saves, because a mutant
+// stops at the first package that kills it — that eagerness made a diff-scoped run
+// slower than compiling each mutant separately, which is the whole thing this path
+// exists to beat. Nothing else would notice if it came back.
+func TestSchemataBuildsOnlyTheBinariesItUses(t *testing.T) {
+	root := writeSchemataFixture(t)
+	mutants := generateSchemataFixture(t, root)
+
+	batches, _ := planBatches(mutants)
+	require.Len(t, batches, 1)
+
+	batch := batches[0]
+	t.Cleanup(batch.cleanup)
+	require.NoError(t, batch.prepare())
+
+	bin := filepath.Join(batch.workdir, "bin")
+	_, err := os.Stat(bin)
+	assert.True(t, os.IsNotExist(err),
+		"preparing a batch must not compile anything; the first mutant that needs a binary pays for it")
+
+	for _, slot := range batch.binaries {
+		assert.Empty(t, slot.path)
+		assert.NoError(t, slot.err)
+	}
+}
+
 func TestSchemataCoversEveryMutatorKind(t *testing.T) {
 	mutants := generateSchemataFixture(t, writeSchemataFixture(t))
 
