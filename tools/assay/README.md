@@ -71,9 +71,36 @@ assay explain internal/core/domain/shipment/shipment.go:412
 ```
 
 `assay index` compiles one test binary per package, enumerates its tests, and
-runs each one alone with coverage on. It is incremental: only packages whose
-dependency closure changed are re-indexed. Records live beside the graph cache and
-are never committed.
+attributes coverage per test. It is incremental: only packages whose dependency
+closure changed are re-indexed. Records live beside the graph cache and are
+never committed.
+
+### How collection runs
+
+By default the whole package is collected in **one process**: a `TestMain`
+injected through `-overlay` — never written to your tree — runs each test in the
+same binary, snapshotting and clearing the `runtime/coverage` counters between
+tests. Package init executes once instead of once per test, which is where the
+time goes in packages that parse config, compile regexes, or register fixtures
+at init. Durations recorded this way are measured around the test itself, not
+around a process that spends most of its life initialising.
+
+A hanging test cannot take the package with it: the harness reports progress
+after each test's counters are safely on disk, a rolling per-test deadline kills
+the process group when one stalls, and everything already collected is kept —
+only the stalled test and the remainder re-run one process at a time, where the
+per-test timeout applies.
+
+Packages that define their own `TestMain` are collected one process per test,
+since injecting a second `TestMain` would not compile. `--legacy-collection`
+forces that mode everywhere; the two modes are asserted to produce identical
+records, so it is a safety valve rather than a different answer.
+
+One attribution difference is worth knowing: lazy initialisation triggered by
+whichever test happens to run first — a `sync.Once`, a package-level cache — is
+attributed to that test's window in single-process mode, where fresh processes
+attributed it to every test. Package-level `init` and `var` initialisers are
+unaffected: their window is merged into every test.
 
 ### The index is pinned to a commit
 
@@ -305,8 +332,8 @@ package in this repository, so the guard is there on purpose.
 | `--no-index` | Skip line-level narrowing; select whole packages |
 | `--cache-dir` | Cache location for graph and index (default: user cache dir, or `ASSAY_CACHE`) |
 
-`assay index` additionally takes `--jobs`, `--timeout`, `--packages`, `--quiet`
-and `--allow-dirty`. `assay mutate` takes `--whole`, `--packages`, `--baseline`,
+`assay index` additionally takes `--jobs`, `--timeout`, `--packages`, `--quiet`,
+`--allow-dirty` and `--legacy-collection`. `assay mutate` takes `--whole`, `--packages`, `--baseline`,
 `--write-baseline`, `--min-msi`, `--allow-failing-tests`, `--no-schemata`, `--jobs`
 and `--json`.
 

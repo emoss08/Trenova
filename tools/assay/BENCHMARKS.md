@@ -204,6 +204,43 @@ Roughly 8 tests/second on 4 cores — one process per test plus a coverage profi
 parse. Incremental rebuilds re-index only packages whose dependency closure moved,
 so the steady-state cost after a one-file edit is a handful of packages.
 
+### Single-process collection
+
+Collection now defaults to one harness process per package — a `TestMain`
+injected through `-overlay` runs every test in the same process, snapshotting
+`runtime/coverage` counters between tests — with the per-test-process path kept
+under `--legacy-collection`. Measured at `9093af2`, `--jobs 2`, fresh caches,
+identical records both ways (an agreement test enforces that in CI):
+
+| Workload | Single-process | Per-process | |
+|---|---|---|---|
+| assay `internal/...`, 12 packages / 256 tests | 65s | 66s | wash |
+| synthetic: 160 trivial tests, trivial init | 1.03s | 0.76s | 0.73× |
+| synthetic: 40 tests behind an 80ms package init | 1.71s | 4.05s | **2.4×** |
+
+The three rows are the honest shape of this change, and the middle one needs
+saying out loud: **as implemented, the mechanism trades one process spawn for
+another.** Each test's counter window still round-trips through
+`go tool covdata textfmt`, so a package of trivial tests pays a covdata spawn
+where it used to pay a test-binary spawn — a bounded loss of a couple of
+milliseconds per test, which is why the real suite is a wash.
+
+What the harness actually removes is **re-execution of package init**, which
+per-process collection paid once per test. The 80ms-init row is 40 × 80ms of
+redundant init collapsing into one, and that is the profile of the packages this
+tool is aimed at — config parsing, regex compilation, fixture and model
+registration all live in init in enterprise code. The loss is bounded and tiny;
+the win scales with init cost times test count.
+
+Durations also become honest in this mode: they are measured inside the harness
+around `m.Run`, not around a process that spends most of its life initialising.
+
+The follow-up that would turn the wash into a win everywhere is parsing the
+binary covcounters format directly instead of shelling out to covdata per
+window. It is deliberately not attempted here: the format is internal to the Go
+toolchain and version-sensitive, and a maintenance trap should be walked into
+deliberately or not at all.
+
 **The full 353-package index was not measured here, and the reason is worth
 recording.** The first attempt drove load average to 30 on a 4-core box and was
 killed. `--jobs N` was multiplying with Go's own build parallelism: each
