@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/assay/internal/cache"
 	"github.com/emoss08/assay/internal/cover"
 	"github.com/emoss08/assay/internal/graph"
+	"github.com/emoss08/assay/internal/overlay"
 	"github.com/emoss08/assay/internal/proc"
 )
 
@@ -40,7 +41,20 @@ type Options struct {
 	Env         []string
 	Packages    []string
 	Progress    func(pkg string, done, total int)
+
+	// Legacy runs each test in its own process instead of one harness process per
+	// package. Much slower, and the only way to cross-check the harness path.
+	Legacy bool
 }
+
+// Collection modes, reported per package so tests and stats can tell whether the
+// fast path actually ran — an agreement test that silently fell back to
+// per-process collection would prove nothing.
+const (
+	CollectionSingleProcess = "single-process"
+	CollectionPerProcess    = "per-process"
+	CollectionSalvaged      = "salvaged"
+)
 
 type PackageOutcome struct {
 	Package   string
@@ -48,6 +62,7 @@ type PackageOutcome struct {
 	AlwaysRun int
 	Reused    bool
 	Degraded  string
+	Mode      string
 	Err       error
 }
 
@@ -58,6 +73,7 @@ type Stats struct {
 	Tests     int
 	AlwaysRun int
 	Failures  []PackageOutcome
+	Packages  []PackageOutcome
 	Duration  time.Duration
 }
 
@@ -115,7 +131,7 @@ func Build(ctx context.Context, opts Options) (Stats, error) {
 		return Stats{}, err
 	}
 
-	stats := Stats{Total: len(targets), Duration: time.Since(started)}
+	stats := Stats{Total: len(targets), Packages: outcomes, Duration: time.Since(started)}
 	for _, outcome := range outcomes {
 		switch {
 		case outcome.Err != nil:
@@ -167,7 +183,7 @@ func indexPackage(
 		}
 	}
 
-	record, err := collectPackage(ctx, opts, coverPkg, importPath, buildParallelism)
+	record, mode, err := collectPackage(ctx, opts, coverPkg, importPath, buildParallelism)
 	if err != nil {
 		return PackageOutcome{Package: importPath, Err: err}
 	}
@@ -183,23 +199,85 @@ func indexPackage(
 		Tests:     len(record.Tests),
 		AlwaysRun: len(record.AlwaysRunTests()),
 		Degraded:  record.Degraded,
+		Mode:      mode,
 	}
 }
 
-func collectPackage(ctx context.Context, opts Options, coverPkg, importPath string, buildParallelism int) (*Record, error) {
+// collectPackage routes a package to the collection mode that can serve it. The
+// harness path is the default; anything that disqualifies it — an explicit
+// --legacy-collection, a package-defined TestMain the injected one would clash
+// with, an unreadable package clause, a real assay_harness_test.go on disk, or a
+// harness build failure — lands on the per-process path, which stays first-class
+// rather than vestigial.
+//
+// One semantic divergence is known and accepted: lazy initialisation a test
+// triggers (a sync.Once fired by whichever test runs first) is attributed only to
+// that test's window, where fresh-process collection attributed it to every test.
+// Package-level init is unaffected — its window is merged into every test.
+func collectPackage(
+	ctx context.Context,
+	opts Options,
+	coverPkg, importPath string,
+	buildParallelism int,
+) (*Record, string, error) {
 	pkg, ok := opts.Graph.Package(importPath)
 	if !ok {
-		return nil, fmt.Errorf("package %s is not in the graph", importPath)
+		return nil, "", fmt.Errorf("package %s is not in the graph", importPath)
 	}
 
 	workdir, err := os.MkdirTemp("", "assay-index-")
 	if err != nil {
-		return nil, fmt.Errorf("create work directory: %w", err)
+		return nil, "", fmt.Errorf("create work directory: %w", err)
 	}
 	defer os.RemoveAll(workdir)
 
+	if !opts.Legacy {
+		if name, eligible := singleProcessEligible(pkg.Dir); eligible {
+			record, mode, harnessErr := collectPackageSingleProcess(
+				ctx, opts, coverPkg, importPath, pkg.Dir, workdir, name, buildParallelism)
+			if harnessErr == nil {
+				return record, mode, nil
+			}
+			if ctx.Err() != nil {
+				return nil, "", harnessErr
+			}
+		}
+	}
+
+	record, err := collectPackageLegacy(ctx, opts, coverPkg, importPath, pkg.Dir, workdir, buildParallelism)
+
+	return record, CollectionPerProcess, err
+}
+
+// singleProcessEligible reports whether the harness can be injected, and the
+// package name to inject it under. Every failure is a quiet "no": the answer
+// decides speed, never correctness.
+func singleProcessEligible(dir string) (string, bool) {
+	if _, err := os.Stat(filepath.Join(dir, HarnessFileName)); err == nil {
+		return "", false
+	}
+
+	hasTestMain, err := packageDefinesTestMain(dir)
+	if err != nil || hasTestMain {
+		return "", false
+	}
+
+	name, err := packageName(dir)
+	if err != nil {
+		return "", false
+	}
+
+	return name, true
+}
+
+func collectPackageLegacy(
+	ctx context.Context,
+	opts Options,
+	coverPkg, importPath, dir, workdir string,
+	buildParallelism int,
+) (*Record, error) {
 	binary := filepath.Join(workdir, "test.bin")
-	if buildErr := buildTestBinary(ctx, opts, coverPkg, importPath, binary, buildParallelism); buildErr != nil {
+	if buildErr := buildTestBinary(ctx, opts, coverPkg, importPath, binary, "", buildParallelism); buildErr != nil {
 		return nil, buildErr
 	}
 
@@ -207,7 +285,7 @@ func collectPackage(ctx context.Context, opts Options, coverPkg, importPath stri
 		return &Record{Version: recordVersion, Package: importPath, IndexedAt: opts.Commit}, nil
 	}
 
-	names, err := listTests(ctx, opts, binary, pkg.Dir)
+	names, err := listTests(ctx, opts, binary, dir)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +295,7 @@ func collectPackage(ctx context.Context, opts Options, coverPkg, importPath stri
 	resolve := profileResolver(opts.Graph)
 
 	for _, name := range names {
-		test, unresolved, runErr := runTest(ctx, opts, binary, pkg.Dir, workdir, name, build, resolve)
+		test, unresolved, runErr := runTest(ctx, opts, binary, dir, workdir, name, build, resolve)
 		if runErr != nil {
 			return nil, runErr
 		}
@@ -232,10 +310,108 @@ func collectPackage(ctx context.Context, opts Options, coverPkg, importPath stri
 	return record, nil
 }
 
+func collectPackageSingleProcess(
+	ctx context.Context,
+	opts Options,
+	coverPkg, importPath, dir, workdir, pkgName string,
+	buildParallelism int,
+) (*Record, string, error) {
+	injected := filepath.Join(dir, HarnessFileName)
+	harnessPath, err := overlay.WriteUnderBasename(workdir, "harness", injected, HarnessSource(pkgName))
+	if err != nil {
+		return nil, "", err
+	}
+	overlayPath, err := overlay.WriteFile(workdir, map[string]string{injected: harnessPath})
+	if err != nil {
+		return nil, "", err
+	}
+
+	binary := filepath.Join(workdir, "harness.bin")
+	if buildErr := buildTestBinary(ctx, opts, coverPkg, importPath, binary, overlayPath, buildParallelism); buildErr != nil {
+		return nil, "", buildErr
+	}
+
+	if _, statErr := os.Stat(binary); statErr != nil {
+		return &Record{Version: recordVersion, Package: importPath, IndexedAt: opts.Commit},
+			CollectionSingleProcess, nil
+	}
+
+	// The harness contract rides on two environment variables, so an inherited
+	// value from the caller's environment must not switch modes underneath us.
+	scrubbed := scrubHarnessEnv(opts)
+
+	names, err := listTests(ctx, scrubbed, binary, dir)
+	if err != nil {
+		return nil, "", err
+	}
+
+	listFile := filepath.Join(workdir, "tests.list")
+	if writeErr := os.WriteFile(listFile, []byte(strings.Join(names, "\n")+"\n"), 0o644); writeErr != nil {
+		return nil, "", fmt.Errorf("write test list: %w", writeErr)
+	}
+
+	counterDir := filepath.Join(workdir, "counters")
+	if mkErr := os.MkdirAll(filepath.Join(counterDir, "assay-final"), 0o755); mkErr != nil {
+		return nil, "", fmt.Errorf("create counter directory: %w", mkErr)
+	}
+
+	run := runHarness(ctx, scrubbed, binary, dir, listFile, counterDir, names)
+	if ctx.Err() != nil {
+		return nil, "", ctx.Err()
+	}
+
+	record, convErr := assembleWindows(ctx, scrubbed, importPath, counterDir, run.completed)
+	if convErr != nil {
+		return nil, "", convErr
+	}
+
+	mode := CollectionSingleProcess
+	if run.stalled != "" {
+		// Everything before the stall keeps its window-derived coverage; the
+		// stalled test and the remainder are re-run one process at a time on the
+		// same binary, which restores the per-test timeout and the established
+		// timed-out/always-run semantics for exactly the tests that need them.
+		mode = CollectionSalvaged
+		build := rebuilderFrom(record)
+		resolve := profileResolver(opts.Graph)
+		for _, name := range names[len(run.completed):] {
+			test, unresolved, runErr := runTest(ctx, scrubbed, binary, dir, workdir, name, build, resolve)
+			if runErr != nil {
+				return nil, "", runErr
+			}
+			if unresolved != "" && record.Degraded == "" {
+				record.Degraded = "unresolved coverage path: " + unresolved
+			}
+			record.Tests = append(record.Tests, test)
+		}
+		record.Files = build.order
+	}
+
+	return record, mode, nil
+}
+
+func scrubHarnessEnv(opts Options) Options {
+	env := opts.Env
+	if len(env) == 0 {
+		env = os.Environ()
+	}
+
+	cleaned := make([]string, 0, len(env))
+	for _, entry := range env {
+		if strings.HasPrefix(entry, EnvTestList+"=") || strings.HasPrefix(entry, EnvCounterDir+"=") {
+			continue
+		}
+		cleaned = append(cleaned, entry)
+	}
+	opts.Env = cleaned
+
+	return opts
+}
+
 func buildTestBinary(
 	ctx context.Context,
 	opts Options,
-	coverPkg, importPath, output string,
+	coverPkg, importPath, output, overlayPath string,
 	buildParallelism int,
 ) error {
 	args := []string{
@@ -243,6 +419,9 @@ func buildTestBinary(
 		"-coverpkg=" + coverPkg,
 		"-p", strconv.Itoa(buildParallelism),
 		"-o", output,
+	}
+	if overlayPath != "" {
+		args = append(args, "-overlay="+overlayPath)
 	}
 	if len(opts.Tags) > 0 {
 		args = append(args, "-tags", strings.Join(opts.Tags, ","))

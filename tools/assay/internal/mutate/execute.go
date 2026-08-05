@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcegraph/conc/pool"
 
+	"github.com/emoss08/assay/internal/overlay"
 	"github.com/emoss08/assay/internal/proc"
 	"github.com/emoss08/assay/internal/runpattern"
 )
@@ -342,12 +343,12 @@ func (o ExecuteOptions) PackageBudget(plan TestPlan, testPkg string) time.Durati
 }
 
 func writeOverlay(workdir string, m Mutant) (string, error) {
-	replacement, err := writeUnderBasename(workdir, "mutant", m.File, m.Source())
+	replacement, err := overlay.WriteUnderBasename(workdir, "mutant", m.File, m.Source())
 	if err != nil {
 		return "", err
 	}
 
-	return writeOverlayFile(workdir, map[string]string{m.File: replacement})
+	return overlay.WriteFile(workdir, map[string]string{m.File: replacement})
 }
 
 type buildRequest struct {

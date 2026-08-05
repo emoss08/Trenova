@@ -2,7 +2,6 @@ package mutate
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +9,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/emoss08/assay/internal/overlay"
 )
 
 // schemataBatch is every schema-capable mutant in one package, compiled together.
@@ -150,20 +151,20 @@ func (b *schemataBatch) prepare() error {
 			return fmt.Errorf("render schemata for %s: %w", file, renderErr)
 		}
 
-		path, writeErr := writeUnderBasename(workdir, strconv.Itoa(n), file, rendered)
+		path, writeErr := overlay.WriteUnderBasename(workdir, strconv.Itoa(n), file, rendered)
 		if writeErr != nil {
 			return writeErr
 		}
 		replace[file] = path
 	}
 
-	runtimePath, err := writeUnderBasename(workdir, "runtime", injected, SchemataSource(b.pkgName, b.helpers))
+	runtimePath, err := overlay.WriteUnderBasename(workdir, "runtime", injected, SchemataSource(b.pkgName, b.helpers))
 	if err != nil {
 		return err
 	}
 	replace[injected] = runtimePath
 
-	b.overlay, err = writeOverlayFile(workdir, replace)
+	b.overlay, err = overlay.WriteFile(workdir, replace)
 
 	return err
 }
@@ -307,36 +308,6 @@ func prepareBatches(batches []*schemataBatch) ([]*schemataBatch, []int) {
 	}
 
 	return ready, declined
-}
-
-// writeUnderBasename keeps the original file name, because the go command decides
-// build constraints such as _linux or _amd64 from the name it is given.
-func writeUnderBasename(workdir, group, original string, content []byte) (string, error) {
-	dir := filepath.Join(workdir, group)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return "", fmt.Errorf("create overlay directory: %w", err)
-	}
-
-	path := filepath.Join(dir, filepath.Base(original))
-	if err := os.WriteFile(path, content, 0o644); err != nil {
-		return "", fmt.Errorf("write %s: %w", path, err)
-	}
-
-	return path, nil
-}
-
-func writeOverlayFile(workdir string, replace map[string]string) (string, error) {
-	payload, err := json.Marshal(map[string]map[string]string{"Replace": replace})
-	if err != nil {
-		return "", fmt.Errorf("encode overlay: %w", err)
-	}
-
-	path := filepath.Join(workdir, "overlay.json")
-	if err := os.WriteFile(path, payload, 0o644); err != nil {
-		return "", fmt.Errorf("write overlay: %w", err)
-	}
-
-	return path, nil
 }
 
 func sanitisePath(importPath string) string {

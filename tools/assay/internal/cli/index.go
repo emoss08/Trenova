@@ -21,6 +21,7 @@ func newIndexCommand(opts *options) *cobra.Command {
 		timeout    time.Duration
 		packages   []string
 		quiet      bool
+		legacy     bool
 	)
 
 	cmd := &cobra.Command{
@@ -86,6 +87,7 @@ func newIndexCommand(opts *options) *cobra.Command {
 				Timeout:     timeout,
 				Packages:    targets,
 				Progress:    newProgress(cmd.ErrOrStderr(), quiet),
+				Legacy:      legacy,
 			})
 			if err != nil {
 				return err
@@ -102,6 +104,8 @@ func newIndexCommand(opts *options) *cobra.Command {
 	cmd.Flags().BoolVar(&quiet, "quiet", false, "suppress progress output")
 	cmd.Flags().BoolVar(&allowDirty, "allow-dirty", false,
 		"index a modified tree; the records cannot then be used for narrowing")
+	cmd.Flags().BoolVar(&legacy, "legacy-collection", false,
+		"run each test in its own process instead of one harness per package (much slower)")
 
 	return cmd
 }
