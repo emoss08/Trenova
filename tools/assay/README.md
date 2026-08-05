@@ -206,6 +206,42 @@ On `internal/cover` that is a handful of tests per mutant instead of 201.
 Mutants are injected through `-overlay`, so the source tree is never written to
 and an interrupted run leaves nothing behind.
 
+### One binary per package, not per mutant
+
+Compiling a test binary for every mutant is what makes mutation testing slow, so
+by default every mutation site in a package is compiled into the *same* binary
+behind a switch on `ASSAY_MUTANT`. Each mutant is then a run rather than a build.
+`ASSAY_MUTANT=0`, and anything unset or unparseable, leaves every site behaving
+exactly like the original — which is why the same binary can serve as its own
+control.
+
+The switch lives in an `assay_schemata.go` that reaches the compiler through
+`-overlay` and is never written to your tree. It imports only `os`, so injecting it
+into a low-level package is unlikely to create an import cycle.
+
+A site is only rewritten this way when the rewrite is provably type-correct, and
+assay would rather be slow than emit something that does not compile — under a
+shared binary a single bad rewrite would invalidate every mutant in the package,
+not one. These fall back to a binary of their own:
+
+| Declined | Why |
+|---|---|
+| a comparison whose result is a named boolean type | the helper returns `bool`, which is not assignable to it |
+| `&&` / `\|\|` on named boolean types | the short-circuit thunk is spelled `func() bool` |
+| anything in a `const` declaration or an array length | the language wants a constant, not a call |
+| operands of a type parameter | its constraint need not imply the helper's |
+| `m[k]++` | legal Go, but `&m[k]` is not, and the helper steps through a pointer |
+| operands of different types | inference would fail rather than pick one |
+
+The summary reports the split whenever anything fell back. `--no-schemata` forces
+every mutant onto its own binary; the two modes are asserted to reach identical
+verdicts, mutant for mutant, so it is a safety valve rather than a different
+answer.
+
+One caveat applies to both modes: rewriting expressions changes what the compiler
+can inline and what escapes, so a test asserting an exact allocation count could
+behave differently under mutation than it does normally.
+
 ### What the outcomes mean
 
 | Outcome | Meaning |
@@ -271,7 +307,8 @@ package in this repository, so the guard is there on purpose.
 
 `assay index` additionally takes `--jobs`, `--timeout`, `--packages`, `--quiet`
 and `--allow-dirty`. `assay mutate` takes `--whole`, `--packages`, `--baseline`,
-`--write-baseline`, `--min-msi`, `--allow-failing-tests`, `--jobs` and `--json`.
+`--write-baseline`, `--min-msi`, `--allow-failing-tests`, `--no-schemata`, `--jobs`
+and `--json`.
 
 ## Commands
 

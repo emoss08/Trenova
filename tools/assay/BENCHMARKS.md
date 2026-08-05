@@ -98,6 +98,56 @@ Diff scope, a one-line edit inside a function: **1 mutant, 9.8s**. That is the
 difference the default makes — mutating a whole package is a nightly job,
 mutating a diff is a PR check.
 
+### Sharing one binary across a package's mutants
+
+Compiling a test binary per mutant is what made the runs above take minutes, so
+the next step compiled every mutation site in a package into one binary behind a
+runtime switch. Matched A/B at `5614746`, same index, `--jobs 2`, four cores:
+
+| Mode | Mutants | Wall | CPU | Result |
+|---|---|---|---|---|
+| a binary per mutant (`--no-schemata`) | 76 | 3m49s | 698s | 68 killed / 7 survived / 1 no-coverage, MSI 90.7% |
+| one binary per package | 76 | **3m07s** | **582s** | identical, mutant for mutant |
+
+**1.22× wall, 1.20× CPU.** The literature reports 4.1×–14× for mutant schemata, so
+this needs explaining rather than rounding up. Splitting by outcome says where it
+went:
+
+| Per mutant | a binary each | shared binary | |
+|---|---|---|---|
+| killed | 1.18s | **0.26s** | 4.5× |
+| survived | 34.9s | 31.4s | 1.11× |
+
+A kill stops at the first test that fails. A survivor has to exhaust every covering
+test in every covering package before it can be called a survivor at all. So **7
+survivors account for 94% of the run** and 68 kills account for 6% — and survivor
+cost is test execution, which sharing a binary cannot touch. The 4.5× on the kill
+path is the mechanism working exactly as advertised; the headline is diluted
+because this particular package is survivor-bound.
+
+`internal/cover` is also close to the worst case for this measurement. It is a leaf
+package, so every package that imports it — `cli`, `index`, `mutate`, `selection` —
+contributes covering tests, and those are the heavyweight integration suites. Each
+survivor drags all of them in.
+
+The 72-mutant rows above are **not** comparable: mutation eligibility now spans
+statements rather than function-body braces, which admitted one-line function
+bodies and took the population from 72 to 76.
+
+Diff scope, the same one-line edit, 4 mutants: **46.3s shared against 44.0s
+separate**. A wash. Four mutants is not enough to amortise a shared build, and the
+first mutant has to wait for it while separate builds start immediately. Getting
+even to a wash took a fix: the first implementation compiled a binary for every
+test package a batch might reach, which cost 53.4s against 45.7s — the fast path
+was slower than the path it replaced. Binaries are now compiled on first use, and
+a mutant that dies to the first test package never pays for the rest.
+
+**What would actually move the whole-package number.** Not compiling less —
+survivors dominate, and they are bound by running the same covering tests once per
+mutant. The lever is running each covering test once across all mutants, which
+needs the runtime switch to be settable per test rather than read once per process.
+That is a larger change than this one and is not attempted here.
+
 ### What it actually found
 
 The twelve initial survivors were real gaps in this repository's own tests, in the
