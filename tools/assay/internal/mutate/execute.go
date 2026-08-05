@@ -18,6 +18,7 @@ import (
 	"github.com/sourcegraph/conc/pool"
 
 	"github.com/emoss08/assay/internal/proc"
+	"github.com/emoss08/assay/internal/runpattern"
 )
 
 type Outcome string
@@ -458,25 +459,7 @@ func firstFailure(out []byte) string {
 }
 
 func RunPattern(tests []string) string {
-	quoted := make([]string, 0, len(tests))
-	for _, test := range tests {
-		quoted = append(quoted, quoteMeta(test))
-	}
-	sort.Strings(quoted)
-
-	return "^(" + strings.Join(quoted, "|") + ")$"
-}
-
-func quoteMeta(name string) string {
-	var b strings.Builder
-	for _, r := range name {
-		if strings.ContainsRune(`\.+*?()|[]{}^$`, r) {
-			b.WriteByte('\\')
-		}
-		b.WriteRune(r)
-	}
-
-	return b.String()
+	return runpattern.From(tests)
 }
 
 func sortedKeys(plan TestPlan) []string {

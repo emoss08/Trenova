@@ -510,3 +510,14 @@ func runGit(ctx context.Context, dir string, args ...string) ([]byte, error) {
 
 	return stdout.Bytes(), nil
 }
+
+func ShortSHA(sha string) string {
+	if sha == "" {
+		return "unknown"
+	}
+	if len(sha) > 8 {
+		return sha[:8]
+	}
+
+	return sha
+}

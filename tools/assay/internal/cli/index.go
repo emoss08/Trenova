@@ -189,7 +189,7 @@ func cutWildcard(pattern string) (string, bool) {
 
 func printIndexStats(cmd *cobra.Command, stats index.Stats, commit string) error {
 	cmd.Printf("indexed %d, reused %d, of %d packages at %s in %s\n",
-		stats.Indexed, stats.Reused, stats.Total, shortSHA(commit), stats.Duration.Round(time.Millisecond))
+		stats.Indexed, stats.Reused, stats.Total, vcs.ShortSHA(commit), stats.Duration.Round(time.Millisecond))
 	cmd.Printf("%d tests recorded, %d always-run\n", stats.Tests, stats.AlwaysRun)
 
 	if len(stats.Failures) == 0 {
@@ -202,17 +202,6 @@ func printIndexStats(cmd *cobra.Command, stats index.Stats, commit string) error
 	}
 
 	return &ExitError{Code: 1}
-}
-
-func shortSHA(sha string) string {
-	if len(sha) > 8 {
-		return sha[:8]
-	}
-	if sha == "" {
-		return "unknown"
-	}
-
-	return sha
 }
 
 func shortenTail(value string, width int) string {

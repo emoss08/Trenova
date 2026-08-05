@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/emoss08/assay/internal/cover"
 	"github.com/emoss08/assay/internal/graph"
 	"github.com/emoss08/assay/internal/index"
+	"github.com/emoss08/assay/internal/runpattern"
 	"github.com/emoss08/assay/internal/vcs"
 )
 
@@ -223,7 +223,7 @@ func planFor(in planInput) PackagePlan {
 	}
 	if record.IndexedAt != in.baseCommit {
 		plan.FullReason = fmt.Sprintf("index was built at %s, base is %s",
-			shortSHA(record.IndexedAt), shortSHA(in.baseCommit))
+			vcs.ShortSHA(record.IndexedAt), vcs.ShortSHA(in.baseCommit))
 
 		return plan
 	}
@@ -258,34 +258,6 @@ func planFor(in planInput) PackagePlan {
 	return plan
 }
 
-func shortSHA(sha string) string {
-	if len(sha) > 8 {
-		return sha[:8]
-	}
-	if sha == "" {
-		return "unknown"
-	}
-
-	return sha
-}
-
 func RunPattern(tests []string) string {
-	quoted := make([]string, 0, len(tests))
-	for _, test := range tests {
-		quoted = append(quoted, regexpQuote(test))
-	}
-
-	return "^(" + strings.Join(quoted, "|") + ")$"
-}
-
-func regexpQuote(name string) string {
-	var b strings.Builder
-	for _, r := range name {
-		if strings.ContainsRune(`\.+*?()|[]{}^$`, r) {
-			b.WriteByte('\\')
-		}
-		b.WriteRune(r)
-	}
-
-	return b.String()
+	return runpattern.From(tests)
 }

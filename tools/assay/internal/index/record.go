@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -36,6 +37,46 @@ type Record struct {
 	Files     []string
 	Tests     []TestCoverage
 	Degraded  string
+
+	// The lookup structures are derived lazily because records come out of gob,
+	// and eagerly: a whole-package mutation run asks TestsCovering once per
+	// mutation site, and linear-scanning every test's every range per site was
+	// measurably worse than running the mutants.
+	memo     sync.Once
+	ids      map[string]uint32
+	perFile  map[uint32][]fileSpan
+	nameByID []string
+}
+
+type fileSpan struct {
+	start uint32
+	end   uint32
+	test  int32
+}
+
+func (r *Record) buildLookups() {
+	r.memo.Do(func() {
+		r.ids = make(map[string]uint32, len(r.Files))
+		for i, file := range r.Files {
+			r.ids[file] = uint32(i)
+		}
+
+		r.perFile = make(map[uint32][]fileSpan)
+		r.nameByID = make([]string, len(r.Tests))
+		for ti, test := range r.Tests {
+			r.nameByID[ti] = test.Name
+			if test.AlwaysRun {
+				continue
+			}
+			for _, rg := range test.Ranges {
+				r.perFile[rg.FileID] = append(r.perFile[rg.FileID], fileSpan{
+					start: rg.Start,
+					end:   rg.End,
+					test:  int32(ti),
+				})
+			}
+		}
+	})
 }
 
 func (r *Record) Usable() bool {
@@ -87,14 +128,10 @@ func (r *Record) AlwaysRunTests() []string {
 }
 
 func (r *Record) fileID(absPath string) (uint32, bool) {
-	clean := filepath.Clean(absPath)
-	for i, candidate := range r.Files {
-		if candidate == clean {
-			return uint32(i), true
-		}
-	}
+	r.buildLookups()
+	id, ok := r.ids[filepath.Clean(absPath)]
 
-	return 0, false
+	return id, ok
 }
 
 func (r *Record) TestsCovering(absPath string, lines []int) []string {
@@ -103,33 +140,31 @@ func (r *Record) TestsCovering(absPath string, lines []int) []string {
 		return nil
 	}
 
-	var out []string
-	for _, test := range r.Tests {
-		if test.AlwaysRun {
-			continue
-		}
-		if coversAny(test.Ranges, id, lines) {
-			out = append(out, test.Name)
-		}
-	}
-	sort.Strings(out)
-
-	return out
-}
-
-func coversAny(ranges []Range, fileID uint32, lines []int) bool {
-	for _, r := range ranges {
-		if r.FileID != fileID {
+	covered := make(map[int32]struct{})
+	for _, span := range r.perFile[id] {
+		if _, seen := covered[span.test]; seen {
 			continue
 		}
 		for _, line := range lines {
-			if r.Contains(line) {
-				return true
+			if line >= int(span.start) && line <= int(span.end) {
+				covered[span.test] = struct{}{}
+
+				break
 			}
 		}
 	}
 
-	return false
+	if len(covered) == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, len(covered))
+	for test := range covered {
+		out = append(out, r.nameByID[test])
+	}
+	sort.Strings(out)
+
+	return out
 }
 
 func (r *Record) Encode() ([]byte, error) {

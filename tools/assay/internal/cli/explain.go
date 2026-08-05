@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/emoss08/assay/internal/cover"
+	"github.com/emoss08/assay/internal/index"
 	"github.com/emoss08/assay/internal/vcs"
 )
 
@@ -70,17 +71,18 @@ func newExplainCommand(opts *options) *cobra.Command {
 				return nil
 			}
 
-			covering := make(map[string][]string)
-			for _, candidate := range session.graph.AffectedTestPackages([]string{owner.ImportPath}) {
-				record, found := loader.Record(candidate)
-				if !found || !record.Knows(path) {
-					continue
-				}
-				if tests := record.TestsCovering(path, []int{line}); len(tests) > 0 {
-					covering[candidate] = tests
-				}
-			}
+			// The shared query applies the same staleness rule mutation and narrowing
+			// use: records must be indexed at this commit. explain used to skip that
+			// guard and would report coverage measured against source that is not
+			// the source being asked about.
+			query := index.NewCoverageQuery(session.graph, loader, head)
+			covering, usable := query.TestsCovering(path, []int{line})
 
+			if !usable {
+				return fmt.Errorf(
+					"no index record for %s is usable at %s; run assay index at this commit",
+					owner.ImportPath, vcs.ShortSHA(head))
+			}
 			if len(covering) == 0 {
 				cmd.Printf("%s:%d is executable but no indexed test covers it\n", filepath.Base(path), line)
 

@@ -72,6 +72,39 @@ func calcPath(root string) string {
 	return filepath.Join(root, "calc", "calc.go")
 }
 
+// TestCoverageQueryRefusesRecordsFromAnotherCommit pins the staleness rule at
+// the one place every consumer now goes through. explain used to skip this guard
+// and reported coverage measured against source that is not the source being
+// asked about.
+func TestCoverageQueryRefusesRecordsFromAnotherCommit(t *testing.T) {
+	h := setup(t)
+	h.build(t, testfixture.Module+"/calc")
+
+	line := 8
+
+	fresh := index.NewCoverageQuery(h.graph, h.loader, commit)
+	covering, usable := fresh.TestsCovering(calcPath(h.root), []int{line})
+	require.True(t, usable)
+	require.Contains(t, covering, testfixture.Module+"/calc")
+	assert.Contains(t, covering[testfixture.Module+"/calc"], "TestAdd")
+
+	stale := index.NewCoverageQuery(h.graph, h.loader, "ffffffffffffffffffffffffffffffffffffffff")
+	covering, usable = stale.TestsCovering(calcPath(h.root), []int{line})
+	assert.False(t, usable, "a record indexed at another commit has line numbers that mean nothing here")
+	assert.Empty(t, covering)
+}
+
+func TestCoverageQueryReportsUnknownFiles(t *testing.T) {
+	h := setup(t)
+	h.build(t, testfixture.Module+"/calc")
+
+	query := index.NewCoverageQuery(h.graph, h.loader, commit)
+	covering, usable := query.TestsCovering(filepath.Join(h.root, "nowhere", "ghost.go"), []int{1})
+
+	assert.False(t, usable, "a file outside every package has no index to consult")
+	assert.Empty(t, covering)
+}
+
 func TestBuildRecordsPerTestCoverage(t *testing.T) {
 	h := setup(t)
 

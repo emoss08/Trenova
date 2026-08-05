@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/emoss08/assay/internal/cover"
@@ -25,9 +26,11 @@ type ScopeOptions struct {
 type Scope struct {
 	graph      *graph.Graph
 	loader     *index.Loader
-	baseCommit string
+	query      *index.CoverageQuery
 	changed    map[string]map[int]struct{}
 	diffScoped bool
+
+	mu         sync.Mutex
 	executable map[string][]cover.Block
 }
 
@@ -45,7 +48,7 @@ func NewScope(opts ScopeOptions) (*Scope, error) {
 	s := &Scope{
 		graph:      opts.Graph,
 		loader:     opts.Loader,
-		baseCommit: opts.BaseCommit,
+		query:      index.NewCoverageQuery(opts.Graph, opts.Loader, opts.BaseCommit),
 		executable: make(map[string][]cover.Block),
 	}
 
@@ -108,23 +111,30 @@ func (s *Scope) Eligible(absPath string, line int) bool {
 		}
 	}
 
-	ranges, ok := s.executable[absPath]
-	if !ok {
-		var err error
-		ranges, err = cover.ExecutableRanges(absPath)
-		if err != nil {
-			return false
-		}
-		s.executable[absPath] = ranges
-	}
-
-	for _, span := range ranges {
+	for _, span := range s.executableRanges(absPath) {
 		if span.Contains(line) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func (s *Scope) executableRanges(absPath string) []cover.Block {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	ranges, cached := s.executable[absPath]
+	if !cached {
+		var err error
+		ranges, err = cover.ExecutableRanges(absPath)
+		if err != nil {
+			ranges = nil
+		}
+		s.executable[absPath] = ranges
+	}
+
+	return ranges
 }
 
 // Tests finds the tests that execute a line, across every package whose tests can
@@ -136,23 +146,9 @@ func (s *Scope) Eligible(absPath string, line int) bool {
 // means "no test with known coverage of this line killed it", which is the honest
 // claim.
 func (s *Scope) Tests(absPath string, line int) TestPlan {
-	owner, ok := s.graph.PackageForFile(absPath)
-	if !ok {
-		return nil
-	}
+	covering, _ := s.query.TestsCovering(absPath, []int{line})
 
-	plan := make(TestPlan)
-	for _, candidate := range s.graph.AffectedTestPackages([]string{owner.ImportPath}) {
-		record, found := s.loader.Record(candidate)
-		if !found || record.IndexedAt != s.baseCommit || !record.Knows(absPath) {
-			continue
-		}
-		if tests := record.TestsCovering(absPath, []int{line}); len(tests) > 0 {
-			plan[candidate] = tests
-		}
-	}
-
-	return plan
+	return TestPlan(covering)
 }
 
 // Budget sums the indexed durations of the tests a mutant will run, so its timeout
