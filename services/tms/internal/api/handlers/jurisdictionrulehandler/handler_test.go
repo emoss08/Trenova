@@ -21,6 +21,11 @@ import (
 )
 
 type serviceStub struct {
+	// Embedded so adding a method to the port does not break every test here;
+	// the ones this file drives are implemented below and the rest would panic
+	// if a test ever reached them.
+	services.JurisdictionRuleService
+
 	listReq   *services.ListJurisdictionRulesRequest
 	updated   *jurisdictionrule.JurisdictionRule
 	verifyReq *services.VerifyJurisdictionRuleRequest

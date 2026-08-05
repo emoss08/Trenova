@@ -22,6 +22,12 @@ type VerifyJurisdictionRuleRequest struct {
 	Actor      *RequestActor
 }
 
+type ListOverridesRequest struct {
+	Filter     *pagination.QueryOptions
+	Cursor     pagination.CursorInfo
+	TenantInfo pagination.TenantInfo
+}
+
 // JurisdictionRuleService maintains the shared oversize reference data the
 // permit engine derives from.
 //
@@ -61,4 +67,37 @@ type JurisdictionRuleService interface {
 		ctx context.Context,
 		req *VerifyJurisdictionRuleRequest,
 	) (*jurisdictionrule.JurisdictionRule, error)
+
+	// Overrides are how a carrier expresses a stricter posture. Unlike the rules
+	// they narrow, these are tenant-scoped, and an override that would loosen a
+	// statutory limit is rejected rather than saved and silently ignored.
+	ListOverrides(
+		ctx context.Context,
+		req *ListOverridesRequest,
+	) (*pagination.CursorListResult[*jurisdictionrule.Override], error)
+
+	GetOverrideByID(
+		ctx context.Context,
+		overrideID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*jurisdictionrule.Override, error)
+
+	CreateOverride(
+		ctx context.Context,
+		entity *jurisdictionrule.Override,
+		actor *RequestActor,
+	) (*jurisdictionrule.Override, error)
+
+	UpdateOverride(
+		ctx context.Context,
+		entity *jurisdictionrule.Override,
+		actor *RequestActor,
+	) (*jurisdictionrule.Override, error)
+
+	DeleteOverride(
+		ctx context.Context,
+		overrideID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+		actor *RequestActor,
+	) error
 }

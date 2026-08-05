@@ -46,6 +46,21 @@ type VerifyJurisdictionRuleRequest struct {
 	State      jurisdictionrule.VerificationState
 }
 
+type ListOverridesRequest struct {
+	Filter *pagination.QueryOptions
+	Cursor pagination.CursorInfo
+}
+
+type GetOverrideByIDRequest struct {
+	OverrideID pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
+type DeleteOverrideRequest struct {
+	OverrideID pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type JurisdictionRuleRepository interface {
 	GetActiveByStateIDs(
 		ctx context.Context,
@@ -91,6 +106,31 @@ type JurisdictionRuleRepository interface {
 		ctx context.Context,
 		req *VerifyJurisdictionRuleRequest,
 	) (*jurisdictionrule.JurisdictionRule, error)
+
+	// Overrides are tenant data, unlike the rules they narrow, so every method
+	// below scopes by organization and business unit.
+	ListOverridesConnection(
+		ctx context.Context,
+		req *ListOverridesRequest,
+		tenantInfo pagination.TenantInfo,
+	) (*pagination.CursorListResult[*jurisdictionrule.Override], error)
+
+	GetOverrideByID(
+		ctx context.Context,
+		req *GetOverrideByIDRequest,
+	) (*jurisdictionrule.Override, error)
+
+	CreateOverride(
+		ctx context.Context,
+		entity *jurisdictionrule.Override,
+	) (*jurisdictionrule.Override, error)
+
+	UpdateOverride(
+		ctx context.Context,
+		entity *jurisdictionrule.Override,
+	) (*jurisdictionrule.Override, error)
+
+	DeleteOverride(ctx context.Context, req *DeleteOverrideRequest) error
 }
 
 type JurisdictionRuleCacheRepository interface {

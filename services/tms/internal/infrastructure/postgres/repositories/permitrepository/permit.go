@@ -567,3 +567,142 @@ func (r *jurisdictionRepository) ListConnection(
 
 	return result, nil
 }
+
+func (r *jurisdictionRepository) ListOverridesConnection(
+	ctx context.Context,
+	req *repositories.ListOverridesRequest,
+	tenantInfo pagination.TenantInfo,
+) (*pagination.CursorListResult[*jurisdictionrule.Override], error) {
+	dba := r.db.DBForContext(ctx)
+
+	total, err := dba.
+		NewSelect().
+		Model((*jurisdictionrule.Override)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.OverrideScopeTenant(sq, tenantInfo)
+		}).
+		Count(ctx)
+	if err != nil {
+		r.l.Error("failed to count jurisdiction overrides", zap.Error(err))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*jurisdictionrule.Override]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: &total,
+			Query: func(entities *[]*jurisdictionrule.Override) *bun.SelectQuery {
+				return dba.
+					NewSelect().
+					Model(entities).
+					Relation(buncolgen.OverrideRelations.State)
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return sq.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+					return buncolgen.OverrideScopeTenant(q, tenantInfo)
+				}), nil
+			},
+		})
+	if err != nil {
+		r.l.Error("failed to scan jurisdiction overrides", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (r *jurisdictionRepository) GetOverrideByID(
+	ctx context.Context,
+	req *repositories.GetOverrideByIDRequest,
+) (*jurisdictionrule.Override, error) {
+	entity := new(jurisdictionrule.Override)
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Relation(buncolgen.OverrideRelations.State).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.OverrideScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.OverrideColumns.ID.Eq(), req.OverrideID)
+		}).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to get jurisdiction override", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *jurisdictionRepository) CreateOverride(
+	ctx context.Context,
+	entity *jurisdictionrule.Override,
+) (*jurisdictionrule.Override, error) {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
+		r.l.Error("failed to create jurisdiction override", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *jurisdictionRepository) UpdateOverride(
+	ctx context.Context,
+	entity *jurisdictionrule.Override,
+) (*jurisdictionrule.Override, error) {
+	ov := entity.Version
+	entity.Version++
+
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(entity).
+		WherePK().
+		Where("version = ?", ov).
+		// Not OmitZero: every override field is a nullable pointer where nil
+		// means "defer to the statute", so clearing one has to write NULL rather
+		// than be skipped as a zero value.
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to update jurisdiction override", zap.Error(err))
+		return nil, err
+	}
+
+	if err = dberror.CheckRowsAffected(
+		results, "JurisdictionOverride", entity.ID.String(),
+	); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *jurisdictionRepository) DeleteOverride(
+	ctx context.Context,
+	req *repositories.DeleteOverrideRequest,
+) error {
+	results, err := r.db.DBForContext(ctx).
+		NewDelete().
+		Model((*jurisdictionrule.Override)(nil)).
+		WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
+			return sq.
+				Where(buncolgen.OverrideColumns.ID.Eq(), req.OverrideID).
+				Where(buncolgen.OverrideColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+				Where(buncolgen.OverrideColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to delete jurisdiction override", zap.Error(err))
+		return err
+	}
+
+	return dberror.CheckRowsAffected(
+		results, "JurisdictionOverride", req.OverrideID.String(),
+	)
+}

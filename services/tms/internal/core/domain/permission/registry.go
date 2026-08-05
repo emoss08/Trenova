@@ -916,6 +916,31 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceJurisdictionRuleOverride.String(),
+		DisplayName: "Carrier Override",
+		Description: "This organization's stricter posture on a jurisdiction. " +
+			"Unlike a jurisdiction rule these are yours alone, and an override can " +
+			"only tighten a state limit, never loosen one.",
+		Category:       "Operations",
+		ParentResource: ResourceJurisdictionRule.String(),
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View carrier overrides"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Hold this fleet to a stricter limit than a state requires",
+			},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify an override"},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Remove an override, returning the jurisdiction to its statutory limits",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceJurisdictionRule.String(),
 		DisplayName: "Jurisdiction Rule",
 		Description: "Shared oversize and overweight limits per state. " +
