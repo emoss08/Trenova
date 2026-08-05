@@ -303,3 +303,17 @@ func TestExecutableRangesFailsOnUnparseableSource(t *testing.T) {
 
 	require.Error(t, err, "an unparseable file must not silently report no executable lines")
 }
+
+func TestExecutableRangesOnFileWithNoFunctions(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "decls.go")
+	require.NoError(t, os.WriteFile(path,
+		[]byte("package demo\n\nconst A = 1\n\ntype B struct{ C int }\n"), 0o644))
+
+	ranges, err := ExecutableRanges(path)
+
+	require.NoError(t, err)
+	assert.Empty(t, ranges,
+		"a file of pure declarations has no executable span, and the empty case must not "+
+			"reach the merge, which indexes blocks[:1]")
+}
