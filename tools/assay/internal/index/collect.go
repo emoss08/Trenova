@@ -217,7 +217,10 @@ func collectPackage(ctx context.Context, opts Options, coverPkg, importPath stri
 	resolve := profileResolver(opts.Graph)
 
 	for _, name := range names {
-		test, unresolved := runTest(ctx, opts, binary, pkg.Dir, workdir, name, build, resolve)
+		test, unresolved, runErr := runTest(ctx, opts, binary, pkg.Dir, workdir, name, build, resolve)
+		if runErr != nil {
+			return nil, runErr
+		}
 		if unresolved != "" && record.Degraded == "" {
 			record.Degraded = "unresolved coverage path: " + unresolved
 		}
@@ -272,13 +275,18 @@ func listTests(ctx context.Context, opts Options, binary, dir string) ([]string,
 	return names, nil
 }
 
+// runTest runs one test and attributes its coverage. It reports an error only for
+// cancellation: a test that failed to produce a profile for its own reasons is a
+// degraded-but-real observation, but a test interrupted by Ctrl-C observed
+// nothing — recording it as always-run would store a fabricated record that the
+// cache then serves forever.
 func runTest(
 	ctx context.Context,
 	opts Options,
 	binary, dir, workdir, name string,
 	build *builder,
 	resolve cover.Resolver,
-) (TestCoverage, string) {
+) (TestCoverage, string, error) {
 	profilePath := filepath.Join(workdir, "profile.out")
 	_ = os.Remove(profilePath)
 
@@ -287,6 +295,10 @@ func runTest(
 		binary, "-test.run", "^"+regexp.QuoteMeta(name)+"$", "-test.coverprofile", profilePath)
 	elapsed := time.Since(started)
 
+	if err := ctx.Err(); err != nil {
+		return TestCoverage{}, "", err
+	}
+
 	file, openErr := os.Open(profilePath)
 	if openErr != nil {
 		note := "no coverage profile produced"
@@ -294,13 +306,13 @@ func runTest(
 			note += ": " + runErr.Error()
 		}
 
-		return TestCoverage{Name: name, AlwaysRun: true, Note: note, Duration: elapsed}, ""
+		return TestCoverage{Name: name, AlwaysRun: true, Note: note, Duration: elapsed}, "", nil
 	}
 	defer file.Close()
 
 	blocks, parseErr := cover.ParseProfile(file)
 	if parseErr != nil {
-		return TestCoverage{Name: name, AlwaysRun: true, Note: parseErr.Error(), Duration: elapsed}, ""
+		return TestCoverage{Name: name, AlwaysRun: true, Note: parseErr.Error(), Duration: elapsed}, "", nil
 	}
 
 	var ranges []Range
@@ -330,10 +342,10 @@ func runTest(
 			AlwaysRun: true,
 			Note:      "no executed statements attributed; the test may have skipped",
 			Duration:  elapsed,
-		}, unresolved
+		}, unresolved, nil
 	}
 
-	return TestCoverage{Name: name, Ranges: ranges, Duration: elapsed}, unresolved
+	return TestCoverage{Name: name, Ranges: ranges, Duration: elapsed}, unresolved, nil
 }
 
 func profileResolver(g *graph.Graph) cover.Resolver {
