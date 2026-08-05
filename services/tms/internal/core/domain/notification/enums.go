@@ -104,3 +104,48 @@ func DeliveryStatusFromString(v string) (DeliveryStatus, error) {
 		return "", errors.New("invalid delivery status")
 	}
 }
+
+func (v Priority) IsValid() bool {
+	switch v {
+	case PriorityCritical,
+		PriorityHigh,
+		PriorityMedium,
+		PriorityLow:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v Channel) IsValid() bool {
+	switch v {
+	case ChannelGlobal,
+		ChannelUser,
+		ChannelRole:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v State) IsValid() bool {
+	switch v {
+	case StateInbox,
+		StateArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v DeliveryStatus) IsValid() bool {
+	switch v {
+	case DeliveryStatusPending,
+		DeliveryStatusDelivered,
+		DeliveryStatusFailed,
+		DeliveryStatusExpired:
+		return true
+	default:
+		return false
+	}
+}

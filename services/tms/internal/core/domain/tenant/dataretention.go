@@ -2,7 +2,6 @@ package tenant
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -36,7 +35,7 @@ type DataRetention struct {
 }
 
 func (dr *DataRetention) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(dr,
+	multiErr.AddOzzoError(validation.ValidateStruct(dr,
 		validation.Field(&dr.AuditRetentionPeriod,
 			validation.Required.Error("Audit retention period is required"),
 			validation.Min(1).Error("Audit retention period must be greater than 0"),
@@ -47,13 +46,7 @@ func (dr *DataRetention) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&dr.EDIMessageRetentionPeriod,
 			validation.Min(0).Error("EDI message retention period cannot be negative"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (dr *DataRetention) GetID() pulid.ID {

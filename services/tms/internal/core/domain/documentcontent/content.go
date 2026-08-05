@@ -3,8 +3,10 @@ package documentcontent
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -69,3 +71,68 @@ func (c *Content) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (c *Content) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&c.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&c.DocumentID, validation.Required.Error("Document is required")),
+		validation.Field(&c.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(
+				StatusPending,
+				StatusExtracting,
+				StatusExtracted,
+				StatusIndexed,
+				StatusFailed,
+			).Error("Status is invalid"),
+		),
+		validation.Field(&c.SourceKind,
+			validation.In(SourceKindNative, SourceKindOCR, SourceKindMixed).
+				Error("Source kind is invalid"),
+		),
+		validation.Field(&c.PageCount,
+			validation.Min(0).Error("Page count cannot be negative"),
+		),
+		// Confidence is reported to the user as a percentage, so a value outside
+		// the unit interval would render as nonsense.
+		validation.Field(&c.ClassificationConfidence,
+			validation.Min(0.0).Error("Confidence must be between 0 and 1"),
+			validation.Max(1.0).Error("Confidence must be between 0 and 1"),
+		),
+		validation.Field(&c.DetectedLanguage,
+			validation.Length(0, maxLanguageLength).
+				Error("Detected language cannot be longer than 20 characters"),
+		),
+		validation.Field(&c.DetectedDocumentKind,
+			validation.Length(0, maxDetectedKindLength).
+				Error("Detected document kind cannot be longer than 100 characters"),
+		),
+		validation.Field(&c.FailureCode,
+			validation.Length(0, maxFailureCodeLength).
+				Error("Failure code cannot be longer than 100 characters"),
+		),
+		validation.Field(&c.FailureMessage,
+			validation.When(c.Status == StatusFailed, validation.Required.Error(
+				"A failed extraction must record why it failed",
+			)),
+		),
+	))
+
+	for i, page := range c.Pages {
+		if page == nil {
+			continue
+		}
+		page.Validate(multiErr.WithIndex("pages", i))
+	}
+}
+
+const (
+	maxLanguageLength     = 20
+	maxDetectedKindLength = 100
+	maxFailureCodeLength  = 100
+)

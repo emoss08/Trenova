@@ -65,3 +65,25 @@ func TemplateTypeFromString(s string) (TemplateType, error) {
 		return "", errors.New("invalid template type")
 	}
 }
+
+func (v Status) IsValid() bool {
+	switch v {
+	case StatusActive,
+		StatusInactive,
+		StatusDraft,
+		StatusInReview:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v TemplateType) IsValid() bool {
+	switch v {
+	case TemplateTypeFreightCharge,
+		TemplateTypeAccessorialCharge:
+		return true
+	default:
+		return false
+	}
+}

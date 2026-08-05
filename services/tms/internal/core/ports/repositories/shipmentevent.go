@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,7 +38,7 @@ type ShipmentEventRepository interface {
 func (r *ListShipmentEventsRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(
 			&r.TenantInfo.OrgID,
@@ -49,12 +48,7 @@ func (r *ListShipmentEventsRequest) Validate() *errortypes.MultiError {
 			&r.TenantInfo.BuID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if multiErr.HasErrors() {
 		return multiErr

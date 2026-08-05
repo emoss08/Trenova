@@ -2,7 +2,6 @@ package driverpay
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -47,19 +46,14 @@ type WorkerPayAssignment struct {
 }
 
 func (a *WorkerPayAssignment) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(a,
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
 		validation.Field(&a.WorkerID, validation.Required.Error("Worker is required")),
 		validation.Field(&a.PayProfileID, validation.Required.Error("Pay profile is required")),
 		validation.Field(
 			&a.EffectiveFrom,
 			validation.Required.Error("Effective from date is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if a.EffectiveTo != nil && *a.EffectiveTo <= a.EffectiveFrom {
 		multiErr.Add(

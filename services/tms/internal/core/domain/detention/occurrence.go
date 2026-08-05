@@ -7,10 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
@@ -202,24 +204,83 @@ func (o *DetentionOccurrence) Dispute(note string, now int64) error {
 }
 
 func (o *DetentionOccurrence) Validate(multiErr *errortypes.MultiError) {
-	if o.ShipmentID.IsNil() {
-		multiErr.Add("shipmentId", errortypes.ErrRequired, "Shipment is required")
-	}
-	if o.StopID.IsNil() {
-		multiErr.Add("stopId", errortypes.ErrRequired, "Stop is required")
-	}
-	if o.ClockStopAt != nil && *o.ClockStopAt < o.ClockStartAt {
-		multiErr.Add("clockStopAt", errortypes.ErrInvalid,
-			"Clock stop cannot precede clock start")
-	}
-	if o.BillableMinutes < 0 {
-		multiErr.Add("billableMinutes", errortypes.ErrInvalid,
-			"Billable minutes cannot be negative")
-	}
-	if o.Status == OccurrenceStatusWaived && o.WaiverReason == nil {
-		multiErr.Add("waiverReason", errortypes.ErrRequired,
-			"A waiver requires a coded reason")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(o,
+		validation.Field(&o.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&o.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&o.ShipmentID, validation.Required.Error("Shipment is required")),
+		validation.Field(&o.ShipmentMoveID, validation.Required.Error("Shipment move is required")),
+		validation.Field(&o.StopID, validation.Required.Error("Stop is required")),
+		validation.Field(&o.CustomerID, validation.Required.Error("Customer is required")),
+		validation.Field(&o.LocationID, validation.Required.Error("Location is required")),
+		validation.Field(&o.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnumFunc(OccurrenceStatusFromString, "Status is invalid"),
+		),
+		validation.Field(&o.NotificationStatus,
+			domainvalidation.ValidEnumFunc(
+				NotificationStatusFromString, "Notification status is invalid",
+			),
+		),
+		validation.Field(&o.CapApplied,
+			validation.In(
+				CapKindNone,
+				CapKindMaxMinutes,
+				CapKindPerStopAmount,
+				CapKindPerDayAmount,
+				CapKindPerShipment,
+				CapKindLayoverBoundary,
+			).Error("Applied cap is invalid"),
+		),
+		validation.Field(&o.ClockStartAt,
+			validation.Required.Error("Clock start is required"),
+			validation.Min(int64(1)).Error("Clock start must be a valid timestamp"),
+		),
+		// The clock is what the charge is computed from, so an inverted window
+		// would bill negative time.
+		validation.Field(&o.ClockStopAt,
+			validation.Min(o.ClockStartAt).Error("Clock stop cannot precede clock start"),
+		),
+		validation.Field(&o.LateByMinutes,
+			validation.Min(int32(0)).Error("Late by minutes cannot be negative"),
+		),
+		validation.Field(&o.FreeMinutesGranted,
+			validation.Min(int32(0)).Error("Free minutes granted cannot be negative"),
+		),
+		validation.Field(&o.RawDwellMinutes,
+			validation.Min(int32(0)).Error("Raw dwell minutes cannot be negative"),
+		),
+		validation.Field(&o.BillableMinutes,
+			validation.Min(int32(0)).Error("Billable minutes cannot be negative"),
+		),
+		validation.Field(&o.RoundedMinutes,
+			validation.Min(int32(0)).Error("Rounded minutes cannot be negative"),
+		),
+		validation.Field(&o.DriverPayMinutes,
+			validation.Min(int32(0)).Error("Driver pay minutes cannot be negative"),
+		),
+		validation.Field(&o.Currency,
+			validation.Required.Error("Currency is required"),
+			validation.Length(currencyCodeLength, currencyCodeLength).
+				Error("Currency must be a three letter code"),
+		),
+		validation.Field(&o.EvidenceHead,
+			validation.Length(hashLength, hashLength).
+				Error("Evidence head must be a 64 character digest"),
+		),
+		// A waiver writes off money, so the reason it was written off is part of
+		// the record rather than something reconstructed from an audit trail.
+		validation.Field(&o.WaiverReason,
+			validation.When(
+				o.Status == OccurrenceStatusWaived,
+				validation.Required.Error("A waiver requires a coded reason"),
+			),
+			domainvalidation.ValidEnumFunc(WaiverReasonFromString, "Waiver reason is invalid"),
+		),
+	))
 }
 
 func (o *DetentionOccurrence) BeforeAppendModel(_ context.Context, query bun.Query) error {

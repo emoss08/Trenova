@@ -7,11 +7,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -140,16 +142,34 @@ type Dashboard struct {
 }
 
 func (d *Dashboard) Validate(multiErr *errortypes.MultiError) {
-	if d.Name == "" {
-		multiErr.Add("name", errortypes.ErrRequired, "Name is required")
-	}
-	if !d.Visibility.IsValid() {
-		multiErr.Add("visibility", errortypes.ErrInvalid, "Visibility must be private or shared")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
+		validation.Field(&d.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&d.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&d.OwnerID, validation.Required.Error("Owner is required")),
+		validation.Field(&d.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxDefinitionNameLength).
+				Error("Name cannot be longer than 255 characters"),
+		),
+		validation.Field(&d.Category,
+			validation.Length(0, maxDefinitionCategoryLength).
+				Error("Category cannot be longer than 100 characters"),
+		),
+		validation.Field(&d.Visibility,
+			validation.Required.Error("Visibility must be private or shared"),
+			domainvalidation.ValidEnum[Visibility]("Visibility must be private or shared"),
+		),
+		validation.Field(&d.Layout, validation.Required.Error("Layout is required")),
+	))
+
 	if d.Layout == nil {
-		multiErr.Add("layout", errortypes.ErrRequired, "Layout is required")
 		return
 	}
+
 	if len(d.Layout.Tiles) > MaxDashboardTiles {
 		multiErr.Add("layout.tiles", errortypes.ErrInvalid,
 			fmt.Sprintf("A dashboard holds at most %d tiles", MaxDashboardTiles))

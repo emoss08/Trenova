@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -56,25 +58,28 @@ type ReportView struct {
 }
 
 func (rv *ReportView) Validate(multiErr *errortypes.MultiError) {
-	if rv.Name == "" {
-		multiErr.Add("name", errortypes.ErrRequired, "Name is required")
-	}
-	if len(rv.Name) > MaxViewNameLength {
-		multiErr.Add("name", errortypes.ErrInvalid, fmt.Sprintf(
-			"Name must be %d characters or fewer", MaxViewNameLength,
-		))
-	}
-	if rv.DefinitionID.IsNil() {
-		multiErr.Add("definitionId", errortypes.ErrRequired, "Report is required")
-	}
-	if rv.OwnerID.IsNil() {
-		multiErr.Add("ownerId", errortypes.ErrRequired, "Owner is required")
-	}
-	// An empty format means "whatever the report defaults to", which is why it
-	// is nullable; a populated one still has to name a real renderer.
-	if rv.Format != "" && !rv.Format.IsValid() {
-		multiErr.Add("format", errortypes.ErrInvalid, "Format is invalid")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(rv,
+		validation.Field(&rv.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&rv.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&rv.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, MaxViewNameLength).Error(fmt.Sprintf(
+				"Name must be %d characters or fewer", MaxViewNameLength,
+			)),
+		),
+		validation.Field(&rv.DefinitionID, validation.Required.Error("Report is required")),
+		validation.Field(&rv.OwnerID, validation.Required.Error("Owner is required")),
+		// An empty format means "whatever the report defaults to", which is why
+		// it is nullable; a populated one still has to name a real renderer.
+		validation.Field(&rv.Format, domainvalidation.ValidEnum[Format]("Format is invalid")),
+		validation.Field(&rv.RunCount,
+			validation.Min(int64(0)).Error("Run count cannot be negative"),
+		),
+	))
 }
 
 func (rv *ReportView) BeforeAppendModel(_ context.Context, query bun.Query) error {

@@ -5,8 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -61,4 +64,44 @@ func (rr *RecurringShipmentRun) BeforeAppendModel(_ context.Context, query bun.Q
 	}
 
 	return nil
+}
+
+func (r *RecurringShipmentRun) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&r.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&r.RecurringShipmentID,
+			validation.Required.Error("Recurring shipment is required"),
+		),
+		validation.Field(&r.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[RunStatus]("Status is invalid"),
+		),
+		validation.Field(&r.Trigger,
+			validation.Required.Error("Trigger is required"),
+			domainvalidation.ValidEnum[RunTrigger]("Trigger is invalid"),
+		),
+		// The occurrence is which scheduled slot this run stands for, and it is
+		// what stops the same slot being generated twice.
+		validation.Field(&r.OccurrenceAt,
+			validation.Required.Error("Occurrence is required"),
+			validation.Min(int64(1)).Error("Occurrence must be a valid timestamp"),
+		),
+		validation.Field(&r.GeneratedShipmentID,
+			validation.When(
+				r.Status == RunStatusGenerated,
+				validation.Required.Error("A generated run must name the shipment it created"),
+			),
+		),
+		validation.Field(&r.Detail,
+			validation.When(
+				r.Status == RunStatusFailed || r.Status == RunStatusSkipped,
+				validation.Required.Error("A failed or skipped run must record why"),
+			),
+		),
+	))
 }

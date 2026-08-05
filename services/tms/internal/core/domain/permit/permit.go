@@ -2,11 +2,11 @@ package permit
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -99,7 +99,7 @@ func (p *Permit) IsExpiredAt(timestamp int64) bool {
 }
 
 func (p *Permit) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(p,
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.ShipmentID, validation.Required.Error("Shipment is required")),
 		validation.Field(&p.StateID, validation.Required.Error("Issuing state is required")),
 		validation.Field(&p.PermitNumber,
@@ -109,15 +109,9 @@ func (p *Permit) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&p.Status,
 			validation.Required.Error("Status is required"),
-			validation.In(StatusPending, StatusActive, StatusExpired, StatusVoid).
-				Error("Status is invalid"),
+			domainvalidation.ValidEnum[Status]("Status is invalid"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	p.validateDates(multiErr)
 

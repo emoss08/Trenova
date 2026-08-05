@@ -57,7 +57,7 @@ type ShipmentHold struct {
 }
 
 func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		h,
 		validation.Field(&h.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(
@@ -117,12 +117,7 @@ func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (h *ShipmentHold) BeforeAppendModel(_ context.Context, query bun.Query) error {

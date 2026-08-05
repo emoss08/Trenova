@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -34,12 +35,22 @@ type SidebarPreference struct {
 }
 
 func (sp *SidebarPreference) Validate(multiErr *errortypes.MultiError) {
-	if sp.Preferences == nil {
-		multiErr.Add("preferences", errortypes.ErrRequired, "Preferences document is required")
-		return
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(sp,
+		validation.Field(&sp.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&sp.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&sp.UserID, validation.Required.Error("User is required")),
+		validation.Field(&sp.Preferences,
+			validation.Required.Error("Preferences document is required"),
+		),
+	))
 
-	sp.Preferences.Validate(multiErr)
+	if sp.Preferences != nil {
+		sp.Preferences.Validate(multiErr)
+	}
 }
 
 func (sp *SidebarPreference) BeforeAppendModel(_ context.Context, query bun.Query) error {

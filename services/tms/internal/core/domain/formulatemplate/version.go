@@ -6,10 +6,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
@@ -148,3 +151,57 @@ func (ftv *FormulaTemplateVersion) GetPostgresSearchConfig() domaintypes.Postgre
 		},
 	}
 }
+
+func (v *FormulaTemplateVersion) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(v,
+		validation.Field(&v.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&v.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&v.TemplateID, validation.Required.Error("Template is required")),
+		validation.Field(&v.VersionNumber,
+			validation.Required.Error("Version number is required"),
+			validation.Min(int64(1)).Error("Version number must be at least one"),
+		),
+		validation.Field(&v.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxVersionNameLength).
+				Error("Name cannot be longer than 100 characters"),
+		),
+		validation.Field(&v.Type,
+			validation.Required.Error("Type is required"),
+			domainvalidation.ValidEnum[TemplateType]("Type is invalid"),
+		),
+		// The expression is the whole point of the version; a blank one would
+		// price every shipment it is applied to at nothing.
+		validation.Field(&v.Expression, validation.Required.Error("Expression is required")),
+		validation.Field(&v.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[Status]("Status is invalid"),
+		),
+		validation.Field(&v.SchemaID,
+			validation.Required.Error("Schema is required"),
+			validation.Length(1, maxVersionSchemaLength).
+				Error("Schema cannot be longer than 100 characters"),
+		),
+		validation.Field(&v.CreatedByID, validation.Required.Error("Created by is required")),
+		validation.Field(&v.Tags,
+			validation.Each(domainvalidation.ValidEnum[VersionTag]("Tag is invalid")),
+		),
+	))
+
+	// A ceiling below the floor makes every charge fail the bounds it is
+	// clamped to, which surfaces as a priced shipment nobody can explain.
+	if v.MinCharge.Valid && v.MaxCharge.Valid &&
+		v.MaxCharge.Decimal.LessThan(v.MinCharge.Decimal) {
+		multiErr.Add("maxCharge", errortypes.ErrInvalid,
+			"Maximum charge cannot be less than the minimum charge")
+	}
+}
+
+const (
+	maxVersionNameLength   = 100
+	maxVersionSchemaLength = 100
+)

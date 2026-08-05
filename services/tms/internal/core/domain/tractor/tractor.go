@@ -2,7 +2,6 @@ package tractor
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
@@ -77,7 +76,7 @@ type Tractor struct {
 }
 
 func (t *Tractor) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		t,
 		validation.Field(&t.Code, validation.Required),
 		validation.Field(
@@ -113,13 +112,7 @@ func (t *Tractor) Validate(multiErr *errortypes.MultiError) {
 			&t.Vin,
 			validation.By(domaintypes.ValidateVin),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if t.OwnershipType != "" && !t.OwnershipType.IsValid() {
 		multiErr.Add("ownershipType", errortypes.ErrInvalid, "Ownership type is invalid")

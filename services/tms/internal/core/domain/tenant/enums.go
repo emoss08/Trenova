@@ -474,3 +474,340 @@ const (
 		"ShowCurrentAndSupersededExternally",
 	)
 )
+
+func (v SequenceType) IsValid() bool {
+	switch v {
+	case SequenceTypeProNumber,
+		SequenceTypeConsolidation,
+		SequenceTypeOrder,
+		SequenceTypeInvoice,
+		SequenceTypeCreditMemo,
+		SequenceTypeDebitMemo,
+		SequenceTypeWorkOrder,
+		SequenceTypeJournalBatch,
+		SequenceTypeJournalEntry,
+		SequenceTypeManualJournalRequest,
+		SequenceTypeLocationCode,
+		SequenceTypeDriverSettlement:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v JournalPostingModeType) IsValid() bool {
+	switch v {
+	case JournalPostingModeManual,
+		JournalPostingModeAutomatic:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ManualJournalEntryPolicy) IsValid() bool {
+	switch v {
+	case ManualJournalEntryPolicyAllowAll,
+		ManualJournalEntryPolicyAdjustmentOnly,
+		ManualJournalEntryPolicyDisallow:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v JournalReversalPolicyType) IsValid() bool {
+	switch v {
+	case JournalReversalPolicyDisallow,
+		JournalReversalPolicyNextOpenPeriod:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v PeriodCloseModeType) IsValid() bool {
+	switch v {
+	case PeriodCloseModeManualOnly,
+		PeriodCloseModeSystemScheduled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v LockedPeriodPostingPolicy) IsValid() bool {
+	switch v {
+	case LockedPeriodPostingPolicyBlockSubledgerAllowManualJe:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ClosedPeriodPostingPolicy) IsValid() bool {
+	switch v {
+	case ClosedPeriodPostingPolicyRequireReopen,
+		ClosedPeriodPostingPolicyPostToNextOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ReconciliationModeType) IsValid() bool {
+	switch v {
+	case ReconciliationModeDisabled,
+		ReconciliationModeWarnOnly,
+		ReconciliationModeBlockPosting:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v CurrencyModeType) IsValid() bool {
+	switch v {
+	case CurrencyModeSingleCurrency,
+		CurrencyModeMultiCurrency:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ExchangeRateDatePolicy) IsValid() bool {
+	switch v {
+	case ExchangeRateDatePolicyDocumentDate,
+		ExchangeRateDatePolicyAccountingDate:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ExchangeRateOverrideType) IsValid() bool {
+	switch v {
+	case ExchangeRateOverrideAllow,
+		ExchangeRateOverrideRequireApproval,
+		ExchangeRateOverrideDisallow:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v TransferSchedule) IsValid() bool {
+	switch v {
+	case TransferScheduleContinuous,
+		TransferScheduleHourly,
+		TransferScheduleDaily,
+		TransferScheduleWeekly:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v EnforcementLevel) IsValid() bool {
+	switch v {
+	case EnforcementLevelIgnore,
+		EnforcementLevelWarn,
+		EnforcementLevelRequireReview,
+		EnforcementLevelBlock:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v BillingExceptionDisposition) IsValid() bool {
+	switch v {
+	case BillingExceptionDispositionRouteToBillingReview,
+		BillingExceptionDispositionReturnToOperations:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ReadyToBillAssignmentMode) IsValid() bool {
+	switch v {
+	case ReadyToBillAssignmentModeManualOnly,
+		ReadyToBillAssignmentModeAutomaticWhenEligible:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v BillingQueueTransferMode) IsValid() bool {
+	switch v {
+	case BillingQueueTransferModeManualOnly,
+		BillingQueueTransferModeAutomaticWhenReady:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v InvoiceDraftCreationMode) IsValid() bool {
+	switch v {
+	case InvoiceDraftCreationModeManualOnly,
+		InvoiceDraftCreationModeAutomaticWhenTransferred:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v InvoicePostingMode) IsValid() bool {
+	switch v {
+	case InvoicePostingModeManualReviewRequired,
+		InvoicePostingModeAutomaticWhenNoBlockingExceptions:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v RateVarianceAutoResolutionMode) IsValid() bool {
+	switch v {
+	case RateVarianceAutoResolutionModeDisabled,
+		RateVarianceAutoResolutionModeBypassReviewWithinTolerance:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v PaymentTerm) IsValid() bool {
+	switch v {
+	case PaymentTermNet10,
+		PaymentTermNet15,
+		PaymentTermNet30,
+		PaymentTermNet45,
+		PaymentTermNet60,
+		PaymentTermNet90,
+		PaymentTermDueOnReceipt:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v AdjustmentEligibilityPolicy) IsValid() bool {
+	switch v {
+	case AdjustmentEligibilityDisallow,
+		AdjustmentEligibilityAllowWithApproval,
+		AdjustmentEligibilityAllowWithoutApproval:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v AdjustmentAccountingDatePolicy) IsValid() bool {
+	switch v {
+	case AdjustmentAccountingDateUseOriginalIfOpenElseNextOpen,
+		AdjustmentAccountingDateAlwaysNextOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ClosedPeriodAdjustmentPolicy) IsValid() bool {
+	switch v {
+	case ClosedPeriodAdjustmentPolicyDisallow,
+		ClosedPeriodAdjustmentPolicyRequireReopen,
+		ClosedPeriodAdjustmentPolicyPostInNextOpenPeriodWithApproval:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v RequirementPolicy) IsValid() bool {
+	switch v {
+	case RequirementPolicyOptional,
+		RequirementPolicyRequired:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v AdjustmentAttachmentPolicy) IsValid() bool {
+	switch v {
+	case AdjustmentAttachmentPolicyOptional,
+		AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff,
+		AdjustmentAttachmentPolicyRequiredForAll:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ApprovalPolicy) IsValid() bool {
+	switch v {
+	case ApprovalPolicyNone,
+		ApprovalPolicyAlways,
+		ApprovalPolicyAmountThreshold:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v WriteOffApprovalPolicy) IsValid() bool {
+	switch v {
+	case WriteOffApprovalPolicyDisallow,
+		WriteOffApprovalPolicyAlwaysRequireApproval,
+		WriteOffApprovalPolicyRequireApprovalAboveThreshold:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ReplacementInvoiceReviewPolicy) IsValid() bool {
+	switch v {
+	case ReplacementInvoiceReviewPolicyNoAdditionalReview,
+		ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange,
+		ReplacementInvoiceReviewPolicyAlwaysRequireReview:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v CustomerCreditBalancePolicy) IsValid() bool {
+	switch v {
+	case CustomerCreditBalancePolicyDisallow,
+		CustomerCreditBalancePolicyAllowUnappliedCredit:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v OverCreditPolicy) IsValid() bool {
+	switch v {
+	case OverCreditPolicyBlock,
+		OverCreditPolicyAllowWithApproval:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v SupersededInvoiceVisibilityPolicy) IsValid() bool {
+	switch v {
+	case SupersededInvoiceVisibilityPolicyShowCurrentOnlyExternally,
+		SupersededInvoiceVisibilityPolicyShowCurrentAndSupersededExternally:
+		return true
+	default:
+		return false
+	}
+}

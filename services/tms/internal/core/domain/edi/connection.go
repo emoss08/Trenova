@@ -5,8 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -123,4 +126,64 @@ func (c *EDIConnection) GetPostgresSearchConfig() domaintypes.PostgresSearchConf
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightB},
 		},
 	}
+}
+
+func (c *EDIConnection) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		// A connection joins two organizations; without both ends it addresses
+		// nobody, and pointing both ends at one organization would have an
+		// organization trading with itself.
+		validation.Field(&c.SourceOrganizationID,
+			validation.Required.Error("Source organization is required"),
+		),
+		validation.Field(&c.TargetOrganizationID,
+			validation.Required.Error("Target organization is required"),
+			validation.NotIn(c.SourceOrganizationID).
+				Error("A connection cannot join an organization to itself"),
+		),
+		validation.Field(&c.Method,
+			validation.Required.Error("Method is required"),
+			domainvalidation.ValidEnum[ConnectionMethod]("Method is invalid"),
+		),
+		validation.Field(&c.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[ConnectionStatus]("Status is invalid"),
+		),
+		// Each lifecycle transition is an authorization record, so who acted and
+		// when travel together or the trail cannot be audited.
+		validation.Field(&c.AcceptedAt,
+			validation.When(c.AcceptedByID.IsNotNil(), validation.Required.Error(
+				"An accepted connection must record when it was accepted",
+			)),
+		),
+		validation.Field(&c.AcceptedByID,
+			validation.When(c.AcceptedAt != nil, validation.Required.Error(
+				"An accepted connection must record who accepted it",
+			)),
+		),
+		validation.Field(&c.RejectedAt,
+			validation.When(c.RejectedByID.IsNotNil(), validation.Required.Error(
+				"A rejected connection must record when it was rejected",
+			)),
+		),
+		validation.Field(&c.RejectionReason,
+			validation.When(
+				c.Status == ConnectionStatusRejected,
+				validation.Required.Error("A rejected connection must record why"),
+			),
+		),
+		validation.Field(&c.SuspendedAt,
+			validation.When(c.SuspendedByID.IsNotNil(), validation.Required.Error(
+				"A suspended connection must record when it was suspended",
+			)),
+		),
+		validation.Field(&c.RevokedAt,
+			validation.When(c.RevokedByID.IsNotNil(), validation.Required.Error(
+				"A revoked connection must record when it was revoked",
+			)),
+		),
+	))
 }

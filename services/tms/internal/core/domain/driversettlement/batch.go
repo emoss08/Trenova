@@ -2,7 +2,6 @@ package driversettlement
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -54,7 +53,7 @@ type SettlementBatch struct {
 }
 
 func (b *SettlementBatch) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(b,
+	multiErr.AddOzzoError(validation.ValidateStruct(b,
 		validation.Field(&b.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
@@ -62,12 +61,7 @@ func (b *SettlementBatch) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&b.PeriodStart, validation.Required.Error("Period start is required")),
 		validation.Field(&b.PeriodEnd, validation.Required.Error("Period end is required")),
 		validation.Field(&b.PayDate, validation.Required.Error("Pay date is required")),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !b.Status.IsValid() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Batch status is invalid")

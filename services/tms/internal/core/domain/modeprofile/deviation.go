@@ -2,10 +2,10 @@ package modeprofile
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -95,7 +95,7 @@ func (d *Deviation) RequiresAcknowledgement() bool {
 }
 
 func (d *Deviation) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(d,
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
 		validation.Field(&d.RuleKey,
 			validation.Required.Error("Rule key is required"),
 		),
@@ -110,11 +110,7 @@ func (d *Deviation) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&d.State,
 			validation.Required.Error("State is required"),
-			validation.In(
-				DeviationStateOpen,
-				DeviationStateAcknowledged,
-				DeviationStateResolved,
-			).Error("State is invalid"),
+			domainvalidation.ValidEnum[DeviationState]("State is invalid"),
 		),
 		validation.Field(&d.Enforcement,
 			validation.Required.Error("Enforcement level is required"),
@@ -123,12 +119,7 @@ func (d *Deviation) Validate(multiErr *errortypes.MultiError) {
 				tenant.EnforcementLevelRequireReview,
 			).Error("Only warn and review level results are recorded as deviations"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	d.validateAcknowledgement(multiErr)
 }

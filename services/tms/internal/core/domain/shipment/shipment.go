@@ -2,7 +2,6 @@ package shipment
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
@@ -122,7 +121,7 @@ type Shipment struct {
 }
 
 func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		s,
 		validation.Field(&s.ServiceTypeID, validation.Required.Error("Service type is required")),
 		validation.Field(&s.CustomerID, validation.Required.Error("Customer is required")),
@@ -164,11 +163,30 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 			&s.FormulaTemplateID,
 			validation.Required.Error("Formula template is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
+	))
+
+	// The pieces a shipment is made of are validated with it: they arrive in
+	// the same payload, and a caller that sent a malformed stop should hear
+	// about it here rather than from a constraint at insert.
+	for i, move := range s.Moves {
+		if move == nil {
+			continue
 		}
+		move.Validate(multiErr.WithIndex("moves", i))
+	}
+
+	for i, commodity := range s.Commodities {
+		if commodity == nil {
+			continue
+		}
+		commodity.Validate(multiErr.WithIndex("commodities", i))
+	}
+
+	for i, charge := range s.AdditionalCharges {
+		if charge == nil {
+			continue
+		}
+		charge.Validate(multiErr.WithIndex("additionalCharges", i))
 	}
 }
 

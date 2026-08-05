@@ -2,7 +2,6 @@ package tenant
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -54,7 +53,7 @@ type BillingControl struct {
 }
 
 func (bc *BillingControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		bc,
 		validation.Field(&bc.DefaultPaymentTerm, validation.Required),
 		validation.Field(&bc.ReadyToBillAssignmentMode, validation.Required),
@@ -69,13 +68,7 @@ func (bc *BillingControl) Validate(multiErr *errortypes.MultiError) {
 			&bc.RateVarianceTolerancePercent,
 			validation.Required,
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (bc *BillingControl) BeforeAppendModel(_ context.Context, query bun.Query) error {

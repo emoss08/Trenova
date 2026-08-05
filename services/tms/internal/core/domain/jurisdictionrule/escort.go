@@ -2,9 +2,9 @@ package jurisdictionrule
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -57,32 +57,16 @@ func (e *EscortThreshold) Describe() string {
 }
 
 func (e *EscortThreshold) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(e,
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
 		validation.Field(&e.Role,
 			validation.Required.Error("Escort role is required"),
-			validation.In(
-				EscortRoleFront,
-				EscortRoleRear,
-				EscortRolePolice,
-				EscortRoleSurvey,
-			).Error("Escort role is invalid"),
+			domainvalidation.ValidEnum[EscortRole]("Escort role is invalid"),
 		),
 		validation.Field(&e.Trigger,
 			validation.Required.Error("Trigger is required"),
-			validation.In(
-				TriggerWidth,
-				TriggerHeight,
-				TriggerLength,
-				TriggerWeight,
-				TriggerSuperload,
-			).Error("Trigger is invalid"),
+			domainvalidation.ValidEnum[TriggerKind]("Trigger is invalid"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if e.ThresholdValue <= 0 {
 		multiErr.Add("thresholdValue", errortypes.ErrInvalid,

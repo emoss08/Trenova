@@ -2,7 +2,6 @@ package jurisdictionrule
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -72,19 +71,14 @@ func (o *Override) HasAnyOverride() bool {
 }
 
 func (o *Override) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(o,
+	multiErr.AddOzzoError(validation.ValidateStruct(o,
 		validation.Field(&o.StateID, validation.Required.Error("State is required")),
 		validation.Field(&o.Reason,
 			validation.Required.Error("Explain why this jurisdiction is overridden"),
 			validation.Length(10, 0).
 				Error("Provide at least 10 characters explaining the override"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !o.HasAnyOverride() {
 		multiErr.Add("stateId", errortypes.ErrInvalid,

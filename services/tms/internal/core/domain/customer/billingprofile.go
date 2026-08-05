@@ -7,14 +7,22 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
 var _ bun.BeforeAppendModelHook = (*CustomerBillingProfile)(nil)
+
+const (
+	maxInvoicePrefixLength   = 20
+	maxTaxExemptNumberLength = 50
+	currencyCodeLength       = 3
+)
 
 type CustomerBillingProfile struct {
 	bun.BaseModel `bun:"table:customer_billing_profiles,alias:cbp" json:"-"`
@@ -87,18 +95,79 @@ func (b *CustomerBillingProfile) GetID() string {
 }
 
 func (b *CustomerBillingProfile) Validate(multiErr *errortypes.MultiError) {
-	switch b.FuelSurchargeMode {
-	case FuelSurchargeModeNone, FuelSurchargeModeProgram, FuelSurchargeModeFuelIncluded:
-	default:
-		multiErr.Add("billingProfile.fuelSurchargeMode", errortypes.ErrInvalid,
-			"Fuel surcharge mode is invalid")
-	}
-
-	if b.FuelSurchargeMode == FuelSurchargeModeProgram &&
-		(b.FuelSurchargeProgramID == nil || b.FuelSurchargeProgramID.IsNil()) {
-		multiErr.Add("billingProfile.fuelSurchargeProgramId", errortypes.ErrRequired,
-			"Select the fuel surcharge program to apply for this customer")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(b,
+		validation.Field(&b.BillingCycleType,
+			domainvalidation.ValidEnum[BillingCycleType]("Billing cycle type is invalid"),
+		),
+		validation.Field(&b.BillingCycleDayOfWeek,
+			validation.Min(int8(0)).Error("Day of week must be between 0 and 6"),
+			validation.Max(int8(6)).Error("Day of week must be between 0 and 6"),
+		),
+		validation.Field(&b.PaymentTerm,
+			domainvalidation.ValidEnum[PaymentTerm]("Payment term is invalid"),
+		),
+		validation.Field(&b.CreditStatus,
+			domainvalidation.ValidEnum[CreditStatus]("Credit status is invalid"),
+		),
+		validation.Field(&b.InvoiceMethod,
+			domainvalidation.ValidEnum[InvoiceMethod]("Invoice method is invalid"),
+		),
+		validation.Field(&b.ConsolidationGroupBy,
+			domainvalidation.ValidEnum[ConsolidationGroupBy]("Consolidation grouping is invalid"),
+		),
+		validation.Field(&b.ConsolidationPeriodDays,
+			validation.Min(int8(1)).Error("Consolidation period must be at least one day"),
+		),
+		validation.Field(&b.InvoiceNumberFormat,
+			domainvalidation.ValidEnum[InvoiceNumberFormat]("Invoice number format is invalid"),
+		),
+		// A custom prefix format with no prefix would silently fall back to the
+		// default numbering, which is the opposite of what was asked for.
+		validation.Field(&b.CustomerInvoicePrefix,
+			validation.When(
+				b.InvoiceNumberFormat == InvoiceNumberFormatCustomPrefix,
+				validation.Required.Error("Enter the invoice prefix to use for this customer"),
+			),
+			validation.Length(0, maxInvoicePrefixLength).
+				Error("Invoice prefix cannot be longer than 20 characters"),
+		),
+		validation.Field(&b.InvoiceCopies,
+			validation.Min(int8(1)).Error("At least one invoice copy is required"),
+		),
+		validation.Field(&b.GracePeriodDays,
+			validation.Min(int8(0)).Error("Grace period cannot be negative"),
+		),
+		validation.Field(&b.TaxExemptNumber,
+			validation.When(
+				b.TaxExempt,
+				validation.Required.Error("A tax exempt customer must record its exemption number"),
+			),
+			validation.Length(0, maxTaxExemptNumberLength).
+				Error("Tax exempt number cannot be longer than 50 characters"),
+		),
+		validation.Field(&b.BillingCurrency,
+			validation.Required.Error("Billing currency is required"),
+			validation.Length(currencyCodeLength, currencyCodeLength).
+				Error("Billing currency must be a three letter code"),
+		),
+		validation.Field(&b.InvoiceAdjustmentSupportingDocumentPolicy,
+			domainvalidation.ValidEnum[InvoiceAdjustmentSupportingDocumentPolicy](
+				"Supporting document policy is invalid",
+			),
+		),
+		validation.Field(&b.FuelSurchargeMode,
+			validation.Required.Error("Fuel surcharge mode is required"),
+			domainvalidation.ValidEnum[FuelSurchargeMode]("Fuel surcharge mode is invalid"),
+		),
+		validation.Field(&b.FuelSurchargeProgramID,
+			validation.When(
+				b.FuelSurchargeMode == FuelSurchargeModeProgram,
+				validation.Required.Error(
+					"Select the fuel surcharge program to apply for this customer",
+				),
+			),
+		),
+	))
 }
 
 func (b *CustomerBillingProfile) AppliesFuelSurcharge() bool {

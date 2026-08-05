@@ -2,7 +2,6 @@ package exchangerate
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -57,7 +56,7 @@ type ExchangeRate struct {
 }
 
 func (e *ExchangeRate) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(e,
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
 		validation.Field(&e.FromCurrency,
 			validation.Required.Error("From currency is required"),
 			validation.Length(3, 3).Error("From currency must be 3 characters"),
@@ -79,12 +78,7 @@ func (e *ExchangeRate) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&e.Date,
 			validation.Required.Error("Date is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (e *ExchangeRate) GetID() pulid.ID {
@@ -150,7 +144,8 @@ type SettlementQuote struct {
 }
 
 func (q *SettlementQuote) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(q,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		q,
 		validation.Field(&q.FromCurrency,
 			validation.Required.Error("From currency is required"),
 			validation.Length(3, 3).Error("From currency must be 3 characters"),
@@ -166,13 +161,11 @@ func (q *SettlementQuote) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&q.Amount, validation.Required.Error("Amount is required")),
 		validation.Field(&q.Rate, validation.Required.Error("Rate is required")),
-		validation.Field(&q.ConvertedAmount, validation.Required.Error("Converted amount is required")),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+		validation.Field(
+			&q.ConvertedAmount,
+			validation.Required.Error("Converted amount is required"),
+		),
+	))
 }
 
 func (q *SettlementQuote) GetID() pulid.ID {

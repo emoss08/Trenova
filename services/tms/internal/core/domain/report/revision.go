@@ -3,8 +3,10 @@ package report
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -44,3 +46,30 @@ func (rdr *ReportDefinitionRevision) GetOrganizationID() pulid.ID { return rdr.O
 func (rdr *ReportDefinitionRevision) GetBusinessUnitID() pulid.ID { return rdr.BusinessUnitID }
 
 func (rdr *ReportDefinitionRevision) GetTableName() string { return "report_definition_revisions" }
+
+func (r *ReportDefinitionRevision) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&r.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&r.DefinitionID, validation.Required.Error("Report is required")),
+		validation.Field(&r.RevisionNumber,
+			validation.Required.Error("Revision number is required"),
+			validation.Min(int64(1)).Error("Revision number must be at least one"),
+		),
+		// The catalog version pins what the definition was written against, so a
+		// revision without one cannot be replayed after the catalog moves on.
+		validation.Field(&r.CatalogVersion,
+			validation.Required.Error("Catalog version is required"),
+			validation.Length(1, maxCatalogVersionLength).
+				Error("Catalog version cannot be longer than 80 characters"),
+		),
+		validation.Field(&r.Definition, validation.Required.Error("Definition is required")),
+		validation.Field(&r.CreatedByID, validation.Required.Error("Created by is required")),
+	))
+}
+
+const maxCatalogVersionLength = 80

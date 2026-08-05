@@ -5,8 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -66,3 +69,53 @@ func (e *Event) GetOrganizationID() pulid.ID {
 func (e *Event) GetBusinessUnitID() pulid.ID {
 	return e.BusinessUnitID
 }
+
+func (e *Event) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&e.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&e.ShipmentID, validation.Required.Error("Shipment is required")),
+		validation.Field(&e.Type,
+			validation.Required.Error("Type is required"),
+			domainvalidation.ValidEnum[Type]("Type is invalid"),
+		),
+		validation.Field(&e.Severity,
+			validation.Required.Error("Severity is required"),
+			domainvalidation.ValidEnum[Severity]("Severity is invalid"),
+		),
+		validation.Field(&e.ActorType,
+			validation.Required.Error("Actor type is required"),
+			domainvalidation.ValidEnum[ActorType]("Actor type is invalid"),
+		),
+		// A user-attributed entry with no user is an unattributable line on the
+		// shipment timeline, which is the one thing the timeline is for.
+		validation.Field(&e.ActorID,
+			validation.When(
+				e.ActorType == ActorUser,
+				validation.Required.Error("A user event must name the user who caused it"),
+			),
+		),
+		validation.Field(&e.ActorLabel,
+			validation.Length(0, maxActorLabelLength).
+				Error("Actor label cannot be longer than 100 characters"),
+		),
+		validation.Field(&e.Summary, validation.Required.Error("Summary is required")),
+		validation.Field(&e.CorrelationID,
+			validation.Length(0, maxCorrelationIDLength).
+				Error("Correlation id cannot be longer than 100 characters"),
+		),
+		validation.Field(&e.OccurredAt,
+			validation.Required.Error("Occurred at is required"),
+			validation.Min(int64(1)).Error("Occurred at must be a valid timestamp"),
+		),
+	))
+}
+
+const (
+	maxActorLabelLength    = 100
+	maxCorrelationIDLength = 100
+)

@@ -2,8 +2,8 @@ package weatheralert
 
 import (
 	"context"
-	"errors"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,7 +61,7 @@ type Activity struct {
 }
 
 func (w *WeatherAlert) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		w,
 		validation.Field(&w.OrganizationID, validation.Required),
 		validation.Field(&w.BusinessUnitID, validation.Required),
@@ -72,13 +72,7 @@ func (w *WeatherAlert) Validate(multiErr *errortypes.MultiError) {
 			validation.Required,
 			validation.By(ValidateAlertCategory),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if w.Geometry == nil || w.Geometry.Geometry == nil {
 		multiErr.Add("geometry", errortypes.ErrRequired, "Geometry is required")
@@ -115,4 +109,26 @@ func (a *Activity) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
+}
+
+func (a *Activity) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&a.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&a.WeatherAlertID,
+			validation.Required.Error("Weather alert is required"),
+		),
+		validation.Field(&a.ActivityType,
+			validation.Required.Error("Activity type is required"),
+			domainvalidation.ValidEnum[ActivityType]("Activity type is invalid"),
+		),
+		validation.Field(&a.Timestamp,
+			validation.Required.Error("Timestamp is required"),
+			validation.Min(int64(1)).Error("Timestamp must be a valid timestamp"),
+		),
+	))
 }

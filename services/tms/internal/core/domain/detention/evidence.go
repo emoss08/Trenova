@@ -7,9 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -17,6 +19,13 @@ var _ bun.BeforeAppendModelHook = (*DetentionEvidence)(nil)
 
 // GenesisHash anchors the first link of every occurrence's evidence chain.
 const GenesisHash = "0000000000000000000000000000000000000000000000000000000000000000"
+
+const (
+	// hashLength is the width of a hex-encoded SHA-256 digest.
+	hashLength = 64
+	// currencyCodeLength is the width of an ISO 4217 code.
+	currencyCodeLength = 3
+)
 
 // DetentionEvidence is one append-only fact about an occurrence, hash-chained
 // to its predecessor. The carrier's structural credibility problem in a dispute
@@ -114,19 +123,43 @@ func VerifyChain(entries []*DetentionEvidence) int {
 }
 
 func (e *DetentionEvidence) Validate(multiErr *errortypes.MultiError) {
-	if e.DetentionOccurrenceID.IsNil() {
-		multiErr.Add("detentionOccurrenceId", errortypes.ErrRequired,
-			"Detention occurrence is required")
-	}
-	if e.Summary == "" {
-		multiErr.Add("summary", errortypes.ErrRequired, "Summary is required")
-	}
-	if _, err := EvidenceKindFromString(string(e.Kind)); err != nil {
-		multiErr.Add("kind", errortypes.ErrInvalid, "Evidence kind is invalid")
-	}
-	if _, err := EvidenceSourceFromString(string(e.Source)); err != nil {
-		multiErr.Add("source", errortypes.ErrInvalid, "Evidence source is invalid")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&e.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&e.DetentionOccurrenceID,
+			validation.Required.Error("Detention occurrence is required"),
+		),
+		validation.Field(&e.Sequence,
+			validation.Min(int32(0)).Error("Sequence cannot be negative"),
+		),
+		validation.Field(&e.Kind,
+			validation.Required.Error("Evidence kind is required"),
+			domainvalidation.ValidEnumFunc(EvidenceKindFromString, "Evidence kind is invalid"),
+		),
+		validation.Field(&e.Source,
+			validation.Required.Error("Evidence source is required"),
+			domainvalidation.ValidEnumFunc(EvidenceSourceFromString, "Evidence source is invalid"),
+		),
+		validation.Field(&e.Summary, validation.Required.Error("Summary is required")),
+		validation.Field(&e.ObservedAt,
+			validation.Required.Error("Observed at is required"),
+			validation.Min(int64(1)).Error("Observed at must be a valid timestamp"),
+		),
+		// Both are sealed at insert when unset, so they are only checked for
+		// shape here: a chain link of the wrong width could never verify.
+		validation.Field(&e.PrevHash,
+			validation.Length(hashLength, hashLength).
+				Error("Previous hash must be a 64 character digest"),
+		),
+		validation.Field(&e.Hash,
+			validation.Length(hashLength, hashLength).
+				Error("Hash must be a 64 character digest"),
+		),
+	))
 }
 
 func (e *DetentionEvidence) BeforeAppendModel(_ context.Context, query bun.Query) error {

@@ -45,3 +45,53 @@ const (
 	ActorSystem = ActorType("system")
 	ActorEDI    = ActorType("edi")
 )
+
+func (v Type) IsValid() bool {
+	switch v {
+	case TypeShipmentCreated,
+		TypeShipmentUpdated,
+		TypeStatusChanged,
+		TypeShipmentCanceled,
+		TypeShipmentUncanceled,
+		TypeOwnershipTransferred,
+		TypeMoveStatusChanged,
+		TypeMoveDeparted,
+		TypeMoveArrived,
+		TypeStopCompleted,
+		TypeDriverAssigned,
+		TypeDriverReassigned,
+		TypeDriverUnassigned,
+		TypeHoldPlaced,
+		TypeHoldUpdated,
+		TypeHoldReleased,
+		TypeCommentPosted:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v Severity) IsValid() bool {
+	switch v {
+	case SeverityDanger,
+		SeveritySuccess,
+		SeverityBrand,
+		SeverityInfo,
+		SeverityMuted:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ActorType) IsValid() bool {
+	switch v {
+	case ActorUser,
+		ActorAPIKey,
+		ActorSystem,
+		ActorEDI:
+		return true
+	default:
+		return false
+	}
+}

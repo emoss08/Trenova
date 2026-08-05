@@ -2,10 +2,10 @@ package customfield
 
 import (
 	"context"
-	"errors"
 	"regexp"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +50,7 @@ type CustomFieldDefinition struct {
 }
 
 func (c *CustomFieldDefinition) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		c,
 		validation.Field(&c.ResourceType, validation.Required.Error("Resource type is required")),
 		validation.Field(
@@ -66,27 +66,12 @@ func (c *CustomFieldDefinition) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&c.FieldType,
 			validation.Required.Error("Field type is required"),
-			validation.By(func(value any) error {
-				ft, ok := value.(FieldType)
-				if !ok {
-					return errors.New("invalid field type")
-				}
-				if !ft.IsValid() {
-					return errors.New("invalid field type")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[FieldType]("invalid field type"),
 		),
 		validation.Field(&c.Color,
 			validation.Length(0, 20).Error("Color must be at most 20 characters"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if c.FieldType.RequiresOptions() && len(c.Options) == 0 {
 		multiErr.Add(

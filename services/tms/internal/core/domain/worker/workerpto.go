@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -48,7 +49,7 @@ type WorkerPTO struct {
 }
 
 func (wpto *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(wpto,
+	multiErr.AddOzzoError(validation.ValidateStruct(wpto,
 		validation.Field(&wpto.WorkerID,
 			validation.Required.Error("Worker is required"),
 			validation.By(func(value any) error {
@@ -62,35 +63,19 @@ func (wpto *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-		validation.Field(&wpto.Status,
+		validation.Field(
+			&wpto.Status,
 			validation.Required.Error("Status is required"),
-			validation.By(func(value any) error {
-				s, ok := value.(PTOStatus)
-				if !ok {
-					return errors.New("invalid PTO status type")
-				}
-				if !s.IsValid() {
-					return errors.New(
-						"status must be one of: Requested, Approved, Rejected, Cancelled",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[PTOStatus](
+				"status must be one of: Requested, Approved, Rejected, Cancelled",
+			),
 		),
-		validation.Field(&wpto.Type,
+		validation.Field(
+			&wpto.Type,
 			validation.Required.Error("Type is required"),
-			validation.By(func(value any) error {
-				t, ok := value.(PTOType)
-				if !ok {
-					return errors.New("invalid PTO type")
-				}
-				if !t.IsValid() {
-					return errors.New(
-						"type must be one of: Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[PTOType](
+				"type must be one of: Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity",
+			),
 		),
 		validation.Field(&wpto.StartDate,
 			validation.Required.Error("Start date is required"),
@@ -104,13 +89,7 @@ func (wpto *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Reason is required"),
 			validation.Length(1, 255).Error("Reason must be between 1 and 255 characters"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if wpto.EndDate <= wpto.StartDate {
 		multiErr.Add("endDate", errortypes.ErrInvalid, "End date must be after start date")

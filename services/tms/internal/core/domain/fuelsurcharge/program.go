@@ -2,7 +2,6 @@ package fuelsurcharge
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -70,7 +69,7 @@ type FuelSurchargeProgram struct {
 }
 
 func (p *FuelSurchargeProgram) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(p,
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100),
@@ -131,12 +130,7 @@ func (p *FuelSurchargeProgram) Validate(multiErr *errortypes.MultiError) {
 			validation.In(FallbackUseLatestAvailable, FallbackSkip).
 				Error("Missing price fallback is invalid"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	p.validateMethodParams(multiErr)
 	p.validateAmountBounds(multiErr)

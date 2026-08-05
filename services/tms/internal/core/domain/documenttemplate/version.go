@@ -6,11 +6,13 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -201,46 +203,71 @@ func (v *DocumentTemplateVersion) HasContent() bool {
 }
 
 func (v *DocumentTemplateVersion) Validate(multiErr *errortypes.MultiError) {
-	if v.TemplateID.IsNil() {
-		multiErr.Add("templateId", errortypes.ErrRequired, "Template is required")
-	}
-
-	if !v.Status.IsValid() {
-		multiErr.Add("status", errortypes.ErrInvalid, "Status is not a valid version status")
-	}
-
-	if !v.HasContent() {
-		multiErr.Add("bodyHtml", errortypes.ErrRequired,
-			"A version must have content in at least one of its channels")
-	}
-
-	if v.PageSize != "" && !v.PageSize.IsValid() {
-		multiErr.Add("pageSize", errortypes.ErrInvalid, "Page size is not supported")
-	}
-
-	if v.Orientation != "" && !v.Orientation.IsValid() {
-		multiErr.Add("orientation", errortypes.ErrInvalid, "Orientation is not supported")
-	}
-
-	v.validateMargins(multiErr)
+	multiErr.AddOzzoError(validation.ValidateStruct(v,
+		validation.Field(&v.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&v.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&v.TemplateID, validation.Required.Error("Template is required")),
+		validation.Field(&v.VersionNumber,
+			validation.Min(int64(0)).Error("Version number cannot be negative"),
+		),
+		validation.Field(&v.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[VersionStatus]("Status is not a valid version status"),
+		),
+		validation.Field(&v.BodyHTML,
+			validation.When(!v.HasContent(), validation.Required.Error(
+				"A version must have content in at least one of its channels",
+			)),
+		),
+		validation.Field(&v.ContentHash,
+			validation.Required.Error("Content hash is required"),
+			validation.Length(1, MaxHashLength).
+				Error("Content hash cannot be longer than 64 characters"),
+		),
+		validation.Field(&v.StarterHash,
+			validation.Length(0, MaxHashLength).
+				Error("Starter hash cannot be longer than 64 characters"),
+		),
+		validation.Field(&v.PageSize,
+			domainvalidation.ValidEnum[PageSize]("Page size is not supported"),
+		),
+		validation.Field(&v.Orientation,
+			domainvalidation.ValidEnum[Orientation]("Orientation is not supported"),
+		),
+		validation.Field(&v.MarginTop, marginRules()...),
+		validation.Field(&v.MarginBottom, marginRules()...),
+		validation.Field(&v.MarginLeft, marginRules()...),
+		validation.Field(&v.MarginRight, marginRules()...),
+		// These mirror the table's CHECK constraints, so a lifecycle field left
+		// half-set is a field error rather than an opaque constraint violation.
+		validation.Field(&v.PublishedByID,
+			validation.When(v.PublishedAt != nil, validation.Required.Error(
+				"A published version must record who published it",
+			)),
+		),
+		validation.Field(&v.PublishedAt,
+			validation.When(
+				v.PublishedByID != nil || v.Status == VersionStatusActive,
+				validation.Required.Error("A published version must record when it went live"),
+			),
+		),
+		validation.Field(&v.ArchivedAt,
+			validation.When(v.Status != VersionStatusArchived, validation.Nil.Error(
+				"Only an archived version can record when it was archived",
+			)),
+		),
+	))
 }
 
-func (v *DocumentTemplateVersion) validateMargins(multiErr *errortypes.MultiError) {
-	margins := map[string]*float64{
-		"marginTop":    v.MarginTop,
-		"marginBottom": v.MarginBottom,
-		"marginLeft":   v.MarginLeft,
-		"marginRight":  v.MarginRight,
-	}
-
-	for field, value := range margins {
-		if value == nil {
-			continue
-		}
-		if *value < 0 || *value > maxMarginMillimeters {
-			multiErr.Add(field, errortypes.ErrInvalid,
-				"Margin must be between 0 and 100 millimeters")
-		}
+func marginRules() []validation.Rule {
+	return []validation.Rule{
+		validation.Min(0.0).Error("Margin must be between 0 and 100 millimeters"),
+		validation.Max(float64(maxMarginMillimeters)).
+			Error("Margin must be between 0 and 100 millimeters"),
 	}
 }
 

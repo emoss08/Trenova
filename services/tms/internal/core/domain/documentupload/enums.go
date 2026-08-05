@@ -39,6 +39,27 @@ const (
 	StatusExpired     = Status("Expired")
 )
 
+func (s Status) IsValid() bool {
+	switch s {
+	case StatusInitiated,
+		StatusUploading,
+		StatusUploaded,
+		StatusVerifying,
+		StatusFinalizing,
+		StatusPaused,
+		StatusCompleting,
+		StatusCompleted,
+		StatusAvailable,
+		StatusQuarantined,
+		StatusFailed,
+		StatusCanceled,
+		StatusExpired:
+		return true
+	default:
+		return false
+	}
+}
+
 func (s Status) IsTerminal() bool {
 	switch s { //nolint:exhaustive // we only want to check for the terminal statuses
 	case StatusCompleted,
@@ -75,4 +96,13 @@ const (
 
 func (s Strategy) String() string {
 	return string(s)
+}
+
+func (s Strategy) IsValid() bool {
+	switch s {
+	case StrategySingle, StrategyMultipart:
+		return true
+	default:
+		return false
+	}
 }

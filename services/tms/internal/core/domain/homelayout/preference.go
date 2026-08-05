@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -36,12 +37,22 @@ type Preference struct {
 }
 
 func (p *Preference) Validate(multiErr *errortypes.MultiError) {
-	if p.Preferences == nil {
-		multiErr.Add("preferences", errortypes.ErrRequired, "Preferences document is required")
-		return
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
+		validation.Field(&p.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&p.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&p.UserID, validation.Required.Error("User is required")),
+		validation.Field(&p.Preferences,
+			validation.Required.Error("Preferences document is required"),
+		),
+	))
 
-	p.Preferences.Validate(multiErr)
+	if p.Preferences != nil {
+		p.Preferences.Validate(multiErr)
+	}
 }
 
 func (p *Preference) BeforeAppendModel(_ context.Context, query bun.Query) error {

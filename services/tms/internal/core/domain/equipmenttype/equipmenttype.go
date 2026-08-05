@@ -2,10 +2,10 @@ package equipmenttype
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -57,29 +57,21 @@ type EquipmentType struct {
 }
 
 func (et *EquipmentType) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		et,
 		validation.Field(&et.Code, validation.Required),
 		validation.Field(
 			&et.Code,
 			validation.Length(1, 10).Error("Code must be between 1 and 10 characters"),
 		),
-		validation.Field(&et.Class, validation.Required, validation.By(func(value any) error {
-			c, ok := value.(Class)
-			if !ok {
-				return errors.New("invalid class type")
-			}
-			if !c.IsValid() {
-				return errors.New("Class must be one of: Tractor, Trailer, Container, Other")
-			}
-			return nil
-		})),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+		validation.Field(
+			&et.Class,
+			validation.Required,
+			domainvalidation.ValidEnum[Class](
+				"Class must be one of: Tractor, Trailer, Container, Other",
+			),
+		),
+	))
 
 	et.validateDeck(multiErr)
 }

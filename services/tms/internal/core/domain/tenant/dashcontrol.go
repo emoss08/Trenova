@@ -7,7 +7,13 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
+)
+
+const (
+	minDetentionAlertMinutes = int16(15)
+	maxDetentionAlertMinutes = int16(1440)
 )
 
 var (
@@ -49,35 +55,44 @@ type DashControl struct {
 }
 
 func (dc *DashControl) Validate(multiErr *errortypes.MultiError) {
-	if dc.EnableDetentionAlerts &&
-		(dc.DetentionAlertThresholdMinutes < 15 || dc.DetentionAlertThresholdMinutes > 1440) {
-		multiErr.Add(
-			"detentionAlertThresholdMinutes",
-			errortypes.ErrInvalid,
-			"Detention alert threshold must be between 15 minutes and 24 hours",
-		)
-	}
-	if dc.AllowLoadRefusals && !dc.RequireLoadAcknowledgment {
-		multiErr.Add(
-			"allowLoadRefusals",
-			errortypes.ErrInvalid,
-			"Load refusals require load acknowledgment to be enabled",
-		)
-	}
-	if dc.ShowPayEstimates && !dc.ShowLoadPay {
-		multiErr.Add(
-			"showPayEstimates",
-			errortypes.ErrInvalid,
-			"Pay estimates require per-load pay visibility to be enabled",
-		)
-	}
-	if dc.RequireExpenseReceipt && !dc.AllowExpenseSubmission {
-		multiErr.Add(
-			"requireExpenseReceipt",
-			errortypes.ErrInvalid,
-			"Receipt requirement only applies when expense submission is enabled",
-		)
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(dc,
+		validation.Field(&dc.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&dc.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&dc.DetentionAlertThresholdMinutes,
+			validation.When(dc.EnableDetentionAlerts,
+				validation.Required.Error(
+					"Detention alert threshold must be between 15 minutes and 24 hours",
+				),
+				validation.Min(minDetentionAlertMinutes).Error(
+					"Detention alert threshold must be between 15 minutes and 24 hours",
+				),
+				validation.Max(maxDetentionAlertMinutes).Error(
+					"Detention alert threshold must be between 15 minutes and 24 hours",
+				),
+			),
+		),
+		// Each of these settings only means anything while the capability it
+		// depends on is on, so the pair is refused rather than silently ignored.
+		validation.Field(&dc.AllowLoadRefusals,
+			validation.When(!dc.RequireLoadAcknowledgment, validation.Empty.Error(
+				"Load refusals require load acknowledgment to be enabled",
+			)),
+		),
+		validation.Field(&dc.ShowPayEstimates,
+			validation.When(!dc.ShowLoadPay, validation.Empty.Error(
+				"Pay estimates require per-load pay visibility to be enabled",
+			)),
+		),
+		validation.Field(&dc.RequireExpenseReceipt,
+			validation.When(!dc.AllowExpenseSubmission, validation.Empty.Error(
+				"Receipt requirement only applies when expense submission is enabled",
+			)),
+		),
+	))
 }
 
 func (dc *DashControl) GetID() pulid.ID { return dc.ID }

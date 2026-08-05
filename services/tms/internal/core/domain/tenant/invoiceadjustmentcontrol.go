@@ -2,7 +2,6 @@ package tenant
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -56,7 +55,7 @@ type InvoiceAdjustmentControl struct {
 }
 
 func (iac *InvoiceAdjustmentControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		iac,
 		validation.Field(&iac.PartiallyPaidInvoiceAdjustmentPolicy, validation.Required),
 		validation.Field(&iac.PaidInvoiceAdjustmentPolicy, validation.Required),
@@ -71,12 +70,7 @@ func (iac *InvoiceAdjustmentControl) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&iac.CustomerCreditBalancePolicy, validation.Required),
 		validation.Field(&iac.OverCreditPolicy, validation.Required),
 		validation.Field(&iac.SupersededInvoiceVisibilityPolicy, validation.Required),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (iac *InvoiceAdjustmentControl) GetID() pulid.ID {

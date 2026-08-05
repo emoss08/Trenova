@@ -6,8 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/uptrace/bun"
 )
 
@@ -57,8 +61,16 @@ func (m *Message) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		UseSearchVector: true,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "subject", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{Name: "from_email", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
-			{Name: "provider_message_id", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "from_email",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{
+				Name:   "provider_message_id",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
 		},
 	}
 }
@@ -152,3 +164,192 @@ func (s *Suppression) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	}
 	return nil
 }
+
+func (m *Message) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(m,
+		validation.Field(&m.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&m.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&m.ProfileID, validation.Required.Error("Email profile is required")),
+		validation.Field(&m.Purpose,
+			validation.Required.Error("Purpose is required"),
+			domainvalidation.ValidEnum[Purpose]("Purpose is invalid"),
+		),
+		validation.Field(&m.Provider,
+			validation.Required.Error("Provider is required"),
+			domainvalidation.ValidEnum[Provider]("Provider is invalid"),
+		),
+		// The idempotency key is what stops a retried send from mailing the
+		// recipient twice.
+		validation.Field(&m.IdempotencyKey,
+			validation.Required.Error("Idempotency key is required"),
+			validation.Length(1, maxIdempotencyKeyLength).
+				Error("Idempotency key cannot be longer than 160 characters"),
+		),
+		validation.Field(&m.ProviderMessageID,
+			validation.Length(0, maxIdempotencyKeyLength).
+				Error("Provider message id cannot be longer than 160 characters"),
+		),
+		validation.Field(&m.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[MessageStatus]("Status is invalid"),
+		),
+		validation.Field(&m.Attempts,
+			validation.Min(int32(0)).Error("Attempts cannot be negative"),
+		),
+		validation.Field(&m.FromEmail,
+			validation.Required.Error("From email is required"),
+			is.EmailFormat.Error("From email must be a valid email address"),
+			validation.Length(1, maxEmailAddressLength).
+				Error("From email cannot be longer than 320 characters"),
+		),
+		validation.Field(&m.FromName,
+			validation.Required.Error("From name is required"),
+			validation.Length(1, maxFromNameLength).
+				Error("From name cannot be longer than 100 characters"),
+		),
+		validation.Field(&m.ReplyToEmail,
+			is.EmailFormat.Error("Reply to email must be a valid email address"),
+			validation.Length(0, maxEmailAddressLength).
+				Error("Reply to email cannot be longer than 320 characters"),
+		),
+		// A message with no recipient is queued, retried and reported on while
+		// reaching nobody.
+		validation.Field(&m.ToRecipients,
+			validation.Required.Error("At least one recipient is required"),
+			validation.Each(is.EmailFormat.Error("Recipient must be a valid email address")),
+		),
+		validation.Field(&m.CCRecipients,
+			validation.Each(is.EmailFormat.Error("Recipient must be a valid email address")),
+		),
+		validation.Field(&m.BCCRecipients,
+			validation.Each(is.EmailFormat.Error("Recipient must be a valid email address")),
+		),
+		validation.Field(&m.Subject,
+			validation.Required.Error("Subject is required"),
+			validation.Length(1, maxSubjectLength).
+				Error("Subject cannot be longer than 998 characters"),
+		),
+		validation.Field(&m.BodyTextSize,
+			validation.Min(int64(0)).Error("Body text size cannot be negative"),
+		),
+		validation.Field(&m.BodyHTMLSize,
+			validation.Min(int64(0)).Error("Body HTML size cannot be negative"),
+		),
+		validation.Field(&m.LastError,
+			validation.When(
+				m.Status == MessageStatusFailed,
+				validation.Required.Error("A failed message must record why it failed"),
+			),
+		),
+	))
+
+	for i, attachment := range m.Attachments {
+		if attachment == nil {
+			continue
+		}
+		attachment.Validate(multiErr.WithIndex("attachments", i))
+	}
+}
+
+func (a *Attachment) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning message are stamped when the parent is written, so
+	// they are not the caller's to supply.
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.FileName,
+			validation.Required.Error("File name is required"),
+			validation.Length(1, maxAttachmentNameLength).
+				Error("File name cannot be longer than 255 characters"),
+		),
+		validation.Field(&a.ContentType,
+			validation.Required.Error("Content type is required"),
+			validation.Length(1, maxContentTypeLength).
+				Error("Content type cannot be longer than 120 characters"),
+		),
+		// The object key is the only way back to the bytes, so an attachment
+		// without one would be listed on the message and never send.
+		validation.Field(&a.ObjectKey, validation.Required.Error("Object key is required")),
+		validation.Field(&a.SizeBytes,
+			validation.Required.Error("Size is required"),
+			validation.Min(int64(1)).Error("Size must be greater than zero"),
+		),
+	))
+}
+
+func (e *Event) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(e,
+		validation.Field(&e.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&e.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&e.Provider,
+			validation.Required.Error("Provider is required"),
+			domainvalidation.ValidEnum[Provider]("Provider is invalid"),
+		),
+		// The provider event id is what makes a redelivered webhook
+		// recognizable as the same event rather than a second one.
+		validation.Field(&e.ProviderEventID,
+			validation.Required.Error("Provider event id is required"),
+			validation.Length(1, maxProviderEventIDLength).
+				Error("Provider event id cannot be longer than 200 characters"),
+		),
+		validation.Field(&e.Type,
+			validation.Required.Error("Type is required"),
+			domainvalidation.ValidEnum[EventType]("Type is invalid"),
+		),
+		validation.Field(&e.Recipient,
+			is.EmailFormat.Error("Recipient must be a valid email address"),
+			validation.Length(0, maxEmailAddressLength).
+				Error("Recipient cannot be longer than 320 characters"),
+		),
+		validation.Field(&e.OccurredAt,
+			validation.Required.Error("Occurred at is required"),
+			validation.Min(int64(1)).Error("Occurred at must be a valid timestamp"),
+		),
+	))
+}
+
+func (s *Suppression) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&s.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		// A suppression stops future mail to this address, so an unparseable one
+		// would silently suppress nothing.
+		validation.Field(&s.EmailAddress,
+			validation.Required.Error("Email address is required"),
+			is.EmailFormat.Error("Email address must be a valid email address"),
+			validation.Length(1, maxEmailAddressLength).
+				Error("Email address cannot be longer than 320 characters"),
+		),
+		validation.Field(&s.Reason,
+			validation.Required.Error("Reason is required"),
+			domainvalidation.ValidEnum[SuppressionReason]("Reason is invalid"),
+		),
+		validation.Field(&s.Provider,
+			domainvalidation.ValidEnum[Provider]("Provider is invalid"),
+		),
+		validation.Field(&s.SourceEventID,
+			validation.Length(0, maxProviderEventIDLength).
+				Error("Source event id cannot be longer than 200 characters"),
+		),
+	))
+}
+
+const (
+	maxIdempotencyKeyLength  = 160
+	maxEmailAddressLength    = 320
+	maxFromNameLength        = 100
+	maxSubjectLength         = 998
+	maxAttachmentNameLength  = 255
+	maxContentTypeLength     = 120
+	maxProviderEventIDLength = 200
+)

@@ -98,3 +98,126 @@ const (
 		"DefaultOptional",
 	)
 )
+
+func (v Kind) IsValid() bool {
+	switch v {
+	case KindCreditOnly,
+		KindCreditRebill,
+		KindFullReversal,
+		KindWriteOff:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v Status) IsValid() bool {
+	switch v {
+	case StatusDraft,
+		StatusPendingApproval,
+		StatusApproved,
+		StatusRejected,
+		StatusExecuting,
+		StatusExecuted,
+		StatusExecutionFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v RebillStrategy) IsValid() bool {
+	switch v {
+	case RebillStrategyCloneExact,
+		RebillStrategyRerate,
+		RebillStrategyManual:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v SnapshotKind) IsValid() bool {
+	switch v {
+	case SnapshotKindSubmission,
+		SnapshotKindExecution:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ApprovalStatus) IsValid() bool {
+	switch v {
+	case ApprovalStatusNotRequired,
+		ApprovalStatusPending,
+		ApprovalStatusApproved,
+		ApprovalStatusRejected:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ReplacementReviewStatus) IsValid() bool {
+	switch v {
+	case ReplacementReviewStatusNotRequired,
+		ReplacementReviewStatusRequired,
+		ReplacementReviewStatusCompleted:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ExceptionStatus) IsValid() bool {
+	switch v {
+	case ExceptionStatusOpen,
+		ExceptionStatusResolved:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v BatchStatus) IsValid() bool {
+	switch v {
+	case BatchStatusPending,
+		BatchStatusRunning,
+		BatchStatusCompleted,
+		BatchStatusFailed,
+		BatchStatusPartial,
+		BatchStatusSubmitted,
+		BatchStatusQueued:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v BatchItemStatus) IsValid() bool {
+	switch v {
+	case BatchItemStatusPending,
+		BatchItemStatusPreviewed,
+		BatchItemStatusSubmitted,
+		BatchItemStatusPendingApproval,
+		BatchItemStatusExecuting,
+		BatchItemStatusExecuted,
+		BatchItemStatusRejected,
+		BatchItemStatusFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v SupportingDocumentPolicySource) IsValid() bool {
+	switch v {
+	case SupportingDocumentPolicySourceCustomerBillingProfile,
+		SupportingDocumentPolicySourceOrganizationControl,
+		SupportingDocumentPolicySourceDefaultOptional:
+		return true
+	default:
+		return false
+	}
+}

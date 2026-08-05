@@ -1,7 +1,10 @@
 package telematics
 
 import (
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -17,4 +20,27 @@ type FeedState struct {
 	LastSuccessAt  int64    `json:"lastSuccessAt"  bun:"last_success_at,type:BIGINT,nullzero"`
 	FailureCount   int      `json:"failureCount"   bun:"failure_count,type:INT,notnull,default:0"`
 	LastError      string   `json:"lastError"      bun:"last_error,type:TEXT,nullzero"`
+}
+
+func (f *FeedState) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(f,
+		validation.Field(&f.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&f.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&f.Provider,
+			validation.Required.Error("Provider is required"),
+			validation.Length(1, maxProviderLength).
+				Error("Provider cannot be longer than 32 characters"),
+		),
+		validation.Field(&f.FeedType,
+			validation.Required.Error("Feed type is required"),
+			domainvalidation.ValidEnum[FeedType]("Feed type is invalid"),
+		),
+		validation.Field(&f.FailureCount,
+			validation.Min(0).Error("Failure count cannot be negative"),
+		),
+	))
 }

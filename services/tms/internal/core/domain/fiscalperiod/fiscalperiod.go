@@ -2,7 +2,6 @@ package fiscalperiod
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -146,7 +145,7 @@ type FiscalPeriod struct {
 }
 
 func (fp *FiscalPeriod) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(fp,
+	multiErr.AddOzzoError(validation.ValidateStruct(fp,
 		validation.Field(&fp.FiscalYearID,
 			validation.Required.Error("Fiscal year is required"),
 		),
@@ -184,13 +183,7 @@ func (fp *FiscalPeriod) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&fp.EndDate,
 			validation.Required.Error("End date is required"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (fp *FiscalPeriod) GetID() pulid.ID {

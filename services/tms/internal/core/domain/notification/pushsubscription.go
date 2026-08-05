@@ -3,8 +3,11 @@ package notification
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/uptrace/bun"
 )
 
@@ -38,3 +41,31 @@ func (p *PushSubscription) BeforeAppendModel(_ context.Context, query bun.Query)
 	}
 	return nil
 }
+
+func (s *PushSubscription) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(s,
+		validation.Field(&s.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&s.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&s.UserID, validation.Required.Error("User is required")),
+		// The endpoint is the push service URL the browser handed us; anything
+		// that is not an absolute URL could never be posted to.
+		validation.Field(&s.Endpoint,
+			validation.Required.Error("Endpoint is required"),
+			is.URL.Error("Endpoint must be a valid URL"),
+		),
+		// Both keys are required to encrypt a payload for this subscription, so
+		// one without the other produces a notification that cannot be sealed.
+		validation.Field(&s.P256dh, validation.Required.Error("Encryption key is required")),
+		validation.Field(&s.Auth, validation.Required.Error("Auth secret is required")),
+		validation.Field(&s.UserAgent,
+			validation.Length(0, maxPushUserAgentLength).
+				Error("User agent cannot be longer than 255 characters"),
+		),
+	))
+}
+
+const maxPushUserAgentLength = 255

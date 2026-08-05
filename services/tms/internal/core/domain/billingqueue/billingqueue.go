@@ -2,7 +2,6 @@ package billingqueue
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -62,7 +61,7 @@ type BillingQueueItem struct {
 }
 
 func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		b,
 		validation.Field(
 			&b.OrganizationID,
@@ -72,12 +71,7 @@ func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {
 			&b.BusinessUnitID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if b.ShipmentID.IsNil() && b.OrderID.IsNil() {
 		multiErr.Add(

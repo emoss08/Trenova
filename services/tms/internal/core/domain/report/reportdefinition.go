@@ -5,12 +5,20 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
+)
+
+const (
+	maxDefinitionNameLength     = 255
+	maxDefinitionCategoryLength = 100
+	maxCannedKeyLength          = 100
 )
 
 var (
@@ -51,27 +59,54 @@ type ReportDefinition struct {
 }
 
 func (rd *ReportDefinition) Validate(multiErr *errortypes.MultiError) {
-	if rd.Name == "" {
-		multiErr.Add("name", errortypes.ErrRequired, "Name is required")
-	}
-	if !rd.Kind.IsValid() {
-		multiErr.Add("kind", errortypes.ErrInvalid, "Kind must be custom or canned_fork")
-	}
-	if rd.Kind == DefinitionKindCannedFork && rd.CannedKey == "" {
-		multiErr.Add("cannedKey", errortypes.ErrRequired, "Canned key is required for canned forks")
-	}
-	if !rd.Visibility.IsValid() {
-		multiErr.Add("visibility", errortypes.ErrInvalid, "Visibility must be private or shared")
-	}
-	if !rd.Status.IsValid() {
-		multiErr.Add("status", errortypes.ErrInvalid, "Status is invalid")
-	}
-	if !rd.DefaultFormat.IsValid() {
-		multiErr.Add("defaultFormat", errortypes.ErrInvalid, "Default format is invalid")
-	}
-	if rd.Definition == nil {
-		multiErr.Add("definition", errortypes.ErrRequired, "Definition is required")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(rd,
+		validation.Field(&rd.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&rd.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&rd.OwnerID, validation.Required.Error("Owner is required")),
+		validation.Field(&rd.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, maxDefinitionNameLength).
+				Error("Name cannot be longer than 255 characters"),
+		),
+		validation.Field(&rd.Category,
+			validation.Length(0, maxDefinitionCategoryLength).
+				Error("Category cannot be longer than 100 characters"),
+		),
+		validation.Field(&rd.Kind,
+			validation.Required.Error("Kind must be custom or canned_fork"),
+			domainvalidation.ValidEnum[DefinitionKind]("Kind must be custom or canned_fork"),
+		),
+		// A fork with no key has nothing to fork from, so it would resolve to an
+		// empty report the first time it ran.
+		validation.Field(&rd.CannedKey,
+			validation.When(
+				rd.Kind == DefinitionKindCannedFork,
+				validation.Required.Error("Canned key is required for canned forks"),
+			),
+			validation.Length(0, maxCannedKeyLength).
+				Error("Canned key cannot be longer than 100 characters"),
+		),
+		validation.Field(&rd.Visibility,
+			validation.Required.Error("Visibility must be private or shared"),
+			domainvalidation.ValidEnum[Visibility]("Visibility must be private or shared"),
+		),
+		validation.Field(&rd.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[DefinitionStatus]("Status is invalid"),
+		),
+		validation.Field(&rd.DefaultFormat,
+			validation.Required.Error("Default format is required"),
+			domainvalidation.ValidEnum[Format]("Default format is invalid"),
+		),
+		validation.Field(&rd.Definition, validation.Required.Error("Definition is required")),
+		validation.Field(&rd.CurrentRevision,
+			validation.Min(int64(1)).Error("Revision must be at least one"),
+		),
+	))
 }
 
 func (rd *ReportDefinition) BeforeAppendModel(_ context.Context, query bun.Query) error {

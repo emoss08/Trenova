@@ -2,7 +2,6 @@ package manualjournal
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -73,20 +72,14 @@ type Line struct {
 }
 
 func (r *Request) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.OrganizationID, validation.Required),
 		validation.Field(&r.BusinessUnitID, validation.Required),
 		validation.Field(&r.Description, validation.Required),
 		validation.Field(&r.AccountingDate, validation.Required),
 		validation.Field(&r.CurrencyCode, validation.Required, validation.Length(3, 3)),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	for idx, line := range r.Lines {
 		if line == nil {
@@ -100,17 +93,11 @@ func (r *Request) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (l *Line) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		l,
 		validation.Field(&l.GLAccountID, validation.Required),
 		validation.Field(&l.Description, validation.Required),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if l.DebitAmount < 0 {
 		multiErr.Add("debitAmount", errortypes.ErrInvalid, "Debit amount cannot be negative")

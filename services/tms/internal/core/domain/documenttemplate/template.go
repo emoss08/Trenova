@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -22,6 +23,14 @@ const (
 	MaxCodeLength        = 50
 	MaxNameLength        = 200
 	MaxDescriptionLength = 2000
+	MaxKindLength        = 100
+	MaxHashLength        = 64
+
+	MaxReferenceTypeLength = 50
+	MaxFileNameLength      = 255
+	MaxFilePathLength      = 500
+	MaxMimeTypeLength      = 100
+	MaxDeliveredToLength   = 255
 )
 
 var (
@@ -110,35 +119,50 @@ func (t *DocumentTemplate) HasActiveVersion() bool {
 // import the registry into a method without a cycle, so the service passes the
 // verdict in via ValidateWithRegistry.
 func (t *DocumentTemplate) Validate(multiErr *errortypes.MultiError) {
-	if strings.TrimSpace(t.Code) == "" {
-		multiErr.Add("code", errortypes.ErrRequired, "Code is required")
-	} else if len(t.Code) > MaxCodeLength {
-		multiErr.Add("code", errortypes.ErrInvalid,
-			"Code cannot be longer than 50 characters")
-	}
+	t.Normalize()
 
-	if strings.TrimSpace(t.Name) == "" {
-		multiErr.Add("name", errortypes.ErrRequired, "Name is required")
-	} else if len(t.Name) > MaxNameLength {
-		multiErr.Add("name", errortypes.ErrInvalid,
-			"Name cannot be longer than 200 characters")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(t,
+		validation.Field(&t.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&t.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&t.Kind,
+			validation.Required.Error("Template kind is required"),
+			validation.Length(1, MaxKindLength).
+				Error("Template kind cannot be longer than 100 characters"),
+		),
+		validation.Field(&t.Code,
+			validation.Required.Error("Code is required"),
+			validation.Length(1, MaxCodeLength).
+				Error("Code cannot be longer than 50 characters"),
+		),
+		validation.Field(&t.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, MaxNameLength).
+				Error("Name cannot be longer than 200 characters"),
+		),
+		validation.Field(&t.Description,
+			validation.Length(0, MaxDescriptionLength).
+				Error("Description cannot be longer than 2000 characters"),
+		),
+	))
+}
 
-	if len(t.Description) > MaxDescriptionLength {
-		multiErr.Add("description", errortypes.ErrInvalid,
-			"Description cannot be longer than 2000 characters")
-	}
-
-	if strings.TrimSpace(string(t.Kind)) == "" {
-		multiErr.Add("kind", errortypes.ErrRequired, "Template kind is required")
-	}
+// Normalize puts the identity fields in the shape the unique index compares, so
+// validation judges the same value the database will store.
+func (t *DocumentTemplate) Normalize() {
+	t.Code = strings.ToUpper(strings.TrimSpace(t.Code))
+	t.Name = strings.TrimSpace(t.Name)
+	t.Description = strings.TrimSpace(t.Description)
+	t.Kind = Kind(strings.TrimSpace(string(t.Kind)))
 }
 
 func (t *DocumentTemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
-	t.Code = strings.ToUpper(strings.TrimSpace(t.Code))
-	t.Name = strings.TrimSpace(t.Name)
+	t.Normalize()
 
 	switch query.(type) {
 	case *bun.InsertQuery:

@@ -2,7 +2,6 @@ package driverpay
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -79,7 +78,7 @@ type PayProfileComponent struct {
 const searchFieldDescription = "description"
 
 func (p *PayProfile) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(p,
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
@@ -93,12 +92,7 @@ func (p *PayProfile) Validate(multiErr *errortypes.MultiError) {
 			validation.In(domaintypes.StatusActive, domaintypes.StatusInactive).
 				Error("Status must be either Active or Inactive"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if !p.Classification.IsValid() {
 		multiErr.Add(

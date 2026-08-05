@@ -1,7 +1,9 @@
 package telematics
 
 import (
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -39,3 +41,60 @@ type VehicleInspection struct {
 func NewVehicleInspectionID() pulid.ID {
 	return pulid.MustNew("vinsp_")
 }
+
+func (i *VehicleInspection) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(i,
+		validation.Field(&i.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&i.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&i.Provider,
+			validation.Required.Error("Provider is required"),
+			validation.Length(1, maxProviderLength).
+				Error("Provider cannot be longer than 32 characters"),
+		),
+		validation.Field(&i.ProviderDvirID,
+			validation.Required.Error("Provider inspection id is required"),
+		),
+		validation.Field(&i.InspectionType,
+			validation.Required.Error("Inspection type is required"),
+			validation.Length(1, maxInspectionTypeLength).
+				Error("Inspection type cannot be longer than 32 characters"),
+		),
+		// The safety status is what takes a tractor out of service, so it is
+		// never left blank on a stored inspection.
+		validation.Field(&i.SafetyStatus,
+			validation.Required.Error("Safety status is required"),
+			validation.Length(1, maxSafetyStatusLength).
+				Error("Safety status cannot be longer than 16 characters"),
+		),
+		validation.Field(&i.StartedAt,
+			validation.Required.Error("Started at is required"),
+			validation.Min(int64(1)).Error("Started at must be a valid timestamp"),
+		),
+		validation.Field(&i.EndedAt,
+			validation.Required.Error("Ended at is required"),
+			validation.Min(i.StartedAt).Error("Ended at cannot precede the start"),
+		),
+		validation.Field(&i.OdometerMeters,
+			validation.Min(int64(0)).Error("Odometer cannot be negative"),
+		),
+		validation.Field(&i.DefectCount,
+			validation.Min(0).Error("Defect count cannot be negative"),
+		),
+		// More unresolved defects than defects would show a tractor as worse
+		// than the inspection it came from says it is.
+		validation.Field(&i.UnresolvedDefectCount,
+			validation.Min(0).Error("Unresolved defect count cannot be negative"),
+			validation.Max(i.DefectCount).
+				Error("Unresolved defects cannot exceed the total defects"),
+		),
+	))
+}
+
+const (
+	maxInspectionTypeLength = 32
+	maxSafetyStatusLength   = 16
+)

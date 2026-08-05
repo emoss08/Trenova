@@ -2,9 +2,9 @@ package jurisdictionrule
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -94,26 +94,17 @@ func (r *JurisdictionRule) IsEffectiveAt(timestamp int64) bool {
 }
 
 func (r *JurisdictionRule) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(r,
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
 		validation.Field(&r.StateID, validation.Required.Error("State is required")),
 		validation.Field(&r.Status,
 			validation.Required.Error("Status is required"),
-			validation.In(StatusActive, StatusInactive, StatusDraft).Error("Status is invalid"),
+			domainvalidation.ValidEnum[Status]("Status is invalid"),
 		),
 		validation.Field(&r.VerificationState,
 			validation.Required.Error("Verification state is required"),
-			validation.In(
-				VerificationUnverified,
-				VerificationVerified,
-				VerificationDisputed,
-			).Error("Verification state is invalid"),
+			domainvalidation.ValidEnum[VerificationState]("Verification state is invalid"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	r.validateLimits(multiErr)
 	r.validatePermitTerms(multiErr)

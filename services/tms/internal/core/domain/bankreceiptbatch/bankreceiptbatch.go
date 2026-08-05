@@ -2,7 +2,6 @@ package bankreceiptbatch
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,17 +33,11 @@ type BankReceiptBatch struct {
 }
 
 func (b *BankReceiptBatch) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(b,
+	multiErr.AddOzzoError(validation.ValidateStruct(b,
 		validation.Field(&b.OrganizationID, validation.Required),
 		validation.Field(&b.BusinessUnitID, validation.Required),
 		validation.Field(&b.Source, validation.Required),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (b *BankReceiptBatch) BeforeAppendModel(_ context.Context, query bun.Query) error {

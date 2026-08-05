@@ -2,11 +2,11 @@ package modeprofile
 
 import (
 	"context"
-	"errors"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -128,7 +128,7 @@ func (p *Profile) HasCapability(capability Capability) bool {
 }
 
 func (p *Profile) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(p,
+	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
@@ -139,48 +139,21 @@ func (p *Profile) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&p.Status,
 			validation.Required.Error("Status is required"),
-			validation.In(ProfileStatusDraft, ProfileStatusActive, ProfileStatusArchived).
-				Error("Status is invalid"),
+			domainvalidation.ValidEnum[ProfileStatus]("Status is invalid"),
 		),
 		validation.Field(&p.ServiceModel,
 			validation.Required.Error("Service model is required"),
-			validation.In(
-				ServiceModelTruckload,
-				ServiceModelDedicated,
-				ServiceModelLTL,
-				ServiceModelExpedite,
-				ServiceModelFinalMile,
-				ServiceModelDrayage,
-			).Error("Service model is invalid"),
+			domainvalidation.ValidEnum[ServiceModel]("Service model is invalid"),
 		),
 		validation.Field(&p.EquipmentClass,
 			validation.Required.Error("Equipment class is required"),
-			validation.In(
-				EquipmentClassDryVan,
-				EquipmentClassRefrigerated,
-				EquipmentClassFlatbed,
-				EquipmentClassTank,
-				EquipmentClassDryBulk,
-				EquipmentClassContainer,
-				EquipmentClassAutoRack,
-				EquipmentClassStraightTruck,
-			).Error("Equipment class is invalid"),
+			domainvalidation.ValidEnum[EquipmentClass]("Equipment class is invalid"),
 		),
 		validation.Field(&p.ExecutionParty,
 			validation.Required.Error("Execution party is required"),
-			validation.In(
-				ExecutionPartyCompanyAsset,
-				ExecutionPartyOwnerOperator,
-				ExecutionPartyLeasedOn,
-				ExecutionPartyPurchasedCapacity,
-			).Error("Execution party is invalid"),
+			domainvalidation.ValidEnum[ExecutionParty]("Execution party is invalid"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	p.validateCapabilities(multiErr)
 	p.validateEffectiveDates(multiErr)

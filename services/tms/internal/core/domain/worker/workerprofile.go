@@ -2,9 +2,9 @@ package worker
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -54,7 +54,7 @@ type WorkerProfile struct {
 }
 
 func (wp *WorkerProfile) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(wp,
+	multiErr.AddOzzoError(validation.ValidateStruct(wp,
 		validation.Field(&wp.DOB,
 			validation.Required.Error("Date of birth is required"),
 			validation.Min(int64(0)).Error("Date of birth must be a positive value"),
@@ -63,18 +63,12 @@ func (wp *WorkerProfile) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("License number is required"),
 			validation.Length(1, 50).Error("License number must be between 1 and 50 characters"),
 		),
-		validation.Field(&wp.Endorsement,
+		validation.Field(
+			&wp.Endorsement,
 			validation.Required.Error("Endorsement type is required"),
-			validation.By(func(value any) error {
-				e, ok := value.(EndorsementType)
-				if !ok {
-					return errors.New("invalid endorsement type")
-				}
-				if !e.IsValid() {
-					return errors.New("endorsement must be one of: O, N, H, X, P, T")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[EndorsementType](
+				"endorsement must be one of: O, N, H, X, P, T",
+			),
 		),
 		validation.Field(&wp.LicenseExpiry,
 			validation.Required.Error("License expiry is required"),
@@ -84,28 +78,14 @@ func (wp *WorkerProfile) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Hire date is required"),
 			validation.Min(int64(1)).Error("Hire date must be a positive value"),
 		),
-		validation.Field(&wp.ComplianceStatus,
+		validation.Field(
+			&wp.ComplianceStatus,
 			validation.Required.Error("Compliance status is required"),
-			validation.By(func(value any) error {
-				cs, ok := value.(ComplianceStatus)
-				if !ok {
-					return errors.New("invalid compliance status type")
-				}
-				if !cs.IsValid() {
-					return errors.New(
-						"compliance status must be one of: Compliant, NonCompliant, Pending",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[ComplianceStatus](
+				"compliance status must be one of: Compliant, NonCompliant, Pending",
+			),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if wp.Endorsement.RequiresHazmatExpiry() && (wp.HazmatExpiry == nil || *wp.HazmatExpiry <= 0) {
 		multiErr.Add(

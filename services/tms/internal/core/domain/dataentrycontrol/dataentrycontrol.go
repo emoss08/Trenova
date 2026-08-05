@@ -2,8 +2,8 @@ package dataentrycontrol
 
 import (
 	"context"
-	"errors"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,74 +35,36 @@ type DataEntryControl struct {
 }
 
 func (dec *DataEntryControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(dec,
-		validation.Field(&dec.CodeCase,
+	multiErr.AddOzzoError(validation.ValidateStruct(dec,
+		validation.Field(
+			&dec.CodeCase,
 			validation.Required.Error("Code case is required"),
-			validation.By(func(value any) error {
-				c, ok := value.(CaseFormat)
-				if !ok {
-					return errors.New("invalid case format type")
-				}
-				if !c.IsValid() {
-					return errors.New(
-						"code case must be one of: AsEntered, Upper, Lower, TitleCase",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[CaseFormat](
+				"code case must be one of: AsEntered, Upper, Lower, TitleCase",
+			),
 		),
-		validation.Field(&dec.NameCase,
+		validation.Field(
+			&dec.NameCase,
 			validation.Required.Error("Name case is required"),
-			validation.By(func(value any) error {
-				c, ok := value.(CaseFormat)
-				if !ok {
-					return errors.New("invalid case format type")
-				}
-				if !c.IsValid() {
-					return errors.New(
-						"name case must be one of: AsEntered, Upper, Lower, TitleCase",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[CaseFormat](
+				"name case must be one of: AsEntered, Upper, Lower, TitleCase",
+			),
 		),
-		validation.Field(&dec.EmailCase,
+		validation.Field(
+			&dec.EmailCase,
 			validation.Required.Error("Email case is required"),
-			validation.By(func(value any) error {
-				c, ok := value.(CaseFormat)
-				if !ok {
-					return errors.New("invalid case format type")
-				}
-				if !c.IsValid() {
-					return errors.New(
-						"email case must be one of: AsEntered, Upper, Lower, TitleCase",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[CaseFormat](
+				"email case must be one of: AsEntered, Upper, Lower, TitleCase",
+			),
 		),
-		validation.Field(&dec.CityCase,
+		validation.Field(
+			&dec.CityCase,
 			validation.Required.Error("City case is required"),
-			validation.By(func(value any) error {
-				c, ok := value.(CaseFormat)
-				if !ok {
-					return errors.New("invalid case format type")
-				}
-				if !c.IsValid() {
-					return errors.New(
-						"city case must be one of: AsEntered, Upper, Lower, TitleCase",
-					)
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[CaseFormat](
+				"city case must be one of: AsEntered, Upper, Lower, TitleCase",
+			),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (dec *DataEntryControl) GetTableName() string {

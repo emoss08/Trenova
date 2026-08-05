@@ -44,7 +44,7 @@ type CostCategory struct {
 }
 
 func (cat *CostCategory) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		cat,
 		validation.Field(&cat.Category,
 			validation.Required.Error("Category is required"),
@@ -81,12 +81,7 @@ func (cat *CostCategory) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func validateRatePerMile(rate decimal.Decimal) error {

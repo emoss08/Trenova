@@ -2,9 +2,9 @@ package modeprofile
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -119,25 +119,15 @@ func (r *CapabilityRule) resolveParam(name string) (any, bool) {
 }
 
 func (r *CapabilityRule) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(r,
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
 		validation.Field(&r.RuleKey,
 			validation.Required.Error("Rule key is required"),
 		),
 		validation.Field(&r.Enforcement,
 			validation.Required.Error("Enforcement level is required"),
-			validation.In(
-				tenant.EnforcementLevelIgnore,
-				tenant.EnforcementLevelWarn,
-				tenant.EnforcementLevelRequireReview,
-				tenant.EnforcementLevelBlock,
-			).Error("Enforcement level is invalid"),
+			domainvalidation.ValidEnum[tenant.EnforcementLevel]("Enforcement level is invalid"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if r.RuleKey != "" && !IsKnownRuleKey(r.RuleKey) {
 		multiErr.Add("ruleKey", errortypes.ErrInvalid,

@@ -2,7 +2,6 @@ package invoice
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"strings"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
@@ -228,7 +229,7 @@ type DocumentShareToken struct {
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
 func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		i,
 		validation.Field(
 			&i.OrganizationID,
@@ -257,23 +258,11 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&i.Status,
 			validation.Required.Error("Invoice status is required"),
-			validation.By(func(value any) error {
-				status, _ := value.(Status)
-				if !status.IsValid() {
-					return errors.New("invalid invoice status")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[Status]("invalid invoice status"),
 		),
 		validation.Field(&i.PaymentTerm,
 			validation.Required.Error("Payment term is required"),
-			validation.By(func(value any) error {
-				term, _ := value.(PaymentTerm)
-				if !term.IsValid() {
-					return errors.New("invalid payment term")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[PaymentTerm]("invalid payment term"),
 		),
 		validation.Field(&i.CurrencyCode,
 			validation.Required.Error("Currency code is required"),
@@ -281,45 +270,19 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&i.InvoiceDate, validation.Required.Error("Invoice date is required")),
 		validation.Field(&i.SettlementStatus,
-			validation.By(func(value any) error {
-				status, _ := value.(SettlementStatus)
-				if !status.IsValid() {
-					return errors.New("invalid settlement status")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[SettlementStatus]("invalid settlement status"),
 		),
 		validation.Field(&i.DisputeStatus,
-			validation.By(func(value any) error {
-				status, _ := value.(DisputeStatus)
-				if !status.IsValid() {
-					return errors.New("invalid dispute status")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[DisputeStatus]("invalid dispute status"),
 		),
 		validation.Field(&i.SendStatus,
-			validation.By(func(value any) error {
-				status, _ := value.(SendStatus)
-				if status == "" {
-					return nil
-				}
-				if !status.IsValid() {
-					return errors.New("invalid invoice send status")
-				}
-				return nil
-			}),
+			domainvalidation.ValidEnum[SendStatus]("invalid invoice send status"),
 		),
 		validation.Field(&i.BillToName,
 			validation.Required.Error("Bill-to name is required"),
 			validation.Length(1, 255).Error("Bill-to name must be between 1 and 255 characters"),
 		),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 
 	if i.ShipmentID.IsNil() && i.OrderID.IsNil() {
 		multiErr.Add(
@@ -645,3 +608,166 @@ func (i *Invoice) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		},
 	}
 }
+
+func (a *Attachment) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&a.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&a.InvoiceID, validation.Required.Error("Invoice is required")),
+		validation.Field(&a.DocumentID, validation.Required.Error("Document is required")),
+		validation.Field(&a.SortOrder,
+			validation.Min(0).Error("Sort order cannot be negative"),
+		),
+	))
+}
+
+func (a *EmailAttempt) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&a.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&a.InvoiceID, validation.Required.Error("Invoice is required")),
+		validation.Field(&a.AttemptNumber,
+			validation.Required.Error("Attempt number is required"),
+			validation.Min(1).Error("Attempt number must be at least one"),
+		),
+		// A large invoice is split across several messages, so a part outside
+		// its own total would leave the customer with an incomplete set and no
+		// way to tell.
+		validation.Field(&a.TotalParts,
+			validation.Required.Error("Total parts is required"),
+			validation.Min(1).Error("Total parts must be at least one"),
+		),
+		validation.Field(&a.PartNumber,
+			validation.Required.Error("Part number is required"),
+			validation.Min(1).Error("Part number must be at least one"),
+			validation.Max(a.TotalParts).Error("Part number cannot exceed the total parts"),
+		),
+		validation.Field(&a.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[SendStatus]("Status is invalid"),
+		),
+		validation.Field(&a.Provider,
+			domainvalidation.ValidEnum[email.Provider]("Provider is invalid"),
+		),
+		validation.Field(&a.ProviderMessageID,
+			validation.Length(0, maxProviderMessageIDLength).
+				Error("Provider message id cannot be longer than 160 characters"),
+		),
+		validation.Field(&a.ToRecipients,
+			validation.Required.Error("At least one recipient is required"),
+			validation.Each(is.EmailFormat.Error("Recipient must be a valid email address")),
+		),
+		validation.Field(&a.CCRecipients,
+			validation.Each(is.EmailFormat.Error("Recipient must be a valid email address")),
+		),
+		validation.Field(&a.BCCRecipients,
+			validation.Each(is.EmailFormat.Error("Recipient must be a valid email address")),
+		),
+		validation.Field(&a.Subject,
+			validation.Required.Error("Subject is required"),
+			validation.Length(1, maxEmailSubjectLength).
+				Error("Subject cannot be longer than 998 characters"),
+		),
+		validation.Field(&a.EstimatedSize,
+			validation.Min(int64(0)).Error("Estimated size cannot be negative"),
+		),
+		validation.Field(&a.Error,
+			validation.When(
+				a.Status == SendStatusFailed,
+				validation.Required.Error("A failed attempt must record why it failed"),
+			),
+		),
+	))
+
+	for i, attachment := range a.Attachments {
+		if attachment == nil {
+			continue
+		}
+		attachment.Validate(multiErr.WithIndex("attachments", i))
+	}
+}
+
+func (a *EmailAttemptAttachment) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning attempt are stamped when the parent is written, so
+	// they are not the caller's to supply.
+	multiErr.AddOzzoError(validation.ValidateStruct(a,
+		validation.Field(&a.DocumentID, validation.Required.Error("Document is required")),
+		validation.Field(&a.FileName,
+			validation.Required.Error("File name is required"),
+			validation.Length(1, maxAttachmentFileNameLength).
+				Error("File name cannot be longer than 255 characters"),
+		),
+		validation.Field(&a.ContentType,
+			validation.Required.Error("Content type is required"),
+			validation.Length(1, maxAttachmentContentTypeLength).
+				Error("Content type cannot be longer than 120 characters"),
+		),
+		validation.Field(&a.SizeBytes,
+			validation.Min(int64(0)).Error("Size cannot be negative"),
+		),
+		validation.Field(&a.EncodedBytes,
+			validation.Min(int64(0)).Error("Encoded size cannot be negative"),
+		),
+		validation.Field(&a.Method,
+			validation.Required.Error("Delivery method is required"),
+			domainvalidation.ValidEnum[AttachmentDeliveryMethod]("Delivery method is invalid"),
+		),
+		// A link delivery with no token points the customer at nothing, and a
+		// dropped attachment with no reason gives support nothing to explain.
+		validation.Field(&a.ShareTokenID,
+			validation.When(
+				a.Method == AttachmentDeliveryMethodLink,
+				validation.Required.Error("A linked attachment must name its share token"),
+			),
+		),
+		validation.Field(&a.Reason,
+			validation.When(
+				a.Method == AttachmentDeliveryMethodSkipped ||
+					a.Method == AttachmentDeliveryMethodFailed,
+				validation.Required.Error(
+					"An attachment that was not sent must record why",
+				),
+			),
+		),
+	))
+}
+
+func (t *DocumentShareToken) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(t,
+		validation.Field(&t.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&t.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&t.InvoiceID, validation.Required.Error("Invoice is required")),
+		validation.Field(&t.DocumentID, validation.Required.Error("Document is required")),
+		// The token is only ever stored hashed, and it must expire: a share link
+		// with no expiry is an unauthenticated download that never closes.
+		validation.Field(&t.TokenHash,
+			validation.Required.Error("Token hash is required"),
+			validation.Length(1, maxShareTokenHashLength).
+				Error("Token hash cannot be longer than 128 characters"),
+		),
+		validation.Field(&t.ExpiresAt,
+			validation.Required.Error("Expiry is required"),
+			validation.Min(int64(1)).Error("Expiry must be a valid timestamp"),
+		),
+	))
+}
+
+const (
+	maxProviderMessageIDLength     = 160
+	maxEmailSubjectLength          = 998
+	maxAttachmentFileNameLength    = 255
+	maxAttachmentContentTypeLength = 120
+	maxShareTokenHashLength        = 128
+)

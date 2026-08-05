@@ -2,8 +2,11 @@ package journalreversal
 
 import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -62,8 +65,89 @@ func (r *Reversal) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		TableAlias:      "jr",
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
-			{Name: "reason_code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{Name: "reason_text", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "reason_code",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
+			{
+				Name:   "reason_text",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
 		},
 	}
 }
+
+func (r *Reversal) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&r.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&r.OriginalJournalEntryID,
+			validation.Required.Error("Original journal entry is required"),
+		),
+		validation.Field(&r.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[Status]("Status is invalid"),
+		),
+		// The accounting date decides which period the reversal lands in, so an
+		// unset one would post the entry into an undefined period.
+		validation.Field(&r.RequestedAccountingDate,
+			validation.Required.Error("Requested accounting date is required"),
+			validation.Min(int64(1)).Error("Requested accounting date must be a valid date"),
+		),
+		validation.Field(&r.ResolvedFiscalYearID,
+			validation.Required.Error("Resolved fiscal year is required"),
+		),
+		validation.Field(&r.ResolvedFiscalPeriodID,
+			validation.Required.Error("Resolved fiscal period is required"),
+		),
+		// Reversing a posted entry rewrites the books, so the reason is part of
+		// the record rather than something an auditor has to reconstruct.
+		validation.Field(&r.ReasonCode,
+			validation.Required.Error("Reason code is required"),
+			validation.Length(1, maxReasonCodeLength).
+				Error("Reason code cannot be longer than 100 characters"),
+		),
+		validation.Field(&r.ReasonText, validation.Required.Error("Reason is required")),
+		validation.Field(&r.RequestedByID, validation.Required.Error("Requested by is required")),
+		validation.Field(&r.ApprovedAt,
+			validation.When(r.ApprovedByID.IsNotNil(), validation.Required.Error(
+				"An approved reversal must record when it was approved",
+			)),
+		),
+		validation.Field(&r.RejectedAt,
+			validation.When(r.RejectedByID.IsNotNil(), validation.Required.Error(
+				"A rejected reversal must record when it was rejected",
+			)),
+		),
+		validation.Field(&r.RejectionReason,
+			validation.When(
+				r.Status == StatusRejected,
+				validation.Required.Error("A rejected reversal must record why"),
+			),
+		),
+		validation.Field(&r.CancelledAt,
+			validation.When(r.CancelledByID.IsNotNil(), validation.Required.Error(
+				"A cancelled reversal must record when it was cancelled",
+			)),
+		),
+		validation.Field(&r.PostedAt,
+			validation.When(r.PostedByID.IsNotNil(), validation.Required.Error(
+				"A posted reversal must record when it was posted",
+			)),
+		),
+		validation.Field(&r.ReversalJournalEntryID,
+			validation.When(
+				r.Status == StatusPosted,
+				validation.Required.Error("A posted reversal must name the entry it created"),
+			),
+		),
+	))
+}
+
+const maxReasonCodeLength = 100

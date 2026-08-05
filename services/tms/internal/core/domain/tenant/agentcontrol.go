@@ -2,7 +2,6 @@ package tenant
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -43,19 +42,13 @@ type AgentControl struct {
 }
 
 func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(
+	multiErr.AddOzzoError(validation.ValidateStruct(
 		ac,
 		validation.Field(
 			&ac.DecisionTimeoutSeconds,
 			validation.Min(60).Error("Decision timeout must be at least 60 seconds"),
 		),
-	)
-	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
+	))
 }
 
 func (ac *AgentControl) BeforeAppendModel(_ context.Context, query bun.Query) error {

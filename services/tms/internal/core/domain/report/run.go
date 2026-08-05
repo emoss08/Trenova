@@ -5,9 +5,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -99,3 +102,73 @@ func (rr *ReportRun) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 		},
 	}
 }
+
+func (r *ReportRun) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&r.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&r.RequestedByID, validation.Required.Error("Requested by is required")),
+		validation.Field(&r.Trigger,
+			validation.Required.Error("Trigger is required"),
+			domainvalidation.ValidEnum[RunTrigger]("Trigger is invalid"),
+		),
+		validation.Field(&r.Format,
+			validation.Required.Error("Format is required"),
+			domainvalidation.ValidEnum[Format]("Format is invalid"),
+		),
+		validation.Field(&r.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[RunStatus]("Status is invalid"),
+		),
+		// A run reports on either a saved definition or a canned report; naming
+		// neither leaves nothing to execute.
+		validation.Field(&r.CannedKey,
+			validation.When(r.DefinitionID.IsNil(), validation.Required.Error(
+				"A run must name a report definition or a canned report",
+			)),
+			validation.Length(0, maxRunCannedKeyLength).
+				Error("Canned key cannot be longer than 100 characters"),
+		),
+		validation.Field(&r.CannedVersion,
+			validation.Length(0, maxRunCannedVersionLength).
+				Error("Canned version cannot be longer than 20 characters"),
+		),
+		validation.Field(&r.RowCount,
+			validation.Min(int64(0)).Error("Row count cannot be negative"),
+		),
+		validation.Field(&r.ByteSize,
+			validation.Min(int64(0)).Error("Byte size cannot be negative"),
+		),
+		validation.Field(&r.DurationMs,
+			validation.Min(int64(0)).Error("Duration cannot be negative"),
+		),
+		validation.Field(&r.ArtifactKey,
+			validation.Length(0, maxArtifactKeyLength).
+				Error("Artifact key cannot be longer than 512 characters"),
+		),
+		validation.Field(&r.TemporalWorkflowID,
+			validation.Length(0, maxTemporalFieldLength).
+				Error("Workflow cannot be longer than 255 characters"),
+		),
+		validation.Field(&r.TemporalRunID,
+			validation.Length(0, maxTemporalFieldLength).
+				Error("Workflow run cannot be longer than 255 characters"),
+		),
+		// A run that finished before it started would report a negative
+		// duration on the runs list.
+		validation.Field(&r.CompletedAt,
+			validation.Min(r.StartedAt).Error("Completion cannot precede the start"),
+		),
+	))
+}
+
+const (
+	maxRunCannedKeyLength     = 100
+	maxRunCannedVersionLength = 20
+	maxArtifactKeyLength      = 512
+	maxTemporalFieldLength    = 255
+)

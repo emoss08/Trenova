@@ -3,14 +3,22 @@ package detention
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
 var _ bun.BeforeAppendModelHook = (*DetentionNotice)(nil)
+
+const (
+	maxThreadKeyLength     = 120
+	maxNoticeSubjectLength = 255
+)
 
 // DetentionNotice is the customer-facing warning that detention has started or
 // is about to. Contracts that pay detention reliably require written notice at
@@ -105,23 +113,55 @@ func (n *DetentionNotice) MarkBounced(now int64, reason string) {
 }
 
 func (n *DetentionNotice) Validate(multiErr *errortypes.MultiError) {
-	if n.DetentionOccurrenceID.IsNil() {
-		multiErr.Add("detentionOccurrenceId", errortypes.ErrRequired,
-			"Detention occurrence is required")
-	}
-	if n.Subject == "" {
-		multiErr.Add("subject", errortypes.ErrRequired, "Subject is required")
-	}
-	if n.Body == "" {
-		multiErr.Add("body", errortypes.ErrRequired, "Body is required")
-	}
-	if n.Channel == NoticeChannelEmail && len(n.Recipients) == 0 {
-		multiErr.Add("recipients", errortypes.ErrRequired,
-			"At least one recipient is required to send an email notice")
-	}
-	if _, err := NoticeKindFromString(string(n.Kind)); err != nil {
-		multiErr.Add("kind", errortypes.ErrInvalid, "Notice kind is invalid")
-	}
+	multiErr.AddOzzoError(validation.ValidateStruct(n,
+		validation.Field(&n.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&n.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&n.DetentionOccurrenceID,
+			validation.Required.Error("Detention occurrence is required"),
+		),
+		validation.Field(&n.ThreadKey,
+			validation.Length(0, maxThreadKeyLength).
+				Error("Thread key cannot be longer than 120 characters"),
+		),
+		validation.Field(&n.Kind,
+			validation.Required.Error("Notice kind is required"),
+			domainvalidation.ValidEnumFunc(NoticeKindFromString, "Notice kind is invalid"),
+		),
+		validation.Field(&n.Channel,
+			domainvalidation.ValidEnumFunc(NoticeChannelFromString, "Notice channel is invalid"),
+		),
+		validation.Field(&n.DeliveryStatus,
+			domainvalidation.ValidEnumFunc(
+				NoticeDeliveryStatusFromString, "Delivery status is invalid",
+			),
+		),
+		validation.Field(&n.Recipients,
+			validation.When(n.Channel == NoticeChannelEmail, validation.Required.Error(
+				"At least one recipient is required to send an email notice",
+			)),
+			validation.Each(is.EmailFormat.Error("Recipient must be a valid email address")),
+		),
+		validation.Field(&n.Subject,
+			validation.Required.Error("Subject is required"),
+			validation.Length(1, maxNoticeSubjectLength).
+				Error("Subject cannot be longer than 255 characters"),
+		),
+		validation.Field(&n.Body, validation.Required.Error("Body is required")),
+		validation.Field(&n.QuotedFreeMinutes,
+			validation.Min(int32(0)).Error("Quoted free minutes cannot be negative"),
+		),
+		// A failure with no reason is a support ticket nobody can close.
+		validation.Field(&n.FailureReason,
+			validation.When(
+				n.DeliveryStatus == NoticeDeliveryStatusFailed,
+				validation.Required.Error("A failed notice must record why it failed"),
+			),
+		),
+	))
 }
 
 func (n *DetentionNotice) BeforeAppendModel(_ context.Context, query bun.Query) error {

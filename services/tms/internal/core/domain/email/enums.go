@@ -89,3 +89,100 @@ func Purposes() []Purpose {
 func IsValidPurpose(p Purpose) bool {
 	return slices.Contains(Purposes(), p)
 }
+
+func (v Provider) IsValid() bool {
+	switch v {
+	case ProviderResend,
+		ProviderPostmark:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v AuthType) IsValid() bool {
+	switch v {
+	case AuthTypeAPIKey:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v Encryption) IsValid() bool {
+	switch v {
+	case EncryptionNone:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v ProfileStatus) IsValid() bool {
+	switch v {
+	case ProfileStatusActive,
+		ProfileStatusInactive:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v Purpose) IsValid() bool {
+	switch v {
+	case PurposeGeneral,
+		PurposeBilling,
+		PurposeReporting,
+		PurposeOperations,
+		PurposeAuthentication,
+		PurposeNotifications:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v MessageStatus) IsValid() bool {
+	switch v {
+	case MessageStatusQueued,
+		MessageStatusSending,
+		MessageStatusSent,
+		MessageStatusDelivered,
+		MessageStatusFailed,
+		MessageStatusBounced,
+		MessageStatusComplained,
+		MessageStatusOpened,
+		MessageStatusClicked,
+		MessageStatusSuppressed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v EventType) IsValid() bool {
+	switch v {
+	case EventTypeSent,
+		EventTypeDelivered,
+		EventTypeOpened,
+		EventTypeClicked,
+		EventTypeBounced,
+		EventTypeComplained,
+		EventTypeFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v SuppressionReason) IsValid() bool {
+	switch v {
+	case SuppressionReasonHardBounce,
+		SuppressionReasonComplaint,
+		SuppressionReasonSoftBounceLimit,
+		SuppressionReasonManual:
+		return true
+	default:
+		return false
+	}
+}

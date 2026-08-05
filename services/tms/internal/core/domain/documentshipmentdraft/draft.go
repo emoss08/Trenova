@@ -3,8 +3,10 @@ package documentshipmentdraft
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
@@ -57,3 +59,60 @@ func (d *DocumentShipmentDraft) BeforeAppendModel(_ context.Context, query bun.Q
 
 	return nil
 }
+
+func (d *DocumentShipmentDraft) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
+		validation.Field(&d.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&d.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		validation.Field(&d.DocumentID, validation.Required.Error("Document is required")),
+		validation.Field(&d.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(StatusUnavailable, StatusPending, StatusReady, StatusFailed).
+				Error("Status is invalid"),
+		),
+		validation.Field(&d.DocumentKind,
+			validation.Length(0, maxDraftKindLength).
+				Error("Document kind cannot be longer than 100 characters"),
+		),
+		validation.Field(&d.Confidence,
+			validation.Min(0.0).Error("Confidence must be between 0 and 1"),
+			validation.Max(1.0).Error("Confidence must be between 0 and 1"),
+		),
+		validation.Field(&d.FailureCode,
+			validation.Length(0, maxDraftFailureCodeLength).
+				Error("Failure code cannot be longer than 100 characters"),
+		),
+		validation.Field(&d.FailureMessage,
+			validation.When(d.Status == StatusFailed, validation.Required.Error(
+				"A failed draft must record why it failed",
+			)),
+		),
+		// Attaching a draft to a shipment is an authorship record: what it was
+		// attached to, when, and by whom travel together or the audit trail is
+		// incomplete.
+		validation.Field(&d.AttachedAt,
+			validation.When(d.AttachedShipmentID != nil, validation.Required.Error(
+				"An attached draft must record when it was attached",
+			)),
+		),
+		validation.Field(&d.AttachedByID,
+			validation.When(d.AttachedShipmentID != nil, validation.Required.Error(
+				"An attached draft must record who attached it",
+			)),
+		),
+		validation.Field(&d.AttachedShipmentID,
+			validation.When(d.AttachedAt != nil, validation.Required.Error(
+				"An attached draft must name the shipment it was attached to",
+			)),
+		),
+	))
+}
+
+const (
+	maxDraftKindLength        = 100
+	maxDraftFailureCodeLength = 100
+)
