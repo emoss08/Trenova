@@ -193,8 +193,8 @@ func createShipmentStatusCoordinationRule() validationframework.TenantedRule[*sh
 		})
 }
 
-func collectAdvisories(multiErrs ...*errortypes.MultiError) []*errortypes.Advisory {
-	var advisories []*errortypes.Advisory
+func collectAdvisories(multiErrs ...*errortypes.MultiError) []*errortypes.AdvisoryError {
+	var advisories []*errortypes.AdvisoryError
 	for _, multiErr := range multiErrs {
 		advisories = append(advisories, multiErr.AllAdvisories()...)
 	}
@@ -212,7 +212,7 @@ func (v *Validator) ValidateCreate(
 func (v *Validator) ValidateCreateWithAdvisories(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) (*errortypes.MultiError, []*errortypes.Advisory) {
+) (*errortypes.MultiError, []*errortypes.AdvisoryError) {
 	entity.ApplyEntryMethodDefault(nil)
 
 	base := v.validator.ValidateCreate(ctx, entity)
@@ -246,7 +246,7 @@ func (v *Validator) ValidateUpdateWithOriginalAndAdvisories(
 	ctx context.Context,
 	original *shipment.Shipment,
 	entity *shipment.Shipment,
-) (*errortypes.MultiError, []*errortypes.Advisory) {
+) (*errortypes.MultiError, []*errortypes.AdvisoryError) {
 	entity.ApplyEntryMethodDefault(original)
 
 	base := v.validator.ValidateUpdate(ctx, entity)

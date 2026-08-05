@@ -293,7 +293,11 @@ func (h *Handler) getOverride(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetOverrideByID(c.Request.Context(), overrideID, actorutil.TenantInfoFrom(authCtx))
+	entity, err := h.service.GetOverrideByID(
+		c.Request.Context(),
+		overrideID,
+		actorutil.TenantInfoFrom(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -394,7 +398,10 @@ func (h *Handler) deleteOverride(c *gin.Context) {
 	}
 
 	if err = h.service.DeleteOverride(
-		c.Request.Context(), overrideID, actorutil.TenantInfoFrom(authCtx), actorutil.FromAuthContext(authCtx),
+		c.Request.Context(),
+		overrideID,
+		actorutil.TenantInfoFrom(authCtx),
+		actorutil.FromAuthContext(authCtx),
 	); err != nil {
 		h.eh.HandleError(c, err)
 		return

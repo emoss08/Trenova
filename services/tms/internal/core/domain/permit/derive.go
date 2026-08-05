@@ -28,7 +28,7 @@ type DeriveInput struct {
 // Derive walks the route and asks each jurisdiction what it requires. Only
 // jurisdictions the load actually exceeds produce a requirement, so a legal
 // load crossing eight states yields nothing rather than eight empty rows.
-func Derive(input DeriveInput) []*Requirement {
+func Derive(input *DeriveInput) []*Requirement {
 	requirements := make([]*Requirement, 0, len(input.Jurisdictions))
 
 	for _, jurisdiction := range input.Jurisdictions {

@@ -114,9 +114,9 @@ type MultiError struct {
 	parent          *MultiError
 	currentPriority ValidationPriority
 	maxErrors       int
-	Context         *ErrorContext `json:"context,omitempty"`
-	Errors          []*Error      `json:"errors"`
-	Advisories      []*Advisory   `json:"advisories,omitempty"`
+	Context         *ErrorContext    `json:"context,omitempty"`
+	Errors          []*Error         `json:"errors"`
+	Advisories      []*AdvisoryError `json:"advisories,omitempty"`
 }
 
 func NewMultiError() *MultiError {
@@ -297,8 +297,8 @@ func (m *MultiError) MarshalJSON() ([]byte, error) {
 	}
 
 	return sonic.Marshal(struct {
-		Errors     []*Error    `json:"errors"`
-		Advisories []*Advisory `json:"advisories,omitempty"`
+		Errors     []*Error         `json:"errors"`
+		Advisories []*AdvisoryError `json:"advisories,omitempty"`
 	}{
 		Errors:     m.Errors,
 		Advisories: m.Advisories,

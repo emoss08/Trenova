@@ -28,6 +28,8 @@ const (
 	trailerAxleLimitLbs      = int64(34_000)
 )
 
+const severityWarning = "warning"
+
 func (s *service) CalculateLoadingOptimization(
 	ctx context.Context,
 	req *repositories.LoadingOptimizationRequest,
@@ -171,7 +173,7 @@ func envelopeWarnings(envelope *repositories.LoadEnvelope) []repositories.Loadin
 	if envelope.ExceedsLegalWidth {
 		warnings = append(warnings, repositories.LoadingWarning{
 			Type:     "oversize_width",
-			Severity: "warning",
+			Severity: severityWarning,
 			Message: fmt.Sprintf(
 				"Load is %.2f ft wide, over the %.1f ft federal baseline; oversize permits apply",
 				envelope.WidthFeet, legalWidthFeet),
@@ -181,7 +183,7 @@ func envelopeWarnings(envelope *repositories.LoadEnvelope) []repositories.Loadin
 	if envelope.ExceedsLegalHeight {
 		warnings = append(warnings, repositories.LoadingWarning{
 			Type:     "oversize_height",
-			Severity: "warning",
+			Severity: severityWarning,
 			Message: fmt.Sprintf(
 				"Overall height is %.2f ft including a %.2f ft deck, over the %.1f ft baseline",
 				envelope.OverallHeightFeet, envelope.DeckHeightFeet, legalHeightFeet),
@@ -191,7 +193,7 @@ func envelopeWarnings(envelope *repositories.LoadEnvelope) []repositories.Loadin
 	if envelope.RearOverhangFeet > 0 {
 		warnings = append(warnings, repositories.LoadingWarning{
 			Type:     "rear_overhang",
-			Severity: "warning",
+			Severity: severityWarning,
 			Message: fmt.Sprintf(
 				"Cargo overhangs the deck by %.2f ft", envelope.RearOverhangFeet),
 		})
@@ -747,7 +749,7 @@ func checkTemperatureConflicts(
 						*b.MinTemp,
 						*b.MaxTemp,
 					),
-					Severity:     "warning",
+					Severity:     severityWarning,
 					CommodityIDs: []string{a.CommodityID.String(), b.CommodityID.String()},
 				})
 			}
@@ -779,7 +781,7 @@ func checkFragileStacking(
 							placements[j].CommodityName,
 							intutils.FormatWithCommas(placements[j].Weight),
 						),
-						Severity: "warning",
+						Severity: severityWarning,
 						CommodityIDs: []string{
 							placements[i].CommodityID.String(),
 							placements[j].CommodityID.String(),

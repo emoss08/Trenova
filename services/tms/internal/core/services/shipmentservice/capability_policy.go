@@ -2,6 +2,7 @@ package shipmentservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -20,13 +21,17 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 )
 
+// resolveProfileForShipment reports ErrNoModeProfileConfigured when there is no
+// profile to apply, and any other error when the lookup itself failed. Callers
+// that cannot act on the difference should discard the error explicitly, so that
+// choice stays visible at the call site rather than buried here.
 func resolveProfileForShipment(
 	ctx context.Context,
 	profileSvc services.ModeProfileService,
 	entity *shipment.Shipment,
-) *modeprofile.ResolvedPolicy {
+) (*modeprofile.ResolvedPolicy, error) {
 	if profileSvc == nil {
-		return nil
+		return nil, services.ErrNoModeProfileConfigured
 	}
 
 	policy, err := profileSvc.Resolve(ctx, &services.ResolveModeProfileRequest{
@@ -41,22 +46,29 @@ func resolveProfileForShipment(
 		TrailerTypeID:  entity.TrailerTypeID,
 	})
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return policy
+	return policy, nil
 }
 
 func (s *service) recordCapabilityDeviations(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	advisories []*errortypes.Advisory,
+	advisories []*errortypes.AdvisoryError,
 ) {
 	if s.modeProfileService == nil || entity == nil {
 		return
 	}
 
-	policy := resolveProfileForShipment(ctx, s.modeProfileService, entity)
+	policy, resolveErr := resolveProfileForShipment(ctx, s.modeProfileService, entity)
+	if errors.Is(resolveErr, services.ErrNoModeProfileConfigured) {
+		return
+	}
+	if resolveErr != nil {
+		s.l.Error("failed to resolve mode profile for deviations", zap.Error(resolveErr))
+		return
+	}
 	if policy == nil {
 		return
 	}
@@ -103,7 +115,7 @@ func (s *service) syncPermits(
 
 func emit(
 	multiErr *errortypes.MultiError,
-	rule modeprofile.ResolvedRule,
+	rule *modeprofile.ResolvedRule,
 	field string,
 	code errortypes.ErrorCode,
 	message string,
@@ -138,7 +150,9 @@ func maxWeightFor(
 		limit = int64(control.MaxShipmentWeightLimit)
 	}
 
-	return limit, rule, rule.Applies()
+	applies := rule.Applies()
+
+	return limit, rule, applies
 }
 
 func fallbackRule(key modeprofile.RuleKey) modeprofile.ResolvedRule {
@@ -208,7 +222,9 @@ func createCapabilityPolicyRule(
 				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 			}
 
-			policy := resolveProfileForShipment(ctx, profileSvc, entity)
+			// A resolve failure must not fail the save: capability rules are
+			// advisory here, and a database blip should not block dispatch.
+			policy, _ := resolveProfileForShipment(ctx, profileSvc, entity)
 
 			validateWeight(entity, policy, control, multiErr)
 			validateTemperature(entity, policy, multiErr)
@@ -241,7 +257,7 @@ func validateWeight(
 		return
 	}
 
-	emit(multiErr, rule, "weight", errortypes.ErrInvalid,
+	emit(multiErr, &rule, "weight", errortypes.ErrInvalid,
 		fmt.Sprintf("Shipment weight cannot exceed %d", limit))
 }
 
@@ -261,18 +277,18 @@ func validateTemperature(
 	)
 
 	if entity.TemperatureMin == nil && (requireBoth || entity.TemperatureMax == nil) {
-		emit(multiErr, rule, "temperatureMin", errortypes.ErrRequired,
+		emit(multiErr, &rule, "temperatureMin", errortypes.ErrRequired,
 			"Temperature controlled freight requires a minimum temperature")
 	}
 
 	if requireBoth && entity.TemperatureMax == nil {
-		emit(multiErr, rule, "temperatureMax", errortypes.ErrRequired,
+		emit(multiErr, &rule, "temperatureMax", errortypes.ErrRequired,
 			"Temperature controlled freight requires a maximum temperature")
 	}
 
 	if entity.TemperatureMin != nil && entity.TemperatureMax != nil &&
 		*entity.TemperatureMax < *entity.TemperatureMin {
-		emit(multiErr, rule, "temperatureMax", errortypes.ErrInvalid,
+		emit(multiErr, &rule, "temperatureMax", errortypes.ErrInvalid,
 			"Maximum temperature cannot be below the minimum temperature")
 	}
 }
@@ -309,7 +325,7 @@ func validateMoveRemoval(
 		return nil
 	}
 
-	emit(multiErr, rule, "moves", errortypes.ErrInvalidOperation,
+	emit(multiErr, &rule, "moves", errortypes.ErrInvalidOperation,
 		"Your organization does not allow move removals")
 
 	return nil
@@ -330,8 +346,13 @@ func validateDimensions(
 			continue
 		}
 
-		emit(multiErr.WithIndex("commodities", idx), rule, "", errortypes.ErrRequired,
-			"Length, width, and height are required for open deck freight")
+		emit(
+			multiErr.WithIndex(modeprofile.FieldCommodities, idx),
+			&rule,
+			"",
+			errortypes.ErrRequired,
+			"Length, width, and height are required for open deck freight",
+		)
 	}
 }
 
@@ -390,7 +411,7 @@ func validateDeckFit(
 		return
 	}
 
-	emit(multiErr, rule, "commodities", errortypes.ErrInvalid,
+	emit(multiErr, &rule, "commodities", errortypes.ErrInvalid,
 		fmt.Sprintf(
 			"Cargo overhangs the deck by %.1f ft, more than the %d ft allowed",
 			overhang,
@@ -457,7 +478,7 @@ func validatePermitRequired(
 		return
 	}
 
-	emit(multiErr, rule, "permits", errortypes.ErrRequired,
+	emit(multiErr, &rule, "permits", errortypes.ErrRequired,
 		fmt.Sprintf("Permits are required and not recorded for %s",
 			jurisdictionList(assessment.Open)))
 }
@@ -472,7 +493,7 @@ func validatePermitExpiry(
 		return
 	}
 
-	emit(multiErr, rule, "permits", errortypes.ErrInvalid,
+	emit(multiErr, &rule, "permits", errortypes.ErrInvalid,
 		fmt.Sprintf("Permits for %s expire before the final scheduled arrival",
 			jurisdictionList(assessment.ExpiringBeforeDelivery)))
 }
@@ -487,7 +508,7 @@ func validatePermitEscorts(
 		return
 	}
 
-	emit(multiErr, rule, "permits", errortypes.ErrInvalidOperation,
+	emit(multiErr, &rule, "permits", errortypes.ErrInvalidOperation,
 		fmt.Sprintf("This route requires %d escort vehicle(s); confirm they are booked",
 			assessment.TotalEscorts))
 }
@@ -508,7 +529,7 @@ func validatePermitLeadTime(
 		return
 	}
 
-	emit(multiErr, rule, "moves", errortypes.ErrInvalid,
+	emit(multiErr, &rule, "moves", errortypes.ErrInvalid,
 		fmt.Sprintf(
 			"Pickup is scheduled sooner than the %d day permit lead time on this route",
 			assessment.MaxLeadTimeDays))
@@ -539,7 +560,7 @@ func validatePermitCurfew(
 		return
 	}
 
-	emit(multiErr, rule, "moves", errortypes.ErrInvalid,
+	emit(multiErr, &rule, "moves", errortypes.ErrInvalid,
 		fmt.Sprintf(
 			"Movement restrictions apply in %s; confirm the appointment windows are permitted",
 			jurisdictionList(restricted)))

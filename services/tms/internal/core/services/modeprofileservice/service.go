@@ -97,23 +97,58 @@ func (s *service) RecordDeviations(
 		firedKeys = append(firedKeys, advisory.RuleKey)
 	}
 
+	live, readErr := s.deviationRepo.LiveRuleKeysForResource(
+		ctx,
+		&repositories.LiveDeviationKeysRequest{
+			TenantInfo:   req.TenantInfo,
+			ResourceType: req.ResourceType,
+			ResourceID:   req.ResourceID,
+		},
+	)
+	if readErr != nil {
+		log.Error("failed to read live deviations", zap.Error(readErr))
+		return readErr
+	}
+
+	// A rule that fired again keeps the row it already has. Resolving and
+	// re-inserting it would reset OccurredAt, so "how long has this been
+	// deviating" would always read as "just now", and every re-evaluation of an
+	// unchanged shipment would land as another occurrence in the ledger.
 	if err := s.deviationRepo.SupersedeOpenForResource(
 		ctx,
 		&repositories.SupersedeDeviationsRequest{
 			TenantInfo:   req.TenantInfo,
 			ResourceType: req.ResourceType,
 			ResourceID:   req.ResourceID,
+			KeepRuleKeys: firedKeys,
 		},
 	); err != nil {
 		log.Error("failed to supersede prior deviations", zap.Error(err))
 		return err
 	}
 
-	if len(deviations) == 0 {
+	liveKeys := make(map[string]struct{}, len(live))
+	for _, key := range live {
+		liveKeys[key] = struct{}{}
+	}
+
+	// Insert only what is not already on record. An acknowledged deviation that
+	// still fires must not reappear as a second, unacknowledged copy — the
+	// operator already answered for it.
+	fresh := make([]*modeprofile.Deviation, 0, len(deviations))
+	for _, deviation := range deviations {
+		if _, exists := liveKeys[string(deviation.RuleKey)]; exists {
+			continue
+		}
+
+		fresh = append(fresh, deviation)
+	}
+
+	if len(fresh) == 0 {
 		return nil
 	}
 
-	if err := s.deviationRepo.RecordMany(ctx, deviations); err != nil {
+	if err := s.deviationRepo.RecordMany(ctx, fresh); err != nil {
 		log.Error("failed to record deviations", zap.Error(err))
 		return err
 	}

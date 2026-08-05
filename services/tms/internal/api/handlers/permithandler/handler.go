@@ -96,7 +96,11 @@ func (h *Handler) listPermits(c *gin.Context) {
 		return
 	}
 
-	permits, err := h.service.ListPermits(c.Request.Context(), shipmentID, actorutil.TenantInfoFrom(authCtx))
+	permits, err := h.service.ListPermits(
+		c.Request.Context(),
+		shipmentID,
+		actorutil.TenantInfoFrom(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -277,15 +281,18 @@ func (h *Handler) waiveRequirement(c *gin.Context) {
 		return
 	}
 
-	waived, err := h.service.WaiveRequirement(c.Request.Context(), &services.WaiveRequirementRequest{
-		TenantInfo:    actorutil.TenantInfoFrom(authCtx),
-		RequirementID: requirementID,
-		// The waiving user comes from the session, never the payload: the point
-		// of the record is who accepted the risk.
-		WaivedByID: authCtx.UserID,
-		Reason:     body.Reason,
-		Actor:      actorutil.FromAuthContext(authCtx),
-	})
+	waived, err := h.service.WaiveRequirement(
+		c.Request.Context(),
+		&services.WaiveRequirementRequest{
+			TenantInfo:    actorutil.TenantInfoFrom(authCtx),
+			RequirementID: requirementID,
+			// The waiving user comes from the session, never the payload: the point
+			// of the record is who accepted the risk.
+			WaivedByID: authCtx.UserID,
+			Reason:     body.Reason,
+			Actor:      actorutil.FromAuthContext(authCtx),
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

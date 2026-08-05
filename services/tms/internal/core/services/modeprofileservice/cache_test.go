@@ -179,7 +179,10 @@ func TestResolve_WithoutCacheRepositoryFallsBackToDatabase(t *testing.T) {
 	assert.Equal(t, 1, repo.calls)
 }
 
-func TestResolve_EmptyProfileSetResolvesToNil(t *testing.T) {
+// A tenant with no profiles gets a sentinel rather than a bare nil policy, so a
+// caller can tell "nothing is configured" from "the lookup failed" instead of
+// treating a database outage as though no rules applied.
+func TestResolve_EmptyProfileSetReportsNothingConfigured(t *testing.T) {
 	repo := &fakeProfileRepo{profiles: nil}
 	cache := &fakeCacheRepo{getErr: errCacheMiss}
 
@@ -187,7 +190,7 @@ func TestResolve_EmptyProfileSetResolvesToNil(t *testing.T) {
 
 	policy, err := svc.Resolve(t.Context(), &services.ResolveModeProfileRequest{})
 
-	require.NoError(t, err)
+	require.ErrorIs(t, err, services.ErrNoModeProfileConfigured)
 	assert.Nil(t, policy)
 }
 

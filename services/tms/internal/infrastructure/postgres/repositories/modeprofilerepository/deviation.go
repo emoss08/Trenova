@@ -218,7 +218,7 @@ func (r *deviationRepository) SupersedeOpenForResource(
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix())
 
 	if len(req.KeepRuleKeys) > 0 {
-		q = q.Where(cols.RuleKey.NotIn(), bun.In(req.KeepRuleKeys))
+		q = q.Where(cols.RuleKey.NotIn(), bun.List(req.KeepRuleKeys))
 	}
 
 	if _, err := q.Exec(ctx); err != nil {
@@ -227,6 +227,38 @@ func (r *deviationRepository) SupersedeOpenForResource(
 	}
 
 	return nil
+}
+
+func (r *deviationRepository) LiveRuleKeysForResource(
+	ctx context.Context,
+	req *repositories.LiveDeviationKeysRequest,
+) ([]string, error) {
+	log := r.l.With(
+		zap.String("operation", "LiveRuleKeysForResource"),
+		zap.String("resourceId", req.ResourceID.String()),
+	)
+
+	cols := buncolgen.DeviationColumns
+	keys := make([]string, 0, 8)
+
+	if err := buncolgen.DeviationScopeTenant(
+		r.db.DBForContext(ctx).NewSelect().Model((*modeprofile.Deviation)(nil)),
+		req.TenantInfo,
+	).
+		Column(cols.RuleKey.Name).
+		Distinct().
+		Where(cols.ResourceType.Eq(), req.ResourceType).
+		Where(cols.ResourceID.Eq(), req.ResourceID).
+		Where(cols.State.In(), bun.List([]modeprofile.DeviationState{
+			modeprofile.DeviationStateOpen,
+			modeprofile.DeviationStateAcknowledged,
+		})).
+		Scan(ctx, &keys); err != nil {
+		log.Error("failed to read live deviation rule keys", zap.Error(err))
+		return nil, err
+	}
+
+	return keys, nil
 }
 
 func (r *deviationRepository) Ledger(

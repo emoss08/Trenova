@@ -60,7 +60,7 @@ func deriveAcross(
 		})
 	}
 
-	return permit.Derive(permit.DeriveInput{
+	return permit.Derive(&permit.DeriveInput{
 		Jurisdictions: route,
 		Rules:         rules,
 		Measurements:  m,
@@ -142,7 +142,7 @@ func TestDerive_SkipsJurisdictionsWithoutRules(t *testing.T) {
 
 	known := newJurisdiction("GA", 12, 2)
 
-	requirements := permit.Derive(permit.DeriveInput{
+	requirements := permit.Derive(&permit.DeriveInput{
 		Jurisdictions: []permit.RouteJurisdiction{
 			{StateID: known.id, Sequence: 0},
 			{StateID: pulid.MustNew("ust_"), Sequence: 1},

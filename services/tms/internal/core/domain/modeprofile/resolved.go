@@ -56,7 +56,7 @@ type ResolvedRule struct {
 //
 // Blocking is part of the question: a rule that only warns records a deviation
 // rather than refusing the save, so the field is not actually required.
-func (r ResolvedRule) RequiresField(field string) bool {
+func (r *ResolvedRule) RequiresField(field string) bool {
 	if !r.Blocks() {
 		return false
 	}
@@ -64,11 +64,11 @@ func (r ResolvedRule) RequiresField(field string) bool {
 	return slices.Contains(r.RequiredFields, field)
 }
 
-func (r ResolvedRule) Blocks() bool {
+func (r *ResolvedRule) Blocks() bool {
 	return r.Enabled && r.Enforcement == tenant.EnforcementLevelBlock
 }
 
-func (r ResolvedRule) Records() bool {
+func (r *ResolvedRule) Records() bool {
 	if !r.Enabled {
 		return false
 	}
@@ -76,7 +76,7 @@ func (r ResolvedRule) Records() bool {
 		r.Enforcement == tenant.EnforcementLevelRequireReview
 }
 
-func (r ResolvedRule) Applies() bool {
+func (r *ResolvedRule) Applies() bool {
 	return r.Enabled && r.Enforcement != tenant.EnforcementLevelIgnore
 }
 
@@ -189,7 +189,7 @@ func (p *ResolvedPolicy) IntParam(key RuleKey, name string) (int64, bool) {
 	return 0, false
 }
 
-func (p *ResolvedPolicy) BoolParam(key RuleKey, name string) (bool, bool) {
+func (p *ResolvedPolicy) BoolParam(key RuleKey, name string) (enabled, found bool) {
 	rule, ok := p.Rule(key)
 	if !ok {
 		return false, false

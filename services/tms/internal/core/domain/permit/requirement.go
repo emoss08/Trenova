@@ -42,7 +42,7 @@ type RuleProvenance struct {
 	OverrideReason    string                             `json:"overrideReason,omitempty"`
 }
 
-func (p RuleProvenance) IsTrusted() bool {
+func (p *RuleProvenance) IsTrusted() bool {
 	return p.VerificationState.IsTrusted()
 }
 
@@ -79,9 +79,9 @@ type Requirement struct {
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	BusinessUnit      *tenant.BusinessUnit `json:"-"                          bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization      *tenant.Organization `json:"-"                          bun:"rel:belongs-to,join:organization_id=id"`
-	State             *usstate.UsState     `json:"state,omitempty"            bun:"rel:belongs-to,join:state_id=id"`
+	BusinessUnit      *tenant.BusinessUnit `json:"-"                           bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization      *tenant.Organization `json:"-"                           bun:"rel:belongs-to,join:organization_id=id"`
+	State             *usstate.UsState     `json:"state,omitempty"             bun:"rel:belongs-to,join:state_id=id"`
 	SatisfiedByPermit *Permit              `json:"satisfiedByPermit,omitempty" bun:"rel:belongs-to,join:satisfied_by_permit_id=id"`
 }
 

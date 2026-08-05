@@ -80,10 +80,10 @@ type Shipment struct {
 	TotalChargeAmount         decimal.NullDecimal   `json:"totalChargeAmount"          bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
 	Pieces                    *int64                `json:"pieces"                     bun:"pieces,type:INTEGER,nullzero"`
 	Weight                    *int64                `json:"weight"                     bun:"weight,type:INTEGER,nullzero"`
-	EnvelopeLengthFeet        *float64              `json:"envelopeLengthFeet"        bun:"envelope_length_feet,type:NUMERIC(10,2),nullzero"`
-	EnvelopeWidthFeet         *float64              `json:"envelopeWidthFeet"         bun:"envelope_width_feet,type:NUMERIC(10,2),nullzero"`
-	EnvelopeHeightFeet        *float64              `json:"envelopeHeightFeet"        bun:"envelope_height_feet,type:NUMERIC(10,2),nullzero"`
-	EnvelopeOverallHeightFeet *float64              `json:"envelopeOverallHeightFeet" bun:"envelope_overall_height_feet,type:NUMERIC(10,2),nullzero"`
+	EnvelopeLengthFeet        *float64              `json:"envelopeLengthFeet"         bun:"envelope_length_feet,type:NUMERIC(10,2),nullzero"`
+	EnvelopeWidthFeet         *float64              `json:"envelopeWidthFeet"          bun:"envelope_width_feet,type:NUMERIC(10,2),nullzero"`
+	EnvelopeHeightFeet        *float64              `json:"envelopeHeightFeet"         bun:"envelope_height_feet,type:NUMERIC(10,2),nullzero"`
+	EnvelopeOverallHeightFeet *float64              `json:"envelopeOverallHeightFeet"  bun:"envelope_overall_height_feet,type:NUMERIC(10,2),nullzero"`
 	TemperatureMin            *int16                `json:"temperatureMin"             bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
 	TemperatureMax            *int16                `json:"temperatureMax"             bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
 	ActualDeliveryDate        *int64                `json:"actualDeliveryDate"         bun:"actual_delivery_date,type:BIGINT,nullzero"`

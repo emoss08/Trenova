@@ -172,8 +172,11 @@ func (t *Tracker) RecordFailure(
 		Model(record).
 		On("CONFLICT (name, version, environment) DO UPDATE").
 		Set("applied_at = EXCLUDED.applied_at").
-		Set("status = CASE WHEN seed_history.status = 'Active' " +
-			"THEN seed_history.status ELSE EXCLUDED.status END").
+		// sh, not seed_history: bun aliases the target as "sh", and PostgreSQL
+		// rejects the original name once an alias is in play, so referring to it
+		// here made every recorded failure fail with SQLSTATE 42P01.
+		Set("status = CASE WHEN sh.status = 'Active' " +
+			"THEN sh.status ELSE EXCLUDED.status END").
 		Set("error = EXCLUDED.error").
 		Exec(ctx)
 	if err != nil {

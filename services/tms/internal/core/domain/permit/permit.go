@@ -39,8 +39,8 @@ type Permit struct {
 	IssuedAt  *int64 `json:"issuedAt"  bun:"issued_at,type:BIGINT,nullzero"`
 	ExpiresAt *int64 `json:"expiresAt" bun:"expires_at,type:BIGINT,nullzero"`
 
-	Cost  decimal.NullDecimal `json:"cost"       bun:"cost,type:NUMERIC(19,4),nullzero"`
-	Notes string              `json:"notes"      bun:"notes,type:TEXT,nullzero"`
+	Cost  decimal.NullDecimal `json:"cost"  bun:"cost,type:NUMERIC(19,4),nullzero"`
+	Notes string              `json:"notes" bun:"notes,type:TEXT,nullzero"`
 
 	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

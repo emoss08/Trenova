@@ -2,6 +2,7 @@ package permitservice
 
 import (
 	"context"
+	"math"
 
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -40,6 +41,11 @@ type service struct {
 	l                *zap.Logger
 }
 
+// fx builds this from a params object that embeds dig.In, and dig rejects a
+// pointer to one, so the struct is passed by value however heavy it is. It is
+// constructed once at startup, not per request.
+//
+//nolint:gocritic // fx cannot inject a pointer to a dig.In params object
 func NewService(p ServiceParams) services.PermitService {
 	return &service{
 		permitRepo:       p.PermitRepo,
@@ -108,7 +114,13 @@ func (s *service) routeJurisdictions(
 	seen := make(map[pulid.ID]struct{}, len(states))
 	route := make([]permit.RouteJurisdiction, 0, len(states))
 
+	sequence := int16(0)
+
 	for _, stop := range stops {
+		if sequence == math.MaxInt16 {
+			break
+		}
+
 		stateID, ok := states[stop.LocationID]
 		if !ok || stateID.IsNil() {
 			continue
@@ -120,8 +132,9 @@ func (s *service) routeJurisdictions(
 		seen[stateID] = struct{}{}
 		route = append(route, permit.RouteJurisdiction{
 			StateID:  stateID,
-			Sequence: int16(len(route)),
+			Sequence: sequence,
 		})
+		sequence++
 	}
 
 	return route, nil
@@ -296,7 +309,7 @@ func (s *service) Assess(
 	assessment.Jurisdictions = assessJurisdictions(route, rules, measurements)
 	assessment.RouteResolved = len(assessment.Jurisdictions) > 0
 
-	requirements := permit.Derive(permit.DeriveInput{
+	requirements := permit.Derive(&permit.DeriveInput{
 		Jurisdictions: route,
 		Rules:         rules,
 		Measurements:  measurements,

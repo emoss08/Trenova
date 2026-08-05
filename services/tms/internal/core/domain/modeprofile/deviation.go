@@ -25,7 +25,7 @@ var (
 
 type Deviation struct {
 	bun.BaseModel             `bun:"table:mode_profile_deviations,alias:mpd" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                 json:"-"`
+	pagination.CursorValueSet `bun:",embed"                                  json:"-"`
 
 	ID               pulid.ID  `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID   pulid.ID  `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`

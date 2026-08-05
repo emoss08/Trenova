@@ -59,6 +59,8 @@ func (d DeckType) HasWell() bool {
 	switch d {
 	case DeckTypeDoubleDrop, DeckTypeRGN, DeckTypeLowboy:
 		return true
+	case DeckTypeFlatbed, DeckTypeStepDeck, DeckTypeConestoga:
+		return false
 	default:
 		return false
 	}

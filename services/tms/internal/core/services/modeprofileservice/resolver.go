@@ -151,7 +151,10 @@ func buildResolvedPolicy(
 
 	rules := make(map[modeprofile.RuleKey]modeprofile.ResolvedRule, len(configured))
 
-	for _, def := range modeprofile.AllRuleDefinitions() {
+	defs := modeprofile.AllRuleDefinitions()
+	for i := range defs {
+		def := &defs[i]
+
 		if !profile.HasCapability(def.Capability) {
 			continue
 		}
@@ -221,7 +224,7 @@ func buildResolvedPolicy(
 // enforces exactly that. Reporting both unconditionally would mark a field
 // required in the form that the server would happily accept as empty.
 func requiredFieldsFor(
-	def modeprofile.RuleDefinition,
+	def *modeprofile.RuleDefinition,
 	parameters map[string]any,
 ) []string {
 	if len(def.RequiredFields) == 0 {
@@ -243,7 +246,7 @@ func requiredFieldsFor(
 	)
 }
 
-func defaultParameters(def modeprofile.RuleDefinition) map[string]any {
+func defaultParameters(def *modeprofile.RuleDefinition) map[string]any {
 	if len(def.Parameters) == 0 {
 		return nil
 	}
@@ -263,7 +266,7 @@ func defaultParameters(def modeprofile.RuleDefinition) map[string]any {
 }
 
 func mergeParameters(
-	def modeprofile.RuleDefinition,
+	def *modeprofile.RuleDefinition,
 	configured map[string]any,
 ) map[string]any {
 	merged := defaultParameters(def)
@@ -341,7 +344,7 @@ func (s *service) Resolve(
 	}
 
 	if len(candidates) == 0 {
-		return nil, nil
+		return nil, services.ErrNoModeProfileConfigured
 	}
 
 	sortCandidates(candidates)

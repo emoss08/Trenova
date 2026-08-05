@@ -30,7 +30,7 @@ var (
 
 type EquipmentType struct {
 	bun.BaseModel             `bun:"table:equipment_types,alias:et" json:"-"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	pagination.CursorValueSet `bun:",embed"                         json:"-"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -46,11 +46,11 @@ type EquipmentType struct {
 	DeckHeightInches *float64 `json:"deckHeightInches" bun:"deck_height_inches,type:NUMERIC(10,2),nullzero"`
 	WellLengthFeet   *float64 `json:"wellLengthFeet"   bun:"well_length_feet,type:NUMERIC(10,2),nullzero"`
 	AxleCount        *int16   `json:"axleCount"        bun:"axle_count,type:SMALLINT,nullzero"`
-	SearchVector     string   `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank             string   `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
-	Version          int64    `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt        int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector     string   `json:"-"                bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank             string   `json:"-"                bun:"rank,type:VARCHAR(100),scanonly"`
+	Version          int64    `json:"version"          bun:"version,type:BIGINT"`
+	CreatedAt        int64    `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt        int64    `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`

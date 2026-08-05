@@ -89,7 +89,7 @@ func (r *CapabilityRule) IntParam(name string) (int64, bool) {
 	}
 }
 
-func (r *CapabilityRule) BoolParam(name string) (bool, bool) {
+func (r *CapabilityRule) BoolParam(name string) (enabled, found bool) {
 	value, ok := r.resolveParam(name)
 	if !ok {
 		return false, false

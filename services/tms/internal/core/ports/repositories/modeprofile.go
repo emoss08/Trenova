@@ -91,6 +91,18 @@ type SupersedeDeviationsRequest struct {
 	KeepRuleKeys []string
 }
 
+// LiveDeviationKeysRequest asks which rules already have a deviation on record
+// for a resource that has not been resolved.
+//
+// Only the keys are returned rather than whole rows: the caller uses them to
+// decide what not to insert again, and reading the rows would invite carrying
+// stale copies of state that only the database should own.
+type LiveDeviationKeysRequest struct {
+	TenantInfo   pagination.TenantInfo
+	ResourceType string
+	ResourceID   pulid.ID
+}
+
 type DeviationLedgerEntry struct {
 	RuleKey        string `json:"ruleKey"`
 	Capability     string `json:"capability"`
@@ -130,6 +142,15 @@ type DeviationRepository interface {
 		ctx context.Context,
 		req *SupersedeDeviationsRequest,
 	) error
+
+	// LiveRuleKeysForResource covers Open and Acknowledged alike. An
+	// acknowledged deviation is still on record, so re-inserting its rule would
+	// leave the resource carrying the same finding twice, once accepted and
+	// once not.
+	LiveRuleKeysForResource(
+		ctx context.Context,
+		req *LiveDeviationKeysRequest,
+	) ([]string, error)
 
 	Ledger(
 		ctx context.Context,

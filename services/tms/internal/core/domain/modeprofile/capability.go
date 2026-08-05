@@ -95,6 +95,14 @@ const (
 	RuleKeyPermitCurfewConflict = RuleKey("permit.curfewConflict")
 )
 
+// The form fields a rule points at. These name the client's field paths, so a
+// rule and the UI section it drives cannot drift apart silently.
+const (
+	FieldCommodities = "commodities"
+	FieldMoves       = "moves"
+	FieldPermits     = "permits"
+)
+
 func (r RuleKey) String() string { return string(r) }
 
 const (
@@ -151,7 +159,7 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 			"violate 49 CFR 177.848 segregation requirements and expose the carrier " +
 			"to civil penalties and cargo liability.",
 		DefaultEnforcement: tenant.EnforcementLevelBlock,
-		Fields:             []string{"commodities"},
+		Fields:             []string{FieldCommodities},
 	},
 	RuleKeyDuplicateBOL: {
 		Key:        RuleKeyDuplicateBOL,
@@ -170,7 +178,7 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 		Rationale: "Removing a move after dispatch detaches completed stop history " +
 			"from the shipment, breaking detention accrual and driver pay traceability.",
 		DefaultEnforcement: tenant.EnforcementLevelBlock,
-		Fields:             []string{"moves"},
+		Fields:             []string{FieldMoves},
 	},
 	RuleKeyMaxShipmentWeight: {
 		Key:        RuleKeyMaxShipmentWeight,
@@ -199,9 +207,9 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 			"width, and height on every line. Deck fit, overhang, and every " +
 			"jurisdiction permit threshold are computed from these numbers.",
 		DefaultEnforcement: tenant.EnforcementLevelBlock,
-		Fields:             []string{"commodities"},
+		Fields:             []string{FieldCommodities},
 		// validateDimensions emits ErrRequired per commodity line missing a side.
-		RequiredFields: []string{"commodities"},
+		RequiredFields: []string{FieldCommodities},
 	},
 	RuleKeyEnvelopeExceedsEquipment: {
 		Key:        RuleKeyEnvelopeExceedsEquipment,
@@ -211,7 +219,7 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 			"the load needs different equipment or an over-length permit, and " +
 			"discovering that at the shipper costs a day.",
 		DefaultEnforcement: tenant.EnforcementLevelBlock,
-		Fields:             []string{"trailerTypeId", "commodities"},
+		Fields:             []string{"trailerTypeId", FieldCommodities},
 		Parameters: []RuleParameter{
 			{
 				Name:     ParamMaxOverhangFeet,
@@ -230,7 +238,7 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 			"without its permit risks a citation at the scale and an out-of-service " +
 			"order that strands the load and the driver.",
 		DefaultEnforcement: tenant.EnforcementLevelBlock,
-		Fields:             []string{"permits"},
+		Fields:             []string{FieldPermits},
 		Parameters: []RuleParameter{
 			{
 				Name:     ParamAttachDerivedCharge,
@@ -249,7 +257,7 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 			"leaves the load illegal mid-route, which is worse than never having " +
 			"left: the truck is already loaded and committed.",
 		DefaultEnforcement: tenant.EnforcementLevelBlock,
-		Fields:             []string{"permits"},
+		Fields:             []string{FieldPermits},
 	},
 	RuleKeyPermitEscorts: {
 		Key:        RuleKeyPermitEscorts,
@@ -259,7 +267,7 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 			"dispatch that a jurisdiction requires one is a missed pickup, not a " +
 			"phone call.",
 		DefaultEnforcement: tenant.EnforcementLevelRequireReview,
-		Fields:             []string{"permits"},
+		Fields:             []string{FieldPermits},
 	},
 	RuleKeyPermitLeadTime: {
 		Key:        RuleKeyPermitLeadTime,
@@ -269,7 +277,7 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 			"three to five where review is manual. Quoting a pickup sooner than the " +
 			"slowest jurisdiction can issue is a missed appointment already booked.",
 		DefaultEnforcement: tenant.EnforcementLevelWarn,
-		Fields:             []string{"moves"},
+		Fields:             []string{FieldMoves},
 	},
 	RuleKeyPermitCurfewConflict: {
 		Key:        RuleKeyPermitCurfewConflict,
@@ -279,7 +287,7 @@ var ruleDefinitions = map[RuleKey]RuleDefinition{
 			"through metro areas at rush hour. An appointment inside a restricted " +
 			"window cannot legally be met.",
 		DefaultEnforcement: tenant.EnforcementLevelWarn,
-		Fields:             []string{"moves"},
+		Fields:             []string{FieldMoves},
 	},
 	RuleKeyTemperatureRange: {
 		Key:        RuleKeyTemperatureRange,
@@ -320,7 +328,9 @@ func IsKnownRuleKey(key RuleKey) bool {
 
 func AllRuleDefinitions() []RuleDefinition {
 	defs := make([]RuleDefinition, 0, len(ruleDefinitions))
-	for _, def := range ruleDefinitions {
+	for key := range ruleDefinitions {
+		def := ruleDefinitions[key]
+
 		defs = append(defs, def)
 	}
 	sort.Slice(defs, func(i, j int) bool { return defs[i].Key < defs[j].Key })
@@ -329,7 +339,9 @@ func AllRuleDefinitions() []RuleDefinition {
 
 func RuleKeysForCapability(capability Capability) []RuleKey {
 	keys := make([]RuleKey, 0, len(ruleDefinitions))
-	for key, def := range ruleDefinitions {
+	for key := range ruleDefinitions {
+		def := ruleDefinitions[key]
+
 		if def.Capability == capability {
 			keys = append(keys, key)
 		}

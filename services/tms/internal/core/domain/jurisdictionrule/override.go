@@ -45,9 +45,9 @@ type Override struct {
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-"                bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-"                bun:"rel:belongs-to,join:organization_id=id"`
-	State        *usstate.UsState     `json:"state,omitempty"  bun:"rel:belongs-to,join:state_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"               bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"-"               bun:"rel:belongs-to,join:organization_id=id"`
+	State        *usstate.UsState     `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"`
 }
 
 func (o *Override) GetID() pulid.ID { return o.ID }

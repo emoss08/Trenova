@@ -20,7 +20,7 @@ func (s Severity) IsValid() bool {
 	}
 }
 
-type Advisory struct {
+type AdvisoryError struct {
 	Field    string    `json:"field"`
 	Code     ErrorCode `json:"code"`
 	Message  string    `json:"message"`
@@ -28,15 +28,15 @@ type Advisory struct {
 	RuleKey  string    `json:"ruleKey,omitempty"`
 }
 
-func (a *Advisory) Error() string {
+func (a *AdvisoryError) Error() string {
 	if a.Field == "" {
 		return a.Message
 	}
 	return fmt.Sprintf("%s: %s", a.Field, a.Message)
 }
 
-func NewAdvisory(field string, code ErrorCode, message string, severity Severity) *Advisory {
-	return &Advisory{
+func NewAdvisory(field string, code ErrorCode, message string, severity Severity) *AdvisoryError {
+	return &AdvisoryError{
 		Field:    field,
 		Code:     code,
 		Message:  message,
@@ -44,19 +44,19 @@ func NewAdvisory(field string, code ErrorCode, message string, severity Severity
 	}
 }
 
-func (a *Advisory) WithRuleKey(ruleKey string) *Advisory {
+func (a *AdvisoryError) WithRuleKey(ruleKey string) *AdvisoryError {
 	a.RuleKey = ruleKey
 	return a
 }
 
-func (m *MultiError) AddAdvisory(advisory *Advisory) {
+func (m *MultiError) AddAdvisory(advisory *AdvisoryError) {
 	if advisory == nil {
 		return
 	}
 
 	root := m.root()
 
-	advisoryCopy := &Advisory{
+	advisoryCopy := &AdvisoryError{
 		Field:    advisory.Field,
 		Code:     advisory.Code,
 		Message:  advisory.Message,
@@ -82,7 +82,7 @@ func (m *MultiError) Advise(
 	severity Severity,
 	ruleKey string,
 ) {
-	m.AddAdvisory(&Advisory{
+	m.AddAdvisory(&AdvisoryError{
 		Field:    field,
 		Code:     code,
 		Message:  message,
@@ -112,7 +112,7 @@ func (m *MultiError) RequiresReview() bool {
 	return false
 }
 
-func (m *MultiError) AllAdvisories() []*Advisory {
+func (m *MultiError) AllAdvisories() []*AdvisoryError {
 	if m == nil {
 		return nil
 	}

@@ -237,7 +237,7 @@ func (r *repository) ResolveRouteStates(
 		Column(cols.ID.Bare(), cols.StateID.Bare()).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.LocationScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.In(), bun.In(req.LocationIDs))
+				Where(cols.ID.In(), bun.List(req.LocationIDs))
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -348,7 +348,7 @@ func (r *jurisdictionRepository) GetActiveByStateIDs(
 		Relation(buncolgen.JurisdictionRuleRelations.State).
 		Relation(buncolgen.JurisdictionRuleRelations.EscortThresholds).
 		Where(cols.Status.Eq(), jurisdictionrule.StatusActive).
-		Where(cols.StateID.In(), bun.In(req.StateIDs)).
+		Where(cols.StateID.In(), bun.List(req.StateIDs)).
 		Scan(ctx)
 	if err != nil {
 		r.l.Error("failed to load jurisdiction rules", zap.Error(err))
