@@ -5,8 +5,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -28,6 +30,7 @@ Usage:
 
 Flags:
   --since ref     Diff against this ref's merge-base (default: uncommitted vs HEAD)
+  --files path    Read changed paths from a file, or - for stdin (skips git)
   --root dir      Workspace root (default: git repository root)
   --tags list     Comma-separated build tags
   --all           Skip selection and use every testable package
@@ -45,6 +48,7 @@ Examples:
 type config struct {
 	since    string
 	root     string
+	files    string
 	tags     []string
 	all      bool
 	asJSON   bool
@@ -118,6 +122,7 @@ func parseFlags(command string, argv []string) (config, error) {
 	var tags string
 	fs.StringVar(&cfg.since, "since", "", "diff against this ref's merge-base")
 	fs.StringVar(&cfg.root, "root", "", "workspace root")
+	fs.StringVar(&cfg.files, "files", "", "read changed paths from a file, or - for stdin")
 	fs.StringVar(&tags, "tags", "", "comma-separated build tags")
 	fs.BoolVar(&cfg.all, "all", false, "select every testable package")
 	fs.BoolVar(&cfg.asJSON, "json", false, "emit machine-readable output")
@@ -194,6 +199,15 @@ func computeSelection(ctx context.Context, g *graph.Graph, root string, cfg conf
 		return selection.All(g, "--all requested"), nil
 	}
 
+	if cfg.files != "" {
+		changes, err := readFileList(cfg.files, root)
+		if err != nil {
+			return selection.Result{}, err
+		}
+
+		return selection.Select(selection.Options{Graph: g, Changes: changes}), nil
+	}
+
 	changes, err := vcs.Changes(ctx, vcs.Options{
 		Root:             root,
 		Base:             cfg.since,
@@ -204,6 +218,34 @@ func computeSelection(ctx context.Context, g *graph.Graph, root string, cfg conf
 	}
 
 	return selection.Select(selection.Options{Graph: g, Changes: changes}), nil
+}
+
+func readFileList(source, root string) ([]vcs.Change, error) {
+	var raw []byte
+	var err error
+	if source == "-" {
+		raw, err = io.ReadAll(os.Stdin)
+	} else {
+		raw, err = os.ReadFile(source)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("read file list: %w", err)
+	}
+
+	lines := strings.Split(string(raw), "\n")
+	changes := make([]vcs.Change, 0, len(lines))
+	for _, line := range lines {
+		path := strings.TrimSpace(line)
+		if path == "" {
+			continue
+		}
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(root, path)
+		}
+		changes = append(changes, vcs.Change{Path: filepath.Clean(path), Status: "M"})
+	}
+
+	return changes, nil
 }
 
 func resolveRoot(ctx context.Context, explicit string) (string, error) {

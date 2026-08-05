@@ -14,6 +14,12 @@ find every test package a diff can reach.
 Later milestones (per-test coverage index, line-level selection, mutation testing)
 build on this foundation.
 
+On the Trenova workspace (685 packages, 348 with tests), M0 gives a median 32%
+reduction in test packages run — 98.6% on commits touching five files or fewer,
+21.6% on commits touching more than twenty. See [BENCHMARKS.md](BENCHMARKS.md)
+for the method and for why the large-commit case is the argument for the
+line-level index.
+
 ## Install
 
 ```bash
@@ -31,6 +37,9 @@ assay run --since origin/main -- -count=1 -race
 
 # Integration suites gated behind a build tag
 assay run --tags integration --since origin/main
+
+# Skip git entirely when CI already knows the changed paths
+git diff --name-only origin/main | assay select --files - --json
 ```
 
 With no `--since`, `assay` diffs the working tree against `HEAD` — useful locally
@@ -76,6 +85,7 @@ testable, so `--tags integration` runs never silently skip them.
 | Flag | Meaning |
 |---|---|
 | `--since ref` | Diff against `ref`'s merge-base with `HEAD` |
+| `--files path` | Read newline-separated changed paths from a file, or `-` for stdin |
 | `--root dir` | Workspace root (default: git repository root) |
 | `--tags list` | Comma-separated build tags |
 | `--all` | Skip selection; use every testable package |
