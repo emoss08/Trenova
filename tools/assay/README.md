@@ -16,7 +16,9 @@ affected package is narrowed to the individual tests that execute the changed
 lines — and dropped entirely if none do. Only engages when it can be proven safe;
 otherwise the package runs in full.
 
-Mutation testing is the next milestone and reuses the same index.
+**Mutation testing.** `assay mutate` changes the code in small deliberate ways and
+reports whether any test objected. A surviving mutant is a gap coverage cannot
+show you: the line runs under test, but nothing asserts on what it does.
 
 A one-line edit inside a function in this repo selects **3 packages / 20 tests**
 where package-level selection selects 5 whole packages, dropping two packages
@@ -184,6 +186,73 @@ not select tests.
 Packages whose only test files are hidden behind a build tag still count as
 testable, so `--tags integration` runs never silently skip them.
 
+## Mutation testing
+
+```bash
+# Only the lines this diff touched (the default; fast enough for a PR)
+assay mutate --since "$BASE"
+
+# A whole package (minutes to hours; has to be asked for)
+assay mutate --whole --packages ./internal/cover
+
+# Accept the current survivors so CI fails only on new ones
+assay mutate --whole --write-baseline
+```
+
+Mutation reuses the coverage index twice over: only lines a test executes are
+worth mutating, and only the tests covering a mutated line are run to judge it.
+On `internal/cover` that is a handful of tests per mutant instead of 201.
+
+Mutants are injected through `-overlay`, so the source tree is never written to
+and an interrupted run leaves nothing behind.
+
+### What the outcomes mean
+
+| Outcome | Meaning |
+|---|---|
+| `killed` | A covering test noticed. This is what you want |
+| `timeout` | The mutant stopped terminating — also a kill, since behaviour changed |
+| `survived` | Every covering test still passed. A gap |
+| `no-coverage` | No indexed test executes the line. Excluded from the score; the coverage report already told you |
+| `not-built` | The mutant did not compile. An assay defect, excluded from the score rather than counted as a kill |
+
+A survivor means *no test with known coverage of that line objected*. Always-run
+tests — ones whose attribution the index could not determine — are deliberately
+excluded from mutant plans, because a test that was already failing would mark
+every mutant killed and inflate the score.
+
+### The score only means something on a green suite
+
+Before judging any mutant, `assay mutate` runs the union of the covering tests
+against unmutated code. If any already fail it refuses to score and names them,
+because a failing test marks every mutant it judges as killed. `--allow-failing-tests`
+proceeds by dropping those tests from every plan instead.
+
+This catches a deterministically red suite. It does **not** catch a test that only
+fails under load — mutation runs many concurrent `go test -c` builds, and a
+timing-sensitive test can produce a false kill that flatters the score. Run
+mutation on a quiet machine, and treat a surprising kill as worth checking.
+
+### Equivalent mutants
+
+Some mutants cannot be killed by any test because they do not change behaviour.
+`if n > limit { return limit }` mutated to `>=` returns the same value at
+`n == limit`. That is not a hole in your suite, and no tool can tell the two apart
+in general — the problem is undecidable.
+
+The baseline is how they are managed. `--write-baseline` records the current
+survivors in `.assay/mutation-baseline.json`, which is committed; later runs fail
+only on survivors that are not in it. Annotate the entries with *why* each is
+accepted — the file is curated policy, not generated output.
+
+Mutant IDs hash the enclosing function, the mutator, and the changed text, and
+deliberately exclude line numbers, so editing code above a mutation site does not
+churn the baseline.
+
+Writing the baseline checks `git check-ignore` first and warns if the path would
+not be committed. A stray `coverage/` rule once silently swallowed an entire
+package in this repository, so the guard is there on purpose.
+
 ## Flags
 
 | Flag | Meaning |
@@ -201,7 +270,8 @@ testable, so `--tags integration` runs never silently skip them.
 | `--cache-dir` | Cache location for graph and index (default: user cache dir, or `ASSAY_CACHE`) |
 
 `assay index` additionally takes `--jobs`, `--timeout`, `--packages`, `--quiet`
-and `--allow-dirty`.
+and `--allow-dirty`. `assay mutate` takes `--whole`, `--packages`, `--baseline`,
+`--write-baseline`, `--min-msi`, `--allow-failing-tests`, `--jobs` and `--json`.
 
 ## Commands
 
@@ -211,6 +281,7 @@ and `--allow-dirty`.
 | `assay run` | Run the plan through `go test` |
 | `assay index` | Build the line-to-test coverage index |
 | `assay explain <file>:<line>` | Which tests cover this line? |
+| `assay mutate` | Change the code deliberately; report which tests failed to notice |
 | `assay verify` | Run what narrowing excluded, to prove it was sound |
 
 Arguments after `--` pass through to `go test`.

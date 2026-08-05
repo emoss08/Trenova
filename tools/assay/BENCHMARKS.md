@@ -84,6 +84,65 @@ ok  github.com/emoss08/assay/internal/report
 sound: every excluded test passes
 ```
 
+## Mutation testing
+
+Measured on `internal/cover` (2 files, ~340 lines, 201 indexed tests in the
+module), whole-package scope:
+
+| Run | Mutants | Killed | Survived | MSI | Wall clock |
+|---|---|---|---|---|---|
+| Initial | 72 | 59 | 12 | **83.1%** | 5m22s |
+| After acting on the survivors | 72 | 64 | 7 | **90.1%** | 3m41s |
+
+Diff scope, a one-line edit inside a function: **1 mutant, 9.8s**. That is the
+difference the default makes — mutating a whole package is a nightly job,
+mutating a diff is a PR check.
+
+### What it actually found
+
+The twelve initial survivors were real gaps in this repository's own tests, in the
+code that decides which lines narrowing may trust:
+
+- `functionBodyRanges` computes a body span as `[open+1, end-1]`. Mutating `end-1`
+  to `end+1` extends the span one line past the closing brace, so a **declaration
+  would be classified as executable and narrowing would trust it**. Nothing caught
+  that. Every one of those lines was already covered — just not asserted on.
+- `add()` skipped a nil body, and no test passed a bodyless declaration.
+- `classifyLine`'s `line <= len(text)` bound was never exercised on a file's final
+  line.
+- `ExecutableRanges`, added in the previous slice, had no error-path test at all.
+- Forcing the `len(blocks) == 0` guard false sends an empty slice into a function
+  that indexes `blocks[:1]`, which panics. No test passed a file of pure
+  declarations.
+
+Acting on those took MSI from 83.1% to 90.1%.
+
+### The seven that remain are equivalent mutants
+
+They are recorded in `.assay/mutation-baseline.json` with a reason each. Six do not
+change behaviour at all — inverted empty ranges whose `Contains` is false either
+way, a sort comparator whose tiebreak the following merge makes irrelevant, a `>=`
+that widens an assignment to a no-op. The other two mask a read error behind the
+parse error that follows, which no assertion short of matching error text can
+distinguish.
+
+Equivalent mutants are undecidable in general and are the main reason mutation
+testing has poor industry adoption. The baseline is the management strategy, not a
+solution, and the file says so per entry.
+
+### A false kill, and what it cost
+
+While measuring the diff-scoped path, a boundary mutation on a *discarded*
+expression came back killed — by a test in another package that had nothing to do
+with it. That test passes on its own. It had failed for its own reasons while the
+mutant ran, and a covering test that fails for unrelated reasons marks its mutant
+killed, so every such false kill **inflates** the score.
+
+`assay mutate` now runs the covering tests against unmutated code first and refuses
+to score if any already fail. That catches a deterministically red suite. It does
+not catch the actual culprit here, which was a load-sensitive test of ours that
+spawns nested `go test -c` runs — so the caveat is documented rather than closed.
+
 ## Index cost
 
 | Scope | Packages | Tests | Wall clock |
