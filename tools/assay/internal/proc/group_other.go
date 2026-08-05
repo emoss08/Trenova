@@ -1,12 +1,12 @@
 //go:build !unix
 
-package index
+package proc
 
 import (
 	"os/exec"
 	"time"
 )
 
-func isolateProcessGroup(cmd *exec.Cmd) {
+func Isolate(cmd *exec.Cmd) {
 	cmd.WaitDelay = 5 * time.Second
 }

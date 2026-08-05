@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/assay/internal/vcs"
 )
 
-const Version = "0.2.0-m2"
+const Version = "0.3.0-m3"
 
 type ExitError struct {
 	Code int
@@ -75,6 +75,7 @@ func NewRootCommand() *cobra.Command {
 		newSelectCommand(opts),
 		newRunCommand(opts),
 		newIndexCommand(opts),
+		newMutateCommand(opts),
 		newExplainCommand(opts),
 		newVerifyCommand(opts),
 		newVersionCommand(),

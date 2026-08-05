@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/assay/internal/cache"
 	"github.com/emoss08/assay/internal/cover"
 	"github.com/emoss08/assay/internal/graph"
+	"github.com/emoss08/assay/internal/proc"
 )
 
 const defaultTestTimeout = 60 * time.Second
@@ -385,7 +386,7 @@ func runCommand(
 	if len(env) > 0 {
 		cmd.Env = env
 	}
-	isolateProcessGroup(cmd)
+	proc.Isolate(cmd)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

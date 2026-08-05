@@ -190,6 +190,16 @@ func resolveBase(ctx context.Context, root, base string) (baseSpec, error) {
 	}, nil
 }
 
+// IsIgnored reports whether git would ignore path. Worth checking before writing
+// anything meant to be committed: a stray rule like `coverage/` in a root
+// .gitignore can silently swallow a whole directory, and the failure is invisible
+// until someone checks out the result.
+func IsIgnored(ctx context.Context, root, path string) bool {
+	_, err := runGit(ctx, root, "check-ignore", "-q", path)
+
+	return err == nil
+}
+
 func TreeDigests(ctx context.Context, root, commit string) (map[string]string, error) {
 	out, err := runGit(ctx, root,
 		"-c", "core.quotePath=false", "ls-tree", "-r", "-z",

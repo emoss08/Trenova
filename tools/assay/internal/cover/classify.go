@@ -39,6 +39,23 @@ func (c FileClassification) Narrowable() bool {
 	return len(c.Declaration) == 0
 }
 
+// ExecutableRanges returns the line spans inside function bodies — the only lines
+// coverage can attribute, and therefore the only ones worth mutating.
+func ExecutableRanges(absPath string) ([]Block, error) {
+	source, err := os.ReadFile(absPath)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", absPath, err)
+	}
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, absPath, source, parser.SkipObjectResolution)
+	if err != nil {
+		return nil, fmt.Errorf("parse %s: %w", absPath, err)
+	}
+
+	return functionBodyRanges(fset, file), nil
+}
+
 func ClassifyFile(absPath string, lines []int) (FileClassification, error) {
 	source, err := os.ReadFile(absPath)
 	if err != nil {
