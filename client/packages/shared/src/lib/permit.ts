@@ -294,3 +294,47 @@ export function pickupIsTooSoon(
 
   return scheduledPickupAt < assessment.earliestPickup;
 }
+
+/**
+ * What a carrier override actually narrows, as short display labels.
+ *
+ * An override is sparse by design — an unset field defers to the statutory rule
+ * — so a caller cannot simply render every limit. This answers the question an
+ * operator has of a row, which is what it changes, and returns empty for an
+ * override that changes nothing rather than inventing a label for it.
+ *
+ * Restrictions appear only when turned on: an override can add a restriction
+ * the state does not impose but cannot clear one it does, so `false` here means
+ * "defer", not "permitted".
+ */
+export function overriddenLimits(override: {
+  maxWidthFeet?: number | null;
+  maxHeightFeet?: number | null;
+  maxLengthFeet?: number | null;
+  maxWeightPounds?: number | null;
+  permitLeadTimeDays?: number | null;
+  daylightOnly?: boolean | null;
+  holidayRestricted?: boolean | null;
+}): string[] {
+  const applied: string[] = [];
+
+  if (override.maxWidthFeet != null) {
+    applied.push(`Width ${formatFeetInches(override.maxWidthFeet)}`);
+  }
+  if (override.maxHeightFeet != null) {
+    applied.push(`Height ${formatFeetInches(override.maxHeightFeet)}`);
+  }
+  if (override.maxLengthFeet != null) {
+    applied.push(`Length ${formatFeetInches(override.maxLengthFeet)}`);
+  }
+  if (override.maxWeightPounds != null) {
+    applied.push(formatPounds(override.maxWeightPounds));
+  }
+  if (override.permitLeadTimeDays != null) {
+    applied.push(`${override.permitLeadTimeDays}d lead`);
+  }
+  if (override.daylightOnly) applied.push("Daylight only");
+  if (override.holidayRestricted) applied.push("No holidays");
+
+  return applied;
+}

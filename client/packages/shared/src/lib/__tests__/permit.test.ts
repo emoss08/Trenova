@@ -8,6 +8,7 @@ import {
   formatPounds,
   hasOpenRequirements,
   isOversize,
+  overriddenLimits,
   pickupIsTooSoon,
   restrictionSummary,
   unverifiedJurisdictions,
@@ -132,6 +133,37 @@ describe("waiveRequirementSchema", () => {
   it("holds the reason to the server's minimum length", () => {
     expect(waiveRequirementSchema.safeParse({ reason: "too short" }).success).toBe(false);
     expect(waiveRequirementSchema.safeParse({ reason: "a".repeat(10) }).success).toBe(true);
+  });
+});
+
+describe("overriddenLimits", () => {
+  it("lists only the limits the override actually sets", () => {
+    expect(overriddenLimits({ maxWidthFeet: 8, maxWeightPounds: 70000 })).toEqual([
+      "Width 8'",
+      "70,000 lbs",
+    ]);
+  });
+
+  // Sparse by design: an unset field defers to the statute, so it must not be
+  // rendered as though the carrier chose it.
+  it("returns nothing for an override that narrows nothing", () => {
+    expect(overriddenLimits({})).toEqual([]);
+    expect(overriddenLimits({ maxWidthFeet: null, permitLeadTimeDays: null })).toEqual([]);
+  });
+
+  // An override can add a restriction the state does not impose but cannot
+  // clear one it does, so false means "defer" rather than "permitted" and must
+  // not be shown as a choice.
+  it("shows a restriction only when it is turned on", () => {
+    expect(overriddenLimits({ daylightOnly: true })).toEqual(["Daylight only"]);
+    expect(overriddenLimits({ daylightOnly: false })).toEqual([]);
+    expect(overriddenLimits({ holidayRestricted: null })).toEqual([]);
+  });
+
+  // Zero is a real value that must survive the null check, even though the
+  // schema rejects it on dimensions — lead time legitimately reaches zero.
+  it("keeps a zero lead time rather than treating it as unset", () => {
+    expect(overriddenLimits({ permitLeadTimeDays: 0 })).toEqual(["0d lead"]);
   });
 });
 
