@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -69,11 +70,18 @@ func Build(ctx context.Context, opts Options) (Stats, error) {
 	fingerprinter := NewFingerprinter(opts.Graph, opts.TreeDigests, opts.Tags)
 	coverPkg := coverPkgArgument(opts.Graph)
 
+	cores := runtime.GOMAXPROCS(0)
+
 	jobs := opts.Jobs
 	if jobs <= 0 {
-		jobs = runtime.GOMAXPROCS(0)
+		jobs = max(1, cores/2)
 	}
 	jobs = min(jobs, max(1, len(targets)))
+
+	// Each `go test -c` fans out its own build actions, so an unconstrained inner
+	// parallelism multiplies with jobs and buries the machine. Divide the cores
+	// between the workers instead.
+	buildParallelism := max(1, cores/jobs)
 
 	outcomes := make([]PackageOutcome, len(targets))
 	next := make(chan int)
@@ -87,7 +95,7 @@ func Build(ctx context.Context, opts Options) (Stats, error) {
 		go func() {
 			defer wg.Done()
 			for i := range next {
-				outcomes[i] = indexPackage(ctx, opts, fingerprinter, coverPkg, targets[i])
+				outcomes[i] = indexPackage(ctx, opts, fingerprinter, coverPkg, targets[i], buildParallelism)
 
 				mu.Lock()
 				done++
@@ -148,6 +156,7 @@ func indexPackage(
 	opts Options,
 	fingerprinter *Fingerprinter,
 	coverPkg, importPath string,
+	buildParallelism int,
 ) PackageOutcome {
 	key := fingerprinter.For(importPath)
 
@@ -165,7 +174,7 @@ func indexPackage(
 		}
 	}
 
-	record, err := collectPackage(ctx, opts, coverPkg, importPath)
+	record, err := collectPackage(ctx, opts, coverPkg, importPath, buildParallelism)
 	if err != nil {
 		return PackageOutcome{Package: importPath, Err: err}
 	}
@@ -184,7 +193,7 @@ func indexPackage(
 	}
 }
 
-func collectPackage(ctx context.Context, opts Options, coverPkg, importPath string) (*Record, error) {
+func collectPackage(ctx context.Context, opts Options, coverPkg, importPath string, buildParallelism int) (*Record, error) {
 	pkg, ok := opts.Graph.Package(importPath)
 	if !ok {
 		return nil, fmt.Errorf("package %s is not in the graph", importPath)
@@ -197,7 +206,7 @@ func collectPackage(ctx context.Context, opts Options, coverPkg, importPath stri
 	defer os.RemoveAll(workdir)
 
 	binary := filepath.Join(workdir, "test.bin")
-	if buildErr := buildTestBinary(ctx, opts, coverPkg, importPath, binary); buildErr != nil {
+	if buildErr := buildTestBinary(ctx, opts, coverPkg, importPath, binary, buildParallelism); buildErr != nil {
 		return nil, buildErr
 	}
 
@@ -227,8 +236,18 @@ func collectPackage(ctx context.Context, opts Options, coverPkg, importPath stri
 	return record, nil
 }
 
-func buildTestBinary(ctx context.Context, opts Options, coverPkg, importPath, output string) error {
-	args := []string{"test", "-c", "-covermode=atomic", "-coverpkg=" + coverPkg, "-o", output}
+func buildTestBinary(
+	ctx context.Context,
+	opts Options,
+	coverPkg, importPath, output string,
+	buildParallelism int,
+) error {
+	args := []string{
+		"test", "-c", "-covermode=atomic",
+		"-coverpkg=" + coverPkg,
+		"-p", strconv.Itoa(buildParallelism),
+		"-o", output,
+	}
 	if len(opts.Tags) > 0 {
 		args = append(args, "-tags", strings.Join(opts.Tags, ","))
 	}
@@ -363,6 +382,7 @@ func runCommand(
 	if len(env) > 0 {
 		cmd.Env = env
 	}
+	isolateProcessGroup(cmd)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

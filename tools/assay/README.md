@@ -50,6 +50,88 @@ while you edit. In CI, pass the base branch. `--since`, `--files` and `--all` ar
 mutually exclusive; passing more than one is an error rather than a silent
 precedence rule.
 
+## Line-level narrowing
+
+Package-level selection has a structural ceiling: a change anywhere in a package
+that 200 others import must select all 200, even when it touches one function
+three tests exercise. Narrowing removes that ceiling by recording which tests
+execute which lines.
+
+```bash
+# Build the index. Do this on the commit you will diff against.
+assay index
+
+# Now selection narrows to individual tests
+assay select --since "$BASE" -v
+
+# Which tests cover this line?
+assay explain internal/core/domain/shipment/shipment.go:412
+```
+
+`assay index` compiles one test binary per package, enumerates its tests, and
+runs each one alone with coverage on. It is incremental: only packages whose
+dependency closure changed are re-indexed. Records live beside the graph cache and
+are never committed.
+
+### The index is pinned to a commit
+
+An index describes one tree. A diff has two sides, and the index's line numbers
+only mean anything in the coordinates of the tree it was built from — so
+narrowing engages **only when a record's commit equals the selection's base
+commit**, and looks up base-side line numbers. Anything else runs in full.
+
+In practice:
+
+- **Locally**: `assay index` at a clean `HEAD`, then edit. `assay run` diffs
+  against `HEAD`, which is what the index describes, so narrowing engages.
+- **In CI**: index on the base branch and cache it, or index the merge-base
+  commit in the job. `assay select --since "$BASE"` then matches.
+
+`assay index` refuses to run on a dirty tree, because the records would claim to
+describe `HEAD` while actually describing something else. `--allow-dirty` builds
+them anyway and marks them unusable for narrowing.
+
+### What narrowing refuses to do
+
+A selector that skips a test it should have run is worse than no selector, and
+coverage makes that easy to get wrong: coverage instruments **statements**, so a
+changed `const`, struct field, or function signature appears in no coverage block
+at all. A naive lookup would find "no test covers this line" and skip everything.
+
+Every changed line is classified against the AST first:
+
+| Changed line | Behaviour |
+|---|---|
+| Inside a function body, covered | Narrow to the covering tests |
+| Outside any function body — type, const, var, import, signature | **Run the package in full** |
+| Inside a body but in no coverage block | Skip: no test executes it, so no test can observe the change |
+| Blank line, or a plain comment | Ignored entirely |
+| A `//go:` directive | **Run in full** — directives change build behaviour |
+| A one-line function (`func F() int { return 1 }`) | **Run in full** — the body shares its line with the braces |
+
+And per package:
+
+| Condition | Behaviour |
+|---|---|
+| No index record, or one from a different commit | Run in full |
+| Record degraded (a coverage path could not be resolved) | Run in full |
+| A test in the record but not attributable — skipped, panicked, no profile | Always selected |
+| Reached by any change with no line attribution | Run in full |
+| Added, deleted or renamed file; any non-Go file | Run in full |
+
+Every fallback is reported with its reason, in text and in `--json`.
+
+### Proving it
+
+```bash
+assay verify --since "$BASE"
+```
+
+`verify` runs the **complement** of the narrowed selection — every test that
+package-level selection would have run and narrowing dropped — and asserts they
+all pass. A failure there is proof the narrowing was unsound, and it says so in
+those words. Intended for a nightly job; the complement is the expensive half.
+
 ### Shallow clones
 
 `--since <ref>` needs `<ref>` to exist locally and to share history with `HEAD`.
@@ -115,7 +197,21 @@ testable, so `--tags integration` runs never silently skip them.
 | `-v`, `--verbose` | List every selected package and ignored file |
 | `--no-color` | Disable colored output (also honours `NO_COLOR`) |
 | `--no-cache` | Reload the package graph instead of reusing a cached one |
-| `--cache-dir` | Graph cache location (default: user cache dir, or `ASSAY_CACHE`) |
+| `--no-index` | Skip line-level narrowing; select whole packages |
+| `--cache-dir` | Cache location for graph and index (default: user cache dir, or `ASSAY_CACHE`) |
+
+`assay index` additionally takes `--jobs`, `--timeout`, `--packages`, `--quiet`
+and `--allow-dirty`.
+
+## Commands
+
+| Command | Purpose |
+|---|---|
+| `assay select` | Show the plan without running anything |
+| `assay run` | Run the plan through `go test` |
+| `assay index` | Build the line-to-test coverage index |
+| `assay explain <file>:<line>` | Which tests cover this line? |
+| `assay verify` | Run what narrowing excluded, to prove it was sound |
 
 Arguments after `--` pass through to `go test`.
 
