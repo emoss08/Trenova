@@ -193,6 +193,29 @@ to score if any already fail. That catches a deterministically red suite. It doe
 not catch the actual culprit here, which was a load-sensitive test of ours that
 spawns nested `go test -c` runs — so the caveat is documented rather than closed.
 
+## Watch mode
+
+The watch loop's promise is a bounded save-to-verdict cycle, and its two costs
+were measured separately at `--jobs 2`:
+
+| Cost | Measured |
+|---|---|
+| Warm cycle end to end, two-package fixture (save → verdict) | **~420ms** |
+| Plan phase alone, full 695-package workspace, graph memoised | **~172ms** |
+| Plan phase, same workspace, graph reload forced | 1.9s |
+
+The third row is why the memoisation exists: the graph cache is keyed by content
+fingerprints, so every save misses it by design — but a body edit moves no
+import edge. The planner records each file's package clause and import block at
+load time and reloads the graph only when a save changes that signature; a body
+edit costs a microsecond comparison. New, deleted, unparseable and module files
+all force the reload, because a graph of uncertain shape cannot be allowed to
+under-select.
+
+The end-to-end warm cycle includes an unavoidable relink: the saved package's
+test binary must be rebuilt because its source changed. Binaries for packages
+the save did not touch stay warm for the whole session.
+
 ## Index cost
 
 | Scope | Packages | Tests | Wall clock |

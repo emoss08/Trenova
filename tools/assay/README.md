@@ -52,6 +52,39 @@ while you edit. In CI, pass the base branch. `--since`, `--files` and `--all` ar
 mutually exclusive; passing more than one is an error rather than a silent
 precedence rule.
 
+## Watch mode
+
+```bash
+assay index && assay watch
+```
+
+`assay watch` keeps a session open: every save re-runs the tests that change can
+actually affect, and nothing else. It is the same selection and narrowing
+pipeline the CI commands use — the same graph, the same fail-safe rules — so
+the loop can never skip a test that `assay run` would have executed for the
+same dirty tree.
+
+Three things make the loop fast enough to live in:
+
+- **Warm binaries.** Test binaries are kept linked between saves and rebuilt
+  only when a package's dependency closure actually changes, so a cycle is
+  bounded by the tests themselves, not by `go test` start-up.
+- **A memoised graph.** The package graph reloads only when a save changes a
+  file's package clause or imports — a body edit costs microseconds of
+  signature comparison instead of a workspace reload. On this 695-package
+  workspace a warm cycle plans in ~170ms.
+- **Test-edit refinement.** Editing the body of `TestShipmentCreate` runs
+  `TestShipmentCreate`, not its whole package — guarded strictly: any edit
+  outside a test declaration, or a package that is also reached by some other
+  change, runs in full.
+
+Failing tests are **sticky**: they re-run at the front of every following cycle
+until they pass, whichever file the save touched. Saves of other dirty files
+defer their packages' tests until a save reaches them, and the header says so.
+
+An index built at `HEAD` makes the loop narrow to individual covering tests;
+without one it still works at package precision and says why.
+
 ## Line-level narrowing
 
 Package-level selection has a structural ceiling: a change anywhere in a package

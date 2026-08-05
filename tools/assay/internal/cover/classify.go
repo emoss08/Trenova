@@ -95,6 +95,65 @@ func statementRanges(fset *token.FileSet, file *ast.File) []Block {
 	return mergeBlocksOrEmpty(blocks)
 }
 
+// TestFunction is a top-level Test, Benchmark, Example or Fuzz declaration and
+// the line span it occupies, signature included: an edit anywhere in the
+// declaration affects that test and only that test.
+type TestFunction struct {
+	Name  string
+	Start int
+	End   int
+}
+
+// TestFunctions lists the test declarations in a _test.go file. Watch mode uses
+// the spans to run exactly the tests an edit touched — an edit outside every
+// span (a helper, an import, a package-level variable) can affect any test in
+// the package and disqualifies the refinement.
+func TestFunctions(absPath string) ([]TestFunction, error) {
+	source, err := os.ReadFile(absPath)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", absPath, err)
+	}
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, absPath, source, parser.SkipObjectResolution)
+	if err != nil {
+		return nil, fmt.Errorf("parse %s: %w", absPath, err)
+	}
+
+	var out []TestFunction
+	for _, decl := range file.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Recv != nil || !isTestFuncName(fn.Name.Name) {
+			continue
+		}
+		out = append(out, TestFunction{
+			Name:  fn.Name.Name,
+			Start: fset.Position(fn.Pos()).Line,
+			End:   fset.Position(fn.End()).Line,
+		})
+	}
+
+	return out, nil
+}
+
+func isTestFuncName(name string) bool {
+	for _, prefix := range [...]string{"Test", "Benchmark", "Example", "Fuzz"} {
+		if rest, ok := strings.CutPrefix(name, prefix); ok {
+			// The character after the prefix must not be lowercase, mirroring
+			// `go test`'s own rule: Testify is a helper, TestIfy is a test.
+			if rest == "" || !isLowerASCII(rest[0]) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func isLowerASCII(c byte) bool {
+	return c >= 'a' && c <= 'z'
+}
+
 func ClassifyFile(absPath string, lines []int) (FileClassification, error) {
 	source, err := os.ReadFile(absPath)
 	if err != nil {
