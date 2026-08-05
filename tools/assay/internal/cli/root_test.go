@@ -213,6 +213,82 @@ func TestSelectCommandHonoursBuildTags(t *testing.T) {
 	assert.True(t, found, "the build-tagged package must be selected when its tag is enabled")
 }
 
+func TestSelectCommandCachesTheGraph(t *testing.T) {
+	t.Setenv("GOWORK", "off")
+	root := testfixture.Write(t)
+	cacheDir := t.TempDir()
+	list := writeChangeList(t, "repo/repo.go")
+
+	summaryFor := func() report.Summary {
+		t.Helper()
+		stdout, _, err := execute(t,
+			"select", "--root", root, "--files", list, "--cache-dir", cacheDir, "--json")
+		require.NoError(t, err)
+
+		var summary report.Summary
+		require.NoError(t, json.Unmarshal([]byte(stdout), &summary))
+
+		return summary
+	}
+
+	cold := summaryFor()
+	assert.False(t, cold.GraphFromCache, "the first run has nothing to reuse")
+
+	warm := summaryFor()
+	assert.True(t, warm.GraphFromCache, "the second run must reuse the cached graph")
+	assert.Equal(t, cold.SelectedPackages, warm.SelectedPackages,
+		"a cached graph must select exactly what a fresh one selects")
+}
+
+func TestSelectCommandInvalidatesCacheWhenSourceChanges(t *testing.T) {
+	t.Setenv("GOWORK", "off")
+	root := testfixture.Write(t)
+	cacheDir := t.TempDir()
+	list := writeChangeList(t, "repo/repo.go")
+
+	run := func() report.Summary {
+		t.Helper()
+		stdout, _, err := execute(t,
+			"select", "--root", root, "--files", list, "--cache-dir", cacheDir, "--json")
+		require.NoError(t, err)
+
+		var summary report.Summary
+		require.NoError(t, json.Unmarshal([]byte(stdout), &summary))
+
+		return summary
+	}
+
+	run()
+	require.True(t, run().GraphFromCache)
+
+	require.NoError(t, os.WriteFile(
+		filepath.Join(root, "repo", "repo.go"),
+		[]byte("package repo\n\nfunc Get() int { return 2 }\n\nfunc Extra() {}\n"), 0o644))
+
+	assert.False(t, run().GraphFromCache, "editing a Go file must invalidate the cached graph")
+}
+
+func TestSelectCommandNoCacheAlwaysReloads(t *testing.T) {
+	t.Setenv("GOWORK", "off")
+	root := testfixture.Write(t)
+	cacheDir := t.TempDir()
+	list := writeChangeList(t, "repo/repo.go")
+
+	for range 2 {
+		stdout, _, err := execute(t,
+			"select", "--root", root, "--files", list, "--cache-dir", cacheDir, "--no-cache", "--json")
+		require.NoError(t, err)
+
+		var summary report.Summary
+		require.NoError(t, json.Unmarshal([]byte(stdout), &summary))
+		assert.False(t, summary.GraphFromCache)
+	}
+
+	entries, err := os.ReadDir(cacheDir)
+	require.NoError(t, err)
+	assert.Empty(t, entries, "--no-cache must not write cache entries either")
+}
+
 func TestRunCommandRejectsPositionalArguments(t *testing.T) {
 	_, _, err := execute(t, "run", "./...")
 

@@ -12,6 +12,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
+	"github.com/emoss08/assay/internal/cache"
 	"github.com/emoss08/assay/internal/graph"
 	"github.com/emoss08/assay/internal/report"
 	"github.com/emoss08/assay/internal/selection"
@@ -29,14 +30,16 @@ func (e *ExitError) Error() string {
 }
 
 type options struct {
-	since   string
-	files   string
-	root    string
-	tags    []string
-	all     bool
-	asJSON  bool
-	verbose bool
-	noColor bool
+	since    string
+	files    string
+	root     string
+	cacheDir string
+	tags     []string
+	all      bool
+	noCache  bool
+	asJSON   bool
+	verbose  bool
+	noColor  bool
 }
 
 func (o *options) useColor() bool {
@@ -62,6 +65,8 @@ func NewRootCommand() *cobra.Command {
 	flags.StringVar(&opts.root, "root", "", "workspace root (default: git repository root)")
 	flags.StringSliceVar(&opts.tags, "tags", nil, "build tags")
 	flags.BoolVar(&opts.all, "all", false, "skip selection and use every testable package")
+	flags.BoolVar(&opts.noCache, "no-cache", false, "reload the package graph instead of reusing a cached one")
+	flags.StringVar(&opts.cacheDir, "cache-dir", os.Getenv("ASSAY_CACHE"), "graph cache directory (default: user cache dir)")
 	flags.BoolVarP(&opts.verbose, "verbose", "v", false, "list every selected package and ignored file")
 	flags.BoolVar(&opts.noColor, "no-color", false, "disable colored output")
 
@@ -87,7 +92,7 @@ func (o *options) summarize(ctx context.Context) (report.Summary, selection.Resu
 		return report.Summary{}, selection.Result{}, err
 	}
 
-	g, err := graph.Load(ctx, graph.LoadOptions{Root: root, Tags: o.tags})
+	g, err := graph.Load(ctx, graph.LoadOptions{Root: root, Tags: o.tags, Cache: o.store()})
 	if err != nil {
 		return report.Summary{}, selection.Result{}, err
 	}
@@ -97,7 +102,23 @@ func (o *options) summarize(ctx context.Context) (report.Summary, selection.Resu
 		return report.Summary{}, selection.Result{}, err
 	}
 
-	return report.NewSummary(result, g.Len(), len(g.TestablePackages())), result, nil
+	summary := report.NewSummary(result, g.Len(), len(g.TestablePackages()))
+	summary.GraphFromCache = g.FromCache
+
+	return summary, result, nil
+}
+
+func (o *options) store() *cache.Store {
+	if o.noCache {
+		return nil
+	}
+
+	store, err := cache.NewStore(o.cacheDir)
+	if err != nil {
+		return nil
+	}
+
+	return store
 }
 
 func (o *options) selectPackages(ctx context.Context, g *graph.Graph, root string) (selection.Result, error) {

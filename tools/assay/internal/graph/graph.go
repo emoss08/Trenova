@@ -19,7 +19,8 @@ type Package struct {
 }
 
 type Graph struct {
-	Root string
+	Root      string
+	FromCache bool
 
 	pkgs          map[string]*Package
 	dirs          []*Package

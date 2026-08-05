@@ -13,6 +13,8 @@ import (
 	"sync"
 
 	"golang.org/x/tools/go/packages"
+
+	"github.com/emoss08/assay/internal/cache"
 )
 
 const loadMode = packages.NeedName |
@@ -21,9 +23,10 @@ const loadMode = packages.NeedName |
 	packages.NeedModule
 
 type LoadOptions struct {
-	Root string
-	Tags []string
-	Env  []string
+	Root  string
+	Tags  []string
+	Env   []string
+	Cache *cache.Store
 }
 
 type mainModule struct {
@@ -37,6 +40,45 @@ func Load(ctx context.Context, opts LoadOptions) (*Graph, error) {
 		return nil, fmt.Errorf("resolve root: %w", err)
 	}
 
+	key, cacheUsable := cacheKey(ctx, root, opts)
+	if cacheUsable {
+		if payload, hit := opts.Cache.Get(key); hit {
+			if cached, decodeErr := UnmarshalGraph(payload); decodeErr == nil {
+				cached.FromCache = true
+
+				return cached, nil
+			}
+		}
+	}
+
+	g, err := loadFresh(ctx, root, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if cacheUsable {
+		if payload, encodeErr := g.MarshalBinary(); encodeErr == nil {
+			_ = opts.Cache.Put(key, payload)
+		}
+	}
+
+	return g, nil
+}
+
+func cacheKey(ctx context.Context, root string, opts LoadOptions) (cache.Fingerprint, bool) {
+	if opts.Cache == nil {
+		return cache.Fingerprint{}, false
+	}
+
+	key, err := cache.Compute(ctx, cache.Inputs{Root: root, Tags: opts.Tags, Env: opts.Env})
+	if err != nil {
+		return cache.Fingerprint{}, false
+	}
+
+	return key, true
+}
+
+func loadFresh(ctx context.Context, root string, opts LoadOptions) (*Graph, error) {
 	modules, err := mainModules(ctx, root, opts.Env)
 	if err != nil {
 		return nil, err

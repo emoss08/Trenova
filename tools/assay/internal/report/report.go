@@ -26,6 +26,7 @@ type Summary struct {
 	SelectAll        bool              `json:"selectAll"`
 	SelectAllReason  string            `json:"selectAllReason,omitempty"`
 	ReductionPercent float64           `json:"reductionPercent"`
+	GraphFromCache   bool              `json:"graphFromCache"`
 }
 
 func NewSummary(res selection.Result, totalPackages, testablePackages int) Summary {
@@ -102,11 +103,17 @@ func (p *Printer) Summary(s Summary, verbose bool) error {
 		}
 	}
 
-	if err := p.line("%d packages %s %d with tests %s %s selected %s %s skipped",
+	origin := "graph loaded"
+	if s.GraphFromCache {
+		origin = "graph cached"
+	}
+
+	if err := p.line("%d packages %s %d with tests %s %s selected %s %s skipped %s %s",
 		s.TotalPackages, p.muted("·"),
 		s.TestablePackages, p.muted("·"),
 		p.emphasis(len(s.SelectedPackages)), p.muted("·"),
-		p.emphasis(fmt.Sprintf("%.1f%%", s.ReductionPercent)),
+		p.emphasis(fmt.Sprintf("%.1f%%", s.ReductionPercent)), p.muted("·"),
+		p.muted(origin),
 	); err != nil {
 		return err
 	}

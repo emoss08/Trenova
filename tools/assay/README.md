@@ -12,10 +12,11 @@ find every test package a diff can reach.
 Later milestones (per-test coverage index, line-level selection, mutation testing)
 build on this foundation.
 
-On the Trenova workspace (687 packages, 349 with tests), M0 gives a median 32%
+On the Trenova workspace (688 packages, 351 with tests), M0 gives a median 32%
 reduction in test packages run — 98.6% on commits touching five files or fewer,
-21.8% on commits touching more than twenty. See [BENCHMARKS.md](BENCHMARKS.md)
-for the method and for why the large-commit case is the argument for the
+21.8% on commits touching more than twenty. Selection itself takes **~49 ms** on
+a warm graph cache, down from ~1,480 ms. See [BENCHMARKS.md](BENCHMARKS.md) for
+the method, the profile, and why the large-commit case is the argument for the
 line-level index.
 
 ## Install
@@ -90,8 +91,34 @@ testable, so `--tags integration` runs never silently skip them.
 | `--json` | Machine-readable output (`select` only) |
 | `-v`, `--verbose` | List every selected package and ignored file |
 | `--no-color` | Disable colored output (also honours `NO_COLOR`) |
+| `--no-cache` | Reload the package graph instead of reusing a cached one |
+| `--cache-dir` | Graph cache location (default: user cache dir, or `ASSAY_CACHE`) |
 
 Arguments after `--` pass through to `go test`.
+
+## The graph cache
+
+Loading the package graph means running `go list` across every module, which is
+over 99% of a cold run — roughly 1.5s on this workspace against ~2ms of actual
+graph work. So the graph is cached and the subprocess skipped entirely: a warm
+run is **~49ms, about 30× faster**.
+
+The cache key is a BLAKE3 fingerprint over the *content* of every `.go` file and
+every `go.mod`/`go.sum`/`go.work`/`go.work.sum`, plus the build tags, the Go
+version, the workspace root, and the toolchain environment (`GOOS`, `GOARCH`,
+`GOFLAGS`, `GOEXPERIMENT`, `CGO_ENABLED`, `GOWORK`).
+
+Content, deliberately — not size and mtime. A CI cache restore or a `tar -p`
+extraction can preserve timestamps, and an mtime-keyed cache would then serve a
+stale graph and silently skip tests. Hashing 15MB costs ~46ms; a wrong answer
+costs a production incident.
+
+Entries are content-addressed, so reverting an edit reuses the original entry
+rather than reloading. The cache lives outside the repository (`os.UserCacheDir`
+by default), holds the 32 most recent graphs, and commits entries by rename so
+concurrent runs cannot observe a partial write. Every cache failure — unreadable
+entry, corrupt payload, unwritable directory — degrades to a normal load rather
+than an error.
 
 ## Workspaces
 
@@ -114,6 +141,7 @@ their subject instead of appearing as phantom `_test` packages.
 | `golang.org/x/tools/go/packages` | Package loading. Handles workspaces, build tags, test variants and `GOPACKAGESDRIVER`, and its `Overlay` support is what the mutation milestones will build on |
 | `github.com/spf13/cobra` | Subcommands, flag handling, generated help and completions |
 | `github.com/fatih/color` | Terminal color with `NO_COLOR` and TTY detection |
+| `github.com/zeebo/blake3` | Cache fingerprinting. Its AVX2/SSE4.1 assembly hashes at 2.8 GB/s — 2.06× SHA-256 and 5.1× a pure-Go hash |
 | `github.com/stretchr/testify` | Test assertions |
 
 `assay` deliberately shells out to `git` rather than embedding `go-git`: the
