@@ -3,7 +3,9 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -21,6 +23,7 @@ type mutateFlags struct {
 	whole        bool
 	quiet        bool
 	asJSON       bool
+	allowFailing bool
 }
 
 func newMutateCommand(opts *options) *cobra.Command {
@@ -55,6 +58,8 @@ func newMutateCommand(opts *options) *cobra.Command {
 	cmd.Flags().BoolVar(&flags.whole, "whole", false, "mutate entire packages rather than only changed lines")
 	cmd.Flags().BoolVar(&flags.quiet, "quiet", false, "suppress progress output")
 	cmd.Flags().BoolVar(&flags.asJSON, "json", false, "emit machine-readable output")
+	cmd.Flags().BoolVar(&flags.allowFailing, "allow-failing-tests", false,
+		"proceed when a covering test already fails, excluding it from every mutant plan")
 
 	return cmd
 }
@@ -94,6 +99,26 @@ func runMutate(cmd *cobra.Command, opts *options, flags *mutateFlags) error {
 		cmd.PrintErrln("no eligible mutation sites; a change confined to declarations has none")
 
 		return nil
+	}
+
+	execOpts := mutate.ExecuteOptions{
+		Root:   session.root,
+		Tags:   opts.tags,
+		Jobs:   flags.jobs,
+		Budget: scope.Budget,
+	}
+
+	preflight, err := mutate.RunPreflight(ctx, mutants, execOpts)
+	if err != nil {
+		return err
+	}
+	if !preflight.Clean() {
+		if !flags.allowFailing {
+			return failingTestsError(preflight)
+		}
+		cmd.PrintErrf("warning: excluding %d already-failing tests from every mutant plan\n",
+			len(preflight.Names()))
+		mutants = mutate.Exclude(mutants, preflight.Failing)
 	}
 
 	progress := newProgress(cmd.ErrOrStderr(), flags.quiet)
@@ -329,4 +354,21 @@ func mutationExit(cmd *cobra.Command, score mutate.Score, minMSI float64) error 
 	}
 
 	return nil
+}
+
+// failingTestsError refuses to score a red suite. A covering test that already
+// fails marks every mutant it judges as killed, so the score would come out
+// flattering and meaningless.
+func failingTestsError(p mutate.Preflight) error {
+	names := p.Names()
+	shown := names
+	if len(shown) > 8 {
+		shown = shown[:8]
+	}
+
+	return fmt.Errorf(
+		"%d covering tests already fail before any mutation, so every mutant they judge\n"+
+			"would be recorded as killed and the score would be inflated. Fix them, or pass\n"+
+			"--allow-failing-tests to exclude them from mutant plans.\n  %s",
+		len(names), strings.Join(shown, "\n  "))
 }

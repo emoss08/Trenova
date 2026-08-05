@@ -135,13 +135,13 @@ func (s *Scope) Eligible(absPath string, line int) bool {
 // mark every mutant killed and silently inflate the score. A survivor therefore
 // means "no test with known coverage of this line killed it", which is the honest
 // claim.
-func (s *Scope) Tests(absPath string, line int) testPlan {
+func (s *Scope) Tests(absPath string, line int) TestPlan {
 	owner, ok := s.graph.PackageForFile(absPath)
 	if !ok {
 		return nil
 	}
 
-	plan := make(testPlan)
+	plan := make(TestPlan)
 	for _, candidate := range s.graph.AffectedTestPackages([]string{owner.ImportPath}) {
 		record, found := s.loader.Record(candidate)
 		if !found || record.IndexedAt != s.baseCommit || !record.Knows(absPath) {
@@ -157,7 +157,7 @@ func (s *Scope) Tests(absPath string, line int) testPlan {
 
 // Budget sums the indexed durations of the tests a mutant will run, so its timeout
 // is a multiple of what those tests actually cost rather than a fixed guess.
-func (s *Scope) Budget(plan testPlan) time.Duration {
+func (s *Scope) Budget(plan TestPlan) time.Duration {
 	var total time.Duration
 	for pkg, tests := range plan {
 		record, found := s.loader.Record(pkg)

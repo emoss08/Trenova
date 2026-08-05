@@ -59,7 +59,7 @@ type ExecuteOptions struct {
 	Tags       []string
 	Env        []string
 	Jobs       int
-	Budget     func(plan testPlan) time.Duration
+	Budget     func(plan TestPlan) time.Duration
 	MinTimeout time.Duration
 	Progress   func(done, total int)
 }
@@ -200,7 +200,7 @@ func evaluate(ctx context.Context, m Mutant, opts ExecuteOptions, buildParalleli
 	return result
 }
 
-func (o ExecuteOptions) budgetFor(plan testPlan) time.Duration {
+func (o ExecuteOptions) budgetFor(plan TestPlan) time.Duration {
 	floor := o.MinTimeout
 	if floor <= 0 {
 		floor = defaultMinTimeout
@@ -325,7 +325,7 @@ func quoteMeta(name string) string {
 	return b.String()
 }
 
-func sortedKeys(plan testPlan) []string {
+func sortedKeys(plan TestPlan) []string {
 	out := make([]string, 0, len(plan))
 	for key := range plan {
 		out = append(out, key)

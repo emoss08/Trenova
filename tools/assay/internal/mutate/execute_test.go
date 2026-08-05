@@ -461,3 +461,137 @@ func TestScopeRequiresABaseCommit(t *testing.T) {
 
 	require.Error(t, err, "an index from another commit has line numbers that mean nothing here")
 }
+
+const redSource = `package red
+
+func Add(a, b int) int {
+	return a + b
+}
+`
+
+// redTest already fails, which is the point: a mutant judged by it would be
+// recorded as killed no matter what the mutation did.
+const redTest = `package red
+
+import "testing"
+
+func TestAddIsBroken(t *testing.T) {
+	if Add(1, 1) != 3 {
+		t.Fatal("this assertion is simply wrong")
+	}
+}
+`
+
+func writeRedPackage(t *testing.T, root string) {
+	t.Helper()
+
+	dir := filepath.Join(root, "red")
+	require.NoError(t, os.MkdirAll(dir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "red.go"), []byte(redSource), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "red_test.go"), []byte(redTest), 0o644))
+}
+
+func TestPreflightDetectsAlreadyFailingTests(t *testing.T) {
+	c := newCorpus(t)
+	writeRedPackage(t, c.root)
+
+	scope, err := mutate.NewScope(mutate.ScopeOptions{
+		Graph:      c.graph,
+		Loader:     c.loader,
+		BaseCommit: corpusCommit,
+	})
+	require.NoError(t, err)
+
+	mutants := []mutate.Mutant{}
+	generated, err := mutate.Generate(t.Context(), mutate.GenerateOptions{
+		Root:     c.root,
+		Package:  fixtureModule + "/strong",
+		Env:      append(os.Environ(), "GOWORK=off"),
+		Eligible: scope.Eligible,
+		Tests: func(string, int) mutate.TestPlan {
+			return mutate.TestPlan{fixtureModule + "/red": {"TestAddIsBroken"}}
+		},
+	})
+	require.NoError(t, err)
+	mutants = append(mutants, generated...)
+	require.NotEmpty(t, mutants)
+
+	opts := mutate.ExecuteOptions{Root: c.root, Env: append(os.Environ(), "GOWORK=off")}
+	pre, err := mutate.RunPreflight(t.Context(), mutants, opts)
+	require.NoError(t, err)
+
+	assert.False(t, pre.Clean(), "an already-failing covering test must be reported")
+	assert.Contains(t, pre.Names(), fixtureModule+"/red.TestAddIsBroken")
+}
+
+func TestPreflightIsCleanForAGreenSuite(t *testing.T) {
+	c := newCorpus(t)
+
+	mutants, err := mutate.Generate(t.Context(), mutate.GenerateOptions{
+		Root:     c.root,
+		Package:  fixtureModule + "/strong",
+		Env:      append(os.Environ(), "GOWORK=off"),
+		Eligible: c.scope.Eligible,
+		Tests:    c.scope.Tests,
+	})
+	require.NoError(t, err)
+
+	pre, err := mutate.RunPreflight(t.Context(), mutants,
+		mutate.ExecuteOptions{Root: c.root, Env: append(os.Environ(), "GOWORK=off")})
+	require.NoError(t, err)
+
+	assert.True(t, pre.Clean())
+	assert.Empty(t, pre.Names())
+}
+
+func TestExcludeDropsFailingTestsFromPlans(t *testing.T) {
+	c := newCorpus(t)
+
+	mutants, err := mutate.Generate(t.Context(), mutate.GenerateOptions{
+		Root:     c.root,
+		Package:  fixtureModule + "/strong",
+		Env:      append(os.Environ(), "GOWORK=off"),
+		Eligible: c.scope.Eligible,
+		Tests:    c.scope.Tests,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, mutants)
+
+	pkg := fixtureModule + "/strong"
+	filtered := mutate.Exclude(mutants, map[string][]string{pkg: {"TestSum"}})
+
+	for _, m := range filtered {
+		for _, tests := range m.Tests() {
+			assert.NotContains(t, tests, "TestSum")
+		}
+	}
+}
+
+func TestExcludeLeavesMutantsWithNoTestsAsUncovered(t *testing.T) {
+	c := newCorpus(t)
+
+	mutants, err := mutate.Generate(t.Context(), mutate.GenerateOptions{
+		Root:     c.root,
+		Package:  fixtureModule + "/strong",
+		Env:      append(os.Environ(), "GOWORK=off"),
+		Eligible: c.scope.Eligible,
+		Tests: func(string, int) mutate.TestPlan {
+			return mutate.TestPlan{fixtureModule + "/strong": {"TestSum"}}
+		},
+	})
+	require.NoError(t, err)
+
+	filtered := mutate.Exclude(mutants, map[string][]string{fixtureModule + "/strong": {"TestSum"}})
+
+	results, err := mutate.Execute(t.Context(), filtered, mutate.ExecuteOptions{
+		Root: c.root,
+		Env:  append(os.Environ(), "GOWORK=off"),
+		Jobs: 2,
+	})
+	require.NoError(t, err)
+
+	for _, r := range results {
+		assert.Equal(t, mutate.OutcomeNoCoverage, r.Outcome,
+			"a mutant whose only judge was excluded must not be scored as killed")
+	}
+}

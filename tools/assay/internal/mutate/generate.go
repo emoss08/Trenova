@@ -34,18 +34,18 @@ type Mutant struct {
 	Replacement string   `json:"replacement"`
 	source      []byte   `json:"-"`
 	edits       []edit   `json:"-"`
-	tests       testPlan `json:"-"`
+	tests       TestPlan `json:"-"`
 }
 
 func (m Mutant) Location() string {
 	return fmt.Sprintf("%s:%d", filepath.Base(m.File), m.Line)
 }
 
-// testPlan is the set of tests that cover the mutated line, grouped by the test
+// TestPlan is the set of tests that cover the mutated line, grouped by the test
 // package that owns them.
-type testPlan map[string][]string
+type TestPlan map[string][]string
 
-func (p testPlan) empty() bool {
+func (p TestPlan) empty() bool {
 	for _, tests := range p {
 		if len(tests) > 0 {
 			return false
@@ -55,7 +55,7 @@ func (p testPlan) empty() bool {
 	return true
 }
 
-func (p testPlan) count() int {
+func (p TestPlan) count() int {
 	total := 0
 	for _, tests := range p {
 		total += len(tests)
@@ -74,7 +74,7 @@ type GenerateOptions struct {
 	Tags     []string
 	Env      []string
 	Eligible LineFilter
-	Tests    func(absPath string, line int) testPlan
+	Tests    func(absPath string, line int) TestPlan
 }
 
 func Generate(ctx context.Context, opts GenerateOptions) ([]Mutant, error) {
@@ -308,4 +308,4 @@ func (m Mutant) Source() []byte {
 	return out
 }
 
-func (m Mutant) Tests() testPlan { return m.tests }
+func (m Mutant) Tests() TestPlan { return m.tests }
