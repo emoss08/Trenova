@@ -40,7 +40,7 @@ func TestLoopEndToEnd(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(binaries.Close)
 
-	batches := make(chan []string, 4)
+	batches := make(chan Batch, 4)
 	out := &lockedBuffer{}
 
 	done := make(chan error, 1)
@@ -58,7 +58,7 @@ func TestLoopEndToEnd(t *testing.T) {
 	send := func(paths ...string) {
 		t.Helper()
 		before := out.String()
-		batches <- paths
+		batches <- Batch{Paths: paths}
 		require.Eventually(t, func() bool {
 			text := out.String()
 
@@ -99,7 +99,7 @@ func TestLoopWarmCycleIsFast(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(binaries.Close)
 
-	batches := make(chan []string, 4)
+	batches := make(chan Batch, 4)
 	out := &lockedBuffer{}
 
 	done := make(chan error, 1)
@@ -122,13 +122,13 @@ func TestLoopWarmCycleIsFast(t *testing.T) {
 	}
 
 	r.write("alpha/alpha.go", strings.Replace(alphaSource, "n * 2", "n + n", 1))
-	batches <- []string{r.path("alpha/alpha.go")}
+	batches <- Batch{Paths: []string{r.path("alpha/alpha.go")}}
 	waitFor("✓")
 
 	warmStart := time.Now()
 	r.write("alpha/alpha.go", strings.Replace(alphaSource, "n * 2", "2 * n", 1))
 	before := out.String()
-	batches <- []string{r.path("alpha/alpha.go")}
+	batches <- Batch{Paths: []string{r.path("alpha/alpha.go")}}
 	require.Eventually(t, func() bool {
 		text := out.String()
 

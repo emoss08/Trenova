@@ -33,6 +33,9 @@ type Planner struct {
 	Tags  []string
 	Env   []string
 	Store *cache.Store
+	// NoIndex disables line-level narrowing, mirroring the global --no-index
+	// flag: plans stay at package precision even when an index exists.
+	NoIndex bool
 
 	indexStore *cache.Store
 	loaderHead string
@@ -187,23 +190,29 @@ func (p *Planner) refineTestEdit(
 	changes []vcs.Change,
 	importPath string,
 ) (bool, []string) {
-	var owned, foreignOwners []string
-	ownedChanges := make([]vcs.Change, 0, 2)
+	var foreignOwners []string
+	var ownedChanges []vcs.Change
 
 	for _, change := range changes {
 		pkg, ok := g.PackageForFile(change.Path)
 		if !ok {
-			return false, nil
+			// A stray markdown file or client-side asset anywhere in the monorepo
+			// must not disable the refinement; only an unattributable Go file is a
+			// reason to refuse, mirroring what package selection itself does.
+			if filepath.Ext(change.Path) == ".go" {
+				return false, nil
+			}
+
+			continue
 		}
 		if pkg.ImportPath == importPath {
-			owned = append(owned, change.Path)
 			ownedChanges = append(ownedChanges, change)
 
 			continue
 		}
 		foreignOwners = append(foreignOwners, pkg.ImportPath)
 	}
-	if len(owned) == 0 {
+	if len(ownedChanges) == 0 {
 		return false, nil
 	}
 
@@ -229,6 +238,13 @@ func (p *Planner) refineTestEdit(
 			if !inside {
 				return false, nil
 			}
+			// Only Test and Fuzz functions actually execute under -test.run; a
+			// Benchmark needs -test.bench and an output-less Example never runs at
+			// all. Narrowing to one of those would print a green cycle in which
+			// zero tests executed, so the whole package runs instead.
+			if !runnableByTestRun(name) {
+				return false, nil
+			}
 			names[name] = struct{}{}
 		}
 	}
@@ -243,6 +259,18 @@ func (p *Planner) refineTestEdit(
 	sort.Strings(tests)
 
 	return true, tests
+}
+
+func runnableByTestRun(name string) bool {
+	for _, prefix := range [...]string{"Test", "Fuzz"} {
+		if rest, ok := strings.CutPrefix(name, prefix); ok {
+			if rest == "" || rest[0] < 'a' || rest[0] > 'z' {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func enclosingTest(functions []cover.TestFunction, line int) (string, bool) {
@@ -343,20 +371,44 @@ func importSignatures(ctx context.Context, manifest *cache.Manifest) map[string]
 	return out
 }
 
+// importSignature captures everything about a file that can move a graph edge:
+// the package clause, the import set, and the build constraints. Constraints
+// are comments to the parser but not to the graph — removing a //go:build line
+// changes which files are in the package and therefore which edges exist, and
+// missing that here would leave the memoised graph stale for the session.
 func importSignature(path string) (string, error) {
-	file, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ImportsOnly)
+	file, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ImportsOnly|parser.ParseComments)
 	if err != nil {
 		return "", err
 	}
 
-	parts := make([]string, 0, len(file.Imports)+1)
-	parts = append(parts, "package "+file.Name.Name)
+	parts := []string{"package " + file.Name.Name}
+
+	imports := make([]string, 0, len(file.Imports))
 	for _, imp := range file.Imports {
-		parts = append(parts, imp.Path.Value)
+		imports = append(imports, imp.Path.Value)
 	}
-	sort.Strings(parts[1:])
+	sort.Strings(imports)
+	parts = append(parts, imports...)
+
+	for _, group := range file.Comments {
+		for _, comment := range group.List {
+			text := strings.TrimSpace(comment.Text)
+			if strings.HasPrefix(text, "//go:build") || strings.HasPrefix(text, "// +build") {
+				parts = append(parts, text)
+			}
+		}
+	}
 
 	return strings.Join(parts, "\n"), nil
+}
+
+// Invalidate drops every piece of memoised state. Called when filesystem events
+// were lost: a graph whose inputs may have changed unseen cannot be trusted to
+// stay memoised.
+func (p *Planner) Invalidate() {
+	p.memoGraph = nil
+	p.signatures = nil
 }
 
 // lastKnown resolves a package against the most recent cycle's graph and
@@ -380,7 +432,7 @@ func (p *Planner) lastKnown(importPath string) (string, cache.Fingerprint, bool)
 // fingerprints are derived from HEAD's tree digests, which are stable for the
 // life of a commit no matter how dirty the working tree gets.
 func (p *Planner) loaderFor(ctx context.Context, g *graph.Graph, head string) (*index.Loader, error) {
-	if p.Store == nil || head == "" {
+	if p.NoIndex || p.Store == nil || head == "" {
 		return nil, nil
 	}
 

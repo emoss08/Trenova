@@ -18,7 +18,7 @@ import (
 type LoopOptions struct {
 	Planner  *Planner
 	Binaries *BinaryCache
-	Batches  <-chan []string
+	Batches  <-chan Batch
 	Out      io.Writer
 	UseColor bool
 	Jobs     int
@@ -27,15 +27,26 @@ type LoopOptions struct {
 
 const defaultRunTimeout = 2 * time.Minute
 
+// failure is what stickiness remembers about a red package. wholePackage means
+// the failing set is unknown — a package-level failure, a hang, or a run whose
+// output named no test — and only a full run can clear it.
+type failure struct {
+	tests        map[string]struct{}
+	wholePackage bool
+}
+
 // Loop is the watch session: one cycle per batch, until the channel closes or
 // the context ends.
 //
-// Failures are sticky. A test that failed keeps running at the front of every
-// following cycle until it passes, whichever file the save touched — the loop's
-// job is to get the developer back to green, and the fastest route is telling
-// them immediately whether the thing that was broken is still broken.
+// Failures are sticky, and the accounting is per test name, not per package: a
+// cycle that runs only a subset of a package's tests can clear exactly the
+// names it executed and nothing more. A run that never executed the broken
+// test — because narrowing selected different tests — cannot silently declare
+// the package healthy, and an infrastructure error keeps the entry rather than
+// evicting it: the one failure the mechanism must never drop is the one it
+// could not re-check.
 func Loop(ctx context.Context, opts LoopOptions) error {
-	failing := make(map[string][]string)
+	failing := make(map[string]*failure)
 
 	for {
 		select {
@@ -57,16 +68,30 @@ func Loop(ctx context.Context, opts LoopOptions) error {
 	}
 }
 
-func runCycle(ctx context.Context, opts LoopOptions, batch []string, failing map[string][]string) error {
+func runCycle(ctx context.Context, opts LoopOptions, batch Batch, failing map[string]*failure) error {
 	started := time.Now()
 	lines := report.NewLines(opts.Out, opts.UseColor)
 
-	cycle, err := opts.Planner.Plan(ctx, batch)
+	if batch.Resync {
+		// The kernel dropped events, so both the batch and the memoised graph are
+		// unreliable; replan everything from disk.
+		opts.Planner.Invalidate()
+		lines.Warn("%s  filesystem events were dropped; re-checking everything dirty",
+			time.Now().Format("15:04:05"))
+	}
+
+	cycle, err := opts.Planner.Plan(ctx, batch.Paths)
 	if err != nil {
 		return err
 	}
 
-	runs := withStickyFailures(cycle.Runs, failing, opts.Planner, batch)
+	runs, gone := withStickyFailures(cycle.Runs, failing, opts.Planner, batch.Paths)
+	for _, importPath := range gone {
+		lines.Warn("  %s left the workspace while failing; dropping it from the session",
+			shorten(importPath))
+		delete(failing, importPath)
+	}
+
 	if len(runs) == 0 {
 		lines.Muted("%s  nothing to run for this change", time.Now().Format("15:04:05"))
 
@@ -74,9 +99,9 @@ func runCycle(ctx context.Context, opts LoopOptions, batch []string, failing map
 	}
 
 	header := fmt.Sprintf("%s  %d packages", time.Now().Format("15:04:05"), len(runs))
-	if len(batch) > 0 {
+	if len(batch.Paths) > 0 {
 		header = fmt.Sprintf("%s  %s → %d packages",
-			time.Now().Format("15:04:05"), summariseBatch(batch), len(runs))
+			time.Now().Format("15:04:05"), summariseBatch(batch.Paths), len(runs))
 	}
 	if cycle.Deferred > 0 {
 		noun := "packages"
@@ -90,12 +115,12 @@ func runCycle(ctx context.Context, opts LoopOptions, batch []string, failing map
 		lines.Warn("note: %s", cycle.Note)
 	}
 
-	results := executeRuns(ctx, opts, runs)
-	if ctx.Err() != nil {
-		return ctx.Err()
+	results, err := executeRuns(ctx, opts, runs)
+	if err != nil {
+		return err
 	}
 
-	passed, failed := 0, 0
+	passed, failed, skipped := 0, 0, 0
 	testCount := 0
 	for _, result := range results {
 		testCount += len(result.Tests)
@@ -103,25 +128,35 @@ func runCycle(ctx context.Context, opts LoopOptions, batch []string, failing map
 		case result.Err != nil:
 			failed++
 			lines.Warn("  %s  error: %v", shorten(result.ImportPath), result.Err)
-			delete(failing, result.ImportPath)
+			recordUnjudged(failing, result)
+		case result.Skipped:
+			skipped++
+			lines.Muted("  %s  no test binary (build tags?)", shorten(result.ImportPath))
 		case result.Passed:
 			passed++
 			lines.Good("  %s  %s  %s%s", shorten(result.ImportPath), describeTests(result.Tests),
 				result.Duration.Round(time.Millisecond), reusedTag(result.Reused))
-			delete(failing, result.ImportPath)
+			recordPass(failing, result)
 		default:
 			failed++
 			lines.Warn("  %s  FAIL  %s", shorten(result.ImportPath), result.Duration.Round(time.Millisecond))
 			printFailure(opts.Out, result.Output)
-			failing[result.ImportPath] = failedTestNames(result.Output)
+			recordFailure(failing, result)
 		}
 	}
 
 	total := time.Since(started)
-	if failed == 0 {
-		lines.Good("✓ %d packages · %s tests · %s",
+	switch {
+	case failed == 0 && passed > 0:
+		summary := fmt.Sprintf("✓ %d packages · %s tests · %s",
 			passed, countOrAll(testCount, results), total.Round(time.Millisecond))
-	} else {
+		if skipped > 0 {
+			summary += fmt.Sprintf(" · %d skipped", skipped)
+		}
+		lines.Good("%s", summary)
+	case failed == 0:
+		lines.Muted("nothing executed · %s", total.Round(time.Millisecond))
+	default:
 		lines.Warn("✗ %d of %d packages failed · %s", failed, len(results), total.Round(time.Millisecond))
 	}
 	lines.Line("")
@@ -129,42 +164,166 @@ func runCycle(ctx context.Context, opts LoopOptions, batch []string, failing map
 	return nil
 }
 
-// withStickyFailures prepends still-failing packages that this cycle would not
-// otherwise run, narrowed to the tests that were failing.
-func withStickyFailures(
-	runs []PlannedRun,
-	failing map[string][]string,
-	planner *Planner,
-	batch []string,
-) []PlannedRun {
-	planned := make(map[string]struct{}, len(runs))
-	for _, run := range runs {
-		planned[run.ImportPath] = struct{}{}
+// recordPass clears exactly what this run proved: the names it executed. Only a
+// whole-package run may clear a whole-package failure.
+func recordPass(failing map[string]*failure, result RunResult) {
+	entry, ok := failing[result.ImportPath]
+	if !ok {
+		return
 	}
 
+	if len(result.Tests) == 0 {
+		delete(failing, result.ImportPath)
+
+		return
+	}
+	if entry.wholePackage {
+		return
+	}
+
+	for _, name := range result.Tests {
+		delete(entry.tests, name)
+	}
+	if len(entry.tests) == 0 {
+		delete(failing, result.ImportPath)
+	}
+}
+
+func recordFailure(failing map[string]*failure, result RunResult) {
+	names := failedTestNames(result.Output)
+
+	entry, ok := failing[result.ImportPath]
+	if !ok {
+		entry = &failure{tests: make(map[string]struct{})}
+		failing[result.ImportPath] = entry
+	}
+
+	if len(names) == 0 {
+		// The run failed without naming a test — a panic outside any test, a
+		// TestMain exit. Only a full pass can clear this.
+		entry.wholePackage = true
+
+		return
+	}
+
+	if !entry.wholePackage && len(result.Tests) > 0 {
+		executed := make(map[string]struct{}, len(result.Tests))
+		newlyFailed := make(map[string]struct{}, len(names))
+		for _, name := range names {
+			newlyFailed[name] = struct{}{}
+		}
+		for _, name := range result.Tests {
+			executed[name] = struct{}{}
+			if _, still := newlyFailed[name]; !still {
+				delete(entry.tests, name)
+			}
+		}
+	}
+	if len(result.Tests) == 0 {
+		entry.wholePackage = false
+		entry.tests = make(map[string]struct{})
+	}
+	for _, name := range names {
+		entry.tests[name] = struct{}{}
+	}
+}
+
+// recordUnjudged holds a package the cycle could not judge — a build error, a
+// hang. If it was already failing the entry survives untouched; if it was not,
+// it becomes a whole-package failure so the next cycle re-checks it.
+func recordUnjudged(failing map[string]*failure, result RunResult) {
+	if _, ok := failing[result.ImportPath]; ok {
+		return
+	}
+	failing[result.ImportPath] = &failure{tests: make(map[string]struct{}), wholePackage: true}
+}
+
+// withStickyFailures folds the failing set into the cycle.
+//
+// A failing package this cycle already plans gets the failing names unioned
+// into its run — a narrowed run must not be allowed to "pass" a package while
+// the broken test sits outside its pattern. A failing package the cycle does
+// not plan is appended as its own run. Packages that no longer resolve are
+// returned for reporting and eviction.
+func withStickyFailures(
+	runs []PlannedRun,
+	failing map[string]*failure,
+	planner *Planner,
+	batch []string,
+) ([]PlannedRun, []string) {
+	planned := make(map[string]int, len(runs))
+	for i, run := range runs {
+		planned[run.ImportPath] = i
+	}
+
+	var gone []string
 	var sticky []PlannedRun
-	for importPath, tests := range failing {
-		if _, already := planned[importPath]; already {
+
+	for _, importPath := range sortedFailureKeys(failing) {
+		entry := failing[importPath]
+
+		if i, already := planned[importPath]; already {
+			mergeFailureIntoRun(&runs[i], entry)
+
 			continue
 		}
-		run, ok := planner.runForFailing(importPath, tests)
+
+		run, ok := planner.runForFailing(importPath, entry)
 		if !ok {
+			gone = append(gone, importPath)
+
 			continue
 		}
 		sticky = append(sticky, run)
 	}
-	sort.Slice(sticky, func(i, j int) bool { return sticky[i].ImportPath < sticky[j].ImportPath })
 
-	// The batch's own runs still come first: the save the developer just made is
-	// the thing they are waiting on.
 	if len(batch) == 0 {
-		return append(sticky, runs...)
+		return append(sticky, runs...), gone
 	}
 
-	return append(runs, sticky...)
+	return append(runs, sticky...), gone
 }
 
-func executeRuns(ctx context.Context, opts LoopOptions, runs []PlannedRun) []RunResult {
+func mergeFailureIntoRun(run *PlannedRun, entry *failure) {
+	if run.Pattern == "" {
+		return
+	}
+	if entry.wholePackage {
+		run.Pattern = ""
+		run.Tests = nil
+
+		return
+	}
+
+	union := make(map[string]struct{}, len(run.Tests)+len(entry.tests))
+	for _, name := range run.Tests {
+		union[name] = struct{}{}
+	}
+	for name := range entry.tests {
+		union[name] = struct{}{}
+	}
+
+	tests := make([]string, 0, len(union))
+	for name := range union {
+		tests = append(tests, name)
+	}
+	sort.Strings(tests)
+
+	run.Tests = tests
+	run.Pattern = runpattern.From(tests)
+}
+
+func sortedFailureKeys(failing map[string]*failure) []string {
+	out := make([]string, 0, len(failing))
+	for key := range failing {
+		out = append(out, key)
+	}
+	sort.Strings(out)
+
+	return out
+}
+
+func executeRuns(ctx context.Context, opts LoopOptions, runs []PlannedRun) ([]RunResult, error) {
 	cores := runtime.GOMAXPROCS(0)
 	jobs := opts.Jobs
 	if jobs <= 0 {
@@ -209,7 +368,7 @@ func executeRuns(ctx context.Context, opts LoopOptions, runs []PlannedRun) []Run
 			case err != nil:
 				result.Err = err
 			case binary == "":
-				result.Passed = true
+				result.Skipped = true
 			default:
 				began := time.Now()
 				passed, output, runErr := RunTests(ctx, RunRequest{
@@ -235,20 +394,16 @@ func executeRuns(ctx context.Context, opts LoopOptions, runs []PlannedRun) []Run
 	}
 
 	if err := running.Wait(); err != nil {
-		return nil
+		return nil, err
 	}
 
-	return results
+	return results, nil
 }
 
 // runForFailing rebuilds a minimal run for a package whose tests failed in an
-// earlier cycle.
-func (p *Planner) runForFailing(importPath string, tests []string) (PlannedRun, bool) {
-	// The planner's graph state lives cycle to cycle through the cache, so the
-	// cheap route to a directory is the last loaded graph via the loader's
-	// fingerprinter — but correctness only needs the directory, which the run
-	// carries from the cycle that recorded the failure. Failing that, skip: the
-	// package will resurface the next time a save reaches it.
+// earlier cycle, resolved against the current graph and current fingerprints so
+// a stale binary can never satisfy it.
+func (p *Planner) runForFailing(importPath string, entry *failure) (PlannedRun, bool) {
 	dir, fp, ok := p.lastKnown(importPath)
 	if !ok {
 		return PlannedRun{}, false
@@ -260,9 +415,14 @@ func (p *Planner) runForFailing(importPath string, tests []string) (PlannedRun, 
 		Reason:      "still failing",
 		Fingerprint: fp,
 	}
-	if len(tests) > 0 {
+	if !entry.wholePackage && len(entry.tests) > 0 {
+		tests := make([]string, 0, len(entry.tests))
+		for name := range entry.tests {
+			tests = append(tests, name)
+		}
+		sort.Strings(tests)
 		run.Pattern = runpattern.From(tests)
-		run.Tests = append([]string(nil), tests...)
+		run.Tests = tests
 	}
 
 	return run, true
@@ -312,7 +472,7 @@ func describeTests(tests []string) string {
 
 func countOrAll(count int, results []RunResult) string {
 	for _, result := range results {
-		if len(result.Tests) == 0 {
+		if len(result.Tests) == 0 && !result.Skipped {
 			return "all"
 		}
 	}

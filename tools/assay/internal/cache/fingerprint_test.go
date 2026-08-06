@@ -99,6 +99,21 @@ func TestFingerprintIgnoresIrrelevantFiles(t *testing.T) {
 		"documentation and scratch files cannot change the package graph")
 }
 
+// TestFingerprintTracksTestdata pins the stale-fixture fix: test binaries bake
+// testdata in via reads and //go:embed, so a fixture edit must move the
+// fingerprint or a warm binary keeps passing against data that no longer exists.
+func TestFingerprintTracksTestdata(t *testing.T) {
+	files := baseTree()
+	files["svc/testdata/fixture.json"] = `{"v":1}`
+	root := writeTree(t, files)
+	before := compute(t, root)
+
+	require.NoError(t, os.WriteFile(
+		filepath.Join(root, "svc", "testdata", "fixture.json"), []byte(`{"v":2}`), 0o644))
+
+	assert.NotEqual(t, before, compute(t, root))
+}
+
 func TestFingerprintSkipsDotDirectoriesAndNodeModules(t *testing.T) {
 	root := writeTree(t, baseTree())
 	before := compute(t, root)

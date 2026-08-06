@@ -3,6 +3,7 @@ package watch
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -12,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zeebo/blake3"
 
 	"github.com/emoss08/assay/internal/cache"
 	"github.com/emoss08/assay/internal/proc"
@@ -74,9 +77,10 @@ func (c *BinaryCache) Ensure(ctx context.Context, req BuildRequest) (string, boo
 		return entry.path, true, nil
 	}
 
-	output := filepath.Join(c.dir, sanitise(req.ImportPath)+".test")
+	output := filepath.Join(c.dir, binaryName(req.ImportPath))
+	staging := output + ".tmp"
 
-	args := []string{"test", "-c", "-o", output}
+	args := []string{"test", "-c", "-o", staging}
 	if req.BuildParallelism > 0 {
 		args = append(args, "-p", strconv.Itoa(req.BuildParallelism))
 	}
@@ -101,16 +105,32 @@ func (c *BinaryCache) Ensure(ctx context.Context, req BuildRequest) (string, boo
 			req.ImportPath, err, strings.TrimSpace(out.String()))
 	}
 
-	if _, err := os.Stat(output); err != nil {
+	if _, err := os.Stat(staging); err != nil {
 		// A package with no test files builds successfully and produces nothing.
 		c.remember(req.ImportPath, req.Fingerprint, "")
 
 		return "", false, nil
 	}
 
+	// The rename is what makes a cancelled or failed build harmless: a truncated
+	// binary can never sit at the final path where a later fingerprint match
+	// would happily reuse it.
+	if err := os.Rename(staging, output); err != nil {
+		return "", false, fmt.Errorf("publish %s binary: %w", req.ImportPath, err)
+	}
+
 	c.remember(req.ImportPath, req.Fingerprint, output)
 
 	return output, false, nil
+}
+
+// binaryName is injective: distinct import paths must never share a file, or
+// one package's tests would silently execute another package's binary. The
+// readable prefix is for humans; the hash carries the uniqueness.
+func binaryName(importPath string) string {
+	sum := blake3.Sum256([]byte(importPath))
+
+	return sanitise(importPath) + "-" + hex.EncodeToString(sum[:6]) + ".test"
 }
 
 func (c *BinaryCache) remember(importPath string, fp cache.Fingerprint, path string) {
@@ -120,11 +140,14 @@ func (c *BinaryCache) remember(importPath string, fp cache.Fingerprint, path str
 	c.entries[importPath] = binEntry{fingerprint: fp, path: path}
 }
 
-// RunResult is one package's test execution within a cycle.
+// RunResult is one package's test execution within a cycle. Skipped means no
+// test binary exists — a package whose tests are all behind a build tag — which
+// is a different claim from "ran and passed" and must never be counted as one.
 type RunResult struct {
 	ImportPath string
 	Tests      []string
 	Passed     bool
+	Skipped    bool
 	Output     []byte
 	Duration   time.Duration
 	Reused     bool
@@ -149,6 +172,11 @@ func RunTests(ctx context.Context, req RunRequest) (bool, []byte, error) {
 	}
 
 	args := []string{"-test.count=1"}
+	if req.Timeout > 0 {
+		// The binary's own timeout fires first, so a hang dies with a goroutine
+		// dump instead of a bare SIGKILL from the context deadline.
+		args = append(args, "-test.timeout", (req.Timeout * 9 / 10).String())
+	}
 	if req.Pattern != "" {
 		args = append(args, "-test.run", req.Pattern)
 	}

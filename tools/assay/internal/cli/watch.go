@@ -37,6 +37,16 @@ func newWatchCommand(opts *options) *cobra.Command {
 			if err := opts.validate(); err != nil {
 				return err
 			}
+			// Accepting a change-source flag and ignoring it would let the user
+			// believe they scoped the session when they did not.
+			switch {
+			case opts.since != "":
+				return fmt.Errorf("--since has no effect on watch; it always follows the working tree against HEAD")
+			case opts.files != "":
+				return fmt.Errorf("--files has no effect on watch; it always follows the working tree against HEAD")
+			case opts.all:
+				return fmt.Errorf("--all has no effect on watch; save a file to run its tests")
+			}
 
 			root, err := resolveRoot(ctx, opts.root)
 			if err != nil {
@@ -56,9 +66,10 @@ func newWatchCommand(opts *options) *cobra.Command {
 			defer watcher.Close()
 
 			planner := &watch.Planner{
-				Root:  root,
-				Tags:  opts.tags,
-				Store: opts.store(),
+				Root:    root,
+				Tags:    opts.tags,
+				Store:   opts.store(),
+				NoIndex: opts.noIndex,
 			}
 
 			cmd.PrintErrf("watching %s — save a Go file to run its tests (ctrl-c to stop)\n", root)

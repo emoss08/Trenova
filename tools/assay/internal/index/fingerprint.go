@@ -62,7 +62,8 @@ func NewFingerprinter(g *graph.Graph, treeDigests map[string]string, tags []stri
 }
 
 func isRelevantPath(path string) bool {
-	return strings.HasSuffix(path, ".go") || isModuleFile(path)
+	return strings.HasSuffix(path, ".go") || isModuleFile(path) ||
+		strings.Contains(path, "/testdata/")
 }
 
 func isModuleFile(path string) bool {

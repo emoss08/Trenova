@@ -224,7 +224,7 @@ func collect(root string) ([]string, error) {
 			return nil
 		}
 
-		if isRelevant(entry.Name()) {
+		if isRelevant(entry.Name()) || underTestdata(path) {
 			out = append(out, path)
 		}
 
@@ -245,6 +245,18 @@ func isRelevant(name string) bool {
 	}
 
 	return strings.HasSuffix(name, ".go")
+}
+
+// underTestdata includes test fixtures in the fingerprint. A test binary bakes
+// testdata in twice over — tests read it at runtime and //go:embed compiles it
+// in — so a fixture edit that moved no .go digest used to leave a stale warm
+// binary passing against data that no longer exists. Embedded assets outside
+// testdata directories remain outside the fingerprint; that residual is
+// documented rather than chased.
+func underTestdata(path string) bool {
+	sep := string(filepath.Separator)
+
+	return strings.Contains(path, sep+"testdata"+sep)
 }
 
 // hashers keeps a blake3 state and a read buffer per live worker rather than per

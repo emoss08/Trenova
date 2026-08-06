@@ -253,8 +253,9 @@ func TestWatcherBatchesDebouncedSaves(t *testing.T) {
 
 	select {
 	case batch := <-w.Batches():
-		require.Len(t, batch, 1, "editor noise and non-Go files must not appear: %v", batch)
-		assert.Equal(t, filepath.Join(dir, "a.go"), batch[0])
+		require.Len(t, batch.Paths, 1, "editor noise and non-Go files must not appear: %v", batch.Paths)
+		assert.Equal(t, filepath.Join(dir, "a.go"), batch.Paths[0])
+		assert.False(t, batch.Resync)
 	case <-time.After(5 * time.Second):
 		t.Fatal("no batch arrived")
 	}
@@ -278,7 +279,7 @@ func TestWatcherSeesFilesInNewDirectories(t *testing.T) {
 
 	select {
 	case batch := <-w.Batches():
-		assert.Contains(t, batch, filepath.Join(sub, "new.go"),
+		assert.Contains(t, batch.Paths, filepath.Join(sub, "new.go"),
 			"a package created mid-session must be watched")
 	case <-time.After(5 * time.Second):
 		t.Fatal("no batch arrived for the new directory")
