@@ -38,10 +38,30 @@ const (
 // same binary usable as its own control.
 const SchemataEnvVar = "ASSAY_MUTANT"
 
-// schemataPrelude is always emitted. os is the only import: the lower the
-// dependency, the smaller the chance of an import cycle when the package under
-// mutation is itself low-level.
-const schemataPrelude = `var assayMutActive = assayMutSelect(os.Getenv("` + SchemataEnvVar + `"))
+// TrackEnvVar switches on init-site tracking. Only the mutant harness sets it:
+// tracking costs a sync.Map store per site execution until it is turned off, and
+// the env-selected path never turns it off because it never needs the answer.
+const TrackEnvVar = "ASSAY_MUTANT_TRACK"
+
+// schemataPrelude is always emitted. os, sync and sync/atomic are the only
+// imports: the lower the dependency, the smaller the chance of an import cycle
+// when the package under mutation is itself low-level.
+//
+// The active mutant is an atomic because the harness switches it between m.Run
+// calls while goroutines leaked by earlier tests may still be executing sites.
+// Init tracking exists for the harness's one blind spot: package init runs
+// before TestMain can select anything, so a site executed during init has
+// already behaved as the original by the time the harness switches — the
+// harness must judge such mutants in a process of their own, where the
+// environment selects the mutant before init runs.
+const schemataPrelude = `var assayMutActive atomic.Int32
+var assayMutTracking atomic.Bool
+var assayMutInitSeen sync.Map
+
+func init() {
+	assayMutActive.Store(assayMutSelect(os.Getenv("` + SchemataEnvVar + `")))
+	assayMutTracking.Store(os.Getenv("` + TrackEnvVar + `") == "1")
+}
 
 func assayMutSelect(raw string) int32 {
 	var n int32
@@ -56,7 +76,31 @@ func assayMutSelect(raw string) int32 {
 	return n
 }
 
-func ` + helperOn + `(id int32) bool { return assayMutActive == id }`
+// AssaySelect switches the active mutant in-process. Generated for the mutant
+// harness; a normal env-selected run never calls it.
+func AssaySelect(id int32) { assayMutActive.Store(id) }
+
+// AssayInitSites reports every mutation site executed before it was called and
+// stops tracking. The harness calls it once, at the top of TestMain.
+func AssayInitSites() []int32 {
+	assayMutTracking.Store(false)
+	var out []int32
+	assayMutInitSeen.Range(func(key, _ any) bool {
+		out = append(out, key.(int32))
+
+		return true
+	})
+
+	return out
+}
+
+func ` + helperOn + `(id int32) bool {
+	if assayMutTracking.Load() {
+		assayMutInitSeen.Store(id, struct{}{})
+	}
+
+	return assayMutActive.Load() == id
+}`
 
 var constraintSource = map[string]string{
 	constraintNum: `type ` + constraintNum + ` interface {
@@ -186,7 +230,7 @@ func SchemataSource(packageName string, helpers []string) []byte {
 	b.WriteString(schemataHeader)
 	b.WriteString("\npackage ")
 	b.WriteString(packageName)
-	b.WriteString("\n\nimport \"os\"\n\n")
+	b.WriteString("\n\nimport (\n\t\"os\"\n\t\"sync\"\n\t\"sync/atomic\"\n)\n\n")
 	b.WriteString(schemataPrelude)
 	b.WriteString("\n")
 

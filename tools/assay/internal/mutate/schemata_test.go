@@ -264,12 +264,14 @@ func survivorIDs(results []mutate.Result) []string {
 	return out
 }
 
-// TestSchemataAgreesWithOverlay is the test that keeps the fast path honest.
+// TestSchemataAgreesWithOverlay is the test that keeps every fast path honest.
 //
-// Sharing one binary across every mutant in a package is only worth anything if it
-// reaches the same verdict as compiling each mutant on its own. Any divergence —
-// a rewrite that changed evaluation order, a switch that leaked into a neighbouring
-// site — shows up here as a mutant the two modes disagree about.
+// The three modes trade compiles and processes for speed: overlay pays a compile
+// per mutant, per-process schemata shares the compile, and the harness shares the
+// processes too. None of it is worth anything unless all three reach identical
+// verdicts. Any divergence — a rewrite that changed evaluation order, a switch
+// that leaked into a neighbouring site, an init that ran under the wrong mutant —
+// shows up here as a mutant the modes disagree about.
 func TestSchemataAgreesWithOverlay(t *testing.T) {
 	c := newCorpusFrom(t, schemataCorpusFiles())
 
@@ -277,8 +279,13 @@ func TestSchemataAgreesWithOverlay(t *testing.T) {
 		t.Run(pkg, func(t *testing.T) {
 			mutants := c.generate(t, pkg)
 
-			shared := c.executeOptions()
-			sharedResults, err := mutate.Execute(t.Context(), mutants, shared)
+			harness := c.executeOptions()
+			harnessResults, err := mutate.Execute(t.Context(), mutants, harness)
+			require.NoError(t, err)
+
+			perProcess := c.executeOptions()
+			perProcess.NoHarness = true
+			perProcessResults, err := mutate.Execute(t.Context(), mutants, perProcess)
 			require.NoError(t, err)
 
 			separate := c.executeOptions()
@@ -286,19 +293,24 @@ func TestSchemataAgreesWithOverlay(t *testing.T) {
 			separateResults, err := mutate.Execute(t.Context(), mutants, separate)
 			require.NoError(t, err)
 
-			requireNoBuildFailures(t, sharedResults)
+			requireNoBuildFailures(t, harnessResults)
+			requireNoBuildFailures(t, perProcessResults)
 			requireNoBuildFailures(t, separateResults)
 
-			assert.Equal(t, outcomesByID(separateResults), outcomesByID(sharedResults),
+			assert.Equal(t, outcomesByID(separateResults), outcomesByID(perProcessResults),
 				"a shared binary must reach the same verdict as one binary per mutant")
-			assert.Equal(t, survivorIDs(separateResults), survivorIDs(sharedResults))
+			assert.Equal(t, outcomesByID(separateResults), outcomesByID(harnessResults),
+				"switching mutants inside one process must reach the same verdict as a process per mutant")
+			assert.Equal(t, survivorIDs(separateResults), survivorIDs(perProcessResults))
+			assert.Equal(t, survivorIDs(separateResults), survivorIDs(harnessResults))
 		})
 	}
 }
 
 // TestSchemataActuallyTakesTheFastPath stops the agreement test above from passing
-// for the wrong reason. If every mutant quietly fell back to its own binary the
-// verdicts would match perfectly and the milestone would be worthless.
+// for the wrong reason. If every mutant quietly fell back to its own binary or its
+// own process the verdicts would match perfectly and the milestone would be
+// worthless.
 func TestSchemataActuallyTakesTheFastPath(t *testing.T) {
 	c := newCorpusFrom(t, schemataCorpusFiles())
 
@@ -306,10 +318,28 @@ func TestSchemataActuallyTakesTheFastPath(t *testing.T) {
 	require.NoError(t, err)
 
 	modes := mutate.Modes(results)
-	assert.Greater(t, modes[mutate.ModeSchemata], modes[mutate.ModeOverlay],
+	assert.Positive(t, modes[mutate.ModeHarness],
+		"the harness must actually judge mutants, or its agreement proves nothing")
+	assert.Zero(t, modes[mutate.ModeSchemata],
+		"nothing in this package runs at init and no test package defines TestMain, so no mutant needs a process of its own")
+	assert.Greater(t, modes[mutate.ModeHarness], modes[mutate.ModeOverlay],
 		"most of this package is plain int and bool; it should mostly share a binary")
 	assert.Positive(t, modes[mutate.ModeOverlay],
 		"the named types in this package cannot be rewritten, so both paths must run")
+}
+
+func TestNoHarnessForcesAProcessPerMutant(t *testing.T) {
+	c := newCorpusFrom(t, schemataCorpusFiles())
+
+	opts := c.executeOptions()
+	opts.NoHarness = true
+
+	results, err := mutate.Execute(t.Context(), c.generate(t, "kinds"), opts)
+	require.NoError(t, err)
+
+	modes := mutate.Modes(results)
+	assert.Zero(t, modes[mutate.ModeHarness])
+	assert.Positive(t, modes[mutate.ModeSchemata])
 }
 
 func TestNoSchemataForcesOneBinaryPerMutant(t *testing.T) {

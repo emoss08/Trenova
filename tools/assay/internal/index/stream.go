@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/emoss08/assay/internal/proc"
+	"github.com/emoss08/assay/internal/tailbuf"
 )
 
 type harnessProgress struct {
@@ -61,7 +62,7 @@ func runHarness(
 	if err != nil {
 		return harnessResult{err: fmt.Errorf("open harness stdout: %w", err)}
 	}
-	stderr := newTailBuffer(32 << 10)
+	stderr := tailbuf.New(32 << 10)
 	cmd.Stderr = stderr
 
 	if err := cmd.Start(); err != nil {
@@ -116,31 +117,6 @@ func runHarness(
 	}
 
 	return result
-}
-
-// tailBuffer keeps only the last cap bytes written. The harness holds one
-// stderr buffer for a whole package's tests; unbounded, a chatty suite times
-// the resident cost by jobs, and only the tail ever reaches an error message.
-type tailBuffer struct {
-	limit int
-	data  []byte
-}
-
-func newTailBuffer(limit int) *tailBuffer {
-	return &tailBuffer{limit: limit}
-}
-
-func (b *tailBuffer) Write(p []byte) (int, error) {
-	b.data = append(b.data, p...)
-	if len(b.data) > b.limit {
-		b.data = b.data[len(b.data)-b.limit:]
-	}
-
-	return len(p), nil
-}
-
-func (b *tailBuffer) String() string {
-	return string(b.data)
 }
 
 // parseHarnessLine accepts only the line announcing the next expected test, so a

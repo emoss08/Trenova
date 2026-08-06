@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/assay/internal/gopkg"
 	"github.com/emoss08/assay/internal/overlay"
 )
 
@@ -34,8 +35,10 @@ type schemataBatch struct {
 
 	workdir string
 	overlay string
+	replace map[string]string
 
 	binaries map[string]*batchBinary
+	harness  map[string]*batchBinary
 }
 
 // batchBinary is one test package's shared binary. The mutex means concurrent
@@ -122,8 +125,10 @@ func (b *schemataBatch) assign(mutants []Mutant) {
 	b.testPkgs = setToSorted(testPkgs)
 
 	b.binaries = make(map[string]*batchBinary, len(b.testPkgs))
+	b.harness = make(map[string]*batchBinary, len(b.testPkgs))
 	for _, testPkg := range b.testPkgs {
 		b.binaries[testPkg] = &batchBinary{}
+		b.harness[testPkg] = &batchBinary{}
 	}
 }
 
@@ -163,10 +168,93 @@ func (b *schemataBatch) prepare() error {
 		return err
 	}
 	replace[injected] = runtimePath
+	b.replace = replace
 
 	b.overlay, err = overlay.WriteFile(workdir, replace)
 
 	return err
+}
+
+// harnessBinaryFor compiles the shared binary with the mutant harness injected
+// into testPkg, the first time a shard needs it. The harness file rides the
+// same overlay as the schemata rewrite, extended per test package because the
+// injection path differs per package.
+func (b *schemataBatch) harnessBinaryFor(
+	ctx context.Context,
+	opts ExecuteOptions,
+	testPkg, testDir string,
+	buildParallelism int,
+) (string, error) {
+	slot, ok := b.harness[testPkg]
+	if !ok {
+		return "", fmt.Errorf("no harness binary planned for %s", testPkg)
+	}
+
+	slot.mu.Lock()
+	defer slot.mu.Unlock()
+
+	if slot.done {
+		return slot.path, slot.err
+	}
+
+	fail := func(err error) (string, error) {
+		slot.done = true
+		slot.err = err
+
+		return "", err
+	}
+
+	testPkgName, err := gopkg.Name(testDir)
+	if err != nil {
+		return fail(fmt.Errorf("resolve package name for %s: %w", testPkg, err))
+	}
+
+	injected := filepath.Join(testDir, MutHarnessFileName)
+	group := "harness-" + overlay.UniqueName(testPkg)
+	source := MutHarnessSource(testPkgName, b.pkg, testPkg == b.pkg)
+	harnessPath, err := overlay.WriteUnderBasename(b.workdir, group, injected, source)
+	if err != nil {
+		return fail(err)
+	}
+
+	replace := make(map[string]string, len(b.replace)+1)
+	for original, path := range b.replace {
+		replace[original] = path
+	}
+	replace[injected] = harnessPath
+
+	overlayPath, err := overlay.WriteFile(filepath.Join(b.workdir, group), replace)
+	if err != nil {
+		return fail(err)
+	}
+
+	path := filepath.Join(b.workdir, "bin", "harness-"+overlay.UniqueName(testPkg)+".test")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fail(fmt.Errorf("create binary directory: %w", err))
+	}
+
+	if err := buildTestBinary(ctx, buildRequest{
+		root:             opts.Root,
+		env:              opts.Env,
+		tags:             opts.Tags,
+		overlay:          overlayPath,
+		testPackage:      testPkg,
+		output:           path,
+		buildParallelism: buildParallelism,
+	}); err != nil {
+		// A build killed by cancellation says nothing about whether the package
+		// compiles, so it must not be remembered as a failure.
+		if ctx.Err() != nil {
+			return "", ctx.Err()
+		}
+
+		return fail(err)
+	}
+
+	slot.done = true
+	slot.path = path
+
+	return path, nil
 }
 
 // binaryFor compiles this test package's shared binary the first time a mutant

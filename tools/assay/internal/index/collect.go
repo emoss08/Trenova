@@ -20,6 +20,7 @@ import (
 
 	"github.com/emoss08/assay/internal/cache"
 	"github.com/emoss08/assay/internal/cover"
+	"github.com/emoss08/assay/internal/gopkg"
 	"github.com/emoss08/assay/internal/graph"
 	"github.com/emoss08/assay/internal/overlay"
 	"github.com/emoss08/assay/internal/proc"
@@ -272,12 +273,12 @@ func singleProcessEligible(dir string) (string, bool) {
 		return "", false
 	}
 
-	hasTestMain, err := packageDefinesTestMain(dir)
+	hasTestMain, err := gopkg.DefinesTestMain(dir)
 	if err != nil || hasTestMain {
 		return "", false
 	}
 
-	name, err := packageName(dir)
+	name, err := gopkg.Name(dir)
 	if err != nil {
 		return "", false
 	}

@@ -48,13 +48,17 @@ func (o Outcome) Scored() bool {
 	return o.Killed() || o == OutcomeSurvived
 }
 
-// Mode records how a mutant was judged. Both modes must reach the same verdict;
-// schemata is simply the one that does not pay for a compile per mutant.
+// Mode records how a mutant was judged. Every mode must reach the same verdict;
+// they differ only in what they pay. Overlay compiles a binary per mutant,
+// schemata shares one compile across a package's mutants but still spawns a
+// process per (mutant, test package), and harness shares the processes too —
+// one per (test package, shard), switching mutants between test runs.
 type Mode string
 
 const (
 	ModeSchemata Mode = "schemata"
 	ModeOverlay  Mode = "overlay"
+	ModeHarness  Mode = "harness"
 )
 
 type Result struct {
@@ -88,6 +92,11 @@ type ExecuteOptions struct {
 	// NoSchemata forces every mutant to compile its own binary. Slow, and the only
 	// way to cross-check the shared-binary path.
 	NoSchemata bool
+
+	// NoHarness keeps the shared binary but spawns a process per (mutant, test
+	// package) instead of switching mutants inside one; the only way to
+	// cross-check the harness path.
+	NoHarness bool
 }
 
 const (
@@ -135,6 +144,13 @@ func Execute(ctx context.Context, mutants []Mutant, opts ExecuteOptions) ([]Resu
 	sort.Ints(direct)
 
 	progress := newTicker(opts.Progress, "mutants", len(mutants))
+
+	if !opts.NoHarness {
+		if err := runHarnessBatches(ctx, mutants, opts, ready, results, buildParallelism, progress); err != nil {
+			return nil, err
+		}
+		ready = nil
+	}
 
 	judging := pool.New().
 		WithMaxGoroutines(jobs).

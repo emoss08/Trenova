@@ -25,6 +25,7 @@ type mutateFlags struct {
 	asJSON       bool
 	allowFailing bool
 	noSchemata   bool
+	noHarness    bool
 }
 
 func newMutateCommand(opts *options) *cobra.Command {
@@ -63,6 +64,8 @@ func newMutateCommand(opts *options) *cobra.Command {
 		"proceed when a covering test already fails, excluding it from every mutant plan")
 	cmd.Flags().BoolVar(&flags.noSchemata, "no-schemata", false,
 		"compile a separate binary per mutant instead of sharing one per package (much slower)")
+	cmd.Flags().BoolVar(&flags.noHarness, "no-harness", false,
+		"spawn a process per mutant and test package instead of switching mutants inside one (slower)")
 
 	return cmd
 }
@@ -111,6 +114,7 @@ func runMutate(cmd *cobra.Command, opts *options, flags *mutateFlags) error {
 		Budget:     scope.Budget,
 		PackageDir: packageDirResolver(session),
 		NoSchemata: flags.noSchemata,
+		NoHarness:  flags.noHarness,
 	}
 
 	preflight, err := mutate.RunPreflight(ctx, mutants, execOpts)
@@ -296,9 +300,9 @@ func printMutationSummary(
 
 	// A run dominated by the overlay path is minutes slower than one that shares
 	// binaries, so the split is worth saying out loud rather than leaving to guesswork.
-	if modes := mutate.Modes(results); modes[mutate.ModeOverlay] > 0 {
-		out.Muted("%d mutants shared a compiled binary, %d needed one of their own",
-			modes[mutate.ModeSchemata], modes[mutate.ModeOverlay])
+	if modes := mutate.Modes(results); modes[mutate.ModeOverlay] > 0 || modes[mutate.ModeSchemata] > 0 {
+		out.Muted("%d mutants judged in shared processes, %d in processes of their own, %d on binaries of their own",
+			modes[mutate.ModeHarness], modes[mutate.ModeSchemata], modes[mutate.ModeOverlay])
 	}
 
 	for _, reason := range fallbackReasons(results, 3) {

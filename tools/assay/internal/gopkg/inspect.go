@@ -1,4 +1,4 @@
-package index
+package gopkg
 
 import (
 	"bytes"
@@ -12,12 +12,12 @@ import (
 	"strings"
 )
 
-// packageDefinesTestMain reports whether any test file in dir declares its own
+// DefinesTestMain reports whether any test file in dir declares its own
 // TestMain, in the internal or the external test package. Injecting the harness
 // next to one would be a duplicate definition, so such packages take the
 // per-process path. Files excluded by build tags still count: conservative here
 // costs a slower collection, never a broken build.
-func packageDefinesTestMain(dir string) (bool, error) {
+func DefinesTestMain(dir string) (bool, error) {
 	files, err := filepath.Glob(filepath.Join(dir, "*_test.go"))
 	if err != nil {
 		return false, err
@@ -50,14 +50,15 @@ func packageDefinesTestMain(dir string) (bool, error) {
 	return false, nil
 }
 
-// packageName resolves the name to inject the harness under. go/build evaluates
+// Name resolves the package name a generated file injected into dir must
+// declare. go/build evaluates
 // build constraints, so a //go:build ignore generator declaring package main in
 // a library directory — gen.go, build.go, exactly the names that sort first —
 // cannot mislead it the way reading the alphabetically-first file did. A
 // test-only directory has no production name at all; the internal test package
 // clause serves instead, with any _test suffix stripped so the harness lands in
 // the internal test package.
-func packageName(dir string) (string, error) {
+func Name(dir string) (string, error) {
 	pkg, err := build.ImportDir(dir, 0)
 	if err == nil && pkg.Name != "" {
 		return pkg.Name, nil
