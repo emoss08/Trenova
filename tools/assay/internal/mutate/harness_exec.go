@@ -20,14 +20,14 @@ import (
 	"github.com/emoss08/assay/internal/tailbuf"
 )
 
-// harnessShardFloor is the fewest mutants worth a harness process of their own.
-// Below it, splitting for parallelism spends more on spawn and package init than
-// the concurrency returns.
+// harnessShardFloor is the fewest mutants worth a harness walker of their own.
+// Below it, splitting for parallelism spends more on spawn and package init
+// than the concurrency returns.
 const harnessShardFloor = 8
 
-// limiter bounds the child processes running at once across every batch
-// orchestrator. The orchestrators themselves are cheap goroutines that spend
-// their lives waiting; the machine's cores are what the semaphore protects.
+// limiter bounds the child processes running at once across every shard
+// walker. The walkers themselves are cheap goroutines that spend their lives
+// waiting; the machine's cores are what the semaphore protects.
 type limiter chan struct{}
 
 func (l limiter) acquire(ctx context.Context) error {
@@ -44,6 +44,13 @@ func (l limiter) release() { <-l }
 // runHarnessBatches judges every batch's mutants by switching mutants inside
 // shared processes: one harness process per (mutated package × covering test
 // package × shard) instead of one process per (mutant × covering test package).
+//
+// Each batch is split into stable shards that walk the covering test packages
+// independently — there is deliberately no barrier between shards or between
+// packages. A whole-batch walk that synchronised on each test package idled a
+// core whenever one shard's mutants were slower than another's, and measured
+// slower than the per-mutant path it replaced; independent walkers keep every
+// worker busy end to end, the same shape the per-mutant pool has.
 func runHarnessBatches(
 	ctx context.Context,
 	mutants []Mutant,
@@ -59,18 +66,46 @@ func runHarnessBatches(
 
 	sem := make(limiter, opts.jobs(len(mutants)))
 
-	orchestrating := pool.New().
+	walking := pool.New().
 		WithContext(ctx).
 		WithFirstError().
 		WithCancelOnError()
 
 	for _, batch := range batches {
-		orchestrating.Go(func(ctx context.Context) error {
-			return batch.judgeAll(ctx, mutants, opts, results, sem, buildParallelism, progress)
-		})
+		ordered := batch.orderedTestPkgs(mutants, opts)
+		for _, shard := range shardIndices(batch.indices, cap(sem)) {
+			walking.Go(func(ctx context.Context) error {
+				return batch.walkShard(ctx, shardWalk{
+					mutants:          mutants,
+					opts:             opts,
+					results:          results,
+					indices:          shard,
+					orderedPkgs:      ordered,
+					sem:              sem,
+					buildParallelism: buildParallelism,
+					progress:         progress,
+				})
+			})
+		}
 	}
 
-	return orchestrating.Wait()
+	return walking.Wait()
+}
+
+// shardIndices splits a batch's mutants into at most maxShards stable groups,
+// round-robin. Contiguous splits clustered survivors — source order groups a
+// function's mutants together, and survivors cluster by function — leaving one
+// walker with the expensive tail while the others sat idle; interleaving
+// spreads them.
+func shardIndices(indices []int, maxShards int) [][]int {
+	shards := min(maxShards, max(1, (len(indices)+harnessShardFloor-1)/harnessShardFloor))
+
+	out := make([][]int, shards)
+	for position, index := range indices {
+		out[position%shards] = append(out[position%shards], index)
+	}
+
+	return out
 }
 
 // mutInstr is one harness instruction: run this mutant's covering tests in the
@@ -90,23 +125,31 @@ type mutVerdict struct {
 	duration time.Duration
 }
 
-// judgeAll walks the batch's covering test packages in order, judging every
-// still-alive mutant against each. A mutant killed by one package never reaches
-// the next — the same kill-fast ordering the per-mutant path uses — and a
-// mutant alive after the last package survived.
-func (b *schemataBatch) judgeAll(
-	ctx context.Context,
-	mutants []Mutant,
-	opts ExecuteOptions,
-	results []Result,
-	sem limiter,
-	buildParallelism int,
-	progress *ticker,
-) error {
-	acc := make(map[int]*Result, len(b.indices))
-	alive := make(map[int]bool, len(b.indices))
-	for _, index := range b.indices {
-		m := mutants[index]
+// verdictTimeout is executor-internal: the harness never prints it, the rolling
+// deadline infers it.
+const verdictTimeout = "timeout"
+
+type shardWalk struct {
+	mutants          []Mutant
+	opts             ExecuteOptions
+	results          []Result
+	indices          []int
+	orderedPkgs      []string
+	sem              limiter
+	buildParallelism int
+	progress         *ticker
+}
+
+// walkShard judges this shard's mutants against every covering test package in
+// order. A mutant killed by one package never reaches the next — the same
+// kill-fast ordering the per-mutant path uses — and a mutant alive after the
+// last package survived. The walker runs one child process at a time, so
+// overall concurrency is the number of walkers, bounded by the semaphore.
+func (b *schemataBatch) walkShard(ctx context.Context, w shardWalk) error {
+	acc := make(map[int]*Result, len(w.indices))
+	alive := make(map[int]bool, len(w.indices))
+	for _, index := range w.indices {
+		m := w.mutants[index]
 		acc[index] = &Result{Mutant: m, Tests: m.tests.count(), Mode: ModeHarness}
 		alive[index] = true
 	}
@@ -115,17 +158,17 @@ func (b *schemataBatch) judgeAll(
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		results[index] = *acc[index]
+		w.results[index] = *acc[index]
 		delete(alive, index)
-		progress.tick()
+		w.progress.tick()
 
 		return nil
 	}
 
-	for _, testPkg := range b.orderedTestPkgs(mutants, opts) {
-		candidates := make([]int, 0, len(b.indices))
-		for _, index := range b.indices {
-			if alive[index] && len(mutants[index].tests[testPkg]) > 0 {
+	for _, testPkg := range w.orderedPkgs {
+		candidates := make([]int, 0, len(w.indices))
+		for _, index := range w.indices {
+			if alive[index] && len(w.mutants[index].tests[testPkg]) > 0 {
 				candidates = append(candidates, index)
 			}
 		}
@@ -133,22 +176,70 @@ func (b *schemataBatch) judgeAll(
 			continue
 		}
 
-		verdicts, err := b.judgePackage(ctx, judgePackageRequest{
-			mutants:          mutants,
-			opts:             opts,
-			testPkg:          testPkg,
-			candidates:       candidates,
-			sem:              sem,
-			buildParallelism: buildParallelism,
-		})
+		dir := w.opts.dirFor(testPkg)
+
+		binary, harnessed, reason, err := b.binaryForPackage(
+			ctx, w.opts, testPkg, dir, w.buildParallelism, w.sem)
 		if err != nil {
 			return err
+		}
+
+		if binary == "" {
+			// Neither flavour of the shared binary exists; every candidate pays
+			// for a binary of its own, exactly like the pre-harness fallback path.
+			for _, index := range candidates {
+				if semErr := w.sem.acquire(ctx); semErr != nil {
+					return semErr
+				}
+				result := evaluate(ctx, w.mutants[index], w.opts, w.buildParallelism)
+				w.sem.release()
+				if ctxErr := ctx.Err(); ctxErr != nil {
+					return ctxErr
+				}
+				result.Fallback = reason
+				*acc[index] = result
+				if finErr := finalize(index); finErr != nil {
+					return finErr
+				}
+			}
+
+			continue
+		}
+
+		verdicts := make(map[int]tpVerdict, len(candidates))
+		fallback := candidates
+		if harnessed {
+			var judged map[int]tpVerdict
+			var judgeErr error
+			judged, fallback, judgeErr = b.judgeViaHarness(ctx, w, testPkg, binary, dir, candidates)
+			if judgeErr != nil {
+				return judgeErr
+			}
+			for index, v := range judged {
+				verdicts[index] = v
+			}
+		}
+
+		for _, index := range fallback {
+			v, envErr := b.envJudge(ctx, w, testPkg, binary, dir, index)
+			if envErr != nil {
+				return envErr
+			}
+			// A structural decline — a package with its own TestMain, a site
+			// that executes during init — is by-design routing and stays quiet;
+			// only a harness that failed carries a reason worth a warning.
+			if prior, ok := verdicts[index]; ok && prior.fallback != "" {
+				v.fallback = prior.fallback
+			} else {
+				v.fallback = reason
+			}
+			verdicts[index] = v
 		}
 
 		for _, index := range candidates {
 			v, ok := verdicts[index]
 			if !ok {
-				return fmt.Errorf("no verdict for mutant %s in %s", mutants[index].ID, testPkg)
+				return fmt.Errorf("no verdict for mutant %s in %s", w.mutants[index].ID, testPkg)
 			}
 
 			out := acc[index]
@@ -160,24 +251,18 @@ func (b *schemataBatch) judgeAll(
 				out.Mode = v.mode
 			}
 
-			switch {
-			case v.evaluated:
-				*out = v.result
-				if finalizeErr := finalize(index); finalizeErr != nil {
-					return finalizeErr
-				}
-			case v.outcome.Killed():
+			if v.outcome.Killed() {
 				out.Outcome = v.outcome
 				out.KilledBy = testPkg
 				out.Detail = v.detail
-				if finalizeErr := finalize(index); finalizeErr != nil {
-					return finalizeErr
+				if finErr := finalize(index); finErr != nil {
+					return finErr
 				}
 			}
 		}
 	}
 
-	for _, index := range b.indices {
+	for _, index := range w.indices {
 		if !alive[index] {
 			continue
 		}
@@ -190,135 +275,21 @@ func (b *schemataBatch) judgeAll(
 	return nil
 }
 
-// orderedTestPkgs resolves the batch-level judging order from the union of its
-// mutants' plans, so the batch walks its covering packages in the same
-// cost-informed order the per-mutant paths use.
-func (b *schemataBatch) orderedTestPkgs(mutants []Mutant, opts ExecuteOptions) []string {
-	if opts.PackageOrder == nil {
-		return b.testPkgs
-	}
-
-	sets := make(map[string]map[string]struct{}, len(b.testPkgs))
-	for _, index := range b.indices {
-		for pkg, tests := range mutants[index].tests {
-			if len(tests) == 0 {
-				continue
-			}
-			set := sets[pkg]
-			if set == nil {
-				set = make(map[string]struct{})
-				sets[pkg] = set
-			}
-			for _, test := range tests {
-				set[test] = struct{}{}
-			}
-		}
-	}
-
-	merged := make(TestPlan, len(sets))
-	for pkg, set := range sets {
-		merged[pkg] = setToSorted(set)
-	}
-
-	return opts.orderedPackages(merged)
-}
-
 // tpVerdict is one mutant's judgement against one test package.
 type tpVerdict struct {
-	outcome   Outcome
-	detail    string
-	duration  time.Duration
-	mode      Mode
-	fallback  string
-	evaluated bool
-	result    Result
-}
-
-type judgePackageRequest struct {
-	mutants          []Mutant
-	opts             ExecuteOptions
-	testPkg          string
-	candidates       []int
-	sem              limiter
-	buildParallelism int
-}
-
-// judgePackage judges the candidates against one test package. The harness path
-// is tried first; mutants it cannot judge — an init-executed site, a test
-// package with its own TestMain, a harness that will not build or run — fall
-// back to an env-selected process of their own on the same shared binary, and
-// only a binary that cannot be built at all costs a full per-mutant evaluate.
-func (b *schemataBatch) judgePackage(
-	ctx context.Context,
-	req judgePackageRequest,
-) (map[int]tpVerdict, error) {
-	opts := req.opts
-	dir := opts.dirFor(req.testPkg)
-	verdicts := make(map[int]tpVerdict, len(req.candidates))
-
-	binary, harnessed, reason, err := b.binaryForPackage(ctx, opts, req.testPkg, dir, req.buildParallelism, req.sem)
-	if err != nil {
-		return nil, err
-	}
-	if binary == "" {
-		// Neither flavour of the shared binary exists; every candidate pays for a
-		// binary of its own, exactly like the pre-harness fallback path.
-		return b.evaluateAll(ctx, req, reason)
-	}
-
-	fallback := req.candidates
-	if harnessed {
-		var judged map[int]tpVerdict
-		judged, fallback, err = b.judgeViaHarness(ctx, req, binary, dir)
-		if err != nil {
-			return nil, err
-		}
-		for index, v := range judged {
-			verdicts[index] = v
-		}
-	}
-
-	if len(fallback) == 0 {
-		return verdicts, nil
-	}
-
-	judging := pool.New().WithContext(ctx).WithFirstError().WithCancelOnError()
-	envVerdicts := make([]tpVerdict, len(fallback))
-	for i, index := range fallback {
-		judging.Go(func(ctx context.Context) error {
-			v, envErr := b.envJudge(ctx, req, binary, dir, index)
-			if envErr != nil {
-				return envErr
-			}
-			envVerdicts[i] = v
-
-			return nil
-		})
-	}
-	if waitErr := judging.Wait(); waitErr != nil {
-		return nil, waitErr
-	}
-	for i, index := range fallback {
-		v := envVerdicts[i]
-		// A structural decline — a package with its own TestMain, a site that
-		// executes during init — is by-design routing and stays quiet; only a
-		// harness that failed carries a reason worth a warning.
-		if prior, ok := verdicts[index]; ok && prior.fallback != "" {
-			v.fallback = prior.fallback
-		} else {
-			v.fallback = reason
-		}
-		verdicts[index] = v
-	}
-
-	return verdicts, nil
+	outcome  Outcome
+	detail   string
+	duration time.Duration
+	mode     Mode
+	fallback string
 }
 
 // binaryForPackage picks the shared binary flavour this test package can host.
 // A package that can take the harness gets the harness build — which behaves
 // exactly like a plain test binary when the plan variable is unset, so the same
 // binary also serves every env-selected fallback run. A package that cannot
-// host it gets the plain shared build.
+// host it gets the plain shared build. Builds happen once per (batch, test
+// package); concurrent walkers wait on the slot rather than compiling twice.
 func (b *schemataBatch) binaryForPackage(
 	ctx context.Context,
 	opts ExecuteOptions,
@@ -378,92 +349,66 @@ func (b *schemataBatch) harnessCapability(testPkg, dir string) (bool, string) {
 	return true, ""
 }
 
-// judgeViaHarness shards the candidates and runs each shard through harness
-// processes. It returns the verdicts it reached and the candidates it could
-// not judge, which the caller sends down the env-selected path.
+// judgeViaHarness runs the candidates through harness processes. It returns
+// the verdicts it reached and the candidates it could not judge, which the
+// caller sends down the env-selected path.
 func (b *schemataBatch) judgeViaHarness(
 	ctx context.Context,
-	req judgePackageRequest,
-	binary, dir string,
+	w shardWalk,
+	testPkg, binary, dir string,
+	candidates []int,
 ) (map[int]tpVerdict, []int, error) {
-	instrs := make([]mutInstr, 0, len(req.candidates))
-	for _, index := range req.candidates {
-		m := req.mutants[index]
+	instrs := make([]mutInstr, 0, len(candidates))
+	for _, index := range candidates {
+		m := w.mutants[index]
 		instrs = append(instrs, mutInstr{
 			index:   index,
 			id:      int32(b.ids[index]),
-			pattern: RunPattern(m.tests[req.testPkg]),
-			budget:  req.opts.PackageBudget(m.tests, req.testPkg),
+			pattern: RunPattern(m.tests[testPkg]),
+			budget:  w.opts.PackageBudget(m.tests, testPkg),
 		})
 	}
 
-	shards := shardInstructions(instrs, cap(req.sem))
-
-	type shardOutcome struct {
-		verdicts []mutVerdict
-		fallback []mutInstr
-		reason   string
-	}
-	outcomes := make([]shardOutcome, len(shards))
-
-	running := pool.New().WithContext(ctx).WithFirstError().WithCancelOnError()
-	for i, shard := range shards {
-		running.Go(func(ctx context.Context) error {
-			verdicts, unjudged, reason, shardErr := b.judgeShard(ctx, req.opts, binary, dir, shard, req.sem)
-			if shardErr != nil {
-				return shardErr
-			}
-			outcomes[i] = shardOutcome{verdicts: verdicts, fallback: unjudged, reason: reason}
-
-			return nil
-		})
-	}
-	if err := running.Wait(); err != nil {
+	verdicts, unjudged, reason, err := b.judgeShard(ctx, w.opts, binary, dir, instrs, w.sem)
+	if err != nil {
 		return nil, nil, err
 	}
 
 	judged := make(map[int]tpVerdict, len(instrs))
 	var fallback []int
-	for _, outcome := range outcomes {
-		for _, v := range outcome.verdicts {
-			switch v.verdict {
-			case verdictKilled:
-				judged[v.instr.index] = tpVerdict{
-					outcome:  OutcomeKilled,
-					detail:   v.detail,
-					duration: v.duration,
-					mode:     ModeHarness,
-				}
-			case verdictTimeout:
-				judged[v.instr.index] = tpVerdict{
-					outcome:  OutcomeTimeout,
-					detail:   v.detail,
-					duration: v.duration,
-					mode:     ModeHarness,
-				}
-			case verdictSurvived:
-				judged[v.instr.index] = tpVerdict{
-					outcome:  OutcomeSurvived,
-					duration: v.duration,
-					mode:     ModeHarness,
-				}
-			case verdictTainted:
-				judged[v.instr.index] = tpVerdict{}
-				fallback = append(fallback, v.instr.index)
+	for _, v := range verdicts {
+		switch v.verdict {
+		case verdictKilled:
+			judged[v.instr.index] = tpVerdict{
+				outcome:  OutcomeKilled,
+				detail:   v.detail,
+				duration: v.duration,
+				mode:     ModeHarness,
 			}
+		case verdictTimeout:
+			judged[v.instr.index] = tpVerdict{
+				outcome:  OutcomeTimeout,
+				detail:   v.detail,
+				duration: v.duration,
+				mode:     ModeHarness,
+			}
+		case verdictSurvived:
+			judged[v.instr.index] = tpVerdict{
+				outcome:  OutcomeSurvived,
+				duration: v.duration,
+				mode:     ModeHarness,
+			}
+		case verdictTainted:
+			fallback = append(fallback, v.instr.index)
 		}
-		for _, instr := range outcome.fallback {
-			judged[instr.index] = tpVerdict{fallback: outcome.reason}
-			fallback = append(fallback, instr.index)
-		}
+	}
+	for _, instr := range unjudged {
+		judged[instr.index] = tpVerdict{fallback: reason}
+		fallback = append(fallback, instr.index)
 	}
 
 	return judged, fallback, nil
 }
-
-// verdictTimeout is executor-internal: the harness never prints it, the rolling
-// deadline infers it.
-const verdictTimeout = "timeout"
 
 // judgeShard runs one shard's instructions, restarting the harness process as
 // mutants kill it. A mutant that crashes or hangs the process is judged by that
@@ -669,23 +614,23 @@ func (b *schemataBatch) runHarnessOnce(
 // running under the mutant, on a binary that is already built.
 func (b *schemataBatch) envJudge(
 	ctx context.Context,
-	req judgePackageRequest,
-	binary, dir string,
+	w shardWalk,
+	testPkg, binary, dir string,
 	index int,
 ) (tpVerdict, error) {
-	if err := req.sem.acquire(ctx); err != nil {
+	if err := w.sem.acquire(ctx); err != nil {
 		return tpVerdict{}, err
 	}
-	defer req.sem.release()
+	defer w.sem.release()
 
-	m := req.mutants[index]
+	m := w.mutants[index]
 	started := time.Now()
 	outcome, detail := runTests(ctx, testRun{
 		binary: binary,
 		dir:    dir,
-		env:    mutantEnv(req.opts.Env, b.ids[index]),
-		budget: req.opts.PackageBudget(m.tests, req.testPkg),
-		tests:  m.tests[req.testPkg],
+		env:    mutantEnv(w.opts.Env, b.ids[index]),
+		budget: w.opts.PackageBudget(m.tests, testPkg),
+		tests:  m.tests[testPkg],
 	})
 	if err := ctx.Err(); err != nil {
 		return tpVerdict{}, err
@@ -699,59 +644,37 @@ func (b *schemataBatch) envJudge(
 	}, nil
 }
 
-// evaluateAll is the last resort for one test package: no shared binary exists,
-// so every candidate is judged by evaluate, which compiles a binary of its own
-// and re-runs the mutant's whole plan.
-func (b *schemataBatch) evaluateAll(
-	ctx context.Context,
-	req judgePackageRequest,
-	reason string,
-) (map[int]tpVerdict, error) {
-	verdicts := make(map[int]tpVerdict, len(req.candidates))
-	evaluated := make([]Result, len(req.candidates))
+// orderedTestPkgs resolves the batch-level judging order from the union of its
+// mutants' plans, so every shard walks the covering packages in the same
+// cost-informed order the per-mutant paths use.
+func (b *schemataBatch) orderedTestPkgs(mutants []Mutant, opts ExecuteOptions) []string {
+	if opts.PackageOrder == nil {
+		return b.testPkgs
+	}
 
-	judging := pool.New().WithContext(ctx).WithFirstError().WithCancelOnError()
-	for i, index := range req.candidates {
-		judging.Go(func(ctx context.Context) error {
-			if err := req.sem.acquire(ctx); err != nil {
-				return err
+	sets := make(map[string]map[string]struct{}, len(b.testPkgs))
+	for _, index := range b.indices {
+		for pkg, tests := range mutants[index].tests {
+			if len(tests) == 0 {
+				continue
 			}
-			defer req.sem.release()
-
-			result := evaluate(ctx, req.mutants[index], req.opts, req.buildParallelism)
-			if err := ctx.Err(); err != nil {
-				return err
+			set := sets[pkg]
+			if set == nil {
+				set = make(map[string]struct{})
+				sets[pkg] = set
 			}
-			result.Fallback = reason
-			evaluated[i] = result
-
-			return nil
-		})
-	}
-	if err := judging.Wait(); err != nil {
-		return nil, err
+			for _, test := range tests {
+				set[test] = struct{}{}
+			}
+		}
 	}
 
-	for i, index := range req.candidates {
-		verdicts[index] = tpVerdict{evaluated: true, result: evaluated[i]}
+	merged := make(TestPlan, len(sets))
+	for pkg, set := range sets {
+		merged[pkg] = setToSorted(set)
 	}
 
-	return verdicts, nil
-}
-
-func shardInstructions(instrs []mutInstr, maxShards int) [][]mutInstr {
-	shards := min(maxShards, (len(instrs)+harnessShardFloor-1)/harnessShardFloor)
-	if shards < 1 {
-		shards = 1
-	}
-
-	out := make([][]mutInstr, 0, shards)
-	size := (len(instrs) + shards - 1) / shards
-	for start := 0; start < len(instrs); start += size {
-		out = append(out, instrs[start:min(start+size, len(instrs))])
-	}
-
-	return out
+	return opts.orderedPackages(merged)
 }
 
 func writeMutPlan(workdir string, instrs []mutInstr) (string, error) {
