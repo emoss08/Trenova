@@ -20,6 +20,10 @@ otherwise the package runs in full.
 reports whether any test objected. A surviving mutant is a gap coverage cannot
 show you: the line runs under test, but nothing asserts on what it does.
 
+**Flake intelligence.** Every run assay performs is evidence: `assay flakes`
+reports tests observed both passing and failing at the same code state, hunts
+them on demand, and quarantines them so they can never judge a mutant.
+
 A one-line edit inside a function in this repo selects **3 packages / 20 tests**
 where package-level selection selects 5 whole packages, dropping two packages
 outright. A struct-field edit one line away correctly falls back to all 5 in full.
@@ -368,6 +372,40 @@ Writing the baseline checks `git check-ignore` first and warns if the path would
 not be committed. A stray `coverage/` rule once silently swallowed an entire
 package in this repository, so the guard is there on purpose.
 
+## Flake intelligence
+
+assay runs tests more often than anything else in your toolchain — every watch
+cycle, every mutation preflight — and every one of those runs is evidence about
+test reliability. That evidence is kept: each attributable verdict is recorded
+in a machine-local journal, keyed by the package's content fingerprint. A test
+observed both passing and failing **at the same fingerprint** changed its
+verdict while the code did not, which is the definition of a flake. A verdict
+that changed across fingerprints is just the code changing, and is never
+reported.
+
+```
+assay flakes                                       # report, from accumulated evidence
+assay flakes --hunt --packages ./internal/... --runs 20
+assay flakes --quarantine                          # record them in .assay/flaky-tests.json
+```
+
+Watch is a natural flake detector by construction: a failing test re-runs at
+the front of every following cycle, and when the package has not changed, a
+pass on the re-run is a same-code conflict — recorded, no extra work. `--hunt`
+generates evidence deliberately instead of waiting for it: one compile per
+package, then repeated runs at the current tree state, verdicts attributed per
+test. Both feed the same journal, as does every mutation preflight.
+
+The quarantine file is committed policy, like the mutation baseline. A
+quarantined test is excluded from every mutant's plan — a flaky covering test
+marks mutants killed for reasons that have nothing to do with the mutation, and
+every such false kill inflates the score. Watch keeps running quarantined
+tests, but labels their failures as possibly not the change's fault; hiding
+them entirely would let a real regression in a flaky test go unseen.
+
+`assay flakes` exits non-zero when it detects unquarantined flakes, so it can
+gate in CI the same way `--min-msi` does.
+
 ## Flags
 
 | Flag | Meaning |
@@ -387,7 +425,8 @@ package in this repository, so the guard is there on purpose.
 `assay index` additionally takes `--jobs`, `--timeout`, `--packages`, `--quiet`,
 `--allow-dirty` and `--legacy-collection`. `assay mutate` takes `--whole`, `--packages`, `--baseline`,
 `--write-baseline`, `--min-msi`, `--allow-failing-tests`, `--no-schemata`, `--no-harness`, `--jobs`
-and `--json`.
+and `--json`. `assay flakes` takes `--hunt`, `--runs`, `--packages`, `--timeout`
+and `--quarantine`.
 
 ## Commands
 
@@ -399,6 +438,7 @@ and `--json`.
 | `assay explain <file>:<line>` | Which tests cover this line? |
 | `assay mutate` | Change the code deliberately; report which tests failed to notice |
 | `assay verify` | Run what narrowing excluded, to prove it was sound |
+| `assay flakes` | Report tests whose verdicts changed while the code did not |
 
 Arguments after `--` pass through to `go test`.
 

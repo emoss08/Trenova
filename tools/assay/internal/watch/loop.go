@@ -11,6 +11,7 @@ import (
 
 	"github.com/sourcegraph/conc/pool"
 
+	"github.com/emoss08/assay/internal/flake"
 	"github.com/emoss08/assay/internal/report"
 	"github.com/emoss08/assay/internal/runpattern"
 )
@@ -23,6 +24,16 @@ type LoopOptions struct {
 	UseColor bool
 	Jobs     int
 	Timeout  time.Duration
+
+	// Journal receives every attributable verdict the session produces. The
+	// sticky mechanism makes watch a natural flake detector: a failure re-runs
+	// on later cycles, and when the package's fingerprint has not moved, a pass
+	// on the re-run is a verdict change with no code change. Nil records
+	// nothing.
+	Journal *flake.Journal
+	// Quarantine labels failures of tests already known to be flaky, so a red
+	// cycle says "possibly not your change" where that is the documented truth.
+	Quarantine *flake.Quarantine
 }
 
 const defaultRunTimeout = 2 * time.Minute
@@ -47,6 +58,7 @@ type failure struct {
 // could not re-check.
 func Loop(ctx context.Context, opts LoopOptions) error {
 	failing := make(map[string]*failure)
+	journalWarned := false
 
 	for {
 		select {
@@ -56,7 +68,7 @@ func Loop(ctx context.Context, opts LoopOptions) error {
 			if !open {
 				return nil
 			}
-			if err := runCycle(ctx, opts, batch, failing); err != nil {
+			if err := runCycle(ctx, opts, batch, failing, &journalWarned); err != nil {
 				if ctx.Err() != nil {
 					return ctx.Err()
 				}
@@ -68,7 +80,13 @@ func Loop(ctx context.Context, opts LoopOptions) error {
 	}
 }
 
-func runCycle(ctx context.Context, opts LoopOptions, batch Batch, failing map[string]*failure) error {
+func runCycle(
+	ctx context.Context,
+	opts LoopOptions,
+	batch Batch,
+	failing map[string]*failure,
+	journalWarned *bool,
+) error {
 	started := time.Now()
 	lines := report.NewLines(opts.Out, opts.UseColor)
 
@@ -141,8 +159,16 @@ func runCycle(ctx context.Context, opts LoopOptions, batch Batch, failing map[st
 			failed++
 			lines.Warn("  %s  FAIL  %s", shorten(result.ImportPath), result.Duration.Round(time.Millisecond))
 			printFailure(opts.Out, result.Output)
+			if quarantined := quarantinedNames(opts.Quarantine, result); quarantined != "" {
+				lines.Muted("    quarantined flaky: %s — this failure may not be this change's fault", quarantined)
+			}
 			recordFailure(failing, result)
 		}
+	}
+
+	if err := opts.Journal.Record(cycleObservations(results)); err != nil && !*journalWarned {
+		*journalWarned = true
+		lines.Muted("flake journal unavailable this session: %v", err)
 	}
 
 	total := time.Since(started)
@@ -162,6 +188,70 @@ func runCycle(ctx context.Context, opts LoopOptions, batch Batch, failing map[st
 	lines.Line("")
 
 	return nil
+}
+
+// cycleObservations extracts every attributable verdict from a cycle. Passes
+// are only known by name on narrowed runs — a whole-package pass names nobody —
+// and that is exactly enough: the sticky re-runs where flakes reveal themselves
+// are narrowed to the failing names.
+func cycleObservations(results []RunResult) []flake.Observation {
+	now := time.Now().Unix()
+	var out []flake.Observation
+
+	for _, result := range results {
+		if result.Err != nil || result.Skipped {
+			continue
+		}
+		fp := result.Fingerprint.String()
+
+		observe := func(name string, verdict flake.Verdict) {
+			out = append(out, flake.Observation{
+				Package:     result.ImportPath,
+				Test:        name,
+				Fingerprint: fp,
+				Verdict:     verdict,
+				Source:      "watch",
+				Unix:        now,
+			})
+		}
+
+		if result.Passed {
+			for _, name := range result.Tests {
+				observe(name, flake.VerdictPass)
+			}
+
+			continue
+		}
+
+		failed := failedTestNames(result.Output)
+		failedSet := make(map[string]struct{}, len(failed))
+		for _, name := range failed {
+			failedSet[name] = struct{}{}
+			observe(name, flake.VerdictFail)
+		}
+		for _, name := range result.Tests {
+			if _, isFailed := failedSet[name]; !isFailed {
+				observe(name, flake.VerdictPass)
+			}
+		}
+	}
+
+	return out
+}
+
+func quarantinedNames(quarantine *flake.Quarantine, result RunResult) string {
+	if quarantine == nil {
+		return ""
+	}
+
+	var matched []string
+	for _, name := range failedTestNames(result.Output) {
+		if quarantine.Contains(result.ImportPath, name) {
+			matched = append(matched, name)
+		}
+	}
+
+	return strings.Join(matched, ", ")
 }
 
 // recordPass clears exactly what this run proved: the names it executed. Only a
@@ -352,7 +442,7 @@ func executeRuns(ctx context.Context, opts LoopOptions, runs []PlannedRun) ([]Ru
 			}
 
 			run := runs[i]
-			result := RunResult{ImportPath: run.ImportPath, Tests: run.Tests}
+			result := RunResult{ImportPath: run.ImportPath, Tests: run.Tests, Fingerprint: run.Fingerprint}
 
 			binary, reused, err := opts.Binaries.Ensure(ctx, BuildRequest{
 				Root:             opts.Planner.Root,

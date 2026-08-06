@@ -20,7 +20,11 @@ import (
 // mutation score. Silently reporting a flattering number is worse than reporting
 // none, so a red suite has to be surfaced before any mutant is judged.
 type Preflight struct {
-	Failing  map[string][]string
+	Failing map[string][]string
+	// Ran lists the tests each package's preflight executed, pass or fail.
+	// Every verdict here is evidence about test reliability, and callers that
+	// keep a flake journal want the passes as much as the failures.
+	Ran      map[string][]string
 	Duration time.Duration
 }
 
@@ -63,7 +67,7 @@ func RunPreflight(ctx context.Context, mutants []Mutant, opts ExecuteOptions) (P
 		}
 	}
 
-	result := Preflight{Failing: make(map[string][]string)}
+	result := Preflight{Failing: make(map[string][]string), Ran: make(map[string][]string)}
 
 	pkgs := sortedSetKeys(wanted)
 	failures := make([][]string, len(pkgs))
@@ -105,6 +109,9 @@ func RunPreflight(ctx context.Context, mutants []Mutant, opts ExecuteOptions) (P
 	for i, failing := range failures {
 		if len(failing) > 0 {
 			result.Failing[pkgs[i]] = failing
+		}
+		if tests := setToSorted(wanted[pkgs[i]]); len(tests) > 0 {
+			result.Ran[pkgs[i]] = tests
 		}
 	}
 

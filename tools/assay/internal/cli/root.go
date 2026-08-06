@@ -79,6 +79,7 @@ func NewRootCommand() *cobra.Command {
 		newMutateCommand(opts),
 		newExplainCommand(opts),
 		newVerifyCommand(opts),
+		newFlakesCommand(opts),
 		newVersionCommand(),
 	)
 

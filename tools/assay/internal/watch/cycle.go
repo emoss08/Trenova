@@ -102,7 +102,7 @@ func (p *Planner) Plan(ctx context.Context, batch []string) (*Cycle, error) {
 	}
 
 	affected := p.affectedByBatch(g, batch)
-	fingerprints := index.NewFingerprinter(g, manifestDigests(manifest), p.Tags)
+	fingerprints := index.NewFingerprinter(g, manifest.Digests(), p.Tags)
 	p.lastFingerprints = fingerprints
 
 	for _, plan := range narrowed.Plans {
@@ -455,15 +455,6 @@ func (p *Planner) loaderFor(ctx context.Context, g *graph.Graph, head string) (*
 	p.loaderHead = head
 
 	return p.loader, nil
-}
-
-func manifestDigests(manifest *cache.Manifest) map[string]string {
-	out := make(map[string]string, len(manifest.Files))
-	for _, file := range manifest.Files {
-		out[file.RelPath] = fmt.Sprintf("%x", file.Digest)
-	}
-
-	return out
 }
 
 func isModulePath(path string) bool {

@@ -49,6 +49,17 @@ func (m *Manifest) DigestFor(absPath string) (Digest, bool) {
 	return d, ok
 }
 
+// Digests renders the manifest as the rel-path digest map the index
+// fingerprinter consumes, describing the working tree as it is right now.
+func (m *Manifest) Digests() map[string]string {
+	out := make(map[string]string, len(m.Files))
+	for _, file := range m.Files {
+		out[file.RelPath] = fmt.Sprintf("%x", file.Digest)
+	}
+
+	return out
+}
+
 type Inputs struct {
 	Root string
 	Tags []string

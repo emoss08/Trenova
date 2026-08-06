@@ -3,11 +3,13 @@ package cli
 import (
 	"fmt"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/emoss08/assay/internal/flake"
 	"github.com/emoss08/assay/internal/watch"
 )
 
@@ -72,18 +74,26 @@ func newWatchCommand(opts *options) *cobra.Command {
 				NoIndex: opts.noIndex,
 			}
 
+			journal := openJournal(cmd, opts, root)
+			quarantine, err := flake.LoadQuarantine(filepath.Join(root, flake.DefaultQuarantinePath))
+			if err != nil {
+				return err
+			}
+
 			cmd.PrintErrf("watching %s — save a Go file to run its tests (ctrl-c to stop)\n", root)
 
 			go watcher.Run(ctx)
 
 			err = watch.Loop(ctx, watch.LoopOptions{
-				Planner:  planner,
-				Binaries: binaries,
-				Batches:  watcher.Batches(),
-				Out:      cmd.OutOrStdout(),
-				UseColor: opts.useColor(),
-				Jobs:     jobs,
-				Timeout:  timeout,
+				Planner:    planner,
+				Binaries:   binaries,
+				Batches:    watcher.Batches(),
+				Out:        cmd.OutOrStdout(),
+				UseColor:   opts.useColor(),
+				Jobs:       jobs,
+				Timeout:    timeout,
+				Journal:    journal,
+				Quarantine: quarantine,
 			})
 			if err != nil && ctx.Err() == nil {
 				return err

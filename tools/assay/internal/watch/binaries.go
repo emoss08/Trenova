@@ -139,12 +139,15 @@ func (c *BinaryCache) remember(importPath string, fp cache.Fingerprint, path str
 type RunResult struct {
 	ImportPath string
 	Tests      []string
-	Passed     bool
-	Skipped    bool
-	Output     []byte
-	Duration   time.Duration
-	Reused     bool
-	Err        error
+	// Fingerprint is the package content state this result was observed at,
+	// which is the identity flake evidence is keyed by.
+	Fingerprint cache.Fingerprint
+	Passed      bool
+	Skipped     bool
+	Output      []byte
+	Duration    time.Duration
+	Reused      bool
+	Err         error
 }
 
 type RunRequest struct {

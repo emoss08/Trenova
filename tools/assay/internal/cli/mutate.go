@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/emoss08/assay/internal/flake"
+	"github.com/emoss08/assay/internal/index"
 	"github.com/emoss08/assay/internal/mutate"
 	"github.com/emoss08/assay/internal/report"
 	"github.com/emoss08/assay/internal/vcs"
@@ -118,10 +121,21 @@ func runMutate(cmd *cobra.Command, opts *options, flags *mutateFlags) error {
 		NoHarness:    flags.noHarness,
 	}
 
+	quarantine, err := flake.LoadQuarantine(filepath.Join(session.root, flake.DefaultQuarantinePath))
+	if err != nil {
+		return err
+	}
+	if dropped := quarantinedInPlans(mutants, quarantine); dropped > 0 {
+		cmd.PrintErrf("excluding %d quarantined flaky tests from every mutant plan (%s)\n",
+			dropped, flake.DefaultQuarantinePath)
+		mutants = mutate.Exclude(mutants, quarantine.Blocked())
+	}
+
 	preflight, err := mutate.RunPreflight(ctx, mutants, execOpts)
 	if err != nil {
 		return err
 	}
+	recordPreflight(cmd, opts, session, preflight)
 	if !preflight.Clean() {
 		if !flags.allowFailing {
 			return failingTestsError(preflight)
@@ -160,6 +174,69 @@ func runMutate(cmd *cobra.Command, opts *options, flags *mutateFlags) error {
 	}
 
 	return mutationExit(cmd, score, flags.minMSI)
+}
+
+// quarantinedInPlans counts the distinct quarantined tests that would
+// otherwise judge a mutant, so the exclusion note reports what actually
+// changed rather than the size of the quarantine file.
+func quarantinedInPlans(mutants []mutate.Mutant, quarantine *flake.Quarantine) int {
+	if quarantine.Len() == 0 {
+		return 0
+	}
+
+	seen := make(map[[2]string]struct{})
+	for _, m := range mutants {
+		for pkg, tests := range m.Tests() {
+			for _, test := range tests {
+				if quarantine.Contains(pkg, test) {
+					seen[[2]string{pkg, test}] = struct{}{}
+				}
+			}
+		}
+	}
+
+	return len(seen)
+}
+
+// recordPreflight files every preflight verdict as flake evidence. Preflight
+// runs the covering tests against unmutated code, so a verdict here that
+// conflicts with one from watch or a hunt at the same fingerprint is exactly
+// the false-kill precursor the journal exists to catch.
+func recordPreflight(cmd *cobra.Command, opts *options, session *session, pre mutate.Preflight) {
+	journal := openJournal(cmd, opts, session.root)
+	if journal == nil || len(pre.Ran) == 0 {
+		return
+	}
+
+	fingerprinter := index.NewFingerprinter(session.graph, session.manifest.Digests(), opts.tags)
+	now := time.Now().Unix()
+
+	var observations []flake.Observation
+	for pkg, tests := range pre.Ran {
+		fp := fingerprinter.For(pkg).String()
+		failing := make(map[string]struct{}, len(pre.Failing[pkg]))
+		for _, test := range pre.Failing[pkg] {
+			failing[test] = struct{}{}
+		}
+		for _, test := range tests {
+			verdict := flake.VerdictPass
+			if _, failed := failing[test]; failed {
+				verdict = flake.VerdictFail
+			}
+			observations = append(observations, flake.Observation{
+				Package:     pkg,
+				Test:        test,
+				Fingerprint: fp,
+				Verdict:     verdict,
+				Source:      "preflight",
+				Unix:        now,
+			})
+		}
+	}
+
+	if err := journal.Record(observations); err != nil {
+		cmd.PrintErrf("flake journal unavailable: %v\n", err)
+	}
 }
 
 func mutationScope(
