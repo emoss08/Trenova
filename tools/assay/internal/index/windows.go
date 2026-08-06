@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/sourcegraph/conc/pool"
 
@@ -26,6 +25,7 @@ func assembleWindows(
 	opts Options,
 	importPath, counterDir string,
 	completed []harnessProgress,
+	buildParallelism int,
 ) (*Record, error) {
 	windows := make([]string, 0, len(completed)+1)
 	windows = append(windows, initWindowName)
@@ -33,7 +33,7 @@ func assembleWindows(
 		windows = append(windows, progress.name)
 	}
 
-	if err := convertWindows(ctx, opts, counterDir, windows); err != nil {
+	if err := convertWindows(ctx, opts, counterDir, windows, buildParallelism); err != nil {
 		return nil, err
 	}
 
@@ -75,11 +75,16 @@ func assembleWindows(
 	return record, nil
 }
 
-// convertWindows runs `go tool covdata textfmt` for each window. The conversions
-// are independent and each costs a process spawn, so they share a small pool —
-// bounded well below the package workers' own parallelism.
-func convertWindows(ctx context.Context, opts Options, counterDir string, windows []string) error {
-	workers := min(max(1, runtime.GOMAXPROCS(0)/2), len(windows))
+// convertWindows runs `go tool covdata textfmt` for each window, pairing each
+// counters-only window with the package's single meta directory — covdata
+// matches them by hash across input directories.
+//
+// The pool is bounded by the caller's share of the cores, not by GOMAXPROCS:
+// this runs inside one of `jobs` package workers, and an inner bound that
+// ignores the outer one multiplies into cores²/4 concurrent covdata processes —
+// the exact trap the build path in this package already documents.
+func convertWindows(ctx context.Context, opts Options, counterDir string, windows []string, buildParallelism int) error {
+	workers := min(max(1, buildParallelism), len(windows))
 
 	converting := pool.New().
 		WithMaxGoroutines(workers).
@@ -94,9 +99,10 @@ func convertWindows(ctx context.Context, opts Options, counterDir string, window
 			}
 
 			input := filepath.Join(counterDir, window)
+			meta := filepath.Join(counterDir, metaDirName)
 			output := input + ".txt"
 			if _, err := runCommand(ctx, counterDir, opts.Env, 0,
-				"go", "tool", "covdata", "textfmt", "-i="+input, "-o="+output); err != nil {
+				"go", "tool", "covdata", "textfmt", "-i="+meta+","+input, "-o="+output); err != nil {
 				return fmt.Errorf("convert coverage window %s: %w", window, err)
 			}
 

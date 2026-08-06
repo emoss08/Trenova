@@ -17,6 +17,13 @@ const (
 // snapshot taken after the sentinel run, before any test has executed.
 const initWindowName = "assay-init"
 
+// metaDirName holds the coverage meta blob, written once per package. With
+// -coverpkg spanning every module the meta describes the whole workspace, and
+// writing a copy into every test's window multiplied that by the test count;
+// covdata pairs counters with meta by hash across input directories, which was
+// verified empirically before this relied on it.
+const metaDirName = "assay-meta"
+
 // harnessLinePrefix starts every progress line the harness prints:
 // "assay:harness <name> exit=<code> ns=<int64>".
 const harnessLinePrefix = "assay:harness "
@@ -74,6 +81,14 @@ func TestMain(m *testing.M) {
 	_ = flag.Set("test.run", "^$")
 	m.Run()
 
+	meta := filepath.Join(counters, "` + metaDirName + `")
+	if err := os.MkdirAll(meta, 0o755); err != nil {
+		assayHarnessFail(err)
+	}
+	if err := coverage.WriteMetaDir(meta); err != nil {
+		assayHarnessFail(err)
+	}
+
 	assayHarnessSnapshot(counters, "` + initWindowName + `")
 
 	for _, name := range assayHarnessNames(string(raw)) {
@@ -91,9 +106,6 @@ func TestMain(m *testing.M) {
 func assayHarnessSnapshot(counters, name string) {
 	dir := filepath.Join(counters, name)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		assayHarnessFail(err)
-	}
-	if err := coverage.WriteMetaDir(dir); err != nil {
 		assayHarnessFail(err)
 	}
 	if err := coverage.WriteCountersDir(dir); err != nil {

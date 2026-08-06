@@ -54,6 +54,7 @@ const (
 	CollectionSingleProcess = "single-process"
 	CollectionPerProcess    = "per-process"
 	CollectionSalvaged      = "salvaged"
+	CollectionReused        = "reused"
 )
 
 type PackageOutcome struct {
@@ -63,7 +64,11 @@ type PackageOutcome struct {
 	Reused    bool
 	Degraded  string
 	Mode      string
-	Err       error
+	// Fallback records why the harness path was abandoned for this package. A
+	// silent fallback costs a failed compile plus a full per-process run on
+	// every rebuild, which must not be a mystery slowdown.
+	Fallback string
+	Err      error
 }
 
 type Stats struct {
@@ -169,7 +174,10 @@ func indexPackage(
 ) PackageOutcome {
 	key := fingerprinter.For(importPath)
 
-	if opts.Store != nil {
+	// --legacy-collection exists to cross-check the harness path, and a cache
+	// hit would silently cross-check it against itself; the flag always
+	// re-collects (and overwrites the stored record with the equivalent result).
+	if opts.Store != nil && !opts.Legacy {
 		if payload, hit := opts.Store.Get(key); hit {
 			if record, err := Decode(payload); err == nil {
 				return PackageOutcome{
@@ -178,12 +186,13 @@ func indexPackage(
 					AlwaysRun: len(record.AlwaysRunTests()),
 					Reused:    true,
 					Degraded:  record.Degraded,
+					Mode:      CollectionReused,
 				}
 			}
 		}
 	}
 
-	record, mode, err := collectPackage(ctx, opts, coverPkg, importPath, buildParallelism)
+	record, mode, fallback, err := collectPackage(ctx, opts, coverPkg, importPath, buildParallelism)
 	if err != nil {
 		return PackageOutcome{Package: importPath, Err: err}
 	}
@@ -200,6 +209,7 @@ func indexPackage(
 		AlwaysRun: len(record.AlwaysRunTests()),
 		Degraded:  record.Degraded,
 		Mode:      mode,
+		Fallback:  fallback,
 	}
 }
 
@@ -210,43 +220,48 @@ func indexPackage(
 // harness build failure — lands on the per-process path, which stays first-class
 // rather than vestigial.
 //
-// One semantic divergence is known and accepted: lazy initialisation a test
-// triggers (a sync.Once fired by whichever test runs first) is attributed only to
-// that test's window, where fresh-process collection attributed it to every test.
-// Package-level init is unaffected — its window is merged into every test.
+// Two semantic divergences from per-process collection are known and accepted:
+// lazy initialisation a test triggers (a sync.Once fired by whichever test runs
+// first) is attributed only to that test's window, where fresh processes
+// attributed it to every test; and a goroutine one test leaks keeps
+// incrementing counters into later tests' windows. Both err in the safe
+// direction — over- or first-test attribution selects extra tests, never fewer.
+// Package-level init is unaffected: its window is merged into every test.
 func collectPackage(
 	ctx context.Context,
 	opts Options,
 	coverPkg, importPath string,
 	buildParallelism int,
-) (*Record, string, error) {
+) (*Record, string, string, error) {
 	pkg, ok := opts.Graph.Package(importPath)
 	if !ok {
-		return nil, "", fmt.Errorf("package %s is not in the graph", importPath)
+		return nil, "", "", fmt.Errorf("package %s is not in the graph", importPath)
 	}
 
 	workdir, err := os.MkdirTemp("", "assay-index-")
 	if err != nil {
-		return nil, "", fmt.Errorf("create work directory: %w", err)
+		return nil, "", "", fmt.Errorf("create work directory: %w", err)
 	}
 	defer os.RemoveAll(workdir)
 
+	fallback := ""
 	if !opts.Legacy {
 		if name, eligible := singleProcessEligible(pkg.Dir); eligible {
 			record, mode, harnessErr := collectPackageSingleProcess(
 				ctx, opts, coverPkg, importPath, pkg.Dir, workdir, name, buildParallelism)
 			if harnessErr == nil {
-				return record, mode, nil
+				return record, mode, "", nil
 			}
 			if ctx.Err() != nil {
-				return nil, "", harnessErr
+				return nil, "", "", harnessErr
 			}
+			fallback = harnessErr.Error()
 		}
 	}
 
 	record, err := collectPackageLegacy(ctx, opts, coverPkg, importPath, pkg.Dir, workdir, buildParallelism)
 
-	return record, CollectionPerProcess, err
+	return record, CollectionPerProcess, fallback, err
 }
 
 // singleProcessEligible reports whether the harness can be injected, and the
@@ -359,8 +374,14 @@ func collectPackageSingleProcess(
 	if ctx.Err() != nil {
 		return nil, "", ctx.Err()
 	}
+	// A run that died before producing anything has no windows to assemble and no
+	// stall point to salvage from; the error routes the package to the legacy
+	// path with its reason intact.
+	if run.err != nil && len(run.completed) == 0 && run.stalled == "" {
+		return nil, "", run.err
+	}
 
-	record, convErr := assembleWindows(ctx, scrubbed, importPath, counterDir, run.completed)
+	record, convErr := assembleWindows(ctx, scrubbed, importPath, counterDir, run.completed, buildParallelism)
 	if convErr != nil {
 		return nil, "", convErr
 	}
@@ -441,12 +462,20 @@ func listTests(ctx context.Context, opts Options, binary, dir string) ([]string,
 		return nil, fmt.Errorf("list tests: %w", err)
 	}
 
+	// The internal and external test packages may each declare the same top-level
+	// name; -test.list prints both, and keeping both would run one window (or one
+	// profile) for two tests and record the result twice under one name.
+	seen := make(map[string]struct{})
 	var names []string
 	for line := range strings.SplitSeq(string(out), "\n") {
 		name := strings.TrimSpace(line)
 		if name == "" || !testNamePattern.MatchString(name) {
 			continue
 		}
+		if _, dup := seen[name]; dup {
+			continue
+		}
+		seen[name] = struct{}{}
 		names = append(names, name)
 	}
 	sort.Strings(names)

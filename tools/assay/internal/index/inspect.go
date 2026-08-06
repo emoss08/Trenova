@@ -2,7 +2,9 @@ package index
 
 import (
 	"bytes"
+	"errors"
 	"go/ast"
+	"go/build"
 	"go/parser"
 	"go/token"
 	"os"
@@ -48,29 +50,39 @@ func packageDefinesTestMain(dir string) (bool, error) {
 	return false, nil
 }
 
-// packageName reads the package clause of a production file in dir. The graph
-// deliberately does not carry package names — adding the field would invalidate
-// every cached graph for one consumer — and the harness has to be injected under
-// the package's real name, which need not match the directory's.
+// packageName resolves the name to inject the harness under. go/build evaluates
+// build constraints, so a //go:build ignore generator declaring package main in
+// a library directory — gen.go, build.go, exactly the names that sort first —
+// cannot mislead it the way reading the alphabetically-first file did. A
+// test-only directory has no production name at all; the internal test package
+// clause serves instead, with any _test suffix stripped so the harness lands in
+// the internal test package.
 func packageName(dir string) (string, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
+	pkg, err := build.ImportDir(dir, 0)
+	if err == nil && pkg.Name != "" {
+		return pkg.Name, nil
+	}
+	var noGo *build.NoGoError
+	if err != nil && !errors.As(err, &noGo) {
 		return "", err
 	}
 
+	entries, readErr := os.ReadDir(dir)
+	if readErr != nil {
+		return "", readErr
+	}
 	for _, entry := range entries {
 		name := entry.Name()
-		if entry.IsDir() || filepath.Ext(name) != ".go" || strings.HasSuffix(name, "_test.go") {
+		if entry.IsDir() || !strings.HasSuffix(name, "_test.go") {
 			continue
 		}
-
 		parsed, parseErr := parser.ParseFile(
 			token.NewFileSet(), filepath.Join(dir, name), nil, parser.PackageClauseOnly)
 		if parseErr != nil {
 			continue
 		}
 
-		return parsed.Name.Name, nil
+		return strings.TrimSuffix(parsed.Name.Name, "_test"), nil
 	}
 
 	return "", os.ErrNotExist

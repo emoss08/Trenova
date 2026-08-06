@@ -330,29 +330,14 @@ func printMutationSummary(
 }
 
 // fallbackReasons collects the distinct reasons schemata-capable mutants were
-// judged on binaries of their own. A fallback multiplies that mutant's cost by a
-// full compile, so hiding the reason turns a diagnosable failure into a mystery
-// slowdown.
+// judged on binaries of their own.
 func fallbackReasons(results []mutate.Result, limit int) []string {
-	seen := make(map[string]struct{})
-	var out []string
+	reasons := make([]string, 0, len(results))
 	for _, r := range results {
-		if r.Fallback == "" {
-			continue
-		}
-		if _, dup := seen[r.Fallback]; dup {
-			continue
-		}
-		seen[r.Fallback] = struct{}{}
-		if len(out) < limit {
-			out = append(out, r.Fallback)
-		}
-	}
-	if extra := len(seen) - len(out); extra > 0 {
-		out = append(out, fmt.Sprintf("… and %d more distinct reasons", extra))
+		reasons = append(reasons, r.Fallback)
 	}
 
-	return out
+	return summariseReasons(reasons, limit)
 }
 
 func functionOrPackage(r mutate.Result) string {

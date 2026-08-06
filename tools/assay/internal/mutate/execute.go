@@ -256,7 +256,7 @@ func evaluate(ctx context.Context, m Mutant, opts ExecuteOptions, buildParalleli
 	}
 	defer os.RemoveAll(workdir)
 
-	overlay, err := writeOverlay(workdir, m)
+	overlayPath, err := writeOverlay(workdir, m)
 	if err != nil {
 		result.Outcome = OutcomeNotBuilt
 		result.Detail = err.Error()
@@ -271,7 +271,7 @@ func evaluate(ctx context.Context, m Mutant, opts ExecuteOptions, buildParalleli
 			continue
 		}
 
-		binary := filepath.Join(workdir, "bin", sanitisePath(testPackage)+".test")
+		binary := filepath.Join(workdir, "bin", overlay.UniqueName(testPackage)+".test")
 		if mkErr := os.MkdirAll(filepath.Dir(binary), 0o755); mkErr != nil {
 			result.Outcome = OutcomeNotBuilt
 			result.Detail = mkErr.Error()
@@ -284,7 +284,7 @@ func evaluate(ctx context.Context, m Mutant, opts ExecuteOptions, buildParalleli
 			root:             opts.Root,
 			env:              opts.Env,
 			tags:             opts.Tags,
-			overlay:          overlay,
+			overlay:          overlayPath,
 			testPackage:      testPackage,
 			output:           binary,
 			buildParallelism: buildParallelism,

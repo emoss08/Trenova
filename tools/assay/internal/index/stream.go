@@ -2,9 +2,9 @@ package index
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
@@ -61,8 +61,8 @@ func runHarness(
 	if err != nil {
 		return harnessResult{err: fmt.Errorf("open harness stdout: %w", err)}
 	}
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
+	stderr := newTailBuffer(32 << 10)
+	cmd.Stderr = stderr
 
 	if err := cmd.Start(); err != nil {
 		return harnessResult{err: fmt.Errorf("start harness: %w", err)}
@@ -70,6 +70,11 @@ func runHarness(
 
 	timeout := opts.timeout()
 	deadline := time.AfterFunc(timeout, cancel)
+	// The timer must outlive the scanner: if the reader dies first — an
+	// oversized line, a closed descriptor — the child can fill the pipe and
+	// block forever, and this deadline is the only thing left that can kill it.
+	// Stopping it before Wait was a proven deadlock.
+	defer deadline.Stop()
 
 	var completed []harnessProgress
 	scanner := bufio.NewScanner(stdout)
@@ -85,7 +90,14 @@ func runHarness(
 		completed = append(completed, progress)
 		deadline.Reset(timeout)
 	}
-	deadline.Stop()
+
+	scanErr := scanner.Err()
+	if scanErr != nil {
+		// The reader is done but the child may not be; without a drain the child
+		// blocks on a full pipe and Wait never returns.
+		cancel()
+		_, _ = io.Copy(io.Discard, stdout)
+	}
 
 	waitErr := cmd.Wait()
 
@@ -93,6 +105,9 @@ func runHarness(
 	if len(completed) < len(names) {
 		result.stalled = names[len(completed)]
 		detail := strings.TrimSpace(stderr.String())
+		if detail == "" && scanErr != nil {
+			detail = "harness output unreadable: " + scanErr.Error()
+		}
 		if detail == "" && waitErr != nil {
 			detail = waitErr.Error()
 		}
@@ -103,14 +118,46 @@ func runHarness(
 	return result
 }
 
+// tailBuffer keeps only the last cap bytes written. The harness holds one
+// stderr buffer for a whole package's tests; unbounded, a chatty suite times
+// the resident cost by jobs, and only the tail ever reaches an error message.
+type tailBuffer struct {
+	limit int
+	data  []byte
+}
+
+func newTailBuffer(limit int) *tailBuffer {
+	return &tailBuffer{limit: limit}
+}
+
+func (b *tailBuffer) Write(p []byte) (int, error) {
+	b.data = append(b.data, p...)
+	if len(b.data) > b.limit {
+		b.data = b.data[len(b.data)-b.limit:]
+	}
+
+	return len(p), nil
+}
+
+func (b *tailBuffer) String() string {
+	return string(b.data)
+}
+
 // parseHarnessLine accepts only the line announcing the next expected test, so a
 // test that itself prints something shaped like a progress line cannot desync
 // the collector.
+//
+// The prefix is searched anywhere in the line, not only at its start: a test
+// that prints without a trailing newline glues the harness's own output onto
+// its fragment, and requiring a line boundary silently pushed such packages
+// onto the salvage path. Forgery stays impossible — the name after the prefix
+// must equal the next expected test exactly.
 func parseHarnessLine(line, expected string) (harnessProgress, bool) {
-	rest, ok := strings.CutPrefix(line, harnessLinePrefix)
-	if !ok {
+	at := strings.LastIndex(line, harnessLinePrefix)
+	if at < 0 {
 		return harnessProgress{}, false
 	}
+	rest := line[at+len(harnessLinePrefix):]
 
 	fields := strings.Fields(rest)
 	if len(fields) != 3 || fields[0] != expected {

@@ -158,7 +158,14 @@ type m6Harness struct {
 	stats  index.Stats
 }
 
-func m6Setup(t *testing.T, withHangy, legacy bool, timeout time.Duration, packages ...string) m6Harness {
+type m6Workspace struct {
+	root    string
+	env     []string
+	digests map[string]string
+	graph   *graph.Graph
+}
+
+func m6Write(t *testing.T, withHangy bool) m6Workspace {
 	t.Helper()
 	t.Setenv("GOWORK", "off")
 
@@ -176,16 +183,26 @@ func m6Setup(t *testing.T, withHangy, legacy bool, timeout time.Duration, packag
 	g, err := graph.Load(t.Context(), graph.LoadOptions{Root: root, Env: env})
 	require.NoError(t, err)
 
-	store, err := cache.NewStore(t.TempDir())
-	require.NoError(t, err)
+	return m6Workspace{root: root, env: env, digests: digests, graph: g}
+}
+
+func m6Build(
+	t *testing.T,
+	ws m6Workspace,
+	store *cache.Store,
+	legacy bool,
+	timeout time.Duration,
+	packages ...string,
+) index.Stats {
+	t.Helper()
 
 	stats, err := index.Build(t.Context(), index.Options{
-		Root:        root,
+		Root:        ws.root,
 		Commit:      commit,
-		Graph:       g,
-		TreeDigests: digests,
+		Graph:       ws.graph,
+		TreeDigests: ws.digests,
 		Store:       store,
-		Env:         env,
+		Env:         ws.env,
 		Jobs:        2,
 		Timeout:     timeout,
 		Packages:    packages,
@@ -194,10 +211,23 @@ func m6Setup(t *testing.T, withHangy, legacy bool, timeout time.Duration, packag
 	require.NoError(t, err)
 	require.Empty(t, stats.Failures)
 
+	return stats
+}
+
+func m6Setup(t *testing.T, withHangy, legacy bool, timeout time.Duration, packages ...string) m6Harness {
+	t.Helper()
+
+	ws := m6Write(t, withHangy)
+
+	store, err := cache.NewStore(t.TempDir())
+	require.NoError(t, err)
+
+	stats := m6Build(t, ws, store, legacy, timeout, packages...)
+
 	return m6Harness{
-		root:   root,
-		graph:  g,
-		loader: index.NewLoader(store, index.NewFingerprinter(g, digests, nil)),
+		root:   ws.root,
+		graph:  ws.graph,
+		loader: index.NewLoader(store, index.NewFingerprinter(ws.graph, ws.digests, nil)),
 		stats:  stats,
 	}
 }
@@ -340,4 +370,26 @@ func TestLegacyFlagForcesPerProcessCollection(t *testing.T) {
 	h := m6Setup(t, false, true, 0, m6Module+"/plain")
 
 	assert.Equal(t, index.CollectionPerProcess, h.mode(t, "plain"))
+}
+
+// TestLegacyCollectionBypassesTheCache pins the cross-check contract:
+// --legacy-collection exists to verify the harness path against per-process
+// collection, and a warm cache made it a no-op — serving the harness's own
+// record back meant the flag silently cross-checked the harness against itself.
+func TestLegacyCollectionBypassesTheCache(t *testing.T) {
+	ws := m6Write(t, false)
+
+	store, err := cache.NewStore(t.TempDir())
+	require.NoError(t, err)
+
+	warm := m6Build(t, ws, store, false, 0, m6Module+"/plain")
+	require.Equal(t, 1, warm.Indexed, "the first build must populate the cache")
+
+	crosscheck := m6Build(t, ws, store, true, 0, m6Module+"/plain")
+
+	assert.Zero(t, crosscheck.Reused, "a cache hit would cross-check the harness against itself")
+	assert.Equal(t, 1, crosscheck.Indexed)
+	for _, outcome := range crosscheck.Packages {
+		assert.Equal(t, index.CollectionPerProcess, outcome.Mode)
+	}
 }

@@ -189,7 +189,7 @@ func (b *schemataBatch) binaryFor(
 		return slot.path, slot.err
 	}
 
-	path := filepath.Join(b.workdir, "bin", sanitisePath(testPkg)+".test")
+	path := filepath.Join(b.workdir, "bin", overlay.UniqueName(testPkg)+".test")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		slot.done = true
 		slot.err = fmt.Errorf("create binary directory: %w", err)
@@ -308,19 +308,4 @@ func prepareBatches(batches []*schemataBatch) ([]*schemataBatch, []int) {
 	}
 
 	return ready, declined
-}
-
-func sanitisePath(importPath string) string {
-	out := make([]byte, 0, len(importPath))
-	for i := 0; i < len(importPath); i++ {
-		c := importPath[i]
-		switch {
-		case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9', c == '.', c == '-', c == '_':
-			out = append(out, c)
-		default:
-			out = append(out, '_')
-		}
-	}
-
-	return string(out)
 }

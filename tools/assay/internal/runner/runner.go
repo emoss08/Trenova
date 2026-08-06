@@ -132,16 +132,25 @@ func Run(ctx context.Context, opts Options) (int, error) {
 		})
 	}
 
+	// Anything still buffered belongs to invocations that finished out of order
+	// behind a slower front — including everything an aborted run produced
+	// before the abort. Discarding it on error threw away the very failure
+	// output the user needed, so the flush runs on every exit path. All
+	// processes have been waited on by this point, so no writer is live.
+	flushAll := func() {
+		for i := range invocations {
+			stdouts[i].promote()
+			stderrs[i].promote()
+		}
+	}
+
 	if err := running.Wait(); err != nil {
+		flushAll()
+
 		return 1, err
 	}
 
-	// Anything still buffered belongs to invocations that finished out of order
-	// behind a slower front; flush them in order now that everything is done.
-	for i := range invocations {
-		stdouts[i].promote()
-		stderrs[i].promote()
-	}
+	flushAll()
 
 	worst := 0
 	for _, code := range codes {
@@ -242,7 +251,13 @@ func (w *promotedWriter) Write(p []byte) (int, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	if w.live && w.out != nil {
+	if w.live {
+		if w.out == nil {
+			// Promoted with nowhere to stream: buffering would grow for the
+			// life of the run with nothing ever draining it.
+			return len(p), nil
+		}
+
 		return w.out.Write(p)
 	}
 
@@ -256,6 +271,8 @@ func (w *promotedWriter) promote() {
 	if !w.live && w.out != nil && w.buf.Len() > 0 {
 		_, _ = w.out.Write(w.buf.Bytes())
 	}
+	// The buffer is dropped even without a destination; with a nil writer it
+	// would otherwise grow for the life of the run with nothing ever draining it.
 	w.buf.Reset()
 	w.live = true
 }

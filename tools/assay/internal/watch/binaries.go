@@ -3,7 +3,6 @@ package watch
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -14,9 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zeebo/blake3"
-
 	"github.com/emoss08/assay/internal/cache"
+	"github.com/emoss08/assay/internal/overlay"
 	"github.com/emoss08/assay/internal/proc"
 )
 
@@ -124,13 +122,8 @@ func (c *BinaryCache) Ensure(ctx context.Context, req BuildRequest) (string, boo
 	return output, false, nil
 }
 
-// binaryName is injective: distinct import paths must never share a file, or
-// one package's tests would silently execute another package's binary. The
-// readable prefix is for humans; the hash carries the uniqueness.
 func binaryName(importPath string) string {
-	sum := blake3.Sum256([]byte(importPath))
-
-	return sanitise(importPath) + "-" + hex.EncodeToString(sum[:6]) + ".test"
+	return overlay.UniqueName(importPath) + ".test"
 }
 
 func (c *BinaryCache) remember(importPath string, fp cache.Fingerprint, path string) {
@@ -207,19 +200,4 @@ func RunTests(ctx context.Context, req RunRequest) (bool, []byte, error) {
 	}
 
 	return false, out.Bytes(), err
-}
-
-func sanitise(importPath string) string {
-	out := make([]byte, 0, len(importPath))
-	for i := 0; i < len(importPath); i++ {
-		c := importPath[i]
-		switch {
-		case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9', c == '.', c == '-', c == '_':
-			out = append(out, c)
-		default:
-			out = append(out, '_')
-		}
-	}
-
-	return string(out)
 }

@@ -197,6 +197,21 @@ func printIndexStats(cmd *cobra.Command, stats index.Stats, commit string) error
 		stats.Indexed, stats.Reused, stats.Total, vcs.ShortSHA(commit), stats.Duration.Round(time.Millisecond))
 	cmd.Printf("%d tests recorded, %d always-run\n", stats.Tests, stats.AlwaysRun)
 
+	fallbacks := make([]string, 0, len(stats.Packages))
+	fellBack := 0
+	for _, outcome := range stats.Packages {
+		fallbacks = append(fallbacks, outcome.Fallback)
+		if outcome.Fallback != "" {
+			fellBack++
+		}
+	}
+	if fellBack > 0 {
+		cmd.PrintErrf("%d packages fell back to per-process collection:\n", fellBack)
+		for _, reason := range summariseReasons(fallbacks, 3) {
+			cmd.PrintErrf("  %s\n", reason)
+		}
+	}
+
 	if len(stats.Failures) == 0 {
 		return nil
 	}

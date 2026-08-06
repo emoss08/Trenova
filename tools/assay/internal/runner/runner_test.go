@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -236,6 +237,97 @@ func TestPromotedWriterFlushesBufferInOrder(t *testing.T) {
 	_, err = w.Write([]byte("live"))
 	require.NoError(t, err)
 	assert.Equal(t, "buffered live", out.String())
+}
+
+func TestPromoteWithoutWriterDropsTheBuffer(t *testing.T) {
+	w := &promotedWriter{}
+
+	_, err := w.Write([]byte("before promotion"))
+	require.NoError(t, err)
+	w.promote()
+	assert.Zero(t, w.buf.Len(), "promotion must release the buffer even with no destination")
+
+	_, err = w.Write([]byte("after promotion"))
+	require.NoError(t, err)
+	assert.Zero(t, w.buf.Len(), "a promoted writer with no destination must discard, not accumulate")
+}
+
+// TestAbortStillFlushesBufferedOutput pins the fix for the cruellest way to lose
+// a failure: the front invocation dies by signal, Wait returns an error, and the
+// old code returned before the flush loop — throwing away every buffered line
+// from invocations that had already finished, which was exactly the output the
+// user needed to see.
+//
+// The front test kills its own `go test` parent, but only after the fast
+// invocation has run and had time to land its output in the buffer, so the
+// abort is deterministic rather than a wall-clock race.
+func TestAbortStillFlushesBufferedOutput(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the fixture aborts its parent with a unix signal")
+	}
+	t.Setenv("GOWORK", "off")
+	root := t.TempDir()
+
+	write := func(rel, content string) {
+		t.Helper()
+		full := filepath.Join(root, rel)
+		require.NoError(t, os.MkdirAll(filepath.Dir(full), 0o755))
+		require.NoError(t, os.WriteFile(full, []byte(content), 0o644))
+	}
+	sentinel := filepath.Join(root, "fast-done")
+	write("go.mod", "module example.com/run\n\ngo 1.26\n")
+	write("abort/abort_test.go", `package abort
+
+import (
+	"os"
+	"syscall"
+	"testing"
+	"time"
+)
+
+func TestAbort(t *testing.T) {
+	deadline := time.Now().Add(20 * time.Second)
+	for time.Now().Before(deadline) {
+		if _, err := os.Stat(`+strconv.Quote(sentinel)+`); err == nil {
+			time.Sleep(500 * time.Millisecond)
+			_ = syscall.Kill(os.Getppid(), syscall.SIGKILL)
+			os.Exit(0)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("sentinel never appeared")
+}
+`)
+	write("fast/fast_test.go", `package fast
+
+import (
+	"os"
+	"testing"
+)
+
+func TestFast(t *testing.T) {
+	if err := os.WriteFile(`+strconv.Quote(sentinel)+`, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+`)
+
+	var out safeBuilder
+	_, err := Run(t.Context(), Options{
+		Root: root,
+		Groups: []Group{
+			{Packages: []string{"example.com/run/abort"}, Run: "^TestAbort$"},
+			{Packages: []string{"example.com/run/fast"}, Run: "^TestFast$"},
+		},
+		Jobs:      2,
+		ExtraArgs: []string{"-v"},
+		Stdout:    &out,
+		Stderr:    io.Discard,
+	})
+
+	require.Error(t, err, "a signal-killed go test is an abort, not a verdict")
+	assert.Contains(t, out.String(), "--- PASS: TestFast",
+		"output buffered behind the aborted front must still be flushed")
 }
 
 func TestRunForwardsExtraArguments(t *testing.T) {

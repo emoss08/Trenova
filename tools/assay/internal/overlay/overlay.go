@@ -1,10 +1,14 @@
 package overlay
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/zeebo/blake3"
 )
 
 // WriteUnderBasename writes content to workdir/group/<basename(original)>,
@@ -40,4 +44,29 @@ func WriteFile(workdir string, replace map[string]string) (string, error) {
 	}
 
 	return path, nil
+}
+
+// UniqueName renders an identifier as a filesystem-safe name that is injective:
+// two distinct identifiers can never map to the same file. Flattening path
+// separators alone made example.com/a/b and example.com/a_b collide, which let
+// one package's tests silently execute another package's binary; the hash
+// suffix carries the uniqueness, the readable prefix is for humans.
+func UniqueName(identifier string) string {
+	sum := blake3.Sum256([]byte(identifier))
+
+	var b strings.Builder
+	b.Grow(len(identifier) + 14)
+	for i := 0; i < len(identifier); i++ {
+		c := identifier[i]
+		switch {
+		case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9', c == '.', c == '-', c == '_':
+			b.WriteByte(c)
+		default:
+			b.WriteByte('_')
+		}
+	}
+	b.WriteByte('-')
+	b.WriteString(hex.EncodeToString(sum[:6]))
+
+	return b.String()
 }
