@@ -276,8 +276,9 @@ exactly like the original — which is why the same binary can serve as its own
 control.
 
 The switch lives in an `assay_schemata.go` that reaches the compiler through
-`-overlay` and is never written to your tree. It imports only `os`, so injecting it
-into a low-level package is unlikely to create an import cycle.
+`-overlay` and is never written to your tree. It imports only `os`, `sync` and
+`sync/atomic`, so injecting it into a low-level package is unlikely to create an
+import cycle.
 
 A site is only rewritten this way when the rewrite is provably type-correct, and
 assay would rather be slow than emit something that does not compile — under a
@@ -293,10 +294,28 @@ not one. These fall back to a binary of their own:
 | `m[k]++` | legal Go, but `&m[k]` is not, and the helper steps through a pointer |
 | operands of different types | inference would fail rather than pick one |
 
+Sharing the binary removes the compile per mutant; sharing the *process* removes
+the spawn and package init per mutant. A generated `TestMain`, injected into each
+covering test package the same way, runs the package's tests once per mutant and
+switches the active mutant between runs — so judging N mutants costs one process
+per covering test package rather than N. A mutant that crashes or hangs the
+shared process is judged by that death, and the rest continue in a fresh one.
+
+Two kinds of package decline the harness, quietly and by design. A covering test
+package with its own `TestMain` cannot host the injected one, so its mutants run
+in env-selected processes on the same shared binary. And a mutant whose site
+executes during package *init* cannot be judged by an in-process switch at all —
+init has already run, as the original, before `TestMain` gets control. The
+runtime tracks exactly which sites init executed, and those mutants are judged
+in processes of their own, where the environment selects the mutant before init
+runs. Cheapest covering package first, in every mode: the index knows what each
+package's tests cost, and a kill found by the fast package never pays for the
+slow one.
+
 The summary reports the split whenever anything fell back. `--no-schemata` forces
-every mutant onto its own binary; the two modes are asserted to reach identical
-verdicts, mutant for mutant, so it is a safety valve rather than a different
-answer.
+every mutant onto its own binary and `--no-harness` forces a process per mutant;
+all three modes are asserted to reach identical verdicts, mutant for mutant, so
+they are safety valves rather than different answers.
 
 One caveat applies to both modes: rewriting expressions changes what the compiler
 can inline and what escapes, so a test asserting an exact allocation count could
@@ -367,7 +386,7 @@ package in this repository, so the guard is there on purpose.
 
 `assay index` additionally takes `--jobs`, `--timeout`, `--packages`, `--quiet`,
 `--allow-dirty` and `--legacy-collection`. `assay mutate` takes `--whole`, `--packages`, `--baseline`,
-`--write-baseline`, `--min-msi`, `--allow-failing-tests`, `--no-schemata`, `--jobs`
+`--write-baseline`, `--min-msi`, `--allow-failing-tests`, `--no-schemata`, `--no-harness`, `--jobs`
 and `--json`.
 
 ## Commands

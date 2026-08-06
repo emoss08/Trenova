@@ -148,6 +148,68 @@ mutant. The lever is running each covering test once across all mutants, which
 needs the runtime switch to be settable per test rather than read once per process.
 That is a larger change than this one and is not attempted here.
 
+### Switching mutants inside one process
+
+The lever named above is now built: the schemata switch became an in-process
+setter, and a generated `TestMain` injected into each covering test package runs
+its tests once per mutant, switching between runs — one process per (mutated
+package × covering test package × shard) instead of one per (mutant × covering
+test package). Mutants whose sites execute during package init are detected
+dynamically and judged in env-selected processes of their own, because init runs
+before any in-process switch can reach it; test packages with their own
+`TestMain` decline the harness the same way. All three modes — harness,
+process-per-mutant (`--no-harness`), binary-per-mutant (`--no-schemata`) — are
+asserted to reach identical verdicts.
+
+What the harness removes is a spawn and a package init per (mutant × test
+package), so the win scales with init cost. Measured both ways, `--jobs 2`,
+warm build caches, identical verdicts in every row:
+
+| Corpus | process per mutant | harness | |
+|---|---|---|---|
+| synthetic: 25 mutants, init sleeps 500ms | 7.96s | **2.37s** | **3.4×** |
+| `internal/cover`, whole package, 98 mutants | 347–362s | 372–375s | ~wash (0.95×) |
+
+The synthetic is the honest upper bound: its init is pure cost and its tests are
+microseconds, so nearly everything the harness can remove is there to remove.
+`internal/cover` is close to the worst case, for the same reason it was in the
+schemata measurement: it is survivor-bound, and its survivors' covering tests
+are this repository's heavyweight integration suites — the harness removes
+overhead, not test execution.
+
+The wash took two scheduling fixes to reach, and the honest telling is that the
+first harness executor *lost* to the path it replaced, 459s to 337s. Charged
+test time said the harness was doing 19% less work per survivor — the init and
+spawn savings are real — while wall clock said the walkers were barely
+overlapping. Two causes, fixed in sequence: a batch-level barrier that
+synchronised every walker on each test package, and static sharding, which no
+cost estimate can balance because a survivor costs its whole covering plan, a
+kill costs almost nothing, and which is which is exactly what the run exists to
+find out. Walkers now pull guided chunks from a shared queue, so a walker
+anchored on an expensive survivor anchors only itself. The residual few percent
+is the process restarts that crashing kills force, plus the tail of the last
+chunk.
+
+Two structural facts keep the harness honest rather than fast-but-wrong. A test
+package with its own TestMain declines it and takes env-selected processes on
+the same shared binary. And a mutant whose site executes during package init
+cannot be judged by an in-process switch at all — init has already run, as the
+original, before TestMain gets control — so the runtime records which sites
+init executed and those mutants are judged in processes of their own, where the
+environment selects the mutant first. Both paths are pinned by fixtures whose
+verdicts would silently flip without them.
+
+### Cheapest covering package first
+
+Covering packages were judged in lexicographic order, so a kill the cheap
+package finds in microseconds could first pay for an expensive integration
+suite by accident of naming. Every judging path now orders a plan's packages by
+their indexed durations, cheapest first. On `internal/cover` the effect is not
+a headline and was not expected to be — kills already averaged ~0.3s in both
+modes because the cheap package usually *is* first alphabetically here — the
+point is that the order is now chosen by data rather than by names, which is
+pinned by a test whose kill attribution flips with the ordering hook.
+
 ### What it actually found
 
 The twelve initial survivors were real gaps in this repository's own tests, in the
