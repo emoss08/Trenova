@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -44,14 +45,15 @@ func (l limiter) release() { <-l }
 
 // runHarnessBatches judges every batch's mutants by switching mutants inside
 // shared processes: one harness process per (mutated package × covering test
-// package × shard) instead of one process per (mutant × covering test package).
+// package × chunk) instead of one process per (mutant × covering test package).
 //
-// Each batch is split into stable shards that walk the covering test packages
-// independently — there is deliberately no barrier between shards or between
-// packages. A whole-batch walk that synchronised on each test package idled a
-// core whenever one shard's mutants were slower than another's, and measured
-// slower than the per-mutant path it replaced; independent walkers keep every
-// worker busy end to end, the same shape the per-mutant pool has.
+// Each batch's walkers pull chunks from a shared queue and walk the covering
+// test packages independently — there is deliberately no barrier between
+// walkers or between packages. A whole-batch walk that synchronised on each
+// test package idled a core whenever one group's mutants were slower than
+// another's, and measured slower than the per-mutant path it replaced;
+// independent walkers over a shared queue keep every worker busy end to end,
+// the same shape the per-mutant pool has.
 func runHarnessBatches(
 	ctx context.Context,
 	mutants []Mutant,
@@ -74,20 +76,33 @@ func runHarnessBatches(
 
 	for _, batch := range batches {
 		ordered := batch.orderedTestPkgs(mutants, opts)
-		for _, shard := range shardIndices(batch.indices, cap(sem), func(index int) time.Duration {
+		workers := min(cap(sem), max(1, (len(batch.indices)+harnessShardFloor-1)/harnessShardFloor))
+		queue := newMutantQueue(batch.indices, workers, func(index int) time.Duration {
 			return opts.budgetFor(mutants[index].tests)
-		}) {
+		})
+		for range workers {
 			walking.Go(func(ctx context.Context) error {
-				return batch.walkShard(ctx, shardWalk{
-					mutants:          mutants,
-					opts:             opts,
-					results:          results,
-					indices:          shard,
-					orderedPkgs:      ordered,
-					sem:              sem,
-					buildParallelism: buildParallelism,
-					progress:         progress,
-				})
+				for {
+					chunk := queue.pull()
+					if chunk == nil {
+						return nil
+					}
+					if err := batch.walkShard(ctx, shardWalk{
+						mutants:          mutants,
+						opts:             opts,
+						results:          results,
+						indices:          chunk,
+						orderedPkgs:      ordered,
+						sem:              sem,
+						buildParallelism: buildParallelism,
+						progress:         progress,
+					}); err != nil {
+						return err
+					}
+					if err := ctx.Err(); err != nil {
+						return err
+					}
+				}
 			})
 		}
 	}
@@ -95,42 +110,47 @@ func runHarnessBatches(
 	return walking.Wait()
 }
 
-// shardIndices splits a batch's mutants into at most maxShards stable groups,
-// balanced by estimated cost: heaviest mutant first, each into the lightest
-// shard so far. Blind splits lost the parallelism the shards exist for — a
-// survivor's cost is its whole covering plan, the top few survivors carry most
-// of a package's judging time, and whichever walker drew them ran long after
-// the others went idle. The estimate is the plan-derived budget: exactly right
-// for survivors, and irrelevant for kills, which are cheap in any shard.
-func shardIndices(indices []int, maxShards int, cost func(index int) time.Duration) [][]int {
-	shards := min(maxShards, max(1, (len(indices)+harnessShardFloor-1)/harnessShardFloor))
+// mutantQueue hands a batch's mutants to walkers in guided chunks: large while
+// plenty remains, never below the amortisation floor. No static split can
+// balance this load — a survivor costs its whole covering plan, a kill costs
+// almost nothing, and which is which is exactly what the run exists to find
+// out. Both blind and cost-estimated partitions were measured leaving one
+// walker anchored on an expensive tail while the others sat idle; pulling from
+// a shared queue means an anchored walker anchors only itself. Expensive
+// estimates go out first so the tail chunks are cheap ones.
+type mutantQueue struct {
+	mu      sync.Mutex
+	pending []int
+	workers int
+}
 
-	byCost := make([]int, len(indices))
-	copy(byCost, indices)
-	sort.SliceStable(byCost, func(i, j int) bool {
-		return cost(byCost[i]) > cost(byCost[j])
+func newMutantQueue(indices []int, workers int, cost func(index int) time.Duration) *mutantQueue {
+	ordered := make([]int, len(indices))
+	copy(ordered, indices)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		return cost(ordered[i]) > cost(ordered[j])
 	})
 
-	out := make([][]int, shards)
-	loads := make([]time.Duration, shards)
-	for _, index := range byCost {
-		lightest := 0
-		for shard := 1; shard < shards; shard++ {
-			if loads[shard] < loads[lightest] {
-				lightest = shard
-			}
-		}
-		out[lightest] = append(out[lightest], index)
-		loads[lightest] += cost(index)
+	return &mutantQueue{pending: ordered, workers: workers}
+}
+
+func (q *mutantQueue) pull() []int {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	if len(q.pending) == 0 {
+		return nil
 	}
 
-	// Instruction order inside a shard follows source order, like every other
-	// judging path; the cost ordering above only decides membership.
-	for _, shard := range out {
-		sort.Ints(shard)
-	}
+	size := min(len(q.pending), max(harnessShardFloor, len(q.pending)/(2*q.workers)))
+	chunk := append([]int(nil), q.pending[:size]...)
+	q.pending = q.pending[size:]
 
-	return out
+	// Instruction order inside a chunk follows source order, like every other
+	// judging path; the cost ordering above only decides what ships together.
+	sort.Ints(chunk)
+
+	return chunk
 }
 
 // mutInstr is one harness instruction: run this mutant's covering tests in the
