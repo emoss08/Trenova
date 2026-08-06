@@ -108,13 +108,14 @@ func runMutate(cmd *cobra.Command, opts *options, flags *mutateFlags) error {
 	}
 
 	execOpts := mutate.ExecuteOptions{
-		Root:       session.root,
-		Tags:       opts.tags,
-		Jobs:       flags.jobs,
-		Budget:     scope.Budget,
-		PackageDir: packageDirResolver(session),
-		NoSchemata: flags.noSchemata,
-		NoHarness:  flags.noHarness,
+		Root:         session.root,
+		Tags:         opts.tags,
+		Jobs:         flags.jobs,
+		Budget:       scope.Budget,
+		PackageDir:   packageDirResolver(session),
+		PackageOrder: scope.PackageOrder,
+		NoSchemata:   flags.noSchemata,
+		NoHarness:    flags.noHarness,
 	}
 
 	preflight, err := mutate.RunPreflight(ctx, mutants, execOpts)

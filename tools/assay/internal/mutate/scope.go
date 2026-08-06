@@ -165,3 +165,45 @@ func (s *Scope) Budget(plan TestPlan) time.Duration {
 
 	return total
 }
+
+// PackageOrder orders a plan's covering packages cheapest-first by their
+// indexed durations. A killed mutant exits at the first package that catches
+// it, and a kill found by the cheap package never pays for the expensive one;
+// lexicographic order was paying that cost by accident of naming. Unindexed
+// packages sort last — their cost is unknown, not zero.
+func (s *Scope) PackageOrder(plan TestPlan) []string {
+	type pkgCost struct {
+		pkg     string
+		cost    time.Duration
+		indexed bool
+	}
+
+	costs := make([]pkgCost, 0, len(plan))
+	for pkg, tests := range plan {
+		entry := pkgCost{pkg: pkg}
+		if record, found := s.loader.Record(pkg); found {
+			entry.cost = record.DurationOf(tests)
+			entry.indexed = true
+		}
+		costs = append(costs, entry)
+	}
+
+	sort.Slice(costs, func(i, j int) bool {
+		a, b := costs[i], costs[j]
+		if a.indexed != b.indexed {
+			return a.indexed
+		}
+		if a.cost != b.cost {
+			return a.cost < b.cost
+		}
+
+		return a.pkg < b.pkg
+	})
+
+	out := make([]string, 0, len(costs))
+	for _, entry := range costs {
+		out = append(out, entry.pkg)
+	}
+
+	return out
+}

@@ -339,7 +339,7 @@ func (b *schemataBatch) judge(
 
 	env := mutantEnv(opts.Env, b.ids[index])
 
-	for _, testPkg := range sortedKeys(m.tests) {
+	for _, testPkg := range opts.orderedPackages(m.tests) {
 		tests := m.tests[testPkg]
 		if len(tests) == 0 {
 			continue

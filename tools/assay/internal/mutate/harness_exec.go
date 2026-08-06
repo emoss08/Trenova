@@ -122,7 +122,7 @@ func (b *schemataBatch) judgeAll(
 		return nil
 	}
 
-	for _, testPkg := range b.testPkgs {
+	for _, testPkg := range b.orderedTestPkgs(mutants, opts) {
 		candidates := make([]int, 0, len(b.indices))
 		for _, index := range b.indices {
 			if alive[index] && len(mutants[index].tests[testPkg]) > 0 {
@@ -188,6 +188,39 @@ func (b *schemataBatch) judgeAll(
 	}
 
 	return nil
+}
+
+// orderedTestPkgs resolves the batch-level judging order from the union of its
+// mutants' plans, so the batch walks its covering packages in the same
+// cost-informed order the per-mutant paths use.
+func (b *schemataBatch) orderedTestPkgs(mutants []Mutant, opts ExecuteOptions) []string {
+	if opts.PackageOrder == nil {
+		return b.testPkgs
+	}
+
+	sets := make(map[string]map[string]struct{}, len(b.testPkgs))
+	for _, index := range b.indices {
+		for pkg, tests := range mutants[index].tests {
+			if len(tests) == 0 {
+				continue
+			}
+			set := sets[pkg]
+			if set == nil {
+				set = make(map[string]struct{})
+				sets[pkg] = set
+			}
+			for _, test := range tests {
+				set[test] = struct{}{}
+			}
+		}
+	}
+
+	merged := make(TestPlan, len(sets))
+	for pkg, set := range sets {
+		merged[pkg] = setToSorted(set)
+	}
+
+	return opts.orderedPackages(merged)
 }
 
 // tpVerdict is one mutant's judgement against one test package.

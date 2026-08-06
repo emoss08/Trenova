@@ -89,6 +89,12 @@ type ExecuteOptions struct {
 	// reasons that have nothing to do with the mutant.
 	PackageDir func(importPath string) string
 
+	// PackageOrder orders a plan's covering test packages before judging. A
+	// killed mutant exits at the first package that catches it, so an order
+	// informed by cost finds the kill sooner. Nil, or an order that is not a
+	// permutation of the plan, falls back to lexicographic.
+	PackageOrder func(plan TestPlan) []string
+
 	// NoSchemata forces every mutant to compile its own binary. Slow, and the only
 	// way to cross-check the shared-binary path.
 	NoSchemata bool
@@ -281,7 +287,7 @@ func evaluate(ctx context.Context, m Mutant, opts ExecuteOptions, buildParalleli
 		return result
 	}
 
-	for _, testPackage := range sortedKeys(m.tests) {
+	for _, testPackage := range opts.orderedPackages(m.tests) {
 		tests := m.tests[testPackage]
 		if len(tests) == 0 {
 			continue
@@ -356,6 +362,33 @@ func (o ExecuteOptions) budgetFor(plan TestPlan) time.Duration {
 // mutant judged by N packages consume N times its allowance.
 func (o ExecuteOptions) PackageBudget(plan TestPlan, testPkg string) time.Duration {
 	return o.budgetFor(TestPlan{testPkg: plan[testPkg]})
+}
+
+// orderedPackages resolves the judging order for a plan's covering packages.
+// The hook's answer is trusted only if it is a permutation of the plan: an
+// order that dropped a package would skip a judge, and a false survivor is
+// worse than a suboptimal order.
+func (o ExecuteOptions) orderedPackages(plan TestPlan) []string {
+	if o.PackageOrder == nil {
+		return sortedKeys(plan)
+	}
+
+	ordered := o.PackageOrder(plan)
+	if len(ordered) != len(plan) {
+		return sortedKeys(plan)
+	}
+	seen := make(map[string]struct{}, len(ordered))
+	for _, pkg := range ordered {
+		if _, inPlan := plan[pkg]; !inPlan {
+			return sortedKeys(plan)
+		}
+		if _, dup := seen[pkg]; dup {
+			return sortedKeys(plan)
+		}
+		seen[pkg] = struct{}{}
+	}
+
+	return ordered
 }
 
 func writeOverlay(workdir string, m Mutant) (string, error) {
