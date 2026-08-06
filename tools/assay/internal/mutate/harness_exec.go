@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -73,7 +74,9 @@ func runHarnessBatches(
 
 	for _, batch := range batches {
 		ordered := batch.orderedTestPkgs(mutants, opts)
-		for _, shard := range shardIndices(batch.indices, cap(sem)) {
+		for _, shard := range shardIndices(batch.indices, cap(sem), func(index int) time.Duration {
+			return opts.budgetFor(mutants[index].tests)
+		}) {
 			walking.Go(func(ctx context.Context) error {
 				return batch.walkShard(ctx, shardWalk{
 					mutants:          mutants,
@@ -93,16 +96,38 @@ func runHarnessBatches(
 }
 
 // shardIndices splits a batch's mutants into at most maxShards stable groups,
-// round-robin. Contiguous splits clustered survivors — source order groups a
-// function's mutants together, and survivors cluster by function — leaving one
-// walker with the expensive tail while the others sat idle; interleaving
-// spreads them.
-func shardIndices(indices []int, maxShards int) [][]int {
+// balanced by estimated cost: heaviest mutant first, each into the lightest
+// shard so far. Blind splits lost the parallelism the shards exist for — a
+// survivor's cost is its whole covering plan, the top few survivors carry most
+// of a package's judging time, and whichever walker drew them ran long after
+// the others went idle. The estimate is the plan-derived budget: exactly right
+// for survivors, and irrelevant for kills, which are cheap in any shard.
+func shardIndices(indices []int, maxShards int, cost func(index int) time.Duration) [][]int {
 	shards := min(maxShards, max(1, (len(indices)+harnessShardFloor-1)/harnessShardFloor))
 
+	byCost := make([]int, len(indices))
+	copy(byCost, indices)
+	sort.SliceStable(byCost, func(i, j int) bool {
+		return cost(byCost[i]) > cost(byCost[j])
+	})
+
 	out := make([][]int, shards)
-	for position, index := range indices {
-		out[position%shards] = append(out[position%shards], index)
+	loads := make([]time.Duration, shards)
+	for _, index := range byCost {
+		lightest := 0
+		for shard := 1; shard < shards; shard++ {
+			if loads[shard] < loads[lightest] {
+				lightest = shard
+			}
+		}
+		out[lightest] = append(out[lightest], index)
+		loads[lightest] += cost(index)
+	}
+
+	// Instruction order inside a shard follows source order, like every other
+	// judging path; the cost ordering above only decides membership.
+	for _, shard := range out {
+		sort.Ints(shard)
 	}
 
 	return out
