@@ -4,7 +4,7 @@ import { statusChoices } from "@/lib/choices";
 import { updatePayCode, type PayCodeRow } from "@/lib/graphql/driver-settlement";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { toast } from "sonner";
 
 export function payCodeStatusInput(row: PayCodeRow, status: "Active" | "Inactive") {

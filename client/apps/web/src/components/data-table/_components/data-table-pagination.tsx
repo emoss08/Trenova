@@ -1,4 +1,5 @@
 "use no memo";
+import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Select,
@@ -8,10 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
-import type { Table } from "@tanstack/react-table";
+import type { Table } from "@trenova/shared/types/data-table";
 import { ChevronFirstIcon, ChevronLastIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
-type DataTablePaginationProps<TData> = {
+type DataTablePaginationProps<TData extends RowData> = {
   table: Table<TData>;
   mode?: "offset" | "cursor";
   hasNextPage?: boolean;
@@ -24,7 +25,7 @@ type DataTablePaginationProps<TData> = {
 
 const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 40, 50] as const;
 
-export function DataTablePagination<TData>({
+export function DataTablePagination<TData extends RowData>({
   table,
   mode = "offset",
   hasNextPage,
@@ -34,12 +35,11 @@ export function DataTablePagination<TData>({
   onPageChange,
   onPageSizeChange,
 }: DataTablePaginationProps<TData>) {
-  const { pageIndex, pageSize } = table.getState().pagination;
+  const { pageIndex, pageSize } = table.state.pagination;
   const pageCount = table.getPageCount();
   const rowCount = table.getRowCount();
   const cursorMode = mode === "cursor";
-  const visibleRowCount =
-    currentPageRowCount ?? table.getRowModel().rows.length;
+  const visibleRowCount = currentPageRowCount ?? table.getRowModel().rows.length;
 
   const canPreviousPage = pageIndex > 0;
   const canNextPage = cursorMode ? Boolean(hasNextPage) : pageIndex < pageCount - 1;

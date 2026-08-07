@@ -4,7 +4,7 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { BooleanBadge } from "@trenova/shared/components/status-badge";
 import { rateTableLookupTypeChoices } from "@/lib/choices";
 import type { RateTableRow } from "@/types/rate-table";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<RateTableRow>[] {
   return [

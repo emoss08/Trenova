@@ -1,9 +1,6 @@
+import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@trenova/shared/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -12,7 +9,7 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { cn } from "@trenova/shared/lib/utils";
-import type { SortDirection, SortField } from "@trenova/shared/types/data-table";
+import type { SortDirection, SortField, ColumnDef } from "@trenova/shared/types/data-table";
 import {
   closestCenter,
   DndContext,
@@ -32,7 +29,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowDownIcon,
   ArrowUpDownIcon,
@@ -49,13 +45,13 @@ type SortableColumn = {
   label: string;
 };
 
-type DataTableSortBuilderProps<TData> = {
+type DataTableSortBuilderProps<TData extends RowData> = {
   columns: ColumnDef<TData>[];
   sort: SortField[];
   onSortChange: (sort: SortField[]) => void;
 };
 
-export default function DataTableSortBuilder<TData>({
+export default function DataTableSortBuilder<TData extends RowData>({
   columns,
   sort,
   onSortChange,
@@ -83,9 +79,7 @@ export default function DataTableSortBuilder<TData>({
         return {
           id: String("accessorKey" in col ? col.accessorKey : col.id),
           apiField: meta.apiField!,
-          label:
-            meta.label ||
-            String("accessorKey" in col ? col.accessorKey : col.id),
+          label: meta.label || String("accessorKey" in col ? col.accessorKey : col.id),
         };
       });
   }, [columns]);
@@ -119,18 +113,14 @@ export default function DataTableSortBuilder<TData>({
 
   const handleSortFieldChange = useCallback(
     (oldField: string, newField: string) => {
-      onSortChange(
-        sort.map((s) => (s.field === oldField ? { ...s, field: newField } : s)),
-      );
+      onSortChange(sort.map((s) => (s.field === oldField ? { ...s, field: newField } : s)));
     },
     [sort, onSortChange],
   );
 
   const handleSortDirectionChange = useCallback(
     (field: string, direction: SortDirection) => {
-      onSortChange(
-        sort.map((s) => (s.field === field ? { ...s, direction } : s)),
-      );
+      onSortChange(sort.map((s) => (s.field === field ? { ...s, direction } : s)));
     },
     [sort, onSortChange],
   );
@@ -149,9 +139,7 @@ export default function DataTableSortBuilder<TData>({
   const sortCount = sort.length;
   const sortIds = useMemo(() => sort.map((s) => s.field), [sort]);
   const activeSort = activeId ? sort.find((s) => s.field === activeId) : null;
-  const activeSortIndex = activeId
-    ? sort.findIndex((s) => s.field === activeId)
-    : -1;
+  const activeSortIndex = activeId ? sort.findIndex((s) => s.field === activeId) : -1;
 
   const availableColumns = sortableColumns.filter(
     (col) => !sort.some((s) => s.field === col.apiField),
@@ -178,10 +166,7 @@ export default function DataTableSortBuilder<TData>({
         }
       />
       <PopoverContent
-        className={cn(
-          "dark w-auto overflow-hidden p-0",
-          sort.length === 0 && "min-w-[400px]",
-        )}
+        className={cn("dark w-auto overflow-hidden p-0", sort.length === 0 && "min-w-[400px]")}
         align="start"
       >
         {sort.length == 0 ? (
@@ -192,10 +177,7 @@ export default function DataTableSortBuilder<TData>({
                 Add sorts to narrow down your results.
               </p>
             </div>
-            <Button
-              onClick={handleAddSort}
-              disabled={availableColumns.length === 0}
-            >
+            <Button onClick={handleAddSort} disabled={availableColumns.length === 0}>
               <PlusIcon className="size-3.5" />
               Add Sort
             </Button>
@@ -210,10 +192,7 @@ export default function DataTableSortBuilder<TData>({
                 onDragEnd={handleDragEnd}
                 modifiers={[restrictToVerticalAxis]}
               >
-                <SortableContext
-                  items={sortIds}
-                  strategy={verticalListSortingStrategy}
-                >
+                <SortableContext items={sortIds} strategy={verticalListSortingStrategy}>
                   {sort.map((sortField, index) => (
                     <SortableSortRow
                       key={sortField.field}
@@ -282,14 +261,7 @@ function SortableSortRow({
   onDirectionChange,
   onRemove,
 }: SortableSortRowProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sortField.field,
   });
 
@@ -299,18 +271,14 @@ function SortableSortRow({
   };
 
   const availableForThis = columns.filter(
-    (col) =>
-      col.apiField === sortField.field || !usedFields.includes(col.apiField),
+    (col) => col.apiField === sortField.field || !usedFields.includes(col.apiField),
   );
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(
-        "flex items-center gap-2 rounded-md py-1",
-        isDragging && "opacity-50",
-      )}
+      className={cn("flex items-center gap-2 rounded-md py-1", isDragging && "opacity-50")}
     >
       <span className="w-10 shrink-0 text-sm text-muted-foreground">
         {index === 0 ? "By" : "Then"}
@@ -338,9 +306,7 @@ function SortableSortRow({
 
       <Select
         value={sortField.direction}
-        onValueChange={(val) =>
-          onDirectionChange(sortField.field, val as SortDirection)
-        }
+        onValueChange={(val) => onDirectionChange(sortField.field, val as SortDirection)}
         items={[
           { value: "asc", label: "Ascending" },
           { value: "desc", label: "Descending" },
@@ -407,11 +373,7 @@ type SortRowOverlayProps = {
   getColumnLabel: (field: string) => string;
 };
 
-function SortRowOverlay({
-  sortField,
-  index,
-  getColumnLabel,
-}: SortRowOverlayProps) {
+function SortRowOverlay({ sortField, index, getColumnLabel }: SortRowOverlayProps) {
   return (
     <div className="flex items-center gap-2 rounded-md border bg-popover px-2 py-1 shadow-lg">
       <span className="w-10 shrink-0 text-sm text-muted-foreground">

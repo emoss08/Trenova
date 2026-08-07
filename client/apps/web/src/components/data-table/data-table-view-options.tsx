@@ -1,4 +1,5 @@
 "use no memo";
+import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Command,
@@ -8,31 +9,24 @@ import {
   CommandItem,
   CommandList,
 } from "@trenova/shared/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@trenova/shared/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
-import type { Table } from "@tanstack/react-table";
+import type { Table } from "@trenova/shared/types/data-table";
 import { CheckIcon, Columns3Icon } from "lucide-react";
 import { useState } from "react";
 
-type DataTableViewOptionsProps<TData> = {
+type DataTableViewOptionsProps<TData extends RowData> = {
   table: Table<TData>;
 };
 
-export function DataTableViewOptions<TData>({
+export function DataTableViewOptions<TData extends RowData>({
   table,
 }: DataTableViewOptionsProps<TData>) {
   const [open, setOpen] = useState(false);
 
   const columns = table
     .getAllColumns()
-    .filter(
-      (column) =>
-        typeof column.accessorFn !== "undefined" && column.getCanHide(),
-    );
+    .filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide());
 
   if (columns.length === 0) {
     return null;
@@ -64,10 +58,7 @@ export function DataTableViewOptions<TData>({
                     onSelect={() => column.toggleVisibility(!isVisible)}
                   >
                     <CheckIcon
-                      className={cn(
-                        "size-3.5",
-                        isVisible ? "opacity-100" : "opacity-0",
-                      )}
+                      className={cn("size-3.5", isVisible ? "opacity-100" : "opacity-0")}
                     />
                     {label}
                   </CommandItem>

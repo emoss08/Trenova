@@ -5,7 +5,7 @@ import { updatePayProfile, type PayProfileRow } from "@/lib/graphql/driver-settl
 import { payCalcMethodChoices, payComponentKindChoices, statusChoices } from "@/lib/choices";
 import type { PayeeClassification } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { toast } from "sonner";
 
 export function payProfileStatusInput(row: PayProfileRow, status: "Active" | "Inactive") {

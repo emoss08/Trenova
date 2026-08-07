@@ -1,4 +1,5 @@
 "use no memo";
+import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -25,14 +26,13 @@ import {
   stringifyUnknown,
 } from "@/lib/data-table";
 import { cn } from "@trenova/shared/lib/utils";
-import type { FilterVariant } from "@trenova/shared/types/data-table";
+import type { FilterVariant, ColumnDef } from "@trenova/shared/types/data-table";
 import type {
   FormatRuleColor,
   FormatRuleOperator,
   TableFormatRule,
 } from "@/types/table-configuration";
 import type { SelectOption } from "@trenova/shared/types/fields";
-import type { ColumnDef } from "@tanstack/react-table";
 import { PaintbrushIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useMemo } from "react";
 
@@ -43,7 +43,7 @@ type FormatColumn = {
   filterOptions?: SelectOption[];
 };
 
-type DataTableFormatBuilderProps<TData> = {
+type DataTableFormatBuilderProps<TData extends RowData> = {
   columns: ColumnDef<TData>[];
   rules: TableFormatRule[];
   onRulesChange: (rules: TableFormatRule[]) => void;
@@ -76,7 +76,11 @@ function ColorSwatchPicker({
   onChange: (color: FormatRuleColor) => void;
 }) {
   return (
-    <div className="flex shrink-0 items-center gap-1.5" role="radiogroup" aria-label="Highlight color">
+    <div
+      className="flex shrink-0 items-center gap-1.5"
+      role="radiogroup"
+      aria-label="Highlight color"
+    >
       {RULE_COLORS.map((color) => (
         <button
           key={color}
@@ -172,7 +176,7 @@ function RuleValueInput({
   );
 }
 
-export default function DataTableFormatBuilder<TData>({
+export default function DataTableFormatBuilder<TData extends RowData>({
   columns,
   rules,
   onRulesChange,

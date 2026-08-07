@@ -1,4 +1,5 @@
 "use no memo";
+import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -31,9 +32,9 @@ import type {
   FilterOperator,
   FilterVariant,
   SingleFilterItem,
+  ColumnDef,
 } from "@trenova/shared/types/data-table";
 import type { SelectOption } from "@trenova/shared/types/fields";
-import type { ColumnDef } from "@tanstack/react-table";
 import { CalendarIcon, FilterIcon, FolderPlusIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
@@ -46,13 +47,13 @@ type FilterableColumn = {
   defaultOperator: FilterOperator;
 };
 
-type DataTableFilterBuilderProps<TData> = {
+type DataTableFilterBuilderProps<TData extends RowData> = {
   columns: ColumnDef<TData>[];
   filters: FilterItem[];
   onFiltersChange: (filters: FilterItem[]) => void;
 };
 
-export default function DataTableFilterBuilder<TData>({
+export default function DataTableFilterBuilder<TData extends RowData>({
   columns,
   filters,
   onFiltersChange,

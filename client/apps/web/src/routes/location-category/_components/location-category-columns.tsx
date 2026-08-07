@@ -3,7 +3,7 @@ import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { locationCategoryTypeChoices } from "@/lib/choices";
 import type { LocationCategory } from "@/types/location-category";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<LocationCategory>[] {
   return [
@@ -11,10 +11,7 @@ export function getColumns(): ColumnDef<LocationCategory>[] {
       accessorKey: "name",
       header: "Name",
       cell: ({ row }) => (
-        <ColorOptionValue
-          color={row.original.color ?? ""}
-          value={row.original.name}
-        />
+        <ColorOptionValue color={row.original.color ?? ""} value={row.original.name} />
       ),
       meta: {
         label: "Name",
@@ -29,9 +26,7 @@ export function getColumns(): ColumnDef<LocationCategory>[] {
       accessorKey: "type",
       header: "Type",
       cell: ({ row }) => {
-        const choice = locationCategoryTypeChoices.find(
-          (c) => c.value === row.original.type,
-        );
+        const choice = locationCategoryTypeChoices.find((c) => c.value === row.original.type);
         return choice ? (
           <ColorOptionValue color={choice.color} value={choice.label} />
         ) : (
@@ -55,10 +50,7 @@ export function getColumns(): ColumnDef<LocationCategory>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.description}
-          truncateLength={50}
-        />
+        <DataTableDescription description={row.original.description} truncateLength={50} />
       ),
       meta: {
         label: "Description",

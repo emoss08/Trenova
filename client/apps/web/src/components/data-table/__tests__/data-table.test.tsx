@@ -6,8 +6,9 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
 import { DataTable } from "../data-table";
 import { DataTableProvider, useDataTable } from "@/contexts/data-table-context";
-import type { ColumnDef } from "@tanstack/react-table";
-import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
+import { useTable } from "@tanstack/react-table";
+import { dataTableFeatures } from "@trenova/shared/lib/table-features";
 import { DataTablePagination } from "../_components/data-table-pagination";
 
 type TestRow = { id: string; name: string };
@@ -199,10 +200,10 @@ describe("DataTableProvider memoization", () => {
 
     function TestApp() {
       const [loading, setLoading] = React.useState(true);
-      const table = useReactTable({
+      const table = useTable({
+        features: dataTableFeatures,
         data: [] as TestRow[],
         columns: testColumns,
-        getCoreRowModel: getCoreRowModel(),
         getRowId: (row) => row.id,
       });
 
@@ -321,7 +322,7 @@ describe("DataTableProvider memoization", () => {
     expect(lastValue).not.toBe(firstValue);
   });
 
-  it("context value updates when useReactTable is used (table ref changes each render)", () => {
+  it("context value updates when useTable is used (table ref changes each render)", () => {
     const contextValues: unknown[] = [];
 
     function ValueCapture() {
@@ -332,10 +333,10 @@ describe("DataTableProvider memoization", () => {
 
     function WithRealTable() {
       const [tick, setTick] = React.useState(0);
-      const table = useReactTable({
+      const table = useTable({
+        features: dataTableFeatures,
         data: [{ id: "1", name: "Alice" }] as TestRow[],
         columns: testColumns,
-        getCoreRowModel: getCoreRowModel(),
         getRowId: (row) => row.id,
       });
 
@@ -357,7 +358,7 @@ describe("DataTableProvider memoization", () => {
       fireEvent.click(screen.getByTestId("tick-rt"));
     });
 
-    // useReactTable creates a new object each render, so the context
+    // useTable creates a new object each render, so the context
     // value WILL change — this is expected and documented in the plan.
     // The useMemo still protects against changes from other parent state
     // that doesn't affect the provider's props.
@@ -370,13 +371,13 @@ describe("DataTableProvider memoization", () => {
 describe("DataTablePagination", () => {
   it("renders cursor pagination without total count or last-page controls", () => {
     function CursorPaginationHarness() {
-      const table = useReactTable({
+      const table = useTable({
+        features: dataTableFeatures,
         data: [
           { id: "11", name: "Cursor A" },
           { id: "12", name: "Cursor B" },
         ] as TestRow[],
         columns: testColumns,
-        getCoreRowModel: getCoreRowModel(),
         manualPagination: true,
         pageCount: 3,
         rowCount: 30,

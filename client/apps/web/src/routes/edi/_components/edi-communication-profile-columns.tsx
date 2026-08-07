@@ -3,7 +3,7 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { StatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { EDICommunicationProfile } from "@trenova/shared/types/edi";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { communicationProfileMethods, profileStatusOptions } from "./edi-schemas";
 
 export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProfile>[] {

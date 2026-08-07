@@ -6,7 +6,7 @@ import { equipmentStatusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { Tractor } from "@/types/tractor";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 import { toast } from "sonner";
 

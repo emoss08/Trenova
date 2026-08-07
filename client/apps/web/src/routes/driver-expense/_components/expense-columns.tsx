@@ -2,7 +2,7 @@ import { AmountDisplay } from "@trenova/shared/components/accounting/amount-disp
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import type { DriverExpenseRow } from "@trenova/shared/lib/graphql/driver-portal";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 

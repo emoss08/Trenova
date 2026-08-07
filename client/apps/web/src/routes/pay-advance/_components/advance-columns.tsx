@@ -3,7 +3,7 @@ import { PayAdvanceStatusBadge } from "@trenova/shared/components/status-badge";
 import { payAdvanceSourceChoices } from "@/lib/choices";
 import type { PayAdvanceRow } from "@/lib/graphql/driver-settlement";
 import type { PayAdvanceStatus } from "@trenova/shared/types/driver-pay";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix: number): string {

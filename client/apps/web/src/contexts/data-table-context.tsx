@@ -1,13 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { ControlsProvider } from "@/contexts/control-context";
-import type { PanelMode } from "@trenova/shared/types/data-table";
-import type {
-  ColumnDef,
-  PaginationState,
-  Row,
-  RowSelectionState,
-  Table,
-} from "@tanstack/react-table";
+import type { PanelMode, ColumnDef, Row, Table } from "@trenova/shared/types/data-table";
+import type { PaginationState, RowData, RowSelectionState } from "@tanstack/react-table";
 import { createContext, useContext, useMemo } from "react";
 
 interface DataTableStateContextType {
@@ -20,7 +14,7 @@ interface DataTablePermissionsContextType {
   canExport: boolean;
 }
 
-interface DataTablePanelContextType<TData = unknown> {
+interface DataTablePanelContextType<TData extends RowData = RowData> {
   isPanelOpen: boolean;
   panelMode: PanelMode;
   panelRow: TData | null;
@@ -34,13 +28,13 @@ interface DataTablePanelContextType<TData = unknown> {
   canOpenPanel: boolean;
 }
 
-interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
+interface DataTableBaseContextType<TData extends RowData = RowData, TValue = unknown> {
   table: Table<TData>;
   columns: ColumnDef<TData, TValue>[];
   isLoading: boolean;
 }
 
-interface DataTableContextType<TData = unknown, TValue = unknown>
+interface DataTableContextType<TData extends RowData = RowData, TValue = unknown>
   extends
     DataTableStateContextType,
     DataTableBaseContextType<TData, TValue>,
@@ -52,7 +46,7 @@ const DataTableContext = createContext<DataTableContextType<any, any> | null>(nu
 const noopFn = () => {};
 const emptyRows = () => [];
 
-export function DataTableProvider<TData, TValue>({
+export function DataTableProvider<TData extends RowData, TValue>({
   children,
   ...props
 }: Partial<DataTableStateContextType> &
@@ -105,13 +99,13 @@ export function DataTableProvider<TData, TValue>({
   );
 
   return (
-    <DataTableContext.Provider value={value}>
+    <DataTableContext.Provider value={value as DataTableContextType<any, any>}>
       <ControlsProvider>{children}</ControlsProvider>
     </DataTableContext.Provider>
   );
 }
 
-export function useDataTable<TData, TValue>() {
+export function useDataTable<TData extends RowData, TValue>() {
   const context = useContext(DataTableContext);
 
   if (!context) {
@@ -121,6 +115,6 @@ export function useDataTable<TData, TValue>() {
   return context as DataTableContextType<TData, TValue>;
 }
 
-export function useOptionalDataTable<TData, TValue>() {
+export function useOptionalDataTable<TData extends RowData, TValue>() {
   return useContext(DataTableContext) as DataTableContextType<TData, TValue> | null;
 }

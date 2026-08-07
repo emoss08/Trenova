@@ -3,7 +3,7 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { fieldTypeChoices } from "@/lib/choices";
 import type { CustomFieldDefinition, FieldType } from "@/types/custom-field";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 const fieldTypeBadgeVariants: Record<FieldType, BadgeVariant> = {
   text: "info",
@@ -103,9 +103,7 @@ export function getColumns(): ColumnDef<CustomFieldDefinition>[] {
     {
       accessorKey: "createdAt",
       header: "Created At",
-      cell: ({ row }) => (
-        <HoverCardTimestamp timestamp={row.original.createdAt} />
-      ),
+      cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
         label: "Created At",
         apiField: "createdAt",

@@ -1,16 +1,14 @@
 "use no memo";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Checkbox } from "../animate-ui/components/base/checkbox";
 
-export function createSelectionColumn<
-  TData extends Record<string, unknown>,
->(): ColumnDef<TData> {
+export function createSelectionColumn<TData extends Record<string, unknown>>(): ColumnDef<TData> {
   return {
     id: "select",
     header: ({ table }) => (
       <Checkbox
         checked={table.getIsAllPageRowsSelected()}
-        indeterminate={table.getIsSomePageRowsSelected()}
+        indeterminate={table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
         nativeButton

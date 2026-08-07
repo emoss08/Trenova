@@ -4,7 +4,7 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { fieldSensitivityChoices } from "@/lib/choices";
 import type { FieldSensitivity, Role } from "@trenova/shared/types/role";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 function SensitivityBadge({ sensitivity }: { sensitivity: FieldSensitivity }) {
   const choice = fieldSensitivityChoices.find((c) => c.value === sensitivity);
@@ -41,10 +41,7 @@ export function getColumns(): ColumnDef<Role>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.description}
-          truncateLength={60}
-        />
+        <DataTableDescription description={row.original.description} truncateLength={60} />
       ),
       meta: {
         label: "Description",
@@ -61,9 +58,7 @@ export function getColumns(): ColumnDef<Role>[] {
     {
       accessorKey: "maxSensitivity",
       header: "Max Sensitivity",
-      cell: ({ row }) => (
-        <SensitivityBadge sensitivity={row.original.maxSensitivity} />
-      ),
+      cell: ({ row }) => <SensitivityBadge sensitivity={row.original.maxSensitivity} />,
       meta: {
         label: "Max Sensitivity",
         apiField: "maxSensitivity",
@@ -80,9 +75,7 @@ export function getColumns(): ColumnDef<Role>[] {
     {
       accessorKey: "createdAt",
       header: "Created At",
-      cell: ({ row }) => (
-        <HoverCardTimestamp timestamp={row.original.createdAt} />
-      ),
+      cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
         apiField: "createdAt",
         filterable: false,

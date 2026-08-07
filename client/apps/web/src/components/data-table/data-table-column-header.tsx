@@ -1,3 +1,4 @@
+import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -8,8 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { cn } from "@trenova/shared/lib/utils";
-import type { SortDirection } from "@trenova/shared/types/data-table";
-import type { Column } from "@tanstack/react-table";
+import type { SortDirection, Column } from "@trenova/shared/types/data-table";
 import {
   ArrowDownIcon,
   ArrowUpDownIcon,
@@ -19,7 +19,7 @@ import {
   PinOffIcon,
 } from "lucide-react";
 
-type DataTableColumnHeaderProps<TData, TValue> = {
+type DataTableColumnHeaderProps<TData extends RowData, TValue> = {
   column: Column<TData, TValue>;
   title: string;
   currentSort?: { field: string; direction: SortDirection }[];
@@ -27,7 +27,7 @@ type DataTableColumnHeaderProps<TData, TValue> = {
   className?: string;
 };
 
-export function DataTableColumnHeader<TData, TValue>({
+export function DataTableColumnHeader<TData extends RowData, TValue>({
   column,
   title,
   currentSort,
@@ -42,10 +42,7 @@ export function DataTableColumnHeader<TData, TValue>({
   const sortDirection = currentSortEntry?.direction;
   const sortIndex = currentSort?.findIndex((s) => s.field === apiField);
   const showSortIndex =
-    currentSort &&
-    currentSort.length > 1 &&
-    sortIndex !== undefined &&
-    sortIndex >= 0;
+    currentSort && currentSort.length > 1 && sortIndex !== undefined && sortIndex >= 0;
 
   if (!isSortable) {
     return <div className={cn("flex items-center", className)}>{title}</div>;
@@ -60,11 +57,7 @@ export function DataTableColumnHeader<TData, TValue>({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button
-              variant="ghost"
-              size="sm"
-              className="-ml-3 data-open:bg-accent"
-            >
+            <Button variant="ghost" size="sm" className="-ml-3 data-open:bg-accent">
               <span className="uppercase">{title}</span>
               {showSortIndex && (
                 <span className="ml-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
@@ -84,17 +77,13 @@ export function DataTableColumnHeader<TData, TValue>({
         <DropdownMenuContent align="start">
           <DropdownMenuGroup>
             <DropdownMenuItem
-              startContent={
-                <ArrowUpIcon className="size-3.5 text-muted-foreground/70" />
-              }
+              startContent={<ArrowUpIcon className="size-3.5 text-muted-foreground/70" />}
               title="Asc"
               label="Asc"
               onClick={() => handleSort("asc")}
             />
             <DropdownMenuItem
-              startContent={
-                <ArrowDownIcon className="size-3.5 text-muted-foreground/70" />
-              }
+              startContent={<ArrowDownIcon className="size-3.5 text-muted-foreground/70" />}
               title="Desc"
               label="Desc"
               onClick={() => handleSort("desc")}
@@ -103,9 +92,7 @@ export function DataTableColumnHeader<TData, TValue>({
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  startContent={
-                    <ArrowUpDownIcon className="size-3.5 text-muted-foreground/70" />
-                  }
+                  startContent={<ArrowUpDownIcon className="size-3.5 text-muted-foreground/70" />}
                   title="Clear sort"
                   label="Clear sort"
                   onClick={() => handleSort(null)}
@@ -115,9 +102,9 @@ export function DataTableColumnHeader<TData, TValue>({
             {column.getCanPin() && (
               <>
                 <DropdownMenuSeparator />
-                {column.getIsPinned() !== "left" && (
+                {column.getIsPinned() !== "start" && (
                   <DropdownMenuItem
-                    onClick={() => column.pin("left")}
+                    onClick={() => column.pin("start")}
                     startContent={
                       <PinIcon className="size-3.5 -rotate-45 text-muted-foreground/70" />
                     }
@@ -125,9 +112,9 @@ export function DataTableColumnHeader<TData, TValue>({
                     label="Pin left"
                   />
                 )}
-                {column.getIsPinned() !== "right" && (
+                {column.getIsPinned() !== "end" && (
                   <DropdownMenuItem
-                    onClick={() => column.pin("right")}
+                    onClick={() => column.pin("end")}
                     startContent={
                       <PinIcon className="size-3.5 rotate-45 text-muted-foreground/70" />
                     }
@@ -138,9 +125,7 @@ export function DataTableColumnHeader<TData, TValue>({
                 {column.getIsPinned() && (
                   <DropdownMenuItem
                     onClick={() => column.pin(false)}
-                    startContent={
-                      <PinOffIcon className="size-3.5 text-muted-foreground/70" />
-                    }
+                    startContent={<PinOffIcon className="size-3.5 text-muted-foreground/70" />}
                     title="Unpin"
                     label="Unpin"
                   />
@@ -152,9 +137,7 @@ export function DataTableColumnHeader<TData, TValue>({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => column.toggleVisibility(false)}
-                  startContent={
-                    <EyeOffIcon className="size-3.5 text-muted-foreground/70" />
-                  }
+                  startContent={<EyeOffIcon className="size-3.5 text-muted-foreground/70" />}
                   title="Hide"
                   label="Hide"
                 />

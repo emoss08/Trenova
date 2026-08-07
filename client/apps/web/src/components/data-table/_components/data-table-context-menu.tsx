@@ -1,4 +1,5 @@
 "use no memo";
+import type { RowData } from "@tanstack/react-table";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -9,24 +10,23 @@ import {
   ContextMenuTrigger,
 } from "@trenova/shared/components/ui/context-menu";
 import { useDataTable } from "@/contexts/data-table-context";
-import type { RowAction } from "@trenova/shared/types/data-table";
-import type { Row } from "@tanstack/react-table";
+import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { EyeIcon, PencilIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-interface DataTableContextMenuProps<TData> {
+interface DataTableContextMenuProps<TData extends RowData> {
   children: ReactNode;
   row: Row<TData>;
   actions?: RowAction<TData>[];
 }
 
-type ActionGroup<TData> = {
+type ActionGroup<TData extends RowData> = {
   id: string;
   label?: string;
   actions: RowAction<TData>[];
 };
 
-function groupActions<TData>(actions: RowAction<TData>[]): ActionGroup<TData>[] {
+function groupActions<TData extends RowData>(actions: RowAction<TData>[]): ActionGroup<TData>[] {
   const groups: ActionGroup<TData>[] = [];
   const groupMap = new Map<string, ActionGroup<TData>>();
 
@@ -48,7 +48,7 @@ function groupActions<TData>(actions: RowAction<TData>[]): ActionGroup<TData>[] 
   return groups;
 }
 
-export function DataTableContextMenu<TData>({
+export function DataTableContextMenu<TData extends RowData>({
   children,
   row,
   actions = [],

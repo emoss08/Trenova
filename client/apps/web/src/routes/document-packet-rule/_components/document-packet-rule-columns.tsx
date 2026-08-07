@@ -3,7 +3,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { resourceTypeChoices } from "@/lib/choices";
 import type { DocumentPacketRule } from "@/types/document-packet-rule";
 import type { DocumentType } from "@trenova/shared/types/document-type";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(
   documentTypeMap: Map<string, DocumentType>,
@@ -36,9 +36,7 @@ export function getColumns(
         return docType ? (
           <span className="font-medium">{docType.name}</span>
         ) : (
-          <span className="text-muted-foreground">
-            {row.original.documentTypeId}
-          </span>
+          <span className="text-muted-foreground">{row.original.documentTypeId}</span>
         );
       },
       size: 200,
@@ -107,9 +105,7 @@ export function getColumns(
       accessorKey: "expirationRequired",
       header: "Expiration Req.",
       cell: ({ row }) => (
-        <Badge
-          variant={row.original.expirationRequired ? "warning" : "outline"}
-        >
+        <Badge variant={row.original.expirationRequired ? "warning" : "outline"}>
           {row.original.expirationRequired ? "Yes" : "No"}
         </Badge>
       ),
@@ -145,9 +141,7 @@ export function getColumns(
     {
       accessorKey: "createdAt",
       header: "Created At",
-      cell: ({ row }) => (
-        <HoverCardTimestamp timestamp={row.original.createdAt} />
-      ),
+      cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
         apiField: "createdAt",
         filterable: false,

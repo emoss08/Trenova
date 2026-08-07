@@ -8,7 +8,7 @@ import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { FleetCode } from "@trenova/shared/types/fleet-code";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -76,10 +76,7 @@ export function getColumns(): ColumnDef<FleetCode>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.description}
-          truncateLength={100}
-        />
+        <DataTableDescription description={row.original.description} truncateLength={100} />
       ),
       size: 100,
       minSize: 100,
@@ -115,12 +112,7 @@ export function getColumns(): ColumnDef<FleetCode>[] {
       accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => {
-        return (
-          <HoverCardTimestamp
-            className="shrink-0"
-            timestamp={row.original.createdAt}
-          />
-        );
+        return <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />;
       },
       size: 200,
       minSize: 200,

@@ -9,6 +9,9 @@ import type {
   SingleFilterItem,
   SortDirection,
   SortField,
+  Column,
+  ColumnDef,
+  Row,
 } from "@trenova/shared/types/data-table";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type {
@@ -17,19 +20,11 @@ import type {
   TableConfig,
   TableFormatRule,
 } from "@/types/table-configuration";
-import type { Column, ColumnDef, Row } from "@tanstack/react-table";
+import type { ColumnPinningState, RowData } from "@tanstack/react-table";
 import type { CSSProperties } from "react";
 
 export const FILTER_OPERATORS: Record<FilterVariant, FilterOperator[]> = {
-  text: [
-    "contains",
-    "eq",
-    "ne",
-    "startswith",
-    "endswith",
-    "isnull",
-    "isnotnull",
-  ],
+  text: ["contains", "eq", "ne", "startswith", "endswith", "isnull", "isnotnull"],
   number: ["eq", "ne", "gt", "gte", "lt", "lte", "isnull", "isnotnull"],
   date: [
     "eq",
@@ -84,9 +79,7 @@ export const OPERATORS_WITHOUT_VALUE: FilterOperator[] = [
   "tomorrow",
 ];
 
-export function getOperatorsForVariant(
-  variant: FilterVariant,
-): FilterOperator[] {
+export function getOperatorsForVariant(variant: FilterVariant): FilterOperator[] {
   return FILTER_OPERATORS[variant] || FILTER_OPERATORS.text;
 }
 
@@ -98,9 +91,7 @@ export function getConnectorLabel(connector: FilterConnector): string {
   return CONNECTOR_LABELS[connector] || connector;
 }
 
-export function getDefaultOperatorForVariant(
-  variant: FilterVariant,
-): FilterOperator {
+export function getDefaultOperatorForVariant(variant: FilterVariant): FilterOperator {
   switch (variant) {
     case "text":
       return "contains";
@@ -133,10 +124,7 @@ export function sanitizeFilterValue(value: unknown): unknown {
   return value;
 }
 
-export function isValidFilterValue(
-  operator: FilterOperator,
-  value: unknown,
-): boolean {
+export function isValidFilterValue(operator: FilterOperator, value: unknown): boolean {
   if (!operatorRequiresValue(operator)) {
     return true;
   }
@@ -163,9 +151,7 @@ export function updateSortField(
 
   const existing = currentSort.find((s) => s.field === field);
   if (existing) {
-    return currentSort.map((s) =>
-      s.field === field ? { ...s, direction } : s,
-    );
+    return currentSort.map((s) => (s.field === field ? { ...s, direction } : s));
   }
 
   return [...currentSort, { field, direction }];
@@ -175,9 +161,7 @@ export function generateGroupId(): string {
   return `group-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
-function singleFilterToFieldFilter(
-  filter: SingleFilterItem,
-): FieldFilter | null {
+function singleFilterToFieldFilter(filter: SingleFilterItem): FieldFilter | null {
   if (!isValidFilterValue(filter.operator, filter.value)) return null;
   const value = sanitizeFilterValue(filter.value);
   if (Array.isArray(value) && value.length === 0) return null;
@@ -188,9 +172,7 @@ function singleFilterToFieldFilter(
   };
 }
 
-export function convertFilterItemsToFilterGroups(
-  items: FilterItem[],
-): FilterGroup[] {
+export function convertFilterItemsToFilterGroups(items: FilterItem[]): FilterGroup[] {
   if (items.length === 0) return [];
 
   const groups: FilterGroup[] = [];
@@ -237,7 +219,7 @@ export function convertFilterItemsToFilterGroups(
   return groups;
 }
 
-function resolveColumnFields<TData>(
+function resolveColumnFields<TData extends RowData>(
   field: string,
   columns: ColumnDef<TData>[],
 ): {
@@ -248,14 +230,10 @@ function resolveColumnFields<TData>(
   filterOptions?: SelectOption[];
 } {
   const column = columns.find(
-    (c) =>
-      c.meta?.apiField === field ||
-      ("accessorKey" in c && c.accessorKey === field),
+    (c) => c.meta?.apiField === field || ("accessorKey" in c && c.accessorKey === field),
   );
   const columnField =
-    column && "accessorKey" in column
-      ? String(column.accessorKey)
-      : String(column?.id ?? field);
+    column && "accessorKey" in column ? String(column.accessorKey) : String(column?.id ?? field);
   const apiField = column?.meta?.apiField || field;
   return {
     columnField,
@@ -266,7 +244,7 @@ function resolveColumnFields<TData>(
   };
 }
 
-export function initializeFilterItemsFromFilterGroups<TData>(
+export function initializeFilterItemsFromFilterGroups<TData extends RowData>(
   filterGroups: FilterGroup[],
   columns: ColumnDef<TData>[],
 ): FilterItem[] {
@@ -321,9 +299,7 @@ export function initializeFilterItemsFromFilterGroups<TData>(
   return items;
 }
 
-export function convertFilterItemsToFieldFilters(
-  items: FilterItem[],
-): FieldFilter[] | null {
+export function convertFilterItemsToFieldFilters(items: FilterItem[]): FieldFilter[] | null {
   if (items.some((item) => item.type === "group")) return null;
   return (items as SingleFilterItem[]).map((item) => ({
     field: item.apiField,
@@ -336,31 +312,41 @@ export function columnSizeVar(columnId: string): string {
   return `--col-${columnId.replaceAll(".", "-")}-size`;
 }
 
-export function columnPinOffsetVar(columnId: string, side: "left" | "right"): string {
+export function columnPinOffsetVar(columnId: string, side: "start" | "end"): string {
   return `--col-${columnId.replaceAll(".", "-")}-${side}`;
 }
 
-export function pinnedCellStyle(column: Column<any, unknown>): CSSProperties | undefined {
-  const pinned = column.getIsPinned();
-  if (!pinned) return undefined;
-  return pinned === "left"
-    ? { left: `var(${columnPinOffsetVar(column.id, "left")})` }
-    : { right: `var(${columnPinOffsetVar(column.id, "right")})` };
+export function toColumnPinningState(
+  pinning: TableColumnPinning | undefined | null,
+): ColumnPinningState {
+  return { start: pinning?.left ?? [], end: pinning?.right ?? [] };
 }
 
-export function pinnedCellClass(column: Column<any, unknown>): string | undefined {
+export function fromColumnPinningState(
+  pinning: ColumnPinningState | undefined | null,
+): TableColumnPinning {
+  return { left: pinning?.start ?? [], right: pinning?.end ?? [] };
+}
+
+export function pinnedCellStyle<TData extends RowData>(
+  column: Column<TData>,
+): CSSProperties | undefined {
+  const pinned = column.getIsPinned();
+  if (!pinned) return undefined;
+  return pinned === "start"
+    ? { insetInlineStart: `var(${columnPinOffsetVar(column.id, "start")})` }
+    : { insetInlineEnd: `var(${columnPinOffsetVar(column.id, "end")})` };
+}
+
+export function pinnedCellClass<TData extends RowData>(column: Column<TData>): string | undefined {
   const pinned = column.getIsPinned();
   if (!pinned) return undefined;
   const isBoundary =
-    pinned === "left" ? column.getIsLastColumn("left") : column.getIsFirstColumn("right");
-  if (pinned === "left") {
-    return isBoundary
-      ? "sticky z-10 bg-background shadow-[inset_-1px_0_0_0_var(--border)]"
-      : "sticky z-10 bg-background";
-  }
-  return isBoundary
-    ? "sticky z-10 bg-background shadow-[inset_1px_0_0_0_var(--border)]"
-    : "sticky z-10 bg-background";
+    pinned === "start" ? column.getIsLastColumn("start") : column.getIsFirstColumn("end");
+  if (!isBoundary) return "sticky z-10 bg-background";
+  return pinned === "start"
+    ? "sticky z-10 bg-background shadow-[inset_-1px_0_0_0_var(--border)]"
+    : "sticky z-10 bg-background shadow-[inset_1px_0_0_0_var(--border)]";
 }
 
 function areVisibilityMapsEqual(
@@ -488,9 +474,9 @@ function formatRulePredicate(rule: TableFormatRule): (value: unknown) => boolean
   }
 }
 
-export type CompiledFormatRules<TData> = (row: Row<TData>) => string | undefined;
+export type CompiledFormatRules<TData extends RowData> = (row: Row<TData>) => string | undefined;
 
-export function findColumnIdForField<TData>(
+export function findColumnIdForField<TData extends RowData>(
   field: string,
   leafColumns: Column<TData, unknown>[],
 ): string | null {
@@ -505,7 +491,7 @@ export function findColumnIdForField<TData>(
   return column?.id ?? null;
 }
 
-export function compileFormatRules<TData>(
+export function compileFormatRules<TData extends RowData>(
   rules: TableFormatRule[],
   leafColumns: Column<TData, unknown>[],
 ): CompiledFormatRules<TData> | null {
@@ -539,7 +525,7 @@ export function compileFormatRules<TData>(
   };
 }
 
-export function initializeFilterItemsFromFieldFilters<TData>(
+export function initializeFilterItemsFromFieldFilters<TData extends RowData>(
   fieldFilters: FieldFilter[],
   columns: ColumnDef<TData>[],
 ): FilterItem[] {

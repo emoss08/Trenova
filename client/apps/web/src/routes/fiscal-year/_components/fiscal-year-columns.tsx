@@ -6,7 +6,7 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { fiscalYearStatusChoices } from "@/lib/choices";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { FiscalYear } from "@/types/fiscal-year";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<FiscalYear>[] {
   return [
@@ -14,13 +14,9 @@ export function getColumns(): ColumnDef<FiscalYear>[] {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const choice = fiscalYearStatusChoices.find(
-          (c) => c.value === row.original.status,
-        );
+        const choice = fiscalYearStatusChoices.find((c) => c.value === row.original.status);
         if (!choice) return row.original.status;
-        return (
-          <DataTableColorColumn text={choice.label} color={choice.color} />
-        );
+        return <DataTableColorColumn text={choice.label} color={choice.color} />;
       },
       size: 120,
       minSize: 100,
@@ -92,10 +88,7 @@ export function getColumns(): ColumnDef<FiscalYear>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.description}
-          truncateLength={100}
-        />
+        <DataTableDescription description={row.original.description} truncateLength={100} />
       ),
       size: 400,
       minSize: 300,
@@ -111,9 +104,7 @@ export function getColumns(): ColumnDef<FiscalYear>[] {
     {
       accessorKey: "createdAt",
       header: "Created At",
-      cell: ({ row }) => (
-        <HoverCardTimestamp timestamp={row.original.createdAt} />
-      ),
+      cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
         apiField: "createdAt",
         filterable: false,

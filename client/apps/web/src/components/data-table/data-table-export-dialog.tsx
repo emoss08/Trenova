@@ -19,8 +19,11 @@ import {
   fetchAllRows,
   type ExportScope,
 } from "@/lib/data-table-export";
-import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@trenova/shared/types/data-table";
-import type { Table } from "@tanstack/react-table";
+import type {
+  DataTableGraphQLConfig,
+  DataTableQueryOptions,
+  Table,
+} from "@trenova/shared/types/data-table";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -55,7 +58,7 @@ type DataTableExportDialogProps<TData extends Record<string, any>> = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   resource: string;
-  table: Table<any>;
+  table: Table<TData>;
   graphql: DataTableGraphQLConfig<TData>;
   queryOptions: Omit<DataTableQueryOptions, "cursor">;
   currentPageRows: TData[];

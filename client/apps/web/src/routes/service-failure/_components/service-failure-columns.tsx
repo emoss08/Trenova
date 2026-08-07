@@ -12,7 +12,7 @@ import {
   stopTypeChoices,
 } from "@/lib/choices";
 import type { ServiceFailure } from "@/types/service-failure";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 function statusBadge(value: ServiceFailure["status"]) {
   const choice = findChoice(serviceFailureStatusChoices, value);

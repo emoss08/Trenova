@@ -1,4 +1,5 @@
 "use no memo";
+import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Select,
@@ -28,19 +29,19 @@ import {
 import { listShipmentsGraphQL } from "@/lib/graphql/shipment";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
-import type { FieldFilter, FilterItem, RowAction } from "@trenova/shared/types/data-table";
+import type {
+  FieldFilter,
+  FilterItem,
+  RowAction,
+  ColumnDef,
+  Row,
+  Table as TanstackTable,
+} from "@trenova/shared/types/data-table";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import type { TableConfig } from "@/types/table-configuration";
 import { useQuery } from "@tanstack/react-query";
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  type ColumnDef,
-  type Row,
-  type Table as TanstackTable,
-  type VisibilityState,
-} from "@tanstack/react-table";
+import { flexRender, useTable, type ColumnVisibilityState } from "@tanstack/react-table";
+import { dataTableFeatures } from "@trenova/shared/lib/table-features";
 import { ChartGanttIcon, ChevronLeftIcon, ChevronRightIcon, TableIcon } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ShipmentDocumentUploadContext } from "./expanded-row/document-stack";
@@ -137,7 +138,7 @@ export function CommandCenterTable({
   const setHighlightId = useCommandCenterStore.use.setHighlightId();
 
   const [filterItems, setFilterItems] = useState<FilterItem[]>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>({
     pickupAppointment: false,
     deliveryAppointment: false,
   });
@@ -253,10 +254,10 @@ export function CommandCenterTable({
     viewMode,
   ]);
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data: rows,
     columns,
-    getCoreRowModel: getCoreRowModel(),
     state: { columnVisibility, columnOrder },
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
@@ -288,11 +289,7 @@ export function CommandCenterTable({
   );
 
   useEffect(() => {
-    if (
-      defaultConfig?.tableConfig &&
-      !appliedDefaultRef.current &&
-      filterItems.length === 0
-    ) {
+    if (defaultConfig?.tableConfig && !appliedDefaultRef.current && filterItems.length === 0) {
       appliedDefaultRef.current = true;
       handleApplyConfig(defaultConfig.tableConfig);
     }
@@ -425,7 +422,7 @@ export function CommandCenterTable({
         </Suspense>
         <Suspense fallback={<ToolbarButtonSkeleton />}>
           <DataTableFilterBuilder
-            columns={columns as ColumnDef<unknown>[]}
+            columns={columns as ColumnDef<RowData>[]}
             filters={filterItems}
             onFiltersChange={setFilterItems}
           />
@@ -438,7 +435,7 @@ export function CommandCenterTable({
               {rows.length} of {totalCount} results
             </p>
             <Suspense fallback={<ToolbarButtonSkeleton />}>
-              <DataTableViewOptions table={table as unknown as TanstackTable<unknown>} />
+              <DataTableViewOptions table={table as unknown as TanstackTable<RowData>} />
             </Suspense>
           </>
         )}

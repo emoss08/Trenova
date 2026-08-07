@@ -4,7 +4,7 @@ import { EDIInboundFileStatusBadge } from "@trenova/shared/components/status-bad
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ediConnectionMethodChoices, ediInboundFileStatusChoices } from "@/lib/choices";
 import type { EDIInboundFile } from "@trenova/shared/types/edi";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getInboundFileColumns(): ColumnDef<EDIInboundFile>[] {
   return [
@@ -29,9 +29,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFile>[] {
       cell: ({ row }) => (
         <div className="min-w-0">
           <div className="truncate font-medium">{row.original.fileName}</div>
-          <div className="truncate text-xs text-muted-foreground">
-            {row.original.remotePath}
-          </div>
+          <div className="truncate text-xs text-muted-foreground">{row.original.remotePath}</div>
         </div>
       ),
       size: 280,

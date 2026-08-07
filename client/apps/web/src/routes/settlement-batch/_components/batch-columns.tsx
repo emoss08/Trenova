@@ -2,7 +2,7 @@ import { AmountDisplay } from "@trenova/shared/components/accounting/amount-disp
 import { SettlementBatchStatusBadge } from "@trenova/shared/components/status-badge";
 import type { SettlementBatchRow } from "@/lib/graphql/driver-settlement";
 import type { SettlementBatchStatus } from "@trenova/shared/types/driver-pay";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { TriangleAlert } from "lucide-react";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 

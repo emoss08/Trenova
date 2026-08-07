@@ -17,7 +17,7 @@ import {
 } from "@/lib/graphql/driver-settlement";
 import type { DriverPayEventStatus } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { PauseIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

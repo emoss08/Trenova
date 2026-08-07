@@ -2,7 +2,7 @@ import { DataTableDescription } from "@/components/data-table/_components/data-t
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { EmailProfile } from "@trenova/shared/types/email";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { emailProfileStatusChoices, emailProviderChoices } from "./email-profile-constants";
 
 function StatusBadge({ status }: { status: EmailProfile["status"] }) {

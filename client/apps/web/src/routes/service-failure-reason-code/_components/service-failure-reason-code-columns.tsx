@@ -8,7 +8,7 @@ import {
   serviceFailureReasonCodeAppliesToChoices,
 } from "@/lib/choices";
 import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<ServiceFailureReasonCode>[] {
   return [

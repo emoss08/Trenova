@@ -9,9 +9,11 @@ import {
   columnPinOffsetVar,
   columnSizeVar,
   compileFormatRules,
+  fromColumnPinningState,
   initializeFilterItemsFromFieldFilters,
   initializeFilterItemsFromFilterGroups,
   isTableConfigEqual,
+  toColumnPinningState,
   updateSortField,
 } from "@/lib/data-table";
 import { fetchAllRows } from "@/lib/data-table-export";
@@ -25,6 +27,7 @@ import type {
   SingleFilterItem,
   SortDirection,
   SortField,
+  Row,
 } from "@trenova/shared/types/data-table";
 import type {
   ActiveTableView,
@@ -45,15 +48,8 @@ import {
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { arrayMove, horizontalListSortingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
-import {
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type Row,
-  type RowSelectionState,
-} from "@tanstack/react-table";
+import { useTable, type RowSelectionState } from "@tanstack/react-table";
+import { dataTableFeatures } from "@trenova/shared/lib/table-features";
 import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -391,17 +387,13 @@ export function DataTable<TData extends Record<string, any>>({
       : zeroBasedPageIndex + 1 + (cursorPageInfo?.hasNextPage ? 1 : 0);
 
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+  const table = useTable({
+    features: dataTableFeatures,
     data: currentPageResults || [],
     columns: tableColumns,
     pageCount,
     rowCount,
     manualPagination: true,
-    manualFiltering: true,
     columnResizeMode: "onChange",
     enableColumnPinning: true,
     getRowId: (row) => row.id,
@@ -472,8 +464,7 @@ export function DataTable<TData extends Record<string, any>>({
       setRowSelection(selection);
     } catch (error) {
       toast.error("Selection failed", {
-        description:
-          error instanceof Error ? error.message : "Could not load all matching rows.",
+        description: error instanceof Error ? error.message : "Could not load all matching rows.",
       });
     } finally {
       setIsSelectingAll(false);
@@ -513,10 +504,7 @@ export function DataTable<TData extends Record<string, any>>({
       table.setColumnVisibility(newColumnVisibility);
       table.setColumnOrder(newColumnOrder);
       table.setColumnSizing(newColumnSizing);
-      table.setColumnPinning({
-        left: newColumnPinning.left ?? [],
-        right: newColumnPinning.right ?? [],
-      });
+      table.setColumnPinning(toColumnPinningState(newColumnPinning));
       setDensity(newDensity);
       setFormatRules(newFormatRules);
 
@@ -579,7 +567,7 @@ export function DataTable<TData extends Record<string, any>>({
     columnOrder: liveColumnOrder,
     columnSizing: liveColumnSizing,
     columnPinning: liveColumnPinning,
-  } = table.getState();
+  } = table.state;
 
   const currentConfig = useMemo<TableConfig>(() => {
     const columnVisibility: Record<string, boolean> = {};
@@ -596,10 +584,7 @@ export function DataTable<TData extends Record<string, any>>({
       columnVisibility,
       columnOrder: liveColumnOrder,
       columnSizing: liveColumnSizing,
-      columnPinning: {
-        left: liveColumnPinning.left ?? [],
-        right: liveColumnPinning.right ?? [],
-      },
+      columnPinning: fromColumnPinningState(liveColumnPinning),
       density,
       formatRules,
     };
@@ -673,10 +658,10 @@ export function DataTable<TData extends Record<string, any>>({
     totalSize += size;
 
     const pinned = column.getIsPinned();
-    if (pinned === "left") {
-      columnSizeVars[columnPinOffsetVar(column.id, "left")] = `${column.getStart("left")}px`;
-    } else if (pinned === "right") {
-      columnSizeVars[columnPinOffsetVar(column.id, "right")] = `${column.getAfter("right")}px`;
+    if (pinned === "start") {
+      columnSizeVars[columnPinOffsetVar(column.id, "start")] = `${column.getStart("start")}px`;
+    } else if (pinned === "end") {
+      columnSizeVars[columnPinOffsetVar(column.id, "end")] = `${column.getAfter("end")}px`;
     }
   }
 

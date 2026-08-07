@@ -1,10 +1,9 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { fiscalYearTableGraphQLConfig } from "@/lib/graphql/fiscal-year-table";
 import { AlertDialog } from "@trenova/shared/components/ui/alert-dialog";
-import type { RowAction } from "@trenova/shared/types/data-table";
+import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import type { FiscalYear } from "@/types/fiscal-year";
 import { Resource } from "@trenova/shared/types/permission";
-import type { Row } from "@tanstack/react-table";
 import { LockIcon, PlayIcon, UnlockIcon, XCircleIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -19,17 +18,13 @@ import { FiscalYearPanel } from "./fiscal-year-panel";
 export type FiscalYearAction = "activate" | "close" | "lock" | "unlock";
 
 export default function FiscalYearTable() {
-  const [selectedFiscalYear, setSelectedFiscalYear] =
-    useState<FiscalYear | null>(null);
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState<FiscalYear | null>(null);
   const [yearAction, setYearAction] = useState<FiscalYearAction>("close");
 
-  const handleYearAction = useCallback(
-    (fiscalYear: FiscalYear, action: FiscalYearAction) => {
-      setSelectedFiscalYear(fiscalYear);
-      setYearAction(action);
-    },
-    [],
-  );
+  const handleYearAction = useCallback((fiscalYear: FiscalYear, action: FiscalYearAction) => {
+    setSelectedFiscalYear(fiscalYear);
+    setYearAction(action);
+  }, []);
 
   const columns = useMemo(() => getColumns(), []);
 
@@ -39,8 +34,7 @@ export default function FiscalYearTable() {
         id: "activate",
         label: "Set as Current",
         icon: PlayIcon,
-        onClick: (row: Row<FiscalYear>) =>
-          handleYearAction(row.original, "activate"),
+        onClick: (row: Row<FiscalYear>) => handleYearAction(row.original, "activate"),
         hidden: (row: Row<FiscalYear>) =>
           row.original.isCurrent || row.original.status === "Locked",
       },
@@ -49,24 +43,21 @@ export default function FiscalYearTable() {
         label: "Close Year",
         icon: XCircleIcon,
         variant: "destructive",
-        onClick: (row: Row<FiscalYear>) =>
-          handleYearAction(row.original, "close"),
+        onClick: (row: Row<FiscalYear>) => handleYearAction(row.original, "close"),
         hidden: (row: Row<FiscalYear>) => row.original.status !== "Open",
       },
       {
         id: "lock",
         label: "Lock Year",
         icon: LockIcon,
-        onClick: (row: Row<FiscalYear>) =>
-          handleYearAction(row.original, "lock"),
+        onClick: (row: Row<FiscalYear>) => handleYearAction(row.original, "lock"),
         hidden: (row: Row<FiscalYear>) => row.original.status !== "Closed",
       },
       {
         id: "unlock",
         label: "Unlock Year",
         icon: UnlockIcon,
-        onClick: (row: Row<FiscalYear>) =>
-          handleYearAction(row.original, "unlock"),
+        onClick: (row: Row<FiscalYear>) => handleYearAction(row.original, "unlock"),
         hidden: (row: Row<FiscalYear>) => row.original.status !== "Locked",
       },
     ],

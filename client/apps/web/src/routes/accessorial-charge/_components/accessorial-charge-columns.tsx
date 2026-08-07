@@ -9,7 +9,7 @@ import { formatCurrency } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { AccessorialCharge, RateUnit } from "@trenova/shared/types/accessorial-charge";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
 const rateUnitAbbreviations: Record<RateUnit, string> = {
@@ -36,21 +36,20 @@ function formatAmount(row: AccessorialCharge): string {
 }
 
 function MethodBadge({ method }: { method: AccessorialCharge["method"] }) {
-  const methodAttributes: Record<AccessorialCharge["method"], BadgeAttrProps> =
-    {
-      Flat: {
-        variant: "active",
-        text: "Flat",
-      },
-      PerUnit: {
-        variant: "indigo",
-        text: "Per Unit",
-      },
-      Percentage: {
-        variant: "warning",
-        text: "Percentage",
-      },
-    };
+  const methodAttributes: Record<AccessorialCharge["method"], BadgeAttrProps> = {
+    Flat: {
+      variant: "active",
+      text: "Flat",
+    },
+    PerUnit: {
+      variant: "indigo",
+      text: "Per Unit",
+    },
+    Percentage: {
+      variant: "warning",
+      text: "Percentage",
+    },
+  };
   return (
     <Badge variant={methodAttributes[method].variant} className="max-h-6">
       {methodAttributes[method].text}
@@ -136,10 +135,7 @@ export function getColumns(): ColumnDef<AccessorialCharge>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.description}
-          truncateLength={100}
-        />
+        <DataTableDescription description={row.original.description} truncateLength={100} />
       ),
       size: 400,
       minSize: 400,
@@ -170,12 +166,7 @@ export function getColumns(): ColumnDef<AccessorialCharge>[] {
       accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => {
-        return (
-          <HoverCardTimestamp
-            className="shrink-0"
-            timestamp={row.original.createdAt}
-          />
-        );
+        return <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />;
       },
       size: 200,
       minSize: 200,

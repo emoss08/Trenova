@@ -22,11 +22,10 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Input } from "@trenova/shared/components/ui/input";
 import { apiService } from "@/services/api";
-import type { RowAction } from "@trenova/shared/types/data-table";
+import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { testEmailProfileRequestSchema, type EmailProfile } from "@trenova/shared/types/email";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { Loader2Icon, SendIcon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";

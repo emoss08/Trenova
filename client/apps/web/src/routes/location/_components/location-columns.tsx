@@ -4,7 +4,7 @@ import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { Location } from "@trenova/shared/types/location";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
 function LocationStatusCell({ row }: { row: Location }) {
@@ -54,9 +54,7 @@ export function getColumns(): ColumnDef<Location>[] {
     {
       accessorKey: "code",
       header: "Code",
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.code}</span>
-      ),
+      cell: ({ row }) => <span className="font-medium">{row.original.code}</span>,
       size: 120,
       minSize: 80,
       maxSize: 150,

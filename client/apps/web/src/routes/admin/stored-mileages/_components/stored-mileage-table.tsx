@@ -12,11 +12,10 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { storedMileageTableGraphQLConfig } from "@/lib/graphql/stored-mileage-table";
 import { StoredMileageService } from "@/services/stored-mileage";
-import type { RowAction } from "@trenova/shared/types/data-table";
+import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { StoredMileage } from "@/types/stored-mileage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { Loader2Icon, TrashIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";

@@ -12,7 +12,7 @@ import {
   ediTransactionSetChoices,
 } from "@/lib/choices";
 import type { EDIMessage } from "@trenova/shared/types/edi";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getMessageColumns(): ColumnDef<EDIMessage>[] {
   return [
