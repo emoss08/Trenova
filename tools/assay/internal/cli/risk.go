@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/assay/internal/report"
 	"github.com/emoss08/assay/internal/risk"
+	"github.com/emoss08/assay/internal/ui"
 	"github.com/emoss08/assay/internal/vcs"
 )
 
@@ -119,21 +120,32 @@ func printRiskReport(cmd *cobra.Command, opts *options, analysis risk.Report, wi
 	out := report.NewLines(cmd.OutOrStdout(), opts.useColor())
 
 	if len(analysis.Functions) == 0 {
-		out.Good("no exposed functions: everything churning in the last %d days is covered", windowDays)
+		out.Good("✓ no exposed functions: everything churning in the last %d days is covered", windowDays)
 		printRiskFooter(out, analysis)
 
 		return
 	}
 
+	paint := out.Painter()
 	shown := min(top, len(analysis.Functions))
-	out.Warn("%d exposed functions — churn × uncovered lines, worst first (top %d):",
-		len(analysis.Functions), shown)
+	out.Line("%s %s", paint.Badge(ui.ToneWarn, "RISK"),
+		paint.Warn(fmt.Sprintf("%d exposed functions — churn × uncovered lines, worst first (top %d):",
+			len(analysis.Functions), shown)))
+
+	rows := make([][]string, 0, shown)
 	for _, fn := range analysis.Functions[:shown] {
-		out.Line("  %4d  %s.%s", fn.Score, shortenTail(fn.Package, 40), fn.Function)
-		out.Muted("        %s:%d-%d · %d of %d executable lines uncovered · %d commits touched this file in %d days",
-			fn.File, fn.StartLine, fn.EndLine, fn.UncoveredLines, fn.ExecutableLines,
-			fn.Commits, windowDays)
+		rows = append(rows, []string{
+			fmt.Sprintf("%d", fn.Score),
+			shortenTail(fn.Package, 32) + "." + fn.Function,
+			fmt.Sprintf("%d/%d", fn.UncoveredLines, fn.ExecutableLines),
+			fmt.Sprintf("%d", fn.Commits),
+			fmt.Sprintf("%s:%d", fn.File, fn.StartLine),
+		})
 	}
+	out.Line("%s", paint.Table(
+		[]string{"score", "function", "uncovered", "commits", "location"},
+		rows,
+	))
 	if len(analysis.Functions) > shown {
 		out.Muted("… and %d more (--top %d to widen, --json for all)",
 			len(analysis.Functions)-shown, len(analysis.Functions))

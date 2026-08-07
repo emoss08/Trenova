@@ -83,6 +83,22 @@ windows. Prefer it over `go build -o <path>`: a hand-written output path
 without `.exe` produces a file Windows will not execute, so typing `assay`
 opens the file in your editor instead of running the tool.
 
+**Minimal build.** The terminal styling (progress bars, badges, bordered
+tables) renders through [Lip Gloss](https://github.com/charmbracelet/lipgloss).
+It costs nothing measurable at runtime — styles are pure string transforms
+applied at print time, and assay never interrogates the terminal with escape
+round-trips — but if you want the styling engine out of the binary entirely:
+
+```bash
+go install -tags assay_plain ./cmd/assay
+```
+
+The plain build keeps the same colors, bars and alignment with stdlib-only
+ANSI rendering and drops roughly 1.2 MB of binary (measured: 11.6 MB → 10.4 MB,
+startup ~6 ms → ~5 ms). Both builds honor `--no-color`, `NO_COLOR`, and
+disable all decoration when output is not a terminal, so CI logs and piped
+output are always plain text.
+
 A source build reports `assay devel-<commit>` from `assay version`, so a bug
 report always says exactly which code produced it; release binaries report
 their tag.

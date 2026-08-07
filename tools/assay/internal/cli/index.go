@@ -87,7 +87,7 @@ func newIndexCommand(opts *options) *cobra.Command {
 				Jobs:        jobs,
 				Timeout:     timeout,
 				Packages:    targets,
-				Progress:    newProgress(cmd.ErrOrStderr(), quiet),
+				Progress:    newProgress(cmd.ErrOrStderr(), quiet, opts.painter()),
 				Legacy:      legacy,
 			})
 			if err != nil {
