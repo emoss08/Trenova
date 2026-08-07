@@ -1,0 +1,89 @@
+name: Assay Index
+
+# Keeps the shared coverage index warm. Every push to a protected branch
+# refreshes the index at that commit and saves it to the actions cache, where
+# pull-request runs of the Assay Dogfood workflow restore it read-only.
+#
+# The index validates per package: a record built here stays usable for any
+# later merge-base as long as that package (and its dependency closure) is
+# unchanged, and index.Build reuses fingerprint-valid records, so this job is
+# incremental — a typical push re-collects only the packages the push touched.
+#
+# assay is built with -buildvcs=false so its cache identity comes from the
+# binary's content instead of the commit it was built at; a vcs-stamped build
+# would invalidate the whole index on every push.
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+    paths:
+      - "services/**"
+      - "shared/**"
+      - "go.work"
+      - "go.work.sum"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  ASSAY_CACHE: /home/runner/.cache/assay
+
+jobs:
+  index:
+    name: Refresh coverage index
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-key: assay
+
+      - name: Restore previous index
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/assay
+          key: assay-index-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            assay-index-${{ runner.os }}-
+
+      # assay lives in its own repository now; a pinned release version keeps
+      # runs reproducible, and module builds carry no vcs stamp, so the cache
+      # identity is stable across runs of the same version.
+      - name: Install assay
+        run: |
+          GOBIN=/tmp go install github.com/emoss08/assay/cmd/assay@v0.7.0
+
+      # The setup-go action's dependency download can rewrite go.work.sum in
+      # the checkout; assay's dirty-tree guard would then refuse to index at
+      # all. Restore the tree to exactly what the commit describes.
+      - name: Restore pristine tree
+        run: git restore .
+
+      # Package failures (environment-dependent tests, for example) leave those
+      # packages without records — selection falls back to whole-package runs
+      # for them, which is safe. They must not stop the cache from saving, but
+      # the outcome must be visible, so the stats always print.
+      - name: Build coverage index
+        run: |
+          /tmp/assay index --no-color \
+            || echo "::warning::assay index did not complete cleanly; selection falls back to whole packages where records are missing"
+
+      - name: Save index
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: /home/runner/.cache/assay
+          key: assay-index-${{ runner.os }}-${{ github.sha }}
