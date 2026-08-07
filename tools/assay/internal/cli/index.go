@@ -28,9 +28,9 @@ func newIndexCommand(opts *options) *cobra.Command {
 		Use:   "index",
 		Short: "Build the line-to-test coverage index",
 		Long: "index records which source lines each test executes, running every test in a\n" +
-			"package inside one coverage-instrumented process. The result is pinned to the\n" +
-			"current commit: narrowing only engages when a selection's base commit matches\n" +
-			"the commit the index was built at.\n\n" +
+			"package inside one coverage-instrumented process. Records validate per package\n" +
+			"by content: narrowing engages for any selection whose base tree matches the\n" +
+			"indexed content of that package and its dependencies, even across commits.\n\n" +
 			"Build it on your default branch, or on the commit you will diff against.",
 		Args: cobra.NoArgs,
 		Example: "  assay index\n" +

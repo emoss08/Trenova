@@ -167,23 +167,37 @@ attributed to that test's window in single-process mode, where fresh processes
 attributed it to every test. Package-level `init` and `var` initialisers are
 unaffected: their window is merged into every test.
 
-### The index is pinned to a commit
+### The index is pinned to content
 
-An index describes one tree. A diff has two sides, and the index's line numbers
-only mean anything in the coordinates of the tree it was built from — so
-narrowing engages **only when a record's commit equals the selection's base
-commit**, and looks up base-side line numbers. Anything else runs in full.
+An index describes one tree, and its line numbers only mean anything in the
+coordinates of the tree it was built from. Rather than demanding an exact
+commit match, each record is validated **by content**: narrowing engages for a
+package when the selection's base tree has byte-identical digests for that
+package's files, its dependency closure, the module files, and the same
+toolchain — which is exactly the condition under which the record's line
+coordinates are still correct. A record built at one commit keeps serving
+later merge-bases until something it depends on actually changes; a package
+whose content moved falls back to a full run.
 
 In practice:
 
 - **Locally**: `assay index` at a clean `HEAD`, then edit. `assay run` diffs
   against `HEAD`, which is what the index describes, so narrowing engages.
-- **In CI**: index on the base branch and cache it, or index the merge-base
-  commit in the job. `assay select --since "$BASE"` then matches.
+- **In CI**: refresh the index on pushes to the base branch and cache it
+  (`assay index` reuses fingerprint-valid records, so the refresh only
+  re-collects what the push changed). PR jobs restore the cache and
+  `assay select --since "$BASE"` narrows every package whose content still
+  matches the merge-base. See `.github/workflows/assay-index.yml` and
+  `assay-select.yml` in this repository for the working pair.
 
-`assay index` refuses to run on a dirty tree, because the records would claim to
-describe `HEAD` while actually describing something else. `--allow-dirty` builds
-them anyway and marks them unusable for narrowing.
+Build assay with `-buildvcs=false` in CI: cache identity comes from the
+binary's content, so two runs that compile the same assay source trust each
+other's records, while a vcs-stamped build would change identity on every
+commit and reject the entire cache.
+
+`assay index` refuses to run on a dirty tree, because the records would claim
+to describe `HEAD` while actually describing something else. `--allow-dirty`
+builds them anyway and marks them unusable for narrowing.
 
 ### What narrowing refuses to do
 
@@ -207,7 +221,8 @@ And per package:
 
 | Condition | Behaviour |
 |---|---|
-| No index record, or one from a different commit | Run in full |
+| No index record whose content matches the base tree | Run in full |
+| Record built from a dirty tree | Run in full |
 | Record degraded (a coverage path could not be resolved) | Run in full |
 | A test in the record but not attributable — skipped, panicked, no profile | Always selected |
 | Reached by any change with no line attribution | Run in full |

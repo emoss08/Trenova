@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"runtime/debug"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -176,17 +175,37 @@ func BuildIdentity() string {
 	return identity
 }
 
-func executableIdentity() string {
-	path, err := os.Executable()
-	if err != nil {
-		return ""
-	}
-	info, err := os.Stat(path)
-	if err != nil {
-		return ""
-	}
+var (
+	exeIdentityOnce sync.Once
+	exeIdentity     string
+)
 
-	return " exe=" + strconv.FormatInt(info.Size(), 10) + ":" + strconv.FormatInt(info.ModTime().UnixNano(), 10)
+// executableIdentity distinguishes source builds that carry no usable version
+// metadata. It hashes the binary's content: rebuilds that produce an identical
+// binary keep their cache entries valid, while any real change to the tool
+// invalidates them. A size+mtime heuristic would churn the identity on every
+// rebuild even when nothing changed, which defeats index reuse across CI runs
+// that compile assay from source.
+func executableIdentity() string {
+	exeIdentityOnce.Do(func() {
+		path, err := os.Executable()
+		if err != nil {
+			return
+		}
+		file, err := os.Open(path)
+		if err != nil {
+			return
+		}
+		defer file.Close()
+
+		h := blake3.New()
+		if _, err := io.Copy(h, file); err != nil {
+			return
+		}
+		exeIdentity = " exe=" + hex.EncodeToString(h.Sum(nil)[:16])
+	})
+
+	return exeIdentity
 }
 
 func writeField(h io.Writer, value string) {

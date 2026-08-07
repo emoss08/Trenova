@@ -68,6 +68,41 @@ func (h narrowHarness) narrow(t *testing.T, changes []vcs.Change) selection.Narr
 	})
 }
 
+func (h narrowHarness) narrowWithIndexCommit(
+	t *testing.T,
+	changes []vcs.Change,
+	commit string,
+) selection.Narrowed {
+	t.Helper()
+
+	store, err := cache.NewStore(t.TempDir())
+	require.NoError(t, err)
+
+	_, err = index.Build(t.Context(), index.Options{
+		Root:        h.root,
+		Commit:      commit,
+		Graph:       h.graph,
+		TreeDigests: testfixture.Digests(t, h.root),
+		Store:       store,
+		Env:         testfixture.Env(),
+		Jobs:        2,
+	})
+	require.NoError(t, err)
+
+	loader := index.NewLoader(
+		store,
+		index.NewFingerprinter(h.graph, testfixture.Digests(t, h.root), nil),
+	)
+	result := selection.Select(selection.Options{Graph: h.graph, Changes: changes})
+
+	return selection.Narrow(result, selection.NarrowOptions{
+		Graph:      h.graph,
+		Loader:     loader,
+		Changes:    changes,
+		BaseCommit: baseCommit,
+	})
+}
+
 func (h narrowHarness) calcChange(line int) vcs.Change {
 	return vcs.Change{
 		Path:      filepath.Join(h.root, "calc", "calc.go"),
@@ -158,7 +193,7 @@ func TestNarrowFallsBackOnNonGoFile(t *testing.T) {
 		"coverage tracks Go lines only")
 }
 
-func TestNarrowFallsBackWhenIndexCommitDiffers(t *testing.T) {
+func TestNarrowSurvivesIndexFromAnotherCommit(t *testing.T) {
 	h := newNarrowHarness(t)
 	changes := []vcs.Change{h.calcChange(testfixture.CalcAddBodyLine)}
 
@@ -172,8 +207,23 @@ func TestNarrowFallsBackWhenIndexCommitDiffers(t *testing.T) {
 		})
 
 	plan := planFor(t, got, testfixture.Module+"/calc")
-	assert.Contains(t, plan.FullReason, "index was built at",
-		"an index from a different commit has stale line numbers")
+	assert.Empty(t, plan.FullReason,
+		"the fingerprint lookup already proved the record content-identical to the "+
+			"base tree, so a different build commit must not force a full run — a CI "+
+			"index built at the branch tip has to serve merge-bases behind it")
+	assert.NotEmpty(t, plan.Tests)
+}
+
+func TestNarrowRejectsDirtyTreeRecords(t *testing.T) {
+	h := newNarrowHarness(t)
+	changes := []vcs.Change{h.calcChange(testfixture.CalcAddBodyLine)}
+
+	got := h.narrowWithIndexCommit(t, changes, "")
+
+	plan := planFor(t, got, testfixture.Module+"/calc")
+	assert.Contains(t, plan.FullReason, "dirty tree",
+		"a dirty-tree record's fingerprint describes HEAD while its coverage "+
+			"describes uncommitted edits; it must never narrow")
 }
 
 func TestNarrowFallsBackWithoutBaseCommit(t *testing.T) {

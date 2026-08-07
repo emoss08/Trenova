@@ -175,6 +175,18 @@ func TestBuildIdentityIsNonEmptyAndPinsDevBuilds(t *testing.T) {
 		"a dev build has no release version, so the executable itself must pin the key")
 }
 
+func TestExecutableIdentityIsContentDerivedAndStable(t *testing.T) {
+	first := executableIdentity()
+	second := executableIdentity()
+
+	require.NotEmpty(t, first)
+	assert.Equal(t, first, second)
+	assert.Regexp(t, `^ exe=[0-9a-f]{32}$`, first,
+		"the identity must come from the binary's content, not its size or mtime — "+
+			"a CI rebuild of identical source has a fresh mtime but must keep cached "+
+			"index records valid")
+}
+
 func TestScanExposesPerFileDigests(t *testing.T) {
 	root := writeTree(t, baseTree())
 
