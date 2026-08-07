@@ -69,7 +69,7 @@
     "nanoid": "^5.1.16",
     "nuqs": "^2.9.0",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^6.1.200",
+    "pdfjs-dist": "^6.2.108",
     "react": "^19.2.7",
     "react-day-picker": "^10.0.1",
     "react-diff-viewer-continued": "^4.2.2",
