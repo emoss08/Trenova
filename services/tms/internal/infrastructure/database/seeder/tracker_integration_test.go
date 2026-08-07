@@ -164,7 +164,7 @@ func TestTracker_RecordFailure_Integration(t *testing.T) {
 	assert.Equal(t, seedErr.Error(), record.Error)
 }
 
-func TestTracker_RecordFailure_OverwritesSuccess_Integration(t *testing.T) {
+func TestTracker_RecordFailure_PreservesSuccess_Integration(t *testing.T) {
 	testutil.RequireIntegration(t)
 
 	tc, db := testutil.SetupTestDB(t)
@@ -188,7 +188,16 @@ func TestTracker_RecordFailure_OverwritesSuccess_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	applied, _ = tracker.IsApplied(tc.Ctx, seed, common.EnvDevelopment)
-	assert.False(t, applied, "seed should not be applied after failure")
+	assert.True(t, applied, "a failed re-run must not demote an applied seed")
+
+	var record SeedRecord
+	err = db.NewSelect().
+		Model(&record).
+		Where("name = ?", "FlakySeed").
+		Scan(tc.Ctx)
+	require.NoError(t, err)
+	assert.Equal(t, SeedStatusActive, record.Status)
+	assert.Equal(t, seedErr.Error(), record.Error, "the failure is recorded without demoting the seed")
 }
 
 func TestTracker_GetStatus_Integration(t *testing.T) {

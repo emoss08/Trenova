@@ -172,8 +172,8 @@ func (t *Tracker) RecordFailure(
 		Model(record).
 		On("CONFLICT (name, version, environment) DO UPDATE").
 		Set("applied_at = EXCLUDED.applied_at").
-		Set("status = CASE WHEN seed_history.status = 'Active' " +
-			"THEN seed_history.status ELSE EXCLUDED.status END").
+		Set("status = CASE WHEN sh.status = ? THEN sh.status ELSE EXCLUDED.status END",
+			SeedStatusActive).
 		Set("error = EXCLUDED.error").
 		Exec(ctx)
 	if err != nil {
