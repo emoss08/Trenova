@@ -10,10 +10,10 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
 	"github.com/emoss08/assay/internal/cache"
+	"github.com/emoss08/assay/internal/ui"
 	"github.com/emoss08/assay/internal/vcs"
 )
 
@@ -73,7 +73,11 @@ type options struct {
 }
 
 func (o *options) useColor() bool {
-	return !o.noColor && !color.NoColor
+	return !o.noColor && os.Getenv("NO_COLOR") == "" && isTerminal(os.Stdout)
+}
+
+func (o *options) painter() ui.Painter {
+	return ui.New(o.useColor())
 }
 
 func NewRootCommand() *cobra.Command {

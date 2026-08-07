@@ -71,7 +71,15 @@ jobs:
       - name: Race (concurrency-heavy packages)
         run: go test -count=1 -race ./internal/mutate/ ./internal/index/ ./internal/watch/ ./internal/flake/
 
+      # The assay_plain tag swaps the styling engine for a stdlib-only one;
+      # both variants must always build and agree on the ui contract.
+      - name: Plain-build variant
+        run: |
+          go build -tags assay_plain ./...
+          go test -count=1 -tags assay_plain ./internal/ui/ ./internal/cli/ ./internal/report/
+
       - name: Cross-compile
         run: |
           GOOS=windows go build ./...
+          GOOS=windows go build -tags assay_plain ./...
           GOOS=darwin go build ./...

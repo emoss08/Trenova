@@ -183,7 +183,7 @@ func runCycle(
 	case failed == 0:
 		lines.Muted("nothing executed · %s", total.Round(time.Millisecond))
 	default:
-		lines.Warn("✗ %d of %d packages failed · %s", failed, len(results), total.Round(time.Millisecond))
+		lines.Bad("✗ %d of %d packages failed · %s", failed, len(results), total.Round(time.Millisecond))
 	}
 	lines.Line("")
 

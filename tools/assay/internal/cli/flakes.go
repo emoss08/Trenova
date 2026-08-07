@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/assay/internal/overlay"
 	"github.com/emoss08/assay/internal/proc"
 	"github.com/emoss08/assay/internal/report"
+	"github.com/emoss08/assay/internal/ui"
 )
 
 func newFlakesCommand(opts *options) *cobra.Command {
@@ -117,7 +118,7 @@ func runFlakes(cmd *cobra.Command, opts *options, req flakesRequest) error {
 	out := report.NewLines(cmd.OutOrStdout(), opts.useColor())
 
 	if len(flakes) == 0 {
-		out.Good("no flaky tests detected across %d recorded verdicts", len(observations))
+		out.Good("✓ no flaky tests detected across %d recorded verdicts", len(observations))
 		if len(observations) == 0 {
 			out.Muted("evidence accumulates from watch sessions and mutation preflights; " +
 				"or generate it now: assay flakes --hunt --packages <pkg>")
@@ -126,13 +127,15 @@ func runFlakes(cmd *cobra.Command, opts *options, req flakesRequest) error {
 		return nil
 	}
 
-	out.Warn("%d flaky tests:", len(flakes))
+	paint := out.Painter()
+	out.Line("%s %s", paint.Badge(ui.ToneWarn, "FLAKY"),
+		paint.Warn(fmt.Sprintf("%d flaky tests:", len(flakes))))
 	for _, f := range flakes {
 		marker := ""
 		if quarantine.Contains(f.Package, f.Test) {
-			marker = "  [quarantined]"
+			marker = "  " + paint.Badge(ui.ToneMuted, "QUARANTINED")
 		}
-		out.Line("  %s.%s%s", f.Package, f.Test, marker)
+		out.Line("  %s.%s%s", f.Package, paint.Bold(f.Test), marker)
 		out.Muted("      %d fails / %d passes at identical code · seen via %s · last %s",
 			f.Fails(), f.Passes(), strings.Join(flakeSources(f), ", "),
 			f.LastSeen().Format("2006-01-02 15:04"))

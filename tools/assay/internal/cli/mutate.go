@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/assay/internal/index"
 	"github.com/emoss08/assay/internal/mutate"
 	"github.com/emoss08/assay/internal/report"
+	"github.com/emoss08/assay/internal/ui"
 	"github.com/emoss08/assay/internal/vcs"
 )
 
@@ -145,7 +146,7 @@ func runMutate(cmd *cobra.Command, opts *options, flags *mutateFlags) error {
 		mutants = mutate.Exclude(mutants, preflight.Failing)
 	}
 
-	execOpts.Progress = newProgress(cmd.ErrOrStderr(), flags.quiet)
+	execOpts.Progress = newProgress(cmd.ErrOrStderr(), flags.quiet, opts.painter())
 
 	results, err := mutate.Execute(ctx, mutants, execOpts)
 	if err != nil {
@@ -403,20 +404,23 @@ func printMutationSummary(
 	}
 
 	if len(score.NewSurvivors) == 0 {
-		out.Good("no new surviving mutants")
+		out.Good("✓ no new surviving mutants")
 
 		return
 	}
 
+	paint := out.Painter()
 	groups := mutate.GroupSurvivors(score.NewSurvivors)
-	out.Warn("%d new surviving mutants in %d %s — worst first:",
-		len(score.NewSurvivors), len(groups), pluralise(len(groups), "function", "functions"))
+	out.Line("%s %s", paint.Badge(ui.ToneBad, "SURVIVED"),
+		paint.Warn(fmt.Sprintf("%d new surviving mutants in %d %s — worst first:",
+			len(score.NewSurvivors), len(groups), pluralise(len(groups), "function", "functions"))))
 	for _, group := range groups {
-		out.Line("  %s — %d %s:", groupHeading(group),
+		out.Line("  %s — %d %s:", paint.Bold(groupHeading(group)),
 			len(group.Survivors), pluralise(len(group.Survivors), "survivor", "survivors"))
 		for _, r := range group.Survivors {
-			out.Line("    %s  %s  %s -> %s  (%d tests ran)",
-				r.Mutant.ID, r.Mutant.Location(), r.Mutant.Original, r.Mutant.Replacement, r.Tests)
+			out.Line("    %s  %s  %s %s %s  %s", r.Mutant.ID, r.Mutant.Location(),
+				r.Mutant.Original, paint.Muted("->"), paint.Accent(r.Mutant.Replacement),
+				paint.Mutedf("(%d tests ran)", r.Tests))
 			if r.Advice != nil {
 				out.Muted("        → extend %s: %s", adviceTarget(r), r.Advice.Prescription)
 			}

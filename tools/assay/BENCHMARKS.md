@@ -406,6 +406,20 @@ Synthetic graphs, fan-in 5, half the packages carrying tests:
 Attribution is flat in package count because directory matching short-circuits on
 the longest prefix.
 
+## Styling cost (M14)
+
+The terminal styling layer (Lip Gloss v2) is applied at print time only and
+never queries the terminal, so its cost is confined to binary size:
+
+| Build | Binary | `assay version` startup |
+|---|---|---|
+| default (charm styling) | 11.6 MB | ~6 ms |
+| `-tags assay_plain` | 10.4 MB | ~5 ms |
+
+Startup was averaged over 20 invocations on the Trenova dev container; the
+1 ms delta is within run-to-run noise. Progress-bar redraws are throttled to
+one per 50 ms, so callback frequency never affects collection throughput.
+
 ## Reproducing
 
 ```bash

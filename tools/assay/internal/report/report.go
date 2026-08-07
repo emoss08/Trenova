@@ -7,9 +7,8 @@ import (
 	"path"
 	"sort"
 
-	"github.com/fatih/color"
-
 	"github.com/emoss08/assay/internal/selection"
+	"github.com/emoss08/assay/internal/ui"
 )
 
 type SelectedPackage struct {
@@ -125,27 +124,24 @@ type Printer struct {
 	mode     map[string]func(...any) string
 }
 
-func NewPrinter(out io.Writer, useColor bool) *Printer {
-	tint := func(attrs ...color.Attribute) func(...any) string {
-		c := color.New(attrs...)
-		if useColor {
-			c.EnableColor()
-		} else {
-			c.DisableColor()
-		}
-
-		return c.SprintFunc()
+func sprintWith(paint func(string) string) func(...any) string {
+	return func(args ...any) string {
+		return paint(fmt.Sprint(args...))
 	}
+}
+
+func NewPrinter(out io.Writer, useColor bool) *Printer {
+	paint := ui.New(useColor)
 
 	return &Printer{
 		out:      out,
-		warn:     tint(color.FgYellow),
-		muted:    tint(color.Faint),
-		emphasis: tint(color.Bold),
+		warn:     sprintWith(paint.Warn),
+		muted:    sprintWith(paint.Muted),
+		emphasis: sprintWith(paint.Bold),
 		mode: map[string]func(...any) string{
-			"narrowed": tint(color.FgCyan),
-			"full":     tint(color.FgYellow),
-			"dropped":  tint(color.Faint),
+			"narrowed": sprintWith(paint.Accent),
+			"full":     sprintWith(paint.Warn),
+			"dropped":  sprintWith(paint.Muted),
 		},
 	}
 }
