@@ -1,0 +1,77 @@
+name: Assay CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+      - "claude/**"
+    paths:
+      - "tools/assay/**"
+      - ".github/workflows/assay-ci.yml"
+      - ".github/actions/setup-go/**"
+  pull_request:
+    branches:
+      - master
+      - main
+      - develop
+    paths:
+      - "tools/assay/**"
+      - ".github/workflows/assay-ci.yml"
+      - ".github/actions/setup-go/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: tools/assay
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-key: assay
+
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "gofmt needed on:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
+
+      # The mutation and index suites compile test binaries and spawn nested
+      # processes; they are the product under test, not incidental slowness.
+      - name: Test
+        run: go test -count=1 ./...
+
+      - name: Race (concurrency-heavy packages)
+        run: go test -count=1 -race ./internal/mutate/ ./internal/index/ ./internal/watch/ ./internal/flake/
+
+      - name: Cross-compile
+        run: |
+          GOOS=windows go build ./...
+          GOOS=darwin go build ./...

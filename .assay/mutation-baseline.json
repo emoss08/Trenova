@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "survivors": [
+    {
+      "id": "0d884558c32c54b9fc79fb8d",
+      "package": "github.com/emoss08/assay/internal/cover",
+      "function": "ClassifyFile",
+      "kind": "branch",
+      "note": "equivalent in effect: same as ExecutableRanges - the read error is masked by the parse error that follows"
+    },
+    {
+      "id": "2a4e2b85842d9f1c4c88c395",
+      "package": "github.com/emoss08/assay/internal/cover",
+      "function": "mergeBlocks",
+      "kind": "boundary",
+      "note": "equivalent mutant: >= widens the assignment to the case where the value is already equal, which is a no-op"
+    },
+    {
+      "id": "31916229ae9b0d647ade53f6",
+      "package": "github.com/emoss08/assay/internal/cover",
+      "function": "functionBodyRanges",
+      "kind": "branch",
+      "note": "equivalent mutant: never skipping a one-line body yields Block{open+1, end-1} with start > end, and Contains is false for every line"
+    },
+    {
+      "id": "3cdd135aa6780d4c885dba80",
+      "package": "github.com/emoss08/assay/internal/cover",
+      "function": "mergeBlocks",
+      "kind": "branch",
+      "note": "equivalent mutant: losing the EndLine tiebreak changes only the order of blocks sharing a StartLine, and the merge that follows is order-insensitive for them"
+    },
+    {
+      "id": "7ef0bc0acdffc346c324c14e",
+      "package": "github.com/emoss08/assay/internal/cover",
+      "function": "mergeBlocks",
+      "kind": "boundary",
+      "note": "equivalent mutant: a non-strict comparator still sorts these inputs into an order the merge collapses identically"
+    },
+    {
+      "id": "97a702d06cf40813272bd15a",
+      "package": "github.com/emoss08/assay/internal/cover",
+      "function": "ExecutableRanges",
+      "kind": "branch",
+      "note": "equivalent in effect: skipping the read error lets an empty source reach the parser, which fails anyway, so no assertion short of matching the error text can distinguish the two"
+    },
+    {
+      "id": "e66cc79b7dbf171dab77176f",
+      "package": "github.com/emoss08/assay/internal/cover",
+      "function": "functionBodyRanges",
+      "kind": "arithmetic",
+      "note": "equivalent mutant: end+open < 2 is never true for real positions, and the guard it bypasses only produces an inverted range whose Contains is always false"
+    }
+  ]
+}
