@@ -71,6 +71,13 @@ jobs:
         working-directory: tools/assay
         run: go build -trimpath -buildvcs=false -o /tmp/assay ./cmd/assay
 
+      # The setup-go action's dependency download can rewrite go.work.sum in
+      # the checkout; a modified module file is a blocking change that would
+      # degrade narrowing. Restore the tree to exactly what the commit
+      # describes before selecting.
+      - name: Restore pristine tree
+        run: git restore .
+
       - name: Select affected tests
         run: |
           {
