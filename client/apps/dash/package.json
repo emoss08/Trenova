@@ -15,28 +15,28 @@
   "dependencies": {
     "@trenova/graphql": "workspace:*",
     "@trenova/shared": "workspace:*",
-    "@tailwindcss/vite": "^4.3.2",
-    "@tanstack/react-query": "^5.101.2",
-    "lucide-react": "^1.24.0",
-    "motion": "^12.42.2",
-    "react": "^19.2.7",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/react-query": "^5.101.4",
+    "lucide-react": "^1.30.0",
+    "motion": "^13.0.0",
+    "react": "^19.2.8",
     "react-dom": "^19.2.7",
-    "react-router": "^8.2.0",
+    "react-router": "^8.3.0",
     "sonner": "^2.0.7",
-    "tailwindcss": "^4.3.2"
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@trenova/config": "workspace:*",
-    "@types/node": "^26.1.1",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.3",
-    "happy-dom": "^20.10.6",
-    "oxlint": "^1.73.0",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "happy-dom": "^20.11.2",
+    "oxlint": "^1.77.0",
     "typescript": "~7.0.2",
-    "vite": "^8.1.4",
+    "vite": "^8.2.1",
     "vite-plugin-compression2": "^2.5.3",
     "vitest": "^4.1.10",
-    "wrangler": "^4.110.0"
+    "wrangler": "^4.120.0"
   }
 }
