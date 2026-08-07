@@ -6,5 +6,4 @@ use (
 	./services/samsara-sim
 	./services/tms
 	./shared
-	./tools/assay
 )

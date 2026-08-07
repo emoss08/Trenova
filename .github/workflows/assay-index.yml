@@ -22,7 +22,6 @@ on:
     paths:
       - "services/**"
       - "shared/**"
-      - "tools/**"
       - "go.work"
       - "go.work.sum"
   workflow_dispatch:
@@ -60,9 +59,12 @@ jobs:
           restore-keys: |
             assay-index-${{ runner.os }}-
 
-      - name: Build assay
-        working-directory: tools/assay
-        run: go build -trimpath -buildvcs=false -o /tmp/assay ./cmd/assay
+      # assay lives in its own repository now; a pinned release version keeps
+      # runs reproducible, and module builds carry no vcs stamp, so the cache
+      # identity is stable across runs of the same version.
+      - name: Install assay
+        run: |
+          GOBIN=/tmp go install github.com/emoss08/assay/cmd/assay@v0.7.0
 
       # The setup-go action's dependency download can rewrite go.work.sum in
       # the checkout; assay's dirty-tree guard would then refuse to index at
