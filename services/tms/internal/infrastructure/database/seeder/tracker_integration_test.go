@@ -164,10 +164,6 @@ func TestTracker_RecordFailure_Integration(t *testing.T) {
 	assert.Equal(t, seedErr.Error(), record.Error)
 }
 
-// A seed runs in its own transaction, so a failed re-run of an already applied
-// seed changed nothing: the recorded failure must not demote the successful
-// application, or the next run would apply the seed a second time on top of the
-// data it already created. The failure itself is still recorded on the row.
 func TestTracker_RecordFailure_PreservesSuccess_Integration(t *testing.T) {
 	testutil.RequireIntegration(t)
 
