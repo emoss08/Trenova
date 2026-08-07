@@ -24,6 +24,10 @@ show you: the line runs under test, but nothing asserts on what it does.
 reports tests observed both passing and failing at the same code state, hunts
 them on demand, and quarantines them so they can never judge a mutant.
 
+**Risk map.** `assay risk` joins the index with git history: functions ranked
+by churn × uncovered executable lines — where the next regression is most
+likely to land unseen.
+
 A one-line edit inside a function in this repo selects **3 packages / 20 tests**
 where package-level selection selects 5 whole packages, dropping two packages
 outright. A struct-field edit one line away correctly falls back to all 5 in full.
@@ -430,6 +434,33 @@ them entirely would let a real regression in a flaky test go unseen.
 `assay flakes` exits non-zero when it detects unquarantined flakes, so it can
 gate in CI the same way `--min-msi` does.
 
+## The risk map
+
+Coverage alone ranks nothing useful: untested-but-frozen code is a dormant
+liability, and heavily-tested hot code is fine. `assay risk` ranks by the
+product of the two signals that matter together — how often a file changes,
+and how many of a function's executable lines no attributable test executes:
+
+```
+1 exposed functions — churn × uncovered lines, worst first (top 1):
+     4  example.com/app/pricing.Weak
+        pricing/weak.go:38-45 · 2 of 5 executable lines uncovered · 2 commits touched this file in 90 days
+14 churning functions are fully covered — change landing where tests are watching
+```
+
+The score is `commits × uncovered lines` — no weights, no tuning, both factors
+printed so the ranking can be argued with. Coverage comes from the index,
+unioned across every test package that can reach the analyzed one, so a
+package with no tests of its own is still credited with the coverage its
+importers give it. Churn is per file (`--window-days`, default 90); a rename
+reads as fresh churn at the new path, which is defensible — freshly moved code
+is risk.
+
+The footer keeps the report honest: functions churning under full coverage,
+uncovered functions in untouched files (dormant, lower priority), packages
+analyzed with partial records (risk possibly overstated), and packages the
+index cannot see at all.
+
 ## Flags
 
 | Flag | Meaning |
@@ -450,7 +481,8 @@ gate in CI the same way `--min-msi` does.
 `--allow-dirty` and `--legacy-collection`. `assay mutate` takes `--whole`, `--packages`, `--baseline`,
 `--write-baseline`, `--min-msi`, `--allow-failing-tests`, `--no-schemata`, `--no-harness`, `--jobs`
 and `--json`. `assay flakes` takes `--hunt`, `--runs`, `--packages`, `--timeout`
-and `--quarantine`.
+and `--quarantine`. `assay risk` takes `--window-days`, `--top`, `--packages`
+and `--json`.
 
 ## Commands
 
@@ -463,6 +495,7 @@ and `--quarantine`.
 | `assay mutate` | Change the code deliberately; report which tests failed to notice |
 | `assay verify` | Run what narrowing excluded, to prove it was sound |
 | `assay flakes` | Report tests whose verdicts changed while the code did not |
+| `assay risk` | Rank functions by churn × uncovered executable lines |
 
 Arguments after `--` pass through to `go test`.
 

@@ -50,6 +50,24 @@ func DefinesTestMain(dir string) (bool, error) {
 	return false, nil
 }
 
+// SourceFiles lists dir's production Go files under the current build
+// constraints. Files excluded by GOOS or build tags are excluded here too —
+// reporting a linux binary's windows file as untested code would be noise, not
+// insight.
+func SourceFiles(dir string) ([]string, error) {
+	pkg, err := build.ImportDir(dir, 0)
+	if err != nil {
+		var noGo *build.NoGoError
+		if errors.As(err, &noGo) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	return pkg.GoFiles, nil
+}
+
 // Name resolves the package name a generated file injected into dir must
 // declare. go/build evaluates
 // build constraints, so a //go:build ignore generator declaring package main in

@@ -247,6 +247,19 @@ func (g *Graph) BrokenPackages() []string {
 	return out
 }
 
+// Packages lists every package in the workspace, testable or not. Risk
+// analysis needs the untestable ones too: a package with no tests of its own
+// may still be covered by its importers, or by nothing.
+func (g *Graph) Packages() []string {
+	out := make([]string, 0, len(g.pkgs))
+	for path := range g.pkgs {
+		out = append(out, path)
+	}
+	sort.Strings(out)
+
+	return out
+}
+
 func (g *Graph) TestablePackages() []string {
 	out := make([]string, 0, len(g.pkgs))
 	for path, pkg := range g.pkgs {

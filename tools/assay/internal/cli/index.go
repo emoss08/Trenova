@@ -118,6 +118,10 @@ func newIndexCommand(opts *options) *cobra.Command {
 // segments, so `.../cover` cannot quietly include `.../coverage`, and a package
 // matched by several patterns is indexed once.
 func resolveIndexTargets(s *session, requested []string) ([]string, error) {
+	return resolvePackagePatterns(s, requested, s.graph.TestablePackages())
+}
+
+func resolvePackagePatterns(s *session, requested, candidates []string) ([]string, error) {
 	if len(requested) == 0 {
 		return nil, nil
 	}
@@ -132,7 +136,7 @@ func resolveIndexTargets(s *session, requested []string) ([]string, error) {
 
 	for _, want := range requested {
 		matched := false
-		for _, importPath := range s.graph.TestablePackages() {
+		for _, importPath := range candidates {
 			pkg, ok := s.graph.Package(importPath)
 			if !ok {
 				continue
@@ -148,7 +152,7 @@ func resolveIndexTargets(s *session, requested []string) ([]string, error) {
 			targets = append(targets, importPath)
 		}
 		if !matched {
-			return nil, fmt.Errorf("no testable package matches %q", want)
+			return nil, fmt.Errorf("no package in scope matches %q", want)
 		}
 	}
 	sort.Strings(targets)

@@ -80,6 +80,7 @@ func NewRootCommand() *cobra.Command {
 		newExplainCommand(opts),
 		newVerifyCommand(opts),
 		newFlakesCommand(opts),
+		newRiskCommand(opts),
 		newVersionCommand(),
 	)
 

@@ -150,6 +150,35 @@ func (r *Record) ProfileOf(name string) (lines int, duration time.Duration, ok b
 	return 0, 0, false
 }
 
+// LineCoverage reports, for one file, every covered line and how many distinct
+// attributable tests execute it. Always-run tests carry no ranges, so their
+// unknown attribution can never dress a line as covered.
+func (r *Record) LineCoverage(absPath string) map[int]int {
+	id, ok := r.fileID(absPath)
+	if !ok {
+		return nil
+	}
+
+	testsPerLine := make(map[int]map[int32]struct{})
+	for _, span := range r.perFile[id] {
+		for line := int(span.start); line <= int(span.end); line++ {
+			set := testsPerLine[line]
+			if set == nil {
+				set = make(map[int32]struct{})
+				testsPerLine[line] = set
+			}
+			set[span.test] = struct{}{}
+		}
+	}
+
+	out := make(map[int]int, len(testsPerLine))
+	for line, tests := range testsPerLine {
+		out[line] = len(tests)
+	}
+
+	return out
+}
+
 func (r *Record) TestNames() []string {
 	out := make([]string, 0, len(r.Tests))
 	for _, test := range r.Tests {

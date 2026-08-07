@@ -95,6 +95,70 @@ func statementRanges(fset *token.FileSet, file *ast.File) []Block {
 	return mergeBlocksOrEmpty(blocks)
 }
 
+// Function is a declared function or method and the line span its declaration
+// occupies. Methods carry their receiver type so Get on two types stays
+// distinguishable in a report.
+type Function struct {
+	Name  string
+	Start int
+	End   int
+}
+
+// Functions lists a file's function and method declarations. Function literals
+// are deliberately absent: one assigned at package level belongs to no
+// declaration this can name, and one inside a function body already lies
+// within its enclosing span.
+func Functions(absPath string) ([]Function, error) {
+	source, err := os.ReadFile(absPath)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", absPath, err)
+	}
+
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, absPath, source, parser.SkipObjectResolution)
+	if err != nil {
+		return nil, fmt.Errorf("parse %s: %w", absPath, err)
+	}
+
+	var out []Function
+	for _, decl := range file.Decls {
+		fn, ok := decl.(*ast.FuncDecl)
+		if !ok || fn.Body == nil {
+			continue
+		}
+		out = append(out, Function{
+			Name:  functionDisplayName(fn),
+			Start: fset.Position(fn.Pos()).Line,
+			End:   fset.Position(fn.End()).Line,
+		})
+	}
+
+	return out, nil
+}
+
+func functionDisplayName(fn *ast.FuncDecl) string {
+	if fn.Recv == nil || len(fn.Recv.List) == 0 {
+		return fn.Name.Name
+	}
+
+	return receiverTypeName(fn.Recv.List[0].Type) + "." + fn.Name.Name
+}
+
+func receiverTypeName(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.StarExpr:
+		return receiverTypeName(t.X)
+	case *ast.Ident:
+		return t.Name
+	case *ast.IndexExpr:
+		return receiverTypeName(t.X)
+	case *ast.IndexListExpr:
+		return receiverTypeName(t.X)
+	default:
+		return "?"
+	}
+}
+
 // TestFunction is a top-level Test, Benchmark, Example or Fuzz declaration and
 // the line span it occupies, signature included: an edit anywhere in the
 // declaration affects that test and only that test.
