@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 
 	"github.com/fatih/color"
@@ -16,7 +17,38 @@ import (
 	"github.com/emoss08/assay/internal/vcs"
 )
 
-const Version = "0.5.0-m7"
+// Version is stamped by the release build via -ldflags; a source build
+// reports itself as a development version with the commit it was built from,
+// so a bug report can always say exactly which code produced it.
+var Version = ""
+
+func resolveVersion() string {
+	if Version != "" {
+		return Version
+	}
+
+	revision, modified := "", ""
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range info.Settings {
+			switch setting.Key {
+			case "vcs.revision":
+				revision = setting.Value
+			case "vcs.modified":
+				if setting.Value == "true" {
+					modified = "-dirty"
+				}
+			}
+		}
+	}
+	if len(revision) > 12 {
+		revision = revision[:12]
+	}
+	if revision == "" {
+		return "devel"
+	}
+
+	return "devel-" + revision + modified
+}
 
 type ExitError struct {
 	Code int
@@ -93,7 +125,7 @@ func newVersionCommand() *cobra.Command {
 		Short: "Print the assay version",
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, _ []string) {
-			cmd.Println("assay " + Version)
+			cmd.Println("assay " + resolveVersion())
 		},
 	}
 }

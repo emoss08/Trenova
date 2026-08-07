@@ -1,0 +1,67 @@
+name: Assay Dogfood
+
+# Dogfooding, deliberately non-blocking: on every Go PR, assay reports which
+# test packages the diff can actually reach. The selection lands in the job
+# summary where reviewers can sanity-check it against their intuition; once it
+# has earned trust, `assay run` can replace the run-everything test job.
+#
+# No coverage index exists in CI, so selection is package-precise, not
+# test-precise — that is the honest baseline mode, never an unsound one.
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+      - develop
+    paths:
+      - "services/**"
+      - "shared/**"
+      - "tools/**"
+      - "go.work"
+      - "go.work.sum"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  select:
+    name: Report test selection
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # A defect in assay must never block product work; failures here are
+    # visible in the summary, not in the merge box.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Selection diffs against the merge-base with the target branch,
+          # which a shallow clone does not contain.
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-key: assay
+
+      - name: Build assay
+        working-directory: tools/assay
+        run: go build -o /tmp/assay ./cmd/assay
+
+      - name: Select affected tests
+        run: |
+          {
+            echo "## assay: tests this diff can reach"
+            echo
+            echo '```'
+            /tmp/assay select --since "origin/${GITHUB_BASE_REF}" --verbose --no-color 2>&1
+            echo '```'
+            echo
+            echo "_Package-precise selection (no coverage index in CI). See tools/assay/README.md._"
+          } | tee -a "$GITHUB_STEP_SUMMARY"

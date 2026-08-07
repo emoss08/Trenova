@@ -35,9 +35,33 @@ See [BENCHMARKS.md](BENCHMARKS.md).
 
 ## Install
 
+**Released binaries.** Every `assay/vX.Y.Z` tag publishes a GitHub release with
+binaries for linux, macOS and windows on amd64 and arm64, with checksums.
+Download, unpack, put `assay` on your PATH:
+
 ```bash
-go install github.com/emoss08/assay/cmd/assay@latest
+tar -xzf assay_<version>_linux_amd64.tar.gz
+install assay_<version>_linux_amd64/assay ~/.local/bin/
 ```
+
+**From source.** assay lives in this monorepo as a self-contained module; it
+builds anywhere Go 1.26 does:
+
+```bash
+cd tools/assay
+go build -o "$(go env GOPATH)/bin/assay" ./cmd/assay
+```
+
+A source build reports `assay devel-<commit>` from `assay version`, so a bug
+report always says exactly which code produced it; release binaries report
+their tag.
+
+### Releasing
+
+Tag the commit as `assay/vX.Y.Z` and push the tag. CI re-runs the test suite,
+cross-compiles every platform with the version stamped in, and publishes the
+release with checksums — see `.github/workflows/assay-release.yml`. There is no
+release branch and no manual step: the tag is the release.
 
 ## Use
 
