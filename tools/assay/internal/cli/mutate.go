@@ -153,6 +153,12 @@ func runMutate(cmd *cobra.Command, opts *options, flags *mutateFlags) error {
 	}
 	finishProgress(cmd.ErrOrStderr(), flags.quiet)
 
+	for i := range results {
+		if results[i].Outcome == mutate.OutcomeSurvived {
+			results[i].Advice = mutate.Advise(results[i].Mutant, scope.TestProfile)
+		}
+	}
+
 	baselinePath := filepath.Join(session.root, flags.baselinePath)
 	baseline, err := mutate.LoadBaseline(baselinePath)
 	if err != nil {
@@ -402,13 +408,58 @@ func printMutationSummary(
 		return
 	}
 
-	out.Warn("%d new surviving mutants:", len(score.NewSurvivors))
-	for _, r := range score.NewSurvivors {
-		out.Line("  %s  %s in %s  %s -> %s  (%d tests ran)",
-			r.Mutant.ID, r.Mutant.Location(), functionOrPackage(r), r.Mutant.Original,
-			r.Mutant.Replacement, r.Tests)
+	groups := mutate.GroupSurvivors(score.NewSurvivors)
+	out.Warn("%d new surviving mutants in %d %s — worst first:",
+		len(score.NewSurvivors), len(groups), pluralise(len(groups), "function", "functions"))
+	for _, group := range groups {
+		out.Line("  %s — %d %s:", groupHeading(group),
+			len(group.Survivors), pluralise(len(group.Survivors), "survivor", "survivors"))
+		for _, r := range group.Survivors {
+			out.Line("    %s  %s  %s -> %s  (%d tests ran)",
+				r.Mutant.ID, r.Mutant.Location(), r.Mutant.Original, r.Mutant.Replacement, r.Tests)
+			if r.Advice != nil {
+				out.Muted("        → extend %s: %s", adviceTarget(r), r.Advice.Prescription)
+			}
+		}
 	}
 	out.Muted("a survivor means no test with known coverage of that line objected")
+}
+
+func pluralise(n int, singular, plural string) string {
+	if n == 1 {
+		return singular
+	}
+
+	return plural
+}
+
+func groupHeading(group mutate.SurvivorGroup) string {
+	name := group.Function
+	if name == "" {
+		name = "package level"
+	}
+
+	return fmt.Sprintf("%s (%s)", name, filepath.Base(group.File))
+}
+
+// adviceTarget names the suggested test compactly: package-qualified only when
+// the test lives outside the mutated package, profile details only when the
+// index knows them.
+func adviceTarget(r mutate.Result) string {
+	advice := r.Advice
+	name := advice.Test
+	if advice.TestPackage != r.Mutant.Package {
+		name = shortenTail(advice.TestPackage, 30) + "." + name
+	}
+	if advice.Focus > 0 && advice.Duration >= time.Millisecond {
+		return fmt.Sprintf("%s (covers %d lines · %s)",
+			name, advice.Focus, advice.Duration.Round(time.Millisecond))
+	}
+	if advice.Focus > 0 {
+		return fmt.Sprintf("%s (covers %d lines)", name, advice.Focus)
+	}
+
+	return name
 }
 
 // fallbackReasons collects the distinct reasons schemata-capable mutants were

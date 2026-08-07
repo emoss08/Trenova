@@ -166,6 +166,17 @@ func (s *Scope) Budget(plan TestPlan) time.Duration {
 	return total
 }
 
+// TestProfile resolves a covering test's coverage breadth and indexed
+// duration for survivor advice.
+func (s *Scope) TestProfile(pkg, test string) (int, time.Duration, bool) {
+	record, found := s.loader.Record(pkg)
+	if !found {
+		return 0, 0, false
+	}
+
+	return record.ProfileOf(test)
+}
+
 // PackageOrder orders a plan's covering packages cheapest-first by their
 // indexed durations. A killed mutant exits at the first package that catches
 // it, and a kill found by the cheap package never pays for the expensive one;

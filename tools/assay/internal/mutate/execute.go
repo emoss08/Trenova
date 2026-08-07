@@ -73,6 +73,9 @@ type Result struct {
 	Fallback string        `json:"fallback,omitempty"`
 	Tests    int           `json:"tests"`
 	Duration time.Duration `json:"durationNanos"`
+	// Advice is attached to survivors after judging: the covering test closest
+	// to the mutated line and the input that would have killed the mutant.
+	Advice *Advice `json:"advice,omitempty"`
 }
 
 type ExecuteOptions struct {

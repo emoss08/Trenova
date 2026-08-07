@@ -340,6 +340,30 @@ tests — ones whose attribution the index could not determine — are deliberat
 excluded from mutant plans, because a test that was already failing would mark
 every mutant killed and inflate the score.
 
+### Every survivor is a prescription
+
+A survivor's location tells you where the gap is; the report also tells you
+what to do about it. Survivors are grouped by function and ranked worst-first —
+the function with the most survivors is the biggest assertion gap — and each
+one names the covering test to extend and the input that is missing:
+
+```
+7 new surviving mutants in 3 functions — worst first:
+  Weak (heavy.go) — 4 survivors:
+    cbdbe541  heavy.go:40  < -> <=  (1 tests ran)
+        → extend TestWeakBarely (covers 7 lines): no test pins the boundary:
+          add an input where both sides of `<` are equal — the only input
+          where `<` and `<=` disagree
+```
+
+The suggested test is the *most focused* covering test — same package first,
+then fewest covered lines, from the index — because a test that already
+executes the line with the narrowest scope is the cheapest place to add the
+missing assertion. The prescription is derived from the mutation itself: every
+covering test ran both versions to the same verdict, so the input that
+distinguishes them is, by construction, one nobody supplies. `--json` carries
+the same advice per survivor for tooling.
+
 ### The score only means something on a green suite
 
 Before judging any mutant, `assay mutate` runs the union of the covering tests

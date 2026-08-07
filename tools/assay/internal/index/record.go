@@ -105,6 +105,51 @@ func (r *Record) Knows(absPath string) bool {
 	return ok
 }
 
+// ProfileOf reports a test's coverage breadth — how many distinct lines it
+// executes across the workspace — and its indexed duration. Breadth is the
+// focus signal survivor advice ranks by: among the tests that already execute
+// a mutated line, the one covering the fewest lines is the one whose
+// assertions sit closest to that line. Overlapping ranges are merged per file
+// so a line counts once no matter how many blocks report it.
+func (r *Record) ProfileOf(name string) (lines int, duration time.Duration, ok bool) {
+	for _, test := range r.Tests {
+		if test.Name != name {
+			continue
+		}
+
+		perFile := make(map[uint32][]Range)
+		for _, span := range test.Ranges {
+			perFile[span.FileID] = append(perFile[span.FileID], span)
+		}
+		for _, spans := range perFile {
+			sort.Slice(spans, func(i, j int) bool {
+				if spans[i].Start != spans[j].Start {
+					return spans[i].Start < spans[j].Start
+				}
+
+				return spans[i].End < spans[j].End
+			})
+			var coveredThrough int64 = -1
+			for _, span := range spans {
+				start := int64(span.Start)
+				end := int64(span.End)
+				if start <= coveredThrough {
+					start = coveredThrough + 1
+				}
+				if end < start {
+					continue
+				}
+				lines += int(end-start) + 1
+				coveredThrough = end
+			}
+		}
+
+		return lines, test.Duration, true
+	}
+
+	return 0, 0, false
+}
+
 func (r *Record) TestNames() []string {
 	out := make([]string, 0, len(r.Tests))
 	for _, test := range r.Tests {
