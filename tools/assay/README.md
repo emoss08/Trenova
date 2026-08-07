@@ -35,22 +35,53 @@ See [BENCHMARKS.md](BENCHMARKS.md).
 
 ## Install
 
-**Released binaries.** Every `assay/vX.Y.Z` tag publishes a GitHub release with
-binaries for linux, macOS and windows on amd64 and arm64, with checksums.
-Download, unpack, put `assay` on your PATH:
+**Released binaries** — the recommended path. Every `assay/vX.Y.Z` tag
+publishes a [GitHub release](https://github.com/emoss08/Trenova/releases) with
+binaries for linux, macOS and windows on amd64 and arm64, plus a sha256
+checksum file.
+
+Linux and macOS — substitute your platform for `linux_amd64`
+(`darwin_arm64` for Apple silicon):
 
 ```bash
-tar -xzf assay_<version>_linux_amd64.tar.gz
-install assay_<version>_linux_amd64/assay ~/.local/bin/
+v=0.6.0
+curl -fsSLO "https://github.com/emoss08/Trenova/releases/download/assay/v${v}/assay_${v}_linux_amd64.tar.gz"
+curl -fsSLO "https://github.com/emoss08/Trenova/releases/download/assay/v${v}/assay_${v}_checksums.txt"
+sha256sum --check --ignore-missing "assay_${v}_checksums.txt"
+tar -xzf "assay_${v}_linux_amd64.tar.gz"
+install "assay_${v}_linux_amd64/assay" ~/.local/bin/
 ```
 
-**From source.** assay lives in this monorepo as a self-contained module; it
-builds anywhere Go 1.26 does:
+(`~/.local/bin` must be on your PATH; any directory that is works. On macOS,
+`shasum -a 256 --check` replaces `sha256sum --check`.)
+
+Windows, in PowerShell — the archive ships `assay.exe`, ready to run:
+
+```powershell
+$v = "0.6.0"
+Invoke-WebRequest "https://github.com/emoss08/Trenova/releases/download/assay/v$v/assay_${v}_windows_amd64.zip" -OutFile "assay_${v}_windows_amd64.zip"
+Expand-Archive "assay_${v}_windows_amd64.zip" -DestinationPath .
+Move-Item "assay_${v}_windows_amd64\assay.exe" "$env:USERPROFILE\go\bin\assay.exe"
+```
+
+(`$env:USERPROFILE\go\bin` is on PATH when Go is installed; any PATH directory
+works.)
+
+**From source.** assay lives in this monorepo as a self-contained module, so
+`go install github.com/emoss08/assay/...@latest` cannot resolve it — install
+from a checkout instead. It builds anywhere Go 1.26 does:
 
 ```bash
-cd tools/assay
-go build -o "$(go env GOPATH)/bin/assay" ./cmd/assay
+git clone https://github.com/emoss08/Trenova
+cd Trenova/tools/assay
+go install ./cmd/assay
 ```
+
+`go install` puts the binary in `go env GOBIN` (default: `$(go env GOPATH)/bin`)
+under the right name for the platform — `assay` on unix, `assay.exe` on
+windows. Prefer it over `go build -o <path>`: a hand-written output path
+without `.exe` produces a file Windows will not execute, so typing `assay`
+opens the file in your editor instead of running the tool.
 
 A source build reports `assay devel-<commit>` from `assay version`, so a bug
 report always says exactly which code produced it; release binaries report
