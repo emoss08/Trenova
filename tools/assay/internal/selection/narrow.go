@@ -1,7 +1,6 @@
 package selection
 
 import (
-	"fmt"
 	"path/filepath"
 	"sort"
 
@@ -221,9 +220,16 @@ func planFor(in planInput) PackagePlan {
 
 		return plan
 	}
-	if record.IndexedAt != in.baseCommit {
-		plan.FullReason = fmt.Sprintf("index was built at %s, base is %s",
-			vcs.ShortSHA(record.IndexedAt), vcs.ShortSHA(in.baseCommit))
+	// The record was fetched by a fingerprint computed from the base commit's
+	// tree digests, so its content — this package's files, its dependency
+	// closure, module files, toolchain — is proven identical to what was
+	// indexed, and the base tree's line numbers land in the same coordinates
+	// even when the record was built at a different commit. The one record
+	// that must never narrow is a dirty-tree build: its fingerprint describes
+	// HEAD while its coverage describes uncommitted edits, so it is stored
+	// with no commit at all.
+	if record.IndexedAt == "" {
+		plan.FullReason = "index record was built from a dirty tree"
 
 		return plan
 	}

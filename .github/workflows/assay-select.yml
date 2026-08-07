@@ -1,12 +1,18 @@
 name: Assay Dogfood
 
 # Dogfooding, deliberately non-blocking: on every Go PR, assay reports which
-# test packages the diff can actually reach. The selection lands in the job
-# summary where reviewers can sanity-check it against their intuition; once it
-# has earned trust, `assay run` can replace the run-everything test job.
+# tests the diff can actually reach. The selection lands in the job summary
+# where reviewers can sanity-check it against their intuition; once it has
+# earned trust, `assay run` can replace the run-everything test job.
 #
-# No coverage index exists in CI, so selection is package-precise, not
-# test-precise — that is the honest baseline mode, never an unsound one.
+# The Assay Index workflow keeps a coverage index warm in the actions cache on
+# every push to the base branches. When the restored index covers the PR's
+# merge-base, selection narrows to the individual tests that execute the
+# changed lines; packages whose records are stale (or missing after a cache
+# miss) fall back to whole-package selection, which is the safe direction.
+#
+# assay is built with -buildvcs=false so its cache identity matches the index
+# job's build; a vcs-stamped binary would reject every cached record.
 
 on:
   pull_request:
@@ -27,6 +33,9 @@ concurrency:
 
 permissions:
   contents: read
+
+env:
+  ASSAY_CACHE: /home/runner/.cache/assay
 
 jobs:
   select:
@@ -50,9 +59,17 @@ jobs:
         with:
           cache-key: assay
 
+      - name: Restore coverage index
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/assay
+          key: assay-index-${{ runner.os }}-${{ github.event.pull_request.base.sha }}
+          restore-keys: |
+            assay-index-${{ runner.os }}-
+
       - name: Build assay
         working-directory: tools/assay
-        run: go build -o /tmp/assay ./cmd/assay
+        run: go build -trimpath -buildvcs=false -o /tmp/assay ./cmd/assay
 
       - name: Select affected tests
         run: |
@@ -63,5 +80,5 @@ jobs:
             /tmp/assay select --since "origin/${GITHUB_BASE_REF}" --verbose --no-color 2>&1
             echo '```'
             echo
-            echo "_Package-precise selection (no coverage index in CI). See tools/assay/README.md._"
+            echo "_Line-level narrowing engages per package when the cached coverage index matches the merge-base; stale or missing records fall back to whole-package selection. See tools/assay/README.md._"
           } | tee -a "$GITHUB_STEP_SUMMARY"

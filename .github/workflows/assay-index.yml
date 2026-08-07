@@ -1,0 +1,80 @@
+name: Assay Index
+
+# Keeps the shared coverage index warm. Every push to a protected branch
+# refreshes the index at that commit and saves it to the actions cache, where
+# pull-request runs of the Assay Dogfood workflow restore it read-only.
+#
+# The index validates per package: a record built here stays usable for any
+# later merge-base as long as that package (and its dependency closure) is
+# unchanged, and index.Build reuses fingerprint-valid records, so this job is
+# incremental — a typical push re-collects only the packages the push touched.
+#
+# assay is built with -buildvcs=false so its cache identity comes from the
+# binary's content instead of the commit it was built at; a vcs-stamped build
+# would invalidate the whole index on every push.
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+    paths:
+      - "services/**"
+      - "shared/**"
+      - "tools/**"
+      - "go.work"
+      - "go.work.sum"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  ASSAY_CACHE: /home/runner/.cache/assay
+
+jobs:
+  index:
+    name: Refresh coverage index
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-key: assay
+
+      - name: Restore previous index
+        uses: actions/cache/restore@v4
+        with:
+          path: /home/runner/.cache/assay
+          key: assay-index-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            assay-index-${{ runner.os }}-
+
+      - name: Build assay
+        working-directory: tools/assay
+        run: go build -trimpath -buildvcs=false -o /tmp/assay ./cmd/assay
+
+      # Package failures (environment-dependent tests, for example) leave those
+      # packages without records — selection falls back to whole-package runs
+      # for them, which is safe. They must not stop the cache from saving.
+      - name: Build coverage index
+        run: |
+          /tmp/assay index --quiet --no-color \
+            || echo "::warning::assay index reported package failures; affected packages fall back to package-precise selection"
+
+      - name: Save index
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: /home/runner/.cache/assay
+          key: assay-index-${{ runner.os }}-${{ github.sha }}
