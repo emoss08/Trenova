@@ -38,6 +38,10 @@ func newRouteStopFixture() *Fixture {
 	return fixture
 }
 
+func stopRichSimTime() time.Time {
+	return time.Date(2026, 3, 14, 9, 33, 0, 0, time.UTC)
+}
+
 func newRouteStopLiveSimulator() *LiveSimulator {
 	return NewLiveSimulator(NewStore(newRouteStopFixture()), "route-stop-seed", LiveSimulationOptions{
 		FleetSize:    1,
@@ -50,7 +54,7 @@ func TestRouteStopWebhookEmissionsArrivalAndDeparture(t *testing.T) {
 	t.Parallel()
 
 	live := newRouteStopLiveSimulator()
-	now := time.Now().UTC()
+	now := stopRichSimTime()
 	emissions := live.RouteStopWebhookEmissions(now, now.Add(-70*time.Minute), now, nil)
 	if len(emissions) == 0 {
 		t.Fatal("expected route-stop transitions across a full route loop")
