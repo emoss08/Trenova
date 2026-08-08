@@ -82,6 +82,7 @@ export function DataTable<TData extends Record<string, any>>({
   initialColumnVisibility,
   graphql,
   refetchIntervalMs,
+  onCellEditCommit,
 }: DataTableProps<TData>) {
   "use no memo";
   const permissions = usePermissions(resource ?? "");
@@ -363,6 +364,8 @@ export function DataTable<TData extends Record<string, any>>({
     manualSorting: true,
     enableRowSelection,
     enableMultiRowSelection: true,
+    enableCellEditing: !!onCellEditCommit && canUpdate,
+    onCellEditCommit,
     onRowSelectionChange: setRowSelection,
     initialState: initialColumnVisibility
       ? { columnVisibility: initialColumnVisibility }

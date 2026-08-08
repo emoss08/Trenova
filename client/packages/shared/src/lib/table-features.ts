@@ -11,8 +11,10 @@ import {
   sortFns,
   tableFeatures,
 } from "@tanstack/react-table";
+import { cellEditingFeature } from "./cell-editing-feature";
 
 export const dataTableFeatures = tableFeatures({
+  cellEditingFeature,
   columnOrderingFeature,
   columnPinningFeature,
   columnSizingFeature,
