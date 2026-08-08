@@ -2,8 +2,12 @@ import {
   buildDataTableQueryKey,
   fetchDataTablePage,
 } from "@/hooks/data-table/use-data-table-query";
-import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@trenova/shared/types/data-table";
+import type {
+  DataTableGraphQLConfig,
+  DataTableQueryOptions,
+} from "@trenova/shared/types/data-table";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
+import { stableStringify } from "@/lib/stable-stringify";
 import { useQueryClient } from "@tanstack/react-query";
 import type { PaginationState } from "@tanstack/react-table";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -33,7 +37,7 @@ export function useDataTableLiveRefresh<TData extends Record<string, unknown>>({
   const latestRef = useRef({ pagination, options, currentResults });
   latestRef.current = { pagination, options, currentResults };
 
-  const scopeKey = JSON.stringify({ pagination, options });
+  const scopeKey = stableStringify({ pagination, options });
   const scopeKeyRef = useRef(scopeKey);
   if (scopeKeyRef.current !== scopeKey) {
     scopeKeyRef.current = scopeKey;
@@ -56,7 +60,7 @@ export function useDataTableLiveRefresh<TData extends Record<string, unknown>>({
         });
 
         const latest = latestRef.current;
-        if (JSON.stringify(snapshot.options) !== JSON.stringify(latest.options)) return;
+        if (stableStringify(snapshot.options) !== stableStringify(latest.options)) return;
 
         const unchanged =
           JSON.stringify(fresh.results) === JSON.stringify(latest.currentResults ?? []);

@@ -1,30 +1,27 @@
 "use no memo";
 import { DataTableProvider } from "@/contexts/data-table-context";
+import { useDataTableFilterSync } from "@/hooks/data-table/use-data-table-filter-sync";
 import { useDataTableLiveRefresh } from "@/hooks/data-table/use-data-table-live-refresh";
 import { useDataTableQuery } from "@/hooks/data-table/use-data-table-query";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
-import { useDebounce } from "@/hooks/use-debounce";
 import { usePermissions } from "@/hooks/use-permission";
 import {
   columnPinOffsetVar,
   columnSizeVar,
   compileFormatRules,
   fromColumnPinningState,
-  initializeFilterItemsFromFieldFilters,
-  initializeFilterItemsFromFilterGroups,
   isTableConfigEqual,
   toColumnPinningState,
   updateSortField,
 } from "@/lib/data-table";
+import { stableStringify } from "@/lib/stable-stringify";
 import { fetchAllRows } from "@/lib/data-table-export";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
   DataTableProps,
-  FilterGroupItem,
   FilterItem,
   PanelMode,
-  SingleFilterItem,
   SortDirection,
   SortField,
   Row,
@@ -85,6 +82,7 @@ export function DataTable<TData extends Record<string, any>>({
   initialColumnVisibility,
   graphql,
   refetchIntervalMs,
+  onCellEditCommit,
 }: DataTableProps<TData>) {
   "use no memo";
   const permissions = usePermissions(resource ?? "");
@@ -172,53 +170,19 @@ export function DataTable<TData extends Record<string, any>>({
     return columns;
   }, [columns, enableRowSelection]);
 
-  const [filterItems, setFilterItems] = useState<FilterItem[]>(() => [
-    ...initializeFilterItemsFromFieldFilters(fieldFilters ?? [], columns),
-    ...initializeFilterItemsFromFilterGroups(
-      (filterGroups ?? []).filter((g) => g.filters?.length > 0),
-      columns,
-    ),
-  ]);
+  const { filterItems, setFilterItems, applyFilterState } = useDataTableFilterSync({
+    columns,
+    fieldFilters: fieldFilters ?? [],
+    filterGroups: filterGroups ?? [],
+    setSearchParams,
+  });
 
-  const debouncedFilters = useDebounce(filterItems, 300);
-  const urlFiltersRef = useRef({ fieldFilters, filterGroups });
-  urlFiltersRef.current = { fieldFilters, filterGroups };
-
-  useEffect(() => {
-    const singles = debouncedFilters.filter((f) => f.type === "filter") as SingleFilterItem[];
-    const groups = debouncedFilters.filter((f) => f.type === "group") as FilterGroupItem[];
-
-    const newFieldFilters = singles.map((f) => ({
-      field: f.apiField,
-      operator: f.operator,
-      value: f.value,
-    }));
-    const newFilterGroups = groups.map((g) => ({
-      filters: g.items.map((i) => ({
-        field: i.apiField,
-        operator: i.operator,
-        value: i.value,
-      })),
-    }));
-
-    const { fieldFilters: urlFieldFilters, filterGroups: urlFilterGroups } = urlFiltersRef.current;
-    if (
-      JSON.stringify(newFieldFilters) === JSON.stringify(urlFieldFilters) &&
-      JSON.stringify(newFilterGroups) === JSON.stringify(urlFilterGroups)
-    ) {
-      return;
-    }
-
-    void setSearchParams({
-      fieldFilters: newFieldFilters,
-      filterGroups: newFilterGroups,
-      pageIndex: 1,
-    });
-  }, [debouncedFilters, setSearchParams]);
-
-  const handleFiltersChange = useCallback((items: FilterItem[]) => {
-    setFilterItems(items);
-  }, []);
+  const handleFiltersChange = useCallback(
+    (items: FilterItem[]) => {
+      setFilterItems(items);
+    },
+    [setFilterItems],
+  );
 
   const handleSearchChange = useCallback(
     (newQuery: string) => {
@@ -269,7 +233,7 @@ export function DataTable<TData extends Record<string, any>>({
   const effectiveSort = sort;
   const cursorScopeKey = useMemo(
     () =>
-      JSON.stringify({
+      stableStringify({
         pageSize,
         query,
         fieldFilters,
@@ -400,6 +364,8 @@ export function DataTable<TData extends Record<string, any>>({
     manualSorting: true,
     enableRowSelection,
     enableMultiRowSelection: true,
+    enableCellEditing: !!onCellEditCommit && canUpdate,
+    onCellEditCommit,
     onRowSelectionChange: setRowSelection,
     initialState: initialColumnVisibility
       ? { columnVisibility: initialColumnVisibility }
@@ -496,10 +462,7 @@ export function DataTable<TData extends Record<string, any>>({
         pageIndex: 1,
       });
 
-      setFilterItems([
-        ...initializeFilterItemsFromFieldFilters(newFieldFilters, columns),
-        ...initializeFilterItemsFromFilterGroups(newFilterGroups, columns),
-      ]);
+      applyFilterState({ fieldFilters: newFieldFilters, filterGroups: newFilterGroups });
 
       table.setColumnVisibility(newColumnVisibility);
       table.setColumnOrder(newColumnOrder);
@@ -533,7 +496,7 @@ export function DataTable<TData extends Record<string, any>>({
           : null,
       );
     },
-    [setSearchParams, columns, pageSize, table],
+    [setSearchParams, applyFilterState, pageSize, table],
   );
 
   useEffect(() => {
@@ -624,7 +587,7 @@ export function DataTable<TData extends Record<string, any>>({
   const handleClearFilters = useCallback(() => {
     setFilterItems([]);
     void setSearchParams({ query: "", pageIndex: 1 });
-  }, [setSearchParams]);
+  }, [setFilterItems, setSearchParams]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 

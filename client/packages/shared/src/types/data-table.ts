@@ -13,6 +13,7 @@ import type {
 } from "@tanstack/react-table";
 import type { LucideIcon } from "lucide-react";
 import { z } from "zod";
+import type { CellEditCommitFn } from "../lib/cell-editing-feature";
 import type { DataTableFeatures } from "../lib/table-features";
 import type { SelectOption } from "./fields";
 import type { GraphQLExecutableDocument } from "./graphql";
@@ -150,6 +151,7 @@ export type DataTableProps<TData extends Record<string, any>> = {
   enableCreateAction?: boolean;
   enableReadOnlyPanel?: boolean;
   initialColumnVisibility?: Record<string, boolean>;
+  onCellEditCommit?: CellEditCommitFn<TData>;
 };
 
 export type DataTableGraphQLExtraVariableParams = {

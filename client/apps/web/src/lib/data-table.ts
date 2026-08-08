@@ -22,6 +22,51 @@ import type {
 } from "@/types/table-configuration";
 import type { ColumnPinningState, RowData } from "@tanstack/react-table";
 import type { CSSProperties } from "react";
+import { stableStringify } from "@/lib/stable-stringify";
+
+export type UrlFilterState = {
+  fieldFilters: FieldFilter[];
+  filterGroups: FilterGroup[];
+};
+
+export function filterItemsToUrlFilterState(items: FilterItem[]): UrlFilterState {
+  const fieldFilters: FieldFilter[] = [];
+  const filterGroups: FilterGroup[] = [];
+  for (const item of items) {
+    if (item.type === "filter") {
+      fieldFilters.push({ field: item.apiField, operator: item.operator, value: item.value });
+    } else {
+      filterGroups.push({
+        filters: item.items.map((i) => ({
+          field: i.apiField,
+          operator: i.operator,
+          value: i.value,
+        })),
+      });
+    }
+  }
+  return { fieldFilters, filterGroups };
+}
+
+export function buildFilterItemsFromUrlState<TData extends RowData>(
+  state: UrlFilterState,
+  columns: ColumnDef<TData>[],
+): FilterItem[] {
+  return [
+    ...initializeFilterItemsFromFieldFilters(state.fieldFilters, columns),
+    ...initializeFilterItemsFromFilterGroups(
+      state.filterGroups.filter((g) => g.filters?.length > 0),
+      columns,
+    ),
+  ];
+}
+
+export function serializeUrlFilterState(state: UrlFilterState): string {
+  return stableStringify({
+    fieldFilters: state.fieldFilters,
+    filterGroups: state.filterGroups,
+  });
+}
 
 export const FILTER_OPERATORS: Record<FilterVariant, FilterOperator[]> = {
   text: ["contains", "eq", "ne", "startswith", "endswith", "isnull", "isnotnull"],
