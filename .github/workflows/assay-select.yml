@@ -71,7 +71,7 @@ jobs:
       # identity is stable across runs of the same version.
       - name: Install assay
         run: |
-          GOBIN=/tmp go install github.com/emoss08/assay/cmd/assay@v0.7.0
+          GOBIN=/tmp go install github.com/emoss08/assay/cmd/assay@v0.7.1
 
       # The setup-go action's dependency download can rewrite go.work.sum in
       # the checkout; a modified module file is a blocking change that would
