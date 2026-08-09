@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
+	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
@@ -305,6 +306,15 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	fx.Annotate(
 		func(s *driversettlementservice.Service) services.MoveStatusObserver { return s },
+		fx.ResultTags(`group:"move_status_observers"`),
+	),
+	carriersettlementservice.New,
+	fx.Annotate(
+		func(s *carriersettlementservice.Service) services.ShipmentMutationObserver { return s },
+		fx.ResultTags(`group:"shipment_mutation_observers"`),
+	),
+	fx.Annotate(
+		func(s *carriersettlementservice.Service) services.MoveStatusObserver { return s },
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
 	carrierassignmentservice.New,

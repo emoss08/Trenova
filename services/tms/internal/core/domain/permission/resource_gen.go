@@ -86,8 +86,11 @@ const (
 	ResourceCustomerContact Resource = "customer_contact"
 
 	// Carriers
-	ResourceCarrier          Resource = "carrier"
-	ResourceRateConfirmation Resource = "rate_confirmation"
+	ResourceCarrier                  Resource = "carrier"
+	ResourceRateConfirmation         Resource = "rate_confirmation"
+	ResourceCarrierSettlement        Resource = "carrier_settlement"
+	ResourceCarrierSettlementControl Resource = "carrier_settlement_control"
+	ResourceCarrierInvoiceMatch      Resource = "carrier_invoice_match"
 
 	// Locations
 	ResourceLocation         Resource = "location"

@@ -88,6 +88,54 @@ func (r *repository) GetActiveByMoveID(
 	return entity, nil
 }
 
+func (r *repository) FindForMatching(
+	ctx context.Context,
+	req *repositories.FindCarrierAssignmentForMatchingRequest,
+) (*shipment.CarrierAssignment, error) {
+	if req.ProNumber == "" && req.ShipmentID.IsNil() {
+		return nil, nil //nolint:nilnil // nothing to match without a reference
+	}
+
+	cols := buncolgen.CarrierAssignmentColumns
+	entity := new(shipment.CarrierAssignment)
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Relation("Carrier").
+		Relation("Accessorials").
+		Relation("ShipmentMove").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.CarrierAssignmentScopeTenant(sq, req.TenantInfo).
+				Where(cols.Status.Ne(), shipment.CarrierAssignmentStatusCanceled)
+			if !req.CarrierID.IsNil() {
+				sq = sq.Where(cols.CarrierID.Eq(), req.CarrierID)
+			}
+			if req.ProNumber != "" {
+				sq = sq.Where(cols.ProNumber.Eq(), req.ProNumber)
+			} else {
+				sq = sq.Where(
+					"EXISTS (SELECT 1 FROM shipment_moves move WHERE move.id = casn.shipment_move_id "+
+						"AND move.organization_id = casn.organization_id "+
+						"AND move.business_unit_id = casn.business_unit_id "+
+						"AND move.shipment_id = ?)",
+					req.ShipmentID,
+				)
+			}
+			return sq
+		}).
+		Order(cols.CreatedAt.OrderDesc()).
+		Limit(1)
+	if err := query.Scan(ctx); err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil assignment represents an optional absence
+		}
+		r.l.Error("failed to find carrier assignment for matching", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
+}
+
 func (r *repository) stampAccessorials(entity *shipment.CarrierAssignment) {
 	for _, acc := range entity.Accessorials {
 		acc.ID = ""

@@ -149,3 +149,13 @@ func (g TestSequenceGenerator) GenerateDriverSettlementNumber(
 ) (string, error) {
 	return g.SingleValue, nil
 }
+
+func (g TestSequenceGenerator) GenerateCarrierSettlementNumber(
+	_ context.Context,
+	_ pulid.ID,
+	_ pulid.ID,
+	_ string,
+	_ string,
+) (string, error) {
+	return g.SingleValue, nil
+}

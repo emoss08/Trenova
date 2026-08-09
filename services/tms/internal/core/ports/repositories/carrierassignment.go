@@ -95,10 +95,21 @@ type GetCarrierAssignmentByIDRequest struct {
 	CarrierAssignmentID pulid.ID              `json:"carrierAssignmentId"`
 }
 
+type FindCarrierAssignmentForMatchingRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	CarrierID  pulid.ID              `json:"carrierId"`
+	ProNumber  string                `json:"proNumber"`
+	ShipmentID pulid.ID              `json:"shipmentId"`
+}
+
 type CarrierAssignmentRepository interface {
 	GetByID(
 		ctx context.Context,
 		req *GetCarrierAssignmentByIDRequest,
+	) (*shipment.CarrierAssignment, error)
+	FindForMatching(
+		ctx context.Context,
+		req *FindCarrierAssignmentForMatchingRequest,
 	) (*shipment.CarrierAssignment, error)
 	GetActiveByMoveID(
 		ctx context.Context,

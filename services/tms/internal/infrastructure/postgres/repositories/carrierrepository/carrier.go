@@ -2,6 +2,8 @@ package carrierrepository
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -210,6 +212,47 @@ func (r *repository) GetByID(
 	if err != nil {
 		log.Error("failed to get carrier", zap.Error(err))
 		return nil, dberror.HandleNotFoundError(err, "Carrier")
+	}
+
+	return entity, nil
+}
+
+func (r *repository) FindByIdentity(
+	ctx context.Context,
+	req *repositories.FindCarrierByIdentityRequest,
+) (*carrier.Carrier, error) {
+	if req.SCAC == "" && req.DOTNumber == "" {
+		return nil, nil //nolint:nilnil // nothing to look up without an identity
+	}
+
+	cols := buncolgen.CarrierColumns
+	entity := new(carrier.Carrier)
+	err := r.db.DB().
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.CarrierScopeTenant(sq, req.TenantInfo).
+				WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+					if req.SCAC != "" {
+						inner = inner.Where(
+							cols.SCAC.Expr("UPPER({}) = ?"),
+							strings.ToUpper(req.SCAC),
+						)
+					}
+					if req.DOTNumber != "" {
+						inner = inner.WhereOr(cols.DOTNumber.Eq(), req.DOTNumber)
+					}
+					return inner
+				})
+		}).
+		Order(cols.CreatedAt.OrderAsc()).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil carrier represents an optional absence
+		}
+		return nil, fmt.Errorf("find carrier by identity: %w", err)
 	}
 
 	return entity, nil

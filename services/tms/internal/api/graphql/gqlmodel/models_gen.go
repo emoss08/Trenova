@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
@@ -86,6 +87,14 @@ type AccountTypeConnection struct {
 type AccountTypeEdge struct {
 	Node   *accounttype.AccountType `json:"node"`
 	Cursor string                   `json:"cursor"`
+}
+
+type AddCarrierSettlementAdjustmentInput struct {
+	SettlementID string `json:"settlementId"`
+	Description  string `json:"description"`
+	AmountMinor  int    `json:"amountMinor"`
+	// Optional GL account override — the adjustment posts there instead of the default expense account.
+	GlAccountID *string `json:"glAccountId,omitempty"`
 }
 
 type AddSettlementAdjustmentInput struct {
@@ -308,9 +317,57 @@ type CarrierConnection struct {
 	TotalCount *int           `json:"totalCount,omitempty"`
 }
 
+type CarrierCostEventConnection struct {
+	Edges      []*CarrierCostEventEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type CarrierCostEventEdge struct {
+	Node   *carriersettlement.CostEvent `json:"node"`
+	Cursor string                       `json:"cursor"`
+}
+
 type CarrierEdge struct {
 	Node   *carrier.Carrier `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+type CarrierInvoiceMatchActionInput struct {
+	MatchID string  `json:"matchId"`
+	Note    *string `json:"note,omitempty"`
+}
+
+type CarrierInvoiceMatchList struct {
+	Items      []*carriersettlement.InvoiceMatch `json:"items"`
+	TotalCount int                               `json:"totalCount"`
+}
+
+type CarrierSettlementActionInput struct {
+	SettlementID string  `json:"settlementId"`
+	Reason       *string `json:"reason,omitempty"`
+}
+
+type CarrierSettlementBatchConnection struct {
+	Edges      []*CarrierSettlementBatchEdge `json:"edges"`
+	PageInfo   *PageInfo                     `json:"pageInfo"`
+	TotalCount *int                          `json:"totalCount,omitempty"`
+}
+
+type CarrierSettlementBatchEdge struct {
+	Node   *carriersettlement.CarrierSettlementBatch `json:"node"`
+	Cursor string                                    `json:"cursor"`
+}
+
+type CarrierSettlementConnection struct {
+	Edges      []*CarrierSettlementEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type CarrierSettlementEdge struct {
+	Node   *carriersettlement.CarrierSettlement `json:"node"`
+	Cursor string                               `json:"cursor"`
 }
 
 type CategoryCostLine struct {
@@ -392,6 +449,24 @@ type CostingControlInput struct {
 	PlannedMonthlyMiles  *int    `json:"plannedMonthlyMiles,omitempty"`
 	TargetMarginPercent  *string `json:"targetMarginPercent,omitempty"`
 	Version              int     `json:"version"`
+}
+
+type CreateCarrierInvoiceMatchInput struct {
+	// Exactly one source is required: an EDI carrier invoice or a document AI extraction.
+	EdiCarrierInvoiceID    *string `json:"ediCarrierInvoiceId,omitempty"`
+	DocumentAiExtractionID *string `json:"documentAiExtractionId,omitempty"`
+	// Required for document AI sources; EDI sources take the carrier from the linked invoice.
+	CarrierID *string `json:"carrierId,omitempty"`
+	// Optional explicit assignment; otherwise resolved by pro number or shipment reference.
+	CarrierAssignmentID *string `json:"carrierAssignmentId,omitempty"`
+	// Document AI sources only: the extracted invoice number.
+	InvoiceNumber *string `json:"invoiceNumber,omitempty"`
+	// Document AI sources only: the extracted invoice total in minor units.
+	InvoiceTotalMinor *int `json:"invoiceTotalMinor,omitempty"`
+	// Document AI sources only: the pro number used to locate the assignment.
+	ProNumber *string `json:"proNumber,omitempty"`
+	// Document AI sources only: the shipment used to locate the assignment.
+	ShipmentID *string `json:"shipmentId,omitempty"`
 }
 
 type CreateDocumentTemplateVersionInput struct {
@@ -1516,6 +1591,11 @@ type EIASeriesOption struct {
 	FuelType fuelsurcharge.FuelType `json:"fuelType"`
 }
 
+type EdiCarrierInvoiceList struct {
+	Items      []*edi.CarrierInvoice `json:"items"`
+	TotalCount int                   `json:"totalCount"`
+}
+
 type EdiCommunicationProfileConnection struct {
 	Edges      []*EdiCommunicationProfileEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
@@ -2018,6 +2098,13 @@ type GLActualsWindow struct {
 	HasPostings bool    `json:"hasPostings"`
 }
 
+type GenerateCarrierSettlementBatchInput struct {
+	PeriodStart *int    `json:"periodStart,omitempty"`
+	PeriodEnd   *int    `json:"periodEnd,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Notes       *string `json:"notes,omitempty"`
+}
+
 type GenerateDriverSettlementInput struct {
 	WorkerID    string  `json:"workerId"`
 	PeriodStart int     `json:"periodStart"`
@@ -2305,6 +2392,12 @@ type ManualJournalEdge struct {
 	Cursor string                 `json:"cursor"`
 }
 
+type MarkCarrierSettlementPaidInput struct {
+	SettlementID     string  `json:"settlementId"`
+	PaymentMethod    string  `json:"paymentMethod"`
+	PaymentReference *string `json:"paymentReference,omitempty"`
+}
+
 type MarkDriverSettlementPaidInput struct {
 	SettlementID     string  `json:"settlementId"`
 	PaymentMethod    string  `json:"paymentMethod"`
@@ -2545,6 +2638,11 @@ type RecurringShipmentConnection struct {
 type RecurringShipmentEdge struct {
 	Node   *recurringshipment.RecurringShipment `json:"node"`
 	Cursor string                               `json:"cursor"`
+}
+
+type RemoveCarrierSettlementAdjustmentInput struct {
+	SettlementID string `json:"settlementId"`
+	LineID       string `json:"lineId"`
 }
 
 type RemoveOrderChargeInput struct {
@@ -4571,6 +4669,19 @@ type UpcomingWorkerPTOInput struct {
 	WorkerID    *string           `json:"workerId,omitempty"`
 	FleetCodeID *string           `json:"fleetCodeId,omitempty"`
 	Timezone    *string           `json:"timezone,omitempty"`
+}
+
+type UpdateCarrierSettlementControlInput struct {
+	Version                                 int                       `json:"version"`
+	PayTrigger                              tenant.PayTrigger         `json:"payTrigger"`
+	PayPeriodFrequency                      tenant.PayPeriodFrequency `json:"payPeriodFrequency"`
+	PeriodEndDayOfWeek                      int                       `json:"periodEndDayOfWeek"`
+	PayDelayDays                            int                       `json:"payDelayDays"`
+	AutoGenerateBatches                     bool                      `json:"autoGenerateBatches"`
+	AutoPostOnApprove                       bool                      `json:"autoPostOnApprove"`
+	VarianceToleranceMinor                  int                       `json:"varianceToleranceMinor"`
+	DefaultApAccountID                      *string                   `json:"defaultApAccountId,omitempty"`
+	DefaultPurchasedTransportationAccountID *string                   `json:"defaultPurchasedTransportationAccountId,omitempty"`
 }
 
 type UpdateDashControlInput struct {

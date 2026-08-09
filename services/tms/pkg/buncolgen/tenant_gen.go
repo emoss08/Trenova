@@ -1088,6 +1088,233 @@ var BusinessUnitFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// CarrierSettlementControl — table "carrier_settlement_controls", alias "carstlc"
+// ---------------------------------------------------------------------------
+
+// CarrierSettlementControlTable holds the table name, alias, and primary key columns
+// for the "carrier_settlement_controls" table. The alias "carstlc" is used in all generated
+// SQL fragments (e.g. "carstlc.id = ?").
+var CarrierSettlementControlTable = TableInfo{
+	Name:       "carrier_settlement_controls",
+	Alias:      "carstlc",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// CarrierSettlementControlColumns provides type-safe column references for the "carrier_settlement_controls" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(CarrierSettlementControlColumns.ID.String())
+//	// SELECT carstlc.id FROM carrier_settlement_controls AS carstlc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(CarrierSettlementControlColumns.ID.Eq(), id)           // WHERE carstlc.id = ?
+//	q.Order(CarrierSettlementControlColumns.CreatedAt.OrderDesc())  // ORDER BY carstlc.created_at DESC
+var CarrierSettlementControlColumns = struct {
+	ID                                      Column // "id" → qualified: "carstlc.id"
+	BusinessUnitID                          Column // "business_unit_id" → qualified: "carstlc.business_unit_id"
+	OrganizationID                          Column // "organization_id" → qualified: "carstlc.organization_id"
+	PayTrigger                              Column // "pay_trigger" → qualified: "carstlc.pay_trigger"
+	PayPeriodFrequency                      Column // "pay_period_frequency" → qualified: "carstlc.pay_period_frequency"
+	PeriodEndDayOfWeek                      Column // "period_end_day_of_week" → qualified: "carstlc.period_end_day_of_week"
+	PayDelayDays                            Column // "pay_delay_days" → qualified: "carstlc.pay_delay_days"
+	AutoGenerateBatches                     Column // "auto_generate_batches" → qualified: "carstlc.auto_generate_batches"
+	AutoPostOnApprove                       Column // "auto_post_on_approve" → qualified: "carstlc.auto_post_on_approve"
+	VarianceToleranceMinor                  Column // "variance_tolerance_minor" → qualified: "carstlc.variance_tolerance_minor"
+	DefaultAPAccountID                      Column // "default_ap_account_id" → qualified: "carstlc.default_ap_account_id"
+	DefaultPurchasedTransportationAccountID Column // "default_purchased_transportation_account_id" → qualified: "carstlc.default_purchased_transportation_account_id"
+	Version                                 Column // "version" → qualified: "carstlc.version"
+	CreatedAt                               Column // "created_at" → qualified: "carstlc.created_at"
+	UpdatedAt                               Column // "updated_at" → qualified: "carstlc.updated_at"
+}{
+	ID:                                      NewColumn("id", "carstlc"),
+	BusinessUnitID:                          NewColumn("business_unit_id", "carstlc"),
+	OrganizationID:                          NewColumn("organization_id", "carstlc"),
+	PayTrigger:                              NewColumn("pay_trigger", "carstlc"),
+	PayPeriodFrequency:                      NewColumn("pay_period_frequency", "carstlc"),
+	PeriodEndDayOfWeek:                      NewColumn("period_end_day_of_week", "carstlc"),
+	PayDelayDays:                            NewColumn("pay_delay_days", "carstlc"),
+	AutoGenerateBatches:                     NewColumn("auto_generate_batches", "carstlc"),
+	AutoPostOnApprove:                       NewColumn("auto_post_on_approve", "carstlc"),
+	VarianceToleranceMinor:                  NewColumn("variance_tolerance_minor", "carstlc"),
+	DefaultAPAccountID:                      NewColumn("default_ap_account_id", "carstlc"),
+	DefaultPurchasedTransportationAccountID: NewColumn("default_purchased_transportation_account_id", "carstlc"),
+	Version:                                 NewColumn("version", "carstlc"),
+	CreatedAt:                               NewColumn("created_at", "carstlc"),
+	UpdatedAt:                               NewColumn("updated_at", "carstlc"),
+}
+
+// CarrierSettlementControlFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by CarrierSettlementControl.GetStaticFieldMap().
+var CarrierSettlementControlFieldMap = map[string]string{
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"payTrigger":             "pay_trigger",
+	"payPeriodFrequency":     "pay_period_frequency",
+	"periodEndDayOfWeek":     "period_end_day_of_week",
+	"payDelayDays":           "pay_delay_days",
+	"autoGenerateBatches":    "auto_generate_batches",
+	"autoPostOnApprove":      "auto_post_on_approve",
+	"varianceToleranceMinor": "variance_tolerance_minor",
+	"defaultApAccountId":     "default_ap_account_id",
+	"defaultPurchasedTransportationAccountId": "default_purchased_transportation_account_id",
+	"version":   "version",
+	"createdAt": "created_at",
+	"updatedAt": "updated_at",
+}
+
+// CarrierSettlementControlInsertableColumns lists column names suitable for INSERT statements on the "carrier_settlement_controls" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var CarrierSettlementControlInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"pay_trigger",
+	"pay_period_frequency",
+	"period_end_day_of_week",
+	"pay_delay_days",
+	"auto_generate_batches",
+	"auto_post_on_approve",
+	"variance_tolerance_minor",
+	"default_ap_account_id",
+	"default_purchased_transportation_account_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// CarrierSettlementControlRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(CarrierSettlementControlRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var CarrierSettlementControlRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// CarrierSettlementControlScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE carstlc.organization_id = ? AND carstlc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.CarrierSettlementControlScopeTenant(sq, ti).
+//		Where(buncolgen.CarrierSettlementControlColumns.ID.Eq(), id)
+func CarrierSettlementControlScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, CarrierSettlementControlColumns.OrganizationID, CarrierSettlementControlColumns.BusinessUnitID, ti)
+}
+
+// CarrierSettlementControlScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.CarrierSettlementControlScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.CarrierSettlementControlColumns.ID.In(), bun.List(ids))
+//	})
+func CarrierSettlementControlScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, CarrierSettlementControlColumns.OrganizationID, CarrierSettlementControlColumns.BusinessUnitID, ti)
+}
+
+// CarrierSettlementControlScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.CarrierSettlementControlScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.CarrierSettlementControlColumns.ID.Eq(), id)
+//	})
+func CarrierSettlementControlScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, CarrierSettlementControlColumns.OrganizationID, CarrierSettlementControlColumns.BusinessUnitID, ti)
+}
+
+// CarrierSettlementControlApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.CarrierSettlementControlApplyTenant(tenantInfo))
+func CarrierSettlementControlApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(CarrierSettlementControlColumns.OrganizationID, CarrierSettlementControlColumns.BusinessUnitID, ti)
+}
+
+// CarrierSettlementControlFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "carrier_settlement_controls" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	CarrierSettlementControlFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var CarrierSettlementControlFilter = struct {
+	ID                                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	PayTrigger                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payTrigger" → DB: "pay_trigger"
+	PayPeriodFrequency                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payPeriodFrequency" → DB: "pay_period_frequency"
+	PeriodEndDayOfWeek                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodEndDayOfWeek" → DB: "period_end_day_of_week"
+	PayDelayDays                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payDelayDays" → DB: "pay_delay_days"
+	AutoGenerateBatches                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoGenerateBatches" → DB: "auto_generate_batches"
+	AutoPostOnApprove                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoPostOnApprove" → DB: "auto_post_on_approve"
+	VarianceToleranceMinor                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "varianceToleranceMinor" → DB: "variance_tolerance_minor"
+	DefaultAPAccountID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultApAccountId" → DB: "default_ap_account_id"
+	DefaultPurchasedTransportationAccountID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultPurchasedTransportationAccountId" → DB: "default_purchased_transportation_account_id"
+	Version                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	PayTrigger: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payTrigger", op, value)
+	},
+	PayPeriodFrequency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payPeriodFrequency", op, value)
+	},
+	PeriodEndDayOfWeek: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("periodEndDayOfWeek", op, value)
+	},
+	PayDelayDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payDelayDays", op, value)
+	},
+	AutoGenerateBatches: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoGenerateBatches", op, value)
+	},
+	AutoPostOnApprove: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoPostOnApprove", op, value)
+	},
+	VarianceToleranceMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("varianceToleranceMinor", op, value)
+	},
+	DefaultAPAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultApAccountId", op, value)
+	},
+	DefaultPurchasedTransportationAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultPurchasedTransportationAccountId", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // DashControl — table "dash_controls", alias "dashc"
 // ---------------------------------------------------------------------------
 

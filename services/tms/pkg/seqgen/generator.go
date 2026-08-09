@@ -190,6 +190,20 @@ func (g *generator) GenerateDriverSettlementNumber(
 	})
 }
 
+func (g *generator) GenerateCarrierSettlementNumber(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	locationCode, businessUnitCode string,
+) (string, error) {
+	return g.Generate(ctx, &GenerateRequest{
+		Type:             tenant.SequenceTypeCarrierSettlement,
+		OrgID:            orgID,
+		BuID:             buID,
+		LocationCode:     locationCode,
+		BusinessUnitCode: businessUnitCode,
+	})
+}
+
 func (g *generator) Generate(ctx context.Context, req *GenerateRequest) (string, error) {
 	if req == nil {
 		return "", ErrSequenceRequestRequired

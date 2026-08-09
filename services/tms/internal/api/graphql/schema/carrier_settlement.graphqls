@@ -1,0 +1,479 @@
+enum CarrierSettlementStatus {
+  Draft
+  PendingApproval
+  Approved
+  Posted
+  Paid
+  Voided
+}
+
+enum CarrierCostEventType {
+  LinehaulCost
+  FuelSurcharge
+  Accessorial
+  Adjustment
+}
+
+enum CarrierCostEventStatus {
+  Pending
+  Attached
+  Settled
+  Voided
+}
+
+enum CarrierSettlementBatchStatus {
+  Open
+  Completed
+  Canceled
+}
+
+enum CarrierLedgerEntryType {
+  Bill
+  Payment
+  Adjustment
+}
+
+enum CarrierInvoiceMatchStatus {
+  Suggested
+  Matched
+  Variance
+  Resolved
+  Rejected
+}
+
+"""
+The purchased-transportation accrual ledger: one cost event per buy-rate line
+on a carrier assignment, created automatically when a carrier-covered shipment
+reaches the organization's pay trigger. Events are recomputed while Pending,
+locked once attached to a settlement, and voided if the shipment cancels.
+"""
+type CarrierCostEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  carrierId: ID!
+  carrierAssignmentId: ID
+  shipmentId: ID
+  moveId: ID
+  settlementId: ID
+  eventType: CarrierCostEventType!
+  status: CarrierCostEventStatus!
+  eventDate: Int!
+  amountMinor: Int!
+  currencyCode: String!
+  description: String!
+  proNumber: String!
+  assignmentVersion: Int!
+  voidedAt: Int
+  voidReason: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  carrier: Carrier
+}
+
+type CarrierCostEventEdge {
+  node: CarrierCostEvent!
+  cursor: String!
+}
+
+type CarrierCostEventConnection {
+  edges: [CarrierCostEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+One line on a carrier settlement statement. Cost lines trace back to the cost
+event, shipment, and move that produced them; manual adjustment lines have no
+cost event and may carry a GL account override.
+"""
+type CarrierSettlementLine {
+  id: ID!
+  settlementId: ID!
+  lineNumber: Int!
+  eventType: CarrierCostEventType!
+  description: String!
+  amountMinor: Int!
+  costEventId: ID
+  glAccountId: ID
+  shipmentId: ID
+  moveId: ID
+  proNumber: String!
+}
+
+"""
+A carrier's payable statement for one period. Lifecycle: Draft ->
+PendingApproval -> Approved -> Posted -> Paid, with Void available before
+payment. Posting writes DR purchased transportation / CR accounts payable to
+the GL plus a Bill entry in the carrier ledger; marking paid posts the cash
+disbursement (DR AP / CR cash) and the Payment ledger entry.
+"""
+type CarrierSettlement {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  carrierId: ID!
+  batchId: ID
+  settlementNumber: String!
+  status: CarrierSettlementStatus!
+  periodStart: Int!
+  periodEnd: Int!
+  payDate: Int!
+  grossCostMinor: Int!
+  adjustmentsMinor: Int!
+  netPayableMinor: Int!
+  shipmentCount: Int!
+  currencyCode: String!
+  notes: String!
+  submittedById: ID
+  submittedAt: Int
+  approvedById: ID
+  approvedAt: Int
+  postedById: ID
+  postedAt: Int
+  postedJournalBatchId: ID
+  paidAt: Int
+  paidById: ID
+  paymentMethod: String!
+  paymentReference: String!
+  paidJournalBatchId: ID
+  voidedById: ID
+  voidedAt: Int
+  voidReason: String!
+  voidJournalBatchId: ID
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  carrier: Carrier
+  lines: [CarrierSettlementLine!]
+}
+
+type CarrierSettlementEdge {
+  node: CarrierSettlement!
+  cursor: String!
+}
+
+type CarrierSettlementConnection {
+  edges: [CarrierSettlementEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Groups every carrier settlement generated for one pay period so an AP run can
+be reviewed, exported, and remitted as a unit. Batches are idempotent per
+period and can be generated manually or automatically (carrier settlement
+control).
+"""
+type CarrierSettlementBatch {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  status: CarrierSettlementBatchStatus!
+  name: String!
+  periodStart: Int!
+  periodEnd: Int!
+  payDate: Int!
+  settlementCount: Int!
+  totalGrossMinor: Int!
+  totalNetMinor: Int!
+  currencyCode: String!
+  notes: String!
+  generatedById: ID
+  generatedAt: Int
+  completedAt: Int
+  canceledById: ID
+  canceledAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  settlements: [CarrierSettlement!]
+}
+
+type CarrierSettlementBatchEdge {
+  node: CarrierSettlementBatch!
+  cursor: String!
+}
+
+type CarrierSettlementBatchConnection {
+  edges: [CarrierSettlementBatchEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+One immutable entry in a carrier's AP subledger. Posting a settlement appends a
+Bill, paying it appends a Payment, and voiding a posted settlement appends an
+Adjustment — so the running balance always reconciles to the GL's AP account.
+"""
+type CarrierLedgerEntry {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  carrierId: ID!
+  entryType: CarrierLedgerEntryType!
+  sourceObjectType: String!
+  sourceObjectId: String!
+  sourceEventType: String!
+  relatedSettlementId: ID
+  journalBatchId: ID
+  documentNumber: String!
+  transactionDate: Int!
+  lineNumber: Int!
+  amountMinor: Int!
+  createdById: ID!
+  createdAt: Int!
+}
+
+"""
+Organization-wide carrier settlement policy: the shipment milestone at which
+purchased-transportation cost accrues, pay period cadence, batch automation,
+invoice-match variance tolerance, and GL account defaults.
+"""
+type CarrierSettlementControl {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  payTrigger: SettlementPayTrigger!
+  payPeriodFrequency: PayPeriodFrequency!
+  periodEndDayOfWeek: Int!
+  payDelayDays: Int!
+  autoGenerateBatches: Boolean!
+  "When on, approving a carrier settlement immediately posts it to the general ledger."
+  autoPostOnApprove: Boolean!
+  "Invoice totals within this many minor units of the buy rate auto-match; larger gaps flag a variance."
+  varianceToleranceMinor: Int!
+  defaultApAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type CarrierSettlementPeriodBounds {
+  periodStart: Int!
+  periodEnd: Int!
+  payDate: Int!
+}
+
+"""
+One-call snapshot powering the carrier settlement workspace: settlement counts
+by status for the pay period plus the org-wide pool of pending cost events
+waiting to be settled.
+"""
+type CarrierSettlementWorkspaceSummary {
+  periodStart: Int!
+  periodEnd: Int!
+  payDate: Int!
+  draftCount: Int!
+  pendingApprovalCount: Int!
+  approvedCount: Int!
+  postedCount: Int!
+  paidCount: Int!
+  totalNetMinor: Int!
+  totalGrossMinor: Int!
+  pendingEventCount: Int!
+  pendingAmountMinor: Int!
+  pendingCarrierCount: Int!
+  openBatchId: ID
+}
+
+"An inbound EDI 210 carrier freight invoice awaiting reconciliation."
+type EdiCarrierInvoice {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  carrierId: ID
+  shipmentId: ID
+  invoiceNumber: String!
+  invoiceDate: Int
+  deliveryDate: Int
+  shipmentReference: String!
+  bol: String!
+  proNumber: String!
+  billToName: String!
+  currencyCode: String!
+  totalAmount: String
+  expectedAmount: String
+  varianceAmount: String
+  reconciliationStatus: String!
+  reconciliationNotes: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type EdiCarrierInvoiceList {
+  items: [EdiCarrierInvoice!]!
+  totalCount: Int!
+}
+
+"""
+A reconciliation record pairing a carrier freight invoice (EDI 210 or a
+document-AI extraction) with the carrier assignment it bills. The expected
+total comes from the assignment's negotiated buy rate; the variance is invoice
+minus expected. Within the control's tolerance the match lands Matched,
+otherwise Variance — resolvable as-is, with a variance adjustment cost event,
+or by rejection.
+"""
+type CarrierInvoiceMatch {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  ediCarrierInvoiceId: ID
+  documentAiExtractionId: ID
+  carrierId: ID!
+  carrierAssignmentId: ID!
+  carrierSettlementId: ID
+  adjustmentCostEventId: ID
+  status: CarrierInvoiceMatchStatus!
+  invoiceNumber: String!
+  invoiceTotalMinor: Int!
+  expectedTotalMinor: Int!
+  varianceMinor: Int!
+  currencyCode: String!
+  resolutionNote: String!
+  resolvedById: ID
+  resolvedAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  carrier: Carrier
+  carrierAssignment: CarrierAssignment
+}
+
+type CarrierInvoiceMatchList {
+  items: [CarrierInvoiceMatch!]!
+  totalCount: Int!
+}
+
+input GenerateCarrierSettlementBatchInput {
+  periodStart: Int
+  periodEnd: Int
+  name: String
+  notes: String
+}
+
+input CarrierSettlementActionInput {
+  settlementId: ID!
+  reason: String
+}
+
+input MarkCarrierSettlementPaidInput {
+  settlementId: ID!
+  paymentMethod: String!
+  paymentReference: String
+}
+
+input AddCarrierSettlementAdjustmentInput {
+  settlementId: ID!
+  description: String!
+  amountMinor: Int!
+  "Optional GL account override — the adjustment posts there instead of the default expense account."
+  glAccountId: ID
+}
+
+input RemoveCarrierSettlementAdjustmentInput {
+  settlementId: ID!
+  lineId: ID!
+}
+
+input UpdateCarrierSettlementControlInput {
+  version: Int!
+  payTrigger: SettlementPayTrigger!
+  payPeriodFrequency: PayPeriodFrequency!
+  periodEndDayOfWeek: Int!
+  payDelayDays: Int!
+  autoGenerateBatches: Boolean!
+  autoPostOnApprove: Boolean!
+  varianceToleranceMinor: Int!
+  defaultApAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+}
+
+input CreateCarrierInvoiceMatchInput {
+  "Exactly one source is required: an EDI carrier invoice or a document AI extraction."
+  ediCarrierInvoiceId: ID
+  documentAiExtractionId: ID
+  "Required for document AI sources; EDI sources take the carrier from the linked invoice."
+  carrierId: ID
+  "Optional explicit assignment; otherwise resolved by pro number or shipment reference."
+  carrierAssignmentId: ID
+  "Document AI sources only: the extracted invoice number."
+  invoiceNumber: String
+  "Document AI sources only: the extracted invoice total in minor units."
+  invoiceTotalMinor: Int
+  "Document AI sources only: the pro number used to locate the assignment."
+  proNumber: String
+  "Document AI sources only: the shipment used to locate the assignment."
+  shipmentId: ID
+}
+
+input CarrierInvoiceMatchActionInput {
+  matchId: ID!
+  note: String
+}
+
+extend type Query {
+  carrierSettlements(input: DataTableConnectionInput!): CarrierSettlementConnection!
+  carrierSettlement(id: ID!): CarrierSettlement
+  carrierSettlementBatches(input: DataTableConnectionInput!): CarrierSettlementBatchConnection!
+  carrierSettlementBatch(id: ID!): CarrierSettlementBatch
+  carrierCostEvents(input: DataTableConnectionInput!): CarrierCostEventConnection!
+  carrierSettlementControl: CarrierSettlementControl!
+  currentCarrierSettlementPeriod: CarrierSettlementPeriodBounds!
+  "Workspace snapshot for a pay period; omit bounds to use the current period."
+  carrierSettlementWorkspaceSummary(
+    periodStart: Int
+    periodEnd: Int
+  ): CarrierSettlementWorkspaceSummary!
+  "A carrier's AP subledger, newest first."
+  carrierLedgerEntries(carrierId: ID!, limit: Int): [CarrierLedgerEntry!]!
+  carrierInvoiceMatches(
+    status: CarrierInvoiceMatchStatus
+    carrierId: ID
+    limit: Int
+    offset: Int
+  ): CarrierInvoiceMatchList!
+  "Inbound EDI carrier invoices, filterable by reconciliation status (e.g. Unmatched)."
+  ediCarrierInvoices(
+    reconciliationStatus: String
+    limit: Int
+    offset: Int
+  ): EdiCarrierInvoiceList!
+  "Suggests a carrier for an EDI invoice by SCAC/DOT lookup against the carrier master."
+  suggestCarrierForEdiInvoice(invoiceId: ID!): Carrier
+  exportCarrierSettlementBatchCsv(batchId: ID!): String!
+}
+
+extend type Mutation {
+  generateCarrierSettlementBatch(
+    input: GenerateCarrierSettlementBatchInput!
+  ): CarrierSettlementBatch!
+  submitCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
+  approveCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
+  rejectCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
+  postCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
+  markCarrierSettlementPaid(input: MarkCarrierSettlementPaidInput!): CarrierSettlement!
+  voidCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
+  recalculateCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
+  addCarrierSettlementAdjustment(
+    input: AddCarrierSettlementAdjustmentInput!
+  ): CarrierSettlement!
+  removeCarrierSettlementAdjustment(
+    input: RemoveCarrierSettlementAdjustmentInput!
+  ): CarrierSettlement!
+  updateCarrierSettlementControl(
+    input: UpdateCarrierSettlementControlInput!
+  ): CarrierSettlementControl!
+  "Links an inbound EDI carrier invoice to a carrier in the master."
+  linkEdiCarrierInvoiceToCarrier(invoiceId: ID!, carrierId: ID!): EdiCarrierInvoice!
+  createCarrierInvoiceMatch(input: CreateCarrierInvoiceMatchInput!): CarrierInvoiceMatch!
+  acceptCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
+  "Resolves a variance match by accruing an Adjustment cost event for the variance amount."
+  acceptCarrierInvoiceMatchWithVariance(
+    input: CarrierInvoiceMatchActionInput!
+  ): CarrierInvoiceMatch!
+  rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
+}

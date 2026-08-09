@@ -47,7 +47,17 @@ type CarrierSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 }
 
+type FindCarrierByIdentityRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	SCAC       string                `json:"scac"`
+	DOTNumber  string                `json:"dotNumber"`
+}
+
 type CarrierRepository interface {
+	FindByIdentity(
+		ctx context.Context,
+		req *FindCarrierByIdentityRequest,
+	) (*carrier.Carrier, error)
 	List(
 		ctx context.Context,
 		req *ListCarrierRequest,

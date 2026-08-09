@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
+	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
@@ -178,6 +179,10 @@ type Params struct {
 	DriverSettlementRepo         repositories.DriverSettlementRepository
 	SettlementBatchRepo          repositories.SettlementBatchRepository
 	PayEventRepo                 repositories.PayEventRepository
+	CarrierSettlementService     *carriersettlementservice.Service
+	CarrierSettlementRepo        repositories.CarrierSettlementRepository
+	CarrierSettlementBatchRepo   repositories.CarrierSettlementBatchRepository
+	CarrierCostEventRepo         repositories.CarrierCostEventRepository
 }
 
 type Resolver struct {
@@ -279,6 +284,10 @@ type Resolver struct {
 	driverSettlementRepo         repositories.DriverSettlementRepository
 	settlementBatchRepo          repositories.SettlementBatchRepository
 	payEventRepo                 repositories.PayEventRepository
+	carrierSettlementService     *carriersettlementservice.Service
+	carrierSettlementRepo        repositories.CarrierSettlementRepository
+	carrierSettlementBatchRepo   repositories.CarrierSettlementBatchRepository
+	carrierCostEventRepo         repositories.CarrierCostEventRepository
 	reportingService             *reportingservice.Service
 	permissionEngine             services.PermissionEngine
 }
@@ -385,6 +394,10 @@ func New(p Params) *Resolver {
 		driverSettlementRepo:         p.DriverSettlementRepo,
 		settlementBatchRepo:          p.SettlementBatchRepo,
 		payEventRepo:                 p.PayEventRepo,
+		carrierSettlementService:     p.CarrierSettlementService,
+		carrierSettlementRepo:        p.CarrierSettlementRepo,
+		carrierSettlementBatchRepo:   p.CarrierSettlementBatchRepo,
+		carrierCostEventRepo:         p.CarrierCostEventRepo,
 	}
 }
 

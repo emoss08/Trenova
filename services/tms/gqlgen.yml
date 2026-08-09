@@ -1098,6 +1098,54 @@ models:
   BulkSettlementActionPayload:
     model:
       - github.com/emoss08/trenova/internal/core/services/driversettlementservice.BulkActionPayload
+  CarrierSettlementStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.Status
+  CarrierCostEventType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CostEventType
+  CarrierCostEventStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CostEventStatus
+  CarrierSettlementBatchStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.BatchStatus
+  CarrierLedgerEntryType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.LedgerEntryType
+  CarrierInvoiceMatchStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.InvoiceMatchStatus
+  CarrierCostEvent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CostEvent
+  CarrierSettlement:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CarrierSettlement
+  CarrierSettlementLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CarrierSettlementLine
+  CarrierSettlementBatch:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CarrierSettlementBatch
+  CarrierLedgerEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.LedgerEntry
+  CarrierInvoiceMatch:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.InvoiceMatch
+  CarrierSettlementControl:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.CarrierSettlementControl
+  CarrierSettlementPeriodBounds:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/carriersettlementservice.PeriodBounds
+  CarrierSettlementWorkspaceSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/carriersettlementservice.WorkspaceSummary
+  EdiCarrierInvoice:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.CarrierInvoice
   CustomerPaymentStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customerpayment.Status

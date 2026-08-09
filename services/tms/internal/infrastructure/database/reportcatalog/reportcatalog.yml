@@ -135,6 +135,28 @@ entities:
     description: External carriers that cover brokered freight
     category: Parties
 
+  carrier_settlement:
+    struct: carriersettlement.CarrierSettlement
+    resource: carrier_settlement
+    label: Carrier Settlement
+    pluralLabel: Carrier Settlements
+    description: Carrier payable statements for purchased transportation
+    category: Billing
+    fields:
+      grossCostMinor: { label: "Gross Cost (Minor)" }
+      adjustmentsMinor: { label: "Adjustments (Minor)" }
+      netPayableMinor: { label: "Net Payable (Minor)" }
+
+  carrier_cost_event:
+    struct: carriersettlement.CostEvent
+    resource: carrier_settlement
+    label: Carrier Cost Event
+    pluralLabel: Carrier Cost Events
+    description: Purchased transportation cost accruals from carrier assignments
+    category: Billing
+    fields:
+      amountMinor: { label: "Amount (Minor)" }
+
   customer:
     struct: customer.Customer
     resource: customer
