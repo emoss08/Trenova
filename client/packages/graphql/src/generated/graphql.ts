@@ -215,6 +215,44 @@ export type CdlClass =
   | 'B'
   | 'C';
 
+export type CarrierComplianceStatus =
+  | 'Disqualified'
+  | 'Expired'
+  | 'Pending'
+  | 'Qualified';
+
+export type CarrierInsurancePolicyType =
+  | 'AutoLiability'
+  | 'CargoLiability'
+  | 'GeneralLiability'
+  | 'Umbrella'
+  | 'WorkersComp';
+
+export type CarrierPaymentMethod =
+  | 'ACHManual'
+  | 'Check';
+
+export type CarrierSafetyRating =
+  | 'Conditional'
+  | 'NotRated'
+  | 'Satisfactory'
+  | 'Unsatisfactory';
+
+export type CarrierStatus =
+  | 'Active'
+  | 'DoNotUse'
+  | 'Inactive';
+
+export type CarrierTaxIdType =
+  | 'EIN'
+  | 'SSN';
+
+export type CarrierType =
+  | 'Broker'
+  | 'Common'
+  | 'Contract'
+  | 'Exempt';
+
 export type ComplianceStatus =
   | 'Compliant'
   | 'NonCompliant'
@@ -1867,6 +1905,7 @@ export type SegregationType =
   | 'Separated';
 
 export type SelectOptionResource =
+  | 'CARRIER'
   | 'CUSTOMER'
   | 'EDI_TRANSFER'
   | 'EQUIPMENT_MANUFACTURER'
@@ -2854,6 +2893,29 @@ export type AssignBillingQueueBillerMutationVariables = Exact<{
 
 
 export type AssignBillingQueueBillerMutation = { assignBillingQueueBiller: { ' $fragmentRefs'?: { 'BillingQueueActionFieldsFragment': BillingQueueActionFieldsFragment } } };
+
+export type CarrierContactFieldsFragment = { id: string, businessUnitId: string, organizationId: string, carrierId: string, name: string, title: string | null, email: string | null, phone: string | null, isPrimary: boolean, receivesRateConfirmations: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CarrierContactFieldsFragment' };
+
+export type CarrierInsurancePolicyFieldsFragment = { id: string, businessUnitId: string, organizationId: string, carrierId: string, policyType: CarrierInsurancePolicyType, policyNumber: string, providerName: string, coverageAmount: string, effectiveDate: number, expirationDate: number, isVerified: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CarrierInsurancePolicyFieldsFragment' };
+
+export type CarrierTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string | null, remitStateId: string | null, status: CarrierStatus, code: string, name: string, dbaName: string | null, carrierType: CarrierType, dotNumber: string | null, mcNumber: string | null, scac: string | null, complianceStatus: CarrierComplianceStatus, safetyRating: CarrierSafetyRating, qualifiedAt: number | null, disqualifiedReason: string | null, taxId: string | null, taxIdType: CarrierTaxIdType | null, w9OnFile: boolean, is1099Eligible: boolean, paymentMethod: CarrierPaymentMethod, paymentTermDays: number, remitToName: string | null, remitAddressLine1: string | null, remitAddressLine2: string | null, remitCity: string | null, remitPostalCode: string | null, addressLine1: string | null, addressLine2: string | null, city: string | null, postalCode: string | null, phone: string | null, email: string | null, externalId: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number, contacts: Array<{ ' $fragmentRefs'?: { 'CarrierContactFieldsFragment': CarrierContactFieldsFragment } }> | null, insurancePolicies: Array<{ ' $fragmentRefs'?: { 'CarrierInsurancePolicyFieldsFragment': CarrierInsurancePolicyFieldsFragment } }> | null } & { ' $fragmentName'?: 'CarrierTableRowFieldsFragment' };
+
+export type CarrierTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type CarrierTableQuery = { carriers: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CarrierDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CarrierDetailQuery = { carrier: (
+    { state: { id: string, name: string, abbreviation: string } | null, remitState: { id: string, name: string, abbreviation: string } | null }
+    & { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } }
+  ) | null };
 
 export type CommodityTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: FreightClass | null, loadingInstructions: string | null, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CommodityTableRowFieldsFragment' };
 
@@ -5775,6 +5837,120 @@ export const BillingQueueActionFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"BillingQueueActionFields"}) as unknown as TypedDocumentString<BillingQueueActionFieldsFragment, unknown>;
+export const CarrierContactFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierContactFields on CarrierContact {
+  id
+  businessUnitId
+  organizationId
+  carrierId
+  name
+  title
+  email
+  phone
+  isPrimary
+  receivesRateConfirmations
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"CarrierContactFields"}) as unknown as TypedDocumentString<CarrierContactFieldsFragment, unknown>;
+export const CarrierInsurancePolicyFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {
+  id
+  businessUnitId
+  organizationId
+  carrierId
+  policyType
+  policyNumber
+  providerName
+  coverageAmount
+  effectiveDate
+  expirationDate
+  isVerified
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"CarrierInsurancePolicyFields"}) as unknown as TypedDocumentString<CarrierInsurancePolicyFieldsFragment, unknown>;
+export const CarrierTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment CarrierTableRowFields on Carrier {
+  id
+  businessUnitId
+  organizationId
+  stateId
+  remitStateId
+  status
+  code
+  name
+  dbaName
+  carrierType
+  dotNumber
+  mcNumber
+  scac
+  complianceStatus
+  safetyRating
+  qualifiedAt
+  disqualifiedReason
+  taxId
+  taxIdType
+  w9OnFile
+  is1099Eligible
+  paymentMethod
+  paymentTermDays
+  remitToName
+  remitAddressLine1
+  remitAddressLine2
+  remitCity
+  remitPostalCode
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  phone
+  email
+  externalId
+  notes
+  version
+  createdAt
+  updatedAt
+  contacts {
+    ...CarrierContactFields
+  }
+  insurancePolicies {
+    ...CarrierInsurancePolicyFields
+  }
+}
+    fragment CarrierContactFields on CarrierContact {
+  id
+  businessUnitId
+  organizationId
+  carrierId
+  name
+  title
+  email
+  phone
+  isPrimary
+  receivesRateConfirmations
+  version
+  createdAt
+  updatedAt
+}
+fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {
+  id
+  businessUnitId
+  organizationId
+  carrierId
+  policyType
+  policyNumber
+  providerName
+  coverageAmount
+  effectiveDate
+  expirationDate
+  isVerified
+  version
+  createdAt
+  updatedAt
+}`, {"fragmentName":"CarrierTableRowFields"}) as unknown as TypedDocumentString<CarrierTableRowFieldsFragment, unknown>;
 export const CommodityTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment CommodityTableRowFields on Commodity {
   id
@@ -9640,6 +9816,196 @@ export const AssignBillingQueueBillerDocument = new TypedDocumentString(`
   createdAt
   updatedAt
 }`, {"hash":"sha256:9850f8da7824976fc1edee6d78fb22738914fc8ffefb4d3588e54e6c6f66bd9f"}) as unknown as TypedDocumentString<AssignBillingQueueBillerMutation, AssignBillingQueueBillerMutationVariables>;
+export const CarrierTableDocument = new TypedDocumentString(`
+    query CarrierTable($input: DataTableConnectionInput!) {
+  carriers(input: $input) {
+    edges {
+      node {
+        ...CarrierTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment CarrierContactFields on CarrierContact {
+  id
+  businessUnitId
+  organizationId
+  carrierId
+  name
+  title
+  email
+  phone
+  isPrimary
+  receivesRateConfirmations
+  version
+  createdAt
+  updatedAt
+}
+fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {
+  id
+  businessUnitId
+  organizationId
+  carrierId
+  policyType
+  policyNumber
+  providerName
+  coverageAmount
+  effectiveDate
+  expirationDate
+  isVerified
+  version
+  createdAt
+  updatedAt
+}
+fragment CarrierTableRowFields on Carrier {
+  id
+  businessUnitId
+  organizationId
+  stateId
+  remitStateId
+  status
+  code
+  name
+  dbaName
+  carrierType
+  dotNumber
+  mcNumber
+  scac
+  complianceStatus
+  safetyRating
+  qualifiedAt
+  disqualifiedReason
+  taxId
+  taxIdType
+  w9OnFile
+  is1099Eligible
+  paymentMethod
+  paymentTermDays
+  remitToName
+  remitAddressLine1
+  remitAddressLine2
+  remitCity
+  remitPostalCode
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  phone
+  email
+  externalId
+  notes
+  version
+  createdAt
+  updatedAt
+  contacts {
+    ...CarrierContactFields
+  }
+  insurancePolicies {
+    ...CarrierInsurancePolicyFields
+  }
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:c1d3b3dbf1c186c2f3a581289a260a0abd3e4c4c2f26e2d0308b8f828289289b"}) as unknown as TypedDocumentString<CarrierTableQuery, CarrierTableQueryVariables>;
+export const CarrierDetailDocument = new TypedDocumentString(`
+    query CarrierDetail($id: ID!) {
+  carrier(id: $id) {
+    ...CarrierTableRowFields
+    state {
+      id
+      name
+      abbreviation
+    }
+    remitState {
+      id
+      name
+      abbreviation
+    }
+  }
+}
+    fragment CarrierContactFields on CarrierContact {
+  id
+  businessUnitId
+  organizationId
+  carrierId
+  name
+  title
+  email
+  phone
+  isPrimary
+  receivesRateConfirmations
+  version
+  createdAt
+  updatedAt
+}
+fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {
+  id
+  businessUnitId
+  organizationId
+  carrierId
+  policyType
+  policyNumber
+  providerName
+  coverageAmount
+  effectiveDate
+  expirationDate
+  isVerified
+  version
+  createdAt
+  updatedAt
+}
+fragment CarrierTableRowFields on Carrier {
+  id
+  businessUnitId
+  organizationId
+  stateId
+  remitStateId
+  status
+  code
+  name
+  dbaName
+  carrierType
+  dotNumber
+  mcNumber
+  scac
+  complianceStatus
+  safetyRating
+  qualifiedAt
+  disqualifiedReason
+  taxId
+  taxIdType
+  w9OnFile
+  is1099Eligible
+  paymentMethod
+  paymentTermDays
+  remitToName
+  remitAddressLine1
+  remitAddressLine2
+  remitCity
+  remitPostalCode
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  phone
+  email
+  externalId
+  notes
+  version
+  createdAt
+  updatedAt
+  contacts {
+    ...CarrierContactFields
+  }
+  insurancePolicies {
+    ...CarrierInsurancePolicyFields
+  }
+}`, {"hash":"sha256:6c91eaaa790144316305aad3cb6baa91f7326da8716567e858eb683e41d17163"}) as unknown as TypedDocumentString<CarrierDetailQuery, CarrierDetailQueryVariables>;
 export const CommodityTableDocument = new TypedDocumentString(`
     query CommodityTable($input: DataTableConnectionInput!) {
   commodities(input: $input) {

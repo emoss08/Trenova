@@ -1,0 +1,110 @@
+fragment CarrierContactFields on CarrierContact {
+  id
+  businessUnitId
+  organizationId
+  carrierId
+  name
+  title
+  email
+  phone
+  isPrimary
+  receivesRateConfirmations
+  version
+  createdAt
+  updatedAt
+}
+
+fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {
+  id
+  businessUnitId
+  organizationId
+  carrierId
+  policyType
+  policyNumber
+  providerName
+  coverageAmount
+  effectiveDate
+  expirationDate
+  isVerified
+  version
+  createdAt
+  updatedAt
+}
+
+fragment CarrierTableRowFields on Carrier {
+  id
+  businessUnitId
+  organizationId
+  stateId
+  remitStateId
+  status
+  code
+  name
+  dbaName
+  carrierType
+  dotNumber
+  mcNumber
+  scac
+  complianceStatus
+  safetyRating
+  qualifiedAt
+  disqualifiedReason
+  taxId
+  taxIdType
+  w9OnFile
+  is1099Eligible
+  paymentMethod
+  paymentTermDays
+  remitToName
+  remitAddressLine1
+  remitAddressLine2
+  remitCity
+  remitPostalCode
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  phone
+  email
+  externalId
+  notes
+  version
+  createdAt
+  updatedAt
+  contacts {
+    ...CarrierContactFields
+  }
+  insurancePolicies {
+    ...CarrierInsurancePolicyFields
+  }
+}
+
+query CarrierTable($input: DataTableConnectionInput!) {
+  carriers(input: $input) {
+    edges {
+      node {
+        ...CarrierTableRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query CarrierDetail($id: ID!) {
+  carrier(id: $id) {
+    ...CarrierTableRowFields
+    state {
+      id
+      name
+      abbreviation
+    }
+    remitState {
+      id
+      name
+      abbreviation
+    }
+  }
+}

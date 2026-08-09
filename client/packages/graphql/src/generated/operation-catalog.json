@@ -1,6 +1,6 @@
 {
-  "operationCount": 379,
-  "fragmentCount": 114,
+  "operationCount": 381,
+  "fragmentCount": 117,
   "operations": [
     {
       "name": "AccessorialChargeTable",
@@ -1095,6 +1095,55 @@
       "fragments": [],
       "usages": [],
       "sdl": "query CannedReports {\n  cannedReports {\n    key\n    version\n    name\n    description\n    category\n    tags\n    defaultFormat\n    definition\n  }\n}"
+    },
+    {
+      "name": "CarrierDetail",
+      "kind": "query",
+      "domain": "carrier",
+      "sourceFile": "src/operations/carrier/table.graphql",
+      "hash": "sha256:6c91eaaa790144316305aad3cb6baa91f7326da8716567e858eb683e41d17163",
+      "rootFields": [
+        "carrier"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierContactFields",
+        "CarrierInsurancePolicyFields",
+        "CarrierTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierDetail($id: ID!) {\n  carrier(id: $id) {\n    ...CarrierTableRowFields\n    state {\n      id\n      name\n      abbreviation\n    }\n    remitState {\n      id\n      name\n      abbreviation\n    }\n  }\n}\n\nfragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierTableRowFields on Carrier {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  remitStateId\n  status\n  code\n  name\n  dbaName\n  carrierType\n  dotNumber\n  mcNumber\n  scac\n  complianceStatus\n  safetyRating\n  qualifiedAt\n  disqualifiedReason\n  taxId\n  taxIdType\n  w9OnFile\n  is1099Eligible\n  paymentMethod\n  paymentTermDays\n  remitToName\n  remitAddressLine1\n  remitAddressLine2\n  remitCity\n  remitPostalCode\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  phone\n  email\n  externalId\n  notes\n  version\n  createdAt\n  updatedAt\n  contacts {\n    ...CarrierContactFields\n  }\n  insurancePolicies {\n    ...CarrierInsurancePolicyFields\n  }\n}"
+    },
+    {
+      "name": "CarrierTable",
+      "kind": "query",
+      "domain": "carrier",
+      "sourceFile": "src/operations/carrier/table.graphql",
+      "hash": "sha256:c1d3b3dbf1c186c2f3a581289a260a0abd3e4c4c2f26e2d0308b8f828289289b",
+      "rootFields": [
+        "carriers"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "CarrierContactFields",
+        "CarrierInsurancePolicyFields",
+        "CarrierTableRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierTable($input: DataTableConnectionInput!) {\n  carriers(input: $input) {\n    edges {\n      node {\n        ...CarrierTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierTableRowFields on Carrier {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  remitStateId\n  status\n  code\n  name\n  dbaName\n  carrierType\n  dotNumber\n  mcNumber\n  scac\n  complianceStatus\n  safetyRating\n  qualifiedAt\n  disqualifiedReason\n  taxId\n  taxIdType\n  w9OnFile\n  is1099Eligible\n  paymentMethod\n  paymentTermDays\n  remitToName\n  remitAddressLine1\n  remitAddressLine2\n  remitCity\n  remitPostalCode\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  phone\n  email\n  externalId\n  notes\n  version\n  createdAt\n  updatedAt\n  contacts {\n    ...CarrierContactFields\n  }\n  insurancePolicies {\n    ...CarrierInsurancePolicyFields\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "CheckShipmentDuplicateBol",
@@ -8576,6 +8625,48 @@
       "sdl": "fragment BillingQueueActionFields on BillingQueueItem {\n  id\n  organizationId\n  businessUnitId\n  shipmentId\n  assignedBillerId\n  number\n  status\n  billType\n  exceptionReasonCode\n  reviewNotes\n  exceptionNotes\n  reviewStartedAt\n  reviewCompletedAt\n  canceledById\n  canceledAt\n  cancelReason\n  isAdjustmentOrigin\n  sourceInvoiceId\n  sourceInvoiceAdjustmentId\n  sourceCreditMemoInvoiceId\n  correctionGroupId\n  rebillStrategy\n  requiresReplacementReview\n  rerateVariancePercent\n  adjustmentContext\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "CarrierContactFields",
+      "typeCondition": "CarrierContact",
+      "domain": "carrier",
+      "sourceFile": "src/operations/carrier/table.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierDetail",
+        "CarrierTable"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CarrierInsurancePolicyFields",
+      "typeCondition": "CarrierInsurancePolicy",
+      "domain": "carrier",
+      "sourceFile": "src/operations/carrier/table.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CarrierDetail",
+        "CarrierTable"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CarrierTableRowFields",
+      "typeCondition": "Carrier",
+      "domain": "carrier",
+      "sourceFile": "src/operations/carrier/table.graphql",
+      "fragments": [
+        "CarrierContactFields",
+        "CarrierInsurancePolicyFields"
+      ],
+      "usedByOperations": [
+        "CarrierDetail",
+        "CarrierTable"
+      ],
+      "usages": [],
+      "sdl": "fragment CarrierTableRowFields on Carrier {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  remitStateId\n  status\n  code\n  name\n  dbaName\n  carrierType\n  dotNumber\n  mcNumber\n  scac\n  complianceStatus\n  safetyRating\n  qualifiedAt\n  disqualifiedReason\n  taxId\n  taxIdType\n  w9OnFile\n  is1099Eligible\n  paymentMethod\n  paymentTermDays\n  remitToName\n  remitAddressLine1\n  remitAddressLine2\n  remitCity\n  remitPostalCode\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  phone\n  email\n  externalId\n  notes\n  version\n  createdAt\n  updatedAt\n  contacts {\n    ...CarrierContactFields\n  }\n  insurancePolicies {\n    ...CarrierInsurancePolicyFields\n  }\n}\n\nfragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "CommodityTableRowFields",
       "typeCondition": "Commodity",
       "domain": "commodity",
@@ -8652,6 +8743,7 @@
         "AgentRunTable",
         "ApiKeyTable",
         "AuditLogTable",
+        "CarrierTable",
         "CommodityTable",
         "CustomerPaymentTable",
         "CustomerTable",
@@ -15669,6 +15761,7 @@
     "SelectOptionResource": {
       "kind": "enum",
       "values": [
+        "CARRIER",
         "CUSTOMER",
         "EDI_TRANSFER",
         "EQUIPMENT_MANUFACTURER",
@@ -15685,7 +15778,7 @@
         "US_STATE",
         "WORKER"
       ],
-      "sdl": "enum SelectOptionResource {\n  CUSTOMER\n  EDI_TRANSFER\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  ORDER\n  SHIPMENT\n  TRACTOR\n  TRAILER\n  US_STATE\n  WORKER\n}"
+      "sdl": "enum SelectOptionResource {\n  CARRIER\n  CUSTOMER\n  EDI_TRANSFER\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  ORDER\n  SHIPMENT\n  TRACTOR\n  TRAILER\n  US_STATE\n  WORKER\n}"
     },
     "BillType": {
       "kind": "enum",

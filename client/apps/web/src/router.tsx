@@ -864,6 +864,14 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/dispatch/carriers",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Carrier)),
+            async lazy() {
+              const { CarriersPage } = await import("@/routes/carrier/page");
+              return { Component: CarriersPage };
+            },
+          },
+          {
             path: "/accounting/configuration-files/fiscal-years",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.FiscalYear)),
             async lazy() {

@@ -45,6 +45,15 @@ import type {
   TransferSchedule,
 } from "@/types/billing-control";
 import type { BillingQueueStatus, ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
+import type {
+  CarrierComplianceStatus,
+  CarrierInsurancePolicyType,
+  CarrierPaymentMethod,
+  CarrierSafetyRating,
+  CarrierStatus,
+  CarrierTaxIdType,
+  CarrierType,
+} from "@trenova/shared/types/carrier";
 import type { FreightClass } from "@trenova/shared/types/commodity";
 import type { FieldType } from "@/types/custom-field";
 import type {
@@ -299,6 +308,51 @@ export const statusChoices = [
   { label: "Active", value: "Active", color: "#15803d" },
   { label: "Inactive", value: "Inactive", color: "#dc2626" },
 ] satisfies ReadonlyArray<GenericSelectOption<Status>>;
+
+export const carrierStatusChoices = [
+  { label: "Active", value: "Active", color: "#15803d" },
+  { label: "Inactive", value: "Inactive", color: "#dc2626" },
+  { label: "Do Not Use", value: "DoNotUse", color: "#b91c1c" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierStatus>>;
+
+export const carrierTypeChoices = [
+  { label: "Common", value: "Common", color: "#2563eb" },
+  { label: "Contract", value: "Contract", color: "#7e22ce" },
+  { label: "Broker", value: "Broker", color: "#f59e0b" },
+  { label: "Exempt", value: "Exempt", color: "#6b7280" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierType>>;
+
+export const carrierComplianceStatusChoices = [
+  { label: "Pending", value: "Pending", color: "#f59e0b" },
+  { label: "Qualified", value: "Qualified", color: "#15803d" },
+  { label: "Disqualified", value: "Disqualified", color: "#dc2626" },
+  { label: "Expired", value: "Expired", color: "#f97316" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierComplianceStatus>>;
+
+export const carrierSafetyRatingChoices = [
+  { label: "Satisfactory", value: "Satisfactory", color: "#15803d" },
+  { label: "Conditional", value: "Conditional", color: "#f59e0b" },
+  { label: "Unsatisfactory", value: "Unsatisfactory", color: "#dc2626" },
+  { label: "Not Rated", value: "NotRated", color: "#6b7280" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierSafetyRating>>;
+
+export const carrierTaxIdTypeChoices = [
+  { label: "EIN", value: "EIN" },
+  { label: "SSN", value: "SSN" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierTaxIdType>>;
+
+export const carrierPaymentMethodChoices = [
+  { label: "Check", value: "Check", color: "#2563eb" },
+  { label: "ACH (Manual)", value: "ACHManual", color: "#0d9488" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierPaymentMethod>>;
+
+export const carrierInsurancePolicyTypeChoices = [
+  { label: "Auto Liability", value: "AutoLiability", color: "#2563eb" },
+  { label: "Cargo Liability", value: "CargoLiability", color: "#0d9488" },
+  { label: "General Liability", value: "GeneralLiability", color: "#7e22ce" },
+  { label: "Workers Comp", value: "WorkersComp", color: "#f59e0b" },
+  { label: "Umbrella", value: "Umbrella", color: "#6b7280" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierInsurancePolicyType>>;
 
 export const orderStatusChoices = [
   { label: "Draft", value: "Draft", color: "#a3a3a3" },

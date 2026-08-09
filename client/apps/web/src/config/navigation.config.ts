@@ -134,6 +134,12 @@ const dispatchModule: NavModule = {
       resource: Resource.Worker,
     },
     {
+      id: "carriers",
+      label: "Carriers",
+      path: "/dispatch/carriers",
+      resource: Resource.Carrier,
+    },
+    {
       id: "dispatch-config-group",
       label: "Configuration Files",
       defaultOpen: false,

@@ -798,6 +798,143 @@ type CannedReport {
   version: String!
 }
 
+type Carrier {
+  addressLine1: String
+  addressLine2: String
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  carrierType: CarrierType!
+  city: String
+  code: String!
+  complianceStatus: CarrierComplianceStatus!
+  contacts: [CarrierContact!]
+  createdAt: Int!
+  dbaName: String
+  disqualifiedReason: String
+  dotNumber: String
+  email: String
+  externalId: String
+  id: ID!
+  insurancePolicies: [CarrierInsurancePolicy!]
+  is1099Eligible: Boolean!
+  mcNumber: String
+  name: String!
+  notes: String
+  organization: Organization
+  organizationId: ID!
+  paymentMethod: CarrierPaymentMethod!
+  paymentTermDays: Int!
+  phone: String
+  postalCode: String
+  qualifiedAt: Int
+  remitAddressLine1: String
+  remitAddressLine2: String
+  remitCity: String
+  remitPostalCode: String
+  remitState: UsState
+  remitStateId: ID
+  remitToName: String
+  safetyRating: CarrierSafetyRating!
+  scac: String
+  state: UsState
+  stateId: ID
+  status: CarrierStatus!
+  taxId: String
+  taxIdType: CarrierTaxIDType
+  updatedAt: Int!
+  version: Int!
+  w9OnFile: Boolean!
+}
+
+enum CarrierComplianceStatus {
+  Disqualified
+  Expired
+  Pending
+  Qualified
+}
+
+type CarrierConnection {
+  edges: [CarrierEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierContact {
+  businessUnitId: ID!
+  carrierId: ID!
+  createdAt: Int!
+  email: String
+  id: ID!
+  isPrimary: Boolean!
+  name: String!
+  organizationId: ID!
+  phone: String
+  receivesRateConfirmations: Boolean!
+  title: String
+  updatedAt: Int!
+  version: Int!
+}
+
+type CarrierEdge {
+  cursor: String!
+  node: Carrier!
+}
+
+type CarrierInsurancePolicy {
+  businessUnitId: ID!
+  carrierId: ID!
+  coverageAmount: String!
+  createdAt: Int!
+  effectiveDate: Int!
+  expirationDate: Int!
+  id: ID!
+  isVerified: Boolean!
+  organizationId: ID!
+  policyNumber: String!
+  policyType: CarrierInsurancePolicyType!
+  providerName: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum CarrierInsurancePolicyType {
+  AutoLiability
+  CargoLiability
+  GeneralLiability
+  Umbrella
+  WorkersComp
+}
+
+enum CarrierPaymentMethod {
+  ACHManual
+  Check
+}
+
+enum CarrierSafetyRating {
+  Conditional
+  NotRated
+  Satisfactory
+  Unsatisfactory
+}
+
+enum CarrierStatus {
+  Active
+  DoNotUse
+  Inactive
+}
+
+enum CarrierTaxIDType {
+  EIN
+  SSN
+}
+
+enum CarrierType {
+  Broker
+  Common
+  Contract
+  Exempt
+}
+
 type CategoryCostLine {
   amount: String!
   category: CostCategoryType!
@@ -5919,6 +6056,8 @@ type Query {
   auditEntriesByResourceId(input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
   cannedReports: [CannedReport!]!
+  carrier(id: ID!): Carrier
+  carriers(input: DataTableConnectionInput!): CarrierConnection!
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
   costingControl: CostingControl!
@@ -7057,6 +7196,7 @@ type SelectOptionEdge {
 }
 
 enum SelectOptionResource {
+  CARRIER
   CUSTOMER
   EDI_TRANSFER
   EQUIPMENT_MANUFACTURER

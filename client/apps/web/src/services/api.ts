@@ -12,6 +12,7 @@ import { BillingControlService } from "./billing-control";
 import { BillingQueueService } from "./billing-queue";
 import { CommodityService } from "./commodity";
 import { CustomFieldService } from "./custom-field";
+import { CarrierService } from "./carrier";
 import { CustomerService } from "./customer";
 import { DataEntryControlService } from "./data-entry-control";
 import { DatabaseSessionService } from "./database-session";
@@ -98,6 +99,7 @@ class APIService {
   public hazardousMaterialService: HazardousMaterialService;
   public hazmatSegregationRuleService: HazmatSegregationRuleService;
   public commodityService: CommodityService;
+  public carrierService: CarrierService;
   public customerService: CustomerService;
   public databaseSessionService: DatabaseSessionService;
   public googleMapsService: GoogleMapsService;
@@ -175,6 +177,7 @@ class APIService {
     this.hazardousMaterialService = new HazardousMaterialService();
     this.hazmatSegregationRuleService = new HazmatSegregationRuleService();
     this.commodityService = new CommodityService();
+    this.carrierService = new CarrierService();
     this.customerService = new CustomerService();
     this.databaseSessionService = new DatabaseSessionService();
     this.googleMapsService = new GoogleMapsService();

@@ -88,6 +88,9 @@ export const Resource = {
   Customer: "customer",
   CustomerContact: "customer_contact",
 
+  // Carriers
+  Carrier: "carrier",
+
   // Locations
   Location: "location",
   LocationCategory: "location_category",
