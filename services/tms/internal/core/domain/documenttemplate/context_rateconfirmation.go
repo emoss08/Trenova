@@ -17,9 +17,9 @@ type RateConfirmationContext struct {
 	CarrierMC   string
 	CarrierDOT  string
 
-	ShipmentProNumber     string
-	BOL           string
-	RevisionLabel string
+	ShipmentProNumber string
+	BOL               string
+	RevisionLabel     string
 
 	ExternalDriverName    string
 	ExternalDriverPhone   string
@@ -66,7 +66,7 @@ func newRateConfirmationSampleContext() any {
 		CarrierSCAC:           "ESTL",
 		CarrierMC:             "123456",
 		CarrierDOT:            "7654321",
-		ShipmentProNumber:             sampleProNumber,
+		ShipmentProNumber:     sampleProNumber,
 		BOL:                   "BOL-58291",
 		RevisionLabel:         "Revision 2",
 		ExternalDriverName:    "R. Alvarez",
