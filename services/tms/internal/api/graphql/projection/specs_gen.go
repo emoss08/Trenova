@@ -26,6 +26,12 @@ var BillingQueueItemSpec TypeSpec
 
 var BusinessUnitSpec TypeSpec
 
+var CarrierSpec TypeSpec
+
+var CarrierContactSpec TypeSpec
+
+var CarrierInsurancePolicySpec TypeSpec
+
 var CommoditySpec TypeSpec
 
 var CostCategorySpec TypeSpec
@@ -1113,6 +1119,343 @@ func init() {
 			{
 				Name:        "code",
 				FieldMapKey: "code",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CarrierSpec = TypeSpec{
+		TypeName: "Carrier",
+		FieldMap: buncolgen.CarrierFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "stateId",
+				FieldMapKey: "stateId",
+			},
+			{
+				Name:        "remitStateId",
+				FieldMapKey: "remitStateId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "dbaName",
+				FieldMapKey: "dbaName",
+			},
+			{
+				Name:        "carrierType",
+				FieldMapKey: "carrierType",
+			},
+			{
+				Name:        "dotNumber",
+				FieldMapKey: "dotNumber",
+			},
+			{
+				Name:        "mcNumber",
+				FieldMapKey: "mcNumber",
+			},
+			{
+				Name:        "scac",
+				FieldMapKey: "scac",
+			},
+			{
+				Name:        "complianceStatus",
+				FieldMapKey: "complianceStatus",
+			},
+			{
+				Name:        "safetyRating",
+				FieldMapKey: "safetyRating",
+			},
+			{
+				Name:        "qualifiedAt",
+				FieldMapKey: "qualifiedAt",
+			},
+			{
+				Name:        "disqualifiedReason",
+				FieldMapKey: "disqualifiedReason",
+			},
+			{
+				Name:        "taxId",
+				FieldMapKey: "taxId",
+			},
+			{
+				Name:        "taxIdType",
+				FieldMapKey: "taxIdType",
+			},
+			{
+				Name:        "w9OnFile",
+				FieldMapKey: "w9OnFile",
+			},
+			{
+				Name:        "is1099Eligible",
+				FieldMapKey: "is1099Eligible",
+			},
+			{
+				Name:        "paymentMethod",
+				FieldMapKey: "paymentMethod",
+			},
+			{
+				Name:        "paymentTermDays",
+				FieldMapKey: "paymentTermDays",
+			},
+			{
+				Name:        "remitToName",
+				FieldMapKey: "remitToName",
+			},
+			{
+				Name:        "remitAddressLine1",
+				FieldMapKey: "remitAddressLine1",
+			},
+			{
+				Name:        "remitAddressLine2",
+				FieldMapKey: "remitAddressLine2",
+			},
+			{
+				Name:        "remitCity",
+				FieldMapKey: "remitCity",
+			},
+			{
+				Name:        "remitPostalCode",
+				FieldMapKey: "remitPostalCode",
+			},
+			{
+				Name:        "addressLine1",
+				FieldMapKey: "addressLine1",
+			},
+			{
+				Name:        "addressLine2",
+				FieldMapKey: "addressLine2",
+			},
+			{
+				Name:        "city",
+				FieldMapKey: "city",
+			},
+			{
+				Name:        "postalCode",
+				FieldMapKey: "postalCode",
+			},
+			{
+				Name:        "phone",
+				FieldMapKey: "phone",
+			},
+			{
+				Name:        "email",
+				FieldMapKey: "email",
+			},
+			{
+				Name:        "externalId",
+				FieldMapKey: "externalId",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "businessUnit",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &BusinessUnitSpec,
+				},
+			},
+			{
+				Name:        "organization",
+				FieldMapKey: "organizationId",
+				Relation: &RelationSpec{
+					Target: &OrganizationSpec,
+				},
+			},
+			{
+				Name:        "state",
+				FieldMapKey: "stateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+			{
+				Name:        "remitState",
+				FieldMapKey: "remitStateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+			{
+				Name: "contacts",
+				Relation: &RelationSpec{
+					Target: &CarrierContactSpec,
+				},
+			},
+			{
+				Name: "insurancePolicies",
+				Relation: &RelationSpec{
+					Target: &CarrierInsurancePolicySpec,
+				},
+			},
+		},
+	}
+
+	CarrierContactSpec = TypeSpec{
+		TypeName: "CarrierContact",
+		FieldMap: buncolgen.CarrierContactFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "title",
+				FieldMapKey: "title",
+			},
+			{
+				Name:        "email",
+				FieldMapKey: "email",
+			},
+			{
+				Name:        "phone",
+				FieldMapKey: "phone",
+			},
+			{
+				Name:        "isPrimary",
+				FieldMapKey: "isPrimary",
+			},
+			{
+				Name:        "receivesRateConfirmations",
+				FieldMapKey: "receivesRateConfirmations",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CarrierInsurancePolicySpec = TypeSpec{
+		TypeName: "CarrierInsurancePolicy",
+		FieldMap: buncolgen.CarrierInsurancePolicyFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "policyType",
+				FieldMapKey: "policyType",
+			},
+			{
+				Name:        "policyNumber",
+				FieldMapKey: "policyNumber",
+			},
+			{
+				Name:        "providerName",
+				FieldMapKey: "providerName",
+			},
+			{
+				Name:        "coverageAmount",
+				FieldMapKey: "coverageAmount",
+			},
+			{
+				Name:        "effectiveDate",
+				FieldMapKey: "effectiveDate",
+			},
+			{
+				Name:        "expirationDate",
+				FieldMapKey: "expirationDate",
+			},
+			{
+				Name:        "isVerified",
+				FieldMapKey: "isVerified",
 			},
 			{
 				Name:        "version",

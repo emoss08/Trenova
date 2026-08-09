@@ -654,6 +654,48 @@ models:
         resolver: true
       currentLocationName:
         resolver: true
+  Carrier:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.Carrier
+    fields:
+      dotNumber:
+        fieldName: DOTNumber
+      mcNumber:
+        fieldName: MCNumber
+      scac:
+        fieldName: SCAC
+      taxIdType:
+        fieldName: TaxIDType
+  CarrierStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.Status
+  CarrierType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.Type
+  CarrierComplianceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.ComplianceStatus
+  CarrierSafetyRating:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.SafetyRating
+  CarrierTaxIDType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.TaxIDType
+  CarrierPaymentMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.PaymentMethod
+  CarrierInsurancePolicyType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.InsurancePolicyType
+  CarrierContact:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.CarrierContact
+  CarrierInsurancePolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.CarrierInsurancePolicy
+    fields:
+      coverageAmount:
+        resolver: true
   Customer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.Customer

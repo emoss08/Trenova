@@ -1,0 +1,141 @@
+enum CarrierStatus {
+  Active
+  Inactive
+  DoNotUse
+}
+
+enum CarrierType {
+  Common
+  Contract
+  Broker
+  Exempt
+}
+
+enum CarrierComplianceStatus {
+  Pending
+  Qualified
+  Disqualified
+  Expired
+}
+
+enum CarrierSafetyRating {
+  Satisfactory
+  Conditional
+  Unsatisfactory
+  NotRated
+}
+
+enum CarrierTaxIDType {
+  EIN
+  SSN
+}
+
+enum CarrierPaymentMethod {
+  Check
+  ACHManual
+}
+
+enum CarrierInsurancePolicyType {
+  AutoLiability
+  CargoLiability
+  GeneralLiability
+  WorkersComp
+  Umbrella
+}
+
+type CarrierContact {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierId: ID!
+  name: String!
+  title: String
+  email: String
+  phone: String
+  isPrimary: Boolean!
+  receivesRateConfirmations: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type CarrierInsurancePolicy {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierId: ID!
+  policyType: CarrierInsurancePolicyType!
+  policyNumber: String!
+  providerName: String!
+  coverageAmount: String!
+  effectiveDate: Int!
+  expirationDate: Int!
+  isVerified: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type Carrier {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  stateId: ID
+  remitStateId: ID
+  status: CarrierStatus!
+  code: String!
+  name: String!
+  dbaName: String
+  carrierType: CarrierType!
+  dotNumber: String
+  mcNumber: String
+  scac: String
+  complianceStatus: CarrierComplianceStatus!
+  safetyRating: CarrierSafetyRating!
+  qualifiedAt: Int
+  disqualifiedReason: String
+  taxId: String
+  taxIdType: CarrierTaxIDType
+  w9OnFile: Boolean!
+  is1099Eligible: Boolean!
+  paymentMethod: CarrierPaymentMethod!
+  paymentTermDays: Int!
+  remitToName: String
+  remitAddressLine1: String
+  remitAddressLine2: String
+  remitCity: String
+  remitPostalCode: String
+  addressLine1: String
+  addressLine2: String
+  city: String
+  postalCode: String
+  phone: String
+  email: String
+  externalId: String
+  notes: String
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+  state: UsState
+  remitState: UsState
+  contacts: [CarrierContact!]
+  insurancePolicies: [CarrierInsurancePolicy!]
+}
+
+type CarrierEdge {
+  node: Carrier!
+  cursor: String!
+}
+
+type CarrierConnection {
+  edges: [CarrierEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  carriers(input: DataTableConnectionInput!): CarrierConnection!
+  carrier(id: ID!): Carrier
+}

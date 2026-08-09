@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
@@ -92,9 +93,11 @@ type Params struct {
 	AccountsReceivableService    *accountsreceivableservice.Service
 	CustomerPaymentService       services.CustomerPaymentService
 	CustomerPaymentRepo          repositories.CustomerPaymentRepository
+	CarrierRepo                  repositories.CarrierRepository
 	CustomerRepo                 repositories.CustomerRepository
 	GLAccountRepo                repositories.GLAccountRepository
 	CommodityService             *commodityservice.Service
+	CarrierService               *carrierservice.Service
 	CustomerService              *customerservice.Service
 	CustomFieldService           *customfieldservice.Service
 	FleetCodeService             *fleetcodeservice.Service
@@ -191,9 +194,11 @@ type Resolver struct {
 	accountsReceivableService    *accountsreceivableservice.Service
 	customerPaymentService       services.CustomerPaymentService
 	customerPaymentRepo          repositories.CustomerPaymentRepository
+	carrierRepo                  repositories.CarrierRepository
 	customerRepo                 repositories.CustomerRepository
 	glAccountRepo                repositories.GLAccountRepository
 	commodityService             *commodityservice.Service
+	carrierService               *carrierservice.Service
 	customerService              *customerservice.Service
 	customFieldService           *customfieldservice.Service
 	fleetCodeService             *fleetcodeservice.Service
@@ -292,9 +297,11 @@ func New(p Params) *Resolver {
 		accountsReceivableService:    p.AccountsReceivableService,
 		customerPaymentService:       p.CustomerPaymentService,
 		customerPaymentRepo:          p.CustomerPaymentRepo,
+		carrierRepo:                  p.CarrierRepo,
 		customerRepo:                 p.CustomerRepo,
 		glAccountRepo:                p.GLAccountRepo,
 		commodityService:             p.CommodityService,
+		carrierService:               p.CarrierService,
 		customerService:              p.CustomerService,
 		customFieldService:           p.CustomFieldService,
 		fleetCodeService:             p.FleetCodeService,

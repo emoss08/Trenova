@@ -263,6 +263,7 @@ func (rr *RouteRegistry) registerAll() {
 	rr.registerBillingRoutes()
 	rr.registerDetentionRoutes()
 	rr.registerCustomerRoutes()
+	rr.registerCarrierRoutes()
 	rr.registerLocationRoutes()
 	rr.registerCommodityRoutes()
 	rr.registerHoldReasonRoutes()
@@ -748,6 +749,29 @@ func (rr *RouteRegistry) registerDetentionRoutes() {
 		},
 		DisplayName: "Detention Policies",
 		Category:    "Detention",
+	})
+}
+
+func (rr *RouteRegistry) registerCarrierRoutes() {
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/dispatch/carriers",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceCarrier, Operation: OpRead},
+		},
+		DisplayName: "Carriers",
+		Category:    "Carriers",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/dispatch/carriers/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceCarrier, Operation: OpRead},
+		},
+		DisplayName: "Carrier Details",
+		Category:    "Carriers",
+		ParentRoute: "/dispatch/carriers",
 	})
 }
 

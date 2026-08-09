@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
@@ -96,6 +97,7 @@ type ResolverRoot interface {
 	AgentProposal() AgentProposalResolver
 	ApiKey() ApiKeyResolver
 	AuditEntry() AuditEntryResolver
+	CarrierInsurancePolicy() CarrierInsurancePolicyResolver
 	Commodity() CommodityResolver
 	CustomerBillingProfile() CustomerBillingProfileResolver
 	CustomerPayment() CustomerPaymentResolver
@@ -680,6 +682,98 @@ type ComplexityRoot struct {
 		Name          func(childComplexity int) int
 		Tags          func(childComplexity int) int
 		Version       func(childComplexity int) int
+	}
+
+	Carrier struct {
+		AddressLine1       func(childComplexity int) int
+		AddressLine2       func(childComplexity int) int
+		BusinessUnit       func(childComplexity int) int
+		BusinessUnitID     func(childComplexity int) int
+		CarrierType        func(childComplexity int) int
+		City               func(childComplexity int) int
+		Code               func(childComplexity int) int
+		ComplianceStatus   func(childComplexity int) int
+		Contacts           func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		DBAName            func(childComplexity int) int
+		DOTNumber          func(childComplexity int) int
+		DisqualifiedReason func(childComplexity int) int
+		Email              func(childComplexity int) int
+		ExternalID         func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		InsurancePolicies  func(childComplexity int) int
+		Is1099Eligible     func(childComplexity int) int
+		MCNumber           func(childComplexity int) int
+		Name               func(childComplexity int) int
+		Notes              func(childComplexity int) int
+		Organization       func(childComplexity int) int
+		OrganizationID     func(childComplexity int) int
+		PaymentMethod      func(childComplexity int) int
+		PaymentTermDays    func(childComplexity int) int
+		Phone              func(childComplexity int) int
+		PostalCode         func(childComplexity int) int
+		QualifiedAt        func(childComplexity int) int
+		RemitAddressLine1  func(childComplexity int) int
+		RemitAddressLine2  func(childComplexity int) int
+		RemitCity          func(childComplexity int) int
+		RemitPostalCode    func(childComplexity int) int
+		RemitState         func(childComplexity int) int
+		RemitStateID       func(childComplexity int) int
+		RemitToName        func(childComplexity int) int
+		SCAC               func(childComplexity int) int
+		SafetyRating       func(childComplexity int) int
+		State              func(childComplexity int) int
+		StateID            func(childComplexity int) int
+		Status             func(childComplexity int) int
+		TaxID              func(childComplexity int) int
+		TaxIDType          func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+		W9OnFile           func(childComplexity int) int
+	}
+
+	CarrierConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	CarrierContact struct {
+		BusinessUnitID            func(childComplexity int) int
+		CarrierID                 func(childComplexity int) int
+		CreatedAt                 func(childComplexity int) int
+		Email                     func(childComplexity int) int
+		ID                        func(childComplexity int) int
+		IsPrimary                 func(childComplexity int) int
+		Name                      func(childComplexity int) int
+		OrganizationID            func(childComplexity int) int
+		Phone                     func(childComplexity int) int
+		ReceivesRateConfirmations func(childComplexity int) int
+		Title                     func(childComplexity int) int
+		UpdatedAt                 func(childComplexity int) int
+		Version                   func(childComplexity int) int
+	}
+
+	CarrierEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	CarrierInsurancePolicy struct {
+		BusinessUnitID func(childComplexity int) int
+		CarrierID      func(childComplexity int) int
+		CoverageAmount func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		EffectiveDate  func(childComplexity int) int
+		ExpirationDate func(childComplexity int) int
+		ID             func(childComplexity int) int
+		IsVerified     func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		PolicyNumber   func(childComplexity int) int
+		PolicyType     func(childComplexity int) int
+		ProviderName   func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		Version        func(childComplexity int) int
 	}
 
 	CategoryCostLine struct {
@@ -3901,6 +3995,8 @@ type ComplexityRoot struct {
 		AuditEntriesByResourceID            func(childComplexity int, input gqlmodel.DataTableConnectionInput, resourceID string) int
 		AuditEntry                          func(childComplexity int, id string) int
 		CannedReports                       func(childComplexity int) int
+		Carrier                             func(childComplexity int, id string) int
+		Carriers                            func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		Commodities                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		Commodity                           func(childComplexity int, id string) int
 		CostingControl                      func(childComplexity int) int
@@ -6324,6 +6420,9 @@ type AuditEntryResolver interface {
 
 	EntityRef(ctx context.Context, obj *audit.Entry) (*string, error)
 }
+type CarrierInsurancePolicyResolver interface {
+	CoverageAmount(ctx context.Context, obj *carrier.CarrierInsurancePolicy) (string, error)
+}
 type CommodityResolver interface {
 	FreightClass(ctx context.Context, obj *commodity.Commodity) (*commodity.FreightClass, error)
 }
@@ -6671,6 +6770,8 @@ type QueryResolver interface {
 	AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntry(ctx context.Context, id string) (*audit.Entry, error)
+	Carriers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierConnection, error)
+	Carrier(ctx context.Context, id string) (*carrier.Carrier, error)
 	Commodities(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CommodityConnection, error)
 	Commodity(ctx context.Context, id string) (*commodity.Commodity, error)
 	CostingControl(ctx context.Context) (*gqlmodel.CostingControl, error)
@@ -9338,6 +9439,473 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CannedReport.Version(childComplexity), true
+
+	case "Carrier.addressLine1":
+		if e.ComplexityRoot.Carrier.AddressLine1 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.AddressLine1(childComplexity), true
+	case "Carrier.addressLine2":
+		if e.ComplexityRoot.Carrier.AddressLine2 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.AddressLine2(childComplexity), true
+	case "Carrier.businessUnit":
+		if e.ComplexityRoot.Carrier.BusinessUnit == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.BusinessUnit(childComplexity), true
+	case "Carrier.businessUnitId":
+		if e.ComplexityRoot.Carrier.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.BusinessUnitID(childComplexity), true
+	case "Carrier.carrierType":
+		if e.ComplexityRoot.Carrier.CarrierType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.CarrierType(childComplexity), true
+	case "Carrier.city":
+		if e.ComplexityRoot.Carrier.City == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.City(childComplexity), true
+	case "Carrier.code":
+		if e.ComplexityRoot.Carrier.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Code(childComplexity), true
+	case "Carrier.complianceStatus":
+		if e.ComplexityRoot.Carrier.ComplianceStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.ComplianceStatus(childComplexity), true
+	case "Carrier.contacts":
+		if e.ComplexityRoot.Carrier.Contacts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Contacts(childComplexity), true
+	case "Carrier.createdAt":
+		if e.ComplexityRoot.Carrier.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.CreatedAt(childComplexity), true
+	case "Carrier.dbaName":
+		if e.ComplexityRoot.Carrier.DBAName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.DBAName(childComplexity), true
+	case "Carrier.dotNumber":
+		if e.ComplexityRoot.Carrier.DOTNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.DOTNumber(childComplexity), true
+	case "Carrier.disqualifiedReason":
+		if e.ComplexityRoot.Carrier.DisqualifiedReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.DisqualifiedReason(childComplexity), true
+	case "Carrier.email":
+		if e.ComplexityRoot.Carrier.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Email(childComplexity), true
+	case "Carrier.externalId":
+		if e.ComplexityRoot.Carrier.ExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.ExternalID(childComplexity), true
+	case "Carrier.id":
+		if e.ComplexityRoot.Carrier.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.ID(childComplexity), true
+	case "Carrier.insurancePolicies":
+		if e.ComplexityRoot.Carrier.InsurancePolicies == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.InsurancePolicies(childComplexity), true
+	case "Carrier.is1099Eligible":
+		if e.ComplexityRoot.Carrier.Is1099Eligible == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Is1099Eligible(childComplexity), true
+	case "Carrier.mcNumber":
+		if e.ComplexityRoot.Carrier.MCNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.MCNumber(childComplexity), true
+	case "Carrier.name":
+		if e.ComplexityRoot.Carrier.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Name(childComplexity), true
+	case "Carrier.notes":
+		if e.ComplexityRoot.Carrier.Notes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Notes(childComplexity), true
+	case "Carrier.organization":
+		if e.ComplexityRoot.Carrier.Organization == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Organization(childComplexity), true
+	case "Carrier.organizationId":
+		if e.ComplexityRoot.Carrier.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.OrganizationID(childComplexity), true
+	case "Carrier.paymentMethod":
+		if e.ComplexityRoot.Carrier.PaymentMethod == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.PaymentMethod(childComplexity), true
+	case "Carrier.paymentTermDays":
+		if e.ComplexityRoot.Carrier.PaymentTermDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.PaymentTermDays(childComplexity), true
+	case "Carrier.phone":
+		if e.ComplexityRoot.Carrier.Phone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Phone(childComplexity), true
+	case "Carrier.postalCode":
+		if e.ComplexityRoot.Carrier.PostalCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.PostalCode(childComplexity), true
+	case "Carrier.qualifiedAt":
+		if e.ComplexityRoot.Carrier.QualifiedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.QualifiedAt(childComplexity), true
+	case "Carrier.remitAddressLine1":
+		if e.ComplexityRoot.Carrier.RemitAddressLine1 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.RemitAddressLine1(childComplexity), true
+	case "Carrier.remitAddressLine2":
+		if e.ComplexityRoot.Carrier.RemitAddressLine2 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.RemitAddressLine2(childComplexity), true
+	case "Carrier.remitCity":
+		if e.ComplexityRoot.Carrier.RemitCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.RemitCity(childComplexity), true
+	case "Carrier.remitPostalCode":
+		if e.ComplexityRoot.Carrier.RemitPostalCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.RemitPostalCode(childComplexity), true
+	case "Carrier.remitState":
+		if e.ComplexityRoot.Carrier.RemitState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.RemitState(childComplexity), true
+	case "Carrier.remitStateId":
+		if e.ComplexityRoot.Carrier.RemitStateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.RemitStateID(childComplexity), true
+	case "Carrier.remitToName":
+		if e.ComplexityRoot.Carrier.RemitToName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.RemitToName(childComplexity), true
+	case "Carrier.scac":
+		if e.ComplexityRoot.Carrier.SCAC == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.SCAC(childComplexity), true
+	case "Carrier.safetyRating":
+		if e.ComplexityRoot.Carrier.SafetyRating == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.SafetyRating(childComplexity), true
+	case "Carrier.state":
+		if e.ComplexityRoot.Carrier.State == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.State(childComplexity), true
+	case "Carrier.stateId":
+		if e.ComplexityRoot.Carrier.StateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.StateID(childComplexity), true
+	case "Carrier.status":
+		if e.ComplexityRoot.Carrier.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Status(childComplexity), true
+	case "Carrier.taxId":
+		if e.ComplexityRoot.Carrier.TaxID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.TaxID(childComplexity), true
+	case "Carrier.taxIdType":
+		if e.ComplexityRoot.Carrier.TaxIDType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.TaxIDType(childComplexity), true
+	case "Carrier.updatedAt":
+		if e.ComplexityRoot.Carrier.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.UpdatedAt(childComplexity), true
+	case "Carrier.version":
+		if e.ComplexityRoot.Carrier.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.Version(childComplexity), true
+	case "Carrier.w9OnFile":
+		if e.ComplexityRoot.Carrier.W9OnFile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Carrier.W9OnFile(childComplexity), true
+
+	case "CarrierConnection.edges":
+		if e.ComplexityRoot.CarrierConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierConnection.Edges(childComplexity), true
+	case "CarrierConnection.pageInfo":
+		if e.ComplexityRoot.CarrierConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierConnection.PageInfo(childComplexity), true
+	case "CarrierConnection.totalCount":
+		if e.ComplexityRoot.CarrierConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierConnection.TotalCount(childComplexity), true
+
+	case "CarrierContact.businessUnitId":
+		if e.ComplexityRoot.CarrierContact.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.BusinessUnitID(childComplexity), true
+	case "CarrierContact.carrierId":
+		if e.ComplexityRoot.CarrierContact.CarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.CarrierID(childComplexity), true
+	case "CarrierContact.createdAt":
+		if e.ComplexityRoot.CarrierContact.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.CreatedAt(childComplexity), true
+	case "CarrierContact.email":
+		if e.ComplexityRoot.CarrierContact.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.Email(childComplexity), true
+	case "CarrierContact.id":
+		if e.ComplexityRoot.CarrierContact.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.ID(childComplexity), true
+	case "CarrierContact.isPrimary":
+		if e.ComplexityRoot.CarrierContact.IsPrimary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.IsPrimary(childComplexity), true
+	case "CarrierContact.name":
+		if e.ComplexityRoot.CarrierContact.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.Name(childComplexity), true
+	case "CarrierContact.organizationId":
+		if e.ComplexityRoot.CarrierContact.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.OrganizationID(childComplexity), true
+	case "CarrierContact.phone":
+		if e.ComplexityRoot.CarrierContact.Phone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.Phone(childComplexity), true
+	case "CarrierContact.receivesRateConfirmations":
+		if e.ComplexityRoot.CarrierContact.ReceivesRateConfirmations == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.ReceivesRateConfirmations(childComplexity), true
+	case "CarrierContact.title":
+		if e.ComplexityRoot.CarrierContact.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.Title(childComplexity), true
+	case "CarrierContact.updatedAt":
+		if e.ComplexityRoot.CarrierContact.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.UpdatedAt(childComplexity), true
+	case "CarrierContact.version":
+		if e.ComplexityRoot.CarrierContact.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierContact.Version(childComplexity), true
+
+	case "CarrierEdge.cursor":
+		if e.ComplexityRoot.CarrierEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEdge.Cursor(childComplexity), true
+	case "CarrierEdge.node":
+		if e.ComplexityRoot.CarrierEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierEdge.Node(childComplexity), true
+
+	case "CarrierInsurancePolicy.businessUnitId":
+		if e.ComplexityRoot.CarrierInsurancePolicy.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.BusinessUnitID(childComplexity), true
+	case "CarrierInsurancePolicy.carrierId":
+		if e.ComplexityRoot.CarrierInsurancePolicy.CarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.CarrierID(childComplexity), true
+	case "CarrierInsurancePolicy.coverageAmount":
+		if e.ComplexityRoot.CarrierInsurancePolicy.CoverageAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.CoverageAmount(childComplexity), true
+	case "CarrierInsurancePolicy.createdAt":
+		if e.ComplexityRoot.CarrierInsurancePolicy.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.CreatedAt(childComplexity), true
+	case "CarrierInsurancePolicy.effectiveDate":
+		if e.ComplexityRoot.CarrierInsurancePolicy.EffectiveDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.EffectiveDate(childComplexity), true
+	case "CarrierInsurancePolicy.expirationDate":
+		if e.ComplexityRoot.CarrierInsurancePolicy.ExpirationDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.ExpirationDate(childComplexity), true
+	case "CarrierInsurancePolicy.id":
+		if e.ComplexityRoot.CarrierInsurancePolicy.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.ID(childComplexity), true
+	case "CarrierInsurancePolicy.isVerified":
+		if e.ComplexityRoot.CarrierInsurancePolicy.IsVerified == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.IsVerified(childComplexity), true
+	case "CarrierInsurancePolicy.organizationId":
+		if e.ComplexityRoot.CarrierInsurancePolicy.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.OrganizationID(childComplexity), true
+	case "CarrierInsurancePolicy.policyNumber":
+		if e.ComplexityRoot.CarrierInsurancePolicy.PolicyNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.PolicyNumber(childComplexity), true
+	case "CarrierInsurancePolicy.policyType":
+		if e.ComplexityRoot.CarrierInsurancePolicy.PolicyType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.PolicyType(childComplexity), true
+	case "CarrierInsurancePolicy.providerName":
+		if e.ComplexityRoot.CarrierInsurancePolicy.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.ProviderName(childComplexity), true
+	case "CarrierInsurancePolicy.updatedAt":
+		if e.ComplexityRoot.CarrierInsurancePolicy.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.UpdatedAt(childComplexity), true
+	case "CarrierInsurancePolicy.version":
+		if e.ComplexityRoot.CarrierInsurancePolicy.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInsurancePolicy.Version(childComplexity), true
 
 	case "CategoryCostLine.amount":
 		if e.ComplexityRoot.CategoryCostLine.Amount == nil {
@@ -25566,6 +26134,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.CannedReports(childComplexity), true
+	case "Query.carrier":
+		if e.ComplexityRoot.Query.Carrier == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carrier_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Carrier(childComplexity, args["id"].(string)), true
+	case "Query.carriers":
+		if e.ComplexityRoot.Query.Carriers == nil {
+			break
+		}
+
+		args, err := ec.field_Query_carriers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Carriers(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.commodities":
 		if e.ComplexityRoot.Query.Commodities == nil {
 			break
@@ -38675,6 +39265,148 @@ extend type Mutation {
   assignBillingQueueBiller(id: ID!, input: BillingQueueAssignInput!): BillingQueueItem!
 }
 `, BuiltIn: false},
+	{Name: "../schema/carrier.graphqls", Input: `enum CarrierStatus {
+  Active
+  Inactive
+  DoNotUse
+}
+
+enum CarrierType {
+  Common
+  Contract
+  Broker
+  Exempt
+}
+
+enum CarrierComplianceStatus {
+  Pending
+  Qualified
+  Disqualified
+  Expired
+}
+
+enum CarrierSafetyRating {
+  Satisfactory
+  Conditional
+  Unsatisfactory
+  NotRated
+}
+
+enum CarrierTaxIDType {
+  EIN
+  SSN
+}
+
+enum CarrierPaymentMethod {
+  Check
+  ACHManual
+}
+
+enum CarrierInsurancePolicyType {
+  AutoLiability
+  CargoLiability
+  GeneralLiability
+  WorkersComp
+  Umbrella
+}
+
+type CarrierContact {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierId: ID!
+  name: String!
+  title: String
+  email: String
+  phone: String
+  isPrimary: Boolean!
+  receivesRateConfirmations: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type CarrierInsurancePolicy {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierId: ID!
+  policyType: CarrierInsurancePolicyType!
+  policyNumber: String!
+  providerName: String!
+  coverageAmount: String!
+  effectiveDate: Int!
+  expirationDate: Int!
+  isVerified: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type Carrier {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  stateId: ID
+  remitStateId: ID
+  status: CarrierStatus!
+  code: String!
+  name: String!
+  dbaName: String
+  carrierType: CarrierType!
+  dotNumber: String
+  mcNumber: String
+  scac: String
+  complianceStatus: CarrierComplianceStatus!
+  safetyRating: CarrierSafetyRating!
+  qualifiedAt: Int
+  disqualifiedReason: String
+  taxId: String
+  taxIdType: CarrierTaxIDType
+  w9OnFile: Boolean!
+  is1099Eligible: Boolean!
+  paymentMethod: CarrierPaymentMethod!
+  paymentTermDays: Int!
+  remitToName: String
+  remitAddressLine1: String
+  remitAddressLine2: String
+  remitCity: String
+  remitPostalCode: String
+  addressLine1: String
+  addressLine2: String
+  city: String
+  postalCode: String
+  phone: String
+  email: String
+  externalId: String
+  notes: String
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+  state: UsState
+  remitState: UsState
+  contacts: [CarrierContact!]
+  insurancePolicies: [CarrierInsurancePolicy!]
+}
+
+type CarrierEdge {
+  node: Carrier!
+  cursor: String!
+}
+
+type CarrierConnection {
+  edges: [CarrierEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  carriers(input: DataTableConnectionInput!): CarrierConnection!
+  carrier(id: ID!): Carrier
+}
+`, BuiltIn: false},
 	{Name: "../schema/commodity.graphqls", Input: `enum FreightClass {
   Class50
   Class55
@@ -45491,6 +46223,7 @@ extend type Query {
 }
 `, BuiltIn: false},
 	{Name: "../schema/select_options.graphqls", Input: `enum SelectOptionResource {
+  CARRIER
   CUSTOMER
   EQUIPMENT_TYPE
   EQUIPMENT_MANUFACTURER
@@ -49171,6 +49904,190 @@ func (ec *executionContext) childFields_CannedReport(ctx context.Context, field 
 		return ec.fieldContext_CannedReport_definition(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CannedReport", field.Name)
+}
+
+func (ec *executionContext) childFields_Carrier(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Carrier_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_Carrier_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_Carrier_organizationId(ctx, field)
+	case "stateId":
+		return ec.fieldContext_Carrier_stateId(ctx, field)
+	case "remitStateId":
+		return ec.fieldContext_Carrier_remitStateId(ctx, field)
+	case "status":
+		return ec.fieldContext_Carrier_status(ctx, field)
+	case "code":
+		return ec.fieldContext_Carrier_code(ctx, field)
+	case "name":
+		return ec.fieldContext_Carrier_name(ctx, field)
+	case "dbaName":
+		return ec.fieldContext_Carrier_dbaName(ctx, field)
+	case "carrierType":
+		return ec.fieldContext_Carrier_carrierType(ctx, field)
+	case "dotNumber":
+		return ec.fieldContext_Carrier_dotNumber(ctx, field)
+	case "mcNumber":
+		return ec.fieldContext_Carrier_mcNumber(ctx, field)
+	case "scac":
+		return ec.fieldContext_Carrier_scac(ctx, field)
+	case "complianceStatus":
+		return ec.fieldContext_Carrier_complianceStatus(ctx, field)
+	case "safetyRating":
+		return ec.fieldContext_Carrier_safetyRating(ctx, field)
+	case "qualifiedAt":
+		return ec.fieldContext_Carrier_qualifiedAt(ctx, field)
+	case "disqualifiedReason":
+		return ec.fieldContext_Carrier_disqualifiedReason(ctx, field)
+	case "taxId":
+		return ec.fieldContext_Carrier_taxId(ctx, field)
+	case "taxIdType":
+		return ec.fieldContext_Carrier_taxIdType(ctx, field)
+	case "w9OnFile":
+		return ec.fieldContext_Carrier_w9OnFile(ctx, field)
+	case "is1099Eligible":
+		return ec.fieldContext_Carrier_is1099Eligible(ctx, field)
+	case "paymentMethod":
+		return ec.fieldContext_Carrier_paymentMethod(ctx, field)
+	case "paymentTermDays":
+		return ec.fieldContext_Carrier_paymentTermDays(ctx, field)
+	case "remitToName":
+		return ec.fieldContext_Carrier_remitToName(ctx, field)
+	case "remitAddressLine1":
+		return ec.fieldContext_Carrier_remitAddressLine1(ctx, field)
+	case "remitAddressLine2":
+		return ec.fieldContext_Carrier_remitAddressLine2(ctx, field)
+	case "remitCity":
+		return ec.fieldContext_Carrier_remitCity(ctx, field)
+	case "remitPostalCode":
+		return ec.fieldContext_Carrier_remitPostalCode(ctx, field)
+	case "addressLine1":
+		return ec.fieldContext_Carrier_addressLine1(ctx, field)
+	case "addressLine2":
+		return ec.fieldContext_Carrier_addressLine2(ctx, field)
+	case "city":
+		return ec.fieldContext_Carrier_city(ctx, field)
+	case "postalCode":
+		return ec.fieldContext_Carrier_postalCode(ctx, field)
+	case "phone":
+		return ec.fieldContext_Carrier_phone(ctx, field)
+	case "email":
+		return ec.fieldContext_Carrier_email(ctx, field)
+	case "externalId":
+		return ec.fieldContext_Carrier_externalId(ctx, field)
+	case "notes":
+		return ec.fieldContext_Carrier_notes(ctx, field)
+	case "version":
+		return ec.fieldContext_Carrier_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_Carrier_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_Carrier_updatedAt(ctx, field)
+	case "businessUnit":
+		return ec.fieldContext_Carrier_businessUnit(ctx, field)
+	case "organization":
+		return ec.fieldContext_Carrier_organization(ctx, field)
+	case "state":
+		return ec.fieldContext_Carrier_state(ctx, field)
+	case "remitState":
+		return ec.fieldContext_Carrier_remitState(ctx, field)
+	case "contacts":
+		return ec.fieldContext_Carrier_contacts(ctx, field)
+	case "insurancePolicies":
+		return ec.fieldContext_Carrier_insurancePolicies(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Carrier", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_CarrierConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_CarrierConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_CarrierConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierContact(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CarrierContact_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_CarrierContact_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_CarrierContact_organizationId(ctx, field)
+	case "carrierId":
+		return ec.fieldContext_CarrierContact_carrierId(ctx, field)
+	case "name":
+		return ec.fieldContext_CarrierContact_name(ctx, field)
+	case "title":
+		return ec.fieldContext_CarrierContact_title(ctx, field)
+	case "email":
+		return ec.fieldContext_CarrierContact_email(ctx, field)
+	case "phone":
+		return ec.fieldContext_CarrierContact_phone(ctx, field)
+	case "isPrimary":
+		return ec.fieldContext_CarrierContact_isPrimary(ctx, field)
+	case "receivesRateConfirmations":
+		return ec.fieldContext_CarrierContact_receivesRateConfirmations(ctx, field)
+	case "version":
+		return ec.fieldContext_CarrierContact_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CarrierContact_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CarrierContact_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierContact", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_CarrierEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_CarrierEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_CarrierInsurancePolicy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_CarrierInsurancePolicy_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_CarrierInsurancePolicy_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_CarrierInsurancePolicy_organizationId(ctx, field)
+	case "carrierId":
+		return ec.fieldContext_CarrierInsurancePolicy_carrierId(ctx, field)
+	case "policyType":
+		return ec.fieldContext_CarrierInsurancePolicy_policyType(ctx, field)
+	case "policyNumber":
+		return ec.fieldContext_CarrierInsurancePolicy_policyNumber(ctx, field)
+	case "providerName":
+		return ec.fieldContext_CarrierInsurancePolicy_providerName(ctx, field)
+	case "coverageAmount":
+		return ec.fieldContext_CarrierInsurancePolicy_coverageAmount(ctx, field)
+	case "effectiveDate":
+		return ec.fieldContext_CarrierInsurancePolicy_effectiveDate(ctx, field)
+	case "expirationDate":
+		return ec.fieldContext_CarrierInsurancePolicy_expirationDate(ctx, field)
+	case "isVerified":
+		return ec.fieldContext_CarrierInsurancePolicy_isVerified(ctx, field)
+	case "version":
+		return ec.fieldContext_CarrierInsurancePolicy_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_CarrierInsurancePolicy_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_CarrierInsurancePolicy_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CarrierInsurancePolicy", field.Name)
 }
 
 func (ec *executionContext) childFields_CategoryCostLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -62945,6 +63862,34 @@ func (ec *executionContext) field_Query_auditEntry_args(ctx context.Context, raw
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_carrier_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_carriers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_commodities_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -75573,6 +76518,1858 @@ func (ec *executionContext) _CannedReport_definition(ctx context.Context, field 
 }
 func (ec *executionContext) fieldContext_CannedReport_definition(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CannedReport", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_id(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_organizationId(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_stateId(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_stateId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_stateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_remitStateId(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_remitStateId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemitStateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_remitStateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_status(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v carrier.Status) graphql.Marshaler {
+			return ec.marshalNCarrierStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type CarrierStatus does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_code(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_code(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_name(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_dbaName(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_dbaName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DBAName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_dbaName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_carrierType(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_carrierType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CarrierType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v carrier.Type) graphql.Marshaler {
+			return ec.marshalNCarrierType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_carrierType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type CarrierType does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_dotNumber(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_dotNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DOTNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_dotNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_mcNumber(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_mcNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MCNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_mcNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_scac(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_scac(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SCAC, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_scac(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_complianceStatus(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_complianceStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ComplianceStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v carrier.ComplianceStatus) graphql.Marshaler {
+			return ec.marshalNCarrierComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐComplianceStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_complianceStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type CarrierComplianceStatus does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_safetyRating(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_safetyRating(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SafetyRating, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v carrier.SafetyRating) graphql.Marshaler {
+			return ec.marshalNCarrierSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐSafetyRating(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_safetyRating(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type CarrierSafetyRating does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_qualifiedAt(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_qualifiedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.QualifiedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_qualifiedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_disqualifiedReason(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_disqualifiedReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DisqualifiedReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_disqualifiedReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_taxId(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_taxId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TaxID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_taxId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_taxIdType(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_taxIdType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TaxIDType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *carrier.TaxIDType) graphql.Marshaler {
+			return ec.marshalOCarrierTaxIDType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐTaxIDType(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_taxIdType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type CarrierTaxIDType does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_w9OnFile(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_w9OnFile(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.W9OnFile, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_w9OnFile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_is1099Eligible(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_is1099Eligible(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Is1099Eligible, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_is1099Eligible(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_paymentMethod(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_paymentMethod(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PaymentMethod, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v carrier.PaymentMethod) graphql.Marshaler {
+			return ec.marshalNCarrierPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐPaymentMethod(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_paymentMethod(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type CarrierPaymentMethod does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_paymentTermDays(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_paymentTermDays(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PaymentTermDays, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_paymentTermDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_remitToName(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_remitToName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemitToName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_remitToName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_remitAddressLine1(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_remitAddressLine1(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemitAddressLine1, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_remitAddressLine1(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_remitAddressLine2(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_remitAddressLine2(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemitAddressLine2, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_remitAddressLine2(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_remitCity(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_remitCity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemitCity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_remitCity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_remitPostalCode(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_remitPostalCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemitPostalCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_remitPostalCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_addressLine1(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_addressLine1(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AddressLine1, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_addressLine1(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_addressLine2(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_addressLine2(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AddressLine2, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_addressLine2(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_city(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_city(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.City, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_city(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_postalCode(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_postalCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PostalCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_postalCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_phone(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_phone(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Phone, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_phone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_email(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_email(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_externalId(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_externalId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExternalID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_externalId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_notes(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_notes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Notes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_notes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_version(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_createdAt(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_updatedAt(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Carrier", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Carrier_businessUnit(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_businessUnit(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnit, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+			return ec.marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_businessUnit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Carrier",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_BusinessUnit(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Carrier_organization(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_organization(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Organization, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+			return ec.marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Carrier",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Organization(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Carrier_state(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_state(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
+			return ec.marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Carrier",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_UsState(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Carrier_remitState(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_remitState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemitState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
+			return ec.marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_remitState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Carrier",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_UsState(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Carrier_contacts(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_contacts(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Contacts, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*carrier.CarrierContact) graphql.Marshaler {
+			return ec.marshalOCarrierContact2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrierContactᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_contacts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Carrier",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CarrierContact(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Carrier_insurancePolicies(ctx context.Context, field graphql.CollectedField, obj *carrier.Carrier) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Carrier_insurancePolicies(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InsurancePolicies, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*carrier.CarrierInsurancePolicy) graphql.Marshaler {
+			return ec.marshalOCarrierInsurancePolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrierInsurancePolicyᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Carrier_insurancePolicies(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Carrier",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CarrierInsurancePolicy(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CarrierConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CarrierConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.CarrierEdge) graphql.Marshaler {
+			return ec.marshalNCarrierEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CarrierConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CarrierEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CarrierConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CarrierConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CarrierConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CarrierConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CarrierConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_id(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_organizationId(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_carrierId(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_carrierId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CarrierID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_carrierId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_name(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_title(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_email(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_email(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_phone(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_phone(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Phone, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_phone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_isPrimary(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_isPrimary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsPrimary, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_isPrimary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_receivesRateConfirmations(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_receivesRateConfirmations(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReceivesRateConfirmations, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_receivesRateConfirmations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_version(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_createdAt(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierContact_updatedAt(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierContact_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierContact_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierContact", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CarrierEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
+			return ec.marshalNCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CarrierEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Carrier(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CarrierEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CarrierEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_id(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_organizationId(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_carrierId(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_carrierId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CarrierID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_carrierId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_policyType(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_policyType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PolicyType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v carrier.InsurancePolicyType) graphql.Marshaler {
+			return ec.marshalNCarrierInsurancePolicyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐInsurancePolicyType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_policyType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type CarrierInsurancePolicyType does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_policyNumber(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_policyNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PolicyNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_policyNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_providerName(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_providerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProviderName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_providerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_coverageAmount(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_coverageAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.CarrierInsurancePolicy().CoverageAmount(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_coverageAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_effectiveDate(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_effectiveDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EffectiveDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_effectiveDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_expirationDate(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_expirationDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExpirationDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_expirationDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_isVerified(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_isVerified(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsVerified, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_isVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_version(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_createdAt(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInsurancePolicy_updatedAt(ctx context.Context, field graphql.CollectedField, obj *carrier.CarrierInsurancePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInsurancePolicy_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInsurancePolicy_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInsurancePolicy", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _CategoryCostLine_category(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CategoryCostLine) (ret graphql.Marshaler) {
@@ -139955,6 +142752,94 @@ func (ec *executionContext) fieldContext_Query_auditEntry(ctx context.Context, f
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_auditEntry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_carriers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_carriers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Carriers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.CarrierConnection) graphql.Marshaler {
+			return ec.marshalNCarrierConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_carriers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CarrierConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_carriers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_carrier(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_carrier(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Carrier(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
+			return ec.marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_carrier(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Carrier(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_carrier_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -205618,6 +208503,589 @@ func (ec *executionContext) _CannedReport(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var carrierImplementors = []string{"Carrier"}
+
+func (ec *executionContext) _Carrier(ctx context.Context, sel ast.SelectionSet, obj *carrier.Carrier) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, carrierImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Carrier")
+		case "id":
+			out.Values[i] = ec._Carrier_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._Carrier_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._Carrier_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stateId":
+			out.Values[i] = ec._Carrier_stateId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "remitStateId":
+			out.Values[i] = ec._Carrier_remitStateId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._Carrier_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "code":
+			out.Values[i] = ec._Carrier_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Carrier_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dbaName":
+			out.Values[i] = ec._Carrier_dbaName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "carrierType":
+			out.Values[i] = ec._Carrier_carrierType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dotNumber":
+			out.Values[i] = ec._Carrier_dotNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "mcNumber":
+			out.Values[i] = ec._Carrier_mcNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "scac":
+			out.Values[i] = ec._Carrier_scac(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "complianceStatus":
+			out.Values[i] = ec._Carrier_complianceStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "safetyRating":
+			out.Values[i] = ec._Carrier_safetyRating(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "qualifiedAt":
+			out.Values[i] = ec._Carrier_qualifiedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "disqualifiedReason":
+			out.Values[i] = ec._Carrier_disqualifiedReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "taxId":
+			out.Values[i] = ec._Carrier_taxId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "taxIdType":
+			out.Values[i] = ec._Carrier_taxIdType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "w9OnFile":
+			out.Values[i] = ec._Carrier_w9OnFile(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "is1099Eligible":
+			out.Values[i] = ec._Carrier_is1099Eligible(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "paymentMethod":
+			out.Values[i] = ec._Carrier_paymentMethod(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "paymentTermDays":
+			out.Values[i] = ec._Carrier_paymentTermDays(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "remitToName":
+			out.Values[i] = ec._Carrier_remitToName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "remitAddressLine1":
+			out.Values[i] = ec._Carrier_remitAddressLine1(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "remitAddressLine2":
+			out.Values[i] = ec._Carrier_remitAddressLine2(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "remitCity":
+			out.Values[i] = ec._Carrier_remitCity(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "remitPostalCode":
+			out.Values[i] = ec._Carrier_remitPostalCode(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "addressLine1":
+			out.Values[i] = ec._Carrier_addressLine1(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "addressLine2":
+			out.Values[i] = ec._Carrier_addressLine2(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "city":
+			out.Values[i] = ec._Carrier_city(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "postalCode":
+			out.Values[i] = ec._Carrier_postalCode(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "phone":
+			out.Values[i] = ec._Carrier_phone(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._Carrier_email(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "externalId":
+			out.Values[i] = ec._Carrier_externalId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "notes":
+			out.Values[i] = ec._Carrier_notes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._Carrier_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._Carrier_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Carrier_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnit":
+			out.Values[i] = ec._Carrier_businessUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "organization":
+			out.Values[i] = ec._Carrier_organization(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "state":
+			out.Values[i] = ec._Carrier_state(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "remitState":
+			out.Values[i] = ec._Carrier_remitState(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "contacts":
+			out.Values[i] = ec._Carrier_contacts(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "insurancePolicies":
+			out.Values[i] = ec._Carrier_insurancePolicies(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var carrierConnectionImplementors = []string{"CarrierConnection"}
+
+func (ec *executionContext) _CarrierConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.CarrierConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, carrierConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CarrierConnection")
+		case "edges":
+			out.Values[i] = ec._CarrierConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._CarrierConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._CarrierConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var carrierContactImplementors = []string{"CarrierContact"}
+
+func (ec *executionContext) _CarrierContact(ctx context.Context, sel ast.SelectionSet, obj *carrier.CarrierContact) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, carrierContactImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CarrierContact")
+		case "id":
+			out.Values[i] = ec._CarrierContact_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._CarrierContact_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._CarrierContact_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "carrierId":
+			out.Values[i] = ec._CarrierContact_carrierId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._CarrierContact_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._CarrierContact_title(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._CarrierContact_email(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "phone":
+			out.Values[i] = ec._CarrierContact_phone(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "isPrimary":
+			out.Values[i] = ec._CarrierContact_isPrimary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "receivesRateConfirmations":
+			out.Values[i] = ec._CarrierContact_receivesRateConfirmations(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._CarrierContact_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._CarrierContact_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._CarrierContact_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var carrierEdgeImplementors = []string{"CarrierEdge"}
+
+func (ec *executionContext) _CarrierEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.CarrierEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, carrierEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CarrierEdge")
+		case "node":
+			out.Values[i] = ec._CarrierEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._CarrierEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var carrierInsurancePolicyImplementors = []string{"CarrierInsurancePolicy"}
+
+func (ec *executionContext) _CarrierInsurancePolicy(ctx context.Context, sel ast.SelectionSet, obj *carrier.CarrierInsurancePolicy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, carrierInsurancePolicyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CarrierInsurancePolicy")
+		case "id":
+			out.Values[i] = ec._CarrierInsurancePolicy_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._CarrierInsurancePolicy_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organizationId":
+			out.Values[i] = ec._CarrierInsurancePolicy_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "carrierId":
+			out.Values[i] = ec._CarrierInsurancePolicy_carrierId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "policyType":
+			out.Values[i] = ec._CarrierInsurancePolicy_policyType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "policyNumber":
+			out.Values[i] = ec._CarrierInsurancePolicy_policyNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "providerName":
+			out.Values[i] = ec._CarrierInsurancePolicy_providerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "coverageAmount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CarrierInsurancePolicy_coverageAmount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "effectiveDate":
+			out.Values[i] = ec._CarrierInsurancePolicy_effectiveDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "expirationDate":
+			out.Values[i] = ec._CarrierInsurancePolicy_expirationDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "isVerified":
+			out.Values[i] = ec._CarrierInsurancePolicy_isVerified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._CarrierInsurancePolicy_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._CarrierInsurancePolicy_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._CarrierInsurancePolicy_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var categoryCostLineImplementors = []string{"CategoryCostLine"}
 
 func (ec *executionContext) _CategoryCostLine(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.CategoryCostLine) graphql.Marshaler {
@@ -228848,6 +232316,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "carriers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_carriers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "carrier":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_carrier(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "commodities":
 			field := field
 
@@ -251086,6 +254598,178 @@ func (ec *executionContext) marshalNCannedReport2ᚖgithubᚗcomᚋemoss08ᚋtre
 	return ec._CannedReport(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier(ctx context.Context, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Carrier(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCarrierComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐComplianceStatus(ctx context.Context, v any) (carrier.ComplianceStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.ComplianceStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCarrierComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐComplianceStatus(ctx context.Context, sel ast.SelectionSet, v carrier.ComplianceStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNCarrierConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.CarrierConnection) graphql.Marshaler {
+	return ec._CarrierConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCarrierConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.CarrierConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CarrierConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCarrierContact2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrierContact(ctx context.Context, sel ast.SelectionSet, v *carrier.CarrierContact) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CarrierContact(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCarrierEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.CarrierEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNCarrierEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCarrierEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.CarrierEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CarrierEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNCarrierInsurancePolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrierInsurancePolicy(ctx context.Context, sel ast.SelectionSet, v *carrier.CarrierInsurancePolicy) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CarrierInsurancePolicy(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCarrierInsurancePolicyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐInsurancePolicyType(ctx context.Context, v any) (carrier.InsurancePolicyType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.InsurancePolicyType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCarrierInsurancePolicyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐInsurancePolicyType(ctx context.Context, sel ast.SelectionSet, v carrier.InsurancePolicyType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNCarrierPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐPaymentMethod(ctx context.Context, v any) (carrier.PaymentMethod, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.PaymentMethod(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCarrierPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐPaymentMethod(ctx context.Context, sel ast.SelectionSet, v carrier.PaymentMethod) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNCarrierSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐSafetyRating(ctx context.Context, v any) (carrier.SafetyRating, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.SafetyRating(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCarrierSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐSafetyRating(ctx context.Context, sel ast.SelectionSet, v carrier.SafetyRating) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNCarrierStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐStatus(ctx context.Context, v any) (carrier.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCarrierStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐStatus(ctx context.Context, sel ast.SelectionSet, v carrier.Status) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNCarrierType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐType(ctx context.Context, v any) (carrier.Type, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.Type(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCarrierType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐType(ctx context.Context, sel ast.SelectionSet, v carrier.Type) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNCategoryCostLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCategoryCostLineᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.CategoryCostLine) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -262446,6 +266130,70 @@ func (ec *executionContext) marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtre
 		return graphql.Null
 	}
 	return ec._BusinessUnit(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier(ctx context.Context, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Carrier(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOCarrierContact2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrierContactᚄ(ctx context.Context, sel ast.SelectionSet, v []*carrier.CarrierContact) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNCarrierContact2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrierContact(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOCarrierInsurancePolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrierInsurancePolicyᚄ(ctx context.Context, sel ast.SelectionSet, v []*carrier.CarrierInsurancePolicy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNCarrierInsurancePolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrierInsurancePolicy(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOCarrierTaxIDType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐTaxIDType(ctx context.Context, v any) (*carrier.TaxIDType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := carrier.TaxIDType(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOCarrierTaxIDType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐTaxIDType(ctx context.Context, sel ast.SelectionSet, v *carrier.TaxIDType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) marshalOCommodity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcommodityᚐCommodity(ctx context.Context, sel ast.SelectionSet, v *commodity.Commodity) graphql.Marshaler {

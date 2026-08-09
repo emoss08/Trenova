@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/controlplaneprovisioninghandler"
+	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
@@ -187,6 +188,7 @@ type RouterParams struct {
 	EmailHandler                    *emailhandler.Handler
 	TelematicsHandler               *telematicshandler.Handler
 	CommodityHandler                *commodityhandler.Handler
+	CarrierHandler                  *carrierhandler.Handler
 	CustomerHandler                 *customerhandler.Handler
 	CustomerPaymentHandler          *customerpaymenthandler.Handler
 	GoogleMapsHandler               *googlemapshandler.Handler
@@ -298,6 +300,7 @@ type Router struct {
 	emailHandler                    *emailhandler.Handler
 	telematicsHandler               *telematicshandler.Handler
 	commodityHandler                *commodityhandler.Handler
+	carrierHandler                  *carrierhandler.Handler
 	customerHandler                 *customerhandler.Handler
 	customerPaymentHandler          *customerpaymenthandler.Handler
 	googleMapsHandler               *googlemapshandler.Handler
@@ -411,6 +414,7 @@ func NewRouter(p RouterParams) *Router {
 		emailHandler:                    p.EmailHandler,
 		telematicsHandler:               p.TelematicsHandler,
 		commodityHandler:                p.CommodityHandler,
+		carrierHandler:                  p.CarrierHandler,
 		customerHandler:                 p.CustomerHandler,
 		customerPaymentHandler:          p.CustomerPaymentHandler,
 		googleMapsHandler:               p.GoogleMapsHandler,
@@ -589,6 +593,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.ediHandler.RegisterRoutes(protected)
 	r.emailHandler.RegisterRoutes(protected)
 	r.commodityHandler.RegisterRoutes(protected)
+	r.carrierHandler.RegisterRoutes(protected)
 	r.customerHandler.RegisterRoutes(protected)
 	r.customerPaymentHandler.RegisterRoutes(protected)
 	r.googleMapsHandler.RegisterRoutes(protected)

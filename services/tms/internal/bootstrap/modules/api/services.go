@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
@@ -304,6 +305,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		func(s *driversettlementservice.Service) services.MoveStatusObserver { return s },
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
+	carrierservice.New,
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,
 	fx.Annotate(

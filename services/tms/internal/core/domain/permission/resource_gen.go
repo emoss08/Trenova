@@ -85,6 +85,9 @@ const (
 	ResourceCustomer        Resource = "customer"
 	ResourceCustomerContact Resource = "customer_contact"
 
+	// Carriers
+	ResourceCarrier Resource = "carrier"
+
 	// Locations
 	ResourceLocation         Resource = "location"
 	ResourceLocationCategory Resource = "location_category"

@@ -75,6 +75,9 @@ func (r *queryResolver) resolveSelectOptions(
 
 func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]selectOptionRegistryEntry {
 	return map[gqlmodel.SelectOptionResource]selectOptionRegistryEntry{
+		gqlmodel.SelectOptionResourceCarrier: {
+			resolve: r.resolveCarrierSelectOptions,
+		},
 		gqlmodel.SelectOptionResourceCustomer: {
 			resolve: r.resolveCustomerSelectOptions,
 		},

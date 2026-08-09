@@ -206,6 +206,7 @@ func (r *Registry) registerAll() {
 	r.registerOperationsResources()
 	r.registerBillingResources()
 	r.registerCustomerResources()
+	r.registerCarrierResources()
 	r.registerLocationResources()
 	r.registerCommodityResources()
 	r.registerAccountingResources()
@@ -1365,6 +1366,23 @@ func (r *Registry) registerCustomerResources() {
 			{Operation: OpRead, DisplayName: "Read", Description: "View contacts"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add contacts"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify contacts"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+}
+
+func (r *Registry) registerCarrierResources() {
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceCarrier.String(),
+		DisplayName: "Carrier",
+		Description: "External carrier management for brokered freight",
+		Category:    "Carriers",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View carriers"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create carriers"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify carriers"},
+			{Operation: OpExport, DisplayName: "Export", Description: "Export carrier data"},
+			{Operation: OpImport, DisplayName: "Import", Description: "Import carriers"},
 		},
 		DefaultSensitivity: SensitivityInternal,
 	})

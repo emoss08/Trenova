@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
@@ -298,6 +299,17 @@ type CannedReport struct {
 	Tags          []string       `json:"tags"`
 	DefaultFormat string         `json:"defaultFormat"`
 	Definition    map[string]any `json:"definition"`
+}
+
+type CarrierConnection struct {
+	Edges      []*CarrierEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount *int           `json:"totalCount,omitempty"`
+}
+
+type CarrierEdge struct {
+	Node   *carrier.Carrier `json:"node"`
+	Cursor string           `json:"cursor"`
 }
 
 type CategoryCostLine struct {
@@ -5541,6 +5553,7 @@ func (e NotificationState) MarshalJSON() ([]byte, error) {
 type SelectOptionResource string
 
 const (
+	SelectOptionResourceCarrier               SelectOptionResource = "CARRIER"
 	SelectOptionResourceCustomer              SelectOptionResource = "CUSTOMER"
 	SelectOptionResourceEquipmentType         SelectOptionResource = "EQUIPMENT_TYPE"
 	SelectOptionResourceEquipmentManufacturer SelectOptionResource = "EQUIPMENT_MANUFACTURER"
@@ -5559,6 +5572,7 @@ const (
 )
 
 var AllSelectOptionResource = []SelectOptionResource{
+	SelectOptionResourceCarrier,
 	SelectOptionResourceCustomer,
 	SelectOptionResourceEquipmentType,
 	SelectOptionResourceEquipmentManufacturer,
@@ -5578,7 +5592,7 @@ var AllSelectOptionResource = []SelectOptionResource{
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceCustomer, SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceFiscalYear, SelectOptionResourceFiscalPeriod, SelectOptionResourceGlAccount:
+	case SelectOptionResourceCarrier, SelectOptionResourceCustomer, SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceFiscalYear, SelectOptionResourceFiscalPeriod, SelectOptionResourceGlAccount:
 		return true
 	}
 	return false

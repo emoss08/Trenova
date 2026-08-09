@@ -39,6 +39,9 @@ type allowlistEntry struct {
 var defaultAllowlistedTables = []allowlistEntry{
 	{"shipments", "Shipments"},
 	{"customers", "Customers"},
+	{"carriers", "Carriers"},
+	{"carrier_contacts", "Carrier Contacts"},
+	{"carrier_insurance_policies", "Carrier Insurance Policies"},
 	{"workers", "Workers"},
 	{"tractors", "Tractors"},
 	{"trailers", "Trailers"},

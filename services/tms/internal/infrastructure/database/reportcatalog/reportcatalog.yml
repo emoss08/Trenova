@@ -127,6 +127,14 @@ entities:
       customer: { label: Customer }
       shipments: { label: Shipments }
 
+  carrier:
+    struct: carrier.Carrier
+    resource: carrier
+    label: Carrier
+    pluralLabel: Carriers
+    description: External carriers that cover brokered freight
+    category: Parties
+
   customer:
     struct: customer.Customer
     resource: customer
