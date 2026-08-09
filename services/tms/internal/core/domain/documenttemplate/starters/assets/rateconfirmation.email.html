@@ -1,0 +1,30 @@
+<div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #111827; line-height: 1.6;">
+  <p>{{ .CarrierName }},</p>
+  <p>
+    Attached is the rate confirmation for shipment <strong>{{ .ShipmentProNumber }}</strong>{{ if .RevisionLabel }}
+    ({{ .RevisionLabel }}){{ end }}.
+  </p>
+  <table style="border-collapse: collapse; margin: 12px 0;">
+    {{ range .Stops }}
+    <tr>
+      <td style="padding: 4px 12px 4px 0; color: #6b7280;">{{ .Type }}</td>
+      <td style="padding: 4px 0;">{{ .Name }} — {{ .Window }}</td>
+    </tr>
+    {{ end }}
+    <tr>
+      <td style="padding: 4px 12px 4px 0; color: #6b7280;">Total agreed rate</td>
+      <td style="padding: 4px 0; font-weight: bold;">{{ moneyString .Currency .TotalCost }}</td>
+    </tr>
+    {{ if .PaymentTermsLabel }}
+    <tr>
+      <td style="padding: 4px 12px 4px 0; color: #6b7280;">Payment terms</td>
+      <td style="padding: 4px 0;">{{ .PaymentTermsLabel }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  <p>
+    Please sign and return the attached confirmation before dispatching, and submit it with your
+    invoice. Reply to this message if any detail needs review.
+  </p>
+  <p>{{ .CompanyName }}</p>
+</div>

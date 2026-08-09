@@ -110,6 +110,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pushsubscriptionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rateconfirmationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratetablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recurringshipmentrepository"
@@ -280,6 +281,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	dashcontrolrepository.New,
 	carrierassignmentrepository.New,
 	carrierrepository.New,
+	rateconfirmationrepository.New,
 	customerrepository.New,
 	accountingcontrolrepository.New,
 	accountsreceivablerepository.New,

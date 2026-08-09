@@ -1386,6 +1386,28 @@ func (r *Registry) registerCarrierResources() {
 		},
 		DefaultSensitivity: SensitivityInternal,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:       ResourceRateConfirmation.String(),
+		DisplayName:    "Rate Confirmation",
+		Description:    "Outbound carrier rate confirmations",
+		Category:       "Carriers",
+		ParentResource: ResourceCarrier.String(),
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View rate confirmations"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Generate rate confirmations",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Send, confirm, and void rate confirmations",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
 }
 
 func (r *Registry) registerLocationResources() {

@@ -86,7 +86,8 @@ const (
 	ResourceCustomerContact Resource = "customer_contact"
 
 	// Carriers
-	ResourceCarrier Resource = "carrier"
+	ResourceCarrier          Resource = "carrier"
+	ResourceRateConfirmation Resource = "rate_confirmation"
 
 	// Locations
 	ResourceLocation         Resource = "location"

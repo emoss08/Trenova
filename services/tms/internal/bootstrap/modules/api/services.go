@@ -101,6 +101,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/core/services/permission"
 	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
+	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
@@ -308,6 +309,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	carrierassignmentservice.New,
 	carrierservice.New,
+	rateconfirmationservice.New,
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,
 	fx.Annotate(

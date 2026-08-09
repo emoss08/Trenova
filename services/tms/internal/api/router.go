@@ -79,6 +79,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
@@ -191,6 +192,7 @@ type RouterParams struct {
 	CommodityHandler                *commodityhandler.Handler
 	CarrierAssignmentHandler        *carrierassignmenthandler.Handler
 	CarrierHandler                  *carrierhandler.Handler
+	RateConfirmationHandler         *rateconfirmationhandler.Handler
 	CustomerHandler                 *customerhandler.Handler
 	CustomerPaymentHandler          *customerpaymenthandler.Handler
 	GoogleMapsHandler               *googlemapshandler.Handler
@@ -304,6 +306,7 @@ type Router struct {
 	commodityHandler                *commodityhandler.Handler
 	carrierAssignmentHandler        *carrierassignmenthandler.Handler
 	carrierHandler                  *carrierhandler.Handler
+	rateConfirmationHandler         *rateconfirmationhandler.Handler
 	customerHandler                 *customerhandler.Handler
 	customerPaymentHandler          *customerpaymenthandler.Handler
 	googleMapsHandler               *googlemapshandler.Handler
@@ -419,6 +422,7 @@ func NewRouter(p RouterParams) *Router {
 		commodityHandler:                p.CommodityHandler,
 		carrierAssignmentHandler:        p.CarrierAssignmentHandler,
 		carrierHandler:                  p.CarrierHandler,
+		rateConfirmationHandler:         p.RateConfirmationHandler,
 		customerHandler:                 p.CustomerHandler,
 		customerPaymentHandler:          p.CustomerPaymentHandler,
 		googleMapsHandler:               p.GoogleMapsHandler,
@@ -599,6 +603,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.commodityHandler.RegisterRoutes(protected)
 	r.carrierAssignmentHandler.RegisterRoutes(protected)
 	r.carrierHandler.RegisterRoutes(protected)
+	r.rateConfirmationHandler.RegisterRoutes(protected)
 	r.customerHandler.RegisterRoutes(protected)
 	r.customerPaymentHandler.RegisterRoutes(protected)
 	r.googleMapsHandler.RegisterRoutes(protected)

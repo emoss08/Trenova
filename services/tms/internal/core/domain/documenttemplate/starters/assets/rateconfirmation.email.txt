@@ -1,0 +1,12 @@
+{{ .CarrierName }},
+
+Attached is the rate confirmation for shipment {{ .ShipmentProNumber }}{{ if .RevisionLabel }} ({{ .RevisionLabel }}){{ end }}.
+
+{{ range .Stops }}{{ .Sequence }}. {{ .Type }}: {{ .Name }} — {{ .Window }}
+{{ end }}
+Total agreed rate: {{ moneyString .Currency .TotalCost }}
+{{ if .PaymentTermsLabel }}Payment terms: {{ .PaymentTermsLabel }}
+{{ end }}
+Please sign and return the attached confirmation before dispatching. Submit the confirmation with your invoice. Reply to this message if any detail needs review.
+
+{{ .CompanyName }}

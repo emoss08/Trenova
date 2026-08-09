@@ -24,6 +24,12 @@ const (
 
 	// KindDetentionNoticeEmail is the notice sent while a driver is on a dock.
 	KindDetentionNoticeEmail Kind = "detention.notice.email"
+	// KindRateConfirmationPDF is the outbound rate confirmation a carrier signs
+	// before hauling a brokered move.
+	KindRateConfirmationPDF Kind = "rateconfirmation.pdf"
+	// KindRateConfirmationEmail is the message that delivers a rate confirmation.
+	KindRateConfirmationEmail Kind = "rateconfirmation.email"
+
 	// KindDetentionNoticePDF is the printable form of the same notice, which is
 	// what turns it into billable evidence when a charge is disputed.
 	KindDetentionNoticePDF Kind = "detention.notice.pdf"
@@ -105,6 +111,8 @@ func AllKinds() []Kind {
 		KindInvoiceEmail,
 		KindDetentionNoticeEmail,
 		KindDetentionNoticePDF,
+		KindRateConfirmationPDF,
+		KindRateConfirmationEmail,
 		KindReportPDF,
 		KindReportDeliveryEmail,
 		KindDriverPortalInvitationEmail,

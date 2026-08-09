@@ -160,6 +160,18 @@ func (s *DocumentTypeSeed) createSystemDocumentTypes(
 			Color:                  "#f97316",
 			IsSystem:               true,
 		},
+		{
+			ID:                     pulid.MustNew("dt_"),
+			BusinessUnitID:         buID,
+			OrganizationID:         orgID,
+			Code:                   documenttype.CodeRateConfirmation,
+			Name:                   "Rate Confirmation",
+			Description:            "Carrier rate confirmation rendered as a PDF and filed against the shipment",
+			DocumentClassification: documenttype.ClassificationPublic,
+			DocumentCategory:       documenttype.CategoryShipment,
+			Color:                  "#0ea5e9",
+			IsSystem:               true,
+		},
 	}
 
 	_, err := tx.NewInsert().
