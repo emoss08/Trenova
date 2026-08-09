@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { CarrierAssignmentCancelDialog } from "@/components/carrier-assignment/carrier-assignment-cancel-dialog";
+import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { apiService } from "@/services/api";
 import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
 import type {
@@ -263,6 +264,7 @@ export function MoveCard({
       {hasCarrierAssignment && carrierAssignment ? (
         <CarrierAssignmentDetails
           carrierAssignment={carrierAssignment}
+          moveId={move?.id}
           canCancel={canCancelCarrier}
           onCancel={() => setCancelCarrierOpen(true)}
         />
@@ -571,10 +573,12 @@ function formatCarrierMoney(value: number | null | undefined, currencyCode?: str
 
 function CarrierAssignmentDetails({
   carrierAssignment,
+  moveId,
   canCancel,
   onCancel,
 }: {
   carrierAssignment: CarrierAssignment;
+  moveId?: string;
   canCancel: boolean;
   onCancel: () => void;
 }) {
@@ -646,6 +650,12 @@ function CarrierAssignmentDetails({
           {formatCarrierMoney(carrierAssignment.totalCost, currency)}
         </span>
       </div>
+
+      {moveId && (
+        <div className="mt-2 border-t pt-2">
+          <RateConfirmationActions moveId={moveId} />
+        </div>
+      )}
     </div>
   );
 }

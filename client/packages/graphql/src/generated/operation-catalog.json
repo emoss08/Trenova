@@ -1,7 +1,47 @@
 {
-  "operationCount": 384,
+  "operationCount": 413,
   "fragmentCount": 118,
   "operations": [
+    {
+      "name": "AcceptCarrierInvoiceMatch",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:a2d49f45f44e726172c1f4e35fa621fa4c98082208b56b31a29ac4beb9f28a76",
+      "rootFields": [
+        "acceptCarrierInvoiceMatch"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierInvoiceMatchActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation AcceptCarrierInvoiceMatch($input: CarrierInvoiceMatchActionInput!) {\n  acceptCarrierInvoiceMatch(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
+      "name": "AcceptCarrierInvoiceMatchWithVariance",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:060f67125969b0df8bd23b2d406141579141403904677fcf383e944aae0c9349",
+      "rootFields": [
+        "acceptCarrierInvoiceMatchWithVariance"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierInvoiceMatchActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation AcceptCarrierInvoiceMatchWithVariance($input: CarrierInvoiceMatchActionInput!) {\n  acceptCarrierInvoiceMatchWithVariance(input: $input) {\n    id\n    status\n    adjustmentCostEventId\n    version\n  }\n}"
+    },
     {
       "name": "AccessorialChargeTable",
       "kind": "query",
@@ -78,6 +118,26 @@
       ],
       "usages": [],
       "sdl": "mutation AcknowledgeShipmentComment($shipmentId: ID!, $commentId: ID!) {\n  acknowledgeShipmentComment(shipmentId: $shipmentId, commentId: $commentId) {\n    ...ShipmentCommentFields\n  }\n}\n\nfragment ShipmentCommentAcknowledgmentFields on ShipmentCommentAcknowledgment {\n  id\n  commentId\n  userId\n  acknowledgedAt\n  user {\n    ...ShipmentUserFields\n  }\n}\n\nfragment ShipmentCommentAttachmentFields on ShipmentCommentAttachment {\n  documentId\n  fileName\n  originalName\n  fileSize\n  mimeType\n  previewUrl\n  downloadUrl\n  createdAt\n}\n\nfragment ShipmentCommentFields on ShipmentComment {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  userId\n  parentCommentId\n  replyCount\n  comment\n  body\n  type\n  visibility\n  priority\n  source\n  metadata\n  editedAt\n  pinnedAt\n  pinnedById\n  resolvedAt\n  resolvedById\n  requiresAcknowledgment\n  deletedAt\n  version\n  createdAt\n  updatedAt\n  mentionedUserIds\n  user {\n    ...ShipmentUserFields\n  }\n  pinnedBy {\n    ...ShipmentUserFields\n  }\n  resolvedBy {\n    ...ShipmentUserFields\n  }\n  mentionedUsers {\n    ...ShipmentCommentMentionFields\n  }\n  acknowledgments {\n    ...ShipmentCommentAcknowledgmentFields\n  }\n  attachments {\n    ...ShipmentCommentAttachmentFields\n  }\n}\n\nfragment ShipmentCommentMentionFields on ShipmentCommentMention {\n  id\n  commentId\n  mentionedUserId\n  organizationId\n  businessUnitId\n  shipmentId\n  createdAt\n  mentionedUser {\n    ...ShipmentUserFields\n  }\n}\n\nfragment ShipmentUserFields on User {\n  id\n  name\n  username\n  emailAddress\n  timezone\n  status\n  profilePicUrl\n  thumbnailUrl\n}"
+    },
+    {
+      "name": "AddCarrierSettlementAdjustment",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:9c2ecc166a009e4f0e95e171200ec99918e5f9a587eb5f79ca65c094776bbb49",
+      "rootFields": [
+        "addCarrierSettlementAdjustment"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AddCarrierSettlementAdjustmentInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation AddCarrierSettlementAdjustment($input: AddCarrierSettlementAdjustmentInput!) {\n  addCarrierSettlementAdjustment(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
       "name": "AddDriverSettlementAdjustment",
@@ -368,6 +428,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation ApplyUnappliedCustomerPayment($input: ApplyCustomerPaymentInput!) {\n  applyUnappliedCustomerPayment(input: $input) {\n    id\n    customerId\n    amountMinor\n    appliedAmountMinor\n    unappliedAmountMinor\n    status\n    updatedAt\n    applications {\n      id\n      invoiceId\n      appliedAmountMinor\n      shortPayAmountMinor\n      lineNumber\n    }\n  }\n}"
+    },
+    {
+      "name": "ApproveCarrierSettlement",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:ad9b585d98587acc4f26b0a456f6e7cbe326d30103de05891ac19ec0a5341fc7",
+      "rootFields": [
+        "approveCarrierSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation ApproveCarrierSettlement($input: CarrierSettlementActionInput!) {\n  approveCarrierSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
     },
     {
       "name": "ApproveDetentionOccurrence",
@@ -1098,6 +1178,28 @@
       "sdl": "query CannedReports {\n  cannedReports {\n    key\n    version\n    name\n    description\n    category\n    tags\n    defaultFormat\n    definition\n  }\n}"
     },
     {
+      "name": "CarrierCostEventTable",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:f3182a94737a1f670221e741241adaff4e7081c9afea3ff204a11ce03249f886",
+      "rootFields": [
+        "carrierCostEvents"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierCostEventTable($input: DataTableConnectionInput!) {\n  carrierCostEvents(input: $input) {\n    edges {\n      node {\n        id\n        carrierId\n        carrierAssignmentId\n        shipmentId\n        moveId\n        settlementId\n        eventType\n        status\n        eventDate\n        amountMinor\n        currencyCode\n        description\n        proNumber\n        assignmentVersion\n        voidedAt\n        voidReason\n        version\n        createdAt\n        updatedAt\n        carrier {\n          id\n          code\n          name\n          scac\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
       "name": "CarrierDetail",
       "kind": "query",
       "domain": "carrier",
@@ -1120,6 +1222,189 @@
       ],
       "usages": [],
       "sdl": "query CarrierDetail($id: ID!) {\n  carrier(id: $id) {\n    ...CarrierTableRowFields\n    state {\n      id\n      name\n      abbreviation\n    }\n    remitState {\n      id\n      name\n      abbreviation\n    }\n  }\n}\n\nfragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierTableRowFields on Carrier {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  remitStateId\n  status\n  code\n  name\n  dbaName\n  carrierType\n  dotNumber\n  mcNumber\n  scac\n  complianceStatus\n  safetyRating\n  qualifiedAt\n  disqualifiedReason\n  taxId\n  taxIdType\n  w9OnFile\n  is1099Eligible\n  paymentMethod\n  paymentTermDays\n  remitToName\n  remitAddressLine1\n  remitAddressLine2\n  remitCity\n  remitPostalCode\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  phone\n  email\n  externalId\n  notes\n  version\n  createdAt\n  updatedAt\n  contacts {\n    ...CarrierContactFields\n  }\n  insurancePolicies {\n    ...CarrierInsurancePolicyFields\n  }\n}"
+    },
+    {
+      "name": "CarrierInvoiceMatches",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:73fbe63b0c2d0c45bdba9588a2a2f2ba8e707e6fd6102359adff09a9162961d4",
+      "rootFields": [
+        "carrierInvoiceMatches"
+      ],
+      "variables": [
+        {
+          "name": "status",
+          "type": "CarrierInvoiceMatchStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "carrierId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "offset",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CarrierInvoiceMatches($status: CarrierInvoiceMatchStatus, $carrierId: ID, $limit: Int, $offset: Int) {\n  carrierInvoiceMatches(\n    status: $status\n    carrierId: $carrierId\n    limit: $limit\n    offset: $offset\n  ) {\n    items {\n      id\n      ediCarrierInvoiceId\n      documentAiExtractionId\n      carrierId\n      carrierAssignmentId\n      carrierSettlementId\n      adjustmentCostEventId\n      status\n      invoiceNumber\n      invoiceTotalMinor\n      expectedTotalMinor\n      varianceMinor\n      currencyCode\n      resolutionNote\n      resolvedById\n      resolvedAt\n      version\n      createdAt\n      updatedAt\n      carrier {\n        id\n        code\n        name\n        scac\n      }\n      carrierAssignment {\n        id\n        shipmentMoveId\n        status\n        rateMethod\n        baseRate\n        baseAmount\n        fuelSurcharge\n        accessorialTotal\n        totalCost\n        currencyCode\n        proNumber\n        accessorials {\n          id\n          description\n          amount\n        }\n      }\n    }\n    totalCount\n  }\n}"
+    },
+    {
+      "name": "CarrierLedgerEntries",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:49627fbc33be15958d7c8171a3fbb43dac4071a3cde7bf612425a460768179b2",
+      "rootFields": [
+        "carrierLedgerEntries"
+      ],
+      "variables": [
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CarrierLedgerEntries($carrierId: ID!, $limit: Int) {\n  carrierLedgerEntries(carrierId: $carrierId, limit: $limit) {\n    id\n    carrierId\n    entryType\n    sourceObjectType\n    sourceObjectId\n    sourceEventType\n    relatedSettlementId\n    journalBatchId\n    documentNumber\n    transactionDate\n    lineNumber\n    amountMinor\n    createdAt\n  }\n}"
+    },
+    {
+      "name": "CarrierSettlementBatchDetail",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:53418bc43e1ee89c98fab0ea098fa24ddc5bbf657ce45db363ecbfaa732027e3",
+      "rootFields": [
+        "carrierSettlementBatch"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CarrierSettlementBatchDetail($id: ID!) {\n  carrierSettlementBatch(id: $id) {\n    id\n    status\n    name\n    periodStart\n    periodEnd\n    payDate\n    settlementCount\n    totalGrossMinor\n    totalNetMinor\n    currencyCode\n    notes\n    version\n    settlements {\n      id\n      settlementNumber\n      status\n      grossCostMinor\n      adjustmentsMinor\n      netPayableMinor\n      currencyCode\n      carrier {\n        id\n        code\n        name\n        scac\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "CarrierSettlementBatchTable",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:83db3b28b5afa72a9d4bead6e5f505c743c875133bc00afb55a470947712f9ee",
+      "rootFields": [
+        "carrierSettlementBatches"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierSettlementBatchTable($input: DataTableConnectionInput!) {\n  carrierSettlementBatches(input: $input) {\n    edges {\n      node {\n        id\n        status\n        name\n        periodStart\n        periodEnd\n        payDate\n        settlementCount\n        totalGrossMinor\n        totalNetMinor\n        currencyCode\n        notes\n        generatedById\n        generatedAt\n        completedAt\n        canceledAt\n        version\n        createdAt\n        updatedAt\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "CarrierSettlementControl",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:2bf7c10b84e3df025b1094725b81bd351278665da7d2c6f5f7def5c9b3d70966",
+      "rootFields": [
+        "carrierSettlementControl"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CarrierSettlementControl {\n  carrierSettlementControl {\n    id\n    organizationId\n    businessUnitId\n    payTrigger\n    payPeriodFrequency\n    periodEndDayOfWeek\n    payDelayDays\n    autoGenerateBatches\n    autoPostOnApprove\n    varianceToleranceMinor\n    defaultApAccountId\n    defaultPurchasedTransportationAccountId\n    version\n  }\n}"
+    },
+    {
+      "name": "CarrierSettlementDetail",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:cc5b9ce4ed7968de7ec3e10c1c9d40d598baaca2516559ddccbf9ac24d9f8b90",
+      "rootFields": [
+        "carrierSettlement"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CarrierSettlementDetail($id: ID!) {\n  carrierSettlement(id: $id) {\n    id\n    carrierId\n    batchId\n    settlementNumber\n    status\n    periodStart\n    periodEnd\n    payDate\n    grossCostMinor\n    adjustmentsMinor\n    netPayableMinor\n    shipmentCount\n    currencyCode\n    notes\n    submittedById\n    submittedAt\n    approvedById\n    approvedAt\n    postedById\n    postedAt\n    postedJournalBatchId\n    paidAt\n    paidById\n    paymentMethod\n    paymentReference\n    paidJournalBatchId\n    voidedById\n    voidedAt\n    voidReason\n    voidJournalBatchId\n    version\n    createdAt\n    updatedAt\n    carrier {\n      id\n      code\n      name\n      scac\n      paymentMethod\n      paymentTermDays\n      remitToName\n      remitAddressLine1\n      remitAddressLine2\n      remitCity\n      remitPostalCode\n      remitState {\n        id\n        abbreviation\n      }\n    }\n    lines {\n      id\n      lineNumber\n      eventType\n      description\n      amountMinor\n      costEventId\n      glAccountId\n      shipmentId\n      moveId\n      proNumber\n    }\n  }\n}"
+    },
+    {
+      "name": "CarrierSettlementTable",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:36b2fe290ce6efc98beb58eccbfa6bcaec7956b7e99ae194d2d88fdce8c84600",
+      "rootFields": [
+        "carrierSettlements"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query CarrierSettlementTable($input: DataTableConnectionInput!) {\n  carrierSettlements(input: $input) {\n    edges {\n      node {\n        id\n        carrierId\n        batchId\n        settlementNumber\n        status\n        periodStart\n        periodEnd\n        payDate\n        grossCostMinor\n        adjustmentsMinor\n        netPayableMinor\n        shipmentCount\n        currencyCode\n        paymentMethod\n        paymentReference\n        version\n        createdAt\n        updatedAt\n        carrier {\n          id\n          code\n          name\n          scac\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "CarrierSettlementWorkspaceSummary",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:8df59638fd90574819df84446158da1392baee9efa802a96317fb0667d5d7e7e",
+      "rootFields": [
+        "carrierSettlementWorkspaceSummary"
+      ],
+      "variables": [
+        {
+          "name": "periodStart",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "periodEnd",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CarrierSettlementWorkspaceSummary($periodStart: Int, $periodEnd: Int) {\n  carrierSettlementWorkspaceSummary(\n    periodStart: $periodStart\n    periodEnd: $periodEnd\n  ) {\n    periodStart\n    periodEnd\n    payDate\n    draftCount\n    pendingApprovalCount\n    approvedCount\n    postedCount\n    paidCount\n    totalNetMinor\n    totalGrossMinor\n    pendingEventCount\n    pendingAmountMinor\n    pendingCarrierCount\n    openBatchId\n  }\n}"
     },
     {
       "name": "CarrierTable",
@@ -1264,6 +1549,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "query CostingControlPage {\n  costingControl {\n    id\n    businessUnitId\n    organizationId\n    fuelIndexId\n    fuelIndex {\n      id\n      name\n      code\n      source\n      fuelType\n      isActive\n    }\n    useLiveFuelPrice\n    milesPerGallon\n    includeDeadheadMiles\n    glActualsEnabled\n    glRollingMonths\n    plannedMonthlyMiles\n    targetMarginPercent\n    version\n    createdAt\n    updatedAt\n    categories {\n      id\n      category\n      name\n      costBehavior\n      rateSource\n      benchmarkRatePerMile\n      overrideRatePerMile\n      isActive\n      sortOrder\n      version\n      glAccounts {\n        id\n        glAccountId\n        accountCode\n        accountName\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "CreateCarrierInvoiceMatch",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:17d57367630a91c6f3c359aef767e708b7d8977134f4e9387954d105e56a43b3",
+      "rootFields": [
+        "createCarrierInvoiceMatch"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateCarrierInvoiceMatchInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation CreateCarrierInvoiceMatch($input: CreateCarrierInvoiceMatchInput!) {\n  createCarrierInvoiceMatch(input: $input) {\n    id\n    status\n    invoiceTotalMinor\n    expectedTotalMinor\n    varianceMinor\n    version\n  }\n}"
     },
     {
       "name": "CreateDetentionPolicy",
@@ -1707,6 +2012,20 @@
       ],
       "usages": [],
       "sdl": "mutation CreateTableConfiguration($input: TableConfigurationInput!) {\n  createTableConfiguration(input: $input) {\n    ...TableConfigurationFields\n  }\n}\n\nfragment TableConfigurationFields on TableConfiguration {\n  id\n  organizationId\n  businessUnitId\n  userId\n  name\n  description\n  resource\n  tableConfig\n  visibility\n  isDefault\n  isOrgDefault\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n    profilePicUrl\n  }\n}"
+    },
+    {
+      "name": "CurrentCarrierSettlementPeriod",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:189c9afc2c1a0801d13970c56e448bb681693ed1ce58627a9bf2b0d9f73c3b30",
+      "rootFields": [
+        "currentCarrierSettlementPeriod"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CurrentCarrierSettlementPeriod {\n  currentCarrierSettlementPeriod {\n    periodStart\n    periodEnd\n    payDate\n  }\n}"
     },
     {
       "name": "CurrentSettlementPeriod",
@@ -2892,6 +3211,36 @@
       "sdl": "mutation DuplicateShipment($input: ShipmentDuplicateInput!) {\n  duplicateShipment(input: $input) {\n    workflowId\n    runId\n    taskQueue\n    status\n    submittedAt\n  }\n}"
     },
     {
+      "name": "EdiCarrierInvoices",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:b44bbc0b1942001aace1ccb57d8ac692a610dab639177488d6232457787622ce",
+      "rootFields": [
+        "ediCarrierInvoices"
+      ],
+      "variables": [
+        {
+          "name": "reconciliationStatus",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "offset",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query EdiCarrierInvoices($reconciliationStatus: String, $limit: Int, $offset: Int) {\n  ediCarrierInvoices(\n    reconciliationStatus: $reconciliationStatus\n    limit: $limit\n    offset: $offset\n  ) {\n    items {\n      id\n      carrierId\n      shipmentId\n      invoiceNumber\n      invoiceDate\n      deliveryDate\n      shipmentReference\n      bol\n      proNumber\n      billToName\n      currencyCode\n      totalAmount\n      expectedAmount\n      varianceAmount\n      reconciliationStatus\n      reconciliationNotes\n      version\n      createdAt\n      updatedAt\n    }\n    totalCount\n  }\n}"
+    },
+    {
       "name": "EdiCommunicationProfileTable",
       "kind": "query",
       "domain": "edi",
@@ -3401,6 +3750,26 @@
       "sdl": "query ExceptionShipments($input: ShipmentsInput!) {\n  shipments(input: $input) {\n    edges {\n      node {\n        ...ShipmentFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...ShipmentPageInfoFields\n    }\n  }\n}\n\nfragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  accessorialChargeId\n  isSystemGenerated\n  method\n  amount\n  unit\n  fuelSurchargeProgramId\n  fuelSurchargeDetail\n  detentionOccurrenceId\n  version\n  createdAt\n  updatedAt\n  accessorialCharge {\n    id\n    businessUnitId\n    organizationId\n    code\n    description\n    status\n    method\n    rateUnit\n    amount\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentAssignmentFields on ShipmentAssignment {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  primaryWorkerId\n  tractorId\n  trailerId\n  secondaryWorkerId\n  status\n  archivedAt\n  version\n  createdAt\n  updatedAt\n  tractor {\n    ...ShipmentTractorFields\n  }\n  trailer {\n    ...ShipmentTrailerFields\n  }\n  primaryWorker {\n    ...ShipmentWorkerFields\n  }\n  secondaryWorker {\n    ...ShipmentWorkerFields\n  }\n}\n\nfragment ShipmentCarrierAssignmentFields on CarrierAssignment {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  carrierId\n  status\n  rateMethod\n  baseRate\n  baseAmount\n  fuelSurcharge\n  accessorialTotal\n  totalCost\n  currencyCode\n  proNumber\n  externalDriverName\n  externalDriverPhone\n  externalTractorNumber\n  externalTrailerNumber\n  confirmedAt\n  canceledAt\n  cancellationReason\n  version\n  createdAt\n  updatedAt\n  carrier {\n    id\n    code\n    name\n    scac\n  }\n  accessorials {\n    id\n    carrierAssignmentId\n    accessorialChargeId\n    description\n    amount\n    version\n  }\n}\n\nfragment ShipmentCommodityFields on ShipmentCommodity {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  commodityId\n  pieces\n  weight\n  version\n  createdAt\n  updatedAt\n  commodity {\n    id\n    businessUnitId\n    organizationId\n    hazardousMaterialId\n    status\n    name\n    description\n    minTemperature\n    maxTemperature\n    weightPerUnit\n    linearFeetPerUnit\n    maxQuantityPerShipment\n    freightClass\n    loadingInstructions\n    stackable\n    fragile\n    version\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentFields on Shipment {\n  id\n  businessUnitId\n  organizationId\n  sourceDocumentId\n  serviceTypeId\n  shipmentTypeId\n  customerId\n  tractorTypeId\n  trailerTypeId\n  ownerId\n  enteredById\n  canceledById\n  formulaTemplateId\n  consolidationGroupId\n  orderId\n  orderNumber\n  orderStatus\n  status\n  tenderStatus\n  entryMethod\n  proNumber\n  bol\n  cancelReason\n  otherChargeAmount\n  freightChargeAmount\n  baseRate\n  totalChargeAmount\n  pieces\n  weight\n  temperatureMin\n  temperatureMax\n  actualDeliveryDate\n  actualShipDate\n  canceledAt\n  billingTransferStatus\n  transferredToBillingAt\n  markedReadyToBillAt\n  billedAt\n  ratingUnit\n  fuelSurchargeLocked\n  profitabilityEstimate {\n    shipmentId\n    loadedMiles\n    deadheadMiles\n    totalMiles\n    costPerMile\n    estimatedCost\n    profit\n    marginPercent\n    breakEvenRpm\n    targetMarginPercent\n    missingDistance\n  }\n  ratingDetail {\n    ...ShipmentRatingDetailFields\n  }\n  version\n  createdAt\n  updatedAt\n  moves {\n    ...ShipmentMoveFields\n  }\n  additionalCharges {\n    ...ShipmentAdditionalChargeFields\n  }\n  commodities {\n    ...ShipmentCommodityFields\n  }\n  customer {\n    id\n    businessUnitId\n    organizationId\n    stateId\n    status\n    code\n    name\n    addressLine1\n    addressLine2\n    city\n    postalCode\n    isGeocoded\n    longitude\n    latitude\n    placeId\n    externalId\n    allowConsolidation\n    exclusiveConsolidation\n    consolidationPriority\n    version\n    createdAt\n    updatedAt\n  }\n  owner {\n    ...ShipmentUserFields\n  }\n  formulaTemplate {\n    id\n    organizationId\n    businessUnitId\n    name\n    description\n    type\n    expression\n    status\n    schemaId\n    variableDefinitions {\n      name\n      type\n      description\n      required\n      defaultValue\n      source\n    }\n    metadata\n    version\n    sourceTemplateId\n    sourceVersionNumber\n    currentVersionNumber\n    createdAt\n    updatedAt\n  }\n}\n\nfragment ShipmentLocationFields on Location {\n  id\n  name\n  code\n  status\n  locationCategoryId\n  stateId\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  longitude\n  latitude\n}\n\nfragment ShipmentMoveFields on ShipmentMove {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  status\n  loaded\n  sequence\n  distance\n  distanceSource\n  distanceProvider\n  distanceCalculatedAt\n  distanceRouteSignature\n  distanceDataVersion\n  distanceRoutingType\n  distanceUnits\n  distanceMetadata\n  version\n  createdAt\n  updatedAt\n  coverageType\n  stops {\n    ...ShipmentStopFields\n  }\n  assignment {\n    ...ShipmentAssignmentFields\n  }\n  carrierAssignment {\n    ...ShipmentCarrierAssignmentFields\n  }\n}\n\nfragment ShipmentPageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ShipmentRatingDetailFields on ShipmentRatingDetail {\n  formulaTemplateId\n  formulaTemplateName\n  expression\n  resolvedVariables\n  result\n  ratedAt\n}\n\nfragment ShipmentStopFields on ShipmentStop {\n  id\n  businessUnitId\n  organizationId\n  shipmentMoveId\n  locationId\n  status\n  type\n  scheduleType\n  sequence\n  pieces\n  weight\n  scheduledWindowStart\n  scheduledWindowEnd\n  actualArrival\n  actualDeparture\n  countLateOverride\n  countDetentionOverride\n  addressLine\n  version\n  createdAt\n  updatedAt\n  location {\n    ...ShipmentLocationFields\n  }\n}\n\nfragment ShipmentTractorFields on Tractor {\n  id\n  code\n}\n\nfragment ShipmentTrailerFields on Trailer {\n  id\n  code\n  equipmentTypeId\n}\n\nfragment ShipmentUserFields on User {\n  id\n  name\n  username\n  emailAddress\n  timezone\n  status\n  profilePicUrl\n  thumbnailUrl\n}\n\nfragment ShipmentWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
     },
     {
+      "name": "ExportCarrierSettlementBatchCsv",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:add91144201a316a09dd8e91a464313bed62d216d536227cb36f80898d00533b",
+      "rootFields": [
+        "exportCarrierSettlementBatchCsv"
+      ],
+      "variables": [
+        {
+          "name": "batchId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query ExportCarrierSettlementBatchCsv($batchId: ID!) {\n  exportCarrierSettlementBatchCsv(batchId: $batchId)\n}"
+    },
+    {
       "name": "ExportSettlementBatchCsv",
       "kind": "query",
       "domain": "driver-settlement",
@@ -3640,6 +4009,26 @@
       ],
       "usages": [],
       "sdl": "query FuelSurchargeProgramTable($input: DataTableConnectionInput!) {\n  fuelSurchargePrograms(input: $input) {\n    edges {\n      node {\n        ...FuelSurchargeProgramFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment FuelSurchargeProgramFields on FuelSurchargeProgram {\n  id\n  businessUnitId\n  organizationId\n  name\n  code\n  description\n  status\n  fuelIndexId\n  accessorialChargeId\n  method\n  pegPrice\n  increment\n  incrementRate\n  milesPerGallon\n  percentBasis\n  stepRounding\n  rateRounding\n  ratePrecision\n  minAmount\n  maxAmount\n  dateBasis\n  priceEffectiveDay\n  missingPriceFallback\n  effectiveStartDate\n  effectiveEndDate\n  shipmentTypeIds\n  serviceTypeIds\n  tractorTypeIds\n  trailerTypeIds\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "GenerateCarrierSettlementBatch",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:5d4b52fe4c6841d6cf84a1fca15826838cc8790d5f7d01cbaef718546d527a93",
+      "rootFields": [
+        "generateCarrierSettlementBatch"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "GenerateCarrierSettlementBatchInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation GenerateCarrierSettlementBatch($input: GenerateCarrierSettlementBatchInput!) {\n  generateCarrierSettlementBatch(input: $input) {\n    id\n    name\n    settlementCount\n    totalGrossMinor\n    totalNetMinor\n  }\n}"
     },
     {
       "name": "GenerateDriverSettlement",
@@ -4071,6 +4460,31 @@
       "sdl": "query JournalSourceByObject($sourceType: String!, $sourceId: String!) {\n  journalSourceByObject(sourceType: $sourceType, sourceId: $sourceId) {\n    id\n    sourceObjectType\n    sourceObjectId\n    sourceEventType\n    sourceDocumentNumber\n    status\n  }\n}"
     },
     {
+      "name": "LinkEdiCarrierInvoiceToCarrier",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:16d8dd8e30b134141007f62ea5284a5cb79916d189e7b0c77823bab024b3a249",
+      "rootFields": [
+        "linkEdiCarrierInvoiceToCarrier"
+      ],
+      "variables": [
+        {
+          "name": "invoiceId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "carrierId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation LinkEdiCarrierInvoiceToCarrier($invoiceId: ID!, $carrierId: ID!) {\n  linkEdiCarrierInvoiceToCarrier(invoiceId: $invoiceId, carrierId: $carrierId) {\n    id\n    carrierId\n    reconciliationStatus\n    version\n  }\n}"
+    },
+    {
       "name": "LocationCategoryTable",
       "kind": "query",
       "domain": "location-category",
@@ -4201,6 +4615,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation MarkAllNotificationsRead {\n  markAllNotificationsRead\n}"
+    },
+    {
+      "name": "MarkCarrierSettlementPaid",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:4f6a8d1f6671d63951f4e036fe9cd48fbd8daebb5ee0d181581456fa35a77ef6",
+      "rootFields": [
+        "markCarrierSettlementPaid"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "MarkCarrierSettlementPaidInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation MarkCarrierSettlementPaid($input: MarkCarrierSettlementPaidInput!) {\n  markCarrierSettlementPaid(input: $input) {\n    id\n    status\n    version\n  }\n}"
     },
     {
       "name": "MarkDriverSettlementPaid",
@@ -5127,6 +5561,26 @@
       "sdl": "mutation PostAndApplyCustomerPayment($input: PostCustomerPaymentInput!) {\n  postAndApplyCustomerPayment(input: $input) {\n    id\n    customerId\n    paymentDate\n    accountingDate\n    amountMinor\n    appliedAmountMinor\n    unappliedAmountMinor\n    status\n    paymentMethod\n    referenceNumber\n    memo\n    currencyCode\n    postedBatchId\n    createdAt\n    updatedAt\n    applications {\n      id\n      invoiceId\n      appliedAmountMinor\n      shortPayAmountMinor\n      lineNumber\n    }\n  }\n}"
     },
     {
+      "name": "PostCarrierSettlement",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:f2d7453179bf7a7d2cd2921956c2ffe96ed97f6b7bd46bad5ebe8060d17fc694",
+      "rootFields": [
+        "postCarrierSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation PostCarrierSettlement($input: CarrierSettlementActionInput!) {\n  postCarrierSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
       "name": "PostDriverSettlement",
       "kind": "mutation",
       "domain": "driver-settlement",
@@ -5230,6 +5684,26 @@
       ],
       "usages": [],
       "sdl": "query RateTableTable($input: DataTableConnectionInput!) {\n  rateTables(input: $input) {\n    edges {\n      node {\n        ...RateTableTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RateTableTableRowFields on RateTable {\n  id\n  businessUnitId\n  organizationId\n  name\n  key\n  description\n  lookupType\n  active\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "RecalculateCarrierSettlement",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:878471da098a46cb2287d43f18ee444fafd902b86dec4543712fbe00afb952db",
+      "rootFields": [
+        "recalculateCarrierSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation RecalculateCarrierSettlement($input: CarrierSettlementActionInput!) {\n  recalculateCarrierSettlement(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
       "name": "RecalculateDriverSettlement",
@@ -5384,6 +5858,46 @@
       "sdl": "query RecurringShipmentTable($input: DataTableConnectionInput!) {\n  recurringShipments(input: $input) {\n    edges {\n      node {\n        ...RecurringShipmentTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RecurringShipmentTableRowFields on RecurringShipment {\n  id\n  businessUnitId\n  organizationId\n  sourceShipmentId\n  customerId\n  originLocationId\n  destinationLocationId\n  name\n  description\n  status\n  cronExpression\n  timezone\n  startDate\n  endDate\n  maxOccurrences\n  leadTimeDays\n  skipWeekends\n  exceptionPolicy\n  blackoutDates\n  autoGenerate\n  nextOccurrenceAt\n  lastOccurrenceAt\n  lastRunAt\n  generationCount\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n  originLocation {\n    id\n    name\n    code\n  }\n  destinationLocation {\n    id\n    name\n    code\n  }\n}"
     },
     {
+      "name": "RejectCarrierInvoiceMatch",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:9afe5a46af162af1d29113765c8b1107deee2246b7294f54301c3b2884169ea1",
+      "rootFields": [
+        "rejectCarrierInvoiceMatch"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierInvoiceMatchActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation RejectCarrierInvoiceMatch($input: CarrierInvoiceMatchActionInput!) {\n  rejectCarrierInvoiceMatch(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
+      "name": "RejectCarrierSettlement",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:bd2180a2b51de2f424838c4fcc66cac3ccedea1ea8d621c1adca0a5d53884d8a",
+      "rootFields": [
+        "rejectCarrierSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation RejectCarrierSettlement($input: CarrierSettlementActionInput!) {\n  rejectCarrierSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
       "name": "RejectDriverSettlement",
       "kind": "mutation",
       "domain": "driver-settlement",
@@ -5450,6 +5964,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation ReleaseDriverPayEvent($payEventId: ID!) {\n  releaseDriverPayEvent(payEventId: $payEventId) {\n    id\n    status\n    onHold\n    holdReason\n    version\n  }\n}"
+    },
+    {
+      "name": "RemoveCarrierSettlementAdjustment",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:f1824d88917e5f75145c6705c91310427bd15c0dce5852153e16d5c74679829a",
+      "rootFields": [
+        "removeCarrierSettlementAdjustment"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "RemoveCarrierSettlementAdjustmentInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation RemoveCarrierSettlementAdjustment($input: RemoveCarrierSettlementAdjustmentInput!) {\n  removeCarrierSettlementAdjustment(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
       "name": "RemoveDriverSettlementAdjustment",
@@ -6867,6 +7401,26 @@
       "sdl": "query StoredMileageTable($input: DataTableConnectionInput!) {\n  storedMileages(input: $input) {\n    edges {\n      node {\n        ...StoredMileageTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment StoredMileageStopKeyFields on StopKey {\n  method\n  key\n  city\n  state\n  postalCode\n  placeId\n  coordinates\n}\n\nfragment StoredMileageTableRowFields on StoredMileage {\n  id\n  businessUnitId\n  organizationId\n  status\n  originKey {\n    ...StoredMileageStopKeyFields\n  }\n  destinationKey {\n    ...StoredMileageStopKeyFields\n  }\n  intermediateKeys {\n    ...StoredMileageStopKeyFields\n  }\n  routeSignature\n  routeHash\n  distance\n  distanceUnits\n  provider\n  source\n  routingType\n  method\n  distanceProfileId\n  distanceProfileName\n  hitCount\n  lastCalculatedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "SubmitCarrierSettlement",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:5f603312efac3036a8f1dd5f427616a81a9cf7c7cf2ac5110b7fd85e5dad0347",
+      "rootFields": [
+        "submitCarrierSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation SubmitCarrierSettlement($input: CarrierSettlementActionInput!) {\n  submitCarrierSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
       "name": "SubmitDriverSettlement",
       "kind": "mutation",
       "domain": "driver-settlement",
@@ -6905,6 +7459,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation SubmitMyExpense($input: SubmitMyExpenseInput!) {\n  submitMyExpense(input: $input) {\n    id\n    status\n    amountMinor\n    description\n    incurredDate\n    createdAt\n  }\n}"
+    },
+    {
+      "name": "SuggestCarrierForEdiInvoice",
+      "kind": "query",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:b5aa64a822ffc92d294a71816236a2a3be0bcb0db952715b5d46d530e648c382",
+      "rootFields": [
+        "suggestCarrierForEdiInvoice"
+      ],
+      "variables": [
+        {
+          "name": "invoiceId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query SuggestCarrierForEdiInvoice($invoiceId: ID!) {\n  suggestCarrierForEdiInvoice(invoiceId: $invoiceId) {\n    id\n    code\n    name\n    scac\n    dotNumber\n  }\n}"
     },
     {
       "name": "TableConfigurationDetail",
@@ -7404,6 +7978,26 @@
       ],
       "usages": [],
       "sdl": "mutation UpdateBillingQueueStatus($id: ID!, $input: BillingQueueUpdateStatusInput!) {\n  updateBillingQueueStatus(id: $id, input: $input) {\n    ...BillingQueueActionFields\n  }\n}\n\nfragment BillingQueueActionFields on BillingQueueItem {\n  id\n  organizationId\n  businessUnitId\n  shipmentId\n  assignedBillerId\n  number\n  status\n  billType\n  exceptionReasonCode\n  reviewNotes\n  exceptionNotes\n  reviewStartedAt\n  reviewCompletedAt\n  canceledById\n  canceledAt\n  cancelReason\n  isAdjustmentOrigin\n  sourceInvoiceId\n  sourceInvoiceAdjustmentId\n  sourceCreditMemoInvoiceId\n  correctionGroupId\n  rebillStrategy\n  requiresReplacementReview\n  rerateVariancePercent\n  adjustmentContext\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "UpdateCarrierSettlementControl",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:9eec23817d83cb811a311687e73e4dc975104a4c45000d129aa4f75849dcb86a",
+      "rootFields": [
+        "updateCarrierSettlementControl"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateCarrierSettlementControlInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation UpdateCarrierSettlementControl($input: UpdateCarrierSettlementControlInput!) {\n  updateCarrierSettlementControl(input: $input) {\n    id\n    version\n  }\n}"
     },
     {
       "name": "UpdateCostCategory",
@@ -8140,6 +8734,26 @@
       "sdl": "query VehiclePositions($maxAgeSeconds: Int) {\n  vehiclePositions(maxAgeSeconds: $maxAgeSeconds) {\n    tractorId\n    tractorCode\n    provider\n    providerVehicleId\n    latitude\n    longitude\n    headingDegrees\n    speedMph\n    engineState\n    fuelPercent\n    odometerMeters\n    formattedLocation\n    recordedAt\n    receivedAt\n    primaryWorkerId\n    primaryWorkerName\n  }\n}"
     },
     {
+      "name": "VoidCarrierSettlement",
+      "kind": "mutation",
+      "domain": "carrier-settlement",
+      "sourceFile": "src/operations/carrier-settlement/operations.graphql",
+      "hash": "sha256:ce8b05d78d10fc5db7cbca3f04e6fa1ca48c7c00db88aed242b2ba027f73a5dc",
+      "rootFields": [
+        "voidCarrierSettlement"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CarrierSettlementActionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation VoidCarrierSettlement($input: CarrierSettlementActionInput!) {\n  voidCarrierSettlement(input: $input) {\n    id\n    status\n    version\n  }\n}"
+    },
+    {
       "name": "VoidDriverSettlement",
       "kind": "mutation",
       "domain": "driver-settlement",
@@ -8818,6 +9432,9 @@
         "AgentRunTable",
         "ApiKeyTable",
         "AuditLogTable",
+        "CarrierCostEventTable",
+        "CarrierSettlementBatchTable",
+        "CarrierSettlementTable",
         "CarrierTable",
         "CommodityTable",
         "CustomerPaymentTable",
@@ -10360,6 +10977,32 @@
     }
   ],
   "types": {
+    "AddCarrierSettlementAdjustmentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "amountMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "description",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "glAccountId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AddCarrierSettlementAdjustmentInput {\n  amountMinor: Int!\n  description: String!\n  \"\"\"\n  Optional GL account override — the adjustment posts there instead of the default expense account.\n  \"\"\"\n  glAccountId: ID\n  settlementId: ID!\n}"
+    },
     "AddSettlementAdjustmentInput": {
       "kind": "input",
       "fields": [
@@ -10642,6 +11285,49 @@
       ],
       "sdl": "input BulkUpdateEquipmentTypeStatusInput {\n  equipmentTypeIds: [ID!]!\n  status: EntityStatus!\n}"
     },
+    "CarrierInvoiceMatchActionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "matchId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "note",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CarrierInvoiceMatchActionInput {\n  matchId: ID!\n  note: String\n}"
+    },
+    "CarrierInvoiceMatchStatus": {
+      "kind": "enum",
+      "values": [
+        "Matched",
+        "Rejected",
+        "Resolved",
+        "Suggested",
+        "Variance"
+      ],
+      "sdl": "enum CarrierInvoiceMatchStatus {\n  Matched\n  Rejected\n  Resolved\n  Suggested\n  Variance\n}"
+    },
+    "CarrierSettlementActionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "reason",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CarrierSettlementActionInput {\n  reason: String\n  settlementId: ID!\n}"
+    },
     "ConfigurationVisibility": {
       "kind": "enum",
       "values": [
@@ -10737,6 +11423,52 @@
         }
       ],
       "sdl": "input CostingControlInput {\n  fuelIndexId: ID\n  glActualsEnabled: Boolean!\n  glRollingMonths: Int!\n  includeDeadheadMiles: Boolean!\n  milesPerGallon: String!\n  plannedMonthlyMiles: Int\n  targetMarginPercent: String\n  useLiveFuelPrice: Boolean!\n  version: Int!\n}"
+    },
+    "CreateCarrierInvoiceMatchInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "carrierAssignmentId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "carrierId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "documentAiExtractionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "ediCarrierInvoiceId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "invoiceNumber",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "invoiceTotalMinor",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "proNumber",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "shipmentId",
+          "type": "ID",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateCarrierInvoiceMatchInput {\n  \"\"\"\n  Optional explicit assignment; otherwise resolved by pro number or shipment reference.\n  \"\"\"\n  carrierAssignmentId: ID\n  \"\"\"\n  Required for document AI sources; EDI sources take the carrier from the linked invoice.\n  \"\"\"\n  carrierId: ID\n  documentAiExtractionId: ID\n  \"\"\"\n  Exactly one source is required: an EDI carrier invoice or a document AI extraction.\n  \"\"\"\n  ediCarrierInvoiceId: ID\n  \"\"\"Document AI sources only: the extracted invoice number.\"\"\"\n  invoiceNumber: String\n  \"\"\"Document AI sources only: the extracted invoice total in minor units.\"\"\"\n  invoiceTotalMinor: Int\n  \"\"\"\n  Document AI sources only: the pro number used to locate the assignment.\n  \"\"\"\n  proNumber: String\n  \"\"\"Document AI sources only: the shipment used to locate the assignment.\"\"\"\n  shipmentId: ID\n}"
     },
     "CreateMyLoadCommentInput": {
       "kind": "input",
@@ -12201,6 +12933,32 @@
       ],
       "sdl": "input FuelSurchargeProgramInput {\n  accessorialChargeId: ID!\n  code: String!\n  dateBasis: FuelSurchargeDateBasis\n  description: String\n  effectiveEndDate: Int\n  effectiveStartDate: Int\n  fuelIndexId: ID!\n  increment: String\n  incrementRate: String\n  maxAmount: String\n  method: FuelSurchargeProgramMethod!\n  milesPerGallon: String\n  minAmount: String\n  missingPriceFallback: FuelSurchargeMissingPriceFallback\n  name: String!\n  pegPrice: String\n  percentBasis: FuelSurchargePercentBasis\n  priceEffectiveDay: Int\n  ratePrecision: Int\n  rateRounding: FuelSurchargeRateRounding\n  serviceTypeIds: [ID!]\n  shipmentTypeIds: [ID!]\n  status: FuelSurchargeProgramStatus\n  stepRounding: FuelSurchargeStepRounding\n  tableRows: [FuelSurchargeTableRowInput!]\n  tractorTypeIds: [ID!]\n  trailerTypeIds: [ID!]\n}"
     },
+    "GenerateCarrierSettlementBatchInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "name",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "notes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "periodEnd",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "periodStart",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input GenerateCarrierSettlementBatchInput {\n  name: String\n  notes: String\n  periodEnd: Int\n  periodStart: Int\n}"
+    },
     "GenerateDriverSettlementInput": {
       "kind": "input",
       "fields": [
@@ -12396,6 +13154,27 @@
     "JSON": {
       "kind": "scalar",
       "sdl": "scalar JSON"
+    },
+    "MarkCarrierSettlementPaidInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "paymentMethod",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "paymentReference",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input MarkCarrierSettlementPaidInput {\n  paymentMethod: String!\n  paymentReference: String\n  settlementId: ID!\n}"
     },
     "MarkDriverSettlementPaidInput": {
       "kind": "input",
@@ -12713,6 +13492,22 @@
         }
       ],
       "sdl": "input RecordMyStopActionInput {\n  action: PortalStopAction!\n  moveId: ID!\n  stopId: ID!\n}"
+    },
+    "RemoveCarrierSettlementAdjustmentInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "lineId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "settlementId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input RemoveCarrierSettlementAdjustmentInput {\n  lineId: ID!\n  settlementId: ID!\n}"
     },
     "RemoveOrderChargeInput": {
       "kind": "input",
@@ -14037,6 +14832,62 @@
         }
       ],
       "sdl": "input UpcomingWorkerPTOInput {\n  after: String\n  endDate: Int\n  first: Int = 20\n  fleetCodeId: ID\n  startDate: Int\n  status: PTOStatus\n  timezone: String\n  type: PTOType\n  workerId: ID\n}"
+    },
+    "UpdateCarrierSettlementControlInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "autoGenerateBatches",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "autoPostOnApprove",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "defaultApAccountId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "defaultPurchasedTransportationAccountId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "payDelayDays",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "payPeriodFrequency",
+          "type": "PayPeriodFrequency!",
+          "defaultValue": null
+        },
+        {
+          "name": "payTrigger",
+          "type": "SettlementPayTrigger!",
+          "defaultValue": null
+        },
+        {
+          "name": "periodEndDayOfWeek",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "varianceToleranceMinor",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateCarrierSettlementControlInput {\n  autoGenerateBatches: Boolean!\n  autoPostOnApprove: Boolean!\n  defaultApAccountId: ID\n  defaultPurchasedTransportationAccountId: ID\n  payDelayDays: Int!\n  payPeriodFrequency: PayPeriodFrequency!\n  payTrigger: SettlementPayTrigger!\n  periodEndDayOfWeek: Int!\n  varianceToleranceMinor: Int!\n  version: Int!\n}"
     },
     "UpdateDashControlInput": {
       "kind": "input",
@@ -16416,24 +17267,6 @@
       ],
       "sdl": "enum PTOType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
     },
-    "RecurringDeductionStatus": {
-      "kind": "enum",
-      "values": [
-        "Active",
-        "Completed",
-        "Paused"
-      ],
-      "sdl": "enum RecurringDeductionStatus {\n  Active\n  Completed\n  Paused\n}"
-    },
-    "RecurringEarningStatus": {
-      "kind": "enum",
-      "values": [
-        "Active",
-        "Completed",
-        "Paused"
-      ],
-      "sdl": "enum RecurringEarningStatus {\n  Active\n  Completed\n  Paused\n}"
-    },
     "PayPeriodFrequency": {
       "kind": "enum",
       "values": [
@@ -16452,6 +17285,24 @@
         "ShipmentInvoiced"
       ],
       "sdl": "enum SettlementPayTrigger {\n  \"\"\"\n  Pay accrues the moment a driver completes their move — even before the full shipment delivers.\n  \"\"\"\n  MoveCompleted\n  PODReceived\n  ShipmentDelivered\n  ShipmentInvoiced\n}"
+    },
+    "RecurringDeductionStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Completed",
+        "Paused"
+      ],
+      "sdl": "enum RecurringDeductionStatus {\n  Active\n  Completed\n  Paused\n}"
+    },
+    "RecurringEarningStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Completed",
+        "Paused"
+      ],
+      "sdl": "enum RecurringEarningStatus {\n  Active\n  Completed\n  Paused\n}"
     },
     "DriverType": {
       "kind": "enum",

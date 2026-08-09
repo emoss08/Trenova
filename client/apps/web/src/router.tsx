@@ -367,6 +367,64 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/carrier-settlements/workspace",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierSettlementWorkspacePage } =
+                await import("@/routes/carrier-settlement-workspace/page");
+              return { Component: CarrierSettlementWorkspacePage };
+            },
+          },
+          {
+            path: "/carrier-settlements/settlements",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierSettlementsPage } = await import("@/routes/carrier-settlement/page");
+              return { Component: CarrierSettlementsPage };
+            },
+          },
+          {
+            path: "/carrier-settlements/batches",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierSettlementBatchesPage } =
+                await import("@/routes/carrier-settlement-batch/page");
+              return { Component: CarrierSettlementBatchesPage };
+            },
+          },
+          {
+            path: "/carrier-settlements/cost-events",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierCostEventsPage } = await import("@/routes/carrier-cost-event/page");
+              return { Component: CarrierCostEventsPage };
+            },
+          },
+          {
+            path: "/carrier-settlements/invoice-matching",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierInvoiceMatch),
+            ),
+            async lazy() {
+              const { CarrierInvoiceMatchingPage } =
+                await import("@/routes/carrier-invoice-matching/page");
+              return { Component: CarrierInvoiceMatchingPage };
+            },
+          },
+          {
             path: "/billing/invoices",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
             async lazy() {
@@ -426,9 +484,8 @@ const routes: RouteObject[] = [
               createPermissionLoader(Resource.DetentionPolicy),
             ),
             async lazy() {
-              const { DetentionIntelligencePage } = await import(
-                "@/routes/detention-intelligence/page"
-              );
+              const { DetentionIntelligencePage } =
+                await import("@/routes/detention-intelligence/page");
               return { Component: DetentionIntelligencePage };
             },
           },
@@ -846,10 +903,7 @@ const routes: RouteObject[] = [
           },
           {
             path: "/dispatch/console",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.ShipmentMove),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ShipmentMove)),
             async lazy() {
               const { DispatchConsolePage } = await import("@/routes/dispatch-console/page");
               return { Component: DispatchConsolePage };
@@ -960,6 +1014,15 @@ const routes: RouteObject[] = [
                   const { SettlementControlPage } =
                     await import("@/routes/settlement-control/page");
                   return { Component: SettlementControlPage };
+                },
+              },
+              {
+                path: "carrier-settlement-control",
+                loader: createPermissionLoader(Resource.CarrierSettlementControl, Operation.Read),
+                async lazy() {
+                  const { CarrierSettlementControlPage } =
+                    await import("@/routes/carrier-settlement-control/page");
+                  return { Component: CarrierSettlementControlPage };
                 },
               },
               {

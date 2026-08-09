@@ -8,6 +8,7 @@ export type ModuleId =
   | "billing"
   | "detention"
   | "payroll"
+  | "carrier-settlements"
   | "edi"
   | "reports"
   | "accounting"

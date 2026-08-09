@@ -17,6 +17,14 @@ export type AccountCategory =
   | 'Liability'
   | 'Revenue';
 
+export type AddCarrierSettlementAdjustmentInput = {
+  amountMinor: number;
+  description: string;
+  /** Optional GL account override — the adjustment posts there instead of the default expense account. */
+  glAccountId?: string | number | null | undefined;
+  settlementId: string | number;
+};
+
 export type AddSettlementAdjustmentInput = {
   amountMinor: number;
   description: string;
@@ -226,12 +234,41 @@ export type CarrierComplianceStatus =
   | 'Pending'
   | 'Qualified';
 
+export type CarrierCostEventStatus =
+  | 'Attached'
+  | 'Pending'
+  | 'Settled'
+  | 'Voided';
+
+export type CarrierCostEventType =
+  | 'Accessorial'
+  | 'Adjustment'
+  | 'FuelSurcharge'
+  | 'LinehaulCost';
+
 export type CarrierInsurancePolicyType =
   | 'AutoLiability'
   | 'CargoLiability'
   | 'GeneralLiability'
   | 'Umbrella'
   | 'WorkersComp';
+
+export type CarrierInvoiceMatchActionInput = {
+  matchId: string | number;
+  note?: string | null | undefined;
+};
+
+export type CarrierInvoiceMatchStatus =
+  | 'Matched'
+  | 'Rejected'
+  | 'Resolved'
+  | 'Suggested'
+  | 'Variance';
+
+export type CarrierLedgerEntryType =
+  | 'Adjustment'
+  | 'Bill'
+  | 'Payment';
 
 export type CarrierPaymentMethod =
   | 'ACHManual'
@@ -246,6 +283,24 @@ export type CarrierSafetyRating =
   | 'NotRated'
   | 'Satisfactory'
   | 'Unsatisfactory';
+
+export type CarrierSettlementActionInput = {
+  reason?: string | null | undefined;
+  settlementId: string | number;
+};
+
+export type CarrierSettlementBatchStatus =
+  | 'Canceled'
+  | 'Completed'
+  | 'Open';
+
+export type CarrierSettlementStatus =
+  | 'Approved'
+  | 'Draft'
+  | 'Paid'
+  | 'PendingApproval'
+  | 'Posted'
+  | 'Voided';
 
 export type CarrierStatus =
   | 'Active'
@@ -313,6 +368,24 @@ export type CostingControlInput = {
   targetMarginPercent?: string | null | undefined;
   useLiveFuelPrice: boolean;
   version: number;
+};
+
+export type CreateCarrierInvoiceMatchInput = {
+  /** Optional explicit assignment; otherwise resolved by pro number or shipment reference. */
+  carrierAssignmentId?: string | number | null | undefined;
+  /** Required for document AI sources; EDI sources take the carrier from the linked invoice. */
+  carrierId?: string | number | null | undefined;
+  documentAiExtractionId?: string | number | null | undefined;
+  /** Exactly one source is required: an EDI carrier invoice or a document AI extraction. */
+  ediCarrierInvoiceId?: string | number | null | undefined;
+  /** Document AI sources only: the extracted invoice number. */
+  invoiceNumber?: string | null | undefined;
+  /** Document AI sources only: the extracted invoice total in minor units. */
+  invoiceTotalMinor?: number | null | undefined;
+  /** Document AI sources only: the pro number used to locate the assignment. */
+  proNumber?: string | null | undefined;
+  /** Document AI sources only: the shipment used to locate the assignment. */
+  shipmentId?: string | number | null | undefined;
 };
 
 export type CreateMyLoadCommentInput = {
@@ -1193,6 +1266,13 @@ export type FuelType =
   | 'Diesel'
   | 'Gasoline';
 
+export type GenerateCarrierSettlementBatchInput = {
+  name?: string | null | undefined;
+  notes?: string | null | undefined;
+  periodEnd?: number | null | undefined;
+  periodStart?: number | null | undefined;
+};
+
 export type GenerateDriverSettlementInput = {
   batchId?: string | number | null | undefined;
   payDate: number;
@@ -1365,6 +1445,12 @@ export type ManualJournalStatus =
   | 'PendingApproval'
   | 'Posted'
   | 'Rejected';
+
+export type MarkCarrierSettlementPaidInput = {
+  paymentMethod: string;
+  paymentReference?: string | null | undefined;
+  settlementId: string | number;
+};
 
 export type MarkDriverSettlementPaidInput = {
   paymentMethod: string;
@@ -1649,6 +1735,11 @@ export type RecurringShipmentStatus =
   | 'Active'
   | 'Expired'
   | 'Paused';
+
+export type RemoveCarrierSettlementAdjustmentInput = {
+  lineId: string | number;
+  settlementId: string | number;
+};
 
 export type RemoveOrderChargeInput = {
   chargeId: string | number;
@@ -2458,6 +2549,19 @@ export type UpcomingWorkerPtoInput = {
   workerId?: string | number | null | undefined;
 };
 
+export type UpdateCarrierSettlementControlInput = {
+  autoGenerateBatches: boolean;
+  autoPostOnApprove: boolean;
+  defaultApAccountId?: string | number | null | undefined;
+  defaultPurchasedTransportationAccountId?: string | number | null | undefined;
+  payDelayDays: number;
+  payPeriodFrequency: PayPeriodFrequency;
+  payTrigger: SettlementPayTrigger;
+  periodEndDayOfWeek: number;
+  varianceToleranceMinor: number;
+  version: number;
+};
+
 export type UpdateDashControlInput = {
   allowContactInfoEdit: boolean;
   allowExpenseSubmission: boolean;
@@ -2940,6 +3044,213 @@ export type AssignBillingQueueBillerMutationVariables = Exact<{
 
 
 export type AssignBillingQueueBillerMutation = { assignBillingQueueBiller: { ' $fragmentRefs'?: { 'BillingQueueActionFieldsFragment': BillingQueueActionFieldsFragment } } };
+
+export type CarrierSettlementTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type CarrierSettlementTableQuery = { carrierSettlements: { totalCount: number | null, edges: Array<{ node: { id: string, carrierId: string, batchId: string | null, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, grossCostMinor: number, adjustmentsMinor: number, netPayableMinor: number, shipmentCount: number, currencyCode: string, paymentMethod: string, paymentReference: string, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CarrierSettlementDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CarrierSettlementDetailQuery = { carrierSettlement: { id: string, carrierId: string, batchId: string | null, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, grossCostMinor: number, adjustmentsMinor: number, netPayableMinor: number, shipmentCount: number, currencyCode: string, notes: string, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, postedById: string | null, postedAt: number | null, postedJournalBatchId: string | null, paidAt: number | null, paidById: string | null, paymentMethod: string, paymentReference: string, paidJournalBatchId: string | null, voidedById: string | null, voidedAt: number | null, voidReason: string, voidJournalBatchId: string | null, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null, paymentMethod: CarrierPaymentMethod, paymentTermDays: number, remitToName: string | null, remitAddressLine1: string | null, remitAddressLine2: string | null, remitCity: string | null, remitPostalCode: string | null, remitState: { id: string, abbreviation: string } | null } | null, lines: Array<{ id: string, lineNumber: number, eventType: CarrierCostEventType, description: string, amountMinor: number, costEventId: string | null, glAccountId: string | null, shipmentId: string | null, moveId: string | null, proNumber: string }> | null } | null };
+
+export type CarrierSettlementBatchTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type CarrierSettlementBatchTableQuery = { carrierSettlementBatches: { totalCount: number | null, edges: Array<{ node: { id: string, status: CarrierSettlementBatchStatus, name: string, periodStart: number, periodEnd: number, payDate: number, settlementCount: number, totalGrossMinor: number, totalNetMinor: number, currencyCode: string, notes: string, generatedById: string | null, generatedAt: number | null, completedAt: number | null, canceledAt: number | null, version: number, createdAt: number, updatedAt: number } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CarrierSettlementBatchDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CarrierSettlementBatchDetailQuery = { carrierSettlementBatch: { id: string, status: CarrierSettlementBatchStatus, name: string, periodStart: number, periodEnd: number, payDate: number, settlementCount: number, totalGrossMinor: number, totalNetMinor: number, currencyCode: string, notes: string, version: number, settlements: Array<{ id: string, settlementNumber: string, status: CarrierSettlementStatus, grossCostMinor: number, adjustmentsMinor: number, netPayableMinor: number, currencyCode: string, carrier: { id: string, code: string, name: string, scac: string | null } | null }> | null } | null };
+
+export type CarrierCostEventTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type CarrierCostEventTableQuery = { carrierCostEvents: { totalCount: number | null, edges: Array<{ node: { id: string, carrierId: string, carrierAssignmentId: string | null, shipmentId: string | null, moveId: string | null, settlementId: string | null, eventType: CarrierCostEventType, status: CarrierCostEventStatus, eventDate: number, amountMinor: number, currencyCode: string, description: string, proNumber: string, assignmentVersion: number, voidedAt: number | null, voidReason: string, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type CarrierSettlementControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CarrierSettlementControlQuery = { carrierSettlementControl: { id: string, organizationId: string, businessUnitId: string, payTrigger: SettlementPayTrigger, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, autoGenerateBatches: boolean, autoPostOnApprove: boolean, varianceToleranceMinor: number, defaultApAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, version: number } };
+
+export type CurrentCarrierSettlementPeriodQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CurrentCarrierSettlementPeriodQuery = { currentCarrierSettlementPeriod: { periodStart: number, periodEnd: number, payDate: number } };
+
+export type CarrierSettlementWorkspaceSummaryQueryVariables = Exact<{
+  periodStart?: number | null | undefined;
+  periodEnd?: number | null | undefined;
+}>;
+
+
+export type CarrierSettlementWorkspaceSummaryQuery = { carrierSettlementWorkspaceSummary: { periodStart: number, periodEnd: number, payDate: number, draftCount: number, pendingApprovalCount: number, approvedCount: number, postedCount: number, paidCount: number, totalNetMinor: number, totalGrossMinor: number, pendingEventCount: number, pendingAmountMinor: number, pendingCarrierCount: number, openBatchId: string | null } };
+
+export type CarrierLedgerEntriesQueryVariables = Exact<{
+  carrierId: string | number;
+  limit?: number | null | undefined;
+}>;
+
+
+export type CarrierLedgerEntriesQuery = { carrierLedgerEntries: Array<{ id: string, carrierId: string, entryType: CarrierLedgerEntryType, sourceObjectType: string, sourceObjectId: string, sourceEventType: string, relatedSettlementId: string | null, journalBatchId: string | null, documentNumber: string, transactionDate: number, lineNumber: number, amountMinor: number, createdAt: number }> };
+
+export type CarrierInvoiceMatchesQueryVariables = Exact<{
+  status?: CarrierInvoiceMatchStatus | null | undefined;
+  carrierId?: string | number | null | undefined;
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+}>;
+
+
+export type CarrierInvoiceMatchesQuery = { carrierInvoiceMatches: { totalCount: number, items: Array<{ id: string, ediCarrierInvoiceId: string | null, documentAiExtractionId: string | null, carrierId: string, carrierAssignmentId: string, carrierSettlementId: string | null, adjustmentCostEventId: string | null, status: CarrierInvoiceMatchStatus, invoiceNumber: string, invoiceTotalMinor: number, expectedTotalMinor: number, varianceMinor: number, currencyCode: string, resolutionNote: string, resolvedById: string | null, resolvedAt: number | null, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null, carrierAssignment: { id: string, shipmentMoveId: string, status: CarrierAssignmentStatus, rateMethod: CarrierRateMethod, baseRate: string, baseAmount: string, fuelSurcharge: string, accessorialTotal: string, totalCost: string, currencyCode: string, proNumber: string | null, accessorials: Array<{ id: string, description: string, amount: string }> | null } | null }> } };
+
+export type EdiCarrierInvoicesQueryVariables = Exact<{
+  reconciliationStatus?: string | null | undefined;
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+}>;
+
+
+export type EdiCarrierInvoicesQuery = { ediCarrierInvoices: { totalCount: number, items: Array<{ id: string, carrierId: string | null, shipmentId: string | null, invoiceNumber: string, invoiceDate: number | null, deliveryDate: number | null, shipmentReference: string, bol: string, proNumber: string, billToName: string, currencyCode: string, totalAmount: string | null, expectedAmount: string | null, varianceAmount: string | null, reconciliationStatus: string, reconciliationNotes: string, version: number, createdAt: number, updatedAt: number }> } };
+
+export type SuggestCarrierForEdiInvoiceQueryVariables = Exact<{
+  invoiceId: string | number;
+}>;
+
+
+export type SuggestCarrierForEdiInvoiceQuery = { suggestCarrierForEdiInvoice: { id: string, code: string, name: string, scac: string | null, dotNumber: string | null } | null };
+
+export type ExportCarrierSettlementBatchCsvQueryVariables = Exact<{
+  batchId: string | number;
+}>;
+
+
+export type ExportCarrierSettlementBatchCsvQuery = { exportCarrierSettlementBatchCsv: string };
+
+export type GenerateCarrierSettlementBatchMutationVariables = Exact<{
+  input: GenerateCarrierSettlementBatchInput;
+}>;
+
+
+export type GenerateCarrierSettlementBatchMutation = { generateCarrierSettlementBatch: { id: string, name: string, settlementCount: number, totalGrossMinor: number, totalNetMinor: number } };
+
+export type SubmitCarrierSettlementMutationVariables = Exact<{
+  input: CarrierSettlementActionInput;
+}>;
+
+
+export type SubmitCarrierSettlementMutation = { submitCarrierSettlement: { id: string, status: CarrierSettlementStatus, version: number } };
+
+export type ApproveCarrierSettlementMutationVariables = Exact<{
+  input: CarrierSettlementActionInput;
+}>;
+
+
+export type ApproveCarrierSettlementMutation = { approveCarrierSettlement: { id: string, status: CarrierSettlementStatus, version: number } };
+
+export type RejectCarrierSettlementMutationVariables = Exact<{
+  input: CarrierSettlementActionInput;
+}>;
+
+
+export type RejectCarrierSettlementMutation = { rejectCarrierSettlement: { id: string, status: CarrierSettlementStatus, version: number } };
+
+export type PostCarrierSettlementMutationVariables = Exact<{
+  input: CarrierSettlementActionInput;
+}>;
+
+
+export type PostCarrierSettlementMutation = { postCarrierSettlement: { id: string, status: CarrierSettlementStatus, version: number } };
+
+export type MarkCarrierSettlementPaidMutationVariables = Exact<{
+  input: MarkCarrierSettlementPaidInput;
+}>;
+
+
+export type MarkCarrierSettlementPaidMutation = { markCarrierSettlementPaid: { id: string, status: CarrierSettlementStatus, version: number } };
+
+export type VoidCarrierSettlementMutationVariables = Exact<{
+  input: CarrierSettlementActionInput;
+}>;
+
+
+export type VoidCarrierSettlementMutation = { voidCarrierSettlement: { id: string, status: CarrierSettlementStatus, version: number } };
+
+export type RecalculateCarrierSettlementMutationVariables = Exact<{
+  input: CarrierSettlementActionInput;
+}>;
+
+
+export type RecalculateCarrierSettlementMutation = { recalculateCarrierSettlement: { id: string, version: number } };
+
+export type AddCarrierSettlementAdjustmentMutationVariables = Exact<{
+  input: AddCarrierSettlementAdjustmentInput;
+}>;
+
+
+export type AddCarrierSettlementAdjustmentMutation = { addCarrierSettlementAdjustment: { id: string, version: number } };
+
+export type RemoveCarrierSettlementAdjustmentMutationVariables = Exact<{
+  input: RemoveCarrierSettlementAdjustmentInput;
+}>;
+
+
+export type RemoveCarrierSettlementAdjustmentMutation = { removeCarrierSettlementAdjustment: { id: string, version: number } };
+
+export type UpdateCarrierSettlementControlMutationVariables = Exact<{
+  input: UpdateCarrierSettlementControlInput;
+}>;
+
+
+export type UpdateCarrierSettlementControlMutation = { updateCarrierSettlementControl: { id: string, version: number } };
+
+export type LinkEdiCarrierInvoiceToCarrierMutationVariables = Exact<{
+  invoiceId: string | number;
+  carrierId: string | number;
+}>;
+
+
+export type LinkEdiCarrierInvoiceToCarrierMutation = { linkEdiCarrierInvoiceToCarrier: { id: string, carrierId: string | null, reconciliationStatus: string, version: number } };
+
+export type CreateCarrierInvoiceMatchMutationVariables = Exact<{
+  input: CreateCarrierInvoiceMatchInput;
+}>;
+
+
+export type CreateCarrierInvoiceMatchMutation = { createCarrierInvoiceMatch: { id: string, status: CarrierInvoiceMatchStatus, invoiceTotalMinor: number, expectedTotalMinor: number, varianceMinor: number, version: number } };
+
+export type AcceptCarrierInvoiceMatchMutationVariables = Exact<{
+  input: CarrierInvoiceMatchActionInput;
+}>;
+
+
+export type AcceptCarrierInvoiceMatchMutation = { acceptCarrierInvoiceMatch: { id: string, status: CarrierInvoiceMatchStatus, version: number } };
+
+export type AcceptCarrierInvoiceMatchWithVarianceMutationVariables = Exact<{
+  input: CarrierInvoiceMatchActionInput;
+}>;
+
+
+export type AcceptCarrierInvoiceMatchWithVarianceMutation = { acceptCarrierInvoiceMatchWithVariance: { id: string, status: CarrierInvoiceMatchStatus, adjustmentCostEventId: string | null, version: number } };
+
+export type RejectCarrierInvoiceMatchMutationVariables = Exact<{
+  input: CarrierInvoiceMatchActionInput;
+}>;
+
+
+export type RejectCarrierInvoiceMatchMutation = { rejectCarrierInvoiceMatch: { id: string, status: CarrierInvoiceMatchStatus, version: number } };
 
 export type CarrierContactFieldsFragment = { id: string, businessUnitId: string, organizationId: string, carrierId: string, name: string, title: string | null, email: string | null, phone: string | null, isPrimary: boolean, receivesRateConfirmations: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CarrierContactFieldsFragment' };
 
@@ -10017,6 +10328,547 @@ export const AssignBillingQueueBillerDocument = new TypedDocumentString(`
   createdAt
   updatedAt
 }`, {"hash":"sha256:9850f8da7824976fc1edee6d78fb22738914fc8ffefb4d3588e54e6c6f66bd9f"}) as unknown as TypedDocumentString<AssignBillingQueueBillerMutation, AssignBillingQueueBillerMutationVariables>;
+export const CarrierSettlementTableDocument = new TypedDocumentString(`
+    query CarrierSettlementTable($input: DataTableConnectionInput!) {
+  carrierSettlements(input: $input) {
+    edges {
+      node {
+        id
+        carrierId
+        batchId
+        settlementNumber
+        status
+        periodStart
+        periodEnd
+        payDate
+        grossCostMinor
+        adjustmentsMinor
+        netPayableMinor
+        shipmentCount
+        currencyCode
+        paymentMethod
+        paymentReference
+        version
+        createdAt
+        updatedAt
+        carrier {
+          id
+          code
+          name
+          scac
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:36b2fe290ce6efc98beb58eccbfa6bcaec7956b7e99ae194d2d88fdce8c84600"}) as unknown as TypedDocumentString<CarrierSettlementTableQuery, CarrierSettlementTableQueryVariables>;
+export const CarrierSettlementDetailDocument = new TypedDocumentString(`
+    query CarrierSettlementDetail($id: ID!) {
+  carrierSettlement(id: $id) {
+    id
+    carrierId
+    batchId
+    settlementNumber
+    status
+    periodStart
+    periodEnd
+    payDate
+    grossCostMinor
+    adjustmentsMinor
+    netPayableMinor
+    shipmentCount
+    currencyCode
+    notes
+    submittedById
+    submittedAt
+    approvedById
+    approvedAt
+    postedById
+    postedAt
+    postedJournalBatchId
+    paidAt
+    paidById
+    paymentMethod
+    paymentReference
+    paidJournalBatchId
+    voidedById
+    voidedAt
+    voidReason
+    voidJournalBatchId
+    version
+    createdAt
+    updatedAt
+    carrier {
+      id
+      code
+      name
+      scac
+      paymentMethod
+      paymentTermDays
+      remitToName
+      remitAddressLine1
+      remitAddressLine2
+      remitCity
+      remitPostalCode
+      remitState {
+        id
+        abbreviation
+      }
+    }
+    lines {
+      id
+      lineNumber
+      eventType
+      description
+      amountMinor
+      costEventId
+      glAccountId
+      shipmentId
+      moveId
+      proNumber
+    }
+  }
+}
+    `, {"hash":"sha256:cc5b9ce4ed7968de7ec3e10c1c9d40d598baaca2516559ddccbf9ac24d9f8b90"}) as unknown as TypedDocumentString<CarrierSettlementDetailQuery, CarrierSettlementDetailQueryVariables>;
+export const CarrierSettlementBatchTableDocument = new TypedDocumentString(`
+    query CarrierSettlementBatchTable($input: DataTableConnectionInput!) {
+  carrierSettlementBatches(input: $input) {
+    edges {
+      node {
+        id
+        status
+        name
+        periodStart
+        periodEnd
+        payDate
+        settlementCount
+        totalGrossMinor
+        totalNetMinor
+        currencyCode
+        notes
+        generatedById
+        generatedAt
+        completedAt
+        canceledAt
+        version
+        createdAt
+        updatedAt
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:83db3b28b5afa72a9d4bead6e5f505c743c875133bc00afb55a470947712f9ee"}) as unknown as TypedDocumentString<CarrierSettlementBatchTableQuery, CarrierSettlementBatchTableQueryVariables>;
+export const CarrierSettlementBatchDetailDocument = new TypedDocumentString(`
+    query CarrierSettlementBatchDetail($id: ID!) {
+  carrierSettlementBatch(id: $id) {
+    id
+    status
+    name
+    periodStart
+    periodEnd
+    payDate
+    settlementCount
+    totalGrossMinor
+    totalNetMinor
+    currencyCode
+    notes
+    version
+    settlements {
+      id
+      settlementNumber
+      status
+      grossCostMinor
+      adjustmentsMinor
+      netPayableMinor
+      currencyCode
+      carrier {
+        id
+        code
+        name
+        scac
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:53418bc43e1ee89c98fab0ea098fa24ddc5bbf657ce45db363ecbfaa732027e3"}) as unknown as TypedDocumentString<CarrierSettlementBatchDetailQuery, CarrierSettlementBatchDetailQueryVariables>;
+export const CarrierCostEventTableDocument = new TypedDocumentString(`
+    query CarrierCostEventTable($input: DataTableConnectionInput!) {
+  carrierCostEvents(input: $input) {
+    edges {
+      node {
+        id
+        carrierId
+        carrierAssignmentId
+        shipmentId
+        moveId
+        settlementId
+        eventType
+        status
+        eventDate
+        amountMinor
+        currencyCode
+        description
+        proNumber
+        assignmentVersion
+        voidedAt
+        voidReason
+        version
+        createdAt
+        updatedAt
+        carrier {
+          id
+          code
+          name
+          scac
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:f3182a94737a1f670221e741241adaff4e7081c9afea3ff204a11ce03249f886"}) as unknown as TypedDocumentString<CarrierCostEventTableQuery, CarrierCostEventTableQueryVariables>;
+export const CarrierSettlementControlDocument = new TypedDocumentString(`
+    query CarrierSettlementControl {
+  carrierSettlementControl {
+    id
+    organizationId
+    businessUnitId
+    payTrigger
+    payPeriodFrequency
+    periodEndDayOfWeek
+    payDelayDays
+    autoGenerateBatches
+    autoPostOnApprove
+    varianceToleranceMinor
+    defaultApAccountId
+    defaultPurchasedTransportationAccountId
+    version
+  }
+}
+    `, {"hash":"sha256:2bf7c10b84e3df025b1094725b81bd351278665da7d2c6f5f7def5c9b3d70966"}) as unknown as TypedDocumentString<CarrierSettlementControlQuery, CarrierSettlementControlQueryVariables>;
+export const CurrentCarrierSettlementPeriodDocument = new TypedDocumentString(`
+    query CurrentCarrierSettlementPeriod {
+  currentCarrierSettlementPeriod {
+    periodStart
+    periodEnd
+    payDate
+  }
+}
+    `, {"hash":"sha256:189c9afc2c1a0801d13970c56e448bb681693ed1ce58627a9bf2b0d9f73c3b30"}) as unknown as TypedDocumentString<CurrentCarrierSettlementPeriodQuery, CurrentCarrierSettlementPeriodQueryVariables>;
+export const CarrierSettlementWorkspaceSummaryDocument = new TypedDocumentString(`
+    query CarrierSettlementWorkspaceSummary($periodStart: Int, $periodEnd: Int) {
+  carrierSettlementWorkspaceSummary(
+    periodStart: $periodStart
+    periodEnd: $periodEnd
+  ) {
+    periodStart
+    periodEnd
+    payDate
+    draftCount
+    pendingApprovalCount
+    approvedCount
+    postedCount
+    paidCount
+    totalNetMinor
+    totalGrossMinor
+    pendingEventCount
+    pendingAmountMinor
+    pendingCarrierCount
+    openBatchId
+  }
+}
+    `, {"hash":"sha256:8df59638fd90574819df84446158da1392baee9efa802a96317fb0667d5d7e7e"}) as unknown as TypedDocumentString<CarrierSettlementWorkspaceSummaryQuery, CarrierSettlementWorkspaceSummaryQueryVariables>;
+export const CarrierLedgerEntriesDocument = new TypedDocumentString(`
+    query CarrierLedgerEntries($carrierId: ID!, $limit: Int) {
+  carrierLedgerEntries(carrierId: $carrierId, limit: $limit) {
+    id
+    carrierId
+    entryType
+    sourceObjectType
+    sourceObjectId
+    sourceEventType
+    relatedSettlementId
+    journalBatchId
+    documentNumber
+    transactionDate
+    lineNumber
+    amountMinor
+    createdAt
+  }
+}
+    `, {"hash":"sha256:49627fbc33be15958d7c8171a3fbb43dac4071a3cde7bf612425a460768179b2"}) as unknown as TypedDocumentString<CarrierLedgerEntriesQuery, CarrierLedgerEntriesQueryVariables>;
+export const CarrierInvoiceMatchesDocument = new TypedDocumentString(`
+    query CarrierInvoiceMatches($status: CarrierInvoiceMatchStatus, $carrierId: ID, $limit: Int, $offset: Int) {
+  carrierInvoiceMatches(
+    status: $status
+    carrierId: $carrierId
+    limit: $limit
+    offset: $offset
+  ) {
+    items {
+      id
+      ediCarrierInvoiceId
+      documentAiExtractionId
+      carrierId
+      carrierAssignmentId
+      carrierSettlementId
+      adjustmentCostEventId
+      status
+      invoiceNumber
+      invoiceTotalMinor
+      expectedTotalMinor
+      varianceMinor
+      currencyCode
+      resolutionNote
+      resolvedById
+      resolvedAt
+      version
+      createdAt
+      updatedAt
+      carrier {
+        id
+        code
+        name
+        scac
+      }
+      carrierAssignment {
+        id
+        shipmentMoveId
+        status
+        rateMethod
+        baseRate
+        baseAmount
+        fuelSurcharge
+        accessorialTotal
+        totalCost
+        currencyCode
+        proNumber
+        accessorials {
+          id
+          description
+          amount
+        }
+      }
+    }
+    totalCount
+  }
+}
+    `, {"hash":"sha256:73fbe63b0c2d0c45bdba9588a2a2f2ba8e707e6fd6102359adff09a9162961d4"}) as unknown as TypedDocumentString<CarrierInvoiceMatchesQuery, CarrierInvoiceMatchesQueryVariables>;
+export const EdiCarrierInvoicesDocument = new TypedDocumentString(`
+    query EdiCarrierInvoices($reconciliationStatus: String, $limit: Int, $offset: Int) {
+  ediCarrierInvoices(
+    reconciliationStatus: $reconciliationStatus
+    limit: $limit
+    offset: $offset
+  ) {
+    items {
+      id
+      carrierId
+      shipmentId
+      invoiceNumber
+      invoiceDate
+      deliveryDate
+      shipmentReference
+      bol
+      proNumber
+      billToName
+      currencyCode
+      totalAmount
+      expectedAmount
+      varianceAmount
+      reconciliationStatus
+      reconciliationNotes
+      version
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+}
+    `, {"hash":"sha256:b44bbc0b1942001aace1ccb57d8ac692a610dab639177488d6232457787622ce"}) as unknown as TypedDocumentString<EdiCarrierInvoicesQuery, EdiCarrierInvoicesQueryVariables>;
+export const SuggestCarrierForEdiInvoiceDocument = new TypedDocumentString(`
+    query SuggestCarrierForEdiInvoice($invoiceId: ID!) {
+  suggestCarrierForEdiInvoice(invoiceId: $invoiceId) {
+    id
+    code
+    name
+    scac
+    dotNumber
+  }
+}
+    `, {"hash":"sha256:b5aa64a822ffc92d294a71816236a2a3be0bcb0db952715b5d46d530e648c382"}) as unknown as TypedDocumentString<SuggestCarrierForEdiInvoiceQuery, SuggestCarrierForEdiInvoiceQueryVariables>;
+export const ExportCarrierSettlementBatchCsvDocument = new TypedDocumentString(`
+    query ExportCarrierSettlementBatchCsv($batchId: ID!) {
+  exportCarrierSettlementBatchCsv(batchId: $batchId)
+}
+    `, {"hash":"sha256:add91144201a316a09dd8e91a464313bed62d216d536227cb36f80898d00533b"}) as unknown as TypedDocumentString<ExportCarrierSettlementBatchCsvQuery, ExportCarrierSettlementBatchCsvQueryVariables>;
+export const GenerateCarrierSettlementBatchDocument = new TypedDocumentString(`
+    mutation GenerateCarrierSettlementBatch($input: GenerateCarrierSettlementBatchInput!) {
+  generateCarrierSettlementBatch(input: $input) {
+    id
+    name
+    settlementCount
+    totalGrossMinor
+    totalNetMinor
+  }
+}
+    `, {"hash":"sha256:5d4b52fe4c6841d6cf84a1fca15826838cc8790d5f7d01cbaef718546d527a93"}) as unknown as TypedDocumentString<GenerateCarrierSettlementBatchMutation, GenerateCarrierSettlementBatchMutationVariables>;
+export const SubmitCarrierSettlementDocument = new TypedDocumentString(`
+    mutation SubmitCarrierSettlement($input: CarrierSettlementActionInput!) {
+  submitCarrierSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:5f603312efac3036a8f1dd5f427616a81a9cf7c7cf2ac5110b7fd85e5dad0347"}) as unknown as TypedDocumentString<SubmitCarrierSettlementMutation, SubmitCarrierSettlementMutationVariables>;
+export const ApproveCarrierSettlementDocument = new TypedDocumentString(`
+    mutation ApproveCarrierSettlement($input: CarrierSettlementActionInput!) {
+  approveCarrierSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:ad9b585d98587acc4f26b0a456f6e7cbe326d30103de05891ac19ec0a5341fc7"}) as unknown as TypedDocumentString<ApproveCarrierSettlementMutation, ApproveCarrierSettlementMutationVariables>;
+export const RejectCarrierSettlementDocument = new TypedDocumentString(`
+    mutation RejectCarrierSettlement($input: CarrierSettlementActionInput!) {
+  rejectCarrierSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:bd2180a2b51de2f424838c4fcc66cac3ccedea1ea8d621c1adca0a5d53884d8a"}) as unknown as TypedDocumentString<RejectCarrierSettlementMutation, RejectCarrierSettlementMutationVariables>;
+export const PostCarrierSettlementDocument = new TypedDocumentString(`
+    mutation PostCarrierSettlement($input: CarrierSettlementActionInput!) {
+  postCarrierSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:f2d7453179bf7a7d2cd2921956c2ffe96ed97f6b7bd46bad5ebe8060d17fc694"}) as unknown as TypedDocumentString<PostCarrierSettlementMutation, PostCarrierSettlementMutationVariables>;
+export const MarkCarrierSettlementPaidDocument = new TypedDocumentString(`
+    mutation MarkCarrierSettlementPaid($input: MarkCarrierSettlementPaidInput!) {
+  markCarrierSettlementPaid(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:4f6a8d1f6671d63951f4e036fe9cd48fbd8daebb5ee0d181581456fa35a77ef6"}) as unknown as TypedDocumentString<MarkCarrierSettlementPaidMutation, MarkCarrierSettlementPaidMutationVariables>;
+export const VoidCarrierSettlementDocument = new TypedDocumentString(`
+    mutation VoidCarrierSettlement($input: CarrierSettlementActionInput!) {
+  voidCarrierSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:ce8b05d78d10fc5db7cbca3f04e6fa1ca48c7c00db88aed242b2ba027f73a5dc"}) as unknown as TypedDocumentString<VoidCarrierSettlementMutation, VoidCarrierSettlementMutationVariables>;
+export const RecalculateCarrierSettlementDocument = new TypedDocumentString(`
+    mutation RecalculateCarrierSettlement($input: CarrierSettlementActionInput!) {
+  recalculateCarrierSettlement(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:878471da098a46cb2287d43f18ee444fafd902b86dec4543712fbe00afb952db"}) as unknown as TypedDocumentString<RecalculateCarrierSettlementMutation, RecalculateCarrierSettlementMutationVariables>;
+export const AddCarrierSettlementAdjustmentDocument = new TypedDocumentString(`
+    mutation AddCarrierSettlementAdjustment($input: AddCarrierSettlementAdjustmentInput!) {
+  addCarrierSettlementAdjustment(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:9c2ecc166a009e4f0e95e171200ec99918e5f9a587eb5f79ca65c094776bbb49"}) as unknown as TypedDocumentString<AddCarrierSettlementAdjustmentMutation, AddCarrierSettlementAdjustmentMutationVariables>;
+export const RemoveCarrierSettlementAdjustmentDocument = new TypedDocumentString(`
+    mutation RemoveCarrierSettlementAdjustment($input: RemoveCarrierSettlementAdjustmentInput!) {
+  removeCarrierSettlementAdjustment(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:f1824d88917e5f75145c6705c91310427bd15c0dce5852153e16d5c74679829a"}) as unknown as TypedDocumentString<RemoveCarrierSettlementAdjustmentMutation, RemoveCarrierSettlementAdjustmentMutationVariables>;
+export const UpdateCarrierSettlementControlDocument = new TypedDocumentString(`
+    mutation UpdateCarrierSettlementControl($input: UpdateCarrierSettlementControlInput!) {
+  updateCarrierSettlementControl(input: $input) {
+    id
+    version
+  }
+}
+    `, {"hash":"sha256:9eec23817d83cb811a311687e73e4dc975104a4c45000d129aa4f75849dcb86a"}) as unknown as TypedDocumentString<UpdateCarrierSettlementControlMutation, UpdateCarrierSettlementControlMutationVariables>;
+export const LinkEdiCarrierInvoiceToCarrierDocument = new TypedDocumentString(`
+    mutation LinkEdiCarrierInvoiceToCarrier($invoiceId: ID!, $carrierId: ID!) {
+  linkEdiCarrierInvoiceToCarrier(invoiceId: $invoiceId, carrierId: $carrierId) {
+    id
+    carrierId
+    reconciliationStatus
+    version
+  }
+}
+    `, {"hash":"sha256:16d8dd8e30b134141007f62ea5284a5cb79916d189e7b0c77823bab024b3a249"}) as unknown as TypedDocumentString<LinkEdiCarrierInvoiceToCarrierMutation, LinkEdiCarrierInvoiceToCarrierMutationVariables>;
+export const CreateCarrierInvoiceMatchDocument = new TypedDocumentString(`
+    mutation CreateCarrierInvoiceMatch($input: CreateCarrierInvoiceMatchInput!) {
+  createCarrierInvoiceMatch(input: $input) {
+    id
+    status
+    invoiceTotalMinor
+    expectedTotalMinor
+    varianceMinor
+    version
+  }
+}
+    `, {"hash":"sha256:17d57367630a91c6f3c359aef767e708b7d8977134f4e9387954d105e56a43b3"}) as unknown as TypedDocumentString<CreateCarrierInvoiceMatchMutation, CreateCarrierInvoiceMatchMutationVariables>;
+export const AcceptCarrierInvoiceMatchDocument = new TypedDocumentString(`
+    mutation AcceptCarrierInvoiceMatch($input: CarrierInvoiceMatchActionInput!) {
+  acceptCarrierInvoiceMatch(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:a2d49f45f44e726172c1f4e35fa621fa4c98082208b56b31a29ac4beb9f28a76"}) as unknown as TypedDocumentString<AcceptCarrierInvoiceMatchMutation, AcceptCarrierInvoiceMatchMutationVariables>;
+export const AcceptCarrierInvoiceMatchWithVarianceDocument = new TypedDocumentString(`
+    mutation AcceptCarrierInvoiceMatchWithVariance($input: CarrierInvoiceMatchActionInput!) {
+  acceptCarrierInvoiceMatchWithVariance(input: $input) {
+    id
+    status
+    adjustmentCostEventId
+    version
+  }
+}
+    `, {"hash":"sha256:060f67125969b0df8bd23b2d406141579141403904677fcf383e944aae0c9349"}) as unknown as TypedDocumentString<AcceptCarrierInvoiceMatchWithVarianceMutation, AcceptCarrierInvoiceMatchWithVarianceMutationVariables>;
+export const RejectCarrierInvoiceMatchDocument = new TypedDocumentString(`
+    mutation RejectCarrierInvoiceMatch($input: CarrierInvoiceMatchActionInput!) {
+  rejectCarrierInvoiceMatch(input: $input) {
+    id
+    status
+    version
+  }
+}
+    `, {"hash":"sha256:9afe5a46af162af1d29113765c8b1107deee2246b7294f54301c3b2884169ea1"}) as unknown as TypedDocumentString<RejectCarrierInvoiceMatchMutation, RejectCarrierInvoiceMatchMutationVariables>;
 export const CarrierTableDocument = new TypedDocumentString(`
     query CarrierTable($input: DataTableConnectionInput!) {
   carriers(input: $input) {

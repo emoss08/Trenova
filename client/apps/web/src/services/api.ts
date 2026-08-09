@@ -54,6 +54,7 @@ import { NotificationService, notificationService } from "@trenova/shared/servic
 import { OrganizationService } from "./organization";
 import { PageFavoriteService } from "./page-favorite";
 import { PlatformBillingService } from "./platform-billing";
+import { RateConfirmationService } from "./rate-confirmation";
 import { RateTableService } from "./rate-table";
 import { RealtimeService, realtimeService } from "@trenova/shared/services/realtime";
 import { SequenceConfigService } from "./sequence-config";
@@ -98,6 +99,7 @@ class APIService {
   public commodityService: CommodityService;
   public carrierService: CarrierService;
   public carrierAssignmentService: CarrierAssignmentService;
+  public rateConfirmationService: RateConfirmationService;
   public customerService: CustomerService;
   public databaseSessionService: DatabaseSessionService;
   public googleMapsService: GoogleMapsService;
@@ -177,6 +179,7 @@ class APIService {
     this.commodityService = new CommodityService();
     this.carrierService = new CarrierService();
     this.carrierAssignmentService = new CarrierAssignmentService();
+    this.rateConfirmationService = new RateConfirmationService();
     this.customerService = new CustomerService();
     this.databaseSessionService = new DatabaseSessionService();
     this.googleMapsService = new GoogleMapsService();

@@ -54,6 +54,13 @@ import type {
   CarrierTaxIdType,
   CarrierType,
 } from "@trenova/shared/types/carrier";
+import type {
+  CarrierCostEventStatus,
+  CarrierCostEventType,
+  CarrierInvoiceMatchStatus,
+  CarrierSettlementStatus,
+} from "@trenova/shared/types/carrier-settlement";
+import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
 import type { FreightClass } from "@trenova/shared/types/commodity";
 import type { FieldType } from "@/types/custom-field";
 import type {
@@ -366,6 +373,44 @@ export const carrierInsurancePolicyTypeChoices = [
   { label: "Workers Comp", value: "WorkersComp", color: "#f59e0b" },
   { label: "Umbrella", value: "Umbrella", color: "#6b7280" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierInsurancePolicyType>>;
+
+export const carrierSettlementStatusChoices = [
+  { label: "Draft", value: "Draft", color: "#a3a3a3" },
+  { label: "Pending Approval", value: "PendingApproval", color: "#f59e0b" },
+  { label: "Approved", value: "Approved", color: "#2563eb" },
+  { label: "Posted", value: "Posted", color: "#9333ea" },
+  { label: "Paid", value: "Paid", color: "#15803d" },
+  { label: "Voided", value: "Voided", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierSettlementStatus>>;
+
+export const carrierCostEventTypeChoices = [
+  { label: "Linehaul Cost", value: "LinehaulCost", color: "#2563eb" },
+  { label: "Fuel Surcharge", value: "FuelSurcharge", color: "#f59e0b" },
+  { label: "Accessorial", value: "Accessorial", color: "#0d9488" },
+  { label: "Adjustment", value: "Adjustment", color: "#7e22ce" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierCostEventType>>;
+
+export const carrierCostEventStatusChoices = [
+  { label: "Pending", value: "Pending", color: "#2563eb" },
+  { label: "Attached", value: "Attached", color: "#f59e0b" },
+  { label: "Settled", value: "Settled", color: "#15803d" },
+  { label: "Voided", value: "Voided", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierCostEventStatus>>;
+
+export const carrierInvoiceMatchStatusChoices = [
+  { label: "Suggested", value: "Suggested", color: "#a3a3a3" },
+  { label: "Matched", value: "Matched", color: "#2563eb" },
+  { label: "Variance", value: "Variance", color: "#f59e0b" },
+  { label: "Resolved", value: "Resolved", color: "#15803d" },
+  { label: "Rejected", value: "Rejected", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierInvoiceMatchStatus>>;
+
+export const rateConfirmationStatusChoices = [
+  { label: "Generated", value: "Generated", color: "#a3a3a3" },
+  { label: "Sent", value: "Sent", color: "#2563eb" },
+  { label: "Confirmed", value: "Confirmed", color: "#15803d" },
+  { label: "Voided", value: "Voided", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<RateConfirmationStatus>>;
 
 export const orderStatusChoices = [
   { label: "Draft", value: "Draft", color: "#a3a3a3" },
@@ -858,6 +903,9 @@ export const journalSourceEventChoices = [
   { value: "CustomerPaymentPosted", label: "Customer Payment Posted" },
   { value: "VendorBillPosted", label: "Vendor Bill Posted" },
   { value: "VendorPaymentPosted", label: "Vendor Payment Posted" },
+  { value: "CarrierSettlementPosted", label: "Carrier Settlement Posted" },
+  { value: "CarrierSettlementVoided", label: "Carrier Settlement Voided" },
+  { value: "CarrierSettlementPaid", label: "Carrier Settlement Paid" },
 ] satisfies ReadonlyArray<GenericSelectOption<JournalSourceEvent>>;
 
 export const manualJournalEntryPolicyChoices = [

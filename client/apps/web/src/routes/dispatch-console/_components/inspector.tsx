@@ -1,3 +1,4 @@
+import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { isTypingTarget } from "@/lib/dom";
 import type {
   DispatchBoardDriver,
@@ -121,6 +122,7 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
           Total cost {formatCurrency(move.carrierTotalCost)}
         </span>
       )}
+      <RateConfirmationActions moveId={move.moveId} />
       <div>
         <Button
           size="sm"

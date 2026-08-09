@@ -285,6 +285,16 @@ type AccountTypeEdge {
   node: AccountType!
 }
 
+input AddCarrierSettlementAdjustmentInput {
+  amountMinor: Int!
+  description: String!
+  """
+  Optional GL account override — the adjustment posts there instead of the default expense account.
+  """
+  glAccountId: ID
+  settlementId: ID!
+}
+
 input AddSettlementAdjustmentInput {
   amountMinor: Int!
   description: String!
@@ -924,6 +934,62 @@ type CarrierContact {
   version: Int!
 }
 
+"""
+The purchased-transportation accrual ledger: one cost event per buy-rate line
+on a carrier assignment, created automatically when a carrier-covered shipment
+reaches the organization's pay trigger. Events are recomputed while Pending,
+locked once attached to a settlement, and voided if the shipment cancels.
+"""
+type CarrierCostEvent {
+  amountMinor: Int!
+  assignmentVersion: Int!
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierAssignmentId: ID
+  carrierId: ID!
+  createdAt: Int!
+  currencyCode: String!
+  description: String!
+  eventDate: Int!
+  eventType: CarrierCostEventType!
+  id: ID!
+  moveId: ID
+  organizationId: ID!
+  proNumber: String!
+  settlementId: ID
+  shipmentId: ID
+  status: CarrierCostEventStatus!
+  updatedAt: Int!
+  version: Int!
+  voidReason: String!
+  voidedAt: Int
+}
+
+type CarrierCostEventConnection {
+  edges: [CarrierCostEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierCostEventEdge {
+  cursor: String!
+  node: CarrierCostEvent!
+}
+
+enum CarrierCostEventStatus {
+  Attached
+  Pending
+  Settled
+  Voided
+}
+
+enum CarrierCostEventType {
+  Accessorial
+  Adjustment
+  FuelSurcharge
+  LinehaulCost
+}
+
 type CarrierEdge {
   cursor: String!
   node: Carrier!
@@ -954,6 +1020,88 @@ enum CarrierInsurancePolicyType {
   WorkersComp
 }
 
+"""
+A reconciliation record pairing a carrier freight invoice (EDI 210 or a
+document-AI extraction) with the carrier assignment it bills. The expected
+total comes from the assignment's negotiated buy rate; the variance is invoice
+minus expected. Within the control's tolerance the match lands Matched,
+otherwise Variance — resolvable as-is, with a variance adjustment cost event,
+or by rejection.
+"""
+type CarrierInvoiceMatch {
+  adjustmentCostEventId: ID
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierAssignment: CarrierAssignment
+  carrierAssignmentId: ID!
+  carrierId: ID!
+  carrierSettlementId: ID
+  createdAt: Int!
+  currencyCode: String!
+  documentAiExtractionId: ID
+  ediCarrierInvoiceId: ID
+  expectedTotalMinor: Int!
+  id: ID!
+  invoiceNumber: String!
+  invoiceTotalMinor: Int!
+  organizationId: ID!
+  resolutionNote: String!
+  resolvedAt: Int
+  resolvedById: ID
+  status: CarrierInvoiceMatchStatus!
+  updatedAt: Int!
+  varianceMinor: Int!
+  version: Int!
+}
+
+input CarrierInvoiceMatchActionInput {
+  matchId: ID!
+  note: String
+}
+
+type CarrierInvoiceMatchList {
+  items: [CarrierInvoiceMatch!]!
+  totalCount: Int!
+}
+
+enum CarrierInvoiceMatchStatus {
+  Matched
+  Rejected
+  Resolved
+  Suggested
+  Variance
+}
+
+"""
+One immutable entry in a carrier's AP subledger. Posting a settlement appends a
+Bill, paying it appends a Payment, and voiding a posted settlement appends an
+Adjustment — so the running balance always reconciles to the GL's AP account.
+"""
+type CarrierLedgerEntry {
+  amountMinor: Int!
+  businessUnitId: ID!
+  carrierId: ID!
+  createdAt: Int!
+  createdById: ID!
+  documentNumber: String!
+  entryType: CarrierLedgerEntryType!
+  id: ID!
+  journalBatchId: ID
+  lineNumber: Int!
+  organizationId: ID!
+  relatedSettlementId: ID
+  sourceEventType: String!
+  sourceObjectId: String!
+  sourceObjectType: String!
+  transactionDate: Int!
+}
+
+enum CarrierLedgerEntryType {
+  Adjustment
+  Bill
+  Payment
+}
+
 enum CarrierPaymentMethod {
   ACHManual
   Check
@@ -969,6 +1117,202 @@ enum CarrierSafetyRating {
   NotRated
   Satisfactory
   Unsatisfactory
+}
+
+"""
+A carrier's payable statement for one period. Lifecycle: Draft ->
+PendingApproval -> Approved -> Posted -> Paid, with Void available before
+payment. Posting writes DR purchased transportation / CR accounts payable to
+the GL plus a Bill entry in the carrier ledger; marking paid posts the cash
+disbursement (DR AP / CR cash) and the Payment ledger entry.
+"""
+type CarrierSettlement {
+  adjustmentsMinor: Int!
+  approvedAt: Int
+  approvedById: ID
+  batchId: ID
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierId: ID!
+  createdAt: Int!
+  currencyCode: String!
+  grossCostMinor: Int!
+  id: ID!
+  lines: [CarrierSettlementLine!]
+  netPayableMinor: Int!
+  notes: String!
+  organizationId: ID!
+  paidAt: Int
+  paidById: ID
+  paidJournalBatchId: ID
+  payDate: Int!
+  paymentMethod: String!
+  paymentReference: String!
+  periodEnd: Int!
+  periodStart: Int!
+  postedAt: Int
+  postedById: ID
+  postedJournalBatchId: ID
+  settlementNumber: String!
+  shipmentCount: Int!
+  status: CarrierSettlementStatus!
+  submittedAt: Int
+  submittedById: ID
+  updatedAt: Int!
+  version: Int!
+  voidJournalBatchId: ID
+  voidReason: String!
+  voidedAt: Int
+  voidedById: ID
+}
+
+input CarrierSettlementActionInput {
+  reason: String
+  settlementId: ID!
+}
+
+"""
+Groups every carrier settlement generated for one pay period so an AP run can
+be reviewed, exported, and remitted as a unit. Batches are idempotent per
+period and can be generated manually or automatically (carrier settlement
+control).
+"""
+type CarrierSettlementBatch {
+  businessUnitId: ID!
+  canceledAt: Int
+  canceledById: ID
+  completedAt: Int
+  createdAt: Int!
+  currencyCode: String!
+  generatedAt: Int
+  generatedById: ID
+  id: ID!
+  name: String!
+  notes: String!
+  organizationId: ID!
+  payDate: Int!
+  periodEnd: Int!
+  periodStart: Int!
+  settlementCount: Int!
+  settlements: [CarrierSettlement!]
+  status: CarrierSettlementBatchStatus!
+  totalGrossMinor: Int!
+  totalNetMinor: Int!
+  updatedAt: Int!
+  version: Int!
+}
+
+type CarrierSettlementBatchConnection {
+  edges: [CarrierSettlementBatchEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierSettlementBatchEdge {
+  cursor: String!
+  node: CarrierSettlementBatch!
+}
+
+enum CarrierSettlementBatchStatus {
+  Canceled
+  Completed
+  Open
+}
+
+type CarrierSettlementConnection {
+  edges: [CarrierSettlementEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Organization-wide carrier settlement policy: the shipment milestone at which
+purchased-transportation cost accrues, pay period cadence, batch automation,
+invoice-match variance tolerance, and GL account defaults.
+"""
+type CarrierSettlementControl {
+  autoGenerateBatches: Boolean!
+  """
+  When on, approving a carrier settlement immediately posts it to the general ledger.
+  """
+  autoPostOnApprove: Boolean!
+  businessUnitId: ID!
+  createdAt: Int!
+  defaultApAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  id: ID!
+  organizationId: ID!
+  payDelayDays: Int!
+  payPeriodFrequency: PayPeriodFrequency!
+  payTrigger: SettlementPayTrigger!
+  periodEndDayOfWeek: Int!
+  updatedAt: Int!
+  """
+  Invoice totals within this many minor units of the buy rate auto-match; larger gaps flag a variance.
+  """
+  varianceToleranceMinor: Int!
+  version: Int!
+}
+
+type CarrierSettlementEdge {
+  cursor: String!
+  node: CarrierSettlement!
+}
+
+"""
+One line on a carrier settlement statement. Cost lines trace back to the cost
+event, shipment, and move that produced them; manual adjustment lines have no
+cost event and may carry a GL account override.
+"""
+type CarrierSettlementLine {
+  amountMinor: Int!
+  costEventId: ID
+  description: String!
+  eventType: CarrierCostEventType!
+  glAccountId: ID
+  id: ID!
+  lineNumber: Int!
+  moveId: ID
+  proNumber: String!
+  settlementId: ID!
+  shipmentId: ID
+}
+
+type CarrierSettlementPeriodBounds {
+  payDate: Int!
+  periodEnd: Int!
+  periodStart: Int!
+}
+
+enum CarrierSettlementStatus {
+  Approved
+  Draft
+  Paid
+  PendingApproval
+  Posted
+  Voided
+}
+
+"""
+One-call snapshot powering the carrier settlement workspace: settlement counts
+by status for the pay period plus the org-wide pool of pending cost events
+waiting to be settled.
+"""
+type CarrierSettlementWorkspaceSummary {
+  approvedCount: Int!
+  draftCount: Int!
+  openBatchId: ID
+  paidCount: Int!
+  payDate: Int!
+  pendingAmountMinor: Int!
+  pendingApprovalCount: Int!
+  pendingCarrierCount: Int!
+  pendingEventCount: Int!
+  periodEnd: Int!
+  periodStart: Int!
+  postedCount: Int!
+  totalGrossMinor: Int!
+  totalNetMinor: Int!
 }
 
 enum CarrierStatus {
@@ -1129,6 +1473,32 @@ input CostingControlInput {
   targetMarginPercent: String
   useLiveFuelPrice: Boolean!
   version: Int!
+}
+
+input CreateCarrierInvoiceMatchInput {
+  """
+  Optional explicit assignment; otherwise resolved by pro number or shipment reference.
+  """
+  carrierAssignmentId: ID
+  """
+  Required for document AI sources; EDI sources take the carrier from the linked invoice.
+  """
+  carrierId: ID
+  documentAiExtractionId: ID
+  """
+  Exactly one source is required: an EDI carrier invoice or a document AI extraction.
+  """
+  ediCarrierInvoiceId: ID
+  """Document AI sources only: the extracted invoice number."""
+  invoiceNumber: String
+  """Document AI sources only: the extracted invoice total in minor units."""
+  invoiceTotalMinor: Int
+  """
+  Document AI sources only: the pro number used to locate the assignment.
+  """
+  proNumber: String
+  """Document AI sources only: the shipment used to locate the assignment."""
+  shipmentId: ID
 }
 
 input CreateDocumentTemplateVersionInput {
@@ -3158,6 +3528,36 @@ type EIASeriesOption {
   seriesId: String!
 }
 
+"""An inbound EDI 210 carrier freight invoice awaiting reconciliation."""
+type EdiCarrierInvoice {
+  billToName: String!
+  bol: String!
+  businessUnitId: ID!
+  carrierId: ID
+  createdAt: Int!
+  currencyCode: String!
+  deliveryDate: Int
+  expectedAmount: String
+  id: ID!
+  invoiceDate: Int
+  invoiceNumber: String!
+  organizationId: ID!
+  proNumber: String!
+  reconciliationNotes: String!
+  reconciliationStatus: String!
+  shipmentId: ID
+  shipmentReference: String!
+  totalAmount: String
+  updatedAt: Int!
+  varianceAmount: String
+  version: Int!
+}
+
+type EdiCarrierInvoiceList {
+  items: [EdiCarrierInvoice!]!
+  totalCount: Int!
+}
+
 type EdiCommunicationProfile {
   businessUnitId: ID!
   createdAt: Int!
@@ -4366,6 +4766,13 @@ type GLActualsWindow {
   toDate: Int!
 }
 
+input GenerateCarrierSettlementBatchInput {
+  name: String
+  notes: String
+  periodEnd: Int
+  periodStart: Int
+}
+
 input GenerateDriverSettlementInput {
   batchId: ID
   payDate: Int!
@@ -5091,6 +5498,12 @@ enum ManualJournalStatus {
   Rejected
 }
 
+input MarkCarrierSettlementPaidInput {
+  paymentMethod: String!
+  paymentReference: String
+  settlementId: ID!
+}
+
 input MarkDriverSettlementPaidInput {
   paymentMethod: String!
   paymentReference: String
@@ -5111,12 +5524,19 @@ enum MoveStatus {
 }
 
 type Mutation {
+  acceptCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
+  """
+  Resolves a variance match by accruing an Adjustment cost event for the variance amount.
+  """
+  acceptCarrierInvoiceMatchWithVariance(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
   acknowledgeShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
+  addCarrierSettlementAdjustment(input: AddCarrierSettlementAdjustmentInput!): CarrierSettlement!
   addDriverSettlementAdjustment(input: AddSettlementAdjustmentInput!): DriverSettlement!
   addFuelIndexPrice(input: FuelIndexPriceInput!): FuelIndexPrice!
   addOrderCharge(amount: String!, description: String!, orderId: ID!): Order!
   adjustEscrowAccount(input: AdjustEscrowAccountInput!): EscrowAccount!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
+  approveCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   approveDetentionOccurrence(occurrenceId: ID!): DetentionOccurrence!
   approveDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   approveWorkerPTO(id: ID!): WorkerPTO!
@@ -5148,6 +5568,7 @@ type Mutation {
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
   closeEscrowAccount(accountId: ID!): EscrowAccount!
   closeOrder(id: ID!): Order!
+  createCarrierInvoiceMatch(input: CreateCarrierInvoiceMatchInput!): CarrierInvoiceMatch!
   createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
   createDocumentTemplate(input: DocumentTemplateInput!): DocumentTemplate!
   createDocumentTemplateVersion(input: CreateDocumentTemplateVersionInput!): DocumentTemplateVersion!
@@ -5213,6 +5634,7 @@ type Mutation {
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   endWorkerPayAssignment(input: EndWorkerPayAssignmentInput!): WorkerPayAssignment!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
+  generateCarrierSettlementBatch(input: GenerateCarrierSettlementBatchInput!): CarrierSettlementBatch!
   generateDriverSettlement(input: GenerateDriverSettlementInput!): DriverSettlement
   generateSettlementBatch(input: GenerateSettlementBatchInput!): SettlementBatch!
   """
@@ -5222,6 +5644,8 @@ type Mutation {
   """Invites a worker to the driver portal (back office)."""
   inviteWorkerToPortal(input: InviteWorkerToPortalInput!): InviteWorkerToPortalResult!
   issuePayAdvance(input: IssuePayAdvanceInput!): PayAdvance!
+  """Links an inbound EDI carrier invoice to a carrier in the master."""
+  linkEdiCarrierInvoiceToCarrier(carrierId: ID!, invoiceId: ID!): EdiCarrierInvoice!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
   """
@@ -5229,6 +5653,7 @@ type Mutation {
   """
   markAllMyNotificationsRead: Boolean!
   markAllNotificationsRead: Boolean!
+  markCarrierSettlementPaid(input: MarkCarrierSettlementPaidInput!): CarrierSettlement!
   markDriverSettlementPaid(input: MarkDriverSettlementPaidInput!): DriverSettlement!
   """
   Notification state changes for the signed-in driver. Each only ever touches
@@ -5255,8 +5680,10 @@ type Mutation {
   payWorkerNow(input: PayWorkerNowInput!): DriverSettlement!
   pinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
+  postCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   postDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   publishDocumentTemplateVersion(id: ID!, notes: String): DocumentTemplateVersion!
+  recalculateCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   recalculateDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
   """
@@ -5265,10 +5692,13 @@ type Mutation {
   cascade, and pay accrues when the move completes.
   """
   recordMyStopAction(input: RecordMyStopActionInput!): Boolean!
+  rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
+  rejectCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   """Release a held pay event back into the settlement pool."""
   releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
+  removeCarrierSettlementAdjustment(input: RemoveCarrierSettlementAdjustmentInput!): CarrierSettlement!
   removeDriverSettlementAdjustment(input: RemoveSettlementAdjustmentInput!): DriverSettlement!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
@@ -5311,6 +5741,7 @@ type Mutation {
   setOrgDefaultTableConfiguration(enabled: Boolean!, id: ID!): TableConfiguration!
   """Moves an open dispute into review (back office)."""
   startSettlementDisputeReview(id: ID!): SettlementDispute!
+  submitCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   submitDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
@@ -5321,6 +5752,7 @@ type Mutation {
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAgentControl(input: AgentControlInput!): AgentControl!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
+  updateCarrierSettlementControl(input: UpdateCarrierSettlementControlInput!): CarrierSettlementControl!
   updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
   updateCostingControl(input: CostingControlInput!): CostingControl!
   """Updates the org's Dash feature toggles (back office)."""
@@ -5359,6 +5791,7 @@ type Mutation {
   updateTableConfiguration(id: ID!, input: TableConfigurationInput!): TableConfiguration!
   updateTractor(id: ID!, input: TractorInput!): Tractor!
   updateTrailer(id: ID!, input: TrailerInput!): Trailer!
+  voidCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   voidDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   waiveDetentionOccurrence(input: DetentionWaiveInput!): DetentionOccurrence!
   """Withdraws one of the signed-in driver's own open disputes."""
@@ -6162,10 +6595,24 @@ type Query {
   auditEntry(id: ID!): AuditEntry
   cannedReports: [CannedReport!]!
   carrier(id: ID!): Carrier
+  carrierCostEvents(input: DataTableConnectionInput!): CarrierCostEventConnection!
+  carrierInvoiceMatches(carrierId: ID, limit: Int, offset: Int, status: CarrierInvoiceMatchStatus): CarrierInvoiceMatchList!
+  """A carrier's AP subledger, newest first."""
+  carrierLedgerEntries(carrierId: ID!, limit: Int): [CarrierLedgerEntry!]!
+  carrierSettlement(id: ID!): CarrierSettlement
+  carrierSettlementBatch(id: ID!): CarrierSettlementBatch
+  carrierSettlementBatches(input: DataTableConnectionInput!): CarrierSettlementBatchConnection!
+  carrierSettlementControl: CarrierSettlementControl!
+  """
+  Workspace snapshot for a pay period; omit bounds to use the current period.
+  """
+  carrierSettlementWorkspaceSummary(periodEnd: Int, periodStart: Int): CarrierSettlementWorkspaceSummary!
+  carrierSettlements(input: DataTableConnectionInput!): CarrierSettlementConnection!
   carriers(input: DataTableConnectionInput!): CarrierConnection!
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
   costingControl: CostingControl!
+  currentCarrierSettlementPeriod: CarrierSettlementPeriodBounds!
   currentSettlementPeriod: SettlementPeriodBounds!
   customFieldDefinition(id: ID!): CustomFieldDefinition
   customFieldDefinitions(input: DataTableConnectionInput!): CustomFieldDefinitionConnection!
@@ -6214,6 +6661,10 @@ type Query {
   driverPayEvents(input: DataTableConnectionInput!): DriverPayEventConnection!
   driverSettlement(id: ID!): DriverSettlement
   driverSettlements(input: DataTableConnectionInput!): DriverSettlementConnection!
+  """
+  Inbound EDI carrier invoices, filterable by reconciliation status (e.g. Unmatched).
+  """
+  ediCarrierInvoices(limit: Int, offset: Int, reconciliationStatus: String): EdiCarrierInvoiceList!
   ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
   ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
@@ -6237,6 +6688,7 @@ type Query {
   equipmentTypes(classes: [EquipmentClass!], input: DataTableConnectionInput!): EquipmentTypeConnection!
   escrowAccount(id: ID!): EscrowAccount
   escrowAccounts(input: DataTableConnectionInput!): EscrowAccountConnection!
+  exportCarrierSettlementBatchCsv(batchId: ID!): String!
   exportSettlementBatchCsv(batchId: ID!): String!
   fiscalYear(id: ID!): FiscalYear
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
@@ -6418,6 +6870,10 @@ type Query {
   sidebarPreferences: SidebarPreferences!
   storedMileage(id: ID!): StoredMileage
   storedMileages(input: DataTableConnectionInput!): StoredMileageConnection!
+  """
+  Suggests a carrier for an EDI invoice by SCAC/DOT lookup against the carrier master.
+  """
+  suggestCarrierForEdiInvoice(invoiceId: ID!): Carrier
   tableConfiguration(id: ID!): TableConfiguration
   tableConfigurations(input: DataTableConnectionInput!, resource: String, visibility: ConfigurationVisibility): TableConfigurationConnection!
   tcaSubscription(id: ID!): TCASubscription
@@ -6671,6 +7127,11 @@ enum RecurringShipmentStatus {
   Active
   Expired
   Paused
+}
+
+input RemoveCarrierSettlementAdjustmentInput {
+  lineId: ID!
+  settlementId: ID!
 }
 
 input RemoveOrderChargeInput {
@@ -9389,6 +9850,19 @@ input UpcomingWorkerPTOInput {
   timezone: String
   type: PTOType
   workerId: ID
+}
+
+input UpdateCarrierSettlementControlInput {
+  autoGenerateBatches: Boolean!
+  autoPostOnApprove: Boolean!
+  defaultApAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  payDelayDays: Int!
+  payPeriodFrequency: PayPeriodFrequency!
+  payTrigger: SettlementPayTrigger!
+  periodEndDayOfWeek: Int!
+  varianceToleranceMinor: Int!
+  version: Int!
 }
 
 input UpdateDashControlInput {
