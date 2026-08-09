@@ -1,12 +1,14 @@
 import {
   getDispatchAssignmentPreviewGraphQL,
   getDispatchBoardGraphQL,
+  getDispatchCarrierAssignmentPreviewGraphQL,
   getDispatchDriverMovesGraphQL,
   getDispatchMoveCandidatesGraphQL,
 } from "@/lib/graphql/dispatch-console";
 import type {
   DispatchAssignmentPreviewInput,
   DispatchBoardInput,
+  DispatchCarrierAssignmentPreviewInput,
   DispatchDriverMovesInput,
   DispatchMoveCandidatesInput,
 } from "@trenova/graphql/generated/graphql";
@@ -20,6 +22,7 @@ export const DISPATCH_BOARD_KEY = "dispatch-board";
 export const DISPATCH_MOVE_CANDIDATES_KEY = "dispatch-move-candidates";
 export const DISPATCH_DRIVER_MOVES_KEY = "dispatch-driver-moves";
 export const DISPATCH_ASSIGNMENT_PREVIEW_KEY = "dispatch-assignment-preview";
+export const DISPATCH_CARRIER_PREVIEW_KEY = "dispatch-carrier-assignment-preview";
 
 export const dispatchConsoleQueries = {
   board: (input: DispatchBoardInput) => ({
@@ -37,5 +40,9 @@ export const dispatchConsoleQueries = {
   assignmentPreview: (input: DispatchAssignmentPreviewInput) => ({
     queryKey: [DISPATCH_ASSIGNMENT_PREVIEW_KEY, input] as const,
     queryFn: () => getDispatchAssignmentPreviewGraphQL(input),
+  }),
+  carrierAssignmentPreview: (input: DispatchCarrierAssignmentPreviewInput) => ({
+    queryKey: [DISPATCH_CARRIER_PREVIEW_KEY, input] as const,
+    queryFn: () => getDispatchCarrierAssignmentPreviewGraphQL(input),
   }),
 };

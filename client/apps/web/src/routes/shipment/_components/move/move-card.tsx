@@ -10,9 +10,13 @@ import {
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatSplitDateTime } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { CarrierAssignmentCancelDialog } from "@/components/carrier-assignment/carrier-assignment-cancel-dialog";
 import { apiService } from "@/services/api";
+import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
 import type {
+  CarrierAssignment,
+  CarrierAssignmentStatus,
   MoveStatus,
   Shipment,
   Stop,
@@ -22,6 +26,7 @@ import type {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownIcon,
+  Building2Icon,
   CheckIcon,
   EllipsisVerticalIcon,
   PencilIcon,
@@ -59,17 +64,22 @@ export function MoveCard({
   const move = useWatch({ control, name: `moves.${moveIndex}` });
   const shipmentId = useWatch({ control, name: "id" });
   const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [cancelCarrierOpen, setCancelCarrierOpen] = useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
 
   const stops = move?.stops ?? [];
   const statusConfig = moveStatusConfig[move?.status ?? "New"];
   const moveErrors = errors.moves?.[moveIndex]?.stops;
   const hasId = !!move?.id;
-  const hasAssignment = !!move?.assignment?.id;
+  const carrierAssignment = move?.carrierAssignment ?? null;
+  const hasCarrierAssignment = isActiveCarrierAssignment(carrierAssignment);
+  const hasDriverAssignment = !!move?.assignment?.id;
+  const hasAssignment = hasDriverAssignment || hasCarrierAssignment;
   const isTerminal = move?.status === "Completed" || move?.status === "Canceled";
   const canRemove = !hasId || allowPersistedMoveRemoval;
   const canUnassign =
-    hasAssignment && move?.status === "Assigned" && move?.assignment?.status === "New";
+    hasDriverAssignment && move?.status === "Assigned" && move?.assignment?.status === "New";
+  const canCancelCarrier = hasCarrierAssignment && move?.status === "Assigned";
   const canSplit =
     hasId &&
     !isTerminal &&
@@ -88,6 +98,23 @@ export function MoveCard({
     },
     onError: () => {
       toast.error("Failed to unassign move");
+    },
+  });
+
+  const cancelCarrierMutation = useMutation({
+    mutationFn: (reason: string) => apiService.carrierAssignmentService.cancel(move.id!, reason),
+    onSuccess: () => {
+      setValue(`moves.${moveIndex}.carrierAssignment`, undefined as any);
+      setValue(`moves.${moveIndex}.coverageType`, "driver");
+      setValue(`moves.${moveIndex}.status`, "New");
+      setCancelCarrierOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+      toast.success("Carrier assignment canceled", {
+        description: "The move is uncovered again.",
+      });
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to cancel carrier assignment", { description: error.message });
     },
   });
 
@@ -151,6 +178,15 @@ export function MoveCard({
                 color="danger"
                 startContent={<UserXIcon className="size-3.5" />}
                 onClick={() => unassignMutation.mutate()}
+              />
+            )}
+            {canCancelCarrier && (
+              <DropdownMenuItem
+                label="Cancel Carrier Assignment"
+                title="Cancel Carrier Assignment"
+                color="danger"
+                startContent={<Building2Icon className="size-3.5" />}
+                onClick={() => setCancelCarrierOpen(true)}
               />
             )}
             {canSplit && (
@@ -224,7 +260,15 @@ export function MoveCard({
           })}
         </div>
       </ScrollArea>
-      <AssignmentDetails assignmentId={move?.assignment?.id} />
+      {hasCarrierAssignment && carrierAssignment ? (
+        <CarrierAssignmentDetails
+          carrierAssignment={carrierAssignment}
+          canCancel={canCancelCarrier}
+          onCancel={() => setCancelCarrierOpen(true)}
+        />
+      ) : (
+        <AssignmentDetails assignmentId={move?.assignment?.id} />
+      )}
       {hasId && (
         <>
           <AssignmentDialog
@@ -233,6 +277,7 @@ export function MoveCard({
             moveId={move.id!}
             shipmentId={shipmentId}
             existingAssignment={move?.assignment}
+            existingCarrierAssignment={carrierAssignment}
             onAssigned={(assignment) => {
               setValue(`moves.${moveIndex}.assignment`, assignment);
               setValue(`moves.${moveIndex}.status`, "Assigned");
@@ -240,6 +285,19 @@ export function MoveCard({
                 queryKey: ["assignment", assignment.id],
               });
             }}
+            onCarrierAssigned={(nextCarrierAssignment) => {
+              setValue(`moves.${moveIndex}.carrierAssignment`, nextCarrierAssignment);
+              setValue(`moves.${moveIndex}.coverageType`, "carrier");
+              setValue(`moves.${moveIndex}.status`, "Assigned");
+              void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+            }}
+          />
+          <CarrierAssignmentCancelDialog
+            open={cancelCarrierOpen}
+            onOpenChange={setCancelCarrierOpen}
+            carrierName={carrierAssignment?.carrier?.name}
+            isSubmitting={cancelCarrierMutation.isPending}
+            onConfirm={(reason) => cancelCarrierMutation.mutate(reason)}
           />
           {canSplit && (
             <SplitMoveDialog
@@ -493,6 +551,100 @@ function StopTimelineItem({
             Enter {stopTypeLabels[stop.type]} Information
           </span>
         )}
+      </div>
+    </div>
+  );
+}
+
+const carrierAssignmentStatusConfig: Record<
+  CarrierAssignmentStatus,
+  { label: string; variant: "warning" | "active" | "inactive" }
+> = {
+  Pending: { label: "Pending", variant: "warning" },
+  Confirmed: { label: "Confirmed", variant: "active" },
+  Canceled: { label: "Canceled", variant: "inactive" },
+};
+
+function formatCarrierMoney(value: number | null | undefined, currencyCode?: string): string {
+  return formatCurrency(value ?? 0, currencyCode || "USD");
+}
+
+function CarrierAssignmentDetails({
+  carrierAssignment,
+  canCancel,
+  onCancel,
+}: {
+  carrierAssignment: CarrierAssignment;
+  canCancel: boolean;
+  onCancel: () => void;
+}) {
+  const statusConfig = carrierAssignmentStatusConfig[carrierAssignment.status];
+  const carrierName = carrierAssignment.carrier?.name || "External carrier";
+  const scac = carrierAssignment.carrier?.scac;
+  const currency = carrierAssignment.currencyCode;
+
+  return (
+    <div className="rounded-b-md border-t bg-muted p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <Building2Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="truncate text-xs font-medium">
+            {carrierName}
+            {scac ? ` (${scac})` : ""}
+          </span>
+          <Badge variant={statusConfig.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
+            {statusConfig.label}
+          </Badge>
+        </div>
+        {canCancel && (
+          <Button type="button" size="xs" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+        {carrierAssignment.proNumber && (
+          <div>
+            <p className="text-2xs text-muted-foreground">Carrier Pro Number</p>
+            <p className="text-xs font-medium">{carrierAssignment.proNumber}</p>
+          </div>
+        )}
+        {carrierAssignment.externalDriverName && (
+          <div>
+            <p className="text-2xs text-muted-foreground">Driver</p>
+            <p className="text-xs font-medium">
+              {carrierAssignment.externalDriverName}
+              {carrierAssignment.externalDriverPhone
+                ? ` · ${carrierAssignment.externalDriverPhone}`
+                : ""}
+            </p>
+          </div>
+        )}
+        {carrierAssignment.externalTractorNumber && (
+          <div>
+            <p className="text-2xs text-muted-foreground">Tractor</p>
+            <p className="text-xs font-medium">{carrierAssignment.externalTractorNumber}</p>
+          </div>
+        )}
+        {carrierAssignment.externalTrailerNumber && (
+          <div>
+            <p className="text-2xs text-muted-foreground">Trailer</p>
+            <p className="text-xs font-medium">{carrierAssignment.externalTrailerNumber}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 border-t pt-2 text-2xs text-muted-foreground tabular-nums">
+        <span>Base {formatCarrierMoney(carrierAssignment.baseAmount, currency)}</span>
+        <span aria-hidden>+</span>
+        <span>Fuel {formatCarrierMoney(carrierAssignment.fuelSurcharge, currency)}</span>
+        <span aria-hidden>+</span>
+        <span>Accessorials {formatCarrierMoney(carrierAssignment.accessorialTotal, currency)}</span>
+        <span aria-hidden>=</span>
+        <span className="font-medium text-foreground">
+          {formatCarrierMoney(carrierAssignment.totalCost, currency)}
+        </span>
       </div>
     </div>
   );

@@ -69,6 +69,7 @@ type PendingAssignment = {
   moveId: string;
   shipmentId: string | null;
   existingAssignment: TimelineBar["assignment"];
+  existingCarrierAssignment: TimelineBar["carrierAssignment"];
   prefill: Partial<AssignmentPayload> | null;
 };
 
@@ -284,7 +285,9 @@ export default function CommandCenterTimeline({
     if (!bar || !row) return;
 
     if (row.key === UNASSIGNED_ROW_KEY) {
-      if (bar.assignment) setPendingUnassign(bar);
+      // Carrier coverage cannot be dropped away: canceling it requires a recorded
+      // reason, which lives behind the bar's detail popover instead.
+      if (bar.assignment && !bar.carrierAssignment) setPendingUnassign(bar);
       return;
     }
     if (bar.assignment?.primaryWorker?.id === row.key) return;
@@ -293,6 +296,7 @@ export default function CommandCenterTimeline({
       moveId: bar.moveId,
       shipmentId: bar.shipment.id ?? null,
       existingAssignment: bar.assignment,
+      existingCarrierAssignment: bar.carrierAssignment,
       prefill: { primaryWorkerId: row.key },
     });
   }, []);
@@ -337,6 +341,7 @@ export default function CommandCenterTimeline({
       moveId: bar.moveId,
       shipmentId: bar.shipment.id ?? null,
       existingAssignment: bar.assignment,
+      existingCarrierAssignment: bar.carrierAssignment,
       prefill: null,
     });
   }, []);
@@ -544,8 +549,10 @@ export default function CommandCenterTimeline({
           moveId={pendingAssignment.moveId}
           shipmentId={pendingAssignment.shipmentId}
           existingAssignment={pendingAssignment.existingAssignment}
+          existingCarrierAssignment={pendingAssignment.existingCarrierAssignment}
           prefill={pendingAssignment.prefill}
           onAssigned={() => setPendingAssignment(null)}
+          onCarrierAssigned={() => setPendingAssignment(null)}
         />
       )}
 

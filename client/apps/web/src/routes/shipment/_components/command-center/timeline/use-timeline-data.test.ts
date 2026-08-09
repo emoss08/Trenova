@@ -1,6 +1,7 @@
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { describe, expect, it } from "vitest";
 import {
+  barMatchesFocus,
   buildTimelineData,
   DWELL_CRITICAL_SECONDS,
   DWELL_WATCH_SECONDS,
@@ -26,6 +27,10 @@ type MoveSeed = {
   workerFirstName?: string;
   workerLastName?: string;
   tractorCode?: string;
+  carrierId?: string;
+  carrierName?: string | null;
+  carrierAssignmentStatus?: string;
+  coverageType?: string;
   stops: StopSeed[];
 };
 
@@ -65,6 +70,20 @@ function makeShipment(id: string, status: string, moves: MoveSeed[]): Shipment {
               profilePicUrl: null,
             },
             tractor: move.tractorCode ? { id: "trk_1", code: move.tractorCode } : null,
+          }
+        : null,
+      coverageType: move.coverageType ?? (move.carrierId ? "carrier" : "driver"),
+      carrierAssignment: move.carrierId
+        ? {
+            id: `casn-${move.id}`,
+            shipmentMoveId: move.id,
+            carrierId: move.carrierId,
+            status: move.carrierAssignmentStatus ?? "Pending",
+            rateMethod: "Flat",
+            carrier:
+              move.carrierName === null
+                ? null
+                : { id: move.carrierId, name: move.carrierName ?? "Acme Freight" },
           }
         : null,
     })),
@@ -338,6 +357,125 @@ describe("buildTimelineData", () => {
     expect(data.rows[0].stats.late).toBe(1);
     expect(data.rows[0].alert).toBe("late");
     expect(data.exceptions.late).toBe(1);
+  });
+
+  it("groups carrier-covered moves into a carrier row instead of the unassigned lane", () => {
+    const shipments = [
+      makeShipment("shp_1", "Assigned", [
+        {
+          id: "mov_1",
+          carrierId: "car_1",
+          carrierName: "Acme Freight",
+          stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+        },
+      ]),
+      makeShipment("shp_2", "Assigned", [
+        {
+          id: "mov_2",
+          carrierId: "car_1",
+          carrierName: "Acme Freight",
+          stops: [{ start: RANGE.start + 8000, end: RANGE.start + 12_000 }],
+        },
+      ]),
+    ];
+
+    const data = buildTimelineData(shipments, 2, RANGE, NOW);
+
+    expect(data.unassignedRow).toBeNull();
+    expect(data.exceptions.unassigned).toBe(0);
+    expect(data.rows).toHaveLength(1);
+    expect(data.rows[0].key).toBe("carrier:car_1");
+    expect(data.rows[0].isCarrier).toBe(true);
+    expect(data.rows[0].workerName).toBe("Acme Freight");
+    expect(data.rows[0].bars).toHaveLength(2);
+    expect(data.rows[0].bars.every((bar) => bar.carrierAssignment !== null)).toBe(true);
+    expect(data.rows[0].bars.every((bar) => !barMatchesFocus(bar, "unassigned"))).toBe(true);
+  });
+
+  it("falls back to a generic carrier label when the carrier relation is absent", () => {
+    const shipments = [
+      makeShipment("shp_1", "Assigned", [
+        {
+          id: "mov_1",
+          carrierId: "car_1",
+          carrierName: null,
+          stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+        },
+      ]),
+    ];
+
+    const data = buildTimelineData(shipments, 1, RANGE, NOW);
+
+    expect(data.rows[0].isCarrier).toBe(true);
+    expect(data.rows[0].workerName).toBe("External carrier");
+  });
+
+  it("treats a canceled carrier assignment as no coverage", () => {
+    const shipments = [
+      makeShipment("shp_1", "New", [
+        {
+          id: "mov_1",
+          carrierId: "car_1",
+          carrierAssignmentStatus: "Canceled",
+          coverageType: "carrier",
+          stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+        },
+      ]),
+    ];
+
+    const data = buildTimelineData(shipments, 1, RANGE, NOW);
+
+    expect(data.rows).toHaveLength(0);
+    expect(data.unassignedRow?.bars).toHaveLength(1);
+    expect(data.unassignedRow?.bars[0].carrierAssignment).toBeNull();
+    expect(data.exceptions.unassigned).toBe(1);
+    expect(barMatchesFocus(data.unassignedRow!.bars[0], "unassigned")).toBe(true);
+  });
+
+  it("keeps a lingering active carrier assignment out of coverage when the move is driver-typed", () => {
+    // The server flips coverageType back to driver when coverage is removed; a stale
+    // active record must not resurrect a carrier row on its own.
+    const shipments = [
+      makeShipment("shp_1", "New", [
+        {
+          id: "mov_1",
+          carrierId: "car_1",
+          coverageType: "driver",
+          stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+        },
+      ]),
+    ];
+
+    const data = buildTimelineData(shipments, 1, RANGE, NOW);
+
+    expect(data.rows).toHaveLength(0);
+    expect(data.unassignedRow?.bars).toHaveLength(1);
+  });
+
+  it("never flags overlapping moves on a carrier row", () => {
+    const shipments = [
+      makeShipment("shp_1", "Assigned", [
+        {
+          id: "mov_1",
+          carrierId: "car_1",
+          stops: [{ start: RANGE.start + 1000, end: RANGE.start + 30_000 }],
+        },
+      ]),
+      makeShipment("shp_2", "Assigned", [
+        {
+          id: "mov_2",
+          carrierId: "car_1",
+          stops: [{ start: RANGE.start + 5000, end: RANGE.start + 20_000 }],
+        },
+      ]),
+    ];
+
+    const data = buildTimelineData(shipments, 2, RANGE, NOW);
+
+    expect(data.rows[0].isCarrier).toBe(true);
+    expect(data.rows[0].bars.every((bar) => !bar.hasOverlap)).toBe(true);
+    expect(data.rows[0].stats.overlaps).toBe(0);
+    expect(data.exceptions.overlaps).toBe(0);
   });
 });
 

@@ -6,14 +6,16 @@ import type {
   DispatchDriverMoveMatch,
 } from "@/lib/graphql/dispatch-console";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
+import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatClockDurationMs, formatUnixDateTime } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { Building2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatMiles, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
@@ -102,6 +104,37 @@ function CandidateRow({
   );
 }
 
+function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
+  const openCarrierCancel = useDispatchConsoleStore.use.openCarrierCancel();
+
+  return (
+    <div className="flex flex-col gap-1.5 border-b bg-muted/30 px-2.5 py-2">
+      <div className="flex items-center gap-1.5">
+        <Building2Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+        <span className="truncate text-xs font-medium">{move.assignedCarrierName}</span>
+        <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
+          Carrier
+        </Badge>
+      </div>
+      {move.carrierTotalCost != null && (
+        <span className="text-[10px] text-muted-foreground tabular-nums">
+          Total cost {formatCurrency(move.carrierTotalCost)}
+        </span>
+      )}
+      <div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[10px]"
+          onClick={() => openCarrierCancel(move)}
+        >
+          Cancel carrier assignment
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function MoveInspector({
   move,
   onAssign,
@@ -114,6 +147,11 @@ function MoveInspector({
   hotkeysEnabled: boolean;
 }) {
   const [includeBlocked, setIncludeBlocked] = useState(false);
+  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
+  const isCarrierCovered = move.coverageType === "carrier";
+  // A carrier-covered move cannot take a driver on top; the carrier assignment has to be
+  // canceled first, so driver assignment is held off rather than allowed to fail.
+  const assignLocked = isAssigning || isCarrierCovered;
 
   const { data, isLoading } = useQuery({
     ...dispatchConsoleQueries.moveCandidates({ moveId: move.moveId, includeBlocked }),
@@ -125,7 +163,7 @@ function MoveInspector({
   // The rank shown next to each candidate doubles as its keyboard shortcut: pressing the
   // digit assigns without touching the mouse.
   useEffect(() => {
-    if (!hotkeysEnabled || isAssigning) return;
+    if (!hotkeysEnabled || assignLocked) return;
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -140,7 +178,7 @@ function MoveInspector({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [candidates, hotkeysEnabled, isAssigning, onAssign]);
+  }, [candidates, hotkeysEnabled, assignLocked, onAssign]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -155,18 +193,34 @@ function MoveInspector({
         </span>
       </div>
 
+      {isCarrierCovered && <CarrierCoverageCard move={move} />}
+
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
         <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
           {candidates.length} candidates
         </span>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-6 px-2 text-[10px]"
-          onClick={() => setIncludeBlocked((value) => !value)}
-        >
-          {includeBlocked ? "Hide ineligible" : "Show ineligible"}
-        </Button>
+        <div className="flex items-center gap-1.5">
+          {!move.isCovered && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px]"
+              disabled={isAssigning}
+              onClick={() => openCarrierAssign(move)}
+            >
+              <Building2Icon className="size-3" aria-hidden />
+              Assign to carrier
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => setIncludeBlocked((value) => !value)}
+          >
+            {includeBlocked ? "Hide ineligible" : "Show ineligible"}
+          </Button>
+        </div>
       </div>
 
       <ScrollArea
@@ -186,7 +240,7 @@ function MoveInspector({
                   candidate={candidate}
                   rank={index + 1}
                   onAssign={onAssign}
-                  isAssigning={isAssigning}
+                  isAssigning={assignLocked}
                 />
               ))}
           {!isLoading && candidates.length === 0 && (

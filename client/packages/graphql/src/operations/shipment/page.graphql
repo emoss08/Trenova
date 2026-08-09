@@ -118,11 +118,56 @@ fragment ShipmentMoveFields on ShipmentMove {
   version
   createdAt
   updatedAt
+  coverageType
   stops {
     ...ShipmentStopFields
   }
   assignment {
     ...ShipmentAssignmentFields
+  }
+  carrierAssignment {
+    ...ShipmentCarrierAssignmentFields
+  }
+}
+
+fragment ShipmentCarrierAssignmentFields on CarrierAssignment {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  carrierId
+  status
+  rateMethod
+  baseRate
+  baseAmount
+  fuelSurcharge
+  accessorialTotal
+  totalCost
+  currencyCode
+  proNumber
+  externalDriverName
+  externalDriverPhone
+  externalTractorNumber
+  externalTrailerNumber
+  confirmedAt
+  canceledAt
+  cancellationReason
+  version
+  createdAt
+  updatedAt
+  carrier {
+    id
+    code
+    name
+    scac
+  }
+  accessorials {
+    id
+    carrierAssignmentId
+    accessorialChargeId
+    description
+    amount
+    version
   }
 }
 

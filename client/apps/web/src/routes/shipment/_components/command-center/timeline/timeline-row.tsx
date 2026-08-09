@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { cn } from "@trenova/shared/lib/utils";
 import { useDroppable } from "@dnd-kit/core";
-import { ChevronDownIcon, ChevronRightIcon, InboxIcon } from "lucide-react";
+import { Building2Icon, ChevronDownIcon, ChevronRightIcon, InboxIcon } from "lucide-react";
 import {
   COLLAPSED_BAR_HEIGHT_PX,
   RAIL_WIDTH_PX,
@@ -84,11 +84,13 @@ export function TimelineRowItem({
   });
 
   const activeBar = active?.data.current?.bar as TimelineBar | undefined;
+  // Carrier-covered bars never accept a driver drop, and carrier rows are not drop
+  // targets: coverage moves through the carrier dialogs, not drag-and-drop.
   const isValidTarget =
     !!activeBar &&
-    (isUnassigned
-      ? !!activeBar.assignment
-      : activeBar.assignment?.primaryWorker?.id !== row.key);
+    !activeBar.carrierAssignment &&
+    !row.isCarrier &&
+    (isUnassigned ? !!activeBar.assignment : activeBar.assignment?.primaryWorker?.id !== row.key);
   const showDropHint = isOver && isValidTarget;
   const height = rowHeightPx(row.laneCount, density, collapsed);
 
@@ -128,6 +130,10 @@ export function TimelineRowItem({
             <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning">
               <InboxIcon className="size-3.5" />
             </span>
+          ) : row.isCarrier ? (
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <Building2Icon className="size-3.5" />
+            </span>
           ) : (
             <Avatar className={cn("shrink-0", density === "compact" ? "size-5" : "size-6")}>
               {row.workerProfilePicUrl && (
@@ -141,10 +147,7 @@ export function TimelineRowItem({
         <div className="flex min-w-0 flex-col">
           <span className="flex min-w-0 items-center gap-1.5">
             <span
-              className={cn(
-                "truncate text-[11.5px] font-medium",
-                isUnassigned && "text-warning",
-              )}
+              className={cn("truncate text-[11.5px] font-medium", isUnassigned && "text-warning")}
             >
               {isUnassigned ? "Unassigned" : row.workerName}
             </span>
@@ -167,9 +170,11 @@ export function TimelineRowItem({
             <span className="truncate font-table text-[9.5px] text-muted-foreground tabular-nums">
               {isUnassigned
                 ? "Drop here to unassign"
-                : row.equipmentCodes.length > 0
-                  ? row.equipmentCodes.join(" · ")
-                  : "No tractor"}
+                : row.isCarrier
+                  ? "Carrier"
+                  : row.equipmentCodes.length > 0
+                    ? row.equipmentCodes.join(" · ")
+                    : "No tractor"}
               {" · "}
               {row.bars.length} {row.bars.length === 1 ? "load" : "loads"}
             </span>

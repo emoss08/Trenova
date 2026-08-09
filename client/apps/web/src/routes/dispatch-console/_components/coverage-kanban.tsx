@@ -4,7 +4,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCompactCurrency } from "@trenova/shared/lib/utils";
-import { FlameIcon, SnowflakeIcon, TriangleAlertIcon } from "lucide-react";
+import { Building2Icon, FlameIcon, SnowflakeIcon, TriangleAlertIcon } from "lucide-react";
 import { useMemo } from "react";
 import { CoverageKanbanSkeleton } from "./console-skeletons";
 import {
@@ -120,12 +120,21 @@ function MoveCard({
 
       <div className="flex items-center justify-between gap-2">
         <span className="truncate text-[10px] text-muted-foreground">{move.customerName}</span>
-        {move.isCovered && (
-          <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
-            {move.assignedWorkerName}
-            {move.assignedTractorCode ? ` · ${move.assignedTractorCode}` : ""}
-          </Badge>
-        )}
+        {move.isCovered &&
+          (move.coverageType === "carrier" ? (
+            <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
+              <Building2Icon className="mr-0.5 size-2.5" aria-hidden />
+              {move.assignedCarrierName}
+              {move.carrierTotalCost != null
+                ? ` · ${formatCompactCurrency(move.carrierTotalCost)}`
+                : ""}
+            </Badge>
+          ) : (
+            <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
+              {move.assignedWorkerName}
+              {move.assignedTractorCode ? ` · ${move.assignedTractorCode}` : ""}
+            </Badge>
+          ))}
       </div>
     </div>
   );

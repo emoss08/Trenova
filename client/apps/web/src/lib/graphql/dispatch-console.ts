@@ -1,17 +1,24 @@
 import {
   DispatchAssignMovesDocument,
+  DispatchAssignMoveToCarrierDocument,
   DispatchAssignmentPreviewDocument,
   DispatchBoardDocument,
+  DispatchCancelCarrierAssignmentDocument,
+  DispatchCarrierAssignmentPreviewDocument,
   DispatchDriverMovesDocument,
   DispatchMoveCandidatesDocument,
   DispatchPlanAutoAssignDocument,
   DispatchUnassignMovesDocument,
   type DispatchAssignMoveInput,
   type DispatchAssignMovesMutation,
+  type DispatchAssignMoveToCarrierInput,
+  type DispatchAssignMoveToCarrierMutation,
   type DispatchAssignmentPreviewInput,
   type DispatchAssignmentPreviewQuery,
   type DispatchBoardInput,
   type DispatchBoardQuery,
+  type DispatchCarrierAssignmentPreviewInput,
+  type DispatchCarrierAssignmentPreviewQuery,
   type DispatchDriverMovesInput,
   type DispatchDriverMovesQuery,
   type DispatchMoveCandidatesInput,
@@ -33,6 +40,10 @@ export type DispatchScoreFactor = DispatchCandidate["factors"][number];
 export type DispatchAssignmentPreview = DispatchAssignmentPreviewQuery["dispatchAssignmentPreview"];
 export type DispatchDriverMoveMatch = DispatchDriverMovesQuery["dispatchDriverMoves"][number];
 export type DispatchBulkAssignResult = DispatchAssignMovesMutation["dispatchAssignMoves"];
+export type DispatchCarrierEligibility =
+  DispatchCarrierAssignmentPreviewQuery["dispatchCarrierAssignmentPreview"];
+export type DispatchCarrierAssignment =
+  DispatchAssignMoveToCarrierMutation["dispatchAssignMoveToCarrier"];
 export type DispatchPlan = DispatchPlanAutoAssignMutation["dispatchPlanAutoAssign"];
 export type DispatchPlannedAssignment = DispatchPlan["assignments"][number];
 export type DispatchUncoveredMove = DispatchPlan["uncovered"][number];
@@ -99,6 +110,40 @@ export async function unassignDispatchMovesGraphQL(
     variables: { moveIds },
   });
   return data.dispatchUnassignMoves;
+}
+
+export async function getDispatchCarrierAssignmentPreviewGraphQL(
+  input: DispatchCarrierAssignmentPreviewInput,
+): Promise<DispatchCarrierEligibility> {
+  const data = await requestGraphQL({
+    document: DispatchCarrierAssignmentPreviewDocument,
+    operationName: "DispatchCarrierAssignmentPreview",
+    variables: { input },
+  });
+  return data.dispatchCarrierAssignmentPreview;
+}
+
+export async function assignDispatchMoveToCarrierGraphQL(
+  input: DispatchAssignMoveToCarrierInput,
+): Promise<DispatchCarrierAssignment> {
+  const data = await requestGraphQL({
+    document: DispatchAssignMoveToCarrierDocument,
+    operationName: "DispatchAssignMoveToCarrier",
+    variables: { input },
+  });
+  return data.dispatchAssignMoveToCarrier;
+}
+
+export async function cancelDispatchCarrierAssignmentGraphQL(
+  moveId: string,
+  reason: string,
+): Promise<boolean> {
+  const data = await requestGraphQL({
+    document: DispatchCancelCarrierAssignmentDocument,
+    operationName: "DispatchCancelCarrierAssignment",
+    variables: { moveId, reason },
+  });
+  return data.dispatchCancelCarrierAssignment;
 }
 
 export async function planDispatchAutoAssignGraphQL(

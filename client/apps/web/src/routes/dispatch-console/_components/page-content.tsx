@@ -46,6 +46,8 @@ export function DispatchConsoleContent() {
   const setDragPreview = useDispatchConsoleStore.use.setDragPreview();
   const openPreflight = useDispatchConsoleStore.use.openPreflight();
   const preflight = useDispatchConsoleStore.use.preflight();
+  const carrierAssignTarget = useDispatchConsoleStore.use.carrierAssignTarget();
+  const carrierCancelTarget = useDispatchConsoleStore.use.carrierCancelTarget();
   const resetConsole = useDispatchConsoleStore.use.reset();
 
   // A drag or a pending pre-flight belongs to the visit, not to the store's lifetime.
@@ -141,6 +143,14 @@ export function DispatchConsoleContent() {
       }
       if (!target) return;
 
+      // A carrier-covered move cannot take a driver until its carrier assignment is
+      // canceled; selecting it surfaces the coverage card with that action instead of
+      // opening a pre-flight that is guaranteed to fail.
+      if (target.move.coverageType === "carrier") {
+        selectMove(target.move.moveId);
+        return;
+      }
+
       openPreflight(target);
       selectMove(target.move.moveId);
     },
@@ -157,7 +167,11 @@ export function DispatchConsoleContent() {
     [actions, range],
   );
 
-  const hasDialogOpen = Boolean(preflight) || Boolean(actions.plan && !actions.plan.shadowMode);
+  const hasDialogOpen =
+    Boolean(preflight) ||
+    Boolean(carrierAssignTarget) ||
+    Boolean(carrierCancelTarget) ||
+    Boolean(actions.plan && !actions.plan.shadowMode);
 
   useDispatchHotkeys({
     enabled: !hasDialogOpen,

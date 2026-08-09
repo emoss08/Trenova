@@ -195,6 +195,122 @@ export const assignmentSchema = z.object({
 });
 export type Assignment = z.infer<typeof assignmentSchema>;
 
+export const moveCoverageTypeSchema = z.enum(["driver", "carrier"]);
+export type MoveCoverageType = z.infer<typeof moveCoverageTypeSchema>;
+
+export const carrierAssignmentStatusSchema = z.enum(["Pending", "Confirmed", "Canceled"]);
+export type CarrierAssignmentStatus = z.infer<typeof carrierAssignmentStatusSchema>;
+
+export const carrierRateMethodSchema = z.enum(["Flat", "PerMile"]);
+export type CarrierRateMethod = z.infer<typeof carrierRateMethodSchema>;
+
+const carrierAssignmentCarrierSummarySchema = z.object({
+  id: optionalStringSchema,
+  code: optionalStringSchema,
+  name: optionalStringSchema,
+  scac: nullableStringSchema,
+});
+
+export const carrierAssignmentAccessorialSchema = z.object({
+  id: optionalStringSchema,
+  carrierAssignmentId: optionalStringSchema,
+  accessorialChargeId: nullableStringSchema,
+  description: z.string(),
+  amount: decimalStringSchema,
+  version: z.number().optional(),
+});
+export type CarrierAssignmentAccessorial = z.infer<typeof carrierAssignmentAccessorialSchema>;
+
+export const carrierAssignmentSchema = z.object({
+  id: optionalStringSchema,
+  shipmentMoveId: optionalStringSchema,
+  carrierId: optionalStringSchema,
+  status: carrierAssignmentStatusSchema.default("Pending"),
+  rateMethod: carrierRateMethodSchema.default("Flat"),
+  baseRate: decimalStringSchema,
+  baseAmount: decimalStringSchema,
+  fuelSurcharge: decimalStringSchema,
+  accessorialTotal: decimalStringSchema,
+  totalCost: decimalStringSchema,
+  currencyCode: optionalStringSchema,
+  proNumber: nullableStringSchema,
+  externalDriverName: nullableStringSchema,
+  externalDriverPhone: nullableStringSchema,
+  externalTractorNumber: nullableStringSchema,
+  externalTrailerNumber: nullableStringSchema,
+  confirmedAt: z.number().nullish(),
+  canceledAt: z.number().nullish(),
+  cancellationReason: nullableStringSchema,
+  carrier: carrierAssignmentCarrierSummarySchema.nullish(),
+  accessorials: z.array(carrierAssignmentAccessorialSchema).nullish(),
+  version: z.number().optional(),
+});
+export type CarrierAssignment = z.infer<typeof carrierAssignmentSchema>;
+
+export function isActiveCarrierAssignment(
+  carrierAssignment: CarrierAssignment | null | undefined,
+): carrierAssignment is CarrierAssignment {
+  return !!carrierAssignment?.id && carrierAssignment.status !== "Canceled";
+}
+
+const carrierAssignmentAccessorialPayloadSchema = z.object({
+  accessorialChargeId: nullableStringSchema,
+  description: z
+    .string()
+    .min(1, { error: "Description is required" })
+    .max(255, { error: "Description must be at most 255 characters" }),
+  amount: z
+    .number({ error: "Amount is required" })
+    .nonnegative({ error: "Amount cannot be negative" }),
+});
+export type CarrierAssignmentAccessorialPayload = z.infer<
+  typeof carrierAssignmentAccessorialPayloadSchema
+>;
+
+export const carrierAssignmentPayloadSchema = z.object({
+  carrierId: z.string().min(1, { error: "Carrier is required" }),
+  rateMethod: carrierRateMethodSchema,
+  baseRate: z
+    .number({ error: "Base rate is required" })
+    .nonnegative({ error: "Base rate cannot be negative" }),
+  fuelSurcharge: z
+    .number()
+    .nonnegative({ error: "Fuel surcharge cannot be negative" })
+    .nullish(),
+  accessorials: z.array(carrierAssignmentAccessorialPayloadSchema),
+  proNumber: z.string().max(50, { error: "Pro number must be at most 50 characters" }),
+  externalDriverName: z.string().max(255, { error: "Driver name must be at most 255 characters" }),
+  externalDriverPhone: z.string().max(20, { error: "Driver phone must be at most 20 characters" }),
+  externalTractorNumber: z
+    .string()
+    .max(50, { error: "Tractor number must be at most 50 characters" }),
+  externalTrailerNumber: z
+    .string()
+    .max(50, { error: "Trailer number must be at most 50 characters" }),
+  overrideInsuranceWarning: z.boolean(),
+});
+export type CarrierAssignmentPayload = z.infer<typeof carrierAssignmentPayloadSchema>;
+
+export const emptyCarrierAssignmentPayload: CarrierAssignmentPayload = {
+  carrierId: "",
+  rateMethod: "Flat",
+  baseRate: 0,
+  fuelSurcharge: null,
+  accessorials: [],
+  proNumber: "",
+  externalDriverName: "",
+  externalDriverPhone: "",
+  externalTractorNumber: "",
+  externalTrailerNumber: "",
+  overrideInsuranceWarning: false,
+};
+
+export const carrierEligibilitySchema = z.object({
+  blockers: z.array(z.string()).default([]),
+  warnings: z.array(z.string()).default([]),
+});
+export type CarrierEligibility = z.infer<typeof carrierEligibilitySchema>;
+
 const shipmentMoveBaseSchema = z.object({
   status: moveStatusSchema.default("New"),
   loaded: z.boolean().default(true),
@@ -218,8 +334,10 @@ const shipmentMoveReadMetadataSchema = z.object({
 export const shipmentMoveSchema = shipmentMoveReadMetadataSchema.extend({
   ...shipmentMoveBaseSchema.shape,
   id: optionalStringSchema,
+  coverageType: moveCoverageTypeSchema.optional(),
   stops: z.array(stopSchema).default([]),
   assignment: assignmentSchema.nullish(),
+  carrierAssignment: carrierAssignmentSchema.nullish(),
 });
 export type ShipmentMove = z.infer<typeof shipmentMoveSchema>;
 

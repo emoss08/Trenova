@@ -846,6 +846,55 @@ type Carrier {
   w9OnFile: Boolean!
 }
 
+type CarrierAssignment {
+  accessorialTotal: String!
+  accessorials: [CarrierAssignmentAccessorial!]
+  assignedById: ID
+  baseAmount: String!
+  baseRate: String!
+  businessUnitId: ID!
+  canceledAt: Int
+  cancellationReason: String
+  carrier: Carrier
+  carrierId: ID!
+  confirmedAt: Int
+  createdAt: Int!
+  currencyCode: String!
+  externalDriverName: String
+  externalDriverPhone: String
+  externalTractorNumber: String
+  externalTrailerNumber: String
+  fuelSurcharge: String!
+  id: ID!
+  organizationId: ID!
+  proNumber: String
+  rateMethod: CarrierRateMethod!
+  shipmentMoveId: ID!
+  status: CarrierAssignmentStatus!
+  totalCost: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type CarrierAssignmentAccessorial {
+  accessorialChargeId: ID
+  amount: String!
+  businessUnitId: ID!
+  carrierAssignmentId: ID!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  organizationId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum CarrierAssignmentStatus {
+  Canceled
+  Confirmed
+  Pending
+}
+
 enum CarrierComplianceStatus {
   Disqualified
   Expired
@@ -908,6 +957,11 @@ enum CarrierInsurancePolicyType {
 enum CarrierPaymentMethod {
   ACHManual
   Check
+}
+
+enum CarrierRateMethod {
+  Flat
+  PerMile
 }
 
 enum CarrierSafetyRating {
@@ -2074,6 +2128,30 @@ input DispatchAssignMoveInput {
   trailerId: ID
 }
 
+input DispatchAssignMoveToCarrierInput {
+  accessorials: [DispatchCarrierAccessorialInput!]
+  baseRate: String!
+  carrierId: ID!
+  externalDriverName: String
+  externalDriverPhone: String
+  externalTractorNumber: String
+  externalTrailerNumber: String
+  fuelSurcharge: String
+  moveId: ID!
+  """
+  Proceed despite insurance policies that expire inside the warning window. Hard blockers
+  (inactive, unqualified, or expired coverage) can never be overridden.
+  """
+  overrideInsuranceWarning: Boolean
+  proNumber: String
+  rateMethod: CarrierRateMethod!
+  """
+  Replace an existing carrier assignment rather than rejecting the request. The console
+  sets this when a dispatcher re-covers a move that already has carrier coverage.
+  """
+  replace: Boolean
+}
+
 """
 Per-move outcome of a bulk assignment. Failures carry their reason rather than aborting
 the batch: covering nine of ten moves and saying which one failed beats covering none.
@@ -2169,6 +2247,8 @@ input DispatchBoardInput {
 }
 
 type DispatchBoardMove {
+  assignedCarrierId: ID
+  assignedCarrierName: String!
   assignedTractorCode: String!
   assignedTractorId: ID
   assignedTrailerCode: String!
@@ -2178,6 +2258,9 @@ type DispatchBoardMove {
   assignmentAckStatus: String!
   assignmentId: ID
   bol: String!
+  carrierAssignmentId: ID
+  carrierTotalCost: Float
+  coverageType: String!
   customerId: ID
   customerName: String!
   destinationCity: String!
@@ -2276,6 +2359,21 @@ type DispatchCandidate {
   verdict: String!
   workerId: ID!
   workerName: String!
+}
+
+input DispatchCarrierAccessorialInput {
+  accessorialChargeId: ID
+  amount: String!
+  description: String!
+}
+
+input DispatchCarrierAssignmentPreviewInput {
+  carrierId: ID!
+}
+
+type DispatchCarrierEligibility {
+  blockers: [String!]!
+  warnings: [String!]!
 }
 
 """
@@ -4999,6 +5097,11 @@ input MarkDriverSettlementPaidInput {
   settlementId: ID!
 }
 
+enum MoveCoverageType {
+  carrier
+  driver
+}
+
 enum MoveStatus {
   Assigned
   Canceled
@@ -5101,7 +5204,9 @@ type Mutation {
   detentionBacktest(input: DetentionBacktestInput!): DetentionBacktestResult!
   dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
+  dispatchAssignMoveToCarrier(input: DispatchAssignMoveToCarrierInput!): CarrierAssignment!
   dispatchAssignMoves(input: [DispatchAssignMoveInput!]!): DispatchBulkAssignResult!
+  dispatchCancelCarrierAssignment(moveId: ID!, reason: String!): Boolean!
   dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
   dispatchUnassignMoves(moveIds: [ID!]!): DispatchBulkAssignResult!
   disputeDetentionOccurrence(input: DetentionDisputeInput!): DetentionOccurrence!
@@ -6083,6 +6188,7 @@ type Query {
   detentionWaiverStats(input: DetentionStatsInput!): [DetentionWaiverLeakageStat!]!
   dispatchAssignmentPreview(input: DispatchAssignmentPreviewInput!): DispatchAssignmentPreview!
   dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
+  dispatchCarrierAssignmentPreview(input: DispatchCarrierAssignmentPreviewInput!): DispatchCarrierEligibility!
   dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
   dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
   distanceOverride(id: ID!): DistanceOverride
@@ -8438,6 +8544,8 @@ type ShipmentLoadingWarning {
 type ShipmentMove {
   assignment: ShipmentAssignment
   businessUnitId: ID!
+  carrierAssignment: CarrierAssignment
+  coverageType: MoveCoverageType!
   createdAt: Int!
   distance: Float
   distanceCalculatedAt: Int

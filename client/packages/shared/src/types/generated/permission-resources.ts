@@ -90,6 +90,7 @@ export const Resource = {
 
   // Carriers
   Carrier: "carrier",
+  RateConfirmation: "rate_confirmation",
 
   // Locations
   Location: "location",

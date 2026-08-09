@@ -1,5 +1,7 @@
 import {
   assignDispatchMovesGraphQL,
+  assignDispatchMoveToCarrierGraphQL,
+  cancelDispatchCarrierAssignmentGraphQL,
   planDispatchAutoAssignGraphQL,
   unassignDispatchMovesGraphQL,
   type DispatchBulkAssignResult,
@@ -12,6 +14,7 @@ import {
 } from "@/lib/queries/dispatch-console";
 import type {
   DispatchAssignMoveInput,
+  DispatchAssignMoveToCarrierInput,
   DispatchPlanInput,
 } from "@trenova/graphql/generated/graphql";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -99,6 +102,32 @@ export function useDispatchActions() {
     onError: (error: Error) => toast.error("Unassignment failed", { description: error.message }),
   });
 
+  // Carrier coverage is deliberately outside the undo stack: reversing it requires a
+  // cancellation reason the console cannot invent on the dispatcher's behalf.
+  const carrierAssignMutation = useMutation({
+    mutationFn: (input: DispatchAssignMoveToCarrierInput) =>
+      assignDispatchMoveToCarrierGraphQL(input),
+    onSuccess: (assignment) => {
+      toast.success("Move assigned to carrier", {
+        description: assignment.carrier?.name ?? undefined,
+      });
+      invalidateBoard();
+    },
+    onError: (error: Error) =>
+      toast.error("Carrier assignment failed", { description: error.message }),
+  });
+
+  const carrierCancelMutation = useMutation({
+    mutationFn: (params: { moveId: string; reason: string }) =>
+      cancelDispatchCarrierAssignmentGraphQL(params.moveId, params.reason),
+    onSuccess: () => {
+      toast.success("Carrier assignment canceled");
+      invalidateBoard();
+    },
+    onError: (error: Error) =>
+      toast.error("Carrier cancellation failed", { description: error.message }),
+  });
+
   const planMutation = useMutation({
     mutationFn: (input: DispatchPlanInput) => planDispatchAutoAssignGraphQL(input),
     onSuccess: (plan: DispatchPlan) => {
@@ -145,12 +174,18 @@ export function useDispatchActions() {
     assign: runAssign,
     unassign: (moveIds: string[], restore?: DispatchAssignMoveInput[]) =>
       runUnassign({ moveIds, restore }),
+    assignToCarrier: carrierAssignMutation.mutateAsync,
+    cancelCarrierAssignment: carrierCancelMutation.mutateAsync,
     planAutoAssign: planMutation.mutate,
     plan: planMutation.data ?? null,
     clearPlan: planMutation.reset,
     undo,
     canUndo: undoDepth > 0,
-    isAssigning: assignMutation.isPending || unassignMutation.isPending,
+    isAssigning:
+      assignMutation.isPending ||
+      unassignMutation.isPending ||
+      carrierAssignMutation.isPending ||
+      carrierCancelMutation.isPending,
     isPlanning: planMutation.isPending,
   };
 }

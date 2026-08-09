@@ -150,6 +150,8 @@ import type {
   ServiceFailureReasonCodeAppliesTo,
 } from "@/types/service-failure-reason-code";
 import type {
+  CarrierAssignmentStatus,
+  CarrierRateMethod,
   MoveStatus,
   ShipmentStatus,
   ShipmentTenderStatus,
@@ -345,6 +347,17 @@ export const carrierPaymentMethodChoices = [
   { label: "Check", value: "Check", color: "#2563eb" },
   { label: "ACH (Manual)", value: "ACHManual", color: "#0d9488" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierPaymentMethod>>;
+
+export const carrierRateMethodChoices = [
+  { label: "Flat", value: "Flat", color: "#2563eb" },
+  { label: "Per Mile", value: "PerMile", color: "#0d9488" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierRateMethod>>;
+
+export const carrierAssignmentStatusChoices = [
+  { label: "Pending", value: "Pending", color: "#f59e0b" },
+  { label: "Confirmed", value: "Confirmed", color: "#15803d" },
+  { label: "Canceled", value: "Canceled", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierAssignmentStatus>>;
 
 export const carrierInsurancePolicyTypeChoices = [
   { label: "Auto Liability", value: "AutoLiability", color: "#2563eb" },

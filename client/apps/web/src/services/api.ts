@@ -13,14 +13,11 @@ import { BillingQueueService } from "./billing-queue";
 import { CommodityService } from "./commodity";
 import { CustomFieldService } from "./custom-field";
 import { CarrierService } from "./carrier";
+import { CarrierAssignmentService } from "./carrier-assignment";
 import { CustomerService } from "./customer";
 import { DataEntryControlService } from "./data-entry-control";
 import { DatabaseSessionService } from "./database-session";
-import {
-  DetentionAnalyticsService,
-  DetentionPolicyService,
-  DetentionService,
-} from "./detention";
+import { DetentionAnalyticsService, DetentionPolicyService, DetentionService } from "./detention";
 import { DispatchControlService } from "./dispatch-control";
 import { DistanceOverrideService } from "./distance-override";
 import { DistanceControlService } from "./distance-control";
@@ -100,6 +97,7 @@ class APIService {
   public hazmatSegregationRuleService: HazmatSegregationRuleService;
   public commodityService: CommodityService;
   public carrierService: CarrierService;
+  public carrierAssignmentService: CarrierAssignmentService;
   public customerService: CustomerService;
   public databaseSessionService: DatabaseSessionService;
   public googleMapsService: GoogleMapsService;
@@ -178,6 +176,7 @@ class APIService {
     this.hazmatSegregationRuleService = new HazmatSegregationRuleService();
     this.commodityService = new CommodityService();
     this.carrierService = new CarrierService();
+    this.carrierAssignmentService = new CarrierAssignmentService();
     this.customerService = new CustomerService();
     this.databaseSessionService = new DatabaseSessionService();
     this.googleMapsService = new GoogleMapsService();
