@@ -80,6 +80,12 @@ type BoardMove struct {
 	AssignedTrailerCode   string                 `bun:"assigned_trailer_code" json:"assignedTrailerCode"`
 	AssignmentAckStatus   shipment.AssignmentAck `bun:"assignment_ack_status" json:"assignmentAckStatus"`
 	PreviousMoveTrailerID pulid.ID               `bun:"previous_trailer_id"   json:"previousMoveTrailerId"`
+
+	CoverageType        string   `bun:"coverage_type"         json:"coverageType"`
+	CarrierAssignmentID pulid.ID `bun:"carrier_assignment_id" json:"carrierAssignmentId"`
+	AssignedCarrierID   pulid.ID `bun:"assigned_carrier_id"   json:"assignedCarrierId"`
+	AssignedCarrierName string   `bun:"assigned_carrier_name" json:"assignedCarrierName"`
+	CarrierTotalCost    *float64 `bun:"carrier_total_cost"    json:"carrierTotalCost"`
 }
 
 type BoardDriver struct {

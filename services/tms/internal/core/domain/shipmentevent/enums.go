@@ -20,6 +20,9 @@ const (
 	TypeDriverReassigned = Type("DriverReassigned")
 	TypeDriverUnassigned = Type("DriverUnassigned")
 
+	TypeCarrierAssigned   = Type("CarrierAssigned")
+	TypeCarrierUnassigned = Type("CarrierUnassigned")
+
 	TypeHoldPlaced   = Type("HoldPlaced")
 	TypeHoldUpdated  = Type("HoldUpdated")
 	TypeHoldReleased = Type("HoldReleased")
@@ -61,6 +64,8 @@ func (v Type) IsValid() bool {
 		TypeDriverAssigned,
 		TypeDriverReassigned,
 		TypeDriverUnassigned,
+		TypeCarrierAssigned,
+		TypeCarrierUnassigned,
 		TypeHoldPlaced,
 		TypeHoldUpdated,
 		TypeHoldReleased,

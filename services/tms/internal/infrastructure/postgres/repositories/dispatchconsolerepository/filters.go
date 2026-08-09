@@ -63,6 +63,25 @@ var (
 		" AND " + buncolgen.AssignmentColumns.BusinessUnitID.EqColumn(
 		buncolgen.ShipmentMoveColumns.BusinessUnitID) +
 		" AND " + buncolgen.AssignmentColumns.ArchivedAt.IsNull()
+
+	carrierAssignmentJoin = "LEFT JOIN " + buncolgen.CarrierAssignmentTable.As(
+		buncolgen.CarrierAssignmentTable.Alias) +
+		" ON " + buncolgen.CarrierAssignmentColumns.ShipmentMoveID.EqColumn(
+		buncolgen.ShipmentMoveColumns.ID) +
+		" AND " + buncolgen.CarrierAssignmentColumns.OrganizationID.EqColumn(
+		buncolgen.ShipmentMoveColumns.OrganizationID) +
+		" AND " + buncolgen.CarrierAssignmentColumns.BusinessUnitID.EqColumn(
+		buncolgen.ShipmentMoveColumns.BusinessUnitID) +
+		" AND " + buncolgen.CarrierAssignmentColumns.Status.Qualified() + " <> 'Canceled'"
+
+	assignedCarrierJoin = "LEFT JOIN " + buncolgen.CarrierTable.As(
+		buncolgen.CarrierTable.Alias) +
+		" ON " + buncolgen.CarrierColumns.ID.EqColumn(
+		buncolgen.CarrierAssignmentColumns.CarrierID) +
+		" AND " + buncolgen.CarrierColumns.OrganizationID.EqColumn(
+		buncolgen.CarrierAssignmentColumns.OrganizationID) +
+		" AND " + buncolgen.CarrierColumns.BusinessUnitID.EqColumn(
+		buncolgen.CarrierAssignmentColumns.BusinessUnitID)
 )
 
 const openAssignmentLateral = `LEFT JOIN LATERAL (

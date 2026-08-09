@@ -34,8 +34,8 @@ func TestProject_PlentyOfHoursRunsOnCurrentClocks(t *testing.T) {
 	t.Parallel()
 
 	result := Project(Input{
-		Now:       baseTime,
-		Departure: baseTime,
+		Now:         baseTime,
+		Departure:   baseTime,
 		TripDriveMs: hoursMs(4),
 		Clocks: Clocks{
 			DriveMs: hoursMs(9),

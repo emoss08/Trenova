@@ -502,12 +502,18 @@ func shipmentMovesToModel(
 		if err != nil {
 			return nil, err
 		}
+		coverageType := entity.CoverageType
+		if coverageType == "" {
+			coverageType = shipmentdomain.MoveCoverageTypeDriver
+		}
 		moves = append(moves, &gqlmodel.ShipmentMove{
 			ID:                     idPtr(entity.ID),
 			BusinessUnitID:         entity.BusinessUnitID.String(),
 			OrganizationID:         entity.OrganizationID.String(),
 			ShipmentID:             idPtr(entity.ShipmentID),
 			Status:                 gqlmodel.MoveStatus(entity.Status),
+			CoverageType:           coverageType,
+			CarrierAssignment:      entity.CarrierAssignment,
 			Loaded:                 entity.Loaded,
 			Sequence:               int(entity.Sequence),
 			Distance:               entity.Distance,

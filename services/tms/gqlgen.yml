@@ -654,6 +654,35 @@ models:
         resolver: true
       currentLocationName:
         resolver: true
+  MoveCoverageType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.MoveCoverageType
+  CarrierAssignmentStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.CarrierAssignmentStatus
+  CarrierRateMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.CarrierRateMethod
+  CarrierAssignment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.CarrierAssignment
+    fields:
+      baseRate:
+        resolver: true
+      baseAmount:
+        resolver: true
+      fuelSurcharge:
+        resolver: true
+      accessorialTotal:
+        resolver: true
+      totalCost:
+        resolver: true
+  CarrierAssignmentAccessorial:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.CarrierAssignmentAccessorial
+    fields:
+      amount:
+        resolver: true
   Carrier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/carrier.Carrier

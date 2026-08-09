@@ -22,9 +22,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/controlplaneprovisioninghandler"
-	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
@@ -188,6 +189,7 @@ type RouterParams struct {
 	EmailHandler                    *emailhandler.Handler
 	TelematicsHandler               *telematicshandler.Handler
 	CommodityHandler                *commodityhandler.Handler
+	CarrierAssignmentHandler        *carrierassignmenthandler.Handler
 	CarrierHandler                  *carrierhandler.Handler
 	CustomerHandler                 *customerhandler.Handler
 	CustomerPaymentHandler          *customerpaymenthandler.Handler
@@ -300,6 +302,7 @@ type Router struct {
 	emailHandler                    *emailhandler.Handler
 	telematicsHandler               *telematicshandler.Handler
 	commodityHandler                *commodityhandler.Handler
+	carrierAssignmentHandler        *carrierassignmenthandler.Handler
 	carrierHandler                  *carrierhandler.Handler
 	customerHandler                 *customerhandler.Handler
 	customerPaymentHandler          *customerpaymenthandler.Handler
@@ -414,6 +417,7 @@ func NewRouter(p RouterParams) *Router {
 		emailHandler:                    p.EmailHandler,
 		telematicsHandler:               p.TelematicsHandler,
 		commodityHandler:                p.CommodityHandler,
+		carrierAssignmentHandler:        p.CarrierAssignmentHandler,
 		carrierHandler:                  p.CarrierHandler,
 		customerHandler:                 p.CustomerHandler,
 		customerPaymentHandler:          p.CustomerPaymentHandler,
@@ -593,6 +597,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.ediHandler.RegisterRoutes(protected)
 	r.emailHandler.RegisterRoutes(protected)
 	r.commodityHandler.RegisterRoutes(protected)
+	r.carrierAssignmentHandler.RegisterRoutes(protected)
 	r.carrierHandler.RegisterRoutes(protected)
 	r.customerHandler.RegisterRoutes(protected)
 	r.customerPaymentHandler.RegisterRoutes(protected)

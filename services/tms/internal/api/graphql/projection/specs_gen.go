@@ -28,6 +28,10 @@ var BusinessUnitSpec TypeSpec
 
 var CarrierSpec TypeSpec
 
+var CarrierAssignmentSpec TypeSpec
+
+var CarrierAssignmentAccessorialSpec TypeSpec
+
 var CarrierContactSpec TypeSpec
 
 var CarrierInsurancePolicySpec TypeSpec
@@ -1338,6 +1342,181 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &CarrierInsurancePolicySpec,
 				},
+			},
+		},
+	}
+
+	CarrierAssignmentSpec = TypeSpec{
+		TypeName: "CarrierAssignment",
+		FieldMap: buncolgen.CarrierAssignmentFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "rateMethod",
+				FieldMapKey: "rateMethod",
+			},
+			{
+				Name:        "baseRate",
+				FieldMapKey: "baseRate",
+			},
+			{
+				Name:        "baseAmount",
+				FieldMapKey: "baseAmount",
+			},
+			{
+				Name:        "fuelSurcharge",
+				FieldMapKey: "fuelSurcharge",
+			},
+			{
+				Name:        "accessorialTotal",
+				FieldMapKey: "accessorialTotal",
+			},
+			{
+				Name:        "totalCost",
+				FieldMapKey: "totalCost",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "proNumber",
+				FieldMapKey: "proNumber",
+			},
+			{
+				Name:        "externalDriverName",
+				FieldMapKey: "externalDriverName",
+			},
+			{
+				Name:        "externalDriverPhone",
+				FieldMapKey: "externalDriverPhone",
+			},
+			{
+				Name:        "externalTractorNumber",
+				FieldMapKey: "externalTractorNumber",
+			},
+			{
+				Name:        "externalTrailerNumber",
+				FieldMapKey: "externalTrailerNumber",
+			},
+			{
+				Name:        "assignedById",
+				FieldMapKey: "assignedById",
+			},
+			{
+				Name:        "confirmedAt",
+				FieldMapKey: "confirmedAt",
+			},
+			{
+				Name:        "canceledAt",
+				FieldMapKey: "canceledAt",
+			},
+			{
+				Name:        "cancellationReason",
+				FieldMapKey: "cancellationReason",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "carrier",
+				FieldMapKey: "carrierId",
+				Relation: &RelationSpec{
+					Target: &CarrierSpec,
+				},
+			},
+			{
+				Name: "accessorials",
+				Relation: &RelationSpec{
+					Target: &CarrierAssignmentAccessorialSpec,
+				},
+			},
+		},
+	}
+
+	CarrierAssignmentAccessorialSpec = TypeSpec{
+		TypeName: "CarrierAssignmentAccessorial",
+		FieldMap: buncolgen.CarrierAssignmentAccessorialFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "carrierAssignmentId",
+				FieldMapKey: "carrierAssignmentId",
+			},
+			{
+				Name:        "accessorialChargeId",
+				FieldMapKey: "accessorialChargeId",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "amount",
+				FieldMapKey: "amount",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}
@@ -10855,6 +11034,10 @@ func init() {
 				FieldMapKey: "status",
 			},
 			{
+				Name:        "coverageType",
+				FieldMapKey: "coverageType",
+			},
+			{
 				Name:        "loaded",
 				FieldMapKey: "loaded",
 			},
@@ -10920,6 +11103,12 @@ func init() {
 				Name: "assignment",
 				Relation: &RelationSpec{
 					Target: &ShipmentAssignmentSpec,
+				},
+			},
+			{
+				Name: "carrierAssignment",
+				Relation: &RelationSpec{
+					Target: &CarrierAssignmentSpec,
 				},
 			},
 		},

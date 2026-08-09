@@ -219,6 +219,62 @@ func BuildDriverUnassigned(
 	}
 }
 
+// BuildCarrierAssigned emits an external-carrier coverage event.
+func BuildCarrierAssigned(
+	tenant TenantRef,
+	ref AssignmentRef,
+	assignment *shipment.CarrierAssignment,
+	carrierName string,
+	actor services.AuditActor,
+) *services.RecordShipmentEventParams {
+	metadata := map[string]any{
+		"carrierName": carrierName,
+	}
+	if assignment != nil {
+		metadata["carrierId"] = assignment.CarrierID.String()
+		metadata["totalCost"] = assignment.TotalCost.String()
+		if assignment.ProNumber != "" {
+			metadata["proNumber"] = assignment.ProNumber
+		}
+	}
+
+	return &services.RecordShipmentEventParams{
+		OrganizationID: tenant.OrganizationID,
+		BusinessUnitID: tenant.BusinessUnitID,
+		ShipmentID:     ref.ShipmentID,
+		MoveID:         ref.MoveID,
+		Type:           shipmentevent.TypeCarrierAssigned,
+		Severity:       shipmentevent.SeverityMuted,
+		Summary:        "Carrier assigned",
+		Metadata:       metadata,
+		Actor:          actor,
+	}
+}
+
+// BuildCarrierUnassigned emits an external-carrier coverage removal event.
+func BuildCarrierUnassigned(
+	tenant TenantRef,
+	ref AssignmentRef,
+	carrierName string,
+	reason string,
+	actor services.AuditActor,
+) *services.RecordShipmentEventParams {
+	return &services.RecordShipmentEventParams{
+		OrganizationID: tenant.OrganizationID,
+		BusinessUnitID: tenant.BusinessUnitID,
+		ShipmentID:     ref.ShipmentID,
+		MoveID:         ref.MoveID,
+		Type:           shipmentevent.TypeCarrierUnassigned,
+		Severity:       shipmentevent.SeverityMuted,
+		Summary:        "Carrier unassigned",
+		Metadata: map[string]any{
+			"carrierName": carrierName,
+			"reason":      reason,
+		},
+		Actor: actor,
+	}
+}
+
 // BuildHoldPlaced emits a hold creation event.
 func BuildHoldPlaced(
 	tenant TenantRef,

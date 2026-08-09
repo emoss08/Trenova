@@ -685,6 +685,10 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 			return errortypes.NewBusinessError("Shipment does not contain the target move").
 				WithParam("shipmentMoveId", moveID.String())
 		}
+		if targetMove.HasCarrierAssignment() {
+			return errortypes.NewBusinessError("Shipment move is covered by an external carrier. Cancel the carrier assignment before assigning a driver").
+				WithParam("shipmentMoveId", moveID.String())
+		}
 
 		existing, err := s.repo.GetByMoveID(txCtx, tenantInfo, moveID)
 		if err != nil {
@@ -905,6 +909,10 @@ func cloneShipment(source *shipment.Shipment) *shipment.Shipment {
 		if move.Assignment != nil {
 			assignmentClone := *move.Assignment
 			moveClone.Assignment = &assignmentClone
+		}
+		if move.CarrierAssignment != nil {
+			carrierAssignmentClone := *move.CarrierAssignment
+			moveClone.CarrierAssignment = &carrierAssignmentClone
 		}
 		moveClone.Stops = make([]*shipment.Stop, 0, len(move.Stops))
 

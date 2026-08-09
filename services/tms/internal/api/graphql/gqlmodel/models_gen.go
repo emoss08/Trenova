@@ -52,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
@@ -942,6 +943,26 @@ type DispatchAssignMoveInput struct {
 	Reassign *bool `json:"reassign,omitempty"`
 }
 
+type DispatchAssignMoveToCarrierInput struct {
+	MoveID                string                             `json:"moveId"`
+	CarrierID             string                             `json:"carrierId"`
+	RateMethod            shipment.CarrierRateMethod         `json:"rateMethod"`
+	BaseRate              string                             `json:"baseRate"`
+	FuelSurcharge         *string                            `json:"fuelSurcharge,omitempty"`
+	Accessorials          []*DispatchCarrierAccessorialInput `json:"accessorials,omitempty"`
+	ProNumber             *string                            `json:"proNumber,omitempty"`
+	ExternalDriverName    *string                            `json:"externalDriverName,omitempty"`
+	ExternalDriverPhone   *string                            `json:"externalDriverPhone,omitempty"`
+	ExternalTractorNumber *string                            `json:"externalTractorNumber,omitempty"`
+	ExternalTrailerNumber *string                            `json:"externalTrailerNumber,omitempty"`
+	// Replace an existing carrier assignment rather than rejecting the request. The console
+	// sets this when a dispatcher re-covers a move that already has carrier coverage.
+	Replace *bool `json:"replace,omitempty"`
+	// Proceed despite insurance policies that expire inside the warning window. Hard blockers
+	// (inactive, unqualified, or expired coverage) can never be overridden.
+	OverrideInsuranceWarning *bool `json:"overrideInsuranceWarning,omitempty"`
+}
+
 // Per-move outcome of a bulk assignment. Failures carry their reason rather than aborting
 // the batch: covering nine of ten moves and saying which one failed beats covering none.
 type DispatchAssignResult struct {
@@ -1085,6 +1106,11 @@ type DispatchBoardMove struct {
 	AssignedTrailerCode    string   `json:"assignedTrailerCode"`
 	AssignmentAckStatus    string   `json:"assignmentAckStatus"`
 	PreviousMoveTrailerID  *string  `json:"previousMoveTrailerId,omitempty"`
+	CoverageType           string   `json:"coverageType"`
+	CarrierAssignmentID    *string  `json:"carrierAssignmentId,omitempty"`
+	AssignedCarrierID      *string  `json:"assignedCarrierId,omitempty"`
+	AssignedCarrierName    string   `json:"assignedCarrierName"`
+	CarrierTotalCost       *float64 `json:"carrierTotalCost,omitempty"`
 }
 
 // The metrics strip at the top of the console: the numbers a dispatcher is measured on.
@@ -1134,6 +1160,21 @@ type DispatchCandidate struct {
 	HosProjectedCycleMs  int                    `json:"hosProjectedCycleMs"`
 	Findings             []*DispatchFinding     `json:"findings"`
 	Factors              []*DispatchScoreFactor `json:"factors"`
+}
+
+type DispatchCarrierAccessorialInput struct {
+	AccessorialChargeID *string `json:"accessorialChargeId,omitempty"`
+	Description         string  `json:"description"`
+	Amount              string  `json:"amount"`
+}
+
+type DispatchCarrierAssignmentPreviewInput struct {
+	CarrierID string `json:"carrierId"`
+}
+
+type DispatchCarrierEligibility struct {
+	Blockers []string `json:"blockers"`
+	Warnings []string `json:"warnings"`
 }
 
 // An assignment a driver already holds inside the planning horizon. The console draws these
@@ -3923,28 +3964,30 @@ type ShipmentLoadingWarning struct {
 }
 
 type ShipmentMove struct {
-	ID                     *string    `json:"id,omitempty"`
-	BusinessUnitID         string     `json:"businessUnitId"`
-	OrganizationID         string     `json:"organizationId"`
-	ShipmentID             *string    `json:"shipmentId,omitempty"`
-	Status                 MoveStatus `json:"status"`
-	Loaded                 bool       `json:"loaded"`
-	Sequence               int        `json:"sequence"`
-	Distance               *float64   `json:"distance,omitempty"`
-	DistanceSource         *string    `json:"distanceSource,omitempty"`
-	DistanceProvider       *string    `json:"distanceProvider,omitempty"`
-	DistanceCalculatedAt   *int       `json:"distanceCalculatedAt,omitempty"`
-	DistanceRouteSignature *string    `json:"distanceRouteSignature,omitempty"`
-	DistanceDataVersion    *string    `json:"distanceDataVersion,omitempty"`
-	DistanceRoutingType    *string    `json:"distanceRoutingType,omitempty"`
-	DistanceUnits          *string    `json:"distanceUnits,omitempty"`
+	ID                     *string                   `json:"id,omitempty"`
+	BusinessUnitID         string                    `json:"businessUnitId"`
+	OrganizationID         string                    `json:"organizationId"`
+	ShipmentID             *string                   `json:"shipmentId,omitempty"`
+	Status                 MoveStatus                `json:"status"`
+	CoverageType           shipment.MoveCoverageType `json:"coverageType"`
+	Loaded                 bool                      `json:"loaded"`
+	Sequence               int                       `json:"sequence"`
+	Distance               *float64                  `json:"distance,omitempty"`
+	DistanceSource         *string                   `json:"distanceSource,omitempty"`
+	DistanceProvider       *string                   `json:"distanceProvider,omitempty"`
+	DistanceCalculatedAt   *int                      `json:"distanceCalculatedAt,omitempty"`
+	DistanceRouteSignature *string                   `json:"distanceRouteSignature,omitempty"`
+	DistanceDataVersion    *string                   `json:"distanceDataVersion,omitempty"`
+	DistanceRoutingType    *string                   `json:"distanceRoutingType,omitempty"`
+	DistanceUnits          *string                   `json:"distanceUnits,omitempty"`
 	// Distance providers may return provider-specific route details, so this remains intentionally open-ended.
-	DistanceMetadata map[string]any      `json:"distanceMetadata,omitempty"`
-	Version          int                 `json:"version"`
-	CreatedAt        int                 `json:"createdAt"`
-	UpdatedAt        int                 `json:"updatedAt"`
-	Stops            []*ShipmentStop     `json:"stops"`
-	Assignment       *ShipmentAssignment `json:"assignment,omitempty"`
+	DistanceMetadata  map[string]any              `json:"distanceMetadata,omitempty"`
+	Version           int                         `json:"version"`
+	CreatedAt         int                         `json:"createdAt"`
+	UpdatedAt         int                         `json:"updatedAt"`
+	Stops             []*ShipmentStop             `json:"stops"`
+	Assignment        *ShipmentAssignment         `json:"assignment,omitempty"`
+	CarrierAssignment *shipment.CarrierAssignment `json:"carrierAssignment,omitempty"`
 }
 
 type ShipmentMoveInput struct {

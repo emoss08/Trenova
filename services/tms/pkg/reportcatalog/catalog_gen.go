@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:dfec1b13a2e49e29e811d909ff25520587d4638d64d8f38b9ff82451cad2c24c"
+const Version = "sha256:e7acee359aece076f28c8e46aab5f942ffd22ae43ae28e1a23eb2666216fb871"
 
 var Default = Catalog{
 	Version: Version,
@@ -4459,6 +4459,19 @@ var Default = Catalog{
 						{Value: "InTransit", Label: "In Transit"},
 						{Value: "Completed", Label: "Completed"},
 						{Value: "Canceled", Label: "Canceled"},
+					},
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:    "coverageType",
+					Column: buncolgen.NewColumn("coverage_type", "sm"),
+					Label:  "Coverage Type",
+					Type:   FieldEnum,
+					EnumValues: []EnumValue{
+						{Value: "driver", Label: "Driver"},
+						{Value: "carrier", Label: "Carrier"},
 					},
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,

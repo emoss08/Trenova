@@ -13,9 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
-	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/dashcontrolservice"
@@ -97,6 +98,7 @@ type Params struct {
 	CustomerRepo                 repositories.CustomerRepository
 	GLAccountRepo                repositories.GLAccountRepository
 	CommodityService             *commodityservice.Service
+	CarrierAssignmentService     *carrierassignmentservice.Service
 	CarrierService               *carrierservice.Service
 	CustomerService              *customerservice.Service
 	CustomFieldService           *customfieldservice.Service
@@ -198,6 +200,7 @@ type Resolver struct {
 	customerRepo                 repositories.CustomerRepository
 	glAccountRepo                repositories.GLAccountRepository
 	commodityService             *commodityservice.Service
+	carrierAssignmentService     *carrierassignmentservice.Service
 	carrierService               *carrierservice.Service
 	customerService              *customerservice.Service
 	customFieldService           *customfieldservice.Service
@@ -301,6 +304,7 @@ func New(p Params) *Resolver {
 		customerRepo:                 p.CustomerRepo,
 		glAccountRepo:                p.GLAccountRepo,
 		commodityService:             p.CommodityService,
+		carrierAssignmentService:     p.CarrierAssignmentService,
 		carrierService:               p.CarrierService,
 		customerService:              p.CustomerService,
 		customFieldService:           p.CustomFieldService,

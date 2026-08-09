@@ -11,35 +11,60 @@ import (
 	"github.com/uptrace/bun"
 )
 
+type MoveCoverageType string
+
+const (
+	MoveCoverageTypeDriver  = MoveCoverageType("driver")
+	MoveCoverageTypeCarrier = MoveCoverageType("carrier")
+)
+
+func (c MoveCoverageType) String() string {
+	return string(c)
+}
+
+func (c MoveCoverageType) IsValid() bool {
+	switch c {
+	case MoveCoverageTypeDriver, MoveCoverageTypeCarrier:
+		return true
+	}
+	return false
+}
+
 type ShipmentMove struct {
 	bun.BaseModel `json:"-" bun:"table:shipment_moves,alias:sm"`
 
-	ID                     pulid.ID       `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID       `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID         pulid.ID       `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ShipmentID             pulid.ID       `json:"shipmentId"           bun:"shipment_id,type:VARCHAR(100),notnull"`
-	Status                 MoveStatus     `json:"status"               bun:"status,type:move_status_enum,notnull,default:'New'"`
-	Loaded                 bool           `json:"loaded"               bun:"loaded,type:BOOLEAN,notnull,default:true"`
-	Sequence               int64          `json:"sequence"             bun:"sequence,type:INTEGER,notnull,default:0"`
-	Distance               *float64       `json:"distance"             bun:"distance,type:FLOAT,nullzero"`
-	DistanceSource         string         `json:"distanceSource"       bun:"distance_source,type:VARCHAR(50),nullzero"`
-	DistanceProvider       string         `json:"distanceProvider"     bun:"distance_provider,type:VARCHAR(50),nullzero"`
-	DistanceCalculatedAt   *int64         `json:"distanceCalculatedAt" bun:"distance_calculated_at,type:BIGINT,nullzero"`
-	DistanceRouteSignature string         `json:"distanceRouteSignature" bun:"distance_route_signature,type:TEXT,nullzero"`
-	DistanceDataVersion    string         `json:"distanceDataVersion"  bun:"distance_data_version,type:VARCHAR(50),nullzero"`
-	DistanceRoutingType    string         `json:"distanceRoutingType"  bun:"distance_routing_type,type:VARCHAR(50),nullzero"`
-	DistanceUnits          string         `json:"distanceUnits"        bun:"distance_units,type:VARCHAR(50),nullzero"`
-	DistanceMetadata       map[string]any `json:"distanceMetadata,omitempty" bun:"distance_metadata,type:JSONB,nullzero"`
-	Version                int64          `json:"version"              bun:"version,type:BIGINT"`
-	CreatedAt              int64          `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64          `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	Stops                  []*Stop        `json:"stops,omitempty"      bun:"rel:has-many,join:id=shipment_move_id"`
-	Assignment             *Assignment    `json:"assignment,omitempty" bun:"rel:has-one,join:id=shipment_move_id"`
-	Shipment               *Shipment      `json:"shipment,omitempty"   bun:"rel:belongs-to,join:shipment_id=id"`
+	ID                     pulid.ID           `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID         pulid.ID           `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ShipmentID             pulid.ID           `json:"shipmentId"           bun:"shipment_id,type:VARCHAR(100),notnull"`
+	Status                 MoveStatus         `json:"status"               bun:"status,type:move_status_enum,notnull,default:'New'"`
+	CoverageType           MoveCoverageType   `json:"coverageType"         bun:"coverage_type,type:VARCHAR(20),notnull,default:'driver'"`
+	Loaded                 bool               `json:"loaded"               bun:"loaded,type:BOOLEAN,notnull,default:true"`
+	Sequence               int64              `json:"sequence"             bun:"sequence,type:INTEGER,notnull,default:0"`
+	Distance               *float64           `json:"distance"             bun:"distance,type:FLOAT,nullzero"`
+	DistanceSource         string             `json:"distanceSource"       bun:"distance_source,type:VARCHAR(50),nullzero"`
+	DistanceProvider       string             `json:"distanceProvider"     bun:"distance_provider,type:VARCHAR(50),nullzero"`
+	DistanceCalculatedAt   *int64             `json:"distanceCalculatedAt" bun:"distance_calculated_at,type:BIGINT,nullzero"`
+	DistanceRouteSignature string             `json:"distanceRouteSignature" bun:"distance_route_signature,type:TEXT,nullzero"`
+	DistanceDataVersion    string             `json:"distanceDataVersion"  bun:"distance_data_version,type:VARCHAR(50),nullzero"`
+	DistanceRoutingType    string             `json:"distanceRoutingType"  bun:"distance_routing_type,type:VARCHAR(50),nullzero"`
+	DistanceUnits          string             `json:"distanceUnits"        bun:"distance_units,type:VARCHAR(50),nullzero"`
+	DistanceMetadata       map[string]any     `json:"distanceMetadata,omitempty" bun:"distance_metadata,type:JSONB,nullzero"`
+	Version                int64              `json:"version"              bun:"version,type:BIGINT"`
+	CreatedAt              int64              `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt              int64              `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Stops                  []*Stop            `json:"stops,omitempty"             bun:"rel:has-many,join:id=shipment_move_id"`
+	Assignment             *Assignment        `json:"assignment,omitempty"        bun:"rel:has-one,join:id=shipment_move_id"`
+	CarrierAssignment      *CarrierAssignment `json:"carrierAssignment,omitempty" bun:"rel:has-one,join:id=shipment_move_id"`
+	Shipment               *Shipment          `json:"shipment,omitempty"          bun:"rel:belongs-to,join:shipment_id=id"`
 }
 
 func (m *ShipmentMove) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
+
+	if m.CoverageType == "" {
+		m.CoverageType = MoveCoverageTypeDriver
+	}
 
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -70,6 +95,20 @@ func (m *ShipmentMove) HasAssignment() bool {
 	return m != nil && m.Assignment != nil
 }
 
+func (m *ShipmentMove) HasCarrierAssignment() bool {
+	return m != nil && m.CarrierAssignment.IsActive()
+}
+
+// HasCoverage reports whether the move is covered by either a company driver
+// assignment or an active external carrier assignment.
+func (m *ShipmentMove) HasCoverage() bool {
+	return m.HasAssignment() || m.HasCarrierAssignment()
+}
+
+func (m *ShipmentMove) IsCarrierCovered() bool {
+	return m != nil && m.CoverageType == MoveCoverageTypeCarrier
+}
+
 func (m *ShipmentMove) IsNew() bool {
 	return m.Status == MoveStatusNew
 }
@@ -86,6 +125,12 @@ func (sm *ShipmentMove) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&sm.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[MoveStatus]("Status is invalid"),
+		),
+		validation.Field(&sm.CoverageType,
+			validation.When(
+				sm.CoverageType != "",
+				domainvalidation.ValidEnum[MoveCoverageType]("Coverage type is invalid"),
+			),
 		),
 		validation.Field(&sm.Sequence,
 			validation.Min(int64(0)).Error("Sequence cannot be negative"),
