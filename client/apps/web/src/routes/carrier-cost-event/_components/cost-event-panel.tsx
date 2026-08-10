@@ -7,12 +7,8 @@ import type {
   CarrierCostEventStatus,
   CarrierCostEventType,
 } from "@trenova/shared/types/carrier-settlement";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { formatSettlementDate } from "@trenova/shared/lib/date";
 import { costEventTypeLabel } from "./cost-event-columns";
-
-function formatDate(unix?: number | null): string {
-  return formatUnixDateMedium(unix, { fallback: "—" });
-}
 
 export function CostEventPanel({
   open,
@@ -52,7 +48,7 @@ export function CostEventPanel({
               </tr>
               <tr className="border-b">
                 <td className="px-3 py-2 font-medium">Accrued</td>
-                <td className="px-3 py-2 text-right">{formatDate(row.eventDate)}</td>
+                <td className="px-3 py-2 text-right">{formatSettlementDate(row.eventDate)}</td>
               </tr>
               <tr className="border-b">
                 <td className="px-3 py-2 font-medium">Pro Number</td>

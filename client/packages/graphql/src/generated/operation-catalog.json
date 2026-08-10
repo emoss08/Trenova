@@ -1,5 +1,5 @@
 {
-  "operationCount": 413,
+  "operationCount": 412,
   "fragmentCount": 118,
   "operations": [
     {
@@ -1198,30 +1198,6 @@
       ],
       "usages": [],
       "sdl": "query CarrierCostEventTable($input: DataTableConnectionInput!) {\n  carrierCostEvents(input: $input) {\n    edges {\n      node {\n        id\n        carrierId\n        carrierAssignmentId\n        shipmentId\n        moveId\n        settlementId\n        eventType\n        status\n        eventDate\n        amountMinor\n        currencyCode\n        description\n        proNumber\n        assignmentVersion\n        voidedAt\n        voidReason\n        version\n        createdAt\n        updatedAt\n        carrier {\n          id\n          code\n          name\n          scac\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
-    },
-    {
-      "name": "CarrierDetail",
-      "kind": "query",
-      "domain": "carrier",
-      "sourceFile": "src/operations/carrier/table.graphql",
-      "hash": "sha256:6c91eaaa790144316305aad3cb6baa91f7326da8716567e858eb683e41d17163",
-      "rootFields": [
-        "carrier"
-      ],
-      "variables": [
-        {
-          "name": "id",
-          "type": "ID!",
-          "defaultValue": null
-        }
-      ],
-      "fragments": [
-        "CarrierContactFields",
-        "CarrierInsurancePolicyFields",
-        "CarrierTableRowFields"
-      ],
-      "usages": [],
-      "sdl": "query CarrierDetail($id: ID!) {\n  carrier(id: $id) {\n    ...CarrierTableRowFields\n    state {\n      id\n      name\n      abbreviation\n    }\n    remitState {\n      id\n      name\n      abbreviation\n    }\n  }\n}\n\nfragment CarrierContactFields on CarrierContact {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  name\n  title\n  email\n  phone\n  isPrimary\n  receivesRateConfirmations\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {\n  id\n  businessUnitId\n  organizationId\n  carrierId\n  policyType\n  policyNumber\n  providerName\n  coverageAmount\n  effectiveDate\n  expirationDate\n  isVerified\n  version\n  createdAt\n  updatedAt\n}\n\nfragment CarrierTableRowFields on Carrier {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  remitStateId\n  status\n  code\n  name\n  dbaName\n  carrierType\n  dotNumber\n  mcNumber\n  scac\n  complianceStatus\n  safetyRating\n  qualifiedAt\n  disqualifiedReason\n  taxId\n  taxIdType\n  w9OnFile\n  is1099Eligible\n  paymentMethod\n  paymentTermDays\n  remitToName\n  remitAddressLine1\n  remitAddressLine2\n  remitCity\n  remitPostalCode\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  phone\n  email\n  externalId\n  notes\n  version\n  createdAt\n  updatedAt\n  contacts {\n    ...CarrierContactFields\n  }\n  insurancePolicies {\n    ...CarrierInsurancePolicyFields\n  }\n}"
     },
     {
       "name": "CarrierInvoiceMatches",
@@ -9320,7 +9296,6 @@
       "sourceFile": "src/operations/carrier/table.graphql",
       "fragments": [],
       "usedByOperations": [
-        "CarrierDetail",
         "CarrierTable"
       ],
       "usages": [],
@@ -9333,7 +9308,6 @@
       "sourceFile": "src/operations/carrier/table.graphql",
       "fragments": [],
       "usedByOperations": [
-        "CarrierDetail",
         "CarrierTable"
       ],
       "usages": [],
@@ -9349,7 +9323,6 @@
         "CarrierInsurancePolicyFields"
       ],
       "usedByOperations": [
-        "CarrierDetail",
         "CarrierTable"
       ],
       "usages": [],

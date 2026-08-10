@@ -53,16 +53,6 @@ export function toCarrierAssignmentRequestBody(
 }
 
 export class CarrierAssignmentService {
-  public async getActive(moveId: string): Promise<CarrierAssignment | null> {
-    const response = await api.get<CarrierAssignment | undefined>(
-      `/shipment-moves/${moveId}/carrier-assignment/`,
-    );
-
-    if (!response) return null;
-
-    return safeParse(carrierAssignmentSchema, response, "CarrierAssignment");
-  }
-
   public async preview(moveId: string, carrierId: string): Promise<CarrierEligibility> {
     const response = await api.get<CarrierEligibility>(
       `/shipment-moves/${moveId}/carrier-assignment/preview/?carrierId=${encodeURIComponent(carrierId)}`,

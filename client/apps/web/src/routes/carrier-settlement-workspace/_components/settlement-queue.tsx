@@ -5,11 +5,14 @@ import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { BulkMarkPaidDialog } from "@/components/settlements/bulk-mark-paid-dialog";
+import {
+  BulkMarkPaidDialog,
+  CARRIER_MARK_PAID_METHODS,
+} from "@/components/settlements/bulk-mark-paid-dialog";
 import { runBulkAction } from "@/lib/bulk-run";
 import {
-  carrierLifecycleEligibility,
   carrierLifecycleVerbs,
+  eligibleCarrierSettlements,
   type CarrierSettlementLifecycleAction,
 } from "@/lib/carrier-settlement-lifecycle";
 import {
@@ -254,9 +257,7 @@ function BulkActionBar({
   const [payDialogOpen, setPayDialogOpen] = useState(false);
 
   const eligibleRows = (action: CarrierSettlementLifecycleAction) =>
-    checked.filter((settlement) =>
-      carrierLifecycleEligibility[action].includes(settlement.status as CarrierSettlementStatus),
-    );
+    eligibleCarrierSettlements(checked, action);
 
   const mutation = useMutation({
     mutationFn: async (input: {
@@ -333,6 +334,7 @@ function BulkActionBar({
         open={payDialogOpen}
         count={eligibleRows("MarkPaid").length}
         pending={mutation.isPending}
+        methods={CARRIER_MARK_PAID_METHODS}
         onOpenChange={setPayDialogOpen}
         onConfirm={(paymentMethod, paymentReference) => {
           setPayDialogOpen(false);

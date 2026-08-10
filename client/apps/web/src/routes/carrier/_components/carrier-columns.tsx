@@ -1,6 +1,9 @@
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { StatusBadge } from "@trenova/shared/components/status-badge";
+import {
+  CarrierComplianceStatusBadge,
+  CarrierSafetyRatingBadge,
+} from "@trenova/shared/components/status-badge";
 import {
   carrierComplianceStatusChoices,
   carrierSafetyRatingChoices,
@@ -165,7 +168,7 @@ export function getColumns(): ColumnDef<Carrier>[] {
     {
       accessorKey: "complianceStatus",
       header: "Compliance",
-      cell: ({ row }) => <StatusBadge status={row.original.complianceStatus} />,
+      cell: ({ row }) => <CarrierComplianceStatusBadge status={row.original.complianceStatus} />,
       size: 140,
       minSize: 110,
       maxSize: 160,
@@ -181,14 +184,7 @@ export function getColumns(): ColumnDef<Carrier>[] {
     {
       accessorKey: "safetyRating",
       header: "Safety Rating",
-      cell: ({ row }) => (
-        <StatusBadge
-          status={
-            findChoice(carrierSafetyRatingChoices, row.original.safetyRating)?.label ??
-            row.original.safetyRating
-          }
-        />
-      ),
+      cell: ({ row }) => <CarrierSafetyRatingBadge status={row.original.safetyRating} />,
       size: 140,
       minSize: 110,
       maxSize: 170,

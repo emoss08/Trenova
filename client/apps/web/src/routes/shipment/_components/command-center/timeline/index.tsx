@@ -55,6 +55,7 @@ import { TimelineToolbar } from "./timeline-toolbar";
 import { BarDetailPopover } from "./bar-detail-popover";
 import {
   barMatchesFocus,
+  isValidDropTarget,
   sortTimelineRows,
   UNASSIGNED_ROW_KEY,
   useTimelineData,
@@ -283,14 +284,17 @@ export default function CommandCenterTimeline({
     const bar = event.active.data.current?.bar as TimelineBar | undefined;
     const row = event.over?.data.current?.row as TimelineRow | undefined;
     if (!bar || !row) return;
+    // Re-check validity even though invalid rows disable their droppable: it
+    // guards carrier rows (whose `carrier:` keys are not worker IDs) and
+    // carrier-covered bars against ever reaching the assignment dialog.
+    if (!isValidDropTarget(bar, row)) return;
 
     if (row.key === UNASSIGNED_ROW_KEY) {
       // Carrier coverage cannot be dropped away: canceling it requires a recorded
       // reason, which lives behind the bar's detail popover instead.
-      if (bar.assignment && !bar.carrierAssignment) setPendingUnassign(bar);
+      setPendingUnassign(bar);
       return;
     }
-    if (bar.assignment?.primaryWorker?.id === row.key) return;
 
     setPendingAssignment({
       moveId: bar.moveId,

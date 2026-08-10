@@ -5,6 +5,7 @@ import {
   buildTimelineData,
   DWELL_CRITICAL_SECONDS,
   DWELL_WATCH_SECONDS,
+  isValidDropTarget,
   sortTimelineRows,
   UNASSIGNED_ROW_KEY,
 } from "./use-timeline-data";
@@ -476,6 +477,73 @@ describe("buildTimelineData", () => {
     expect(data.rows[0].bars.every((bar) => !bar.hasOverlap)).toBe(true);
     expect(data.rows[0].stats.overlaps).toBe(0);
     expect(data.exceptions.overlaps).toBe(0);
+  });
+});
+
+describe("isValidDropTarget", () => {
+  const shipments = [
+    makeShipment("shp_driver", "Assigned", [
+      {
+        id: "mov_driver",
+        workerId: "wkr_a",
+        workerName: "Alice Driver",
+        stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+      },
+    ]),
+    makeShipment("shp_other_driver", "Assigned", [
+      {
+        id: "mov_other",
+        workerId: "wkr_b",
+        workerName: "Bob Hauler",
+        stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+      },
+    ]),
+    makeShipment("shp_carrier", "Assigned", [
+      {
+        id: "mov_carrier",
+        carrierId: "car_1",
+        stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+      },
+    ]),
+    makeShipment("shp_open", "New", [
+      { id: "mov_open", stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }] },
+    ]),
+  ];
+  const data = buildTimelineData(shipments, 4, RANGE, NOW);
+  const aliceRow = data.rows.find((row) => row.key === "wkr_a")!;
+  const bobRow = data.rows.find((row) => row.key === "wkr_b")!;
+  const carrierRow = data.rows.find((row) => row.isCarrier)!;
+  const unassignedRow = data.unassignedRow!;
+  const driverBar = aliceRow.bars[0];
+  const carrierBar = carrierRow.bars[0];
+  const openBar = unassignedRow.bars.find((bar) => bar.moveId === "mov_open")!;
+
+  it("allows a driver bar onto another driver's row", () => {
+    expect(isValidDropTarget(driverBar, bobRow)).toBe(true);
+  });
+
+  it("rejects a drop back onto the bar's own driver", () => {
+    expect(isValidDropTarget(driverBar, aliceRow)).toBe(false);
+  });
+
+  it("never accepts carrier rows as drop targets — their keys are not worker IDs", () => {
+    expect(isValidDropTarget(driverBar, carrierRow)).toBe(false);
+    expect(isValidDropTarget(openBar, carrierRow)).toBe(false);
+  });
+
+  it("never accepts a carrier-covered bar on any row", () => {
+    expect(isValidDropTarget(carrierBar, bobRow)).toBe(false);
+    expect(isValidDropTarget(carrierBar, unassignedRow)).toBe(false);
+    expect(isValidDropTarget(carrierBar, carrierRow)).toBe(false);
+  });
+
+  it("only accepts bars with a driver assignment in the unassigned lane", () => {
+    expect(isValidDropTarget(driverBar, unassignedRow)).toBe(true);
+    expect(isValidDropTarget(openBar, unassignedRow)).toBe(false);
+  });
+
+  it("lets an unassigned bar drop onto any driver row", () => {
+    expect(isValidDropTarget(openBar, aliceRow)).toBe(true);
   });
 });
 

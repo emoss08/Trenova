@@ -36,6 +36,7 @@ import type {
   AssignmentPayload,
   CarrierAssignment,
   CarrierAssignmentPayload,
+  CarrierAssignmentPayloadInput,
 } from "@trenova/shared/types/shipment";
 import {
   assignmentPayloadSchema,
@@ -408,12 +409,12 @@ function toCarrierAssignmentDefaults(
   return {
     carrierId: existing.carrierId ?? "",
     rateMethod: existing.rateMethod,
-    baseRate: existing.baseRate ?? 0,
-    fuelSurcharge: existing.fuelSurcharge ?? null,
+    baseRate: Number(existing.baseRate ?? 0),
+    fuelSurcharge: existing.fuelSurcharge != null ? Number(existing.fuelSurcharge) : null,
     accessorials: (existing.accessorials ?? []).map((accessorial) => ({
       accessorialChargeId: accessorial.accessorialChargeId ?? null,
       description: accessorial.description,
-      amount: accessorial.amount ?? 0,
+      amount: Number(accessorial.amount ?? 0),
     })),
     proNumber: existing.proNumber ?? "",
     externalDriverName: existing.externalDriverName ?? "",
@@ -438,7 +439,7 @@ function CarrierAssignmentTab({
   const queryClient = useQueryClient();
   const isReplacing = isActiveCarrierAssignment(existingCarrierAssignment);
 
-  const form = useForm<CarrierAssignmentPayload>({
+  const form = useForm<CarrierAssignmentPayloadInput, unknown, CarrierAssignmentPayload>({
     resolver: zodResolver(carrierAssignmentPayloadSchema),
     defaultValues: toCarrierAssignmentDefaults(existingCarrierAssignment),
   });

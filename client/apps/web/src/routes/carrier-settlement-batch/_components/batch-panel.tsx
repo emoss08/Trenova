@@ -29,11 +29,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm, type Resolver } from "react-hook-form";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-
-function formatDate(unix?: number | null): string {
-  return formatUnixDateMedium(unix, { fallback: "—" });
-}
+import { formatSettlementDate } from "@trenova/shared/lib/date";
 
 export function CarrierBatchPanel({
   open,
@@ -88,9 +84,11 @@ function GenerateBatchPanel({
               Current Pay Period
             </p>
             <p className="mt-1 font-medium">
-              {formatDate(period.periodStart)} – {formatDate(period.periodEnd)}
+              {formatSettlementDate(period.periodStart)} – {formatSettlementDate(period.periodEnd)}
             </p>
-            <p className="text-xs text-muted-foreground">Pays on {formatDate(period.payDate)}</p>
+            <p className="text-xs text-muted-foreground">
+              Pays on {formatSettlementDate(period.payDate)}
+            </p>
           </div>
         ) : undefined
       }
@@ -170,8 +168,8 @@ function BatchDetail({ batchId }: { batchId: string }) {
       <div className="flex flex-wrap items-center gap-2">
         <CarrierSettlementBatchStatusBadge status={data.status as CarrierSettlementBatchStatus} />
         <span className="text-xs text-muted-foreground">
-          {formatDate(data.periodStart)} – {formatDate(data.periodEnd)} · pays{" "}
-          {formatDate(data.payDate)}
+          {formatSettlementDate(data.periodStart)} – {formatSettlementDate(data.periodEnd)} · pays{" "}
+          {formatSettlementDate(data.payDate)}
         </span>
         <Button
           size="sm"

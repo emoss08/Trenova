@@ -4,9 +4,10 @@ import {
   fetchCarrierSettlementWorkspaceSummary,
   fetchWorkspaceCarrierSettlements,
   generateCarrierSettlementBatch,
+  invalidateCarrierWorkspace,
   type CarrierSettlementRow,
 } from "@/lib/graphql/carrier-settlement";
-import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCcw, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
@@ -15,22 +16,6 @@ import { CarrierSettlementDetail } from "@/routes/carrier-settlement/_components
 import { CarrierContextRail } from "./carrier-context-rail";
 import { SettlementQueue, type QueueFilter } from "./settlement-queue";
 import { WorkspaceSummaryStrip } from "./workspace-summary";
-
-export function invalidateCarrierWorkspace(queryClient: QueryClient) {
-  const prefixes = [
-    "carrier-settlement-workspace-summary",
-    "carrier-settlement-workspace-settlements",
-    "carrier-settlement-detail",
-    "carrier-settlement-list",
-    "carrier-cost-event-list",
-    "carrier-pending-cost-events",
-    "carrier-recent-settlements",
-    "carrier-ledger-entries",
-  ];
-  for (const prefix of prefixes) {
-    void queryClient.invalidateQueries({ queryKey: [prefix] });
-  }
-}
 
 export default function Workspace() {
   const queryClient = useQueryClient();
@@ -78,7 +63,14 @@ export default function Workspace() {
         "That settlement isn't in the current pay period — look it up in Settlement History.",
       );
     }
-    setSearchParams({}, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("settlement");
+        return next;
+      },
+      { replace: true },
+    );
   }, [settlements, searchParams, setSearchParams]);
 
   useEffect(() => {

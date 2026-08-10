@@ -1,13 +1,10 @@
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { CarrierSettlementStatusBadge } from "@trenova/shared/components/status-badge";
+import { carrierSettlementStatusChoices } from "@/lib/choices";
 import type { CarrierSettlementRow } from "@/lib/graphql/carrier-settlement";
 import type { CarrierSettlementStatus } from "@trenova/shared/types/carrier-settlement";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-
-function formatDate(unix: number): string {
-  return formatUnixDateMedium(unix, { fallback: "—" });
-}
+import { formatSettlementDate } from "@trenova/shared/lib/date";
 
 function carrierName(row: CarrierSettlementRow): string {
   if (!row.carrier) return "—";
@@ -23,7 +20,15 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
         <CarrierSettlementStatusBadge status={row.original.status as CarrierSettlementStatus} />
       ),
       size: 150,
-      meta: { apiField: "status", label: "Status" },
+      meta: {
+        apiField: "status",
+        label: "Status",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: carrierSettlementStatusChoices,
+        defaultFilterOperator: "eq",
+      },
     },
     {
       accessorKey: "settlementNumber",
@@ -32,7 +37,14 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
         <span className="font-mono text-xs font-medium">{row.original.settlementNumber}</span>
       ),
       size: 150,
-      meta: { apiField: "settlementNumber", label: "Settlement Number" },
+      meta: {
+        apiField: "settlementNumber",
+        label: "Settlement Number",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+        defaultFilterOperator: "contains",
+      },
     },
     {
       id: "carrier",
@@ -43,16 +55,34 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
     {
       accessorKey: "periodEnd",
       header: "Period End",
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.periodEnd)}</span>,
+      cell: ({ row }) => (
+        <span className="text-xs">{formatSettlementDate(row.original.periodEnd)}</span>
+      ),
       size: 110,
-      meta: { apiField: "periodEnd", label: "Period End" },
+      meta: {
+        apiField: "periodEnd",
+        label: "Period End",
+        filterable: true,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
     },
     {
       accessorKey: "payDate",
       header: "Pay Date",
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.payDate)}</span>,
+      cell: ({ row }) => (
+        <span className="text-xs">{formatSettlementDate(row.original.payDate)}</span>
+      ),
       size: 110,
-      meta: { apiField: "payDate", label: "Pay Date" },
+      meta: {
+        apiField: "payDate",
+        label: "Pay Date",
+        filterable: true,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
     },
     {
       accessorKey: "shipmentCount",
@@ -61,7 +91,14 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
         <div className="text-right text-xs tabular-nums">{row.original.shipmentCount}</div>
       ),
       size: 70,
-      meta: { apiField: "shipmentCount", label: "Shipment Count" },
+      meta: {
+        apiField: "shipmentCount",
+        label: "Shipment Count",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+        defaultFilterOperator: "eq",
+      },
     },
     {
       accessorKey: "grossCostMinor",
@@ -72,7 +109,14 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
         </div>
       ),
       size: 110,
-      meta: { apiField: "grossCostMinor", label: "Gross Cost Minor" },
+      meta: {
+        apiField: "grossCostMinor",
+        label: "Gross Cost Minor",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+        defaultFilterOperator: "eq",
+      },
     },
     {
       accessorKey: "adjustmentsMinor",
@@ -87,7 +131,14 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
         </div>
       ),
       size: 110,
-      meta: { apiField: "adjustmentsMinor", label: "Adjustments Minor" },
+      meta: {
+        apiField: "adjustmentsMinor",
+        label: "Adjustments Minor",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+        defaultFilterOperator: "eq",
+      },
     },
     {
       accessorKey: "netPayableMinor",
@@ -102,7 +153,14 @@ export function getColumns(): ColumnDef<CarrierSettlementRow>[] {
         </div>
       ),
       size: 120,
-      meta: { apiField: "netPayableMinor", label: "Net Payable Minor" },
+      meta: {
+        apiField: "netPayableMinor",
+        label: "Net Payable Minor",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+        defaultFilterOperator: "eq",
+      },
     },
   ];
 }

@@ -13,9 +13,29 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
-import type { CarrierAssignmentPayload, CarrierEligibility } from "@trenova/shared/types/shipment";
+import type {
+  CarrierAssignmentPayload,
+  CarrierAssignmentPayloadInput,
+  CarrierEligibility,
+} from "@trenova/shared/types/shipment";
 import { OctagonXIcon, PlusIcon, TrashIcon, TriangleAlertIcon } from "lucide-react";
 import { useFieldArray, type Control, type UseFormReturn } from "react-hook-form";
+
+/**
+ * The payload schema coerces GraphQL decimal strings to numbers, so the form's
+ * field values (input) and submitted values (output) differ — both entry points
+ * type their forms with these aliases so the pair cannot drift apart.
+ */
+export type CarrierAssignmentFormReturn = UseFormReturn<
+  CarrierAssignmentPayloadInput,
+  unknown,
+  CarrierAssignmentPayload
+>;
+export type CarrierAssignmentFormControl = Control<
+  CarrierAssignmentPayloadInput,
+  unknown,
+  CarrierAssignmentPayload
+>;
 
 /**
  * Whether the current eligibility verdict should keep the submit button disabled.
@@ -35,7 +55,7 @@ export function CarrierEligibilityAlerts({
   eligibility,
   isLoading,
 }: {
-  control: Control<CarrierAssignmentPayload>;
+  control: CarrierAssignmentFormControl;
   eligibility: CarrierEligibility | undefined;
   isLoading: boolean;
 }) {
@@ -93,11 +113,7 @@ export function CarrierEligibilityAlerts({
  * The full brokered-coverage field set, shared by the dispatch console dialog and the
  * shipment panel's carrier tab so the two entry points cannot drift apart.
  */
-export function CarrierAssignmentFields({
-  form,
-}: {
-  form: UseFormReturn<CarrierAssignmentPayload>;
-}) {
+export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormReturn }) {
   const { control, getValues, setValue } = form;
   const { fields, append, remove } = useFieldArray({ control, name: "accessorials" });
 

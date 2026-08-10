@@ -17,12 +17,14 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea, type ScrollAreaMaskVariant } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { carrierCostEventTypeChoices, findChoice } from "@/lib/choices";
 import {
   addCarrierSettlementAdjustment,
   approveCarrierSettlement,
   exportCarrierSettlementBatchCsv,
   fetchCarrierInvoiceMatches,
   fetchCarrierSettlementDetail,
+  invalidateCarrierWorkspace,
   markCarrierSettlementPaid,
   postCarrierSettlement,
   recalculateCarrierSettlement,
@@ -37,7 +39,7 @@ import { apiService } from "@/services/api";
 import { documentContentUrl } from "@/services/document";
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { formatSettlementDate } from "@trenova/shared/lib/date";
 import type { CarrierSettlementStatus } from "@trenova/shared/types/carrier-settlement";
 import type { RateConfirmation } from "@trenova/shared/types/rate-confirmation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -59,20 +61,13 @@ import { toast } from "sonner";
 
 type ReasonAction = "reject" | "void";
 
-const lineTypeLabels: Record<string, string> = {
-  LinehaulCost: "Linehaul Cost",
-  FuelSurcharge: "Fuel Surcharge",
-  Accessorial: "Accessorials",
-  Adjustment: "Manual Adjustments",
-};
+const lineTypeOrder = carrierCostEventTypeChoices.map((choice) => choice.value);
 
-const lineTypeOrder = ["LinehaulCost", "FuelSurcharge", "Accessorial", "Adjustment"];
+function lineTypeLabel(eventType: string): string {
+  return findChoice(carrierCostEventTypeChoices, eventType)?.label ?? eventType;
+}
 
 const MAX_RATE_CON_MOVES = 8;
-
-function formatDate(unix?: number | null): string {
-  return formatUnixDateMedium(unix, { fallback: "—" });
-}
 
 export function CarrierSettlementDetail({
   settlementId,
@@ -91,16 +86,7 @@ export function CarrierSettlementDetail({
     queryFn: () => fetchCarrierSettlementDetail(settlementId),
   });
 
-  const invalidate = () => {
-    void queryClient.invalidateQueries({
-      queryKey: ["carrier-settlement-detail", settlementId],
-    });
-    void queryClient.invalidateQueries({ queryKey: ["carrier-settlement-list"] });
-    void queryClient.invalidateQueries({ queryKey: ["carrier-settlement-workspace-summary"] });
-    void queryClient.invalidateQueries({
-      queryKey: ["carrier-settlement-workspace-settlements"],
-    });
-  };
+  const invalidate = () => invalidateCarrierWorkspace(queryClient);
 
   if (isLoading || !settlement) {
     return (
@@ -170,8 +156,9 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
           </span>
         )}
         <span className="ml-auto text-xs text-muted-foreground">
-          {formatDate(settlement.periodStart)} – {formatDate(settlement.periodEnd)} · pays{" "}
-          {formatDate(settlement.payDate)}
+          {formatSettlementDate(settlement.periodStart)} –{" "}
+          {formatSettlementDate(settlement.periodEnd)} · pays{" "}
+          {formatSettlementDate(settlement.payDate)}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -681,7 +668,7 @@ function SettlementLines({
           <div key={eventType}>
             <div className="mb-1 flex items-baseline justify-between">
               <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                {lineTypeLabels[eventType] ?? eventType}
+                {lineTypeLabel(eventType)}
               </h4>
               <AmountDisplay value={subtotal} currency={settlement.currencyCode} />
             </div>
@@ -942,7 +929,7 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
         {events.map((event) => (
           <li key={event.label} className="flex justify-between text-xs">
             <span>{event.label}</span>
-            <span className="text-muted-foreground">{formatDate(event.at)}</span>
+            <span className="text-muted-foreground">{formatSettlementDate(event.at)}</span>
           </li>
         ))}
       </ol>

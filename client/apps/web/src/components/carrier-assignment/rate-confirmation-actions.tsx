@@ -25,7 +25,13 @@ export function rateConfirmationQueryKey(moveId: string) {
   return ["move-rate-confirmations", moveId] as const;
 }
 
-export function RateConfirmationActions({ moveId }: { moveId: string }) {
+export function RateConfirmationActions({
+  moveId,
+  carrierAssignmentId,
+}: {
+  moveId: string;
+  carrierAssignmentId: string;
+}) {
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
@@ -35,7 +41,12 @@ export function RateConfirmationActions({ moveId }: { moveId: string }) {
     queryFn: () => apiService.rateConfirmationService.listByMove(moveId),
   });
 
-  const latest = latestActiveRateConfirmation(rateConfirmations);
+  // A move can accumulate rate confirmations from replaced assignments; only the
+  // active assignment's paper is actionable here.
+  const scopedRateConfirmations = rateConfirmations?.filter(
+    (rateCon) => rateCon.carrierAssignmentId === carrierAssignmentId,
+  );
+  const latest = latestActiveRateConfirmation(scopedRateConfirmations);
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: rateConfirmationQueryKey(moveId) });

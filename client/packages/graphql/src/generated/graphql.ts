@@ -3265,16 +3265,6 @@ export type CarrierTableQueryVariables = Exact<{
 
 export type CarrierTableQuery = { carriers: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type CarrierDetailQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type CarrierDetailQuery = { carrier: (
-    { state: { id: string, name: string, abbreviation: string } | null, remitState: { id: string, name: string, abbreviation: string } | null }
-    & { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } }
-  ) | null };
-
 export type CommodityTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: FreightClass | null, loadingInstructions: string | null, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CommodityTableRowFieldsFragment' };
 
 export type CommodityTableQueryVariables = Exact<{
@@ -10965,100 +10955,6 @@ fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
 }`, {"hash":"sha256:c1d3b3dbf1c186c2f3a581289a260a0abd3e4c4c2f26e2d0308b8f828289289b"}) as unknown as TypedDocumentString<CarrierTableQuery, CarrierTableQueryVariables>;
-export const CarrierDetailDocument = new TypedDocumentString(`
-    query CarrierDetail($id: ID!) {
-  carrier(id: $id) {
-    ...CarrierTableRowFields
-    state {
-      id
-      name
-      abbreviation
-    }
-    remitState {
-      id
-      name
-      abbreviation
-    }
-  }
-}
-    fragment CarrierContactFields on CarrierContact {
-  id
-  businessUnitId
-  organizationId
-  carrierId
-  name
-  title
-  email
-  phone
-  isPrimary
-  receivesRateConfirmations
-  version
-  createdAt
-  updatedAt
-}
-fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy {
-  id
-  businessUnitId
-  organizationId
-  carrierId
-  policyType
-  policyNumber
-  providerName
-  coverageAmount
-  effectiveDate
-  expirationDate
-  isVerified
-  version
-  createdAt
-  updatedAt
-}
-fragment CarrierTableRowFields on Carrier {
-  id
-  businessUnitId
-  organizationId
-  stateId
-  remitStateId
-  status
-  code
-  name
-  dbaName
-  carrierType
-  dotNumber
-  mcNumber
-  scac
-  complianceStatus
-  safetyRating
-  qualifiedAt
-  disqualifiedReason
-  taxId
-  taxIdType
-  w9OnFile
-  is1099Eligible
-  paymentMethod
-  paymentTermDays
-  remitToName
-  remitAddressLine1
-  remitAddressLine2
-  remitCity
-  remitPostalCode
-  addressLine1
-  addressLine2
-  city
-  postalCode
-  phone
-  email
-  externalId
-  notes
-  version
-  createdAt
-  updatedAt
-  contacts {
-    ...CarrierContactFields
-  }
-  insurancePolicies {
-    ...CarrierInsurancePolicyFields
-  }
-}`, {"hash":"sha256:6c91eaaa790144316305aad3cb6baa91f7326da8716567e858eb683e41d17163"}) as unknown as TypedDocumentString<CarrierDetailQuery, CarrierDetailQueryVariables>;
 export const CommodityTableDocument = new TypedDocumentString(`
     query CommodityTable($input: DataTableConnectionInput!) {
   commodities(input: $input) {

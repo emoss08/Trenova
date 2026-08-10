@@ -26,8 +26,9 @@ import {
   type CarrierInvoiceMatchRow,
   type EdiCarrierInvoiceRow,
 } from "@/lib/graphql/carrier-settlement";
+import { carrierInvoiceMatchStatusChoices } from "@/lib/choices";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { formatSettlementDate } from "@trenova/shared/lib/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Building2Icon,
@@ -51,9 +52,13 @@ type MatchFilter = "open" | "Suggested" | "Matched" | "Variance" | "Resolved" | 
 
 const OPEN_MATCH_STATUSES = new Set(["Suggested", "Matched", "Variance"]);
 
-function formatDate(unix?: number | null): string {
-  return formatUnixDateMedium(unix, { fallback: "—" });
-}
+const matchFilterChips: ReadonlyArray<{ value: MatchFilter; label: string }> = [
+  { value: "open", label: "Open" },
+  ...carrierInvoiceMatchStatusChoices.map((choice) => ({
+    value: choice.value as MatchFilter,
+    label: choice.label,
+  })),
+];
 
 function invoiceNeedsAttention(invoice: EdiCarrierInvoiceRow): boolean {
   return (
@@ -186,16 +191,7 @@ export default function MatchingWorkspace() {
               </div>
             ) : (
               <div className="flex flex-wrap gap-1">
-                {(
-                  [
-                    { value: "open", label: "Open" },
-                    { value: "Suggested", label: "Suggested" },
-                    { value: "Matched", label: "Matched" },
-                    { value: "Variance", label: "Variance" },
-                    { value: "Resolved", label: "Resolved" },
-                    { value: "Rejected", label: "Rejected" },
-                  ] as Array<{ value: MatchFilter; label: string }>
-                ).map((chip) => (
+                {matchFilterChips.map((chip) => (
                   <FilterChip
                     key={chip.value}
                     active={matchFilter === chip.value}
@@ -227,7 +223,11 @@ export default function MatchingWorkspace() {
         <ScrollArea className="h-full min-h-0" viewportClassName="min-h-0">
           {tab === "invoices" ? (
             selectedInvoice ? (
-              <InvoiceDetail invoice={selectedInvoice} onChanged={refresh} />
+              <InvoiceDetail
+                key={selectedInvoice.id}
+                invoice={selectedInvoice}
+                onChanged={refresh}
+              />
             ) : (
               <DetailEmptyState
                 title="No invoice selected"
@@ -237,7 +237,7 @@ export default function MatchingWorkspace() {
           ) : selectedMatch ? (
             <MatchDetail
               match={selectedMatch}
-              varianceToleranceMinor={controlQuery.data?.varianceToleranceMinor ?? 0}
+              varianceToleranceMinor={controlQuery.data?.varianceToleranceMinor ?? null}
               onChanged={refresh}
             />
           ) : (
@@ -513,7 +513,7 @@ function InvoiceDetail({
         <div className="border-b px-4 py-3">
           <h3 className="text-sm font-semibold">Invoice {invoice.invoiceNumber || invoice.id}</h3>
           <p className="text-xs text-muted-foreground">
-            EDI 210 carrier freight invoice · received {formatDate(invoice.createdAt)}
+            EDI 210 carrier freight invoice · received {formatSettlementDate(invoice.createdAt)}
           </p>
         </div>
         <div className="grid gap-3 p-4 md:grid-cols-2">
@@ -526,8 +526,8 @@ function InvoiceDetail({
                 : "—"
             }
           />
-          <Metric label="Invoice Date" value={formatDate(invoice.invoiceDate)} />
-          <Metric label="Delivery Date" value={formatDate(invoice.deliveryDate)} />
+          <Metric label="Invoice Date" value={formatSettlementDate(invoice.invoiceDate)} />
+          <Metric label="Delivery Date" value={formatSettlementDate(invoice.deliveryDate)} />
           <Metric label="Pro Number" value={invoice.proNumber || "—"} />
           <Metric label="BOL" value={invoice.bol || "—"} />
           <Metric label="Shipment Reference" value={invoice.shipmentReference || "—"} />
@@ -620,13 +620,15 @@ function MatchDetail({
   onChanged,
 }: {
   match: CarrierInvoiceMatchRow;
-  varianceToleranceMinor: number;
+  /** Null when the settlement control could not be loaded — tolerance is then unknown, not $0. */
+  varianceToleranceMinor: number | null;
   onChanged: () => void;
 }) {
   const [rejectOpen, setRejectOpen] = useState(false);
   const assignment = match.carrierAssignment;
   const currency = match.currencyCode || "USD";
-  const withinTolerance = Math.abs(match.varianceMinor) <= varianceToleranceMinor;
+  const withinTolerance =
+    varianceToleranceMinor != null && Math.abs(match.varianceMinor) <= varianceToleranceMinor;
   const isOpen = OPEN_MATCH_STATUSES.has(match.status);
 
   const acceptMutation = useMutation({
@@ -658,7 +660,7 @@ function MatchDetail({
           {match.carrier?.scac ? ` (${match.carrier.scac})` : ""}
         </span>
         <span className="ml-auto text-xs text-muted-foreground">
-          created {formatDate(match.createdAt)}
+          created {formatSettlementDate(match.createdAt)}
         </span>
       </div>
 
@@ -760,11 +762,17 @@ function MatchDetail({
               <AmountDisplay value={match.varianceMinor} variant="auto" currency={currency} />
             </p>
             <p className="text-[11px] text-muted-foreground">
-              Invoice minus expected · tolerance{" "}
-              <AmountDisplay value={varianceToleranceMinor} currency={currency} /> —{" "}
-              {withinTolerance
-                ? "within tolerance"
-                : "beyond tolerance, accept with variance to accrue the difference"}
+              {varianceToleranceMinor != null ? (
+                <>
+                  Invoice minus expected · tolerance{" "}
+                  <AmountDisplay value={varianceToleranceMinor} currency={currency} /> —{" "}
+                  {withinTolerance
+                    ? "within tolerance"
+                    : "beyond tolerance, accept with variance to accrue the difference"}
+                </>
+              ) : (
+                "Invoice minus expected"
+              )}
             </p>
           </div>
         </div>
@@ -772,19 +780,20 @@ function MatchDetail({
 
       {isOpen ? (
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            disabled={acceptMutation.isPending || acceptWithVarianceMutation.isPending}
-            onClick={() => acceptMutation.mutate()}
-            title="Reconciles the invoice against the buy rate without changing the accrued cost"
-          >
-            <CheckCheckIcon className="size-3.5" />
-            Accept
-          </Button>
+          {match.status !== "Variance" && (
+            <Button
+              size="sm"
+              disabled={acceptMutation.isPending || acceptWithVarianceMutation.isPending}
+              onClick={() => acceptMutation.mutate()}
+              title="Reconciles the invoice against the buy rate without changing the accrued cost"
+            >
+              <CheckCheckIcon className="size-3.5" />
+              Accept
+            </Button>
+          )}
           {match.status === "Variance" && (
             <Button
               size="sm"
-              variant="outline"
               disabled={acceptMutation.isPending || acceptWithVarianceMutation.isPending}
               onClick={() => acceptWithVarianceMutation.mutate()}
               title="Accrues an adjustment cost event for the variance so the carrier is paid the billed amount"
@@ -808,7 +817,7 @@ function MatchDetail({
       ) : (
         <p className="text-xs text-muted-foreground">
           {match.status === "Resolved"
-            ? `Resolved${match.resolvedAt ? ` ${formatDate(match.resolvedAt)}` : ""}${match.resolutionNote ? ` — ${match.resolutionNote}` : ""}`
+            ? `Resolved${match.resolvedAt ? ` ${formatSettlementDate(match.resolvedAt)}` : ""}${match.resolutionNote ? ` — ${match.resolutionNote}` : ""}`
             : `Rejected${match.resolutionNote ? ` — ${match.resolutionNote}` : ""}`}
         </p>
       )}

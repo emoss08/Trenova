@@ -21,6 +21,7 @@ import {
   carrierAssignmentPayloadSchema,
   emptyCarrierAssignmentPayload,
   type CarrierAssignmentPayload,
+  type CarrierAssignmentPayloadInput,
 } from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -71,7 +72,7 @@ export function CarrierAssignDialog({
 }) {
   const replace = move.coverageType === "carrier" && !!move.carrierAssignmentId;
 
-  const form = useForm<CarrierAssignmentPayload>({
+  const form = useForm<CarrierAssignmentPayloadInput, unknown, CarrierAssignmentPayload>({
     resolver: zodResolver(carrierAssignmentPayloadSchema),
     defaultValues: { ...emptyCarrierAssignmentPayload },
   });

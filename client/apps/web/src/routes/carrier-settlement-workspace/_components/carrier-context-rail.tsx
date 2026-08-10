@@ -5,6 +5,7 @@ import {
 } from "@trenova/shared/components/status-badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { carrierLedgerEntryTypeChoices, findChoice } from "@/lib/choices";
 import {
   fetchCarrierLedgerEntries,
   fetchCarrierPendingCostEvents,
@@ -13,22 +14,15 @@ import {
 } from "@/lib/graphql/carrier-settlement";
 import type {
   CarrierCostEventStatus,
-  CarrierLedgerEntryType,
   CarrierSettlementStatus,
 } from "@trenova/shared/types/carrier-settlement";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { formatUnixMonthDay } from "@trenova/shared/lib/date";
+import { formatSettlementMonthDay } from "@trenova/shared/lib/date";
 
-function formatDate(unix?: number | null): string {
-  return formatUnixMonthDay(unix, { fallback: "—" });
+function ledgerEntryTypeLabel(entryType: string): string {
+  return findChoice(carrierLedgerEntryTypeChoices, entryType)?.label ?? entryType;
 }
-
-const ledgerEntryLabels: Record<CarrierLedgerEntryType, string> = {
-  Bill: "Bill",
-  Payment: "Payment",
-  Adjustment: "Adjustment",
-};
 
 export function CarrierContextRail({
   carrierId,
@@ -136,7 +130,7 @@ function UnsettledCostSection({ carrierId }: { carrierId: string }) {
                   {event.proNumber || "No PRO"}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  {formatDate(event.eventDate)}
+                  {formatSettlementMonthDay(event.eventDate)}
                 </span>
                 <span className="ml-auto text-xs font-semibold">
                   <AmountDisplay value={event.amountMinor} currency={event.currencyCode} />
@@ -191,7 +185,8 @@ function RecentSettlementsSection({
                   {settlement.settlementNumber}
                 </p>
                 <p className="text-[10px] text-muted-foreground">
-                  {formatDate(settlement.periodStart)} – {formatDate(settlement.periodEnd)}
+                  {formatSettlementMonthDay(settlement.periodStart)} –{" "}
+                  {formatSettlementMonthDay(settlement.periodEnd)}
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-0.5">
@@ -248,9 +243,7 @@ function LedgerSection({ carrierId }: { carrierId: string }) {
               key={entry.id}
               className="flex items-center gap-2 rounded-md border px-2 py-1 text-[11px]"
             >
-              <span className="font-medium">
-                {ledgerEntryLabels[entry.entryType as CarrierLedgerEntryType] ?? entry.entryType}
-              </span>
+              <span className="font-medium">{ledgerEntryTypeLabel(entry.entryType)}</span>
               <span className="truncate font-mono text-[10px] text-muted-foreground">
                 {entry.documentNumber}
               </span>

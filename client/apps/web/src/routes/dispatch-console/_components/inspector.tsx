@@ -106,6 +106,7 @@ function CandidateRow({
 }
 
 function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
+  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
   const openCarrierCancel = useDispatchConsoleStore.use.openCarrierCancel();
 
   return (
@@ -122,8 +123,22 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
           Total cost {formatCurrency(move.carrierTotalCost)}
         </span>
       )}
-      <RateConfirmationActions moveId={move.moveId} />
-      <div>
+      {move.carrierAssignmentId && (
+        <RateConfirmationActions
+          moveId={move.moveId}
+          carrierAssignmentId={move.carrierAssignmentId}
+        />
+      )}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[10px]"
+          title="Broker this move to a different carrier — the current assignment is replaced"
+          onClick={() => openCarrierAssign(move)}
+        >
+          Replace carrier
+        </Button>
         <Button
           size="sm"
           variant="outline"

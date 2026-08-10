@@ -54,6 +54,29 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
+import type { QueryClient } from "@tanstack/react-query";
+
+/**
+ * Invalidates every query the carrier settlement workspace renders — the queue
+ * and summary, the selected detail, the history table, and the context rail
+ * (cost events, recent settlements, AP ledger). Any surface that mutates a
+ * carrier settlement must use this so the rail refreshes with the money.
+ */
+export function invalidateCarrierWorkspace(queryClient: QueryClient) {
+  const prefixes = [
+    "carrier-settlement-workspace-summary",
+    "carrier-settlement-workspace-settlements",
+    "carrier-settlement-detail",
+    "carrier-settlement-list",
+    "carrier-cost-event-list",
+    "carrier-pending-cost-events",
+    "carrier-recent-settlements",
+    "carrier-ledger-entries",
+  ];
+  for (const prefix of prefixes) {
+    void queryClient.invalidateQueries({ queryKey: [prefix] });
+  }
+}
 
 export type CarrierSettlementRow = NonNullable<
   CarrierSettlementTableQuery["carrierSettlements"]["edges"]

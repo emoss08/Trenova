@@ -19,8 +19,12 @@ describe("eligibleCarrierSettlements", () => {
     expect(eligibleCarrierSettlements(rows, "Submit").map((row) => row.id)).toEqual(["1"]);
   });
 
-  it("approves drafts and pending settlements", () => {
-    expect(eligibleCarrierSettlements(rows, "Approve").map((row) => row.id)).toEqual(["1", "2"]);
+  it("approves only settlements pending approval, matching the server transition matrix", () => {
+    expect(eligibleCarrierSettlements(rows, "Approve").map((row) => row.id)).toEqual(["2"]);
+  });
+
+  it("never lets a draft skip the approval queue", () => {
+    expect(eligibleCarrierSettlements([{ id: "d", status: "Draft" }], "Approve")).toEqual([]);
   });
 
   it("posts only approved settlements", () => {

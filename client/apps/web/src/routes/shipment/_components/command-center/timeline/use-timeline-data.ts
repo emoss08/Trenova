@@ -147,6 +147,19 @@ export function barMatchesFocus(bar: TimelineBar, focus: TimelineFocus): boolean
   }
 }
 
+/**
+ * Whether dropping `bar` onto `row` is a legal reassignment. Carrier-covered
+ * bars never accept a driver drop, and carrier rows are not drop targets:
+ * coverage moves through the carrier dialogs, not drag-and-drop. The unassigned
+ * lane only accepts bars that actually have a driver assignment to remove, and
+ * dropping a bar back onto its own driver is a no-op.
+ */
+export function isValidDropTarget(bar: TimelineBar, row: TimelineRow): boolean {
+  if (bar.carrierAssignment || row.isCarrier) return false;
+  if (row.key === UNASSIGNED_ROW_KEY) return !!bar.assignment;
+  return bar.assignment?.primaryWorker?.id !== row.key;
+}
+
 type UseTimelineDataParams = {
   range: TimeRange;
   fieldFilters: FieldFilter[];

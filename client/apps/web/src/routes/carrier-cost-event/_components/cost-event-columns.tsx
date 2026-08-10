@@ -7,11 +7,7 @@ import type {
   CarrierCostEventType,
 } from "@trenova/shared/types/carrier-settlement";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-
-function formatDate(unix: number): string {
-  return formatUnixDateMedium(unix, { fallback: "—" });
-}
+import { formatSettlementDate } from "@trenova/shared/lib/date";
 
 export function costEventTypeLabel(eventType: CarrierCostEventType): string {
   return (
@@ -74,7 +70,9 @@ export function getColumns(): ColumnDef<CarrierCostEventRow>[] {
     {
       accessorKey: "eventDate",
       header: "Accrued",
-      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.eventDate)}</span>,
+      cell: ({ row }) => (
+        <span className="text-xs">{formatSettlementDate(row.original.eventDate)}</span>
+      ),
       size: 110,
       meta: { apiField: "eventDate", label: "Event Date" },
     },

@@ -253,15 +253,32 @@ export function isActiveCarrierAssignment(
   return !!carrierAssignment?.id && carrierAssignment.status !== "Canceled";
 }
 
+/**
+ * Rate fields arrive as plain numbers from the form inputs but as decimal
+ * strings when prefilled from GraphQL (replace flows), so both are accepted
+ * and normalized to a number — mirroring the `decimalStringSchema` pattern.
+ */
+const decimalNumberSchema = (requiredError: string, negativeError: string) =>
+  z
+    .union(
+      [
+        z
+          .string()
+          .transform((val) => (val.trim() === "" ? Number.NaN : Number(val)))
+          .refine((val) => Number.isFinite(val), { error: requiredError }),
+        z.number().refine((val) => Number.isFinite(val), { error: requiredError }),
+      ],
+      { error: requiredError },
+    )
+    .refine((val) => val >= 0, { error: negativeError });
+
 const carrierAssignmentAccessorialPayloadSchema = z.object({
   accessorialChargeId: nullableStringSchema,
   description: z
     .string()
     .min(1, { error: "Description is required" })
     .max(255, { error: "Description must be at most 255 characters" }),
-  amount: z
-    .number({ error: "Amount is required" })
-    .nonnegative({ error: "Amount cannot be negative" }),
+  amount: decimalNumberSchema("Amount is required", "Amount cannot be negative"),
 });
 export type CarrierAssignmentAccessorialPayload = z.infer<
   typeof carrierAssignmentAccessorialPayloadSchema
@@ -270,13 +287,11 @@ export type CarrierAssignmentAccessorialPayload = z.infer<
 export const carrierAssignmentPayloadSchema = z.object({
   carrierId: z.string().min(1, { error: "Carrier is required" }),
   rateMethod: carrierRateMethodSchema,
-  baseRate: z
-    .number({ error: "Base rate is required" })
-    .nonnegative({ error: "Base rate cannot be negative" }),
-  fuelSurcharge: z
-    .number()
-    .nonnegative({ error: "Fuel surcharge cannot be negative" })
-    .nullish(),
+  baseRate: decimalNumberSchema("Base rate is required", "Base rate cannot be negative"),
+  fuelSurcharge: decimalNumberSchema(
+    "Fuel surcharge must be a valid number",
+    "Fuel surcharge cannot be negative",
+  ).nullish(),
   accessorials: z.array(carrierAssignmentAccessorialPayloadSchema),
   proNumber: z.string().max(50, { error: "Pro number must be at most 50 characters" }),
   externalDriverName: z.string().max(255, { error: "Driver name must be at most 255 characters" }),
@@ -290,6 +305,7 @@ export const carrierAssignmentPayloadSchema = z.object({
   overrideInsuranceWarning: z.boolean(),
 });
 export type CarrierAssignmentPayload = z.infer<typeof carrierAssignmentPayloadSchema>;
+export type CarrierAssignmentPayloadInput = z.input<typeof carrierAssignmentPayloadSchema>;
 
 export const emptyCarrierAssignmentPayload: CarrierAssignmentPayload = {
   carrierId: "",
@@ -526,9 +542,7 @@ export const shipmentProfitabilityEstimateSchema = z.object({
   targetMarginPercent: z.string().nullish(),
   missingDistance: z.boolean(),
 });
-export type ShipmentProfitabilityEstimate = z.infer<
-  typeof shipmentProfitabilityEstimateSchema
->;
+export type ShipmentProfitabilityEstimate = z.infer<typeof shipmentProfitabilityEstimateSchema>;
 
 export const shipmentSchema = z.object({
   ...tenantInfoSchema.shape,

@@ -12,6 +12,7 @@ import type {
   RecurringEarningStatus,
   SettlementBatchStatus,
 } from "@trenova/shared/types/driver-pay";
+import type { CarrierComplianceStatus, CarrierSafetyRating } from "@trenova/shared/types/carrier";
 import type {
   CarrierCostEventStatus,
   CarrierInvoiceMatchStatus,
@@ -23,6 +24,7 @@ import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirma
 import type { OrderStatus } from "@trenova/shared/types/order";
 import {
   shipmentStatusSchema,
+  type CarrierAssignmentStatus,
   type ShipmentStatus,
   type ShipmentTenderStatus,
 } from "@trenova/shared/types/shipment";
@@ -1243,6 +1245,124 @@ export function CarrierInvoiceMatchStatusBadge({
       variant: "inactive",
       text: "Rejected",
       description: "Dismissed — the invoice does not bill this assignment.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function CarrierComplianceStatusBadge({
+  status,
+  className,
+}: {
+  status: CarrierComplianceStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<CarrierComplianceStatus, BadgeAttrProps> = {
+    Pending: {
+      variant: "warning",
+      text: "Pending",
+      description: "Compliance review has not been completed for this carrier.",
+    },
+    Qualified: {
+      variant: "active",
+      text: "Qualified",
+      description: "The carrier passed the compliance review and can be assigned freight.",
+    },
+    Disqualified: {
+      variant: "inactive",
+      text: "Disqualified",
+      description: "The carrier failed compliance and must not be assigned freight.",
+    },
+    Expired: {
+      variant: "inactive",
+      text: "Expired",
+      description: "The carrier's qualification lapsed and must be renewed before assignment.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function CarrierSafetyRatingBadge({
+  status,
+  className,
+}: {
+  status: CarrierSafetyRating;
+  className?: string;
+}) {
+  const statusAttributes: Record<CarrierSafetyRating, BadgeAttrProps> = {
+    Satisfactory: {
+      variant: "active",
+      text: "Satisfactory",
+      description: "FMCSA rated the carrier satisfactory.",
+    },
+    Conditional: {
+      variant: "warning",
+      text: "Conditional",
+      description: "FMCSA found deficiencies — review before assigning freight.",
+    },
+    Unsatisfactory: {
+      variant: "inactive",
+      text: "Unsatisfactory",
+      description: "FMCSA rated the carrier unsatisfactory — do not assign freight.",
+    },
+    NotRated: {
+      variant: "secondary",
+      text: "Not Rated",
+      description: "FMCSA has not issued a safety rating for this carrier.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function CarrierAssignmentStatusBadge({
+  status,
+  className,
+}: {
+  status: CarrierAssignmentStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<CarrierAssignmentStatus, BadgeAttrProps> = {
+    Pending: {
+      variant: "warning",
+      text: "Pending",
+      description: "The carrier has been assigned but has not confirmed the rate yet.",
+    },
+    Confirmed: {
+      variant: "active",
+      text: "Confirmed",
+      description: "The carrier confirmed the negotiated rate for this move.",
+    },
+    Canceled: {
+      variant: "inactive",
+      text: "Canceled",
+      description: "The carrier assignment was canceled or replaced.",
     },
   };
 

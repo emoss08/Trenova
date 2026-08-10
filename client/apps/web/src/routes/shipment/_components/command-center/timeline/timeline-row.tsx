@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@trenova/shared/components/ui/avatar";
 import { cn } from "@trenova/shared/lib/utils";
-import { useDroppable } from "@dnd-kit/core";
+import { useDndContext, useDroppable } from "@dnd-kit/core";
 import { Building2Icon, ChevronDownIcon, ChevronRightIcon, InboxIcon } from "lucide-react";
 import {
   COLLAPSED_BAR_HEIGHT_PX,
@@ -13,6 +13,7 @@ import { getBarGeometry, type TimeRange } from "./time-scale";
 import type { TimelineZoom } from "../url-state";
 import {
   barMatchesFocus,
+  isValidDropTarget,
   UNASSIGNED_ROW_KEY,
   type TimelineBar,
   type TimelineFocus,
@@ -77,20 +78,16 @@ export function TimelineRowItem({
   onSelectBar,
 }: TimelineRowItemProps) {
   const isUnassigned = row.key === UNASSIGNED_ROW_KEY;
-  const { setNodeRef, isOver, active } = useDroppable({
+  const { active } = useDndContext();
+  const activeBar = active?.data.current?.bar as TimelineBar | undefined;
+  const isValidTarget = !!activeBar && isValidDropTarget(activeBar, row);
+  const { setNodeRef, isOver } = useDroppable({
     id: `row:${row.key}`,
     data: { row },
-    disabled: !droppable,
+    // Full validity feeds `disabled`, so dnd-kit never reports an invalid row as
+    // a drop target — a drop on it resolves to no target instead of a bogus one.
+    disabled: !droppable || !isValidTarget,
   });
-
-  const activeBar = active?.data.current?.bar as TimelineBar | undefined;
-  // Carrier-covered bars never accept a driver drop, and carrier rows are not drop
-  // targets: coverage moves through the carrier dialogs, not drag-and-drop.
-  const isValidTarget =
-    !!activeBar &&
-    !activeBar.carrierAssignment &&
-    !row.isCarrier &&
-    (isUnassigned ? !!activeBar.assignment : activeBar.assignment?.primaryWorker?.id !== row.key);
   const showDropHint = isOver && isValidTarget;
   const height = rowHeightPx(row.laneCount, density, collapsed);
 

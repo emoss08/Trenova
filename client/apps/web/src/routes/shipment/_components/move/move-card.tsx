@@ -13,11 +13,11 @@ import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { CarrierAssignmentCancelDialog } from "@/components/carrier-assignment/carrier-assignment-cancel-dialog";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
+import { CarrierAssignmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { apiService } from "@/services/api";
 import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
 import type {
   CarrierAssignment,
-  CarrierAssignmentStatus,
   MoveStatus,
   Shipment,
   Stop,
@@ -90,7 +90,7 @@ export function MoveCard({
   const unassignMutation = useMutation({
     mutationFn: () => apiService.assignmentService.unassign(move.id!),
     onSuccess: () => {
-      setValue(`moves.${moveIndex}.assignment`, undefined as any);
+      setValue(`moves.${moveIndex}.assignment`, null);
       setValue(`moves.${moveIndex}.status`, "New");
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       toast.success("Move unassigned", {
@@ -105,7 +105,7 @@ export function MoveCard({
   const cancelCarrierMutation = useMutation({
     mutationFn: (reason: string) => apiService.carrierAssignmentService.cancel(move.id!, reason),
     onSuccess: () => {
-      setValue(`moves.${moveIndex}.carrierAssignment`, undefined as any);
+      setValue(`moves.${moveIndex}.carrierAssignment`, null);
       setValue(`moves.${moveIndex}.coverageType`, "driver");
       setValue(`moves.${moveIndex}.status`, "New");
       setCancelCarrierOpen(false);
@@ -558,17 +558,12 @@ function StopTimelineItem({
   );
 }
 
-const carrierAssignmentStatusConfig: Record<
-  CarrierAssignmentStatus,
-  { label: string; variant: "warning" | "active" | "inactive" }
-> = {
-  Pending: { label: "Pending", variant: "warning" },
-  Confirmed: { label: "Confirmed", variant: "active" },
-  Canceled: { label: "Canceled", variant: "inactive" },
-};
-
-function formatCarrierMoney(value: number | null | undefined, currencyCode?: string): string {
-  return formatCurrency(value ?? 0, currencyCode || "USD");
+function formatCarrierMoney(
+  value: string | number | null | undefined,
+  currencyCode?: string | null,
+): string {
+  const amount = typeof value === "string" ? Number(value) : (value ?? 0);
+  return formatCurrency(Number.isFinite(amount) ? amount : 0, currencyCode || "USD");
 }
 
 function CarrierAssignmentDetails({
@@ -582,7 +577,6 @@ function CarrierAssignmentDetails({
   canCancel: boolean;
   onCancel: () => void;
 }) {
-  const statusConfig = carrierAssignmentStatusConfig[carrierAssignment.status];
   const carrierName = carrierAssignment.carrier?.name || "External carrier";
   const scac = carrierAssignment.carrier?.scac;
   const currency = carrierAssignment.currencyCode;
@@ -596,9 +590,10 @@ function CarrierAssignmentDetails({
             {carrierName}
             {scac ? ` (${scac})` : ""}
           </span>
-          <Badge variant={statusConfig.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
-            {statusConfig.label}
-          </Badge>
+          <CarrierAssignmentStatusBadge
+            status={carrierAssignment.status}
+            className="h-4 shrink-0 rounded px-1 text-[9px]"
+          />
         </div>
         {canCancel && (
           <Button type="button" size="xs" variant="outline" onClick={onCancel}>
@@ -651,9 +646,9 @@ function CarrierAssignmentDetails({
         </span>
       </div>
 
-      {moveId && (
+      {moveId && carrierAssignment.id && (
         <div className="mt-2 border-t pt-2">
-          <RateConfirmationActions moveId={moveId} />
+          <RateConfirmationActions moveId={moveId} carrierAssignmentId={carrierAssignment.id} />
         </div>
       )}
     </div>

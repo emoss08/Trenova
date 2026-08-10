@@ -58,6 +58,8 @@ import type {
   CarrierCostEventStatus,
   CarrierCostEventType,
   CarrierInvoiceMatchStatus,
+  CarrierLedgerEntryType,
+  CarrierSettlementBatchStatus,
   CarrierSettlementStatus,
 } from "@trenova/shared/types/carrier-settlement";
 import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
@@ -389,6 +391,18 @@ export const carrierCostEventTypeChoices = [
   { label: "Accessorial", value: "Accessorial", color: "#0d9488" },
   { label: "Adjustment", value: "Adjustment", color: "#7e22ce" },
 ] satisfies ReadonlyArray<GenericSelectOption<CarrierCostEventType>>;
+
+export const carrierSettlementBatchStatusChoices = [
+  { label: "Open", value: "Open", color: "#2563eb" },
+  { label: "Completed", value: "Completed", color: "#15803d" },
+  { label: "Canceled", value: "Canceled", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierSettlementBatchStatus>>;
+
+export const carrierLedgerEntryTypeChoices = [
+  { label: "Bill", value: "Bill", color: "#2563eb" },
+  { label: "Payment", value: "Payment", color: "#15803d" },
+  { label: "Adjustment", value: "Adjustment", color: "#7e22ce" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierLedgerEntryType>>;
 
 export const carrierCostEventStatusChoices = [
   { label: "Pending", value: "Pending", color: "#2563eb" },

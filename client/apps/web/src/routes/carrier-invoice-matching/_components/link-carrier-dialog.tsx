@@ -10,6 +10,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { linkEdiCarrierInvoiceToCarrier } from "@/lib/graphql/carrier-settlement";
 import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -35,8 +36,16 @@ export function LinkCarrierDialog({
   const form = useForm<LinkCarrierFormValues>({
     defaultValues: { carrierId: suggestedCarrierId ?? "" },
   });
-  const { control, handleSubmit, watch } = form;
+  const { control, handleSubmit, watch, reset } = form;
   const carrierId = watch("carrierId");
+
+  // Default values only apply on mount, so re-seed the form whenever the dialog
+  // opens or a suggestion arrives — otherwise a previous invoice's carrier (or a
+  // stale empty value) leaks into this one.
+  useEffect(() => {
+    if (!open) return;
+    reset({ carrierId: suggestedCarrierId ?? "" });
+  }, [open, suggestedCarrierId, reset]);
 
   const mutation = useMutation({
     mutationFn: (values: LinkCarrierFormValues) =>

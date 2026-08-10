@@ -93,18 +93,3 @@ query CarrierTable($input: DataTableConnectionInput!) {
   }
 }
 
-query CarrierDetail($id: ID!) {
-  carrier(id: $id) {
-    ...CarrierTableRowFields
-    state {
-      id
-      name
-      abbreviation
-    }
-    remitState {
-      id
-      name
-      abbreviation
-    }
-  }
-}

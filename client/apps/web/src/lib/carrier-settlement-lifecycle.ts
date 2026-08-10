@@ -2,12 +2,15 @@ import type { CarrierSettlementStatus } from "@trenova/shared/types/carrier-sett
 
 export type CarrierSettlementLifecycleAction = "Submit" | "Approve" | "Post" | "MarkPaid";
 
+// Mirrors the server's carrier settlement transition matrix: approval is only
+// valid from PendingApproval — drafts must be submitted first (the driver-side
+// Draft→Approve shortcut does not exist for carrier settlements).
 export const carrierLifecycleEligibility: Record<
   CarrierSettlementLifecycleAction,
   CarrierSettlementStatus[]
 > = {
   Submit: ["Draft"],
-  Approve: ["Draft", "PendingApproval"],
+  Approve: ["PendingApproval"],
   Post: ["Approved"],
   MarkPaid: ["Posted"],
 };
@@ -18,28 +21,6 @@ export const carrierLifecycleVerbs: Record<CarrierSettlementLifecycleAction, str
   Post: "posted",
   MarkPaid: "marked paid",
 };
-
-export const carrierSettlementLifecycleChoices = [
-  {
-    value: "Submit",
-    label: "Submit for Approval",
-    color: "#2563eb",
-    description: "Moves draft carrier statements into the approval queue.",
-  },
-  {
-    value: "Approve",
-    label: "Approve",
-    color: "#15803d",
-    description: "Approves draft and pending carrier settlements, locking their totals.",
-  },
-  {
-    value: "Post",
-    label: "Post to GL",
-    color: "#9333ea",
-    description:
-      "Journalizes approved settlements — purchased transportation against accounts payable.",
-  },
-] as const;
 
 export function eligibleCarrierSettlements<T extends { status: string }>(
   rows: T[],
