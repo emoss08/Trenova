@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -37,6 +39,11 @@ type Params struct {
 	Workflows             portservices.WorkflowStarter
 	EventService          portservices.ShipmentEventService
 	Realtime              portservices.RealtimeService
+	Config                *config.Config
+	Templates             portservices.DocumentTemplateResolver `optional:"true"`
+	EmailService          portservices.EmailService             `optional:"true"`
+	Notifications         *notificationservice.Service          `optional:"true"`
+	EDIChannel            portservices.EDITenderChannel         `optional:"true"`
 }
 
 type Service struct {
@@ -52,6 +59,12 @@ type Service struct {
 	workflows             portservices.WorkflowStarter
 	eventService          portservices.ShipmentEventService
 	realtime              portservices.RealtimeService
+	cfg                   *config.Config
+	templates             portservices.DocumentTemplateResolver
+	emailService          portservices.EmailService
+	notifications         *notificationservice.Service
+	assigner              portservices.CarrierMoveAssigner
+	ediChannel            portservices.EDITenderChannel
 }
 
 func New(p Params) *Service {
@@ -68,12 +81,30 @@ func New(p Params) *Service {
 		workflows:             p.Workflows,
 		eventService:          p.EventService,
 		realtime:              p.Realtime,
+		cfg:                   p.Config,
+		templates:             p.Templates,
+		emailService:          p.EmailService,
+		notifications:         p.Notifications,
+		ediChannel:            p.EDIChannel,
 	}
+}
+
+// AssignerSetter breaks the construction cycle between the tender service
+// (which needs the assigner to land accepted offers) and the carrier
+// assignment service (which needs the tender guard to withdraw dead tenders):
+// the assigner arrives after both are built.
+type AssignerSetter interface {
+	SetCarrierMoveAssigner(assigner portservices.CarrierMoveAssigner)
+}
+
+func (s *Service) SetCarrierMoveAssigner(assigner portservices.CarrierMoveAssigner) {
+	s.assigner = assigner
 }
 
 var (
 	_ portservices.TenderGuard            = (*Service)(nil)
 	_ portservices.TenderResponseRecorder = (*Service)(nil)
+	_ portservices.TenderLifecycle        = (*Service)(nil)
 )
 
 func (s *Service) Get(

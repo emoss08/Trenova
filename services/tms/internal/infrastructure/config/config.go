@@ -1151,10 +1151,19 @@ type Config struct {
 	Renderer             RendererConfig             `mapstructure:"renderer"`
 	Portal               PortalConfig               `mapstructure:"portal"`
 	Push                 PushConfig                 `mapstructure:"push"`
+	Tendering            TenderingConfig            `mapstructure:"tendering"`
 }
 
 type PortalConfig struct {
 	BaseURL string `mapstructure:"baseUrl" validate:"omitempty,url"`
+}
+
+type TenderingConfig struct {
+	PublicBaseURL string `mapstructure:"publicBaseUrl" validate:"omitempty,url"`
+}
+
+func (c *TenderingConfig) GetPublicBaseURL() string {
+	return strings.TrimSuffix(c.PublicBaseURL, "/")
 }
 
 type PushConfig struct {

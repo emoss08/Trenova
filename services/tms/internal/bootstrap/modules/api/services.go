@@ -329,6 +329,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	tenderservice.New,
 	func(s *tenderservice.Service) services.TenderGuard { return s },
 	func(s *tenderservice.Service) services.TenderResponseRecorder { return s },
+	func(s *tenderservice.Service) services.TenderLifecycle { return s },
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,
 	fx.Annotate(
@@ -421,6 +422,9 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 ), fx.Invoke(
 	func(setter servicefailureservice.EDIServiceSetter, service services.EDIService) {
 		setter.SetEDIService(service)
+	},
+	func(s *tenderservice.Service, assigner services.CarrierMoveAssigner) {
+		s.SetCarrierMoveAssigner(assigner)
 	},
 	fx.Annotate(
 		func(

@@ -2,14 +2,12 @@ package rateconfirmationservice
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
-
-const windowTimeLayout = "Mon 02 Jan 2006 15:04 MST"
 
 type payloadParams struct {
 	Shipment    *shipment.Shipment
@@ -106,20 +104,7 @@ func stopTypeLabel(stopType shipment.StopType) string {
 }
 
 func windowLabel(start int64, end *int64) string {
-	if start <= 0 {
-		return ""
-	}
-
-	startLabel := time.Unix(start, 0).UTC().Format(windowTimeLayout)
-	if end == nil || *end <= 0 {
-		return startLabel
-	}
-
-	endTime := time.Unix(*end, 0).UTC()
-	if endTime.UTC().Truncate(24*time.Hour) == time.Unix(start, 0).UTC().Truncate(24*time.Hour) {
-		return startLabel + "–" + endTime.Format("15:04 MST")
-	}
-	return startLabel + " – " + endTime.Format(windowTimeLayout)
+	return timeutils.WindowLabelUTC(start, end)
 }
 
 func rateMethodLabel(method shipment.CarrierRateMethod) string {
