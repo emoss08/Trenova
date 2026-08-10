@@ -527,6 +527,7 @@ func (r *Router) setupMiddleware() {
 			}),
 		),
 	)
+	r.s.router.Use(middleware.NewTokenRedactionMiddleware())
 	r.s.router.Use(ginzap.Ginzap(r.l, time.RFC3339, true))
 	r.s.router.Use(r.observabilityMiddleware.TracingMiddleware())
 	r.s.router.Use(middleware.NewRateLimiter(r.cfg, r.errorHandler).Middleware())
