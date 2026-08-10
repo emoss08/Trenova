@@ -10,38 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
-
-//nolint:exhaustive // canceled shipments never accrue cost
-var shipmentStatusRank = map[shipment.Status]int{
-	shipment.StatusNew:                0,
-	shipment.StatusPartiallyAssigned:  1,
-	shipment.StatusAssigned:           2,
-	shipment.StatusInTransit:          3,
-	shipment.StatusDelayed:            3,
-	shipment.StatusPartiallyCompleted: 4,
-	shipment.StatusCompleted:          5,
-	shipment.StatusReadyToInvoice:     6,
-	shipment.StatusInvoiced:           7,
-}
-
-func payTriggerRank(trigger tenant.PayTrigger) int {
-	switch trigger {
-	case tenant.PayTriggerMoveCompleted, tenant.PayTriggerShipmentDelivered:
-		return shipmentStatusRank[shipment.StatusCompleted]
-	case tenant.PayTriggerPODReceived:
-		return shipmentStatusRank[shipment.StatusReadyToInvoice]
-	case tenant.PayTriggerShipmentInvoiced:
-		return shipmentStatusRank[shipment.StatusInvoiced]
-	default:
-		return shipmentStatusRank[shipment.StatusCompleted]
-	}
-}
 
 func (s *Service) AfterShipmentUpdate(
 	ctx context.Context,
@@ -72,13 +47,13 @@ func (s *Service) AfterShipmentUpdate(
 		return nil
 	}
 
-	triggerRank := payTriggerRank(control.PayTrigger)
-	updatedRank, ok := shipmentStatusRank[updated.Status]
+	triggerRank := settlementshared.PayTriggerRank(control.PayTrigger)
+	updatedRank, ok := settlementshared.ShipmentStatusRank(updated.Status)
 	if !ok || updatedRank < triggerRank {
 		return nil
 	}
 	if original != nil {
-		if originalRank, known := shipmentStatusRank[original.Status]; known &&
+		if originalRank, known := settlementshared.ShipmentStatusRank(original.Status); known &&
 			originalRank >= triggerRank {
 			return nil
 		}
@@ -207,7 +182,10 @@ func (s *Service) accrueCarrierMove(
 		return err
 	}
 	if assignment == nil || !assignment.IsActive() {
-		return nil
+		// No active coverage means every assignment-derived pending event on the
+		// move is stale — sweep with an empty active-key set so a canceled or
+		// replaced assignment never leaves payable events behind.
+		return s.voidStaleMoveCostEvents(ctx, tenantInfo, move.ID, nil)
 	}
 
 	inputs := BuildAssignmentCostEventInputs(assignment)
@@ -254,10 +232,22 @@ func (s *Service) upsertCostEvent(
 			return nil
 		case carriersettlement.CostEventStatusPending,
 			carriersettlement.CostEventStatusVoided:
+			// A Pending event stamped with the current assignment version and
+			// identical pricing is already up to date; anything else — a voided
+			// event, a renegotiated rate (version bump), or drifted amounts — is
+			// stale and recomputes in place.
+			proNumber := costEventProNumber(params.Shipment, params.Assignment)
+			if existing.Status == carriersettlement.CostEventStatusPending &&
+				existing.AssignmentVersion == params.Assignment.Version &&
+				existing.AmountMinor == params.Input.AmountMinor &&
+				existing.Description == params.Input.Description &&
+				existing.ProNumber == proNumber {
+				return nil
+			}
 			existing.Status = carriersettlement.CostEventStatusPending
 			existing.AmountMinor = params.Input.AmountMinor
 			existing.Description = params.Input.Description
-			existing.ProNumber = costEventProNumber(params.Shipment, params.Assignment)
+			existing.ProNumber = proNumber
 			existing.AssignmentVersion = params.Assignment.Version
 			existing.VoidedAt = nil
 			existing.VoidReason = ""
@@ -304,6 +294,101 @@ func (s *Service) upsertCostEvent(
 	}
 	s.publishCostEventInvalidation(ctx, created, permission.OpCreate, pulid.Nil)
 	return nil
+}
+
+// ReaccrueMove re-derives the move's carrier cost events after an assignment
+// mutation (cancel or replace): stale pending events are voided and, when the
+// pay trigger has already crossed, the current assignment's costs accrue
+// immediately so a re-brokered move pays the right carrier.
+func (s *Service) ReaccrueMove(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+) error {
+	assignment, err := s.assignmentRepo.GetActiveByMoveID(ctx, tenantInfo, moveID)
+	if err != nil {
+		return err
+	}
+	if assignment == nil || !assignment.IsActive() {
+		return s.voidStaleMoveCostEvents(ctx, tenantInfo, moveID, nil)
+	}
+
+	shipmentID, err := s.shipmentIDForAssignment(ctx, tenantInfo, assignment)
+	if err != nil {
+		return err
+	}
+
+	sp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         shipmentID,
+		TenantInfo: tenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	var move *shipment.ShipmentMove
+	for _, candidate := range sp.Moves {
+		if candidate != nil && candidate.ID == moveID {
+			move = candidate
+			break
+		}
+	}
+	if move == nil || move.Status == shipment.MoveStatusCanceled || !move.IsCarrierCovered() {
+		return s.voidStaleMoveCostEvents(ctx, tenantInfo, moveID, nil)
+	}
+
+	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
+	if err != nil {
+		return err
+	}
+	if !payTriggerCrossed(control.PayTrigger, sp.Status, move.Status) {
+		return s.voidStaleMoveCostEvents(ctx, tenantInfo, moveID, nil)
+	}
+
+	eventDate := timeutils.NowUnix()
+	if sp.ActualDeliveryDate != nil {
+		eventDate = *sp.ActualDeliveryDate
+	}
+	return s.accrueCarrierMove(ctx, tenantInfo, sp, move, eventDate)
+}
+
+func payTriggerCrossed(
+	trigger tenant.PayTrigger,
+	shipmentStatus shipment.Status,
+	moveStatus shipment.MoveStatus,
+) bool {
+	if trigger == tenant.PayTriggerMoveCompleted &&
+		moveStatus == shipment.MoveStatusCompleted {
+		return true
+	}
+	rank, ok := settlementshared.ShipmentStatusRank(shipmentStatus)
+	return ok && rank >= settlementshared.PayTriggerRank(trigger)
+}
+
+func (s *Service) shipmentIDForAssignment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	assignment *shipment.CarrierAssignment,
+) (pulid.ID, error) {
+	if assignment.ShipmentMove != nil {
+		return assignment.ShipmentMove.ShipmentID, nil
+	}
+	full, err := s.assignmentRepo.GetByID(ctx, &repositories.GetCarrierAssignmentByIDRequest{
+		TenantInfo:          tenantInfo,
+		CarrierAssignmentID: assignment.ID,
+	})
+	if err != nil {
+		return pulid.Nil, err
+	}
+	if full.ShipmentMove == nil {
+		return pulid.Nil, errortypes.NewBusinessError(
+			"Carrier assignment is missing its shipment move",
+		).WithParam("carrierAssignmentId", assignment.ID.String())
+	}
+	return full.ShipmentMove.ShipmentID, nil
 }
 
 func costEventProNumber(sp *shipment.Shipment, assignment *shipment.CarrierAssignment) string {

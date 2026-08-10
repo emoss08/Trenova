@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -64,17 +65,17 @@ func (s *Service) ExportBatchPayrollCSV(
 				settlement.Worker.FirstName + " " + settlement.Worker.LastName,
 			)
 		}
-		writeCSVField(&sb, settlement.SettlementNumber)
+		settlementshared.WriteCSVField(&sb, settlement.SettlementNumber)
 		sb.WriteByte(',')
-		writeCSVField(&sb, workerName)
+		settlementshared.WriteCSVField(&sb, workerName)
 		sb.WriteByte(',')
-		writeCSVField(&sb, settlement.Classification.String())
+		settlementshared.WriteCSVField(&sb, settlement.Classification.String())
 		sb.WriteByte(',')
-		sb.WriteString(formatCSVDate(settlement.PeriodStart))
+		sb.WriteString(settlementshared.FormatCSVDate(settlement.PeriodStart))
 		sb.WriteByte(',')
-		sb.WriteString(formatCSVDate(settlement.PeriodEnd))
+		sb.WriteString(settlementshared.FormatCSVDate(settlement.PeriodEnd))
 		sb.WriteByte(',')
-		sb.WriteString(formatCSVDate(settlement.PayDate))
+		sb.WriteString(settlementshared.FormatCSVDate(settlement.PayDate))
 		sb.WriteByte(',')
 		sb.WriteString(money.DecimalFromMinor(settlement.GrossEarningsMinor).StringFixed(2))
 		sb.WriteByte(',')
@@ -164,18 +165,4 @@ func (s *Service) GetYTDPaySummaries(
 		results = append(results, summaries[workerID])
 	}
 	return results, nil
-}
-
-func writeCSVField(sb *strings.Builder, value string) {
-	if strings.ContainsAny(value, ",\"\n") {
-		sb.WriteByte('"')
-		sb.WriteString(strings.ReplaceAll(value, "\"", "\"\""))
-		sb.WriteByte('"')
-		return
-	}
-	sb.WriteString(value)
-}
-
-func formatCSVDate(unix int64) string {
-	return time.Unix(unix, 0).UTC().Format("2006-01-02")
 }

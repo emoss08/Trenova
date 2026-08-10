@@ -208,12 +208,30 @@ func (s *Service) CreateMatch(
 		if shipmentID.IsNil() {
 			shipmentID = invoice.ShipmentID
 		}
-	} else if carrierID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"carrierId",
-			errortypes.ErrRequired,
-			"Carrier is required for document AI invoice matches",
+	} else {
+		if carrierID.IsNil() {
+			return nil, errortypes.NewValidationError(
+				"carrierId",
+				errortypes.ErrRequired,
+				"Carrier is required for document AI invoice matches",
+			)
+		}
+
+		existing, err := s.invoiceMatchRepo.GetOpenByExtractionID(
+			ctx,
+			req.TenantInfo,
+			*req.DocumentAIExtractionID,
 		)
+		if err != nil {
+			return nil, err
+		}
+		if existing != nil {
+			return nil, errortypes.NewValidationError(
+				"documentAiExtractionId",
+				errortypes.ErrDuplicate,
+				"This document AI extraction already has an open match",
+			)
+		}
 	}
 
 	assignment, err := s.resolveMatchAssignment(ctx, req, carrierID, proNumber, shipmentID)

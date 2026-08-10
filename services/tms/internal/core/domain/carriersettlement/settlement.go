@@ -27,43 +27,43 @@ type CarrierSettlement struct {
 	bun.BaseModel             `bun:"table:carrier_settlements,alias:carstl" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                                 json:"-"`
 
-	ID                   pulid.ID  `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID  `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID  `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	CarrierID            pulid.ID  `json:"carrierId"            bun:"carrier_id,type:VARCHAR(100),notnull"`
-	BatchID              *pulid.ID `json:"batchId"              bun:"batch_id,type:VARCHAR(100),nullzero"`
-	SettlementNumber     string    `json:"settlementNumber"     bun:"settlement_number,type:VARCHAR(100),notnull"`
-	Status               Status    `json:"status"               bun:"status,type:VARCHAR(50),notnull,default:'Draft'"`
-	PeriodStart          int64     `json:"periodStart"          bun:"period_start,type:BIGINT,notnull"`
-	PeriodEnd            int64     `json:"periodEnd"            bun:"period_end,type:BIGINT,notnull"`
-	PayDate              int64     `json:"payDate"              bun:"pay_date,type:BIGINT,notnull"`
-	GrossCostMinor       int64     `json:"grossCostMinor"       bun:"gross_cost_minor,type:BIGINT,notnull,default:0"`
-	AdjustmentsMinor     int64     `json:"adjustmentsMinor"     bun:"adjustments_minor,type:BIGINT,notnull,default:0"`
-	NetPayableMinor      int64     `json:"netPayableMinor"      bun:"net_payable_minor,type:BIGINT,notnull,default:0"`
-	ShipmentCount        int       `json:"shipmentCount"        bun:"shipment_count,type:INTEGER,notnull,default:0"`
-	CurrencyCode         string    `json:"currencyCode"         bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	Notes                string    `json:"notes"                bun:"notes,type:TEXT,nullzero"`
-	SubmittedByID        pulid.ID  `json:"submittedById"        bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
-	SubmittedAt          *int64    `json:"submittedAt"          bun:"submitted_at,type:BIGINT,nullzero"`
-	ApprovedByID         pulid.ID  `json:"approvedById"         bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt           *int64    `json:"approvedAt"           bun:"approved_at,type:BIGINT,nullzero"`
-	PostedByID           pulid.ID  `json:"postedById"           bun:"posted_by_id,type:VARCHAR(100),nullzero"`
-	PostedAt             *int64    `json:"postedAt"             bun:"posted_at,type:BIGINT,nullzero"`
-	PostedJournalBatchID *pulid.ID `json:"postedJournalBatchId" bun:"posted_journal_batch_id,type:VARCHAR(100),nullzero"`
+	ID                     pulid.ID  `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID         pulid.ID  `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID         pulid.ID  `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	CarrierID              pulid.ID  `json:"carrierId"            bun:"carrier_id,type:VARCHAR(100),notnull"`
+	BatchID                *pulid.ID `json:"batchId"              bun:"batch_id,type:VARCHAR(100),nullzero"`
+	SettlementNumber       string    `json:"settlementNumber"     bun:"settlement_number,type:VARCHAR(100),notnull"`
+	Status                 Status    `json:"status"               bun:"status,type:VARCHAR(50),notnull,default:'Draft'"`
+	PeriodStart            int64     `json:"periodStart"          bun:"period_start,type:BIGINT,notnull"`
+	PeriodEnd              int64     `json:"periodEnd"            bun:"period_end,type:BIGINT,notnull"`
+	PayDate                int64     `json:"payDate"              bun:"pay_date,type:BIGINT,notnull"`
+	GrossCostMinor         int64     `json:"grossCostMinor"       bun:"gross_cost_minor,type:BIGINT,notnull,default:0"`
+	AdjustmentsMinor       int64     `json:"adjustmentsMinor"     bun:"adjustments_minor,type:BIGINT,notnull,default:0"`
+	NetPayableMinor        int64     `json:"netPayableMinor"      bun:"net_payable_minor,type:BIGINT,notnull,default:0"`
+	ShipmentCount          int       `json:"shipmentCount"        bun:"shipment_count,type:INTEGER,notnull,default:0"`
+	CurrencyCode           string    `json:"currencyCode"         bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
+	Notes                  string    `json:"notes"                bun:"notes,type:TEXT,nullzero"`
+	SubmittedByID          pulid.ID  `json:"submittedById"        bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
+	SubmittedAt            *int64    `json:"submittedAt"          bun:"submitted_at,type:BIGINT,nullzero"`
+	ApprovedByID           pulid.ID  `json:"approvedById"         bun:"approved_by_id,type:VARCHAR(100),nullzero"`
+	ApprovedAt             *int64    `json:"approvedAt"           bun:"approved_at,type:BIGINT,nullzero"`
+	PostedByID             pulid.ID  `json:"postedById"           bun:"posted_by_id,type:VARCHAR(100),nullzero"`
+	PostedAt               *int64    `json:"postedAt"             bun:"posted_at,type:BIGINT,nullzero"`
+	PostedJournalBatchID   *pulid.ID `json:"postedJournalBatchId" bun:"posted_journal_batch_id,type:VARCHAR(100),nullzero"`
 	PostedExpenseAccountID *pulid.ID `json:"postedExpenseAccountId" bun:"posted_expense_account_id,type:VARCHAR(100),nullzero"`
 	PostedAPAccountID      *pulid.ID `json:"postedApAccountId"      bun:"posted_ap_account_id,type:VARCHAR(100),nullzero"`
-	PaidAt               *int64    `json:"paidAt"               bun:"paid_at,type:BIGINT,nullzero"`
-	PaidByID             pulid.ID  `json:"paidById"             bun:"paid_by_id,type:VARCHAR(100),nullzero"`
-	PaymentMethod        string    `json:"paymentMethod"        bun:"payment_method,type:VARCHAR(50),nullzero"`
-	PaymentReference     string    `json:"paymentReference"     bun:"payment_reference,type:VARCHAR(100),nullzero"`
-	PaidJournalBatchID   *pulid.ID `json:"paidJournalBatchId"   bun:"paid_journal_batch_id,type:VARCHAR(100),nullzero"`
-	VoidedByID           pulid.ID  `json:"voidedById"           bun:"voided_by_id,type:VARCHAR(100),nullzero"`
-	VoidedAt             *int64    `json:"voidedAt"             bun:"voided_at,type:BIGINT,nullzero"`
-	VoidReason           string    `json:"voidReason"           bun:"void_reason,type:TEXT,nullzero"`
-	VoidJournalBatchID   *pulid.ID `json:"voidJournalBatchId"   bun:"void_journal_batch_id,type:VARCHAR(100),nullzero"`
-	Version              int64     `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt            int64     `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64     `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	PaidAt                 *int64    `json:"paidAt"               bun:"paid_at,type:BIGINT,nullzero"`
+	PaidByID               pulid.ID  `json:"paidById"             bun:"paid_by_id,type:VARCHAR(100),nullzero"`
+	PaymentMethod          string    `json:"paymentMethod"        bun:"payment_method,type:VARCHAR(50),nullzero"`
+	PaymentReference       string    `json:"paymentReference"     bun:"payment_reference,type:VARCHAR(100),nullzero"`
+	PaidJournalBatchID     *pulid.ID `json:"paidJournalBatchId"   bun:"paid_journal_batch_id,type:VARCHAR(100),nullzero"`
+	VoidedByID             pulid.ID  `json:"voidedById"           bun:"voided_by_id,type:VARCHAR(100),nullzero"`
+	VoidedAt               *int64    `json:"voidedAt"             bun:"voided_at,type:BIGINT,nullzero"`
+	VoidReason             string    `json:"voidReason"           bun:"void_reason,type:TEXT,nullzero"`
+	VoidJournalBatchID     *pulid.ID `json:"voidJournalBatchId"   bun:"void_journal_batch_id,type:VARCHAR(100),nullzero"`
+	Version                int64     `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt              int64     `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt              int64     `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnit *tenant.BusinessUnit     `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization     `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`

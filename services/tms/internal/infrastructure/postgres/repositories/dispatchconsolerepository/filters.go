@@ -72,7 +72,8 @@ var (
 		buncolgen.ShipmentMoveColumns.OrganizationID) +
 		" AND " + buncolgen.CarrierAssignmentColumns.BusinessUnitID.EqColumn(
 		buncolgen.ShipmentMoveColumns.BusinessUnitID) +
-		" AND " + buncolgen.CarrierAssignmentColumns.Status.Qualified() + " <> 'Canceled'"
+		" AND " + buncolgen.CarrierAssignmentColumns.Status.Qualified() +
+		" <> '" + shipment.CarrierAssignmentStatusCanceled.String() + "'"
 
 	assignedCarrierJoin = "LEFT JOIN " + buncolgen.CarrierTable.As(
 		buncolgen.CarrierTable.Alias) +

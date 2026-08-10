@@ -65,13 +65,19 @@ func buildContext(p payloadParams) *documenttemplate.RateConfirmationContext {
 
 func stopRows(stops []*shipment.Stop) []documenttemplate.RateConfirmationStopRow {
 	rows := make([]documenttemplate.RateConfirmationStopRow, 0, len(stops))
-	for idx, stop := range stops {
+	for _, stop := range stops {
 		if stop == nil {
 			continue
 		}
 
+		// Stop sequences are zero-based; the rendered order starts at 1. An
+		// unset sequence falls back to the row ordinal.
+		sequence := int(stop.Sequence) + 1
+		if stop.Sequence <= 0 {
+			sequence = len(rows) + 1
+		}
 		row := documenttemplate.RateConfirmationStopRow{
-			Sequence: idx + 1,
+			Sequence: sequence,
 			Type:     stopTypeLabel(stop.Type),
 			Window:   windowLabel(stop.ScheduledWindowStart, stop.ScheduledWindowEnd),
 			Address:  stop.AddressLine,

@@ -69,6 +69,10 @@ func (c CostEventStatus) IsValid() bool {
 	}
 }
 
+// BatchStatus mirrors the driver settlement batch enum. Batches are
+// intentionally Open-only today — nothing transitions them to Completed or
+// Canceled — so late cost events can keep flowing into the period's batch; the
+// terminal values exist for schema parity and future lifecycle work.
 type BatchStatus string
 
 const (

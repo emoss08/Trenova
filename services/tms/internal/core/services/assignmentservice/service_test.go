@@ -88,7 +88,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 			_ context.Context,
 			_ *repositories.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return cloneShipment(original), nil
+			return shipment.CloneForUpdate(original), nil
 		}).
 		Once()
 	shipmentRepo.EXPECT().
@@ -278,7 +278,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 	shipmentRepo := mocks.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
-		Return(cloneShipment(original), nil).
+		Return(shipment.CloneForUpdate(original), nil).
 		Once()
 
 	holdRepo := mocks.NewMockShipmentHoldRepository(t)
@@ -424,11 +424,11 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	shipmentRepo := mocks.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
-		Return(cloneShipment(original), nil).
+		Return(shipment.CloneForUpdate(original), nil).
 		Once()
 	shipmentRepo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
-		Return(cloneShipment(original), nil).
+		Return(shipment.CloneForUpdate(original), nil).
 		Once()
 
 	holdRepo := mocks.NewMockShipmentHoldRepository(t)
@@ -554,7 +554,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		RunAndReturn(func(_ context.Context, _ *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error) {
-			return cloneShipment(original), nil
+			return shipment.CloneForUpdate(original), nil
 		}).
 		Once()
 	shipmentRepo.EXPECT().
@@ -782,12 +782,12 @@ func ptrInt64(v int64) *int64 {
 func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, resolveDelayThresholdMinutes(nil))
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, resolveDelayThresholdMinutes(&tenant.ShipmentControl{
+	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, shipmentstate.ResolveControlDelayThreshold(nil))
+	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
 		AutoDelayShipments:          false,
 		AutoDelayShipmentsThreshold: new(int16(30)),
 	}))
-	assert.Equal(t, int16(30), resolveDelayThresholdMinutes(&tenant.ShipmentControl{
+	assert.Equal(t, int16(30), shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
 		AutoDelayShipments:          true,
 		AutoDelayShipmentsThreshold: new(int16(30)),
 	}))

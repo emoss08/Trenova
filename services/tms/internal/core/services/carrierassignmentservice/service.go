@@ -5,12 +5,13 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -35,10 +36,12 @@ type Params struct {
 	ShipmentRepo      repositories.ShipmentRepository
 	HoldRepo          repositories.ShipmentHoldRepository
 	ControlRepo       repositories.ShipmentControlRepository
+	RateConRepo       repositories.RateConfirmationRepository
 	ShipmentValidator *shipmentservice.Validator
 	Coordinator       *shipmentstate.Coordinator
 	EventService      portservices.ShipmentEventService
 	Realtime          portservices.RealtimeService
+	CostAccrual       portservices.CarrierCostAccrual `optional:"true"`
 }
 
 type Service struct {
@@ -50,10 +53,12 @@ type Service struct {
 	shipmentRepo      repositories.ShipmentRepository
 	holdRepo          repositories.ShipmentHoldRepository
 	controlRepo       repositories.ShipmentControlRepository
+	rateConRepo       repositories.RateConfirmationRepository
 	shipmentValidator *shipmentservice.Validator
 	coordinator       *shipmentstate.Coordinator
 	eventService      portservices.ShipmentEventService
 	realtime          portservices.RealtimeService
+	costAccrual       portservices.CarrierCostAccrual
 }
 
 func New(p Params) *Service {
@@ -66,10 +71,12 @@ func New(p Params) *Service {
 		shipmentRepo:      p.ShipmentRepo,
 		holdRepo:          p.HoldRepo,
 		controlRepo:       p.ControlRepo,
+		rateConRepo:       p.RateConRepo,
 		shipmentValidator: p.ShipmentValidator,
 		coordinator:       p.Coordinator,
 		eventService:      p.EventService,
 		realtime:          p.Realtime,
+		costAccrual:       p.CostAccrual,
 	}
 }
 
@@ -114,16 +121,22 @@ func (s *Service) AssignToMove(
 
 	var result *shipment.CarrierAssignment
 	var carrierEntity *carrier.Carrier
+	var replaced bool
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		move, txErr := s.assignmentRepo.GetMoveByID(txCtx, req.TenantInfo, req.ShipmentMoveID)
 		if txErr != nil {
 			return txErr
 		}
-		if txErr = ensureCoverableMove(move); txErr != nil {
+		if txErr = move.EnsureAssignable(); txErr != nil {
 			return txErr
 		}
-		if txErr = s.ensureNoDispatchHold(txCtx, move.ShipmentID, req.TenantInfo); txErr != nil {
+		if txErr = validatePerMileDistance(req.RateMethod, move.Distance); txErr != nil {
+			return txErr
+		}
+		if txErr = dispatchguard.EnsureNoDispatchHold(
+			txCtx, s.holdRepo, req.TenantInfo, move.ShipmentID,
+		); txErr != nil {
 			return txErr
 		}
 
@@ -168,6 +181,12 @@ func (s *Service) AssignToMove(
 			if _, txErr = s.repo.Update(txCtx, existing); txErr != nil {
 				return txErr
 			}
+			if txErr = s.voidActiveRateConfirmation(
+				txCtx, req.TenantInfo, existing.ID, "Carrier assignment replaced",
+			); txErr != nil {
+				return txErr
+			}
+			replaced = true
 		}
 
 		entity := s.buildAssignment(req, move)
@@ -206,13 +225,16 @@ func (s *Service) AssignToMove(
 	}
 
 	s.recordEvent(ctx, shipmenteventservice.BuildCarrierAssigned(
-		tenantRef(req.TenantInfo),
+		shipmenteventservice.TenantRefFor(req.TenantInfo),
 		assignmentRef(result),
 		result,
 		carrierEntity.Name,
-		actorFromTenant(req.TenantInfo),
+		shipmenteventservice.ActorFor(req.TenantInfo),
 	))
 	s.publishInvalidation(ctx, req.TenantInfo, shipmentIDOf(result), "carrier_assigned")
+	if replaced {
+		s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
+	}
 
 	return result, nil
 }
@@ -225,8 +247,8 @@ func (s *Service) Cancel(
 		return multiErr
 	}
 
-	var canceled *shipment.CarrierAssignment
 	var carrierName string
+	var shipmentID pulid.ID
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		existing, txErr := s.repo.GetActiveByMoveID(txCtx, req.TenantInfo, req.ShipmentMoveID)
@@ -247,6 +269,7 @@ func (s *Service) Cancel(
 			return errortypes.NewBusinessError("Only fresh assigned shipment moves can have their carrier assignment canceled").
 				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
 		}
+		shipmentID = move.ShipmentID
 
 		original, txErr := s.loadShipment(txCtx, req.TenantInfo, move.ShipmentID)
 		if txErr != nil {
@@ -261,7 +284,12 @@ func (s *Service) Cancel(
 		existing.Status = shipment.CarrierAssignmentStatusCanceled
 		existing.CanceledAt = &now
 		existing.CancellationReason = req.Reason
-		if canceled, txErr = s.repo.Update(txCtx, existing); txErr != nil {
+		if _, txErr = s.repo.Update(txCtx, existing); txErr != nil {
+			return txErr
+		}
+		if txErr = s.voidActiveRateConfirmation(
+			txCtx, req.TenantInfo, existing.ID, "Carrier assignment canceled",
+		); txErr != nil {
 			return txErr
 		}
 
@@ -275,13 +303,17 @@ func (s *Service) Cancel(
 	}
 
 	s.recordEvent(ctx, shipmenteventservice.BuildCarrierUnassigned(
-		tenantRef(req.TenantInfo),
-		assignmentRef(canceled),
+		shipmenteventservice.TenantRefFor(req.TenantInfo),
+		shipmenteventservice.AssignmentRef{
+			ShipmentID: shipmentID,
+			MoveID:     req.ShipmentMoveID,
+		},
 		carrierName,
 		req.Reason,
-		actorFromTenant(req.TenantInfo),
+		shipmenteventservice.ActorFor(req.TenantInfo),
 	))
-	s.publishInvalidation(ctx, req.TenantInfo, shipmentIDOf(canceled), "carrier_unassigned")
+	s.publishInvalidation(ctx, req.TenantInfo, shipmentID, "carrier_unassigned")
+	s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
 
 	return nil
 }
@@ -296,8 +328,8 @@ func (s *Service) applyCoverageChange(
 	moveID pulid.ID,
 	assignment *shipment.CarrierAssignment,
 ) error {
-	updated := cloneShipment(original)
-	targetMove := findMove(updated, moveID)
+	updated := shipment.CloneForUpdate(original)
+	targetMove := updated.FindMove(moveID)
 	if targetMove == nil {
 		return errortypes.NewBusinessError("Shipment does not contain the target move").
 			WithParam("shipmentMoveId", moveID.String())
@@ -320,7 +352,7 @@ func (s *Service) applyCoverageChange(
 	if multiErr := s.coordinator.PrepareForUpdateWithDelayThreshold(
 		original,
 		updated,
-		resolveDelayThresholdMinutes(control),
+		shipmentstate.ResolveControlDelayThreshold(control),
 	); multiErr != nil {
 		return multiErr
 	}
@@ -411,23 +443,59 @@ func (s *Service) loadShipment(
 	})
 }
 
-func (s *Service) ensureNoDispatchHold(
+// voidActiveRateConfirmation retires the assignment's standing agreement inside
+// the mutating transaction so a canceled or replaced assignment can never keep
+// an active rate confirmation behind it.
+func (s *Service) voidActiveRateConfirmation(
 	ctx context.Context,
-	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
+	assignmentID pulid.ID,
+	reason string,
 ) error {
-	hasHold, err := s.holdRepo.HasActiveDispatchHold(ctx, &repositories.ActiveShipmentHoldRequest{
-		ShipmentID: shipmentID,
-		TenantInfo: tenantInfo,
-	})
+	active, err := s.rateConRepo.GetActiveByAssignmentID(ctx, tenantInfo, assignmentID)
 	if err != nil {
 		return err
 	}
-	if hasHold {
-		return errortypes.NewBusinessError("Shipment has an active dispatch-blocking hold").
-			WithParam("shipmentId", shipmentID.String())
+	if active == nil {
+		return nil
 	}
 
+	now := timeutils.NowUnix()
+	active.Status = rateconfirmation.StatusVoided
+	active.VoidedAt = &now
+	active.VoidReason = reason
+	_, err = s.rateConRepo.Update(ctx, active)
+	return err
+}
+
+// reaccrueMove runs post-transaction, mirroring how accrual hooks fire
+// elsewhere; a failure is logged because the sweep re-derives from current
+// state on its next run.
+func (s *Service) reaccrueMove(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+) {
+	if s.costAccrual == nil {
+		return
+	}
+	if err := s.costAccrual.ReaccrueMove(ctx, tenantInfo, moveID); err != nil {
+		s.l.Error("failed to re-accrue carrier cost events for move",
+			zap.Error(err), zap.String("moveId", moveID.String()))
+	}
+}
+
+func validatePerMileDistance(rateMethod shipment.CarrierRateMethod, distance *float64) error {
+	if rateMethod != shipment.CarrierRateMethodPerMile {
+		return nil
+	}
+	if distance == nil || *distance <= 0 {
+		return errortypes.NewValidationError(
+			"rateMethod",
+			errortypes.ErrInvalid,
+			"Per-mile rates require a move with a computed distance. Compute the move distance first or use a Flat rate",
+		)
+	}
 	return nil
 }
 
@@ -489,36 +557,6 @@ func enforceEligibility(entity *carrier.Carrier, overrideWarnings bool) error {
 	return nil
 }
 
-func ensureCoverableMove(move *shipment.ShipmentMove) error {
-	//nolint:exhaustive // only actionable enum states require explicit handling here
-	switch move.Status {
-	case shipment.MoveStatusCompleted:
-		return errortypes.NewBusinessError("Completed shipment moves cannot be assigned")
-	case shipment.MoveStatusCanceled:
-		return errortypes.NewBusinessError("Canceled shipment moves cannot be assigned")
-	default:
-		return nil
-	}
-}
-
-func tenantRef(tenantInfo pagination.TenantInfo) shipmenteventservice.TenantRef {
-	return shipmenteventservice.TenantRef{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-	}
-}
-
-func actorFromTenant(tenantInfo pagination.TenantInfo) portservices.AuditActor {
-	if tenantInfo.UserID.IsNil() {
-		return portservices.AuditActor{}
-	}
-	return portservices.AuditActor{
-		PrincipalType: portservices.PrincipalTypeUser,
-		PrincipalID:   tenantInfo.UserID,
-		UserID:        tenantInfo.UserID,
-	}
-}
-
 func assignmentRef(assignment *shipment.CarrierAssignment) shipmenteventservice.AssignmentRef {
 	if assignment == nil {
 		return shipmenteventservice.AssignmentRef{}
@@ -538,65 +576,4 @@ func shipmentIDOf(assignment *shipment.CarrierAssignment) pulid.ID {
 		return pulid.Nil
 	}
 	return assignment.ShipmentMove.ShipmentID
-}
-
-func cloneShipment(source *shipment.Shipment) *shipment.Shipment {
-	if source == nil {
-		return nil
-	}
-
-	clone := *source
-	clone.Moves = make([]*shipment.ShipmentMove, 0, len(source.Moves))
-
-	for _, move := range source.Moves {
-		if move == nil {
-			clone.Moves = append(clone.Moves, nil)
-			continue
-		}
-
-		moveClone := *move
-		if move.Assignment != nil {
-			assignmentClone := *move.Assignment
-			moveClone.Assignment = &assignmentClone
-		}
-		if move.CarrierAssignment != nil {
-			carrierAssignmentClone := *move.CarrierAssignment
-			moveClone.CarrierAssignment = &carrierAssignmentClone
-		}
-		moveClone.Stops = make([]*shipment.Stop, 0, len(move.Stops))
-
-		for _, stop := range move.Stops {
-			if stop == nil {
-				moveClone.Stops = append(moveClone.Stops, nil)
-				continue
-			}
-
-			stopClone := *stop
-			moveClone.Stops = append(moveClone.Stops, &stopClone)
-		}
-
-		clone.Moves = append(clone.Moves, &moveClone)
-	}
-
-	return &clone
-}
-
-func findMove(entity *shipment.Shipment, moveID pulid.ID) *shipment.ShipmentMove {
-	for _, move := range entity.Moves {
-		if move != nil && move.ID == moveID {
-			return move
-		}
-	}
-
-	return nil
-}
-
-func resolveDelayThresholdMinutes(control *tenant.ShipmentControl) int16 {
-	if control == nil {
-		return shipmentstate.DisabledDelayThresholdMinutes
-	}
-	if control.AutoDelayShipmentsThreshold == nil {
-		return shipmentstate.ResolveDelayThresholdMinutes(0)
-	}
-	return shipmentstate.ResolveDelayThresholdMinutes(*control.AutoDelayShipmentsThreshold)
 }

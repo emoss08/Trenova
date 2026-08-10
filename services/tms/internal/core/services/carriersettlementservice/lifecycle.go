@@ -465,10 +465,15 @@ func (s *Service) AddAdjustmentLine(
 	})
 	entity.SyncTotals()
 
-	if err = s.settlementRepo.ReplaceLines(ctx, entity); err != nil {
-		return nil, err
-	}
-	updated, err := s.settlementRepo.Update(ctx, entity)
+	var updated *carriersettlement.CarrierSettlement
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if txErr := s.settlementRepo.ReplaceLines(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		var txErr error
+		updated, txErr = s.settlementRepo.Update(txCtx, entity)
+		return txErr
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -529,10 +534,15 @@ func (s *Service) RemoveAdjustmentLine(
 	entity.Lines = remaining
 	entity.SyncTotals()
 
-	if err = s.settlementRepo.ReplaceLines(ctx, entity); err != nil {
-		return nil, err
-	}
-	updated, err := s.settlementRepo.Update(ctx, entity)
+	var updated *carriersettlement.CarrierSettlement
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if txErr := s.settlementRepo.ReplaceLines(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		var txErr error
+		updated, txErr = s.settlementRepo.Update(txCtx, entity)
+		return txErr
+	})
 	if err != nil {
 		return nil, err
 	}

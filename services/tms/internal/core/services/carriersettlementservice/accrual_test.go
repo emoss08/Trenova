@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -211,16 +212,234 @@ func TestAccrueCarrierMoveRevivesVoidedAndVoidsStale(t *testing.T) {
 	assert.Equal(t, "Assignment cost line removed", staleAccessorial.VoidReason)
 }
 
-func TestAccrueCarrierMoveSkipsWithoutActiveAssignment(t *testing.T) {
+func TestAccrueCarrierMoveWithoutActiveAssignmentVoidsPending(t *testing.T) {
 	deps := setupAccrualTest(t)
 	tenantInfo := accrualTenantInfo()
 	sp := newAccrualShipment(tenantInfo)
 	move := newCarrierMove(sp)
 
+	orphaned := &carriersettlement.CostEvent{
+		ID:             pulid.MustNew("cacc_"),
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		EventType:      carriersettlement.CostEventTypeLinehaulCost,
+		Status:         carriersettlement.CostEventStatusPending,
+		IdempotencyKey: "carrier-cost:casn_old:LinehaulCost:0",
+	}
+	settled := &carriersettlement.CostEvent{
+		ID:             pulid.MustNew("cacc_"),
+		EventType:      carriersettlement.CostEventTypeLinehaulCost,
+		Status:         carriersettlement.CostEventStatusSettled,
+		IdempotencyKey: "carrier-cost:casn_old:FuelSurcharge:0",
+	}
+
 	deps.assignments.On("GetActiveByMoveID", mock.Anything, tenantInfo, move.ID).
 		Return(nil, nil)
+	deps.costEvents.On("ListByMove", mock.Anything, tenantInfo, move.ID).
+		Return([]*carriersettlement.CostEvent{orphaned, settled}, nil)
+	deps.costEvents.On("Update", mock.Anything, orphaned).Return(orphaned, nil).Once()
 
 	err := deps.svc.accrueCarrierMove(t.Context(), tenantInfo, sp, move, 1_700_000_000)
+	require.NoError(t, err)
+
+	deps.costEvents.AssertNotCalled(t, "Create")
+	assert.Equal(t, carriersettlement.CostEventStatusVoided, orphaned.Status,
+		"a canceled assignment must not leave payable events behind")
+	assert.Equal(t, carriersettlement.CostEventStatusSettled, settled.Status)
+}
+
+func TestUpsertCostEventSkipsCurrentPendingAndRepricesVersionBump(t *testing.T) {
+	deps := setupAccrualTest(t)
+	tenantInfo := accrualTenantInfo()
+	sp := newAccrualShipment(tenantInfo)
+	move := newCarrierMove(sp)
+	assignment := newFlatAssignment()
+	assignment.Version = 3
+	inputs := BuildAssignmentCostEventInputs(assignment)
+
+	current := &carriersettlement.CostEvent{
+		ID:                pulid.MustNew("cacc_"),
+		OrganizationID:    tenantInfo.OrgID,
+		BusinessUnitID:    tenantInfo.BuID,
+		Status:            carriersettlement.CostEventStatusPending,
+		IdempotencyKey:    inputs[0].IdempotencyKey,
+		AmountMinor:       inputs[0].AmountMinor,
+		Description:       inputs[0].Description,
+		ProNumber:         sp.ProNumber,
+		AssignmentVersion: 3,
+	}
+	deps.costEvents.On(
+		"GetByIdempotencyKey", mock.Anything, tenantInfo, inputs[0].IdempotencyKey,
+	).Return(current, nil)
+
+	err := deps.svc.upsertCostEvent(t.Context(), &upsertCostEventParams{
+		TenantInfo: tenantInfo,
+		Shipment:   sp,
+		Move:       move,
+		Assignment: assignment,
+		Input:      inputs[0],
+		EventDate:  1_700_000_000,
+	})
+	require.NoError(t, err)
+	deps.costEvents.AssertNotCalled(t, "Update")
+
+	stale := &carriersettlement.CostEvent{
+		ID:                pulid.MustNew("cacc_"),
+		OrganizationID:    tenantInfo.OrgID,
+		BusinessUnitID:    tenantInfo.BuID,
+		Status:            carriersettlement.CostEventStatusPending,
+		IdempotencyKey:    inputs[0].IdempotencyKey,
+		AmountMinor:       inputs[0].AmountMinor,
+		Description:       inputs[0].Description,
+		ProNumber:         sp.ProNumber,
+		AssignmentVersion: 2,
+	}
+	deps.costEvents.ExpectedCalls = nil
+	deps.costEvents.On(
+		"GetByIdempotencyKey", mock.Anything, tenantInfo, inputs[0].IdempotencyKey,
+	).Return(stale, nil)
+	deps.costEvents.On("Update", mock.Anything, stale).Return(stale, nil).Once()
+
+	err = deps.svc.upsertCostEvent(t.Context(), &upsertCostEventParams{
+		TenantInfo: tenantInfo,
+		Shipment:   sp,
+		Move:       move,
+		Assignment: assignment,
+		Input:      inputs[0],
+		EventDate:  1_700_000_000,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, int64(3), stale.AssignmentVersion,
+		"a version-bumped assignment reprices its pending events")
+}
+
+type reaccrueDeps struct {
+	costEvents  *mocks.MockCarrierCostEventRepository
+	assignments *mocks.MockCarrierAssignmentRepository
+	shipments   *mocks.MockShipmentRepository
+	control     *mocks.MockCarrierSettlementControlRepository
+	svc         *Service
+}
+
+func setupReaccrueTest(t *testing.T) *reaccrueDeps {
+	t.Helper()
+	costEvents := mocks.NewMockCarrierCostEventRepository(t)
+	assignments := mocks.NewMockCarrierAssignmentRepository(t)
+	shipments := mocks.NewMockShipmentRepository(t)
+	control := mocks.NewMockCarrierSettlementControlRepository(t)
+	svc := &Service{
+		l:                 zap.NewNop(),
+		costEventRepo:     costEvents,
+		assignmentRepo:    assignments,
+		shipmentRepo:      shipments,
+		settlementControl: control,
+	}
+	return &reaccrueDeps{
+		costEvents:  costEvents,
+		assignments: assignments,
+		shipments:   shipments,
+		control:     control,
+		svc:         svc,
+	}
+}
+
+func TestReaccrueMoveCancelAfterDeliveryVoidsEvents(t *testing.T) {
+	deps := setupReaccrueTest(t)
+	tenantInfo := accrualTenantInfo()
+	moveID := pulid.MustNew("sm_")
+
+	orphaned := &carriersettlement.CostEvent{
+		ID:             pulid.MustNew("cacc_"),
+		Status:         carriersettlement.CostEventStatusPending,
+		IdempotencyKey: "carrier-cost:casn_old:LinehaulCost:0",
+	}
+
+	deps.assignments.On("GetActiveByMoveID", mock.Anything, tenantInfo, moveID).
+		Return(nil, nil)
+	deps.costEvents.On("ListByMove", mock.Anything, tenantInfo, moveID).
+		Return([]*carriersettlement.CostEvent{orphaned}, nil)
+	deps.costEvents.On("Update", mock.Anything, orphaned).Return(orphaned, nil).Once()
+
+	err := deps.svc.ReaccrueMove(t.Context(), tenantInfo, moveID)
+	require.NoError(t, err)
+
+	assert.Equal(t, carriersettlement.CostEventStatusVoided, orphaned.Status)
+	assert.Equal(t, "Assignment cost line removed", orphaned.VoidReason)
+}
+
+func TestReaccrueMoveReplaceAfterDeliveryAccruesNewCarrier(t *testing.T) {
+	deps := setupReaccrueTest(t)
+	tenantInfo := accrualTenantInfo()
+	sp := newAccrualShipment(tenantInfo)
+	sp.Status = shipment.StatusCompleted
+	move := newCarrierMove(sp)
+	sp.Moves = []*shipment.ShipmentMove{move}
+
+	replacement := newFlatAssignment()
+	replacement.Accessorials = nil
+	replacement.SyncTotals(nil)
+	replacement.ShipmentMove = &shipment.ShipmentMove{ID: move.ID, ShipmentID: sp.ID}
+	inputs := BuildAssignmentCostEventInputs(replacement)
+
+	oldEvent := &carriersettlement.CostEvent{
+		ID:             pulid.MustNew("cacc_"),
+		Status:         carriersettlement.CostEventStatusPending,
+		IdempotencyKey: "carrier-cost:casn_old:LinehaulCost:0",
+	}
+
+	deps.assignments.On("GetActiveByMoveID", mock.Anything, tenantInfo, move.ID).
+		Return(replacement, nil)
+	deps.shipments.On("GetByID", mock.Anything, mock.Anything).Return(sp, nil)
+	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
+		Return(&tenant.CarrierSettlementControl{
+			PayTrigger: tenant.PayTriggerShipmentDelivered,
+		}, nil)
+	deps.costEvents.On("GetByIdempotencyKey", mock.Anything, tenantInfo, mock.Anything).
+		Return(nil, errors.New("not found")).Times(len(inputs))
+
+	created := make([]*carriersettlement.CostEvent, 0, len(inputs))
+	deps.costEvents.On("Create", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			created = append(created, args.Get(1).(*carriersettlement.CostEvent))
+		}).
+		Return(&carriersettlement.CostEvent{}, nil).Times(len(inputs))
+	deps.costEvents.On("ListByMove", mock.Anything, tenantInfo, move.ID).
+		Return([]*carriersettlement.CostEvent{oldEvent}, nil)
+	deps.costEvents.On("Update", mock.Anything, oldEvent).Return(oldEvent, nil).Once()
+
+	err := deps.svc.ReaccrueMove(t.Context(), tenantInfo, move.ID)
+	require.NoError(t, err)
+
+	require.Len(t, created, len(inputs))
+	assert.Equal(t, replacement.CarrierID, created[0].CarrierID,
+		"the replacement carrier accrues immediately after the trigger crossed")
+	assert.Equal(t, carriersettlement.CostEventStatusVoided, oldEvent.Status,
+		"the replaced assignment's events are voided")
+}
+
+func TestReaccrueMoveBeforeTriggerOnlyVoidsStale(t *testing.T) {
+	deps := setupReaccrueTest(t)
+	tenantInfo := accrualTenantInfo()
+	sp := newAccrualShipment(tenantInfo)
+	sp.Status = shipment.StatusInTransit
+	move := newCarrierMove(sp)
+	move.Status = shipment.MoveStatusInTransit
+	sp.Moves = []*shipment.ShipmentMove{move}
+
+	replacement := newFlatAssignment()
+	replacement.ShipmentMove = &shipment.ShipmentMove{ID: move.ID, ShipmentID: sp.ID}
+
+	deps.assignments.On("GetActiveByMoveID", mock.Anything, tenantInfo, move.ID).
+		Return(replacement, nil)
+	deps.shipments.On("GetByID", mock.Anything, mock.Anything).Return(sp, nil)
+	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
+		Return(&tenant.CarrierSettlementControl{
+			PayTrigger: tenant.PayTriggerShipmentDelivered,
+		}, nil)
+	deps.costEvents.On("ListByMove", mock.Anything, tenantInfo, move.ID).
+		Return([]*carriersettlement.CostEvent{}, nil)
+
+	err := deps.svc.ReaccrueMove(t.Context(), tenantInfo, move.ID)
 	require.NoError(t, err)
 	deps.costEvents.AssertNotCalled(t, "Create")
 }

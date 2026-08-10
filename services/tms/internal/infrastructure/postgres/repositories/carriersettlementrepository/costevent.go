@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -164,6 +165,10 @@ func (r *costEventRepository) GetByIdempotencyKey(
 	return entity, nil
 }
 
+// ListPendingByCarrier deliberately applies no lower period bound: pending
+// events accrued before the current period (late accruals, re-opened moves)
+// are swept into the next settlement instead of being stranded. This mirrors
+// the driver settlement repository.
 func (r *costEventRepository) ListPendingByCarrier(
 	ctx context.Context,
 	req *repositories.ListPendingCostEventsRequest,
@@ -334,7 +339,7 @@ func (r *costEventRepository) MarkAttached(
 		return nil
 	}
 	cols := buncolgen.CostEventColumns
-	_, err := r.db.DBForContext(ctx).
+	res, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model((*carriersettlement.CostEvent)(nil)).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
@@ -348,6 +353,20 @@ func (r *costEventRepository) MarkAttached(
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("mark carrier cost events attached: %w", err)
+	}
+	// Zero rows means every selected event was attached or voided by a
+	// concurrent generator; the caller must not keep a settlement built from
+	// events it does not own.
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("mark carrier cost events attached: %w", err)
+	}
+	if rows == 0 {
+		return errortypes.NewValidationError(
+			"costEventIds",
+			errortypes.ErrInvalidOperation,
+			"The selected carrier cost events are no longer pending; they were attached or voided by a concurrent request",
+		)
 	}
 	return nil
 }

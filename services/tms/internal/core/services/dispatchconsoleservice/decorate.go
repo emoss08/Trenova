@@ -21,7 +21,7 @@ func decorateMove(move *repositories.BoardMove, now int64) *BoardMove {
 		BoardMove:       move,
 		Urgency:         urgencyFor(move, now),
 		MinutesToPickup: minutesToPickup(move, now),
-		IsCovered:       !move.AssignmentID.IsNil(),
+		IsCovered:       !move.AssignmentID.IsNil() || !move.CarrierAssignmentID.IsNil(),
 		TotalStopCount:  move.MoveCount,
 	}
 }

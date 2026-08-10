@@ -2,12 +2,10 @@ package carriersettlementjobs
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -73,9 +71,6 @@ func (a *Activities) GenerateCarrierSettlementBatchesActivity(
 			systemActor(),
 		)
 		if genErr != nil {
-			if isDuplicatePeriodError(genErr) {
-				continue
-			}
 			result.Failed++
 			a.logger.Error("failed to auto-generate carrier settlement batch",
 				zap.Error(genErr),
@@ -87,9 +82,4 @@ func (a *Activities) GenerateCarrierSettlementBatchesActivity(
 		}
 	}
 	return result, nil
-}
-
-func isDuplicatePeriodError(err error) bool {
-	var validationErr *errortypes.Error
-	return errors.As(err, &validationErr) && validationErr.Code == errortypes.ErrDuplicate
 }

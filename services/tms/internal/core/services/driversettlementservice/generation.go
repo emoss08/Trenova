@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -30,43 +31,16 @@ type GenerateBatchRequest struct {
 	Notes       string
 }
 
-type PeriodBounds struct {
-	PeriodStart int64 `json:"periodStart"`
-	PeriodEnd   int64 `json:"periodEnd"`
-	PayDate     int64 `json:"payDate"`
-}
+// PeriodBounds aliases the shared settlement period type.
+type PeriodBounds = settlementshared.PeriodBounds
 
 func ResolveCurrentPeriod(control *tenant.SettlementControl, now int64) PeriodBounds {
-	nowTime := time.Unix(now, 0).UTC()
-	endDay := time.Weekday(control.PeriodEndDayOfWeek)
-
-	daysBack := int(nowTime.Weekday() - endDay)
-	if daysBack < 0 {
-		daysBack += 7
-	}
-	periodEndDate := time.Date(
-		nowTime.Year(), nowTime.Month(), nowTime.Day(),
-		0, 0, 0, 0, time.UTC,
-	).AddDate(0, 0, -daysBack+1)
-
-	var periodStartDate time.Time
-	switch control.PayPeriodFrequency {
-	case tenant.PayPeriodFrequencyWeekly:
-		periodStartDate = periodEndDate.AddDate(0, 0, -7)
-	case tenant.PayPeriodFrequencyBiweekly:
-		periodStartDate = periodEndDate.AddDate(0, 0, -14)
-	case tenant.PayPeriodFrequencyMonthly:
-		periodStartDate = periodEndDate.AddDate(0, -1, 0)
-	default:
-		periodStartDate = periodEndDate.AddDate(0, 0, -7)
-	}
-
-	periodEnd := periodEndDate.Unix()
-	return PeriodBounds{
-		PeriodStart: periodStartDate.Unix(),
-		PeriodEnd:   periodEnd,
-		PayDate:     periodEndDate.AddDate(0, 0, control.PayDelayDays).Unix(),
-	}
+	return settlementshared.ResolvePeriod(
+		control.PayPeriodFrequency,
+		control.PeriodEndDayOfWeek,
+		control.PayDelayDays,
+		now,
+	)
 }
 
 func (s *Service) GenerateBatch(

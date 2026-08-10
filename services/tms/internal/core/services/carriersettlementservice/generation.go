@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -27,43 +29,16 @@ type GenerateBatchRequest struct {
 	Notes       string
 }
 
-type PeriodBounds struct {
-	PeriodStart int64 `json:"periodStart"`
-	PeriodEnd   int64 `json:"periodEnd"`
-	PayDate     int64 `json:"payDate"`
-}
+// PeriodBounds aliases the shared settlement period type.
+type PeriodBounds = settlementshared.PeriodBounds
 
 func ResolveCurrentPeriod(control *tenant.CarrierSettlementControl, now int64) PeriodBounds {
-	nowTime := time.Unix(now, 0).UTC()
-	endDay := time.Weekday(control.PeriodEndDayOfWeek)
-
-	daysBack := int(nowTime.Weekday() - endDay)
-	if daysBack < 0 {
-		daysBack += 7
-	}
-	periodEndDate := time.Date(
-		nowTime.Year(), nowTime.Month(), nowTime.Day(),
-		0, 0, 0, 0, time.UTC,
-	).AddDate(0, 0, -daysBack+1)
-
-	var periodStartDate time.Time
-	switch control.PayPeriodFrequency {
-	case tenant.PayPeriodFrequencyWeekly:
-		periodStartDate = periodEndDate.AddDate(0, 0, -7)
-	case tenant.PayPeriodFrequencyBiweekly:
-		periodStartDate = periodEndDate.AddDate(0, 0, -14)
-	case tenant.PayPeriodFrequencyMonthly:
-		periodStartDate = periodEndDate.AddDate(0, -1, 0)
-	default:
-		periodStartDate = periodEndDate.AddDate(0, 0, -7)
-	}
-
-	periodEnd := periodEndDate.Unix()
-	return PeriodBounds{
-		PeriodStart: periodStartDate.Unix(),
-		PeriodEnd:   periodEnd,
-		PayDate:     periodEndDate.AddDate(0, 0, control.PayDelayDays).Unix(),
-	}
+	return settlementshared.ResolvePeriod(
+		control.PayPeriodFrequency,
+		control.PeriodEndDayOfWeek,
+		control.PayDelayDays,
+		now,
+	)
 }
 
 func (s *Service) GenerateBatch(
@@ -160,13 +135,6 @@ func (s *Service) resolveOpenBatch(
 		return nil, err
 	}
 	if existing != nil {
-		if existing.Status != carriersettlement.BatchStatusOpen {
-			return nil, errortypes.NewValidationError(
-				"periodEnd",
-				errortypes.ErrInvalidOperation,
-				"The carrier settlement batch for this period is already completed; generate individual settlements for late cost events instead",
-			)
-		}
 		return existing, nil
 	}
 
@@ -258,12 +226,28 @@ func (s *Service) GenerateForCarrier(
 		}
 
 		eventIDs := make([]pulid.ID, 0, len(events))
+		adjustmentIDs := make([]pulid.ID, 0, len(events))
 		for _, event := range events {
 			eventIDs = append(eventIDs, event.ID)
+			if event.EventType == carriersettlement.CostEventTypeAdjustment {
+				adjustmentIDs = append(adjustmentIDs, event.ID)
+			}
 		}
-		return s.costEventRepo.MarkAttached(txCtx, req.TenantInfo, eventIDs, created.ID)
+		if txErr = s.costEventRepo.MarkAttached(
+			txCtx, req.TenantInfo, eventIDs, created.ID,
+		); txErr != nil {
+			return txErr
+		}
+		return s.invoiceMatchRepo.UpdateSettlementForAdjustmentEvents(
+			txCtx, req.TenantInfo, adjustmentIDs, created.ID,
+		)
 	})
 	if err != nil {
+		// The partial unique index on (carrier, period) makes concurrent
+		// generation idempotent: the loser treats the period as already settled.
+		if dberror.IsUniqueConstraintViolation(err) {
+			return nil, nil //nolint:nilnil // nil settlement means this carrier period is already settled
+		}
 		return nil, err
 	}
 	if created == nil {

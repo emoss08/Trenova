@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -79,6 +80,16 @@ func (s *Service) BulkUpdateStatus(
 		zap.String("operation", "BulkUpdateStatus"),
 		zap.Any("request", req),
 	)
+
+	// Note: customerservice.BulkUpdateStatus has the same missing-enum-check gap;
+	// it is left untouched on this branch.
+	if !req.Status.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"Carrier status is invalid",
+		)
+	}
 
 	originalEntities, err := s.repo.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
 		TenantInfo: req.TenantInfo,

@@ -3,10 +3,10 @@ package carriersettlementservice
 import (
 	"context"
 	"strings"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -68,29 +68,29 @@ func (s *Service) ExportBatchRemittanceCSV(
 			paymentMethod = settlement.PaymentMethod
 		}
 
-		writeCSVField(&sb, settlement.SettlementNumber)
+		settlementshared.WriteCSVField(&sb, settlement.SettlementNumber)
 		sb.WriteByte(',')
-		writeCSVField(&sb, carrierCode)
+		settlementshared.WriteCSVField(&sb, carrierCode)
 		sb.WriteByte(',')
-		writeCSVField(&sb, carrierName)
+		settlementshared.WriteCSVField(&sb, carrierName)
 		sb.WriteByte(',')
-		writeCSVField(&sb, remitToName)
+		settlementshared.WriteCSVField(&sb, remitToName)
 		sb.WriteByte(',')
-		writeCSVField(&sb, remitAddress)
+		settlementshared.WriteCSVField(&sb, remitAddress)
 		sb.WriteByte(',')
-		sb.WriteString(formatCSVDate(settlement.PeriodStart))
+		sb.WriteString(settlementshared.FormatCSVDate(settlement.PeriodStart))
 		sb.WriteByte(',')
-		sb.WriteString(formatCSVDate(settlement.PeriodEnd))
+		sb.WriteString(settlementshared.FormatCSVDate(settlement.PeriodEnd))
 		sb.WriteByte(',')
-		sb.WriteString(formatCSVDate(settlement.PayDate))
+		sb.WriteString(settlementshared.FormatCSVDate(settlement.PayDate))
 		sb.WriteByte(',')
 		sb.WriteString(money.DecimalFromMinor(settlement.NetPayableMinor).StringFixed(2))
 		sb.WriteByte(',')
 		sb.WriteString(settlement.CurrencyCode)
 		sb.WriteByte(',')
-		writeCSVField(&sb, paymentMethod)
+		settlementshared.WriteCSVField(&sb, paymentMethod)
 		sb.WriteByte(',')
-		writeCSVField(&sb, settlement.PaymentReference)
+		settlementshared.WriteCSVField(&sb, settlement.PaymentReference)
 		sb.WriteByte('\n')
 	}
 	return sb.String(), nil
@@ -104,18 +104,4 @@ func joinAddress(parts ...string) string {
 		}
 	}
 	return strings.Join(nonEmpty, ", ")
-}
-
-func writeCSVField(sb *strings.Builder, value string) {
-	if strings.ContainsAny(value, ",\"\n") {
-		sb.WriteByte('"')
-		sb.WriteString(strings.ReplaceAll(value, "\"", "\"\""))
-		sb.WriteByte('"')
-		return
-	}
-	sb.WriteString(value)
-}
-
-func formatCSVDate(unix int64) string {
-	return time.Unix(unix, 0).UTC().Format("2006-01-02")
 }

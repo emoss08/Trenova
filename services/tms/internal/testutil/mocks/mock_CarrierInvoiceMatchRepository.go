@@ -60,6 +60,20 @@ func (_mock *MockCarrierInvoiceMatchRepository) GetOpenByEDIInvoiceID(ctx contex
 	return r0, ret.Error(1)
 }
 
+func (_mock *MockCarrierInvoiceMatchRepository) GetOpenByExtractionID(ctx context.Context, tenantInfo pagination.TenantInfo, extractionID pulid.ID) (*carriersettlement.InvoiceMatch, error) {
+	ret := _mock.Called(ctx, tenantInfo, extractionID)
+	var r0 *carriersettlement.InvoiceMatch
+	if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*carriersettlement.InvoiceMatch)
+	}
+	return r0, ret.Error(1)
+}
+
+func (_mock *MockCarrierInvoiceMatchRepository) UpdateSettlementForAdjustmentEvents(ctx context.Context, tenantInfo pagination.TenantInfo, costEventIDs []pulid.ID, settlementID pulid.ID) error {
+	ret := _mock.Called(ctx, tenantInfo, costEventIDs, settlementID)
+	return ret.Error(0)
+}
+
 func (_mock *MockCarrierInvoiceMatchRepository) Create(ctx context.Context, entity *carriersettlement.InvoiceMatch) (*carriersettlement.InvoiceMatch, error) {
 	ret := _mock.Called(ctx, entity)
 	var r0 *carriersettlement.InvoiceMatch

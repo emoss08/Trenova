@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -136,9 +137,11 @@ func (r *repository) FindForMatching(
 	return entity, nil
 }
 
+// stampAccessorials pins accessorials to the assignment and tenant. IDs are
+// left alone: kept rows retain their identity (and created_at for audit
+// diffs); BeforeAppendModel mints IDs for the new, ID-less rows only.
 func (r *repository) stampAccessorials(entity *shipment.CarrierAssignment) {
 	for _, acc := range entity.Accessorials {
-		acc.ID = ""
 		acc.CarrierAssignmentID = entity.ID
 		acc.OrganizationID = entity.OrganizationID
 		acc.BusinessUnitID = entity.BusinessUnitID
@@ -161,19 +164,56 @@ func (r *repository) insertAccessorials(
 	return err
 }
 
-func (r *repository) deleteAccessorials(
+// deleteMissingAccessorials removes only the accessorial rows the payload no
+// longer carries.
+func (r *repository) deleteMissingAccessorials(
 	ctx context.Context,
 	entity *shipment.CarrierAssignment,
 ) error {
+	kept := make([]pulid.ID, 0, len(entity.Accessorials))
+	for _, acc := range entity.Accessorials {
+		if acc != nil && !acc.ID.IsNil() {
+			kept = append(kept, acc.ID)
+		}
+	}
+
 	_, err := r.db.DBForContext(ctx).
 		NewDelete().
 		Model((*shipment.CarrierAssignmentAccessorial)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.CarrierAssignmentAccessorialScopeTenantDelete(dq, pagination.TenantInfo{
+			dq = buncolgen.CarrierAssignmentAccessorialScopeTenantDelete(dq, pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
 			}).Where(buncolgen.CarrierAssignmentAccessorialColumns.CarrierAssignmentID.Eq(), entity.ID)
+			if len(kept) > 0 {
+				dq = dq.Where(buncolgen.CarrierAssignmentAccessorialColumns.ID.NotIn(), bun.List(kept))
+			}
+			return dq
 		}).
+		Exec(ctx)
+	return err
+}
+
+// upsertAccessorials inserts new (ID-less) rows and updates the kept ones in
+// place, preserving row identity across assignment edits.
+func (r *repository) upsertAccessorials(
+	ctx context.Context,
+	entity *shipment.CarrierAssignment,
+) error {
+	if len(entity.Accessorials) == 0 {
+		return nil
+	}
+
+	_, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(&entity.Accessorials).
+		On("CONFLICT (id, business_unit_id, organization_id) DO UPDATE").
+		Set("accessorial_charge_id = EXCLUDED.accessorial_charge_id").
+		Set("description = EXCLUDED.description").
+		Set("amount = EXCLUDED.amount").
+		Set("version = casna.version + 1").
+		Set("updated_at = ?", timeutils.NowUnix()).
+		Returning("*").
 		Exec(ctx)
 	return err
 }
@@ -233,14 +273,14 @@ func (r *repository) Update(
 		return nil, err
 	}
 
-	if err = r.deleteAccessorials(ctx, entity); err != nil {
+	if err = r.deleteMissingAccessorials(ctx, entity); err != nil {
 		log.Error("failed to delete carrier assignment accessorials", zap.Error(err))
 		return nil, err
 	}
 
 	r.stampAccessorials(entity)
-	if err = r.insertAccessorials(ctx, entity); err != nil {
-		log.Error("failed to insert carrier assignment accessorials", zap.Error(err))
+	if err = r.upsertAccessorials(ctx, entity); err != nil {
+		log.Error("failed to upsert carrier assignment accessorials", zap.Error(err))
 		return nil, err
 	}
 

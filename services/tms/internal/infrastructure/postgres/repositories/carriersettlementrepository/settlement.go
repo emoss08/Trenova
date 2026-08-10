@@ -343,7 +343,6 @@ func assignLineFields(entity *carriersettlement.CarrierSettlement) {
 		if line == nil {
 			continue
 		}
-		line.ID = pulid.Nil
 		line.OrganizationID = entity.OrganizationID
 		line.BusinessUnitID = entity.BusinessUnitID
 		line.SettlementID = entity.ID

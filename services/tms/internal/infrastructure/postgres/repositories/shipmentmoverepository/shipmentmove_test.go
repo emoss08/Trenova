@@ -185,6 +185,10 @@ func TestGetMovesByShipmentID_ExpandedDetailsKeepsUnassignedMoves(t *testing.T) 
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "primary_worker_id", "tractor_id", "trailer_id", "secondary_worker_id", "status", "version", "created_at", "updated_at",
 		}).
 			AddRow(activeAssignmentID, buID, orgID, assignedMoveID, nil, nil, nil, nil, shipment.AssignmentStatusNew, 1, 1, 1))
+	mock.ExpectQuery(`SELECT .*FROM "carrier_assignments" AS "casn".*casn\.shipment_move_id IN.*casn\.organization_id = .*casn\.business_unit_id = .*casn\.status != `).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "business_unit_id", "organization_id", "shipment_move_id", "carrier_id", "status", "version", "created_at", "updated_at",
+		}))
 
 	entities, err := repo.GetMovesByShipmentID(t.Context(), &repositories.GetMovesByShipmentIDRequest{
 		ShipmentID: shipmentID,
@@ -229,6 +233,10 @@ func TestUpdateStatus_UpdatesMove(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "primary_worker_id", "tractor_id", "trailer_id", "secondary_worker_id", "status", "version", "created_at", "updated_at",
 		}))
+	mock.ExpectQuery(`SELECT .*FROM "carrier_assignments" AS "casn".*casn\.shipment_move_id IN.*casn\.organization_id = .*casn\.business_unit_id = .*casn\.status != `).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "business_unit_id", "organization_id", "shipment_move_id", "carrier_id", "status", "version", "created_at", "updated_at",
+		}))
 
 	entity, err := repo.UpdateStatus(t.Context(), &repositories.UpdateMoveStatusRequest{
 		TenantInfo: pagination.TenantInfo{
@@ -272,6 +280,10 @@ func TestSplitMove_CreatesDownstreamMoveAndUpdatesOriginalStop(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "primary_worker_id", "tractor_id", "trailer_id", "secondary_worker_id", "status", "version", "created_at", "updated_at",
 		}))
+	mock.ExpectQuery(`SELECT .*FROM "carrier_assignments" AS "casn".*casn\.shipment_move_id IN.*casn\.organization_id = .*casn\.business_unit_id = .*casn\.status != `).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "business_unit_id", "organization_id", "shipment_move_id", "carrier_id", "status", "version", "created_at", "updated_at",
+		}))
 	mock.ExpectExec(`UPDATE .*shipment_moves.*sequence = sequence \+ 1.*`).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 	mock.ExpectExec(`UPDATE .*stops.*status.*type.*version.*updated_at.*`).
@@ -292,6 +304,10 @@ func TestSplitMove_CreatesDownstreamMoveAndUpdatesOriginalStop(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "primary_worker_id", "tractor_id", "trailer_id", "secondary_worker_id", "status", "version", "created_at", "updated_at",
 		}))
+	mock.ExpectQuery(`SELECT .*FROM "carrier_assignments" AS "casn".*casn\.shipment_move_id IN.*casn\.organization_id = .*casn\.business_unit_id = .*casn\.status != `).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "business_unit_id", "organization_id", "shipment_move_id", "carrier_id", "status", "version", "created_at", "updated_at",
+		}))
 	mock.ExpectQuery(`SELECT .*FROM "shipment_moves" AS "sm".*sm\.id = .*`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_id", "status", "loaded", "sequence", "version", "created_at", "updated_at",
@@ -303,6 +319,10 @@ func TestSplitMove_CreatesDownstreamMoveAndUpdatesOriginalStop(t *testing.T) {
 	mock.ExpectQuery(`SELECT .*FROM "assignments" AS "a".*a\.shipment_move_id IN.*a\.organization_id = .*a\.business_unit_id = .*a\.archived_at IS NULL`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_move_id", "primary_worker_id", "tractor_id", "trailer_id", "secondary_worker_id", "status", "version", "created_at", "updated_at",
+		}))
+	mock.ExpectQuery(`SELECT .*FROM "carrier_assignments" AS "casn".*casn\.shipment_move_id IN.*casn\.organization_id = .*casn\.business_unit_id = .*casn\.status != `).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "business_unit_id", "organization_id", "shipment_move_id", "carrier_id", "status", "version", "created_at", "updated_at",
 		}))
 	mock.ExpectCommit()
 

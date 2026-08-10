@@ -33,6 +33,17 @@ type CarrierInvoiceMatchRepository interface {
 		tenantInfo pagination.TenantInfo,
 		invoiceID pulid.ID,
 	) (*carriersettlement.InvoiceMatch, error)
+	GetOpenByExtractionID(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		extractionID pulid.ID,
+	) (*carriersettlement.InvoiceMatch, error)
+	UpdateSettlementForAdjustmentEvents(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		costEventIDs []pulid.ID,
+		settlementID pulid.ID,
+	) error
 	Create(
 		ctx context.Context,
 		entity *carriersettlement.InvoiceMatch,

@@ -35,7 +35,7 @@ func NewValidator(p ValidatorParams) *Validator {
 				"stateId",
 				"State does not exist",
 				func(w *worker.Worker) pulid.ID { return w.StateID },
-				createStateCheck(p.DB),
+				validationframework.NewUSStateReferenceCheck(func() bun.IDB { return p.DB.DB() }),
 			).
 			WithOptionalCustomReferenceCheck(
 				"fleetCodeId",
@@ -45,26 +45,6 @@ func NewValidator(p ValidatorParams) *Validator {
 			).
 			WithCustomRule(createWorkerComplianceRule(p.DispatchControlRepo)).
 			Build(),
-	}
-}
-
-func createStateCheck(
-	db *postgres.Connection,
-) validationframework.CustomReferenceCheckFunc {
-	return func(ctx context.Context, _, _ pulid.ID, refID pulid.ID) (bool, error) {
-		if refID.IsNil() {
-			return true, nil
-		}
-
-		exists, err := db.DB().NewSelect().
-			TableExpr("us_states").
-			ColumnExpr("1").
-			Where("id = ?", refID).
-			Exists(ctx)
-		if err != nil {
-			return false, err
-		}
-		return exists, nil
 	}
 }
 

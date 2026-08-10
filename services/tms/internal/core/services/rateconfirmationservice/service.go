@@ -131,45 +131,49 @@ func (s *Service) Generate(
 		return nil, err
 	}
 
-	maxRevision, err := s.repo.MaxRevisionForAssignment(ctx, tenantInfo, assignment.ID)
-	if err != nil {
-		return nil, err
-	}
-	revision := maxRevision + 1
-
-	templateContext := buildContext(payloadParams{
-		Shipment:    shipmentEntity,
-		Move:        moveEntity,
-		Assignment:  assignment,
-		Carrier:     carrierEntity,
-		Revision:    revision,
-		CompanyName: s.companyName(ctx, tenantInfo),
-	})
-	s.applyLogo(ctx, tenantInfo, templateContext)
-
-	rendered, err := s.templates.RenderDocument(ctx, &services.RenderDocumentRequest{
-		TenantInfo:  tenantInfo,
-		Kind:        documenttemplate.KindRateConfirmationPDF,
-		Data:        templateContext,
-		ReferenceID: assignment.ID,
-		UserID:      tenantInfo.UserID,
-		Title:       documentTitle(shipmentEntity, revision),
-	})
-	if err != nil {
-		return nil, err
-	}
-	if len(rendered.PDF) == 0 {
-		return nil, errortypes.NewBusinessError("The rate confirmation PDF rendered no content")
-	}
-
-	snapshot, err := contextSnapshot(templateContext)
-	if err != nil {
-		return nil, err
-	}
-
+	// The revision read, render, and create all run in one transaction so two
+	// concurrent generates cannot both claim the same revision; the loser hits
+	// the unique index and surfaces as a retryable business error.
 	var created *rateconfirmation.RateConfirmation
+	var rendered *services.RenderedDocument
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if txErr := s.voidActiveRevision(
+		maxRevision, txErr := s.repo.MaxRevisionForAssignment(txCtx, tenantInfo, assignment.ID)
+		if txErr != nil {
+			return txErr
+		}
+		revision := maxRevision + 1
+
+		templateContext := buildContext(payloadParams{
+			Shipment:    shipmentEntity,
+			Move:        moveEntity,
+			Assignment:  assignment,
+			Carrier:     carrierEntity,
+			Revision:    revision,
+			CompanyName: s.companyName(txCtx, tenantInfo),
+		})
+		s.applyLogo(txCtx, tenantInfo, templateContext)
+
+		rendered, txErr = s.templates.RenderDocument(txCtx, &services.RenderDocumentRequest{
+			TenantInfo:  tenantInfo,
+			Kind:        documenttemplate.KindRateConfirmationPDF,
+			Data:        templateContext,
+			ReferenceID: assignment.ID,
+			UserID:      tenantInfo.UserID,
+			Title:       documentTitle(shipmentEntity, revision),
+		})
+		if txErr != nil {
+			return txErr
+		}
+		if len(rendered.PDF) == 0 {
+			return errortypes.NewBusinessError("The rate confirmation PDF rendered no content")
+		}
+
+		snapshot, txErr := contextSnapshot(templateContext)
+		if txErr != nil {
+			return txErr
+		}
+
+		if txErr = s.voidActiveRevision(
 			txCtx, tenantInfo, assignment.ID, "Superseded by a new revision",
 		); txErr != nil {
 			return txErr
@@ -197,11 +201,15 @@ func (s *Service) Generate(
 			return multiErr
 		}
 
-		var txErr error
 		created, txErr = s.repo.Create(txCtx, entity)
 		return txErr
 	})
 	if err != nil {
+		if dberror.IsUniqueConstraintViolation(err) {
+			return nil, errortypes.NewBusinessError(
+				"A rate confirmation is already being generated for this assignment. Retry.",
+			).WithParam("carrierAssignmentId", assignment.ID.String())
+		}
 		return nil, dberror.MapRetryableTransactionError(
 			err,
 			"Rate confirmation is busy. Retry the request.",
@@ -220,6 +228,12 @@ func (s *Service) Send(
 	tenantInfo pagination.TenantInfo,
 	rateConfirmationID pulid.ID,
 ) (*rateconfirmation.RateConfirmation, error) {
+	if s.templates == nil {
+		return nil, errortypes.NewBusinessError(
+			"Document templates are not configured; the rate confirmation cannot be rendered",
+		)
+	}
+
 	entity, err := s.repo.GetByID(ctx, &repositories.GetRateConfirmationByIDRequest{
 		TenantInfo:         tenantInfo,
 		RateConfirmationID: rateConfirmationID,
@@ -243,6 +257,14 @@ func (s *Service) Send(
 		)
 	}
 
+	// The frozen snapshot re-hydrates into the typed template context; feeding
+	// the raw JSON map to html/template rejects trusted values like the logo
+	// data URI (ZgotmplZ).
+	templateContext, err := contextFromSnapshot(entity.PayloadSnapshot)
+	if err != nil {
+		return nil, err
+	}
+
 	recipients, err := s.recipients(ctx, tenantInfo, entity)
 	if err != nil {
 		return nil, err
@@ -251,7 +273,7 @@ func (s *Service) Send(
 	message, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
 		TenantInfo:  tenantInfo,
 		Kind:        documenttemplate.KindRateConfirmationEmail,
-		Data:        entity.PayloadSnapshot,
+		Data:        templateContext,
 		ReferenceID: entity.CarrierAssignmentID,
 	})
 	if err != nil {
@@ -261,7 +283,7 @@ func (s *Service) Send(
 	rendered, err := s.templates.RenderDocument(ctx, &services.RenderDocumentRequest{
 		TenantInfo:  tenantInfo,
 		Kind:        documenttemplate.KindRateConfirmationPDF,
-		Data:        entity.PayloadSnapshot,
+		Data:        templateContext,
 		ReferenceID: entity.CarrierAssignmentID,
 		Title:       fmt.Sprintf("Rate Confirmation Revision %d", entity.Revision),
 	})
@@ -289,12 +311,37 @@ func (s *Service) Send(
 		return nil, err
 	}
 
-	now := timeutils.NowUnix()
-	entity.Status = rateconfirmation.StatusSent
-	entity.SentAt = &now
-	entity.SentToEmails = strings.Join(recipients, ", ")
+	// The email is out; the status write re-reads the row so a concurrent
+	// transition (e.g. a void) is kept rather than clobbered — and never turned
+	// into an error that would invite a duplicate send on retry.
+	var updated *rateconfirmation.RateConfirmation
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		fresh, txErr := s.repo.GetByID(txCtx, &repositories.GetRateConfirmationByIDRequest{
+			TenantInfo:         tenantInfo,
+			RateConfirmationID: rateConfirmationID,
+		})
+		if txErr != nil {
+			return txErr
+		}
+		if !fresh.CanSend() {
+			s.l.Warn("rate confirmation changed status while the email was in flight; keeping the newer status",
+				zap.String("rateConfirmationId", rateConfirmationID.String()),
+				zap.String("status", fresh.Status.String()))
+			updated = fresh
+			return nil
+		}
 
-	return s.repo.Update(ctx, entity)
+		now := timeutils.NowUnix()
+		fresh.Status = rateconfirmation.StatusSent
+		fresh.SentAt = &now
+		fresh.SentToEmails = strings.Join(recipients, ", ")
+		updated, txErr = s.repo.Update(txCtx, fresh)
+		return txErr
+	})
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (s *Service) MarkConfirmed(
@@ -326,12 +373,21 @@ func (s *Service) MarkConfirmed(
 	entity.ConfirmedAt = &now
 	entity.ConfirmedByName = confirmedByName
 
-	updated, err := s.repo.Update(ctx, entity)
+	var updated *rateconfirmation.RateConfirmation
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		updated, txErr = s.repo.Update(txCtx, entity)
+		if txErr != nil {
+			return txErr
+		}
+		return s.confirmAssignment(txCtx, tenantInfo, entity.CarrierAssignmentID, now)
+	})
 	if err != nil {
-		return nil, err
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"Rate confirmation is busy. Retry the request.",
+		)
 	}
-
-	s.confirmAssignment(ctx, tenantInfo, entity.CarrierAssignmentID, now)
 
 	return updated, nil
 }
@@ -357,13 +413,35 @@ func (s *Service) Void(
 	if entity.Status == rateconfirmation.StatusVoided {
 		return entity, nil
 	}
+	wasConfirmed := entity.Status == rateconfirmation.StatusConfirmed
 
 	now := timeutils.NowUnix()
 	entity.Status = rateconfirmation.StatusVoided
 	entity.VoidedAt = &now
 	entity.VoidReason = reason
 
-	return s.repo.Update(ctx, entity)
+	var updated *rateconfirmation.RateConfirmation
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		updated, txErr = s.repo.Update(txCtx, entity)
+		if txErr != nil {
+			return txErr
+		}
+		if !wasConfirmed {
+			return nil
+		}
+		// Voiding a confirmed agreement withdraws the confirmation, so the
+		// assignment reverts to Pending — the counterpart of confirmAssignment.
+		return s.revertAssignmentConfirmation(txCtx, tenantInfo, entity.CarrierAssignmentID)
+	})
+	if err != nil {
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"Rate confirmation is busy. Retry the request.",
+		)
+	}
+
+	return updated, nil
 }
 
 func (s *Service) voidActiveRevision(
@@ -389,14 +467,14 @@ func (s *Service) voidActiveRevision(
 }
 
 // confirmAssignment flips the carrier assignment to Confirmed alongside its
-// confirmed rate confirmation. A failure is logged rather than returned: the
-// confirmation record itself is the agreement.
+// confirmed rate confirmation. It runs in the caller's transaction so the
+// agreement and the assignment can never disagree.
 func (s *Service) confirmAssignment(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	assignmentID pulid.ID,
 	now int64,
-) {
+) error {
 	assignment, err := s.carrierAssignmentRepo.GetByID(
 		ctx,
 		&repositories.GetCarrierAssignmentByIDRequest{
@@ -405,18 +483,43 @@ func (s *Service) confirmAssignment(
 		},
 	)
 	if err != nil {
-		s.l.Warn("failed to load the carrier assignment for confirmation", zap.Error(err))
-		return
+		return err
 	}
 	if assignment.Status != shipment.CarrierAssignmentStatusPending {
-		return
+		return nil
 	}
 
 	assignment.Status = shipment.CarrierAssignmentStatusConfirmed
 	assignment.ConfirmedAt = &now
-	if _, err = s.carrierAssignmentRepo.Update(ctx, assignment); err != nil {
-		s.l.Warn("failed to confirm the carrier assignment", zap.Error(err))
+	_, err = s.carrierAssignmentRepo.Update(ctx, assignment)
+	return err
+}
+
+// revertAssignmentConfirmation is confirmAssignment's counterpart for voids: a
+// Confirmed assignment whose agreement was withdrawn goes back to Pending.
+func (s *Service) revertAssignmentConfirmation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	assignmentID pulid.ID,
+) error {
+	assignment, err := s.carrierAssignmentRepo.GetByID(
+		ctx,
+		&repositories.GetCarrierAssignmentByIDRequest{
+			TenantInfo:          tenantInfo,
+			CarrierAssignmentID: assignmentID,
+		},
+	)
+	if err != nil {
+		return err
 	}
+	if assignment.Status != shipment.CarrierAssignmentStatusConfirmed {
+		return nil
+	}
+
+	assignment.Status = shipment.CarrierAssignmentStatusPending
+	assignment.ConfirmedAt = nil
+	_, err = s.carrierAssignmentRepo.Update(ctx, assignment)
+	return err
 }
 
 func (s *Service) recipients(
@@ -676,6 +779,21 @@ func contextSnapshot(
 		return nil, fmt.Errorf("snapshot rate confirmation context: %w", err)
 	}
 	return snapshot, nil
+}
+
+func contextFromSnapshot(
+	snapshot map[string]any,
+) (*documenttemplate.RateConfirmationContext, error) {
+	raw, err := sonic.Marshal(snapshot)
+	if err != nil {
+		return nil, fmt.Errorf("decode rate confirmation snapshot: %w", err)
+	}
+
+	out := new(documenttemplate.RateConfirmationContext)
+	if err = sonic.Unmarshal(raw, out); err != nil {
+		return nil, fmt.Errorf("decode rate confirmation snapshot: %w", err)
+	}
+	return out, nil
 }
 
 func documentTitle(shipmentEntity *shipment.Shipment, revision int64) string {

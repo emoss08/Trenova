@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -313,16 +315,17 @@ func (r *repository) SelectOptions(
 	)
 }
 
+// stampChildren pins every child row to its parent and tenant. IDs are left
+// alone: rows the caller kept retain their identity (and created_at history);
+// BeforeAppendModel mints IDs for the new, ID-less rows only.
 func (r *repository) stampChildren(entity *carrier.Carrier) {
 	for _, contact := range entity.Contacts {
-		contact.ID = ""
 		contact.CarrierID = entity.ID
 		contact.OrganizationID = entity.OrganizationID
 		contact.BusinessUnitID = entity.BusinessUnitID
 	}
 
 	for _, policy := range entity.InsurancePolicies {
-		policy.ID = ""
 		policy.CarrierID = entity.ID
 		policy.OrganizationID = entity.OrganizationID
 		policy.BusinessUnitID = entity.BusinessUnitID
@@ -353,32 +356,100 @@ func (r *repository) insertChildren(ctx context.Context, entity *carrier.Carrier
 	return nil
 }
 
-func (r *repository) deleteChildren(ctx context.Context, entity *carrier.Carrier) error {
+func keepIDs[T interface{ GetID() pulid.ID }](children []T) []pulid.ID {
+	ids := make([]pulid.ID, 0, len(children))
+	for _, child := range children {
+		if id := child.GetID(); !id.IsNil() {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+// deleteMissingChildren removes only the child rows the payload no longer
+// carries; rows whose IDs are still present keep their identity and history.
+func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.Carrier) error {
 	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 	}
 
-	if _, err := r.db.DBForContext(ctx).
+	contactQuery := r.db.DBForContext(ctx).
 		NewDelete().
 		Model((*carrier.CarrierContact)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.CarrierContactScopeTenantDelete(dq, tenantInfo).
+			dq = buncolgen.CarrierContactScopeTenantDelete(dq, tenantInfo).
 				Where(buncolgen.CarrierContactColumns.CarrierID.Eq(), entity.ID)
-		}).
-		Exec(ctx); err != nil {
+			if kept := keepIDs(entity.Contacts); len(kept) > 0 {
+				dq = dq.Where(buncolgen.CarrierContactColumns.ID.NotIn(), bun.List(kept))
+			}
+			return dq
+		})
+	if _, err := contactQuery.Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := r.db.DBForContext(ctx).
+	policyQuery := r.db.DBForContext(ctx).
 		NewDelete().
 		Model((*carrier.CarrierInsurancePolicy)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.CarrierInsurancePolicyScopeTenantDelete(dq, tenantInfo).
+			dq = buncolgen.CarrierInsurancePolicyScopeTenantDelete(dq, tenantInfo).
 				Where(buncolgen.CarrierInsurancePolicyColumns.CarrierID.Eq(), entity.ID)
-		}).
-		Exec(ctx); err != nil {
+			if kept := keepIDs(entity.InsurancePolicies); len(kept) > 0 {
+				dq = dq.Where(buncolgen.CarrierInsurancePolicyColumns.ID.NotIn(), bun.List(kept))
+			}
+			return dq
+		})
+	if _, err := policyQuery.Exec(ctx); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// upsertChildren inserts new (ID-less) child rows and updates the kept ones in
+// place, preserving their IDs and created_at for insurance history and audit
+// diffs.
+func (r *repository) upsertChildren(ctx context.Context, entity *carrier.Carrier) error {
+	now := timeutils.NowUnix()
+
+	if len(entity.Contacts) > 0 {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(&entity.Contacts).
+			On("CONFLICT (id, business_unit_id, organization_id) DO UPDATE").
+			Set("name = EXCLUDED.name").
+			Set("title = EXCLUDED.title").
+			Set("email = EXCLUDED.email").
+			Set("phone = EXCLUDED.phone").
+			Set("is_primary = EXCLUDED.is_primary").
+			Set("receives_rate_confirmations = EXCLUDED.receives_rate_confirmations").
+			Set("version = carc.version + 1").
+			Set("updated_at = ?", now).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return err
+		}
+	}
+
+	if len(entity.InsurancePolicies) > 0 {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(&entity.InsurancePolicies).
+			On("CONFLICT (id, business_unit_id, organization_id) DO UPDATE").
+			Set("policy_type = EXCLUDED.policy_type").
+			Set("policy_number = EXCLUDED.policy_number").
+			Set("provider_name = EXCLUDED.provider_name").
+			Set("coverage_amount = EXCLUDED.coverage_amount").
+			Set("effective_date = EXCLUDED.effective_date").
+			Set("expiration_date = EXCLUDED.expiration_date").
+			Set("is_verified = EXCLUDED.is_verified").
+			Set("version = carins.version + 1").
+			Set("updated_at = ?", now).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -441,13 +512,13 @@ func (r *repository) Update(
 			return uErr
 		}
 
-		if dErr := r.deleteChildren(c, entity); dErr != nil {
+		if dErr := r.deleteMissingChildren(c, entity); dErr != nil {
 			return dErr
 		}
 
 		r.stampChildren(entity)
 
-		return r.insertChildren(c, entity)
+		return r.upsertChildren(c, entity)
 	})
 	if err != nil {
 		log.Error("failed to update carrier", zap.Error(err))

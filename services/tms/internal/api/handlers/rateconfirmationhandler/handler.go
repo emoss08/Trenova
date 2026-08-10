@@ -110,6 +110,14 @@ func (h *Handler) listByMove(c *gin.Context) {
 		return
 	}
 
+	// The frozen render snapshot is detail-only payload; list rows drop it to
+	// keep the response lean.
+	for _, entity := range entities {
+		if entity != nil {
+			entity.PayloadSnapshot = nil
+		}
+	}
+
 	c.JSON(http.StatusOK, entities)
 }
 

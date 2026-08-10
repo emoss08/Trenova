@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -11,6 +12,27 @@ import (
 type TenantRef struct {
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
+}
+
+// TenantRefFor derives the event tenant reference from request tenant info.
+func TenantRefFor(tenantInfo pagination.TenantInfo) TenantRef {
+	return TenantRef{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	}
+}
+
+// ActorFor derives the audit actor from request tenant info; system-originated
+// requests without a user yield an empty actor.
+func ActorFor(tenantInfo pagination.TenantInfo) services.AuditActor {
+	if tenantInfo.UserID.IsNil() {
+		return services.AuditActor{}
+	}
+	return services.AuditActor{
+		PrincipalType: services.PrincipalTypeUser,
+		PrincipalID:   tenantInfo.UserID,
+		UserID:        tenantInfo.UserID,
+	}
 }
 
 // AssignmentRef captures the IDs needed to wire an assignment event to its

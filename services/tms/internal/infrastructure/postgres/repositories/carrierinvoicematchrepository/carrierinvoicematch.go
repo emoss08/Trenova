@@ -127,6 +127,63 @@ func (r *repository) GetOpenByEDIInvoiceID(
 	return entity, nil
 }
 
+func (r *repository) GetOpenByExtractionID(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	extractionID pulid.ID,
+) (*carriersettlement.InvoiceMatch, error) {
+	cols := buncolgen.InvoiceMatchColumns
+	entity := new(carriersettlement.InvoiceMatch)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.InvoiceMatchScopeTenant(sq, tenantInfo).
+				Where(cols.DocumentAIExtractionID.Eq(), extractionID).
+				Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
+		}).
+		Order(cols.CreatedAt.OrderDesc()).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil //nolint:nilnil // nil match represents an optional absence
+		}
+		return nil, fmt.Errorf("get open carrier invoice match by extraction: %w", err)
+	}
+	return entity, nil
+}
+
+// UpdateSettlementForAdjustmentEvents stamps the settlement onto every match
+// whose accepted variance adjustment landed in that settlement, closing the
+// invoice → adjustment → settlement audit chain.
+func (r *repository) UpdateSettlementForAdjustmentEvents(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	costEventIDs []pulid.ID,
+	settlementID pulid.ID,
+) error {
+	if len(costEventIDs) == 0 {
+		return nil
+	}
+	cols := buncolgen.InvoiceMatchColumns
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*carriersettlement.InvoiceMatch)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.InvoiceMatchScopeTenantUpdate(uq, tenantInfo).
+				Where(cols.AdjustmentCostEventID.In(), bun.List(costEventIDs)).
+				Where(cols.CarrierSettlementID.IsNull())
+		}).
+		Set(cols.CarrierSettlementID.Set(), settlementID).
+		Set(cols.Version.Inc(1)).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("update carrier invoice match settlements: %w", err)
+	}
+	return nil
+}
+
 func (r *repository) Create(
 	ctx context.Context,
 	entity *carriersettlement.InvoiceMatch,

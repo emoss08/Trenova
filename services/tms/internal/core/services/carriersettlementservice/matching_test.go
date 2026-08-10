@@ -67,6 +67,8 @@ func createMatchWithVariance(
 	extractionID := pulid.MustNew("dax_")
 	assignmentID := assignment.ID
 
+	deps.matches.On("GetOpenByExtractionID", mock.Anything, tenantInfo, extractionID).
+		Return(nil, nil)
 	deps.assignments.On("GetByID", mock.Anything, mock.Anything).Return(assignment, nil)
 	deps.control.On("GetOrCreate", mock.Anything, tenantInfo).
 		Return(&tenant.CarrierSettlementControl{
@@ -127,6 +129,27 @@ func TestCreateMatchVarianceMath(t *testing.T) {
 		assert.Equal(t, carriersettlement.InvoiceMatchStatusMatched, match.Status)
 		assert.Equal(t, int64(0), match.VarianceMinor)
 	})
+}
+
+func TestCreateMatchRejectsDuplicateExtraction(t *testing.T) {
+	deps := setupMatchingTest(t)
+	tenantInfo := accrualTenantInfo()
+	extractionID := pulid.MustNew("dax_")
+	carrierID := pulid.MustNew("car_")
+
+	deps.matches.On("GetOpenByExtractionID", mock.Anything, tenantInfo, extractionID).
+		Return(&carriersettlement.InvoiceMatch{ID: pulid.MustNew("cim_")}, nil)
+
+	_, err := deps.svc.CreateMatch(t.Context(), &CreateMatchRequest{
+		TenantInfo:             tenantInfo,
+		DocumentAIExtractionID: &extractionID,
+		CarrierID:              carrierID,
+		InvoiceNumber:          "INV-9002",
+		InvoiceTotalMinor:      100_000,
+	}, matchingActor())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already has an open match")
+	deps.matches.AssertNotCalled(t, "Create")
 }
 
 func TestCreateMatchRequiresExactlyOneSource(t *testing.T) {
