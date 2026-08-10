@@ -53,39 +53,6 @@ query RoutingGuideTable($input: DataTableConnectionInput!) {
   }
 }
 
-query RoutingGuideDetail($id: ID!) {
-  routingGuide(id: $id) {
-    id
-    name
-    description
-    status
-    originLocationId
-    destinationLocationId
-    originCity
-    originState
-    destinationCity
-    destinationState
-    specificity
-    version
-    createdAt
-    updatedAt
-    entries {
-      id
-      carrierId
-      rank
-      rateMethod
-      rate
-      offerTtlSeconds
-      channel
-      carrier {
-        id
-        name
-        scac
-      }
-    }
-  }
-}
-
 query RoutingGuideOptions($input: DataTableConnectionInput!) {
   routingGuides(input: $input) {
     edges {

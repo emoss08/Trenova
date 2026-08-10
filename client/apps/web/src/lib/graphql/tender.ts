@@ -1,6 +1,5 @@
 import {
   LiveTenderByMoveDocument,
-  TenderDetailDocument,
   TendersByShipmentDocument,
   type LiveTenderByMoveQuery,
   type TendersByShipmentQuery,
@@ -10,15 +9,6 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 export type LiveTender = NonNullable<LiveTenderByMoveQuery["liveTenderByMove"]>;
 export type LiveTenderOffer = NonNullable<LiveTender["offers"]>[number];
 export type ShipmentTender = TendersByShipmentQuery["tendersByShipment"][number];
-
-export async function getTenderGraphQL(id: string): Promise<LiveTender | null> {
-  const data = await requestGraphQL({
-    document: TenderDetailDocument,
-    operationName: "TenderDetail",
-    variables: { id },
-  });
-  return data.tender ?? null;
-}
 
 export async function getTendersByShipmentGraphQL(shipmentId: string): Promise<ShipmentTender[]> {
   const data = await requestGraphQL({

@@ -1,5 +1,5 @@
 {
-  "operationCount": 419,
+  "operationCount": 417,
   "fragmentCount": 120,
   "operations": [
     {
@@ -6558,26 +6558,6 @@
       "sdl": "query RoleTable($input: DataTableConnectionInput!) {\n  roles(input: $input) {\n    edges {\n      node {\n        ...RoleTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RoleTableRowFields on Role {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  coreResponsibility\n  parentRoleIds\n  maxSensitivity\n  isSystem\n  createdBy\n  createdAt\n  updatedAt\n}"
     },
     {
-      "name": "RoutingGuideDetail",
-      "kind": "query",
-      "domain": "routing-guide",
-      "sourceFile": "src/operations/routing-guide/table.graphql",
-      "hash": "sha256:438be74e28c75bd79e6748e519b3c700a9e5a52c0ff5c63cd04a68c9788b30bc",
-      "rootFields": [
-        "routingGuide"
-      ],
-      "variables": [
-        {
-          "name": "id",
-          "type": "ID!",
-          "defaultValue": null
-        }
-      ],
-      "fragments": [],
-      "usages": [],
-      "sdl": "query RoutingGuideDetail($id: ID!) {\n  routingGuide(id: $id) {\n    id\n    name\n    description\n    status\n    originLocationId\n    destinationLocationId\n    originCity\n    originState\n    destinationCity\n    destinationState\n    specificity\n    version\n    createdAt\n    updatedAt\n    entries {\n      id\n      carrierId\n      rank\n      rateMethod\n      rate\n      offerTtlSeconds\n      channel\n      carrier {\n        id\n        name\n        scac\n      }\n    }\n  }\n}"
-    },
-    {
       "name": "RoutingGuideOptions",
       "kind": "query",
       "domain": "routing-guide",
@@ -7665,26 +7645,6 @@
       "fragments": [],
       "usages": [],
       "sdl": "query TelematicsStatus {\n  telematicsStatus {\n    provider\n    enabled\n    configured\n    webhookConfigured\n    lastPolledAt\n    lastSuccessAt\n    failureCount\n    lastError\n    mappedTractors\n    totalTractors\n    mappedWorkers\n  }\n}"
-    },
-    {
-      "name": "TenderDetail",
-      "kind": "query",
-      "domain": "tender",
-      "sourceFile": "src/operations/tender/operations.graphql",
-      "hash": "sha256:92ad3d150e3293bba437d66db77168de7505f646f4c87c81e495289ca7e1374d",
-      "rootFields": [
-        "tender"
-      ],
-      "variables": [
-        {
-          "name": "id",
-          "type": "ID!",
-          "defaultValue": null
-        }
-      ],
-      "fragments": [],
-      "usages": [],
-      "sdl": "query TenderDetail($id: ID!) {\n  tender(id: $id) {\n    id\n    shipmentId\n    shipmentMoveId\n    routingGuideId\n    mode\n    status\n    currentRank\n    cancellationReason\n    acceptedOfferId\n    acceptedAt\n    exhaustedAt\n    canceledAt\n    version\n    createdAt\n    updatedAt\n    routingGuide {\n      id\n      name\n      specificity\n    }\n    offers {\n      id\n      tenderId\n      carrierId\n      rank\n      rateMethod\n      rate\n      offerTtlSeconds\n      channel\n      status\n      recipientEmail\n      sentAt\n      expiresAt\n      respondedAt\n      responseSource\n      declineReason\n      deliveryError\n      createdAt\n      updatedAt\n      carrier {\n        id\n        name\n        scac\n      }\n    }\n  }\n}"
     },
     {
       "name": "TendersByShipment",

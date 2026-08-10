@@ -5334,13 +5334,6 @@ export type RoutingGuideTableQueryVariables = Exact<{
 
 export type RoutingGuideTableQuery = { routingGuides: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RoutingGuideRowFieldsFragment': RoutingGuideRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type RoutingGuideDetailQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type RoutingGuideDetailQuery = { routingGuide: { id: string, name: string, description: string, status: EntityStatus, originLocationId: string | null, destinationLocationId: string | null, originCity: string, originState: string, destinationCity: string, destinationState: string, specificity: number, version: number, createdAt: number, updatedAt: number, entries: Array<{ id: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, carrier: { id: string, name: string, scac: string | null } | null }> | null } | null };
-
 export type RoutingGuideOptionsQueryVariables = Exact<{
   input: DataTableConnectionInput;
 }>;
@@ -5945,13 +5938,6 @@ export type DeleteTelematicsFormMappingMutationVariables = Exact<{
 
 
 export type DeleteTelematicsFormMappingMutation = { deleteTelematicsFormMapping: boolean };
-
-export type TenderDetailQueryVariables = Exact<{
-  id: string | number;
-}>;
-
-
-export type TenderDetailQuery = { tender: { id: string, shipmentId: string, shipmentMoveId: string, routingGuideId: string | null, mode: TenderMode, status: TenderStatus, currentRank: number, cancellationReason: string, acceptedOfferId: string | null, acceptedAt: number | null, exhaustedAt: number | null, canceledAt: number | null, version: number, createdAt: number, updatedAt: number, routingGuide: { id: string, name: string, specificity: number } | null, offers: Array<{ id: string, tenderId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, status: TenderOfferStatus, recipientEmail: string, sentAt: number | null, expiresAt: number | null, respondedAt: number | null, responseSource: TenderResponseSource | null, declineReason: string, deliveryError: string, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null }> | null } | null };
 
 export type TendersByShipmentQueryVariables = Exact<{
   shipmentId: string | number;
@@ -18622,40 +18608,6 @@ fragment RoutingGuideRowFields on RoutingGuide {
     ...RoutingGuideEntryFields
   }
 }`, {"hash":"sha256:2d13b92e01cf0ddbc49107a8e5824866a7cb64bb0af07ff5015042035f276083"}) as unknown as TypedDocumentString<RoutingGuideTableQuery, RoutingGuideTableQueryVariables>;
-export const RoutingGuideDetailDocument = new TypedDocumentString(`
-    query RoutingGuideDetail($id: ID!) {
-  routingGuide(id: $id) {
-    id
-    name
-    description
-    status
-    originLocationId
-    destinationLocationId
-    originCity
-    originState
-    destinationCity
-    destinationState
-    specificity
-    version
-    createdAt
-    updatedAt
-    entries {
-      id
-      carrierId
-      rank
-      rateMethod
-      rate
-      offerTtlSeconds
-      channel
-      carrier {
-        id
-        name
-        scac
-      }
-    }
-  }
-}
-    `, {"hash":"sha256:438be74e28c75bd79e6748e519b3c700a9e5a52c0ff5c63cd04a68c9788b30bc"}) as unknown as TypedDocumentString<RoutingGuideDetailQuery, RoutingGuideDetailQueryVariables>;
 export const RoutingGuideOptionsDocument = new TypedDocumentString(`
     query RoutingGuideOptions($input: DataTableConnectionInput!) {
   routingGuides(input: $input) {
@@ -24705,57 +24657,6 @@ export const DeleteTelematicsFormMappingDocument = new TypedDocumentString(`
   deleteTelematicsFormMapping(id: $id)
 }
     `, {"hash":"sha256:40eca474cafce94d59c9ce91ea624bdb51a477fa552b3f43e0a773c64fd39baf"}) as unknown as TypedDocumentString<DeleteTelematicsFormMappingMutation, DeleteTelematicsFormMappingMutationVariables>;
-export const TenderDetailDocument = new TypedDocumentString(`
-    query TenderDetail($id: ID!) {
-  tender(id: $id) {
-    id
-    shipmentId
-    shipmentMoveId
-    routingGuideId
-    mode
-    status
-    currentRank
-    cancellationReason
-    acceptedOfferId
-    acceptedAt
-    exhaustedAt
-    canceledAt
-    version
-    createdAt
-    updatedAt
-    routingGuide {
-      id
-      name
-      specificity
-    }
-    offers {
-      id
-      tenderId
-      carrierId
-      rank
-      rateMethod
-      rate
-      offerTtlSeconds
-      channel
-      status
-      recipientEmail
-      sentAt
-      expiresAt
-      respondedAt
-      responseSource
-      declineReason
-      deliveryError
-      createdAt
-      updatedAt
-      carrier {
-        id
-        name
-        scac
-      }
-    }
-  }
-}
-    `, {"hash":"sha256:92ad3d150e3293bba437d66db77168de7505f646f4c87c81e495289ca7e1374d"}) as unknown as TypedDocumentString<TenderDetailQuery, TenderDetailQueryVariables>;
 export const TendersByShipmentDocument = new TypedDocumentString(`
     query TendersByShipment($shipmentId: ID!) {
   tendersByShipment(shipmentId: $shipmentId) {
