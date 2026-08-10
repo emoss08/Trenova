@@ -286,6 +286,7 @@ func parseShipmentStatus(t *parsedTransaction) shipmentStatusDetails {
 	if details.shipmentRef == "" {
 		details.shipmentRef = referenceFromL11(t.segments)
 	}
+	details.references = referenceValues(t.segments)
 	if at7 := findSegment(t.segments, "AT7"); at7 != nil {
 		details.statusCode = strings.ToUpper(strings.TrimSpace(elementValue(at7, 1)))
 		details.reasonCode = strings.ToUpper(strings.TrimSpace(elementValue(at7, 2)))

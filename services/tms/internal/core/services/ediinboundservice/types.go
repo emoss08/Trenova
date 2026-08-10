@@ -85,6 +85,7 @@ type shipmentStatusDetails struct {
 	statusCode  string
 	reasonCode  string
 	eventAt     int64
+	references  []string
 }
 
 const inboundDefaultMappingKey = "DEFAULT"

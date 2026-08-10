@@ -81,6 +81,13 @@ type RecordLateOfferResponseRequest struct {
 	OccurredAt int64                 `json:"occurredAt"`
 }
 
+type GetAcceptedOfferForPartnerReferenceRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	PartnerID  pulid.ID              `json:"partnerId"`
+	OfferID    pulid.ID              `json:"offerId"`
+	References []string              `json:"references"`
+}
+
 type ListTendersForSweepRequest struct {
 	TenantInfo *pagination.TenantInfo `json:"-"`
 	ExpiredBy  int64                  `json:"expiredBy"`
@@ -112,6 +119,10 @@ type TenderRepository interface {
 	GetOfferByID(
 		ctx context.Context,
 		req GetTenderOfferByIDRequest,
+	) (*tender.TenderOffer, error)
+	GetAcceptedOfferForPartnerReference(
+		ctx context.Context,
+		req GetAcceptedOfferForPartnerReferenceRequest,
 	) (*tender.TenderOffer, error)
 	ListByShipment(
 		ctx context.Context,

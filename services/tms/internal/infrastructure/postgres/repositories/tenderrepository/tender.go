@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -213,6 +214,65 @@ func (r *repository) GetOfferByID(
 		Scan(ctx)
 	if err != nil {
 		r.l.Error("failed to get tender offer", zap.Error(err))
+		return nil, dberror.HandleNotFoundError(err, "Tender offer")
+	}
+
+	return entity, nil
+}
+
+// GetAcceptedOfferForPartnerReference resolves a late-arriving carrier 214/210
+// to the accepted offer it belongs to. It anchors on OFFER status rather than
+// tender status because the tender row may have moved on by the time the
+// carrier's status or invoice document arrives.
+func (r *repository) GetAcceptedOfferForPartnerReference(
+	ctx context.Context,
+	req repositories.GetAcceptedOfferForPartnerReferenceRequest,
+) (*tender.TenderOffer, error) {
+	if req.OfferID.IsNil() && len(req.References) == 0 {
+		return nil, errortypes.NewNotFoundError("Tender offer")
+	}
+
+	offerCols := buncolgen.TenderOfferColumns
+	tenderCols := buncolgen.TenderColumns
+	shipmentCols := buncolgen.ShipmentColumns
+	entity := new(tender.TenderOffer)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Relation(buncolgen.TenderOfferRelations.Tender).
+		Relation(buncolgen.TenderOfferRelations.Carrier).
+		Join("JOIN "+buncolgen.TenderTable.Name+" AS "+buncolgen.TenderTable.Alias+
+			" ON "+tenderCols.ID.EqColumn(offerCols.TenderID)).
+		Join("JOIN "+buncolgen.ShipmentTable.Name+" AS "+buncolgen.ShipmentTable.Alias+
+			" ON "+shipmentCols.ID.EqColumn(tenderCols.ShipmentID)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.TenderOfferScopeTenant(sq, req.TenantInfo)
+			sq = buncolgen.TenderScopeTenant(sq, req.TenantInfo)
+			sq = buncolgen.ShipmentScopeTenant(sq, req.TenantInfo)
+			return sq.
+				Where(offerCols.EDIPartnerID.Eq(), req.PartnerID).
+				Where(offerCols.Status.Eq(), tender.OfferStatusAccepted).
+				WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+					if !req.OfferID.IsNil() {
+						inner = inner.WhereOr(offerCols.ID.Eq(), req.OfferID)
+					}
+					if len(req.References) > 0 {
+						references := bun.List(req.References)
+						inner = inner.
+							WhereOr(shipmentCols.ID.In(), references).
+							WhereOr(shipmentCols.ProNumber.In(), references).
+							WhereOr(shipmentCols.BOL.In(), references)
+					}
+					return inner
+				})
+		}).
+		OrderExpr(offerCols.RespondedAt.Qualified() + " DESC NULLS LAST").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		if !dberror.IsNotFoundError(err) {
+			r.l.Error("failed to get accepted tender offer for partner reference", zap.Error(err))
+		}
 		return nil, dberror.HandleNotFoundError(err, "Tender offer")
 	}
 

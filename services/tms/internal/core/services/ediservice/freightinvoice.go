@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,10 +17,11 @@ import (
 )
 
 type RecordInboundFreightInvoiceRequest struct {
-	Partner   *edi.EDIPartner
-	Message   *edi.EDIMessage
-	Recipient *edi.TenderRecipient
-	Payload   *edi.FreightInvoicePayload
+	Partner       *edi.EDIPartner
+	Message       *edi.EDIMessage
+	Recipient     *edi.TenderRecipient
+	AcceptedOffer *tender.TenderOffer
+	Payload       *edi.FreightInvoicePayload
 }
 
 type RecordInboundFreightInvoiceResult struct {
@@ -51,6 +54,19 @@ func (s *Service) RecordInboundFreightInvoice(
 		entity.TenderRecipientID = req.Recipient.ID
 		entity.ShipmentID = req.Recipient.SourceShipmentID
 		entity.ExpectedAmount = req.Recipient.LatestBaselinePayload.TotalChargeAmount
+	} else if req.AcceptedOffer != nil && req.AcceptedOffer.Tender != nil {
+		// Tendered-carrier fallback: stamp the shipment and carrier so invoice
+		// matching can anchor on the carrier assignment, but never create a
+		// tender recipient row. A per-mile expected amount comes from the
+		// assignment's TotalCost at match time, so only Flat rates are stamped.
+		entity.ShipmentID = req.AcceptedOffer.Tender.ShipmentID
+		entity.CarrierID = req.AcceptedOffer.CarrierID
+		if req.AcceptedOffer.RateMethod == shipment.CarrierRateMethodFlat {
+			entity.ExpectedAmount = decimal.NullDecimal{
+				Decimal: req.AcceptedOffer.Rate,
+				Valid:   true,
+			}
+		}
 	}
 
 	entity.ReconciliationStatus = reconcileCarrierInvoice(entity, customerResolved, &notes)
@@ -63,7 +79,25 @@ func (s *Service) RecordInboundFreightInvoice(
 	}
 
 	if req.Recipient != nil && req.Recipient.SourceShipmentID.IsNotNil() {
-		s.recordCarrierInvoiceShipmentComment(ctx, req.Recipient, invoice)
+		s.recordCarrierInvoiceShipmentComment(
+			ctx,
+			req.Recipient.SourceShipmentID,
+			pagination.TenantInfo{
+				OrgID: req.Recipient.SourceOrganizationID,
+				BuID:  req.Recipient.SourceBusinessUnitID,
+			},
+			invoice,
+		)
+	} else if req.AcceptedOffer != nil && invoice.ShipmentID.IsNotNil() {
+		s.recordCarrierInvoiceShipmentComment(
+			ctx,
+			invoice.ShipmentID,
+			pagination.TenantInfo{
+				OrgID: req.Message.OrganizationID,
+				BuID:  req.Message.BusinessUnitID,
+			},
+			invoice,
+		)
 	}
 	return &RecordInboundFreightInvoiceResult{Invoice: invoice, Warnings: warnings}, nil
 }
@@ -172,7 +206,8 @@ func reconcileCarrierInvoice(
 
 func (s *Service) recordCarrierInvoiceShipmentComment(
 	ctx context.Context,
-	recipient *edi.TenderRecipient,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
 	invoice *edi.CarrierInvoice,
 ) {
 	comment := fmt.Sprintf(
@@ -210,13 +245,9 @@ func (s *Service) recordCarrierInvoiceShipmentComment(
 	if invoice.VarianceAmount.Valid {
 		metadata["varianceAmount"] = invoice.VarianceAmount.Decimal.String()
 	}
-	tenantInfo := pagination.TenantInfo{
-		OrgID: recipient.SourceOrganizationID,
-		BuID:  recipient.SourceBusinessUnitID,
-	}
 	if err := s.createSystemShipmentComment(
 		ctx,
-		recipient.SourceShipmentID,
+		shipmentID,
 		tenantInfo,
 		comment,
 		metadata,

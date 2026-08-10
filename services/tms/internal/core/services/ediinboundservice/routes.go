@@ -225,11 +225,29 @@ func (s *Service) routeTenderOfferResponse(
 		)}}
 	}
 
-	action := tender.ResponseActionDecline
-	declineReason := stringutils.FirstNonEmpty(details.remarks, details.reservationCode)
-	if details.reservationCode == "A" {
+	var action tender.ResponseAction
+	declineReason := ""
+	switch {
+	case details.reservationCode == reservationCodeAccepted:
 		action = tender.ResponseActionAccept
-		declineReason = ""
+	case isReservationDecline(details.reservationCode):
+		action = tender.ResponseActionDecline
+		declineReason = stringutils.FirstNonEmpty(details.remarks, details.reservationCode)
+	case details.reservationCode == "":
+		return tenderOfferRouteOutcome{handled: true, warnings: []string{fmt.Sprintf(
+			"tender response %s/%s for offer %s carries no reservation code; response not applied",
+			transaction.set,
+			transaction.controlNumber,
+			offer.ID,
+		)}}
+	default:
+		return tenderOfferRouteOutcome{handled: true, warnings: []string{fmt.Sprintf(
+			"tender response %s/%s for offer %s carries unknown reservation code %q; response not applied",
+			transaction.set,
+			transaction.controlNumber,
+			offer.ID,
+			details.reservationCode,
+		)}}
 	}
 	err = s.tenderResponses.RecordResponse(ctx, &services.TenderResponseRequest{
 		TenantInfo:    tenantInfo,
@@ -261,16 +279,8 @@ func tenderOfferReference(details *tenderResponseDetails) pulid.ID {
 	candidates := make([]string, 0, len(details.references)+1)
 	candidates = append(candidates, details.shipmentRef)
 	candidates = append(candidates, details.references...)
-	for _, candidate := range candidates {
-		candidate = strings.TrimSpace(candidate)
-		if !strings.HasPrefix(candidate, tenderOfferReferencePrefix) {
-			continue
-		}
-		if id, parseErr := pulid.Parse(candidate); parseErr == nil {
-			return id
-		}
-	}
-	return pulid.Nil
+	offerID, _ := splitTenderOfferCandidates(candidates)
+	return offerID
 }
 
 func (s *Service) routeShipmentStatus(
@@ -308,10 +318,7 @@ func (s *Service) routeShipmentStatus(
 	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return []string{fmt.Sprintf(
-				"shipment status for reference %s could not be matched to an outbound tender",
-				reference,
-			)}, nil
+			return s.routeTenderedShipmentStatus(ctx, file, partner, &details, reference)
 		}
 		return nil, err
 	}
@@ -361,13 +368,23 @@ func (s *Service) routeFreightInvoice(
 	if err != nil {
 		return warnings, err
 	}
+	var acceptedOffer *tender.TenderOffer
+	if recipient == nil {
+		offer, offerWarnings, offerErr := s.resolveFreightInvoiceOffer(ctx, file, partner, payload)
+		if offerErr != nil {
+			return warnings, offerErr
+		}
+		warnings = append(warnings, offerWarnings...)
+		acceptedOffer = offer
+	}
 	result, err := s.ediService.RecordInboundFreightInvoice(
 		ctx,
 		&ediservice.RecordInboundFreightInvoiceRequest{
-			Partner:   partner,
-			Message:   message,
-			Recipient: recipient,
-			Payload:   payload,
+			Partner:       partner,
+			Message:       message,
+			Recipient:     recipient,
+			AcceptedOffer: acceptedOffer,
+			Payload:       payload,
 		},
 	)
 	if err != nil {
