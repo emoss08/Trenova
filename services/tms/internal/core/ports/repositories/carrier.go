@@ -12,6 +12,7 @@ type CarrierFilterOptions struct {
 	IncludeState             bool `form:"includeState"`
 	IncludeContacts          bool `form:"includeContacts"`
 	IncludeInsurancePolicies bool `form:"includeInsurancePolicies"`
+	IncludeEDIChannels       bool `form:"includeEdiChannels"`
 }
 
 type ListCarrierRequest struct {
@@ -53,6 +54,11 @@ type FindCarrierByIdentityRequest struct {
 	DOTNumber  string                `json:"dotNumber"`
 }
 
+type GetCarrierEDIChannelRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	CarrierID  pulid.ID              `json:"carrierId"`
+}
+
 type CarrierRepository interface {
 	FindByIdentity(
 		ctx context.Context,
@@ -90,4 +96,12 @@ type CarrierRepository interface {
 		ctx context.Context,
 		req *CarrierSelectOptionsRequest,
 	) (*pagination.ListResult[*carrier.Carrier], error)
+	ListEDIChannels(
+		ctx context.Context,
+		req GetCarrierEDIChannelRequest,
+	) ([]*carrier.CarrierEDIChannel, error)
+	GetDefaultEDIChannel(
+		ctx context.Context,
+		req GetCarrierEDIChannelRequest,
+	) (*carrier.CarrierEDIChannel, error)
 }

@@ -158,6 +158,35 @@ func (rg *RoutingGuide) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
+func (rg *RoutingGuide) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias: "rgd",
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "origin_city",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{
+				Name:   "destination_city",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{
+				Name:   "origin_state",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightC,
+			},
+			{
+				Name:   "destination_state",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightC,
+			},
+		},
+	}
+}
+
 func (rg *RoutingGuide) GetID() pulid.ID {
 	return rg.ID
 }

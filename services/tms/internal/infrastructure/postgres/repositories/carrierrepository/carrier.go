@@ -57,6 +57,11 @@ func (r *repository) addOptions(
 		q = q.Relation("InsurancePolicies")
 	}
 
+	if opts.IncludeEDIChannels {
+		q = q.Relation("EDIChannels")
+		q = q.Relation("EDIChannels.EDIPartner")
+	}
+
 	return q
 }
 
@@ -330,6 +335,12 @@ func (r *repository) stampChildren(entity *carrier.Carrier) {
 		policy.OrganizationID = entity.OrganizationID
 		policy.BusinessUnitID = entity.BusinessUnitID
 	}
+
+	for _, channel := range entity.EDIChannels {
+		channel.CarrierID = entity.ID
+		channel.OrganizationID = entity.OrganizationID
+		channel.BusinessUnitID = entity.BusinessUnitID
+	}
 }
 
 func (r *repository) insertChildren(ctx context.Context, entity *carrier.Carrier) error {
@@ -347,6 +358,16 @@ func (r *repository) insertChildren(ctx context.Context, entity *carrier.Carrier
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(&entity.InsurancePolicies).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return err
+		}
+	}
+
+	if len(entity.EDIChannels) > 0 {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(&entity.EDIChannels).
 			Returning("*").
 			Exec(ctx); err != nil {
 			return err
@@ -404,6 +425,21 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 		return err
 	}
 
+	channelQuery := r.db.DBForContext(ctx).
+		NewDelete().
+		Model((*carrier.CarrierEDIChannel)(nil)).
+		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+			dq = buncolgen.CarrierEDIChannelScopeTenantDelete(dq, tenantInfo).
+				Where(buncolgen.CarrierEDIChannelColumns.CarrierID.Eq(), entity.ID)
+			if kept := keepIDs(entity.EDIChannels); len(kept) > 0 {
+				dq = dq.Where(buncolgen.CarrierEDIChannelColumns.ID.NotIn(), bun.List(kept))
+			}
+			return dq
+		})
+	if _, err := channelQuery.Exec(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -445,6 +481,24 @@ func (r *repository) upsertChildren(ctx context.Context, entity *carrier.Carrier
 			Set("expiration_date = EXCLUDED.expiration_date").
 			Set("is_verified = EXCLUDED.is_verified").
 			Set("version = carins.version + 1").
+			Set("updated_at = ?", now).
+			Returning("*").
+			Exec(ctx); err != nil {
+			return err
+		}
+	}
+
+	if len(entity.EDIChannels) > 0 {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(&entity.EDIChannels).
+			On("CONFLICT (id, business_unit_id, organization_id) DO UPDATE").
+			Set("edi_partner_id = EXCLUDED.edi_partner_id").
+			Set("partner_document_profile_id = EXCLUDED.partner_document_profile_id").
+			Set("communication_profile_id = EXCLUDED.communication_profile_id").
+			Set("scac_override = EXCLUDED.scac_override").
+			Set("is_default = EXCLUDED.is_default").
+			Set("version = cec.version + 1").
 			Set("updated_at = ?", now).
 			Returning("*").
 			Exec(ctx); err != nil {
@@ -562,4 +616,55 @@ func (r *repository) BulkUpdateStatus(
 	}
 
 	return entities, nil
+}
+
+func (r *repository) ListEDIChannels(
+	ctx context.Context,
+	req repositories.GetCarrierEDIChannelRequest,
+) ([]*carrier.CarrierEDIChannel, error) {
+	cols := buncolgen.CarrierEDIChannelColumns
+	entities := make([]*carrier.CarrierEDIChannel, 0, 4)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Relation("EDIPartner").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.CarrierEDIChannelScopeTenant(sq, req.TenantInfo).
+				Where(cols.CarrierID.Eq(), req.CarrierID)
+		}).
+		Order(cols.CreatedAt.OrderAsc()).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list carrier EDI channels", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func (r *repository) GetDefaultEDIChannel(
+	ctx context.Context,
+	req repositories.GetCarrierEDIChannelRequest,
+) (*carrier.CarrierEDIChannel, error) {
+	cols := buncolgen.CarrierEDIChannelColumns
+	entity := new(carrier.CarrierEDIChannel)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Relation("EDIPartner").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.CarrierEDIChannelScopeTenant(sq, req.TenantInfo).
+				Where(cols.CarrierID.Eq(), req.CarrierID).
+				Where(cols.IsDefault.IsTrue())
+		}).
+		Scan(ctx)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil channel represents an optional absence
+		}
+		r.l.Error("failed to get default carrier EDI channel", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
 }
