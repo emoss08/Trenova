@@ -42,6 +42,7 @@ type Params struct {
 	EventService      portservices.ShipmentEventService
 	Realtime          portservices.RealtimeService
 	CostAccrual       portservices.CarrierCostAccrual `optional:"true"`
+	TenderGuard       portservices.TenderGuard        `optional:"true"`
 }
 
 type Service struct {
@@ -59,6 +60,7 @@ type Service struct {
 	eventService      portservices.ShipmentEventService
 	realtime          portservices.RealtimeService
 	costAccrual       portservices.CarrierCostAccrual
+	tenderGuard       portservices.TenderGuard
 }
 
 func New(p Params) *Service {
@@ -77,8 +79,11 @@ func New(p Params) *Service {
 		eventService:      p.EventService,
 		realtime:          p.Realtime,
 		costAccrual:       p.CostAccrual,
+		tenderGuard:       p.TenderGuard,
 	}
 }
+
+var _ portservices.CarrierMoveAssigner = (*Service)(nil)
 
 func (s *Service) Get(
 	ctx context.Context,
@@ -235,8 +240,60 @@ func (s *Service) AssignToMove(
 	if replaced {
 		s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
 	}
+	s.withdrawLiveTender(ctx, req.TenantInfo, req.ShipmentMoveID)
 
 	return result, nil
+}
+
+// ConfirmAssignment marks a pending assignment Confirmed, used when a carrier
+// explicitly agreed to the rate — a signed rate confirmation or an accepted
+// tender offer.
+func (s *Service) ConfirmAssignment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	assignmentID pulid.ID,
+) error {
+	entity, err := s.repo.GetByID(ctx, &repositories.GetCarrierAssignmentByIDRequest{
+		TenantInfo:          tenantInfo,
+		CarrierAssignmentID: assignmentID,
+	})
+	if err != nil {
+		return err
+	}
+	if entity.Status != shipment.CarrierAssignmentStatusPending {
+		if entity.Status == shipment.CarrierAssignmentStatusConfirmed {
+			return nil
+		}
+		return errortypes.NewBusinessError(
+			"Only pending carrier assignments can be confirmed",
+		).WithParam("carrierAssignmentId", assignmentID.String())
+	}
+
+	now := timeutils.NowUnix()
+	entity.Status = shipment.CarrierAssignmentStatusConfirmed
+	entity.ConfirmedAt = &now
+	_, err = s.repo.Update(ctx, entity)
+	return err
+}
+
+// withdrawLiveTender runs post-transaction: a move covered outside its tender
+// leaves that tender pointless, so any live one is withdrawn. The tender
+// acceptance flow is unaffected because it moves the tender terminal before
+// creating the assignment.
+func (s *Service) withdrawLiveTender(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+) {
+	if s.tenderGuard == nil {
+		return
+	}
+	if err := s.tenderGuard.CancelLiveTenderForMove(
+		ctx, tenantInfo, moveID, "Move was covered outside the tender",
+	); err != nil {
+		s.l.Error("failed to withdraw live tender for covered move",
+			zap.Error(err), zap.String("moveId", moveID.String()))
+	}
 }
 
 func (s *Service) Cancel(

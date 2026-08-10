@@ -27,6 +27,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
+	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
@@ -319,8 +321,14 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	func(s *carriersettlementservice.Service) services.CarrierCostAccrual { return s },
 	carrierassignmentservice.New,
+	func(s *carrierassignmentservice.Service) services.CarrierMoveAssigner { return s },
 	carrierservice.New,
 	rateconfirmationservice.New,
+	routingguideservice.NewValidator,
+	routingguideservice.New,
+	tenderservice.New,
+	func(s *tenderservice.Service) services.TenderGuard { return s },
+	func(s *tenderservice.Service) services.TenderResponseRecorder { return s },
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,
 	fx.Annotate(

@@ -72,6 +72,7 @@ type Params struct {
 	Commercial          *shipmentcommercial.Calculator
 	OrderDerivation     services.OrderDerivationService
 	DistanceCalculation services.DistanceCalculationService `optional:"true"`
+	TenderGuard         services.TenderGuard                `optional:"true"`
 }
 
 type service struct {
@@ -104,6 +105,7 @@ type service struct {
 	commercial          *shipmentcommercial.Calculator
 	orderDerivation     services.OrderDerivationService
 	distanceCalculation services.DistanceCalculationService
+	tenderGuard         services.TenderGuard
 	mutationObservers   []services.ShipmentMutationObserver
 }
 
@@ -138,6 +140,7 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		commercial:          p.Commercial,
 		orderDerivation:     p.OrderDerivation,
 		distanceCalculation: p.DistanceCalculation,
+		tenderGuard:         p.TenderGuard,
 	}
 }
 
@@ -1037,6 +1040,14 @@ func (s *service) Cancel(
 		req.CancelReason,
 		auditActor,
 	))
+
+	if s.tenderGuard != nil {
+		if err = s.tenderGuard.CancelLiveTendersForShipment(
+			ctx, req.TenantInfo, req.ShipmentID, "Shipment was canceled",
+		); err != nil {
+			log.Error("failed to withdraw live tenders for canceled shipment", zap.Error(err))
+		}
+	}
 
 	return updatedEntity, nil
 }
