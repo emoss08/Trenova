@@ -261,14 +261,28 @@ func (r *repository) ListForSweep(
 		Model(&entities).
 		Apply(r.offersRelation).
 		Where(buncolgen.TenderColumns.Status.Eq(), tender.StatusActive).
-		Where(
-			"EXISTS (SELECT 1 FROM tender_offers tof WHERE tof.tender_id = tnd.id "+
-				"AND tof.organization_id = tnd.organization_id "+
-				"AND tof.business_unit_id = tnd.business_unit_id "+
-				"AND tof.status = ? AND tof.expires_at <= ?)",
-			tender.OfferStatusSent,
-			req.ExpiredBy,
-		).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			// Arm 1: the current offer is overdue. Arm 2: no offer is in
+			// flight at all past the grace window — a workflow that died
+			// before its first dispatch, or after its last offer resolved
+			// without reaching a terminal tender status. Nudging a healthy
+			// workflow that is merely between offers is harmless.
+			return sq.Where(
+				"EXISTS (SELECT 1 FROM tender_offers tof WHERE tof.tender_id = tnd.id "+
+					"AND tof.organization_id = tnd.organization_id "+
+					"AND tof.business_unit_id = tnd.business_unit_id "+
+					"AND tof.status = ? AND tof.expires_at <= ?)",
+				tender.OfferStatusSent,
+				req.ExpiredBy,
+			).WhereOr(
+				"NOT EXISTS (SELECT 1 FROM tender_offers tof WHERE tof.tender_id = tnd.id "+
+					"AND tof.organization_id = tnd.organization_id "+
+					"AND tof.business_unit_id = tnd.business_unit_id "+
+					"AND tof.status = ?) AND tnd.created_at <= ?",
+				tender.OfferStatusSent,
+				req.ExpiredBy,
+			)
+		}).
 		Limit(limit)
 
 	if req.TenantInfo != nil {

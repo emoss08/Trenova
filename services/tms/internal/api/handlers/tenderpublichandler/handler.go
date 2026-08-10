@@ -65,7 +65,7 @@ func (h *Handler) allow(token string) bool {
 	defer h.mu.Unlock()
 
 	now := time.Now()
-	if now.Sub(h.lastGC) > throttleIdleEviction || len(h.visitors) > throttleMaxEntries {
+	if now.Sub(h.lastGC) > throttleIdleEviction {
 		for key, v := range h.visitors {
 			if now.Sub(v.lastSeen) > throttleIdleEviction {
 				delete(h.visitors, key)
@@ -76,6 +76,9 @@ func (h *Handler) allow(token string) bool {
 
 	v, ok := h.visitors[token]
 	if !ok {
+		if len(h.visitors) >= throttleMaxEntries {
+			h.evictOldestLocked()
+		}
 		v = &visitor{
 			limiter: rate.NewLimiter(rate.Limit(throttleRatePerMinute)/60, throttleBurst),
 		}
@@ -84,6 +87,22 @@ func (h *Handler) allow(token string) bool {
 	v.lastSeen = now
 
 	return v.limiter.Allow()
+}
+
+// evictOldestLocked frees exactly one slot at the hard cap; the caller must
+// hold h.mu.
+func (h *Handler) evictOldestLocked() {
+	var oldestKey string
+	var oldestSeen time.Time
+	for key, v := range h.visitors {
+		if oldestKey == "" || v.lastSeen.Before(oldestSeen) {
+			oldestKey = key
+			oldestSeen = v.lastSeen
+		}
+	}
+	if oldestKey != "" {
+		delete(h.visitors, oldestKey)
+	}
 }
 
 func (h *Handler) throttled(c *gin.Context) (string, bool) {

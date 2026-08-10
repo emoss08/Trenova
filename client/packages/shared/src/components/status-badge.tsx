@@ -1409,7 +1409,7 @@ export function TenderStatusBadge({
       description: "The tender was canceled by a dispatcher.",
     },
     NeedsReview: {
-      variant: "inactive",
+      variant: "warning",
       text: "Needs Review",
       description:
         "A carrier accepted but auto-assignment failed — assign the move manually or cancel.",

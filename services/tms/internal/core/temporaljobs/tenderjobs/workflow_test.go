@@ -285,6 +285,56 @@ func TestCarrierTenderWorkflow_DeliveryFailureAdvances(t *testing.T) {
 	env.AssertExpectations(t)
 }
 
+func TestCarrierTenderWorkflow_StaleResponseRecordedAsLate(t *testing.T) {
+	env := newTenderWorkflowTestEnv(t)
+	fixture := newPlanFixture(tender.ModeWaterfall)
+	var a *Activities
+
+	env.OnActivity(a.LoadPlanActivity, mock.Anything, mock.Anything).
+		Return(fixture.plan, nil).Once()
+	env.OnActivity(a.DispatchOfferActivity, mock.Anything, mock.Anything).
+		Return(dispatchResultIn(10*time.Minute), nil).Twice()
+	env.OnActivity(a.DeclineOfferActivity, mock.Anything, mock.MatchedBy(
+		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerOne },
+	)).Return(nil).Once()
+	env.OnActivity(a.RecordLateResponseActivity, mock.Anything, mock.MatchedBy(
+		func(in *TenderActivityInput) bool {
+			return in.OfferID == fixture.offerOne &&
+				in.Action == tender.ResponseActionAccept &&
+				in.Source == tender.ResponseSourceEmail
+		},
+	)).Return(nil).Once()
+	env.OnActivity(a.ExpireOfferActivity, mock.Anything, mock.MatchedBy(
+		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerTwo },
+	)).Return(nil).Once()
+	env.OnActivity(a.MarkExhaustedActivity, mock.Anything, mock.Anything).
+		Return(nil).Once()
+
+	env.RegisterDelayedCallback(func() {
+		env.SignalWorkflow(TenderSignalName, Signal{
+			Kind:          SignalKindResponse,
+			OfferID:       fixture.offerOne,
+			Action:        tender.ResponseActionDecline,
+			Source:        tender.ResponseSourceEmail,
+			DeclineReason: "No capacity",
+		})
+	}, time.Minute)
+	env.RegisterDelayedCallback(func() {
+		env.SignalWorkflow(TenderSignalName, Signal{
+			Kind:    SignalKindResponse,
+			OfferID: fixture.offerOne,
+			Action:  tender.ResponseActionAccept,
+			Source:  tender.ResponseSourceEmail,
+		})
+	}, 2*time.Minute)
+
+	env.ExecuteWorkflow(CarrierTenderWorkflow, fixture.input)
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+	env.AssertExpectations(t)
+}
+
 func TestCarrierTenderWorkflow_TerminalPlanNoOps(t *testing.T) {
 	env := newTenderWorkflowTestEnv(t)
 	fixture := newPlanFixture(tender.ModeWaterfall)

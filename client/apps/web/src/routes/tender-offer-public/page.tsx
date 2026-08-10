@@ -12,7 +12,7 @@ import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { PublicTenderOffer } from "@trenova/shared/types/tender";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2Icon, CircleSlashIcon, ClockIcon } from "lucide-react";
+import { CheckCircle2Icon, CircleSlashIcon, ClockIcon, TriangleAlertIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router";
 
@@ -20,12 +20,20 @@ const tenderService = new TenderService();
 
 type OfferIntent = "accept" | "decline" | null;
 
-function offerErrorKind(error: unknown): "invalid" | "throttled" | "unknown" {
+type OfferErrorKind = "invalid" | "throttled" | "unavailable";
+
+/**
+ * Only a definitive 4xx rejection means the link itself is dead. A network
+ * failure, a 5xx, or anything unrecognized is a transient server-side problem
+ * and must not be presented as an expired offer.
+ */
+function offerErrorKind(error: unknown): OfferErrorKind {
   if (error instanceof ApiRequestError) {
     if (error.status === 429) return "throttled";
     if (error.status === 422 || error.isValidationError()) return "invalid";
+    if (error.status >= 400 && error.status < 500) return "invalid";
   }
-  return "unknown";
+  return "unavailable";
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
@@ -38,13 +46,24 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatusCard({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+function StatusCard({
+  icon,
+  title,
+  body,
+  action,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+  action?: React.ReactNode;
+}) {
   return (
     <Card className="w-full max-w-md">
       <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
         {icon}
         <p className="text-sm font-semibold">{title}</p>
         <p className="text-xs text-muted-foreground">{body}</p>
+        {action}
       </CardContent>
     </Card>
   );
@@ -177,7 +196,7 @@ export function TenderOfferPublicPage() {
   }, [pathname]);
 
   const [submitted, setSubmitted] = useState(false);
-  const [submitError, setSubmitError] = useState<"invalid" | "throttled" | null>(null);
+  const [submitError, setSubmitError] = useState<OfferErrorKind | null>(null);
 
   const previewQuery = useQuery({
     queryKey: ["public-tender-offer", token] as const,
@@ -195,8 +214,7 @@ export function TenderOfferPublicPage() {
       setSubmitted(true);
     },
     onError: (error: unknown) => {
-      const kind = offerErrorKind(error);
-      setSubmitError(kind === "throttled" ? "throttled" : "invalid");
+      setSubmitError(offerErrorKind(error));
     },
   });
 
@@ -215,6 +233,31 @@ export function TenderOfferPublicPage() {
         icon={<ClockIcon className="size-8 text-muted-foreground" aria-hidden />}
         title="Too many attempts"
         body="Please wait a minute and try the link from your email again."
+      />
+    );
+  } else if (submitError === "unavailable") {
+    content = (
+      <StatusCard
+        icon={<TriangleAlertIcon className="size-8 text-muted-foreground" aria-hidden />}
+        title="Temporarily unavailable"
+        body="Your response could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment."
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => {
+              const lastResponse = respondMutation.variables;
+              setSubmitError(null);
+              if (lastResponse) {
+                respondMutation.mutate(lastResponse);
+              }
+            }}
+          >
+            Try again
+          </Button>
+        }
       />
     );
   } else if (submitError === "invalid") {
@@ -243,6 +286,25 @@ export function TenderOfferPublicPage() {
           icon={<ClockIcon className="size-8 text-muted-foreground" aria-hidden />}
           title="Too many attempts"
           body="Please wait a minute and try the link from your email again."
+        />
+      ) : kind === "unavailable" ? (
+        <StatusCard
+          icon={<TriangleAlertIcon className="size-8 text-muted-foreground" aria-hidden />}
+          title="Temporarily unavailable"
+          body="The offer could not be loaded because of a temporary problem. Please try again in a moment."
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              isLoading={previewQuery.isRefetching}
+              loadingText="Retrying..."
+              onClick={() => void previewQuery.refetch()}
+            >
+              Try again
+            </Button>
+          }
         />
       ) : (
         <StatusCard

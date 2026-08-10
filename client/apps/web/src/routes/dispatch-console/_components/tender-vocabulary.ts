@@ -1,4 +1,5 @@
 import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import {
   TENDER_MODE_LABEL,
   type TenderMode,
@@ -47,6 +48,17 @@ export function tenderChipMeta(summary: TenderChipSummary): TenderChipMeta {
     case "Canceled":
       return { label: "Tender canceled", tone: "attention" };
   }
+}
+
+/**
+ * A decimal-string rate rendered the way the console prints money, with the
+ * per-mile qualifier when the method is distance-based. An unparseable string
+ * renders verbatim rather than as NaN.
+ */
+export function formatOfferRate(rate: string, rateMethod: string): string {
+  const amount = Number(rate);
+  if (!Number.isFinite(amount)) return rate;
+  return rateMethod === "PerMile" ? `${formatCurrency(amount)}/mi` : formatCurrency(amount);
 }
 
 /**

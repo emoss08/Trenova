@@ -44,7 +44,7 @@
   </p>
 
   <p style="margin:0;color:#6b7280;font-size:13px">
-    {{ if .ExpiresInHours }}This offer expires in {{ .ExpiresInHours }} hours{{ if .ExpiresAt }}, at {{ .ExpiresAt }}{{ end }}.{{ else }}{{ if .ExpiresAt }}This offer expires at {{ .ExpiresAt }}.{{ end }}{{ end }}
+    {{ if .ExpiresInHours }}This offer expires in {{ .ExpiresInHours }} hour{{ if ne .ExpiresInHours 1 }}s{{ end }}{{ if .ExpiresAt }}, at {{ .ExpiresAt }}{{ end }}.{{ else }}{{ if .ExpiresAt }}This offer expires at {{ .ExpiresAt }}.{{ end }}{{ end }}
     After that the load may be offered to another carrier.
   </p>
 </div>

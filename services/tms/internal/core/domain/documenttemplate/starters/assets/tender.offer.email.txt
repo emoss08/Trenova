@@ -14,4 +14,4 @@ Accept the load:
 Decline the load:
 {{ .DeclineURL }}
 
-{{ if .ExpiresInHours }}This offer expires in {{ .ExpiresInHours }} hours{{ if .ExpiresAt }}, at {{ .ExpiresAt }}{{ end }}.{{ else }}{{ if .ExpiresAt }}This offer expires at {{ .ExpiresAt }}.{{ end }}{{ end }} After that the load may be offered to another carrier.
+{{ if .ExpiresInHours }}This offer expires in {{ .ExpiresInHours }} hour{{ if ne .ExpiresInHours 1 }}s{{ end }}{{ if .ExpiresAt }}, at {{ .ExpiresAt }}{{ end }}.{{ else }}{{ if .ExpiresAt }}This offer expires at {{ .ExpiresAt }}.{{ end }}{{ end }} After that the load may be offered to another carrier.

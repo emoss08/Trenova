@@ -87,6 +87,22 @@ describe("spotTenderPayloadSchema", () => {
     ).toThrowError(/cannot exceed 7 days/);
   });
 
+  it("ignores a leftover email on an EDI line and strips it from the parsed payload", () => {
+    const parsed = spotTenderPayloadSchema.parse(
+      makeSpotPayload({
+        lines: [
+          {
+            ...emptySpotTenderLine,
+            carrierId: "car_01",
+            channel: "EDI",
+            email: "not-an-email",
+          },
+        ],
+      }),
+    );
+    expect(parsed.lines[0].email).toBe("");
+  });
+
   it("accepts an empty email and rejects a malformed one", () => {
     expect(() =>
       spotTenderPayloadSchema.parse(

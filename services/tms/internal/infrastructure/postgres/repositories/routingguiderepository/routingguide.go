@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -221,13 +222,18 @@ func (r *repository) insertEntries(ctx context.Context, entity *tender.RoutingGu
 	return err
 }
 
-func (r *repository) deleteMissingEntries(ctx context.Context, entity *tender.RoutingGuide) error {
+func keptEntryIDs(entity *tender.RoutingGuide) []pulid.ID {
 	kept := make([]pulid.ID, 0, len(entity.Entries))
 	for _, entry := range entity.Entries {
 		if entry != nil && !entry.ID.IsNil() {
 			kept = append(kept, entry.ID)
 		}
 	}
+	return kept
+}
+
+func (r *repository) deleteMissingEntries(ctx context.Context, entity *tender.RoutingGuide) error {
+	kept := keptEntryIDs(entity)
 
 	_, err := r.db.DBForContext(ctx).
 		NewDelete().
@@ -241,6 +247,32 @@ func (r *repository) deleteMissingEntries(ctx context.Context, entity *tender.Ro
 				dq = dq.Where(buncolgen.RoutingGuideEntryColumns.ID.NotIn(), bun.List(kept))
 			}
 			return dq
+		}).
+		Exec(ctx)
+	return err
+}
+
+// shiftKeptEntryRanks moves kept rows out of the live rank range before the
+// upsert rewrites them: uq_routing_guide_entries_rank is not deferrable, so a
+// rank swap applied row-by-row would collide mid-statement. The +10000 offset
+// stays within smallint bounds and above the rank >= 1 check.
+func (r *repository) shiftKeptEntryRanks(ctx context.Context, entity *tender.RoutingGuide) error {
+	kept := keptEntryIDs(entity)
+	if len(kept) == 0 {
+		return nil
+	}
+
+	cols := buncolgen.RoutingGuideEntryColumns
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*tender.RoutingGuideEntry)(nil)).
+		Set("rank = rank + 10000").
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.RoutingGuideEntryScopeTenantUpdate(uq, pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			}).Where(cols.RoutingGuideID.Eq(), entity.ID).
+				Where(cols.ID.In(), bun.List(kept))
 		}).
 		Exec(ctx)
 	return err
@@ -279,18 +311,21 @@ func (r *repository) Create(
 		zap.String("name", entity.Name),
 	)
 
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		Returning("*").
-		Exec(ctx); err != nil {
-		log.Error("failed to create routing guide", zap.Error(err))
-		return nil, err
-	}
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		if _, iErr := r.db.DBForContext(c).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(c); iErr != nil {
+			return iErr
+		}
 
-	r.stampEntries(entity)
-	if err := r.insertEntries(ctx, entity); err != nil {
-		log.Error("failed to insert routing guide entries", zap.Error(err))
+		r.stampEntries(entity)
+
+		return r.insertEntries(c, entity)
+	})
+	if err != nil {
+		log.Error("failed to create routing guide", zap.Error(err))
 		return nil, err
 	}
 
@@ -306,34 +341,43 @@ func (r *repository) Update(
 		zap.String("id", entity.ID.String()),
 	)
 
-	ov := entity.Version
-	entity.Version++
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		ov := entity.Version
+		entity.Version++
 
-	results, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("version = ?", ov).
-		Returning("*").
-		Exec(ctx)
+		results, uErr := r.db.DBForContext(c).
+			NewUpdate().
+			Model(entity).
+			WherePK().
+			Where("version = ?", ov).
+			Returning("*").
+			Exec(c)
+		if uErr != nil {
+			return uErr
+		}
+
+		if uErr = dberror.CheckRowsAffected(results, "Routing guide", entity.ID.String()); uErr != nil {
+			return uErr
+		}
+
+		if dErr := r.deleteMissingEntries(c, entity); dErr != nil {
+			return dErr
+		}
+
+		r.stampEntries(entity)
+
+		if sErr := r.shiftKeptEntryRanks(c, entity); sErr != nil {
+			return sErr
+		}
+
+		return r.upsertEntries(c, entity)
+	})
 	if err != nil {
 		log.Error("failed to update routing guide", zap.Error(err))
-		return nil, err
-	}
-
-	if err = dberror.CheckRowsAffected(results, "Routing guide", entity.ID.String()); err != nil {
-		return nil, err
-	}
-
-	if err = r.deleteMissingEntries(ctx, entity); err != nil {
-		log.Error("failed to delete routing guide entries", zap.Error(err))
-		return nil, err
-	}
-
-	r.stampEntries(entity)
-	if err = r.upsertEntries(ctx, entity); err != nil {
-		log.Error("failed to upsert routing guide entries", zap.Error(err))
-		return nil, err
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"Routing guide is busy. Retry the request.",
+		)
 	}
 
 	return entity, nil
@@ -419,9 +463,12 @@ func (r *repository) MatchLane(
 			func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.
 					Where("LOWER(rgd.origin_city) = ?", strings.ToLower(req.OriginCity)).
-					Where(cols.OriginState.Eq(), req.OriginState).
+					Where(cols.OriginState.Expr("UPPER({}) = ?"), strings.ToUpper(req.OriginState)).
 					Where("LOWER(rgd.destination_city) = ?", strings.ToLower(req.DestinationCity)).
-					Where(cols.DestinationState.Eq(), req.DestinationState)
+					Where(
+						cols.DestinationState.Expr("UPPER({}) = ?"),
+						strings.ToUpper(req.DestinationState),
+					)
 			})
 		if err != nil || guide != nil {
 			return guide, err
@@ -432,8 +479,11 @@ func (r *repository) MatchLane(
 		guide, err := r.matchTier(ctx, req, tender.SpecificityStatePair,
 			func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.
-					Where(cols.OriginState.Eq(), req.OriginState).
-					Where(cols.DestinationState.Eq(), req.DestinationState)
+					Where(cols.OriginState.Expr("UPPER({}) = ?"), strings.ToUpper(req.OriginState)).
+					Where(
+						cols.DestinationState.Expr("UPPER({}) = ?"),
+						strings.ToUpper(req.DestinationState),
+					)
 			})
 		if err != nil || guide != nil {
 			return guide, err

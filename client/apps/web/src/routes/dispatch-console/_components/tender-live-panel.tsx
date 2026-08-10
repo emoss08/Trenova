@@ -14,7 +14,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form } from "@trenova/shared/components/ui/form";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   cancelTenderPayloadSchema,
   recordTenderResponsePayloadSchema,
@@ -26,7 +26,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { TriangleAlertIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { formatOfferCountdown } from "./tender-vocabulary";
+import { formatOfferCountdown, formatOfferRate } from "./tender-vocabulary";
 
 const COUNTDOWN_TICK_MS = 30_000;
 
@@ -191,12 +191,6 @@ function RecordResponseDialog({
   );
 }
 
-function offerRate(offer: LiveTenderOffer): string {
-  const amount = Number(offer.rate);
-  if (!Number.isFinite(amount)) return offer.rate;
-  return offer.rateMethod === "PerMile" ? `${formatCurrency(amount)}/mi` : formatCurrency(amount);
-}
-
 function OfferRow({
   offer,
   isCurrent,
@@ -231,7 +225,7 @@ function OfferRow({
       </div>
 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
-        <span className="tabular-nums">{offerRate(offer)}</span>
+        <span className="tabular-nums">{formatOfferRate(offer.rate, offer.rateMethod)}</span>
         <span>· {TENDER_CHANNEL_LABEL[offer.channel]}</span>
         {countdown && (
           <span

@@ -47,12 +47,42 @@ func (m CarrierRateMethod) String() string {
 	return string(m)
 }
 
+func (m CarrierRateMethod) Label() string {
+	switch m {
+	case CarrierRateMethodPerMile:
+		return "Per Mile"
+	case CarrierRateMethodFlat:
+		return "Flat"
+	default:
+		return string(m)
+	}
+}
+
 func (m CarrierRateMethod) IsValid() bool {
 	switch m {
 	case CarrierRateMethodFlat, CarrierRateMethodPerMile:
 		return true
 	}
 	return false
+}
+
+// CarrierBaseAmount extends a buy rate into the base amount: per-mile rates
+// multiply by the move distance, flat rates pass through. Every surface that
+// prices a carrier offer or assignment must share this math so documents and
+// settlements cannot diverge on rounding.
+func CarrierBaseAmount(
+	method CarrierRateMethod,
+	rate decimal.Decimal,
+	distance *float64,
+) decimal.Decimal {
+	if method == CarrierRateMethodPerMile {
+		miles := decimal.Zero
+		if distance != nil {
+			miles = decimal.NewFromFloat(*distance)
+		}
+		return rate.Mul(miles).Round(4)
+	}
+	return rate
 }
 
 var _ bun.BeforeAppendModelHook = (*CarrierAssignment)(nil)
@@ -110,16 +140,7 @@ func (ca *CarrierAssignment) applyDefaults() {
 func (ca *CarrierAssignment) SyncTotals(distance *float64) {
 	ca.applyDefaults()
 
-	switch ca.RateMethod {
-	case CarrierRateMethodPerMile:
-		miles := decimal.Zero
-		if distance != nil {
-			miles = decimal.NewFromFloat(*distance)
-		}
-		ca.BaseAmount = ca.BaseRate.Mul(miles).Round(4)
-	case CarrierRateMethodFlat:
-		ca.BaseAmount = ca.BaseRate
-	}
+	ca.BaseAmount = CarrierBaseAmount(ca.RateMethod, ca.BaseRate, distance)
 
 	total := decimal.Zero
 	for _, acc := range ca.Accessorials {

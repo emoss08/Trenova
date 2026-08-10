@@ -168,6 +168,13 @@ function TenderCoverageCard({
     ...dispatchConsoleQueries.liveTender(move.moveId),
   });
 
+  // The board summary can lag the live query: a tender that just resolved still
+  // flags the move while liveTender comes back null. Rendering the frame anyway
+  // would leave an empty bordered strip in the inspector.
+  if (!isLoading && !liveTender) {
+    return null;
+  }
+
   return (
     <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto border-b bg-muted/30 px-2.5 py-2">
       {isLoading ? (

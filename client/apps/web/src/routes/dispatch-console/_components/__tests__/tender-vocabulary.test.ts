@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { formatOfferCountdown, tenderChipMeta, type TenderChipSummary } from "../tender-vocabulary";
+import {
+  formatOfferCountdown,
+  formatOfferRate,
+  tenderChipMeta,
+  type TenderChipSummary,
+} from "../tender-vocabulary";
 
 const baseSummary: TenderChipSummary = {
   status: "Active",
@@ -46,6 +51,20 @@ describe("tenderChipMeta", () => {
 
   it("marks an accepted tender as active", () => {
     expect(tenderChipMeta({ ...baseSummary, status: "Accepted" }).tone).toBe("active");
+  });
+});
+
+describe("formatOfferRate", () => {
+  it("formats a flat rate as currency", () => {
+    expect(formatOfferRate("1500.00", "Flat")).toBe("$1,500.00");
+  });
+
+  it("appends the per-mile qualifier for distance-based rates", () => {
+    expect(formatOfferRate("2.5", "PerMile")).toBe("$2.50/mi");
+  });
+
+  it("renders an unparseable rate verbatim rather than as NaN", () => {
+    expect(formatOfferRate("n/a", "Flat")).toBe("n/a");
   });
 });
 

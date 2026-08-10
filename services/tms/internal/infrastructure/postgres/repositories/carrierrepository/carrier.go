@@ -443,6 +443,27 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 	return nil
 }
 
+// clearEDIChannelDefaults drops every default flag before the channel upsert:
+// uq_carrier_edi_channels_default is a non-deferrable partial unique index, so
+// moving is_default between two existing rows in one statement would collide
+// mid-upsert.
+func (r *repository) clearEDIChannelDefaults(ctx context.Context, entity *carrier.Carrier) error {
+	cols := buncolgen.CarrierEDIChannelColumns
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*carrier.CarrierEDIChannel)(nil)).
+		Set("is_default = FALSE").
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.CarrierEDIChannelScopeTenantUpdate(uq, pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			}).Where(cols.CarrierID.Eq(), entity.ID).
+				Where(cols.IsDefault.IsTrue())
+		}).
+		Exec(ctx)
+	return err
+}
+
 // upsertChildren inserts new (ID-less) child rows and updates the kept ones in
 // place, preserving their IDs and created_at for insurance history and audit
 // diffs.
@@ -489,6 +510,10 @@ func (r *repository) upsertChildren(ctx context.Context, entity *carrier.Carrier
 	}
 
 	if len(entity.EDIChannels) > 0 {
+		if err := r.clearEDIChannelDefaults(ctx, entity); err != nil {
+			return err
+		}
+
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(&entity.EDIChannels).

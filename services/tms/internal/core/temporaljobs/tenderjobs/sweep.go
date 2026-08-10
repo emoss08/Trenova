@@ -71,15 +71,14 @@ func (a *Activities) SweepStalledTendersActivity(
 
 	for _, entity := range tenders {
 		result.Checked++
-		if entity.WorkflowID == "" {
-			result.Failed++
-			a.l.Error("live tender has no workflow id; cannot recover",
-				zap.String("tenderId", entity.ID.String()))
-			continue
-		}
+
+		// The stored workflow_id is informational; the identifier is fully
+		// deterministic, so a tender that crashed before recording it is
+		// still recoverable.
+		workflowID := WorkflowID(entity.ID)
 
 		signalErr := a.workflows.SignalWorkflow(
-			ctx, entity.WorkflowID, "", TenderSignalName,
+			ctx, workflowID, "", TenderSignalName,
 			Signal{Kind: SignalKindSweepNudge},
 		)
 		if signalErr == nil {
@@ -90,10 +89,10 @@ func (a *Activities) SweepStalledTendersActivity(
 		a.l.Warn("tender workflow unreachable; restarting it",
 			zap.Error(signalErr),
 			zap.String("tenderId", entity.ID.String()),
-			zap.String("workflowId", entity.WorkflowID))
+			zap.String("workflowId", workflowID))
 
 		_, startErr := a.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
-			ID:        entity.WorkflowID,
+			ID:        workflowID,
 			TaskQueue: temporaltype.TaskQueueDispatch.String(),
 		}, CarrierTenderWorkflowName, WorkflowInput{
 			TenderID:       entity.ID,

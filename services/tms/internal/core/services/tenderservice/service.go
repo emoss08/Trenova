@@ -36,6 +36,7 @@ type Params struct {
 	AssignmentRepo        repositories.AssignmentRepository
 	ShipmentRepo          repositories.ShipmentRepository
 	HoldRepo              repositories.ShipmentHoldRepository
+	OrgRepo               repositories.OrganizationRepository
 	Workflows             portservices.WorkflowStarter
 	EventService          portservices.ShipmentEventService
 	Realtime              portservices.RealtimeService
@@ -56,6 +57,7 @@ type Service struct {
 	assignmentRepo        repositories.AssignmentRepository
 	shipmentRepo          repositories.ShipmentRepository
 	holdRepo              repositories.ShipmentHoldRepository
+	orgRepo               repositories.OrganizationRepository
 	workflows             portservices.WorkflowStarter
 	eventService          portservices.ShipmentEventService
 	realtime              portservices.RealtimeService
@@ -78,6 +80,7 @@ func New(p Params) *Service {
 		assignmentRepo:        p.AssignmentRepo,
 		shipmentRepo:          p.ShipmentRepo,
 		holdRepo:              p.HoldRepo,
+		orgRepo:               p.OrgRepo,
 		workflows:             p.Workflows,
 		eventService:          p.EventService,
 		realtime:              p.Realtime,

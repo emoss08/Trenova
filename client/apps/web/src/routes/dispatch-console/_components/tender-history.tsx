@@ -4,22 +4,17 @@ import { TenderOfferStatusBadge, TenderStatusBadge } from "@trenova/shared/compo
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { TENDER_CHANNEL_LABEL, TENDER_MODE_LABEL } from "@trenova/shared/types/tender";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
+import { formatOfferRate } from "./tender-vocabulary";
 
 function acceptedCarrierName(tender: ShipmentTender): string | null {
   if (!tender.acceptedOfferId) return null;
   const accepted = tender.offers?.find((offer) => offer.id === tender.acceptedOfferId);
   return accepted?.carrier?.name ?? null;
-}
-
-function offerRateLabel(rate: string, rateMethod: string): string {
-  const amount = Number(rate);
-  if (!Number.isFinite(amount)) return rate;
-  return rateMethod === "PerMile" ? `${formatCurrency(amount)}/mi` : formatCurrency(amount);
 }
 
 function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
@@ -83,7 +78,9 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
                 <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-[9px]" />
               </div>
               <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground">
-                <span className="tabular-nums">{offerRateLabel(offer.rate, offer.rateMethod)}</span>
+                <span className="tabular-nums">
+                  {formatOfferRate(offer.rate, offer.rateMethod)}
+                </span>
                 <span>· {TENDER_CHANNEL_LABEL[offer.channel]}</span>
                 {offer.sentAt != null && <span>· sent {formatUnixDateTime(offer.sentAt)}</span>}
                 {offer.respondedAt != null && (

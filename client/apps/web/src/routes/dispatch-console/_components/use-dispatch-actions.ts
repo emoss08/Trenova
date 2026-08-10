@@ -15,6 +15,7 @@ import {
   DISPATCH_SHIPMENT_TENDERS_KEY,
 } from "@/lib/queries/dispatch-console";
 import { apiService } from "@/services/api";
+import { ApiRequestError } from "@trenova/shared/lib/api";
 import type {
   DispatchAssignMoveInput,
   DispatchAssignMoveToCarrierInput,
@@ -52,6 +53,28 @@ function describeResult(result: DispatchBulkAssignResult, verb: string): void {
     `${verb} ${result.succeeded}, ${result.failed} failed`,
     firstFailure?.error ? { description: firstFailure.error } : undefined,
   );
+}
+
+const MAX_TENDER_ERROR_MESSAGES = 3;
+
+/**
+ * Tender mutations have no form to distribute field errors into — the dialogs
+ * close or the action is a bare button — so the backend's field-level messages
+ * ("Carrier has no email address on file", per-line failures) are the toast, not
+ * the generic wrapper message.
+ */
+function describeTenderError(title: string, error: unknown): void {
+  const fieldMessages =
+    error instanceof ApiRequestError
+      ? [...new Set(error.getFieldErrors().map((fieldError) => fieldError.message))]
+      : [];
+  const description =
+    fieldMessages.length > 0
+      ? fieldMessages.slice(0, MAX_TENDER_ERROR_MESSAGES).join("\n")
+      : error instanceof Error
+        ? error.message
+        : undefined;
+  toast.error(title, description ? { description } : undefined);
 }
 
 export type DispatchActions = ReturnType<typeof useDispatchActions>;
@@ -155,8 +178,7 @@ export function useDispatchActions() {
       });
       invalidateTenders();
     },
-    onError: (error: Error) =>
-      toast.error("Could not start the waterfall", { description: error.message }),
+    onError: (error: unknown) => describeTenderError("Could not start the waterfall", error),
   });
 
   const spotTenderMutation = useMutation({
@@ -170,8 +192,7 @@ export function useDispatchActions() {
       });
       invalidateTenders();
     },
-    onError: (error: Error) =>
-      toast.error("Could not send the spot tender", { description: error.message }),
+    onError: (error: unknown) => describeTenderError("Could not send the spot tender", error),
   });
 
   const cancelTenderMutation = useMutation({
@@ -183,8 +204,7 @@ export function useDispatchActions() {
       });
       invalidateTenders();
     },
-    onError: (error: Error) =>
-      toast.error("Could not cancel the tender", { description: error.message }),
+    onError: (error: unknown) => describeTenderError("Could not cancel the tender", error),
   });
 
   const recordOfferResponseMutation = useMutation({
@@ -196,8 +216,7 @@ export function useDispatchActions() {
       );
       invalidateTenders();
     },
-    onError: (error: Error) =>
-      toast.error("Could not record the response", { description: error.message }),
+    onError: (error: unknown) => describeTenderError("Could not record the response", error),
   });
 
   const planMutation = useMutation({

@@ -75,13 +75,16 @@ func (r *tenderResolver) RoutingGuide(ctx context.Context, obj *tender.Tender) (
 	if obj.RoutingGuideID == nil || obj.RoutingGuideID.IsNil() {
 		return nil, nil
 	}
-	if obj.RoutingGuide != nil {
-		return obj.RoutingGuide, nil
-	}
 
 	authCtx, err := r.requireAuth(ctx)
 	if err != nil {
 		return nil, err
+	}
+	if !r.hasPermission(ctx, authCtx, permission.ResourceRoutingGuide, permission.OpRead) {
+		return nil, nil
+	}
+	if obj.RoutingGuide != nil {
+		return obj.RoutingGuide, nil
 	}
 
 	return r.routingGuideService.Get(ctx, repositories.GetRoutingGuideByIDRequest{

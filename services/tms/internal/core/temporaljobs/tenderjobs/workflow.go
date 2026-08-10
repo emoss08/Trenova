@@ -315,6 +315,20 @@ func handleSignal(
 		return outcomeContinue, nil
 	case SignalKindResponse:
 		if !relevant(sig.OfferID) {
+			// The response was in flight when its offer expired or was
+			// superseded, so the service-side gate never saw it as late.
+			// Preserve it here or the carrier's answer vanishes entirely.
+			lateIn := base
+			lateIn.OfferID = sig.OfferID
+			lateIn.Action = sig.Action
+			lateIn.Source = sig.Source
+			if err := workflow.ExecuteActivity(
+				ctx, a.RecordLateResponseActivity, &lateIn,
+			).Get(ctx, nil); err != nil {
+				workflow.GetLogger(ctx).Error(
+					"failed to record late tender response", "error", err,
+				)
+			}
 			return outcomeContinue, nil
 		}
 		return handleResponse(ctx, a, base, sig)

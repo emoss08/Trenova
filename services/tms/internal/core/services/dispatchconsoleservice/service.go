@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 const (
@@ -31,6 +32,7 @@ type Params struct {
 	OrgCacheRepo        repositories.OrganizationCacheRepository
 	TenderRepo          repositories.TenderRepository
 	CandidateService    *dispatchcandidateservice.Service
+	Logger              *zap.Logger
 }
 
 type Service struct {
@@ -39,6 +41,7 @@ type Service struct {
 	orgCacheRepo        repositories.OrganizationCacheRepository
 	tenderRepo          repositories.TenderRepository
 	candidates          *dispatchcandidateservice.Service
+	l                   *zap.Logger
 }
 
 func New(p Params) *Service {
@@ -48,6 +51,7 @@ func New(p Params) *Service {
 		orgCacheRepo:        p.OrgCacheRepo,
 		tenderRepo:          p.TenderRepo,
 		candidates:          p.CandidateService,
+		l:                   p.Logger.Named("service.dispatch-console"),
 	}
 }
 
@@ -178,7 +182,8 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 
 	decoratedMoves := decorateMoves(moves, now)
 	if err = s.attachLiveTenders(ctx, req.TenantInfo, decoratedMoves); err != nil {
-		return nil, err
+		s.l.Warn("failed to attach live tenders to the dispatch board; rendering without tender chips",
+			zap.Error(err))
 	}
 
 	return &Board{
@@ -297,14 +302,6 @@ func (s *Service) GetDriverMoves(
 	sortMatches(matches)
 	if req.Limit > 0 && len(matches) > req.Limit {
 		matches = matches[:req.Limit]
-	}
-
-	matchedMoves := make([]*BoardMove, 0, len(matches))
-	for _, match := range matches {
-		matchedMoves = append(matchedMoves, match.Move)
-	}
-	if err = s.attachLiveTenders(ctx, req.TenantInfo, matchedMoves); err != nil {
-		return nil, err
 	}
 
 	return matches, nil

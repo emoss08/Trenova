@@ -9,9 +9,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
+
+// maxDeclineReasonLength bounds carrier-supplied text before it travels into
+// workflow signals, events, and notifications; the client caps at the same
+// length.
+const maxDeclineReasonLength = 500
 
 // RecordResponse is the single funnel every response channel resolves
 // through. It validates the response is still answerable, then signals the
@@ -36,6 +43,13 @@ func (s *Service) RecordResponse(
 			"source", errortypes.ErrInvalid, "Response source is invalid",
 		)
 	}
+	if len(req.DeclineReason) > maxDeclineReasonLength {
+		return errortypes.NewValidationError(
+			"declineReason",
+			errortypes.ErrInvalid,
+			"Decline reason must be at most 500 characters",
+		)
+	}
 
 	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
 		TenantInfo:    req.TenantInfo,
@@ -54,7 +68,7 @@ func (s *Service) RecordResponse(
 
 	err = s.workflows.SignalWorkflow(
 		ctx,
-		offer.Tender.WorkflowID,
+		tenderjobs.WorkflowID(offer.TenderID),
 		"",
 		tenderjobs.TenderSignalName,
 		tenderjobs.Signal{
@@ -70,7 +84,7 @@ func (s *Service) RecordResponse(
 		s.l.Error("failed to signal tender workflow with response",
 			zap.Error(err),
 			zap.String("offerId", offer.ID.String()),
-			zap.String("workflowId", offer.Tender.WorkflowID))
+			zap.String("workflowId", tenderjobs.WorkflowID(offer.TenderID)))
 		return errortypes.NewBusinessError(
 			"The response could not be recorded right now. Retry in a moment",
 		)
@@ -90,36 +104,61 @@ func (s *Service) recordLateResponse(
 	if offer == nil {
 		return
 	}
+	s.recordLateOfferResponse(ctx, req.TenantInfo, offer, req.Action, req.Source)
+}
 
+// RecordLateResponse preserves a response the workflow drained after its
+// offer had already been expired, superseded, or answered — the race the
+// service-side gate cannot see because the signal was already in flight.
+func (s *Service) RecordLateResponse(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offerID pulid.ID,
+	action tender.ResponseAction,
+	source tender.ResponseSource,
+) error {
+	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+		TenantInfo:    tenantInfo,
+		OfferID:       offerID,
+		IncludeTender: true,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil
+		}
+		return err
+	}
+	if offer.Status.IsOutstanding() || offer.RespondedAt != nil {
+		return nil
+	}
+
+	s.recordLateOfferResponse(ctx, tenantInfo, offer, action, source)
+	return nil
+}
+
+func (s *Service) recordLateOfferResponse(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offer *tender.TenderOffer,
+	action tender.ResponseAction,
+	source tender.ResponseSource,
+) {
 	if err := s.repo.RecordLateOfferResponse(ctx, &repositories.RecordLateOfferResponseRequest{
-		TenantInfo: req.TenantInfo,
+		TenantInfo: tenantInfo,
 		OfferID:    offer.ID,
-		Action:     req.Action,
-		Source:     req.Source,
+		Action:     action,
+		Source:     source,
 		OccurredAt: timeutils.NowUnix(),
 	}); err != nil {
 		s.l.Warn("failed to record late tender response", zap.Error(err))
 	}
 
-	carrierName := ""
-	if offer.Carrier != nil {
-		carrierName = offer.Carrier.Name
-	}
-	ref := shipmenteventservice.TenderRef{
-		TenderID: offer.TenderID,
-		OfferID:  offer.ID,
-	}
-	if offer.Tender != nil {
-		ref.ShipmentID = offer.Tender.ShipmentID
-		ref.MoveID = offer.Tender.ShipmentMoveID
-	}
-
 	s.recordEvent(ctx, shipmenteventservice.BuildTenderLateResponse(
-		shipmenteventservice.TenantRefFor(req.TenantInfo),
-		ref,
-		carrierName,
-		req.Action,
-		req.Source,
-		shipmenteventservice.ActorFor(req.TenantInfo),
+		shipmenteventservice.TenantRefFor(tenantInfo),
+		tenderRefForOffer(offer),
+		carrierNameOf(offer),
+		action,
+		source,
+		shipmenteventservice.ActorFor(tenantInfo),
 	))
 }

@@ -208,15 +208,10 @@ func buildCarrierOfferDocumentPayload(
 }
 
 func carrierOfferTotal(offer *tender.TenderOffer, distance *float64) decimal.NullDecimal {
-	total := offer.Rate
-	if offer.RateMethod == shipment.CarrierRateMethodPerMile {
-		miles := decimal.Zero
-		if distance != nil {
-			miles = decimal.NewFromFloat(*distance)
-		}
-		total = offer.Rate.Mul(miles).Round(4)
+	return decimal.NullDecimal{
+		Decimal: shipment.CarrierBaseAmount(offer.RateMethod, offer.Rate, distance),
+		Valid:   true,
 	}
-	return decimal.NullDecimal{Decimal: total, Valid: true}
 }
 
 func carrierOfferRatingDetail(

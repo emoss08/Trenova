@@ -55,7 +55,7 @@ func (s *Service) Cancel(ctx context.Context, req *CancelTenderRequest) error {
 	switch entity.Status {
 	case tender.StatusActive:
 		signalErr := s.workflows.SignalWorkflow(
-			ctx, entity.WorkflowID, "", tenderjobs.TenderSignalName,
+			ctx, tenderjobs.WorkflowID(entity.ID), "", tenderjobs.TenderSignalName,
 			tenderjobs.Signal{
 				Kind:        tenderjobs.SignalKindCancel,
 				Reason:      req.Reason,

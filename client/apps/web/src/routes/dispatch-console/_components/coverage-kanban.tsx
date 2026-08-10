@@ -17,10 +17,10 @@ import {
 } from "./dispatch-vocabulary";
 import { formatOfferCountdown, tenderChipMeta, type TenderChipTone } from "./tender-vocabulary";
 
-const TENDER_CHIP_VARIANT: Record<TenderChipTone, "info" | "active" | "inactive"> = {
+const TENDER_CHIP_VARIANT: Record<TenderChipTone, "info" | "active" | "warning"> = {
   info: "info",
   active: "active",
-  attention: "inactive",
+  attention: "warning",
 };
 
 function TenderChip({ move }: { move: DispatchBoardMove }) {

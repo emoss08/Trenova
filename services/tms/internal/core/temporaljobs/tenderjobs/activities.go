@@ -42,6 +42,7 @@ type TenderActivityInput struct {
 	TenderID   pulid.ID              `json:"tenderId"`
 	OfferID    pulid.ID              `json:"offerId"`
 
+	Action tender.ResponseAction `json:"action"`
 	Source tender.ResponseSource `json:"source"`
 	Reason string                `json:"reason"`
 
@@ -111,4 +112,11 @@ func (a *Activities) CancelTenderActivity(
 	return a.lifecycle.CancelFromWorkflow(
 		ctx, in.TenantInfo, in.TenderID, in.Reason, in.ActorUserID,
 	)
+}
+
+func (a *Activities) RecordLateResponseActivity(
+	ctx context.Context,
+	in *TenderActivityInput,
+) error {
+	return a.lifecycle.RecordLateResponse(ctx, in.TenantInfo, in.OfferID, in.Action, in.Source)
 }

@@ -33,7 +33,6 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { formatDurationFromSeconds } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
 import {
   formatRoutingGuideLane,
   ROUTING_GUIDE_TIER_LABEL,
@@ -52,6 +51,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { Link } from "react-router";
 import { TenderLivePanel } from "./tender-live-panel";
+import { formatOfferRate } from "./tender-vocabulary";
 import type { DispatchActions } from "./use-dispatch-actions";
 
 type GuidePreview = MatchedRoutingGuide | RoutingGuideOption;
@@ -68,12 +68,6 @@ const SPOT_MODE_ITEMS: { value: SpotTenderMode; label: string; caption: string }
     caption: "One at a time, in the order listed",
   },
 ];
-
-function entryRate(rate: string, rateMethod: string): string {
-  const amount = Number(rate);
-  if (!Number.isFinite(amount)) return rate;
-  return rateMethod === "PerMile" ? `${formatCurrency(amount)}/mi` : formatCurrency(amount);
-}
 
 function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
   const entries = [...(guide.entries ?? [])].sort((a, b) => a.rank - b.rank);
@@ -101,7 +95,7 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
             </span>
           </div>
           <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
-            {entryRate(entry.rate, entry.rateMethod)} ·{" "}
+            {formatOfferRate(entry.rate, entry.rateMethod)} ·{" "}
             {formatDurationFromSeconds(entry.offerTtlSeconds)} ·{" "}
             {TENDER_CHANNEL_LABEL[entry.channel]}
           </span>

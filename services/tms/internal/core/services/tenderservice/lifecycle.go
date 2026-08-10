@@ -2,16 +2,20 @@ package tenderservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tender"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/dberror"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -163,10 +167,13 @@ func (s *Service) DeclineOffer(
 	return nil
 }
 
-// AcceptOffer lands a carrier's acceptance. The tender is moved terminal
-// BEFORE the assignment is created so the out-of-tender coverage guard cannot
-// withdraw the very tender being accepted. An assignment failure leaves the
-// acceptance on record and parks the tender in NeedsReview.
+// AcceptOffer lands a carrier's acceptance. The tender-terminal and
+// offer-accepted transitions commit in ONE transaction — the tender goes
+// terminal before the assignment is created so the out-of-tender coverage
+// guard cannot withdraw the very tender being accepted, and a partial
+// failure can never strand the pair in a half-accepted state. The whole
+// method is retry-safe: a re-run after a crash resumes from whatever the
+// rows say instead of misreading its own earlier progress as a lost race.
 func (s *Service) AcceptOffer(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -187,91 +194,82 @@ func (s *Service) AcceptOffer(
 
 	now := timeutils.NowUnix()
 
-	tenderMoved, err := s.repo.UpdateTenderStatus(ctx, &repositories.UpdateTenderStatusRequest{
-		TenantInfo: tenantInfo,
-		TenderID:   offer.TenderID,
-		FromStatus: []tender.Status{tender.StatusActive},
-		ToStatus:   tender.StatusAccepted,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !tenderMoved {
-		s.recordLateAccept(ctx, tenantInfo, offer, source, now)
-		return &portservices.TenderAcceptResult{Ignored: true}, nil
-	}
+	resuming := offer.Tender.Status == tender.StatusAccepted &&
+		offer.Tender.AcceptedOfferID != nil &&
+		*offer.Tender.AcceptedOfferID == offer.ID &&
+		offer.Status == tender.OfferStatusAccepted
 
-	offerMoved, err := s.repo.UpdateOfferStatus(ctx, &repositories.UpdateOfferStatusRequest{
-		TenantInfo:     tenantInfo,
-		OfferID:        offerID,
-		FromStatus:     []tender.OfferStatus{tender.OfferStatusSent},
-		ToStatus:       tender.OfferStatusAccepted,
-		RespondedAt:    &now,
-		ResponseSource: source,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !offerMoved {
-		if _, revertErr := s.repo.UpdateTenderStatus(
-			ctx,
-			&repositories.UpdateTenderStatusRequest{
-				TenantInfo: tenantInfo,
-				TenderID:   offer.TenderID,
-				FromStatus: []tender.Status{tender.StatusAccepted},
-				ToStatus:   tender.StatusActive,
-			},
-		); revertErr != nil {
-			s.l.Error("failed to revert tender after offer CAS loss", zap.Error(revertErr))
+	if !resuming {
+		accepted := false
+		err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+			tenderMoved, txErr := s.repo.UpdateTenderStatus(
+				txCtx,
+				&repositories.UpdateTenderStatusRequest{
+					TenantInfo: tenantInfo,
+					TenderID:   offer.TenderID,
+					FromStatus: []tender.Status{tender.StatusActive},
+					ToStatus:   tender.StatusAccepted,
+				},
+			)
+			if txErr != nil {
+				return txErr
+			}
+			if !tenderMoved {
+				return nil
+			}
+
+			offerMoved, txErr := s.repo.UpdateOfferStatus(
+				txCtx,
+				&repositories.UpdateOfferStatusRequest{
+					TenantInfo:     tenantInfo,
+					OfferID:        offerID,
+					FromStatus:     []tender.OfferStatus{tender.OfferStatusSent},
+					ToStatus:       tender.OfferStatusAccepted,
+					RespondedAt:    &now,
+					ResponseSource: source,
+				},
+			)
+			if txErr != nil {
+				return txErr
+			}
+			if !offerMoved {
+				return errRollbackAccept
+			}
+
+			offerIDCopy := offer.ID
+			if _, txErr = s.repo.UpdateTenderStatus(
+				txCtx,
+				&repositories.UpdateTenderStatusRequest{
+					TenantInfo:      tenantInfo,
+					TenderID:        offer.TenderID,
+					FromStatus:      []tender.Status{tender.StatusAccepted},
+					ToStatus:        tender.StatusAccepted,
+					AcceptedOfferID: &offerIDCopy,
+					AcceptedAt:      &now,
+				},
+			); txErr != nil {
+				return txErr
+			}
+
+			accepted = true
+			return nil
+		})
+		if err != nil && !errors.Is(err, errRollbackAccept) {
+			return nil, err
 		}
-		s.recordLateAccept(ctx, tenantInfo, offer, source, now)
-		return &portservices.TenderAcceptResult{Ignored: true}, nil
-	}
-
-	offerIDCopy := offer.ID
-	if _, err = s.repo.UpdateTenderStatus(ctx, &repositories.UpdateTenderStatusRequest{
-		TenantInfo:      tenantInfo,
-		TenderID:        offer.TenderID,
-		FromStatus:      []tender.Status{tender.StatusAccepted},
-		ToStatus:        tender.StatusAccepted,
-		AcceptedOfferID: &offerIDCopy,
-		AcceptedAt:      &now,
-	}); err != nil {
-		s.l.Warn("failed to stamp accepted offer on tender", zap.Error(err))
+		if !accepted {
+			s.recordLateAccept(ctx, tenantInfo, offer, source, now)
+			return &portservices.TenderAcceptResult{Ignored: true}, nil
+		}
 	}
 
 	if err = s.repo.RevokeTokensForOffer(ctx, tenantInfo, offer.ID, now); err != nil {
 		s.l.Warn("failed to revoke tokens for accepted tender offer", zap.Error(err))
 	}
 
-	if s.assigner == nil {
-		return &portservices.TenderAcceptResult{
-			NeedsReview:  true,
-			ReviewReason: "Carrier assignment is unavailable; assign the carrier manually",
-		}, nil
-	}
-
-	assignment, assignErr := s.assigner.AssignToMove(ctx, &repositories.AssignMoveToCarrierRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentMoveID: offer.Tender.ShipmentMoveID,
-		CarrierID:      offer.CarrierID,
-		RateMethod:     offer.RateMethod,
-		BaseRate:       offer.Rate,
-	})
-	if assignErr != nil {
-		reason := assignErr.Error()
-		s.l.Warn("tender acceptance could not be auto-assigned",
-			zap.Error(assignErr), zap.String("offerId", offer.ID.String()))
-		return &portservices.TenderAcceptResult{
-			NeedsReview:  true,
-			ReviewReason: reason,
-		}, nil
-	}
-
-	if confirmErr := s.assigner.ConfirmAssignment(
-		ctx, tenantInfo, assignment.ID,
-	); confirmErr != nil {
-		s.l.Error("failed to confirm tender-created assignment", zap.Error(confirmErr))
+	result, err := s.assignAcceptedOffer(ctx, tenantInfo, offer)
+	if err != nil || result.NeedsReview {
+		return result, err
 	}
 
 	s.recordEvent(ctx, shipmenteventservice.BuildTenderAccepted(
@@ -292,6 +290,83 @@ func (s *Service) AcceptOffer(
 		CorrelationID: offer.TenderID.String(),
 	})
 	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_accepted")
+
+	return result, nil
+}
+
+// errRollbackAccept aborts the acceptance transaction when the offer lost its
+// CAS, unwinding the tender transition with it.
+var errRollbackAccept = errors.New("tender accept rolled back: offer already terminal")
+
+// isAssignBusinessFailure separates deterministic assignment rejections
+// (eligibility, coverage, validation — park for review) from transient
+// failures (deadlocks, serialization conflicts mapped to ConflictError, raw
+// infra errors — let the activity retry).
+func isAssignBusinessFailure(err error) bool {
+	if errortypes.IsConflictError(err) {
+		return false
+	}
+	return errortypes.IsBusinessError(err) || errortypes.IsError(err)
+}
+
+// assignAcceptedOffer lands the accepted offer on the assignment spine
+// idempotently: a retry that finds this carrier already covering the move
+// just confirms it. Business failures park the tender for review; infra
+// failures propagate so the activity retries into the resume path.
+func (s *Service) assignAcceptedOffer(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offer *tender.TenderOffer,
+) (*portservices.TenderAcceptResult, error) {
+	if s.assigner == nil {
+		return &portservices.TenderAcceptResult{
+			NeedsReview:  true,
+			ReviewReason: "Carrier assignment is unavailable; assign the carrier manually",
+		}, nil
+	}
+
+	existing, err := s.carrierAssignmentRepo.GetActiveByMoveID(
+		ctx, tenantInfo, offer.Tender.ShipmentMoveID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case existing != nil && existing.CarrierID == offer.CarrierID:
+		if err = s.assigner.ConfirmAssignment(ctx, tenantInfo, existing.ID); err != nil {
+			return nil, err
+		}
+		return &portservices.TenderAcceptResult{}, nil
+	case existing != nil:
+		return &portservices.TenderAcceptResult{
+			NeedsReview:  true,
+			ReviewReason: "Move is already covered by another carrier",
+		}, nil
+	}
+
+	assignment, assignErr := s.assigner.AssignToMove(ctx, &repositories.AssignMoveToCarrierRequest{
+		TenantInfo:     tenantInfo,
+		ShipmentMoveID: offer.Tender.ShipmentMoveID,
+		CarrierID:      offer.CarrierID,
+		RateMethod:     offer.RateMethod,
+		BaseRate:       offer.Rate,
+	})
+	if assignErr != nil {
+		if !isAssignBusinessFailure(assignErr) {
+			return nil, assignErr
+		}
+		s.l.Warn("tender acceptance could not be auto-assigned",
+			zap.Error(assignErr), zap.String("offerId", offer.ID.String()))
+		return &portservices.TenderAcceptResult{
+			NeedsReview:  true,
+			ReviewReason: assignErr.Error(),
+		}, nil
+	}
+
+	if err = s.assigner.ConfirmAssignment(ctx, tenantInfo, assignment.ID); err != nil {
+		return nil, err
+	}
 
 	return &portservices.TenderAcceptResult{}, nil
 }
@@ -385,10 +460,23 @@ func (s *Service) MarkNeedsReview(
 		ToStatus:   tender.StatusNeedsReview,
 	})
 	if err != nil {
-		return err
+		// Another live tender may occupy the move's one-live-tender slot; the
+		// review state then cannot be recorded on the row, but the dispatcher
+		// still has to hear about the stranded acceptance.
+		if !dberror.IsUniqueConstraintViolation(err) {
+			return err
+		}
+		s.l.Warn("tender needs review but the move already has another live tender",
+			zap.String("tenderId", tenderID.String()))
+		moved = true
 	}
 	if !moved {
 		return nil
+	}
+
+	if err = s.FinalizeAccepted(ctx, tenantInfo, tenderID, offerID); err != nil {
+		s.l.Warn("failed to close out sibling offers for needs-review tender",
+			zap.Error(err), zap.String("tenderId", tenderID.String()))
 	}
 
 	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{

@@ -140,6 +140,13 @@ type TenderLifecycle interface {
 		reason string,
 		actorUserID pulid.ID,
 	) error
+	RecordLateResponse(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		offerID pulid.ID,
+		action tender.ResponseAction,
+		source tender.ResponseSource,
+	) error
 }
 
 // SendTenderOfferEDIRequest asks the EDI layer to deliver one offer as an

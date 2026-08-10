@@ -2,10 +2,6 @@ package tenderservice
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -21,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/tokenutils"
 	"go.uber.org/zap"
 )
 
@@ -41,7 +38,15 @@ func (s *Service) DispatchOffer(
 		return nil, err
 	}
 
+	// A Sent row on a fresh attempt means an earlier try crashed between the
+	// CAS and the channel send. Delivery is re-driven rather than adopted
+	// blindly: the email idempotency key and the stamped EDI message make a
+	// duplicate send harmless, while a lost send would otherwise burn the
+	// carrier's whole TTL in silence.
 	if offer.Status == tender.OfferStatusSent && offer.ExpiresAt != nil {
+		if err = s.deliverOffer(ctx, tenantInfo, offer, *offer.ExpiresAt); err != nil {
+			return s.dispatchDeliveryOutcome(ctx, tenantInfo, offer, err)
+		}
 		return &portservices.TenderDispatchResult{
 			Delivered: true,
 			ExpiresAt: *offer.ExpiresAt,
@@ -74,21 +79,19 @@ func (s *Service) DispatchOffer(
 		}, nil
 	}
 
-	var deliveryErr error
-	switch offer.Channel {
-	case tender.ChannelEmail:
-		deliveryErr = s.deliverByEmail(ctx, tenantInfo, offer, expiresAt)
-	case tender.ChannelEDI:
-		deliveryErr = s.deliverByEDI(ctx, tenantInfo, offer)
-	default:
-		deliveryErr = errortypes.NewBusinessError("Offer has no deliverable channel")
+	rank := offer.Rank
+	if _, err = s.repo.UpdateTenderStatus(ctx, &repositories.UpdateTenderStatusRequest{
+		TenantInfo:  tenantInfo,
+		TenderID:    offer.TenderID,
+		FromStatus:  []tender.Status{tender.StatusActive},
+		ToStatus:    tender.StatusActive,
+		CurrentRank: &rank,
+	}); err != nil {
+		s.l.Warn("failed to advance tender current rank", zap.Error(err))
 	}
-	if deliveryErr != nil {
-		s.markDeliveryFailed(ctx, tenantInfo, offer, deliveryErr.Error())
-		return &portservices.TenderDispatchResult{
-			Delivered: false,
-			Reason:    deliveryErr.Error(),
-		}, nil
+
+	if err = s.deliverOffer(ctx, tenantInfo, offer, expiresAt); err != nil {
+		return s.dispatchDeliveryOutcome(ctx, tenantInfo, offer, err)
 	}
 
 	s.recordEvent(ctx, shipmenteventservice.BuildTenderOffered(
@@ -107,6 +110,46 @@ func (s *Service) DispatchOffer(
 	}, nil
 }
 
+func (s *Service) deliverOffer(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offer *tender.TenderOffer,
+	expiresAt int64,
+) error {
+	switch offer.Channel {
+	case tender.ChannelEmail:
+		return s.deliverByEmail(ctx, tenantInfo, offer, expiresAt)
+	case tender.ChannelEDI:
+		if offer.EDIMessageID != nil && !offer.EDIMessageID.IsNil() {
+			return nil
+		}
+		return s.deliverByEDI(ctx, tenantInfo, offer)
+	default:
+		return errortypes.NewBusinessError("Offer has no deliverable channel")
+	}
+}
+
+// dispatchDeliveryOutcome separates deterministic delivery rejections (bad
+// configuration, broken template — mark the offer failed, plan moves on)
+// from transient infra failures, which propagate so the activity retries
+// instead of irrevocably burning the carrier's rank on a blip.
+func (s *Service) dispatchDeliveryOutcome(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offer *tender.TenderOffer,
+	deliveryErr error,
+) (*portservices.TenderDispatchResult, error) {
+	if !isAssignBusinessFailure(deliveryErr) {
+		return nil, deliveryErr
+	}
+
+	s.markDeliveryFailed(ctx, tenantInfo, offer, deliveryErr.Error())
+	return &portservices.TenderDispatchResult{
+		Delivered: false,
+		Reason:    deliveryErr.Error(),
+	}, nil
+}
+
 func (s *Service) deliverByEmail(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -118,8 +161,13 @@ func (s *Service) deliverByEmail(
 			"Email delivery is not configured for this environment",
 		)
 	}
+	if s.cfg.Tendering.GetPublicBaseURL() == "" {
+		return errortypes.NewBusinessError(
+			"Tendering public base URL is not configured; offer links would be unreachable",
+		)
+	}
 
-	token, tokenHash, err := newOfferToken()
+	token, tokenHash, err := tokenutils.New()
 	if err != nil {
 		return err
 	}
@@ -148,7 +196,9 @@ func (s *Service) deliverByEmail(
 		FallbackToBuiltIn: true,
 	})
 	if err != nil {
-		return fmt.Errorf("render tender offer email: %w", err)
+		return errortypes.NewBusinessError(
+			"The tender offer email could not be rendered: " + err.Error(),
+		)
 	}
 
 	if _, err = s.emailService.Send(ctx, &portservices.SendEmailRequest{
@@ -253,6 +303,7 @@ func (s *Service) buildOfferEmailContext(
 ) (documenttemplate.TenderOfferEmailContext, error) {
 	data := documenttemplate.TenderOfferEmailContext{
 		CarrierName:     carrierNameOf(offer),
+		CompanyName:     s.companyName(ctx, tenantInfo),
 		RateAmount:      "$" + offer.Rate.StringFixed(2),
 		RateMethodLabel: rateMethodLabel(offer.RateMethod),
 		AcceptURL:       template.URL(s.offerResponseURL(token, "accept")),  //nolint:gosec // built from config + a generated token
@@ -286,6 +337,9 @@ func (s *Service) buildOfferEmailContext(
 	if sh.Weight != nil && *sh.Weight > 0 {
 		data.WeightSummary = fmt.Sprintf("%d lbs", *sh.Weight)
 	}
+	if sh.TrailerType != nil {
+		data.EquipmentSummary = sh.TrailerType.Code
+	}
 
 	move := sh.FindMove(offer.Tender.ShipmentMoveID)
 	if move == nil {
@@ -313,6 +367,20 @@ func (s *Service) buildOfferEmailContext(
 	return data, nil
 }
 
+func (s *Service) companyName(ctx context.Context, tenantInfo pagination.TenantInfo) string {
+	if s.orgRepo == nil {
+		return ""
+	}
+
+	org, err := s.orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		TenantInfo: tenantInfo,
+	})
+	if err != nil || org == nil {
+		return ""
+	}
+	return org.Name
+}
+
 func (s *Service) offerResponseURL(token, action string) string {
 	path := "/tender-offer/" + url.PathEscape(token) + "/" + action
 	base := s.cfg.Tendering.GetPublicBaseURL()
@@ -322,30 +390,13 @@ func (s *Service) offerResponseURL(token, action string) string {
 	return base + path
 }
 
-func newOfferToken() (token, tokenHash string, err error) {
-	raw := make([]byte, 32)
-	if _, err = rand.Read(raw); err != nil {
-		return "", "", fmt.Errorf("generate tender offer token: %w", err)
-	}
-	token = base64.RawURLEncoding.EncodeToString(raw)
-	return token, HashOfferToken(token), nil
-}
-
 // HashOfferToken derives the stored lookup hash for a raw token.
 func HashOfferToken(token string) string {
-	sum := sha256.Sum256([]byte(token))
-	return hex.EncodeToString(sum[:])
+	return tokenutils.Hash(token)
 }
 
 func rateMethodLabel(method shipment.CarrierRateMethod) string {
-	switch method {
-	case shipment.CarrierRateMethodPerMile:
-		return "Per Mile"
-	case shipment.CarrierRateMethodFlat:
-		return "Flat"
-	default:
-		return string(method)
-	}
+	return method.Label()
 }
 
 func carrierNameOf(offer *tender.TenderOffer) string {

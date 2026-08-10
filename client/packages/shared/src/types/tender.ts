@@ -54,7 +54,7 @@ export const TENDER_CHANNEL_LABEL: Record<TenderChannel, string> = {
   EDI: "EDI",
 };
 
-const tenderCarrierSummarySchema = z.object({
+export const tenderCarrierSummarySchema = z.object({
   id: optionalStringSchema,
   name: optionalStringSchema,
   scac: nullableStringSchema,
@@ -109,21 +109,39 @@ export type WaterfallTenderPayload = z.infer<typeof waterfallTenderPayloadSchema
 export const spotTenderModeSchema = z.enum(["SpotBroadcast", "SpotSequential"]);
 export type SpotTenderMode = z.infer<typeof spotTenderModeSchema>;
 
-export const spotTenderLinePayloadSchema = z.object({
-  carrierId: z.string().min(1, { error: "Carrier is required" }),
-  rateMethod: carrierRateMethodSchema,
-  rate: decimalNumberSchema("Rate is required", "Rate cannot be negative"),
-  offerTtlSeconds: z
-    .number({ error: "Offer expiry is required" })
-    .int()
-    .min(MIN_OFFER_TTL_SECONDS, { error: "Offer expiry must be at least 5 minutes" })
-    .max(MAX_OFFER_TTL_SECONDS, { error: "Offer expiry cannot exceed 7 days" }),
-  channel: tenderChannelSchema,
-  email: z
-    .union([z.literal(""), z.email({ error: "Enter a valid email address" })])
-    .default("")
-    .optional(),
-});
+const emailFormatSchema = z.email();
+
+/**
+ * The email field only renders while the line's channel is Email, but
+ * react-hook-form keeps the unmounted value. Validating it unconditionally
+ * would fail a submit on an error the dispatcher can no longer see, so the
+ * format check applies only to non-EDI lines and EDI lines have the leftover
+ * value stripped on parse.
+ */
+export const spotTenderLinePayloadSchema = z
+  .object({
+    carrierId: z.string().min(1, { error: "Carrier is required" }),
+    rateMethod: carrierRateMethodSchema,
+    rate: decimalNumberSchema("Rate is required", "Rate cannot be negative"),
+    offerTtlSeconds: z
+      .number({ error: "Offer expiry is required" })
+      .int()
+      .min(MIN_OFFER_TTL_SECONDS, { error: "Offer expiry must be at least 5 minutes" })
+      .max(MAX_OFFER_TTL_SECONDS, { error: "Offer expiry cannot exceed 7 days" }),
+    channel: tenderChannelSchema,
+    email: z.string().default("").optional(),
+  })
+  .superRefine((line, ctx) => {
+    if (line.channel === "EDI" || !line.email) return;
+    if (!emailFormatSchema.safeParse(line.email).success) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["email"],
+        message: "Enter a valid email address",
+      });
+    }
+  })
+  .transform((line) => (line.channel === "EDI" ? { ...line, email: "" } : line));
 export type SpotTenderLinePayload = z.infer<typeof spotTenderLinePayloadSchema>;
 
 export const spotTenderPayloadSchema = z

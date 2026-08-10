@@ -37,7 +37,7 @@ export function toSpotTenderRequestBody(payload: SpotTenderPayload): SpotTenderR
       rate: line.rate.toString(),
       offerTtlSeconds: line.offerTtlSeconds,
       channel: line.channel,
-      email: line.email || undefined,
+      email: line.channel === "EDI" ? undefined : line.email || undefined,
     })),
   };
 }

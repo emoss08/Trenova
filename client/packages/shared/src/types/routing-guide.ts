@@ -13,14 +13,9 @@ import {
   DEFAULT_OFFER_TTL_SECONDS,
   MAX_OFFER_TTL_SECONDS,
   MIN_OFFER_TTL_SECONDS,
+  tenderCarrierSummarySchema,
   tenderChannelSchema,
 } from "./tender";
-
-const routingGuideCarrierSummarySchema = z.object({
-  id: optionalStringSchema,
-  name: optionalStringSchema,
-  scac: nullableStringSchema,
-});
 
 export const routingGuideEntrySchema = z.object({
   ...tenantInfoSchema.shape,
@@ -31,7 +26,7 @@ export const routingGuideEntrySchema = z.object({
   rate: decimalStringSchema,
   offerTtlSeconds: z.number().int(),
   channel: tenderChannelSchema,
-  carrier: routingGuideCarrierSummarySchema.nullish(),
+  carrier: tenderCarrierSummarySchema.nullish(),
 });
 export type RoutingGuideEntry = z.infer<typeof routingGuideEntrySchema>;
 
