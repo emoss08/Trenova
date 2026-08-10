@@ -2,6 +2,7 @@ package dispatchconsoleservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
@@ -24,6 +25,31 @@ func decorateMove(move *repositories.BoardMove, now int64) *BoardMove {
 		IsCovered:       !move.AssignmentID.IsNil() || !move.CarrierAssignmentID.IsNil(),
 		TotalStopCount:  move.MoveCount,
 	}
+}
+
+// summarizeTender relies on the repository returning offers ordered by rank
+// ascending, so the first Sent offer is the one currently in a carrier's hands.
+func summarizeTender(entity *tender.Tender) *MoveTenderSummary {
+	summary := &MoveTenderSummary{
+		ID:          entity.ID,
+		Status:      entity.Status,
+		Mode:        entity.Mode,
+		CurrentRank: entity.CurrentRank,
+		OfferCount:  len(entity.Offers),
+	}
+
+	for _, offer := range entity.Offers {
+		if offer == nil || offer.Status != tender.OfferStatusSent {
+			continue
+		}
+		if offer.Carrier != nil {
+			summary.CurrentCarrierName = offer.Carrier.Name
+		}
+		summary.CurrentOfferExpiresAt = offer.ExpiresAt
+		break
+	}
+
+	return summary
 }
 
 func urgencyFor(move *repositories.BoardMove, now int64) UrgencyBucket {

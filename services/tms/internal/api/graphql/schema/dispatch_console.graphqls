@@ -58,6 +58,20 @@ type DispatchCandidate {
   factors: [DispatchScoreFactor!]!
 }
 
+"""
+The live tender riding on a move, condensed to what a board card chip needs: where the
+waterfall stands and which carrier is currently holding the offer.
+"""
+type DispatchBoardTenderSummary {
+  id: ID!
+  status: TenderStatus!
+  mode: TenderMode!
+  currentRank: Int!
+  offerCount: Int!
+  currentCarrierName: String!
+  currentOfferExpiresAt: Int
+}
+
 type DispatchBoardMove {
   moveId: ID!
   shipmentId: ID!
@@ -121,6 +135,8 @@ type DispatchBoardMove {
   assignedCarrierId: ID
   assignedCarrierName: String!
   carrierTotalCost: Float
+
+  liveTender: DispatchBoardTenderSummary
 }
 
 """

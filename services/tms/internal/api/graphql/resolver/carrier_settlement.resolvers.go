@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -412,7 +413,7 @@ func (r *queryResolver) CarrierSettlementControl(ctx context.Context) (*tenant.C
 }
 
 // CurrentCarrierSettlementPeriod is the resolver for the currentCarrierSettlementPeriod field.
-func (r *queryResolver) CurrentCarrierSettlementPeriod(ctx context.Context) (*carriersettlementservice.PeriodBounds, error) {
+func (r *queryResolver) CurrentCarrierSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceCarrierSettlement, permission.OpRead)
 	if err != nil {
 		return nil, err

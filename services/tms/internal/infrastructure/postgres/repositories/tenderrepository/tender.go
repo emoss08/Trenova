@@ -159,6 +159,37 @@ func (r *repository) GetLiveByMoveID(
 	return entity, nil
 }
 
+func (r *repository) ListLiveByMoveIDs(
+	ctx context.Context,
+	req *repositories.ListLiveTendersByMovesRequest,
+) ([]*tender.Tender, error) {
+	if len(req.MoveIDs) == 0 {
+		return []*tender.Tender{}, nil
+	}
+
+	cols := buncolgen.TenderColumns
+	entities := make([]*tender.Tender, 0, len(req.MoveIDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Apply(r.offersRelation).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.TenderScopeTenant(sq, req.TenantInfo).
+				Where(cols.ShipmentMoveID.In(), bun.List(req.MoveIDs)).
+				Where(cols.Status.In(), bun.List([]tender.Status{
+					tender.StatusActive,
+					tender.StatusNeedsReview,
+				}))
+		}).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list live tenders by moves", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) GetOfferByID(
 	ctx context.Context,
 	req repositories.GetTenderOfferByIDRequest,

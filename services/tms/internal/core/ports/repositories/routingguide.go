@@ -18,6 +18,13 @@ type ListRoutingGuideRequest struct {
 	RoutingGuideFilterOptions ` form:"routingGuideFilterOptions"`
 }
 
+type ListRoutingGuideConnectionRequest struct {
+	Filter                    *pagination.QueryOptions `json:"filter"`
+	Cursor                    pagination.CursorInfo    `json:"-"`
+	RoutingGuideColumns       []string                 `json:"-"`
+	RoutingGuideFilterOptions `json:"-"`
+}
+
 type GetRoutingGuideByIDRequest struct {
 	ID                        pulid.ID              `json:"id"         form:"id"`
 	TenantInfo                pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -44,6 +51,10 @@ type RoutingGuideRepository interface {
 		ctx context.Context,
 		req *ListRoutingGuideRequest,
 	) (*pagination.ListResult[*tender.RoutingGuide], error)
+	ListConnection(
+		ctx context.Context,
+		req *ListRoutingGuideConnectionRequest,
+	) (*pagination.CursorListResult[*tender.RoutingGuide], error)
 	GetByID(
 		ctx context.Context,
 		req GetRoutingGuideByIDRequest,

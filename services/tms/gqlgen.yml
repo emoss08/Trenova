@@ -22,6 +22,12 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.ID
       - github.com/emoss08/trenova/shared/pulid.ID
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int32
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int16
   Shipment:
     fields:
       orderNumber:
@@ -683,6 +689,52 @@ models:
     fields:
       amount:
         resolver: true
+  TenderMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.Mode
+  TenderStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.Status
+  TenderOfferStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.OfferStatus
+  TenderChannel:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.Channel
+  TenderResponseSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.ResponseSource
+  RoutingGuide:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.RoutingGuide
+  RoutingGuideEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.RoutingGuideEntry
+    fields:
+      rate:
+        resolver: true
+      offerTtlSeconds:
+        fieldName: OfferTTLSeconds
+  Tender:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.Tender
+    fields:
+      routingGuide:
+        resolver: true
+  TenderOffer:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.TenderOffer
+    fields:
+      rate:
+        resolver: true
+      responseSource:
+        resolver: true
+      offerTtlSeconds:
+        fieldName: OfferTTLSeconds
+      ediPartnerId:
+        fieldName: EDIPartnerID
+      ediMessageId:
+        fieldName: EDIMessageID
   Carrier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/carrier.Carrier

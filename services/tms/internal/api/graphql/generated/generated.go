@@ -69,6 +69,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -78,6 +79,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -106,7 +108,6 @@ type ResolverRoot interface {
 	CustomerBillingProfile() CustomerBillingProfileResolver
 	CustomerPayment() CustomerPaymentResolver
 	CustomerPaymentApplication() CustomerPaymentApplicationResolver
-	DashControl() DashControlResolver
 	DistanceProfile() DistanceProfileResolver
 	DocumentTemplate() DocumentTemplateResolver
 	DocumentTemplateAssignment() DocumentTemplateAssignmentResolver
@@ -136,8 +137,8 @@ type ResolverRoot interface {
 	PayProfileComponent() PayProfileComponentResolver
 	PayRateOverride() PayRateOverrideResolver
 	Query() QueryResolver
-	RecurringShipment() RecurringShipmentResolver
 	Role() RoleResolver
+	RoutingGuideEntry() RoutingGuideEntryResolver
 	ServiceFailure() ServiceFailureResolver
 	ServiceFailureStop() ServiceFailureStopResolver
 	SettlementControl() SettlementControlResolver
@@ -145,6 +146,8 @@ type ResolverRoot interface {
 	Shipment() ShipmentResolver
 	TCASubscription() TCASubscriptionResolver
 	TableConfiguration() TableConfigurationResolver
+	Tender() TenderResolver
+	TenderOffer() TenderOfferResolver
 	Tractor() TractorResolver
 	Trailer() TrailerResolver
 	User() UserResolver
@@ -1747,6 +1750,7 @@ type ComplexityRoot struct {
 		HasActiveHold          func(childComplexity int) int
 		HasHazmat              func(childComplexity int) int
 		IsCovered              func(childComplexity int) int
+		LiveTender             func(childComplexity int) int
 		Loaded                 func(childComplexity int) int
 		MinutesToPickup        func(childComplexity int) int
 		MoveCount              func(childComplexity int) int
@@ -1787,6 +1791,16 @@ type ComplexityRoot struct {
 		UncoveredMoves       func(childComplexity int) int
 		UnseatedDrivers      func(childComplexity int) int
 		UtilizationPercent   func(childComplexity int) int
+	}
+
+	DispatchBoardTenderSummary struct {
+		CurrentCarrierName    func(childComplexity int) int
+		CurrentOfferExpiresAt func(childComplexity int) int
+		CurrentRank           func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Mode                  func(childComplexity int) int
+		OfferCount            func(childComplexity int) int
+		Status                func(childComplexity int) int
 	}
 
 	DispatchBulkAssignResult struct {
@@ -4445,12 +4459,14 @@ type ComplexityRoot struct {
 		JournalReversal                     func(childComplexity int, id string) int
 		JournalReversals                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		JournalSourceByObject               func(childComplexity int, sourceType string, sourceID string) int
+		LiveTenderByMove                    func(childComplexity int, moveID string) int
 		Location                            func(childComplexity int, id string) int
 		LocationCategories                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		LocationCategory                    func(childComplexity int, id string) int
 		Locations                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		ManualJournal                       func(childComplexity int, id string) int
 		ManualJournals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		MatchRoutingGuide                   func(childComplexity int, input gqlmodel.MatchRoutingGuideInput) int
 		MyAdvances                          func(childComplexity int) int
 		MyComplianceProfile                 func(childComplexity int) int
 		MyDisputes                          func(childComplexity int) int
@@ -4513,6 +4529,8 @@ type ComplexityRoot struct {
 		ResolvedCostProfile                 func(childComplexity int, asOfDate *string) int
 		Role                                func(childComplexity int, id string) int
 		Roles                               func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		RoutingGuide                        func(childComplexity int, id string) int
+		RoutingGuides                       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		ScimGroupRoleMappings               func(childComplexity int, input gqlmodel.DataTableConnectionInput, directoryID string) int
 		SelectOptions                       func(childComplexity int, input gqlmodel.SelectOptionsInput) int
 		ServiceFailure                      func(childComplexity int, id string) int
@@ -4555,6 +4573,8 @@ type ComplexityRoot struct {
 		TelematicsFormMapping               func(childComplexity int, id string) int
 		TelematicsFormMappings              func(childComplexity int) int
 		TelematicsStatus                    func(childComplexity int) int
+		Tender                              func(childComplexity int, id string) int
+		TendersByShipment                   func(childComplexity int, shipmentID string) int
 		Tractor                             func(childComplexity int, id string) int
 		Tractors                            func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) int
 		Trailer                             func(childComplexity int, id string) int
@@ -5006,6 +5026,54 @@ type ComplexityRoot struct {
 	RoleEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	RoutingGuide struct {
+		BusinessUnitID        func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		Description           func(childComplexity int) int
+		DestinationCity       func(childComplexity int) int
+		DestinationLocationID func(childComplexity int) int
+		DestinationState      func(childComplexity int) int
+		Entries               func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Name                  func(childComplexity int) int
+		OrganizationID        func(childComplexity int) int
+		OriginCity            func(childComplexity int) int
+		OriginLocationID      func(childComplexity int) int
+		OriginState           func(childComplexity int) int
+		Specificity           func(childComplexity int) int
+		Status                func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+		Version               func(childComplexity int) int
+	}
+
+	RoutingGuideConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	RoutingGuideEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	RoutingGuideEntry struct {
+		BusinessUnitID  func(childComplexity int) int
+		Carrier         func(childComplexity int) int
+		CarrierID       func(childComplexity int) int
+		Channel         func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		ID              func(childComplexity int) int
+		OfferTTLSeconds func(childComplexity int) int
+		OrganizationID  func(childComplexity int) int
+		Rank            func(childComplexity int) int
+		Rate            func(childComplexity int) int
+		RateMethod      func(childComplexity int) int
+		RoutingGuideID  func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+		Version         func(childComplexity int) int
 	}
 
 	SCIMGroupRoleMapping struct {
@@ -6322,6 +6390,59 @@ type ComplexityRoot struct {
 		WebhookConfigured func(childComplexity int) int
 	}
 
+	Tender struct {
+		AcceptedAt         func(childComplexity int) int
+		AcceptedOfferID    func(childComplexity int) int
+		BusinessUnitID     func(childComplexity int) int
+		CanceledAt         func(childComplexity int) int
+		CanceledByID       func(childComplexity int) int
+		CancellationReason func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		CreatedByID        func(childComplexity int) int
+		CurrentRank        func(childComplexity int) int
+		ExhaustedAt        func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		Mode               func(childComplexity int) int
+		Offers             func(childComplexity int) int
+		OrganizationID     func(childComplexity int) int
+		RoutingGuide       func(childComplexity int) int
+		RoutingGuideID     func(childComplexity int) int
+		ShipmentID         func(childComplexity int) int
+		ShipmentMoveID     func(childComplexity int) int
+		Status             func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+	}
+
+	TenderOffer struct {
+		BusinessUnitID     func(childComplexity int) int
+		Carrier            func(childComplexity int) int
+		CarrierID          func(childComplexity int) int
+		Channel            func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		DeclineReason      func(childComplexity int) int
+		DeliveryError      func(childComplexity int) int
+		EDIMessageID       func(childComplexity int) int
+		EDIPartnerID       func(childComplexity int) int
+		ExpiresAt          func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		LateResponseAction func(childComplexity int) int
+		LateResponseAt     func(childComplexity int) int
+		OfferTTLSeconds    func(childComplexity int) int
+		OrganizationID     func(childComplexity int) int
+		Rank               func(childComplexity int) int
+		Rate               func(childComplexity int) int
+		RateMethod         func(childComplexity int) int
+		RecipientEmail     func(childComplexity int) int
+		RespondedAt        func(childComplexity int) int
+		ResponseSource     func(childComplexity int) int
+		SentAt             func(childComplexity int) int
+		Status             func(childComplexity int) int
+		TenderID           func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+	}
+
 	Tractor struct {
 		BusinessUnit            func(childComplexity int) int
 		BusinessUnitID          func(childComplexity int) int
@@ -6804,9 +6925,6 @@ type CustomerPaymentResolver interface {
 type CustomerPaymentApplicationResolver interface {
 	Invoice(ctx context.Context, obj *customerpayment.Application) (*invoice.Invoice, error)
 }
-type DashControlResolver interface {
-	DetentionAlertThresholdMinutes(ctx context.Context, obj *tenant.DashControl) (int, error)
-}
 type DistanceProfileResolver interface {
 	Provider(ctx context.Context, obj *distanceprofile.DistanceProfile) (string, error)
 }
@@ -6878,8 +6996,6 @@ type InvoiceLineResolver interface {
 	Amount(ctx context.Context, obj *invoice.InoviceLine) (string, error)
 }
 type JournalEntryLineResolver interface {
-	LineNumber(ctx context.Context, obj *journalentry.Line) (int, error)
-
 	GlAccount(ctx context.Context, obj *journalentry.Line) (*gqlmodel.JournalEntryLineAccount, error)
 }
 type LocationCategoryResolver interface {
@@ -7161,7 +7277,7 @@ type QueryResolver interface {
 	CarrierSettlementBatch(ctx context.Context, id string) (*carriersettlement.CarrierSettlementBatch, error)
 	CarrierCostEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierCostEventConnection, error)
 	CarrierSettlementControl(ctx context.Context) (*tenant.CarrierSettlementControl, error)
-	CurrentCarrierSettlementPeriod(ctx context.Context) (*carriersettlementservice.PeriodBounds, error)
+	CurrentCarrierSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
 	CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementservice.WorkspaceSummary, error)
 	CarrierLedgerEntries(ctx context.Context, carrierID string, limit *int) ([]*carriersettlement.LedgerEntry, error)
 	CarrierInvoiceMatches(ctx context.Context, status *carriersettlement.InvoiceMatchStatus, carrierID *string, limit *int, offset *int) (*gqlmodel.CarrierInvoiceMatchList, error)
@@ -7265,7 +7381,7 @@ type QueryResolver interface {
 	WorkerEarningsSummary(ctx context.Context, workerID string) (*driversettlementservice.WorkerEarningsSummary, error)
 	WorkerYtdPaySummaries(ctx context.Context, year int, classification *driverpay.PayeeClassification) ([]*driversettlementservice.WorkerYTDPaySummary, error)
 	SettlementControl(ctx context.Context) (*tenant.SettlementControl, error)
-	CurrentSettlementPeriod(ctx context.Context) (*driversettlementservice.PeriodBounds, error)
+	CurrentSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
 	SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementservice.WorkspaceSummary, error)
 	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*repositories.UnsettledWorkerSummary, error)
 	PreviewDriverSettlement(ctx context.Context, workerID string, periodStart *int, periodEnd *int) (*driversettlement.Settlement, error)
@@ -7351,6 +7467,9 @@ type QueryResolver interface {
 	ReportDashboard(ctx context.Context, id string) (*gqlmodel.ReportDashboard, error)
 	Roles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoleConnection, error)
 	Role(ctx context.Context, id string) (*permission.Role, error)
+	RoutingGuides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoutingGuideConnection, error)
+	RoutingGuide(ctx context.Context, id string) (*tender.RoutingGuide, error)
+	MatchRoutingGuide(ctx context.Context, input gqlmodel.MatchRoutingGuideInput) (*tender.RoutingGuide, error)
 	ScimGroupRoleMappings(ctx context.Context, input gqlmodel.DataTableConnectionInput, directoryID string) (*gqlmodel.SCIMGroupRoleMappingConnection, error)
 	SelectOptions(ctx context.Context, input gqlmodel.SelectOptionsInput) (*gqlmodel.SelectOptionConnection, error)
 	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string) (*gqlmodel.ServiceFailureConnection, error)
@@ -7396,6 +7515,9 @@ type QueryResolver interface {
 	HosCertificationSummary(ctx context.Context, startDate string, endDate string) ([]*gqlmodel.HosCertificationSummary, error)
 	TelematicsStatus(ctx context.Context) (*gqlmodel.TelematicsStatus, error)
 	Organization(ctx context.Context, id string, includeState *bool, includeBu *bool) (*tenant.Organization, error)
+	Tender(ctx context.Context, id string) (*tender.Tender, error)
+	TendersByShipment(ctx context.Context, shipmentID string) ([]*tender.Tender, error)
+	LiveTenderByMove(ctx context.Context, moveID string) (*tender.Tender, error)
 	Tractors(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error)
 	Tractor(ctx context.Context, id string) (*tractor.Tractor, error)
 	Users(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.UserConnection, error)
@@ -7405,13 +7527,13 @@ type QueryResolver interface {
 	UpcomingWorkerPto(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
 	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*repositories.PTOChartDataPoint, error)
 }
-type RecurringShipmentResolver interface {
-	LeadTimeDays(ctx context.Context, obj *recurringshipment.RecurringShipment) (int, error)
-}
 type RoleResolver interface {
 	CoreResponsibility(ctx context.Context, obj *permission.Role) (*string, error)
 
 	MaxSensitivity(ctx context.Context, obj *permission.Role) (string, error)
+}
+type RoutingGuideEntryResolver interface {
+	Rate(ctx context.Context, obj *tender.RoutingGuideEntry) (string, error)
 }
 type ServiceFailureResolver interface {
 	StopType(ctx context.Context, obj *servicefailure.ServiceFailure) (gqlmodel.StopType, error)
@@ -7440,6 +7562,14 @@ type TCASubscriptionResolver interface {
 }
 type TableConfigurationResolver interface {
 	TableConfig(ctx context.Context, obj *tableconfiguration.TableConfiguration) (map[string]any, error)
+}
+type TenderResolver interface {
+	RoutingGuide(ctx context.Context, obj *tender.Tender) (*tender.RoutingGuide, error)
+}
+type TenderOfferResolver interface {
+	Rate(ctx context.Context, obj *tender.TenderOffer) (string, error)
+
+	ResponseSource(ctx context.Context, obj *tender.TenderOffer) (*tender.ResponseSource, error)
 }
 type TractorResolver interface {
 	StateID(ctx context.Context, obj *tractor.Tractor) (*string, error)
@@ -15091,6 +15221,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DispatchBoardMove.IsCovered(childComplexity), true
+	case "DispatchBoardMove.liveTender":
+		if e.ComplexityRoot.DispatchBoardMove.LiveTender == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardMove.LiveTender(childComplexity), true
 	case "DispatchBoardMove.loaded":
 		if e.ComplexityRoot.DispatchBoardMove.Loaded == nil {
 			break
@@ -15314,6 +15450,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DispatchBoardSummary.UtilizationPercent(childComplexity), true
+
+	case "DispatchBoardTenderSummary.currentCarrierName":
+		if e.ComplexityRoot.DispatchBoardTenderSummary.CurrentCarrierName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardTenderSummary.CurrentCarrierName(childComplexity), true
+	case "DispatchBoardTenderSummary.currentOfferExpiresAt":
+		if e.ComplexityRoot.DispatchBoardTenderSummary.CurrentOfferExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardTenderSummary.CurrentOfferExpiresAt(childComplexity), true
+	case "DispatchBoardTenderSummary.currentRank":
+		if e.ComplexityRoot.DispatchBoardTenderSummary.CurrentRank == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardTenderSummary.CurrentRank(childComplexity), true
+	case "DispatchBoardTenderSummary.id":
+		if e.ComplexityRoot.DispatchBoardTenderSummary.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardTenderSummary.ID(childComplexity), true
+	case "DispatchBoardTenderSummary.mode":
+		if e.ComplexityRoot.DispatchBoardTenderSummary.Mode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardTenderSummary.Mode(childComplexity), true
+	case "DispatchBoardTenderSummary.offerCount":
+		if e.ComplexityRoot.DispatchBoardTenderSummary.OfferCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardTenderSummary.OfferCount(childComplexity), true
+	case "DispatchBoardTenderSummary.status":
+		if e.ComplexityRoot.DispatchBoardTenderSummary.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchBoardTenderSummary.Status(childComplexity), true
 
 	case "DispatchBulkAssignResult.failed":
 		if e.ComplexityRoot.DispatchBulkAssignResult.Failed == nil {
@@ -29455,6 +29634,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.JournalSourceByObject(childComplexity, args["sourceType"].(string), args["sourceId"].(string)), true
+	case "Query.liveTenderByMove":
+		if e.ComplexityRoot.Query.LiveTenderByMove == nil {
+			break
+		}
+
+		args, err := ec.field_Query_liveTenderByMove_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.LiveTenderByMove(childComplexity, args["moveId"].(string)), true
 	case "Query.location":
 		if e.ComplexityRoot.Query.Location == nil {
 			break
@@ -29521,6 +29711,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ManualJournals(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.matchRoutingGuide":
+		if e.ComplexityRoot.Query.MatchRoutingGuide == nil {
+			break
+		}
+
+		args, err := ec.field_Query_matchRoutingGuide_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.MatchRoutingGuide(childComplexity, args["input"].(gqlmodel.MatchRoutingGuideInput)), true
 	case "Query.myAdvances":
 		if e.ComplexityRoot.Query.MyAdvances == nil {
 			break
@@ -30123,6 +30324,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Roles(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.routingGuide":
+		if e.ComplexityRoot.Query.RoutingGuide == nil {
+			break
+		}
+
+		args, err := ec.field_Query_routingGuide_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RoutingGuide(childComplexity, args["id"].(string)), true
+	case "Query.routingGuides":
+		if e.ComplexityRoot.Query.RoutingGuides == nil {
+			break
+		}
+
+		args, err := ec.field_Query_routingGuides_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RoutingGuides(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.scimGroupRoleMappings":
 		if e.ComplexityRoot.Query.ScimGroupRoleMappings == nil {
 			break
@@ -30555,6 +30778,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.TelematicsStatus(childComplexity), true
+	case "Query.tender":
+		if e.ComplexityRoot.Query.Tender == nil {
+			break
+		}
+
+		args, err := ec.field_Query_tender_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Tender(childComplexity, args["id"].(string)), true
+	case "Query.tendersByShipment":
+		if e.ComplexityRoot.Query.TendersByShipment == nil {
+			break
+		}
+
+		args, err := ec.field_Query_tendersByShipment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.TendersByShipment(childComplexity, args["shipmentId"].(string)), true
 	case "Query.tractor":
 		if e.ComplexityRoot.Query.Tractor == nil {
 			break
@@ -32723,6 +32968,226 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.RoleEdge.Node(childComplexity), true
+
+	case "RoutingGuide.businessUnitId":
+		if e.ComplexityRoot.RoutingGuide.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.BusinessUnitID(childComplexity), true
+	case "RoutingGuide.createdAt":
+		if e.ComplexityRoot.RoutingGuide.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.CreatedAt(childComplexity), true
+	case "RoutingGuide.description":
+		if e.ComplexityRoot.RoutingGuide.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.Description(childComplexity), true
+	case "RoutingGuide.destinationCity":
+		if e.ComplexityRoot.RoutingGuide.DestinationCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.DestinationCity(childComplexity), true
+	case "RoutingGuide.destinationLocationId":
+		if e.ComplexityRoot.RoutingGuide.DestinationLocationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.DestinationLocationID(childComplexity), true
+	case "RoutingGuide.destinationState":
+		if e.ComplexityRoot.RoutingGuide.DestinationState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.DestinationState(childComplexity), true
+	case "RoutingGuide.entries":
+		if e.ComplexityRoot.RoutingGuide.Entries == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.Entries(childComplexity), true
+	case "RoutingGuide.id":
+		if e.ComplexityRoot.RoutingGuide.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.ID(childComplexity), true
+	case "RoutingGuide.name":
+		if e.ComplexityRoot.RoutingGuide.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.Name(childComplexity), true
+	case "RoutingGuide.organizationId":
+		if e.ComplexityRoot.RoutingGuide.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.OrganizationID(childComplexity), true
+	case "RoutingGuide.originCity":
+		if e.ComplexityRoot.RoutingGuide.OriginCity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.OriginCity(childComplexity), true
+	case "RoutingGuide.originLocationId":
+		if e.ComplexityRoot.RoutingGuide.OriginLocationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.OriginLocationID(childComplexity), true
+	case "RoutingGuide.originState":
+		if e.ComplexityRoot.RoutingGuide.OriginState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.OriginState(childComplexity), true
+	case "RoutingGuide.specificity":
+		if e.ComplexityRoot.RoutingGuide.Specificity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.Specificity(childComplexity), true
+	case "RoutingGuide.status":
+		if e.ComplexityRoot.RoutingGuide.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.Status(childComplexity), true
+	case "RoutingGuide.updatedAt":
+		if e.ComplexityRoot.RoutingGuide.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.UpdatedAt(childComplexity), true
+	case "RoutingGuide.version":
+		if e.ComplexityRoot.RoutingGuide.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuide.Version(childComplexity), true
+
+	case "RoutingGuideConnection.edges":
+		if e.ComplexityRoot.RoutingGuideConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideConnection.Edges(childComplexity), true
+	case "RoutingGuideConnection.pageInfo":
+		if e.ComplexityRoot.RoutingGuideConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideConnection.PageInfo(childComplexity), true
+	case "RoutingGuideConnection.totalCount":
+		if e.ComplexityRoot.RoutingGuideConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideConnection.TotalCount(childComplexity), true
+
+	case "RoutingGuideEdge.cursor":
+		if e.ComplexityRoot.RoutingGuideEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEdge.Cursor(childComplexity), true
+	case "RoutingGuideEdge.node":
+		if e.ComplexityRoot.RoutingGuideEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEdge.Node(childComplexity), true
+
+	case "RoutingGuideEntry.businessUnitId":
+		if e.ComplexityRoot.RoutingGuideEntry.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.BusinessUnitID(childComplexity), true
+	case "RoutingGuideEntry.carrier":
+		if e.ComplexityRoot.RoutingGuideEntry.Carrier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.Carrier(childComplexity), true
+	case "RoutingGuideEntry.carrierId":
+		if e.ComplexityRoot.RoutingGuideEntry.CarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.CarrierID(childComplexity), true
+	case "RoutingGuideEntry.channel":
+		if e.ComplexityRoot.RoutingGuideEntry.Channel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.Channel(childComplexity), true
+	case "RoutingGuideEntry.createdAt":
+		if e.ComplexityRoot.RoutingGuideEntry.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.CreatedAt(childComplexity), true
+	case "RoutingGuideEntry.id":
+		if e.ComplexityRoot.RoutingGuideEntry.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.ID(childComplexity), true
+	case "RoutingGuideEntry.offerTtlSeconds":
+		if e.ComplexityRoot.RoutingGuideEntry.OfferTTLSeconds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.OfferTTLSeconds(childComplexity), true
+	case "RoutingGuideEntry.organizationId":
+		if e.ComplexityRoot.RoutingGuideEntry.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.OrganizationID(childComplexity), true
+	case "RoutingGuideEntry.rank":
+		if e.ComplexityRoot.RoutingGuideEntry.Rank == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.Rank(childComplexity), true
+	case "RoutingGuideEntry.rate":
+		if e.ComplexityRoot.RoutingGuideEntry.Rate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.Rate(childComplexity), true
+	case "RoutingGuideEntry.rateMethod":
+		if e.ComplexityRoot.RoutingGuideEntry.RateMethod == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.RateMethod(childComplexity), true
+	case "RoutingGuideEntry.routingGuideId":
+		if e.ComplexityRoot.RoutingGuideEntry.RoutingGuideID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.RoutingGuideID(childComplexity), true
+	case "RoutingGuideEntry.updatedAt":
+		if e.ComplexityRoot.RoutingGuideEntry.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.UpdatedAt(childComplexity), true
+	case "RoutingGuideEntry.version":
+		if e.ComplexityRoot.RoutingGuideEntry.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RoutingGuideEntry.Version(childComplexity), true
 
 	case "SCIMGroupRoleMapping.businessUnitId":
 		if e.ComplexityRoot.SCIMGroupRoleMapping.BusinessUnitID == nil {
@@ -38551,6 +39016,290 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.TelematicsStatus.WebhookConfigured(childComplexity), true
 
+	case "Tender.acceptedAt":
+		if e.ComplexityRoot.Tender.AcceptedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.AcceptedAt(childComplexity), true
+	case "Tender.acceptedOfferId":
+		if e.ComplexityRoot.Tender.AcceptedOfferID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.AcceptedOfferID(childComplexity), true
+	case "Tender.businessUnitId":
+		if e.ComplexityRoot.Tender.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.BusinessUnitID(childComplexity), true
+	case "Tender.canceledAt":
+		if e.ComplexityRoot.Tender.CanceledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.CanceledAt(childComplexity), true
+	case "Tender.canceledById":
+		if e.ComplexityRoot.Tender.CanceledByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.CanceledByID(childComplexity), true
+	case "Tender.cancellationReason":
+		if e.ComplexityRoot.Tender.CancellationReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.CancellationReason(childComplexity), true
+	case "Tender.createdAt":
+		if e.ComplexityRoot.Tender.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.CreatedAt(childComplexity), true
+	case "Tender.createdById":
+		if e.ComplexityRoot.Tender.CreatedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.CreatedByID(childComplexity), true
+	case "Tender.currentRank":
+		if e.ComplexityRoot.Tender.CurrentRank == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.CurrentRank(childComplexity), true
+	case "Tender.exhaustedAt":
+		if e.ComplexityRoot.Tender.ExhaustedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.ExhaustedAt(childComplexity), true
+	case "Tender.id":
+		if e.ComplexityRoot.Tender.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.ID(childComplexity), true
+	case "Tender.mode":
+		if e.ComplexityRoot.Tender.Mode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.Mode(childComplexity), true
+	case "Tender.offers":
+		if e.ComplexityRoot.Tender.Offers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.Offers(childComplexity), true
+	case "Tender.organizationId":
+		if e.ComplexityRoot.Tender.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.OrganizationID(childComplexity), true
+	case "Tender.routingGuide":
+		if e.ComplexityRoot.Tender.RoutingGuide == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.RoutingGuide(childComplexity), true
+	case "Tender.routingGuideId":
+		if e.ComplexityRoot.Tender.RoutingGuideID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.RoutingGuideID(childComplexity), true
+	case "Tender.shipmentId":
+		if e.ComplexityRoot.Tender.ShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.ShipmentID(childComplexity), true
+	case "Tender.shipmentMoveId":
+		if e.ComplexityRoot.Tender.ShipmentMoveID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.ShipmentMoveID(childComplexity), true
+	case "Tender.status":
+		if e.ComplexityRoot.Tender.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.Status(childComplexity), true
+	case "Tender.updatedAt":
+		if e.ComplexityRoot.Tender.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.UpdatedAt(childComplexity), true
+	case "Tender.version":
+		if e.ComplexityRoot.Tender.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Tender.Version(childComplexity), true
+
+	case "TenderOffer.businessUnitId":
+		if e.ComplexityRoot.TenderOffer.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.BusinessUnitID(childComplexity), true
+	case "TenderOffer.carrier":
+		if e.ComplexityRoot.TenderOffer.Carrier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.Carrier(childComplexity), true
+	case "TenderOffer.carrierId":
+		if e.ComplexityRoot.TenderOffer.CarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.CarrierID(childComplexity), true
+	case "TenderOffer.channel":
+		if e.ComplexityRoot.TenderOffer.Channel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.Channel(childComplexity), true
+	case "TenderOffer.createdAt":
+		if e.ComplexityRoot.TenderOffer.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.CreatedAt(childComplexity), true
+	case "TenderOffer.declineReason":
+		if e.ComplexityRoot.TenderOffer.DeclineReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.DeclineReason(childComplexity), true
+	case "TenderOffer.deliveryError":
+		if e.ComplexityRoot.TenderOffer.DeliveryError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.DeliveryError(childComplexity), true
+	case "TenderOffer.ediMessageId":
+		if e.ComplexityRoot.TenderOffer.EDIMessageID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.EDIMessageID(childComplexity), true
+	case "TenderOffer.ediPartnerId":
+		if e.ComplexityRoot.TenderOffer.EDIPartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.EDIPartnerID(childComplexity), true
+	case "TenderOffer.expiresAt":
+		if e.ComplexityRoot.TenderOffer.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.ExpiresAt(childComplexity), true
+	case "TenderOffer.id":
+		if e.ComplexityRoot.TenderOffer.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.ID(childComplexity), true
+	case "TenderOffer.lateResponseAction":
+		if e.ComplexityRoot.TenderOffer.LateResponseAction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.LateResponseAction(childComplexity), true
+	case "TenderOffer.lateResponseAt":
+		if e.ComplexityRoot.TenderOffer.LateResponseAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.LateResponseAt(childComplexity), true
+	case "TenderOffer.offerTtlSeconds":
+		if e.ComplexityRoot.TenderOffer.OfferTTLSeconds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.OfferTTLSeconds(childComplexity), true
+	case "TenderOffer.organizationId":
+		if e.ComplexityRoot.TenderOffer.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.OrganizationID(childComplexity), true
+	case "TenderOffer.rank":
+		if e.ComplexityRoot.TenderOffer.Rank == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.Rank(childComplexity), true
+	case "TenderOffer.rate":
+		if e.ComplexityRoot.TenderOffer.Rate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.Rate(childComplexity), true
+	case "TenderOffer.rateMethod":
+		if e.ComplexityRoot.TenderOffer.RateMethod == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.RateMethod(childComplexity), true
+	case "TenderOffer.recipientEmail":
+		if e.ComplexityRoot.TenderOffer.RecipientEmail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.RecipientEmail(childComplexity), true
+	case "TenderOffer.respondedAt":
+		if e.ComplexityRoot.TenderOffer.RespondedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.RespondedAt(childComplexity), true
+	case "TenderOffer.responseSource":
+		if e.ComplexityRoot.TenderOffer.ResponseSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.ResponseSource(childComplexity), true
+	case "TenderOffer.sentAt":
+		if e.ComplexityRoot.TenderOffer.SentAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.SentAt(childComplexity), true
+	case "TenderOffer.status":
+		if e.ComplexityRoot.TenderOffer.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.Status(childComplexity), true
+	case "TenderOffer.tenderId":
+		if e.ComplexityRoot.TenderOffer.TenderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.TenderID(childComplexity), true
+	case "TenderOffer.updatedAt":
+		if e.ComplexityRoot.TenderOffer.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.UpdatedAt(childComplexity), true
+	case "TenderOffer.version":
+		if e.ComplexityRoot.TenderOffer.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TenderOffer.Version(childComplexity), true
+
 	case "Tractor.businessUnit":
 		if e.ComplexityRoot.Tractor.BusinessUnit == nil {
 			break
@@ -40691,6 +41440,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputLocateTrailerInput,
 		ec.unmarshalInputMarkCarrierSettlementPaidInput,
 		ec.unmarshalInputMarkDriverSettlementPaidInput,
+		ec.unmarshalInputMatchRoutingGuideInput,
 		ec.unmarshalInputNotificationFilterInput,
 		ec.unmarshalInputOpenEscrowAccountInput,
 		ec.unmarshalInputOrderInput,
@@ -43384,6 +44134,20 @@ type DispatchCandidate {
   factors: [DispatchScoreFactor!]!
 }
 
+"""
+The live tender riding on a move, condensed to what a board card chip needs: where the
+waterfall stands and which carrier is currently holding the offer.
+"""
+type DispatchBoardTenderSummary {
+  id: ID!
+  status: TenderStatus!
+  mode: TenderMode!
+  currentRank: Int!
+  offerCount: Int!
+  currentCarrierName: String!
+  currentOfferExpiresAt: Int
+}
+
 type DispatchBoardMove {
   moveId: ID!
   shipmentId: ID!
@@ -43447,6 +44211,8 @@ type DispatchBoardMove {
   assignedCarrierId: ID
   assignedCarrierName: String!
   carrierTotalCost: Float
+
+  liveTender: DispatchBoardTenderSummary
 }
 
 """
@@ -48988,6 +49754,69 @@ extend type Query {
   role(id: ID!): Role
 }
 `, BuiltIn: false},
+	{Name: "../schema/routing_guide.graphqls", Input: `type RoutingGuideEntry {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  routingGuideId: ID!
+  carrierId: ID!
+  rank: Int!
+  rateMethod: CarrierRateMethod!
+  rate: String!
+  offerTtlSeconds: Int!
+  channel: TenderChannel!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  carrier: Carrier
+}
+
+type RoutingGuide {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  status: EntityStatus!
+  originLocationId: ID
+  destinationLocationId: ID
+  originCity: String!
+  originState: String!
+  destinationCity: String!
+  destinationState: String!
+  specificity: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  entries: [RoutingGuideEntry!]
+}
+
+type RoutingGuideEdge {
+  node: RoutingGuide!
+  cursor: String!
+}
+
+type RoutingGuideConnection {
+  edges: [RoutingGuideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input MatchRoutingGuideInput {
+  originLocationId: ID
+  destinationLocationId: ID
+  originCity: String
+  originState: String
+  destinationCity: String
+  destinationState: String
+}
+
+extend type Query {
+  routingGuides(input: DataTableConnectionInput!): RoutingGuideConnection!
+  routingGuide(id: ID!): RoutingGuide
+  matchRoutingGuide(input: MatchRoutingGuideInput!): RoutingGuide
+}
+`, BuiltIn: false},
 	{Name: "../schema/scim_group_role_mapping.graphqls", Input: `type SCIMGroupRoleMapping {
   id: ID!
   businessUnitId: ID!
@@ -51185,6 +52014,102 @@ extend type Query {
 
 extend type Mutation {
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
+}
+`, BuiltIn: false},
+	{Name: "../schema/tender.graphqls", Input: `enum TenderMode {
+  Waterfall
+  SpotBroadcast
+  SpotSequential
+}
+
+enum TenderStatus {
+  Active
+  Accepted
+  Exhausted
+  Canceled
+  NeedsReview
+}
+
+enum TenderOfferStatus {
+  Pending
+  Sent
+  Accepted
+  Declined
+  Expired
+  Withdrawn
+  Superseded
+  Skipped
+  DeliveryFailed
+}
+
+enum TenderChannel {
+  Email
+  EDI
+}
+
+enum TenderResponseSource {
+  Email
+  EDI
+  Manual
+}
+
+type TenderOffer {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  tenderId: ID!
+  carrierId: ID!
+  rank: Int!
+  rateMethod: CarrierRateMethod!
+  rate: String!
+  offerTtlSeconds: Int!
+  channel: TenderChannel!
+  status: TenderOfferStatus!
+  recipientEmail: String!
+  sentAt: Int
+  expiresAt: Int
+  respondedAt: Int
+  responseSource: TenderResponseSource
+  declineReason: String!
+  deliveryError: String!
+  ediPartnerId: ID
+  ediMessageId: ID
+  lateResponseAction: String!
+  lateResponseAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  carrier: Carrier
+}
+
+type Tender {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  routingGuideId: ID
+  mode: TenderMode!
+  status: TenderStatus!
+  currentRank: Int!
+  createdById: ID
+  canceledById: ID
+  cancellationReason: String!
+  acceptedOfferId: ID
+  acceptedAt: Int
+  exhaustedAt: Int
+  canceledAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  routingGuide: RoutingGuide
+  offers: [TenderOffer!]
+}
+
+extend type Query {
+  tender(id: ID!): Tender
+  tendersByShipment(shipmentId: ID!): [Tender!]!
+  liveTenderByMove(moveId: ID!): Tender
 }
 `, BuiltIn: false},
 	{Name: "../schema/tractor.graphqls", Input: `type TractorEdge {
@@ -54937,6 +55862,8 @@ func (ec *executionContext) childFields_DispatchBoardMove(ctx context.Context, f
 		return ec.fieldContext_DispatchBoardMove_assignedCarrierName(ctx, field)
 	case "carrierTotalCost":
 		return ec.fieldContext_DispatchBoardMove_carrierTotalCost(ctx, field)
+	case "liveTender":
+		return ec.fieldContext_DispatchBoardMove_liveTender(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type DispatchBoardMove", field.Name)
 }
@@ -54963,6 +55890,26 @@ func (ec *executionContext) childFields_DispatchBoardSummary(ctx context.Context
 		return ec.fieldContext_DispatchBoardSummary_utilizationPercent(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type DispatchBoardSummary", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchBoardTenderSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_DispatchBoardTenderSummary_id(ctx, field)
+	case "status":
+		return ec.fieldContext_DispatchBoardTenderSummary_status(ctx, field)
+	case "mode":
+		return ec.fieldContext_DispatchBoardTenderSummary_mode(ctx, field)
+	case "currentRank":
+		return ec.fieldContext_DispatchBoardTenderSummary_currentRank(ctx, field)
+	case "offerCount":
+		return ec.fieldContext_DispatchBoardTenderSummary_offerCount(ctx, field)
+	case "currentCarrierName":
+		return ec.fieldContext_DispatchBoardTenderSummary_currentCarrierName(ctx, field)
+	case "currentOfferExpiresAt":
+		return ec.fieldContext_DispatchBoardTenderSummary_currentOfferExpiresAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchBoardTenderSummary", field.Name)
 }
 
 func (ec *executionContext) childFields_DispatchBulkAssignResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -60415,6 +61362,102 @@ func (ec *executionContext) childFields_RoleEdge(ctx context.Context, field grap
 	return nil, fmt.Errorf("no field named %q was found under type RoleEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_RoutingGuide(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_RoutingGuide_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_RoutingGuide_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_RoutingGuide_organizationId(ctx, field)
+	case "name":
+		return ec.fieldContext_RoutingGuide_name(ctx, field)
+	case "description":
+		return ec.fieldContext_RoutingGuide_description(ctx, field)
+	case "status":
+		return ec.fieldContext_RoutingGuide_status(ctx, field)
+	case "originLocationId":
+		return ec.fieldContext_RoutingGuide_originLocationId(ctx, field)
+	case "destinationLocationId":
+		return ec.fieldContext_RoutingGuide_destinationLocationId(ctx, field)
+	case "originCity":
+		return ec.fieldContext_RoutingGuide_originCity(ctx, field)
+	case "originState":
+		return ec.fieldContext_RoutingGuide_originState(ctx, field)
+	case "destinationCity":
+		return ec.fieldContext_RoutingGuide_destinationCity(ctx, field)
+	case "destinationState":
+		return ec.fieldContext_RoutingGuide_destinationState(ctx, field)
+	case "specificity":
+		return ec.fieldContext_RoutingGuide_specificity(ctx, field)
+	case "version":
+		return ec.fieldContext_RoutingGuide_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_RoutingGuide_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_RoutingGuide_updatedAt(ctx, field)
+	case "entries":
+		return ec.fieldContext_RoutingGuide_entries(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RoutingGuide", field.Name)
+}
+
+func (ec *executionContext) childFields_RoutingGuideConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_RoutingGuideConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_RoutingGuideConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_RoutingGuideConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RoutingGuideConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_RoutingGuideEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_RoutingGuideEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_RoutingGuideEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RoutingGuideEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_RoutingGuideEntry(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_RoutingGuideEntry_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_RoutingGuideEntry_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_RoutingGuideEntry_organizationId(ctx, field)
+	case "routingGuideId":
+		return ec.fieldContext_RoutingGuideEntry_routingGuideId(ctx, field)
+	case "carrierId":
+		return ec.fieldContext_RoutingGuideEntry_carrierId(ctx, field)
+	case "rank":
+		return ec.fieldContext_RoutingGuideEntry_rank(ctx, field)
+	case "rateMethod":
+		return ec.fieldContext_RoutingGuideEntry_rateMethod(ctx, field)
+	case "rate":
+		return ec.fieldContext_RoutingGuideEntry_rate(ctx, field)
+	case "offerTtlSeconds":
+		return ec.fieldContext_RoutingGuideEntry_offerTtlSeconds(ctx, field)
+	case "channel":
+		return ec.fieldContext_RoutingGuideEntry_channel(ctx, field)
+	case "version":
+		return ec.fieldContext_RoutingGuideEntry_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_RoutingGuideEntry_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_RoutingGuideEntry_updatedAt(ctx, field)
+	case "carrier":
+		return ec.fieldContext_RoutingGuideEntry_carrier(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RoutingGuideEntry", field.Name)
+}
+
 func (ec *executionContext) childFields_SCIMGroupRoleMapping(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -63041,6 +64084,112 @@ func (ec *executionContext) childFields_TelematicsStatus(ctx context.Context, fi
 		return ec.fieldContext_TelematicsStatus_mappedWorkers(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type TelematicsStatus", field.Name)
+}
+
+func (ec *executionContext) childFields_Tender(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_Tender_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_Tender_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_Tender_organizationId(ctx, field)
+	case "shipmentId":
+		return ec.fieldContext_Tender_shipmentId(ctx, field)
+	case "shipmentMoveId":
+		return ec.fieldContext_Tender_shipmentMoveId(ctx, field)
+	case "routingGuideId":
+		return ec.fieldContext_Tender_routingGuideId(ctx, field)
+	case "mode":
+		return ec.fieldContext_Tender_mode(ctx, field)
+	case "status":
+		return ec.fieldContext_Tender_status(ctx, field)
+	case "currentRank":
+		return ec.fieldContext_Tender_currentRank(ctx, field)
+	case "createdById":
+		return ec.fieldContext_Tender_createdById(ctx, field)
+	case "canceledById":
+		return ec.fieldContext_Tender_canceledById(ctx, field)
+	case "cancellationReason":
+		return ec.fieldContext_Tender_cancellationReason(ctx, field)
+	case "acceptedOfferId":
+		return ec.fieldContext_Tender_acceptedOfferId(ctx, field)
+	case "acceptedAt":
+		return ec.fieldContext_Tender_acceptedAt(ctx, field)
+	case "exhaustedAt":
+		return ec.fieldContext_Tender_exhaustedAt(ctx, field)
+	case "canceledAt":
+		return ec.fieldContext_Tender_canceledAt(ctx, field)
+	case "version":
+		return ec.fieldContext_Tender_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_Tender_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_Tender_updatedAt(ctx, field)
+	case "routingGuide":
+		return ec.fieldContext_Tender_routingGuide(ctx, field)
+	case "offers":
+		return ec.fieldContext_Tender_offers(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type Tender", field.Name)
+}
+
+func (ec *executionContext) childFields_TenderOffer(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_TenderOffer_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_TenderOffer_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_TenderOffer_organizationId(ctx, field)
+	case "tenderId":
+		return ec.fieldContext_TenderOffer_tenderId(ctx, field)
+	case "carrierId":
+		return ec.fieldContext_TenderOffer_carrierId(ctx, field)
+	case "rank":
+		return ec.fieldContext_TenderOffer_rank(ctx, field)
+	case "rateMethod":
+		return ec.fieldContext_TenderOffer_rateMethod(ctx, field)
+	case "rate":
+		return ec.fieldContext_TenderOffer_rate(ctx, field)
+	case "offerTtlSeconds":
+		return ec.fieldContext_TenderOffer_offerTtlSeconds(ctx, field)
+	case "channel":
+		return ec.fieldContext_TenderOffer_channel(ctx, field)
+	case "status":
+		return ec.fieldContext_TenderOffer_status(ctx, field)
+	case "recipientEmail":
+		return ec.fieldContext_TenderOffer_recipientEmail(ctx, field)
+	case "sentAt":
+		return ec.fieldContext_TenderOffer_sentAt(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_TenderOffer_expiresAt(ctx, field)
+	case "respondedAt":
+		return ec.fieldContext_TenderOffer_respondedAt(ctx, field)
+	case "responseSource":
+		return ec.fieldContext_TenderOffer_responseSource(ctx, field)
+	case "declineReason":
+		return ec.fieldContext_TenderOffer_declineReason(ctx, field)
+	case "deliveryError":
+		return ec.fieldContext_TenderOffer_deliveryError(ctx, field)
+	case "ediPartnerId":
+		return ec.fieldContext_TenderOffer_ediPartnerId(ctx, field)
+	case "ediMessageId":
+		return ec.fieldContext_TenderOffer_ediMessageId(ctx, field)
+	case "lateResponseAction":
+		return ec.fieldContext_TenderOffer_lateResponseAction(ctx, field)
+	case "lateResponseAt":
+		return ec.fieldContext_TenderOffer_lateResponseAt(ctx, field)
+	case "version":
+		return ec.fieldContext_TenderOffer_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_TenderOffer_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_TenderOffer_updatedAt(ctx, field)
+	case "carrier":
+		return ec.fieldContext_TenderOffer_carrier(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type TenderOffer", field.Name)
 }
 
 func (ec *executionContext) childFields_Tractor(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -69293,6 +70442,20 @@ func (ec *executionContext) field_Query_journalSourceByObject_args(ctx context.C
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_liveTenderByMove_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "moveId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["moveId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_locationCategories_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -69369,6 +70532,20 @@ func (ec *executionContext) field_Query_manualJournals_args(ctx context.Context,
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
 			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_matchRoutingGuide_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.MatchRoutingGuideInput, error) {
+			return ec.unmarshalNMatchRoutingGuideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMatchRoutingGuideInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -70133,6 +71310,34 @@ func (ec *executionContext) field_Query_roles_args(ctx context.Context, rawArgs 
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_routingGuide_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_routingGuides_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_scimGroupRoleMappings_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -70738,6 +71943,34 @@ func (ec *executionContext) field_Query_telematicsFormMapping_args(ctx context.C
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_tender_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_tendersByShipment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
 	return args, nil
 }
 
@@ -87109,7 +88342,7 @@ func (ec *executionContext) fieldContext_CarrierSettlementLine_proNumber(_ conte
 	return graphql.NewScalarFieldContext("CarrierSettlementLine", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _CarrierSettlementPeriodBounds_periodStart(ctx context.Context, field graphql.CollectedField, obj *carriersettlementservice.PeriodBounds) (ret graphql.Marshaler) {
+func (ec *executionContext) _CarrierSettlementPeriodBounds_periodStart(ctx context.Context, field graphql.CollectedField, obj *settlementshared.PeriodBounds) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -87132,7 +88365,7 @@ func (ec *executionContext) fieldContext_CarrierSettlementPeriodBounds_periodSta
 	return graphql.NewScalarFieldContext("CarrierSettlementPeriodBounds", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _CarrierSettlementPeriodBounds_periodEnd(ctx context.Context, field graphql.CollectedField, obj *carriersettlementservice.PeriodBounds) (ret graphql.Marshaler) {
+func (ec *executionContext) _CarrierSettlementPeriodBounds_periodEnd(ctx context.Context, field graphql.CollectedField, obj *settlementshared.PeriodBounds) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -87155,7 +88388,7 @@ func (ec *executionContext) fieldContext_CarrierSettlementPeriodBounds_periodEnd
 	return graphql.NewScalarFieldContext("CarrierSettlementPeriodBounds", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _CarrierSettlementPeriodBounds_payDate(ctx context.Context, field graphql.CollectedField, obj *carriersettlementservice.PeriodBounds) (ret graphql.Marshaler) {
+func (ec *executionContext) _CarrierSettlementPeriodBounds_payDate(ctx context.Context, field graphql.CollectedField, obj *settlementshared.PeriodBounds) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -93493,18 +94726,18 @@ func (ec *executionContext) _DashControl_detentionAlertThresholdMinutes(ctx cont
 			return ec.fieldContext_DashControl_detentionAlertThresholdMinutes(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.DashControl().DetentionAlertThresholdMinutes(ctx, obj)
+			return obj.DetentionAlertThresholdMinutes, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNInt2int(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
 func (ec *executionContext) fieldContext_DashControl_detentionAlertThresholdMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("DashControl", field, true, true, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("DashControl", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _DashControl_version(ctx context.Context, field graphql.CollectedField, obj *tenant.DashControl) (ret graphql.Marshaler) {
@@ -101727,6 +102960,38 @@ func (ec *executionContext) fieldContext_DispatchBoardMove_carrierTotalCost(_ co
 	return graphql.NewScalarFieldContext("DispatchBoardMove", field, false, false, errors.New("field of type Float does not have child fields"))
 }
 
+func (ec *executionContext) _DispatchBoardMove_liveTender(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardMove) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardMove_liveTender(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LiveTender, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.DispatchBoardTenderSummary) graphql.Marshaler {
+			return ec.marshalODispatchBoardTenderSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardTenderSummary(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardMove_liveTender(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchBoardMove",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchBoardTenderSummary(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DispatchBoardSummary_uncoveredMoves(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardSummary) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -101932,6 +103197,167 @@ func (ec *executionContext) _DispatchBoardSummary_utilizationPercent(ctx context
 }
 func (ec *executionContext) fieldContext_DispatchBoardSummary_utilizationPercent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("DispatchBoardSummary", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardTenderSummary_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardTenderSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardTenderSummary_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardTenderSummary_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardTenderSummary", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardTenderSummary_status(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardTenderSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardTenderSummary_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v tender.Status) graphql.Marshaler {
+			return ec.marshalNTenderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardTenderSummary_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardTenderSummary", field, false, false, errors.New("field of type TenderStatus does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardTenderSummary_mode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardTenderSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardTenderSummary_mode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Mode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v tender.Mode) graphql.Marshaler {
+			return ec.marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐMode(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardTenderSummary_mode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardTenderSummary", field, false, false, errors.New("field of type TenderMode does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardTenderSummary_currentRank(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardTenderSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardTenderSummary_currentRank(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentRank, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardTenderSummary_currentRank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardTenderSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardTenderSummary_offerCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardTenderSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardTenderSummary_offerCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OfferCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardTenderSummary_offerCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardTenderSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardTenderSummary_currentCarrierName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardTenderSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardTenderSummary_currentCarrierName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentCarrierName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardTenderSummary_currentCarrierName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardTenderSummary", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchBoardTenderSummary_currentOfferExpiresAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBoardTenderSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchBoardTenderSummary_currentOfferExpiresAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentOfferExpiresAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchBoardTenderSummary_currentOfferExpiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchBoardTenderSummary", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _DispatchBulkAssignResult_succeeded(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchBulkAssignResult) (ret graphql.Marshaler) {
@@ -132610,18 +134036,18 @@ func (ec *executionContext) _JournalEntryLine_lineNumber(ctx context.Context, fi
 			return ec.fieldContext_JournalEntryLine_lineNumber(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.JournalEntryLine().LineNumber(ctx, obj)
+			return obj.LineNumber, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNInt2int(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
 func (ec *executionContext) fieldContext_JournalEntryLine_lineNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("JournalEntryLine", field, true, true, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("JournalEntryLine", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _JournalEntryLine_description(ctx context.Context, field graphql.CollectedField, obj *journalentry.Line) (ret graphql.Marshaler) {
@@ -153729,8 +155155,8 @@ func (ec *executionContext) _Query_currentCarrierSettlementPeriod(ctx context.Co
 			return ec.Resolvers.Query().CurrentCarrierSettlementPeriod(ctx)
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *carriersettlementservice.PeriodBounds) graphql.Marshaler {
-			return ec.marshalNCarrierSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcarriersettlementserviceᚐPeriodBounds(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *settlementshared.PeriodBounds) graphql.Marshaler {
+			return ec.marshalNCarrierSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋsettlementsharedᚐPeriodBounds(ctx, selections, v)
 		},
 		true,
 		true,
@@ -158050,8 +159476,8 @@ func (ec *executionContext) _Query_currentSettlementPeriod(ctx context.Context, 
 			return ec.Resolvers.Query().CurrentSettlementPeriod(ctx)
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v *driversettlementservice.PeriodBounds) graphql.Marshaler {
-			return ec.marshalNSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriversettlementserviceᚐPeriodBounds(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *settlementshared.PeriodBounds) graphql.Marshaler {
+			return ec.marshalNSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋsettlementsharedᚐPeriodBounds(ctx, selections, v)
 		},
 		true,
 		true,
@@ -161681,6 +163107,138 @@ func (ec *executionContext) fieldContext_Query_role(ctx context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_routingGuides(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_routingGuides(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RoutingGuides(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.RoutingGuideConnection) graphql.Marshaler {
+			return ec.marshalNRoutingGuideConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_routingGuides(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoutingGuideConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_routingGuides_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_routingGuide(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_routingGuide(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RoutingGuide(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
+			return ec.marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_routingGuide(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoutingGuide(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_routingGuide_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_matchRoutingGuide(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_matchRoutingGuide(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().MatchRoutingGuide(ctx, fc.Args["input"].(gqlmodel.MatchRoutingGuideInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
+			return ec.marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_matchRoutingGuide(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoutingGuide(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_matchRoutingGuide_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_scimGroupRoleMappings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -163595,6 +165153,138 @@ func (ec *executionContext) fieldContext_Query_organization(ctx context.Context,
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_organization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_tender(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_tender(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Tender(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tender.Tender) graphql.Marshaler {
+			return ec.marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTender(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_tender(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Tender(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_tender_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_tendersByShipment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_tendersByShipment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().TendersByShipment(ctx, fc.Args["shipmentId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*tender.Tender) graphql.Marshaler {
+			return ec.marshalNTender2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_tendersByShipment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Tender(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_tendersByShipment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_liveTenderByMove(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_liveTenderByMove(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().LiveTenderByMove(ctx, fc.Args["moveId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tender.Tender) graphql.Marshaler {
+			return ec.marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTender(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_liveTenderByMove(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Tender(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_liveTenderByMove_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -166105,18 +167795,18 @@ func (ec *executionContext) _RecurringShipment_leadTimeDays(ctx context.Context,
 			return ec.fieldContext_RecurringShipment_leadTimeDays(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return ec.Resolvers.RecurringShipment().LeadTimeDays(ctx, obj)
+			return obj.LeadTimeDays, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNInt2int(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
 func (ec *executionContext) fieldContext_RecurringShipment_leadTimeDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("RecurringShipment", field, true, true, errors.New("field of type Int does not have child fields"))
+	return graphql.NewScalarFieldContext("RecurringShipment", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _RecurringShipment_skipWeekends(ctx context.Context, field graphql.CollectedField, obj *recurringshipment.RecurringShipment) (ret graphql.Marshaler) {
@@ -171532,6 +173222,879 @@ func (ec *executionContext) fieldContext_RoleEdge_cursor(_ context.Context, fiel
 	return graphql.NewScalarFieldContext("RoleEdge", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _RoutingGuide_id(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_organizationId(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_name(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_description(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_status(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v domaintypes.Status) graphql.Marshaler {
+			return ec.marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type EntityStatus does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_originLocationId(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_originLocationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginLocationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_originLocationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_destinationLocationId(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_destinationLocationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationLocationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_destinationLocationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_originCity(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_originCity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginCity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_originCity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_originState(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_originState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OriginState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_originState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_destinationCity(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_destinationCity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationCity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_destinationCity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_destinationState(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_destinationState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DestinationState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_destinationState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_specificity(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_specificity(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Specificity, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_specificity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_version(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_createdAt(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_updatedAt(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuide", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuide_entries(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuide) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuide_entries(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Entries, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*tender.RoutingGuideEntry) graphql.Marshaler {
+			return ec.marshalORoutingGuideEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuideEntryᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuide_entries(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoutingGuide",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoutingGuideEntry(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoutingGuideConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RoutingGuideConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.RoutingGuideEdge) graphql.Marshaler {
+			return ec.marshalNRoutingGuideEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoutingGuideConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoutingGuideEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoutingGuideConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RoutingGuideConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoutingGuideConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoutingGuideConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RoutingGuideConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RoutingGuideEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
+			return ec.marshalNRoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoutingGuideEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoutingGuide(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RoutingGuideEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RoutingGuideEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_id(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_organizationId(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_routingGuideId(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_routingGuideId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RoutingGuideID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_routingGuideId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_carrierId(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_carrierId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CarrierID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_carrierId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_rank(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_rank(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Rank, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_rank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_rateMethod(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_rateMethod(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RateMethod, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v shipment.CarrierRateMethod) graphql.Marshaler {
+			return ec.marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierRateMethod(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_rateMethod(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type CarrierRateMethod does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_rate(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_rate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.RoutingGuideEntry().Rate(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_rate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_offerTtlSeconds(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_offerTtlSeconds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OfferTTLSeconds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_offerTtlSeconds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_channel(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_channel(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Channel, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v tender.Channel) graphql.Marshaler {
+			return ec.marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐChannel(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_channel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type TenderChannel does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_version(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_createdAt(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_updatedAt(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RoutingGuideEntry", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RoutingGuideEntry_carrier(ctx context.Context, field graphql.CollectedField, obj *tender.RoutingGuideEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RoutingGuideEntry_carrier(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Carrier, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
+			return ec.marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RoutingGuideEntry_carrier(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RoutingGuideEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Carrier(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SCIMGroupRoleMapping_id(ctx context.Context, field graphql.CollectedField, obj *iam.SCIMGroupRoleMapping) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -175987,7 +178550,7 @@ func (ec *executionContext) fieldContext_SettlementException_message(_ context.C
 	return graphql.NewScalarFieldContext("SettlementException", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _SettlementPeriodBounds_periodStart(ctx context.Context, field graphql.CollectedField, obj *driversettlementservice.PeriodBounds) (ret graphql.Marshaler) {
+func (ec *executionContext) _SettlementPeriodBounds_periodStart(ctx context.Context, field graphql.CollectedField, obj *settlementshared.PeriodBounds) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -176010,7 +178573,7 @@ func (ec *executionContext) fieldContext_SettlementPeriodBounds_periodStart(_ co
 	return graphql.NewScalarFieldContext("SettlementPeriodBounds", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _SettlementPeriodBounds_periodEnd(ctx context.Context, field graphql.CollectedField, obj *driversettlementservice.PeriodBounds) (ret graphql.Marshaler) {
+func (ec *executionContext) _SettlementPeriodBounds_periodEnd(ctx context.Context, field graphql.CollectedField, obj *settlementshared.PeriodBounds) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -176033,7 +178596,7 @@ func (ec *executionContext) fieldContext_SettlementPeriodBounds_periodEnd(_ cont
 	return graphql.NewScalarFieldContext("SettlementPeriodBounds", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
-func (ec *executionContext) _SettlementPeriodBounds_payDate(ctx context.Context, field graphql.CollectedField, obj *driversettlementservice.PeriodBounds) (ret graphql.Marshaler) {
+func (ec *executionContext) _SettlementPeriodBounds_payDate(ctx context.Context, field graphql.CollectedField, obj *settlementshared.PeriodBounds) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
@@ -194647,6 +197210,1114 @@ func (ec *executionContext) fieldContext_TelematicsStatus_mappedWorkers(_ contex
 	return graphql.NewScalarFieldContext("TelematicsStatus", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _Tender_id(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_organizationId(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_shipmentId(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_shipmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_shipmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_shipmentMoveId(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_shipmentMoveId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentMoveID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_shipmentMoveId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_routingGuideId(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_routingGuideId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RoutingGuideID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_routingGuideId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_mode(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_mode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Mode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v tender.Mode) graphql.Marshaler {
+			return ec.marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐMode(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_mode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type TenderMode does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_status(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v tender.Status) graphql.Marshaler {
+			return ec.marshalNTenderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type TenderStatus does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_currentRank(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_currentRank(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentRank, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_currentRank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_createdById(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_createdById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_createdById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_canceledById(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_canceledById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CanceledByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_canceledById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_cancellationReason(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_cancellationReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CancellationReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_cancellationReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_acceptedOfferId(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_acceptedOfferId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AcceptedOfferID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_acceptedOfferId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_acceptedAt(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_acceptedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AcceptedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_acceptedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_exhaustedAt(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_exhaustedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExhaustedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_exhaustedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_canceledAt(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_canceledAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CanceledAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_canceledAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_version(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_createdAt(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_updatedAt(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Tender", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Tender_routingGuide(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_routingGuide(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Tender().RoutingGuide(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
+			return ec.marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_routingGuide(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tender",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RoutingGuide(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tender_offers(ctx context.Context, field graphql.CollectedField, obj *tender.Tender) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Tender_offers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Offers, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*tender.TenderOffer) graphql.Marshaler {
+			return ec.marshalOTenderOffer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderOfferᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Tender_offers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tender",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_TenderOffer(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TenderOffer_id(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_organizationId(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_tenderId(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_tenderId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TenderID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_tenderId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_carrierId(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_carrierId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CarrierID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_carrierId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_rank(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_rank(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Rank, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_rank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_rateMethod(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_rateMethod(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RateMethod, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v shipment.CarrierRateMethod) graphql.Marshaler {
+			return ec.marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierRateMethod(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_rateMethod(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type CarrierRateMethod does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_rate(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_rate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.TenderOffer().Rate(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_rate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_offerTtlSeconds(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_offerTtlSeconds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OfferTTLSeconds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_offerTtlSeconds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_channel(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_channel(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Channel, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v tender.Channel) graphql.Marshaler {
+			return ec.marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐChannel(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_channel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type TenderChannel does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_status(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v tender.OfferStatus) graphql.Marshaler {
+			return ec.marshalNTenderOfferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐOfferStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type TenderOfferStatus does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_recipientEmail(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_recipientEmail(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RecipientEmail, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_recipientEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_sentAt(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_sentAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SentAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_sentAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_expiresAt(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_expiresAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExpiresAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_respondedAt(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_respondedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RespondedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_respondedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_responseSource(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_responseSource(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.TenderOffer().ResponseSource(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tender.ResponseSource) graphql.Marshaler {
+			return ec.marshalOTenderResponseSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐResponseSource(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_responseSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, true, true, errors.New("field of type TenderResponseSource does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_declineReason(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_declineReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeclineReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_declineReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_deliveryError(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_deliveryError(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliveryError, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_deliveryError(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_ediPartnerId(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_ediPartnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EDIPartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_ediPartnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_ediMessageId(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_ediMessageId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EDIMessageID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_ediMessageId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_lateResponseAction(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_lateResponseAction(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LateResponseAction, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_lateResponseAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_lateResponseAt(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_lateResponseAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LateResponseAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_lateResponseAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_version(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_createdAt(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_updatedAt(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TenderOffer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _TenderOffer_carrier(ctx context.Context, field graphql.CollectedField, obj *tender.TenderOffer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TenderOffer_carrier(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Carrier, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
+			return ec.marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_TenderOffer_carrier(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TenderOffer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Carrier(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Tractor_id(ctx context.Context, field graphql.CollectedField, obj *tractor.Tractor) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -208925,6 +212596,71 @@ func (ec *executionContext) unmarshalInputMarkDriverSettlementPaidInput(ctx cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputMatchRoutingGuideInput(ctx context.Context, obj any) (gqlmodel.MatchRoutingGuideInput, error) {
+	var it gqlmodel.MatchRoutingGuideInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"originLocationId", "destinationLocationId", "originCity", "originState", "destinationCity", "destinationState"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "originLocationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originLocationId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginLocationID = data
+		case "destinationLocationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationLocationId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationLocationID = data
+		case "originCity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originCity"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginCity = data
+		case "originState":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("originState"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OriginState = data
+		case "destinationCity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationCity"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationCity = data
+		case "destinationState":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationState"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DestinationState = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNotificationFilterInput(ctx context.Context, obj any) (gqlmodel.NotificationFilterInput, error) {
 	var it gqlmodel.NotificationFilterInput
 	if obj == nil {
@@ -222697,7 +226433,7 @@ func (ec *executionContext) _CarrierSettlementLine(ctx context.Context, sel ast.
 
 var carrierSettlementPeriodBoundsImplementors = []string{"CarrierSettlementPeriodBounds"}
 
-func (ec *executionContext) _CarrierSettlementPeriodBounds(ctx context.Context, sel ast.SelectionSet, obj *carriersettlementservice.PeriodBounds) graphql.Marshaler {
+func (ec *executionContext) _CarrierSettlementPeriodBounds(ctx context.Context, sel ast.SelectionSet, obj *settlementshared.PeriodBounds) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, carrierSettlementPeriodBoundsImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -225011,145 +228747,112 @@ func (ec *executionContext) _DashControl(ctx context.Context, sel ast.SelectionS
 		case "id":
 			out.Values[i] = ec._DashControl_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "organizationId":
 			out.Values[i] = ec._DashControl_organizationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "businessUnitId":
 			out.Values[i] = ec._DashControl_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "requireLoadAcknowledgment":
 			out.Values[i] = ec._DashControl_requireLoadAcknowledgment(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "allowLoadRefusals":
 			out.Values[i] = ec._DashControl_allowLoadRefusals(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "allowStopActions":
 			out.Values[i] = ec._DashControl_allowStopActions(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "allowLoadDocumentUpload":
 			out.Values[i] = ec._DashControl_allowLoadDocumentUpload(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "allowLoadComments":
 			out.Values[i] = ec._DashControl_allowLoadComments(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "showLoadPay":
 			out.Values[i] = ec._DashControl_showLoadPay(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "showPayEstimates":
 			out.Values[i] = ec._DashControl_showPayEstimates(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "allowExpenseSubmission":
 			out.Values[i] = ec._DashControl_allowExpenseSubmission(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "requireExpenseReceipt":
 			out.Values[i] = ec._DashControl_requireExpenseReceipt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "allowSettlementDisputes":
 			out.Values[i] = ec._DashControl_allowSettlementDisputes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "allowProfileDocumentUpload":
 			out.Values[i] = ec._DashControl_allowProfileDocumentUpload(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "allowContactInfoEdit":
 			out.Values[i] = ec._DashControl_allowContactInfoEdit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "allowPtoRequests":
 			out.Values[i] = ec._DashControl_allowPtoRequests(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "sendCredentialReminders":
 			out.Values[i] = ec._DashControl_sendCredentialReminders(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "enableDetentionAlerts":
 			out.Values[i] = ec._DashControl_enableDetentionAlerts(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "detentionAlertThresholdMinutes":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._DashControl_detentionAlertThresholdMinutes(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._DashControl_detentionAlertThresholdMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
-				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "version":
 			out.Values[i] = ec._DashControl_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "createdAt":
 			out.Values[i] = ec._DashControl_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "updatedAt":
 			out.Values[i] = ec._DashControl_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -227569,6 +231272,11 @@ func (ec *executionContext) _DispatchBoardMove(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
+		case "liveTender":
+			out.Values[i] = ec._DispatchBoardMove_liveTender(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -227645,6 +231353,74 @@ func (ec *executionContext) _DispatchBoardSummary(ctx context.Context, sel ast.S
 		case "utilizationPercent":
 			out.Values[i] = ec._DispatchBoardSummary_utilizationPercent(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchBoardTenderSummaryImplementors = []string{"DispatchBoardTenderSummary"}
+
+func (ec *executionContext) _DispatchBoardTenderSummary(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchBoardTenderSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchBoardTenderSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchBoardTenderSummary")
+		case "id":
+			out.Values[i] = ec._DispatchBoardTenderSummary_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._DispatchBoardTenderSummary_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mode":
+			out.Values[i] = ec._DispatchBoardTenderSummary_mode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currentRank":
+			out.Values[i] = ec._DispatchBoardTenderSummary_currentRank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "offerCount":
+			out.Values[i] = ec._DispatchBoardTenderSummary_offerCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currentCarrierName":
+			out.Values[i] = ec._DispatchBoardTenderSummary_currentCarrierName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currentOfferExpiresAt":
+			out.Values[i] = ec._DispatchBoardTenderSummary_currentOfferExpiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:
@@ -240015,43 +243791,10 @@ func (ec *executionContext) _JournalEntryLine(ctx context.Context, sel ast.Selec
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "lineNumber":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._JournalEntryLine_lineNumber(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._JournalEntryLine_lineNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
-				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "description":
 			out.Values[i] = ec._JournalEntryLine_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -250939,6 +254682,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "routingGuides":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_routingGuides(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "routingGuide":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_routingGuide(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "matchRoutingGuide":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_matchRoutingGuide(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "scimGroupRoleMappings":
 			field := field
 
@@ -251929,6 +255738,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "tender":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_tender(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "tendersByShipment":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_tendersByShipment(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "liveTenderByMove":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_liveTenderByMove(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "tractors":
 			field := field
 
@@ -252787,210 +256662,177 @@ func (ec *executionContext) _RecurringShipment(ctx context.Context, sel ast.Sele
 		case "id":
 			out.Values[i] = ec._RecurringShipment_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "businessUnitId":
 			out.Values[i] = ec._RecurringShipment_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "organizationId":
 			out.Values[i] = ec._RecurringShipment_organizationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "sourceShipmentId":
 			out.Values[i] = ec._RecurringShipment_sourceShipmentId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "customerId":
 			out.Values[i] = ec._RecurringShipment_customerId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "originLocationId":
 			out.Values[i] = ec._RecurringShipment_originLocationId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "destinationLocationId":
 			out.Values[i] = ec._RecurringShipment_destinationLocationId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "enteredById":
 			out.Values[i] = ec._RecurringShipment_enteredById(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "lastGeneratedShipmentId":
 			out.Values[i] = ec._RecurringShipment_lastGeneratedShipmentId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "name":
 			out.Values[i] = ec._RecurringShipment_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "description":
 			out.Values[i] = ec._RecurringShipment_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "status":
 			out.Values[i] = ec._RecurringShipment_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "cronExpression":
 			out.Values[i] = ec._RecurringShipment_cronExpression(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "timezone":
 			out.Values[i] = ec._RecurringShipment_timezone(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "startDate":
 			out.Values[i] = ec._RecurringShipment_startDate(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "endDate":
 			out.Values[i] = ec._RecurringShipment_endDate(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "maxOccurrences":
 			out.Values[i] = ec._RecurringShipment_maxOccurrences(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "leadTimeDays":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._RecurringShipment_leadTimeDays(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._RecurringShipment_leadTimeDays(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
-
-			if field.IsDeferred() {
-				deferredFieldSet.AddField(field)
-				fieldIndex := len(deferredFieldSet.Values) - 1
-				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, deferredFieldSet)
-				})
-
-				for _, deferrable := range field.Deferrables {
-					view, ok := deferLabelToView[deferrable.Label]
-					if !ok {
-						view = deferredFieldSet.NewView()
-						deferLabelToView[deferrable.Label] = view
-					}
-					view.AddIndices(fieldIndex)
-				}
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "skipWeekends":
 			out.Values[i] = ec._RecurringShipment_skipWeekends(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "exceptionPolicy":
 			out.Values[i] = ec._RecurringShipment_exceptionPolicy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "blackoutDates":
 			out.Values[i] = ec._RecurringShipment_blackoutDates(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "autoGenerate":
 			out.Values[i] = ec._RecurringShipment_autoGenerate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "nextOccurrenceAt":
 			out.Values[i] = ec._RecurringShipment_nextOccurrenceAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "nextOccurrenceSourceAt":
 			out.Values[i] = ec._RecurringShipment_nextOccurrenceSourceAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "lastOccurrenceAt":
 			out.Values[i] = ec._RecurringShipment_lastOccurrenceAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "lastRunAt":
 			out.Values[i] = ec._RecurringShipment_lastRunAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "generationCount":
 			out.Values[i] = ec._RecurringShipment_generationCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "consecutiveFailures":
 			out.Values[i] = ec._RecurringShipment_consecutiveFailures(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "version":
 			out.Values[i] = ec._RecurringShipment_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "createdAt":
 			out.Values[i] = ec._RecurringShipment_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "updatedAt":
 			out.Values[i] = ec._RecurringShipment_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "customer":
 			out.Values[i] = ec._RecurringShipment_customer(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "originLocation":
 			out.Values[i] = ec._RecurringShipment_originLocation(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "destinationLocation":
 			out.Values[i] = ec._RecurringShipment_destinationLocation(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "enteredBy":
 			out.Values[i] = ec._RecurringShipment_enteredBy(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -255071,6 +258913,351 @@ func (ec *executionContext) _RoleEdge(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var routingGuideImplementors = []string{"RoutingGuide"}
+
+func (ec *executionContext) _RoutingGuide(ctx context.Context, sel ast.SelectionSet, obj *tender.RoutingGuide) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, routingGuideImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoutingGuide")
+		case "id":
+			out.Values[i] = ec._RoutingGuide_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._RoutingGuide_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._RoutingGuide_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._RoutingGuide_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._RoutingGuide_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._RoutingGuide_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originLocationId":
+			out.Values[i] = ec._RoutingGuide_originLocationId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "destinationLocationId":
+			out.Values[i] = ec._RoutingGuide_destinationLocationId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "originCity":
+			out.Values[i] = ec._RoutingGuide_originCity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "originState":
+			out.Values[i] = ec._RoutingGuide_originState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationCity":
+			out.Values[i] = ec._RoutingGuide_destinationCity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "destinationState":
+			out.Values[i] = ec._RoutingGuide_destinationState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "specificity":
+			out.Values[i] = ec._RoutingGuide_specificity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._RoutingGuide_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._RoutingGuide_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._RoutingGuide_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "entries":
+			out.Values[i] = ec._RoutingGuide_entries(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var routingGuideConnectionImplementors = []string{"RoutingGuideConnection"}
+
+func (ec *executionContext) _RoutingGuideConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RoutingGuideConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, routingGuideConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoutingGuideConnection")
+		case "edges":
+			out.Values[i] = ec._RoutingGuideConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._RoutingGuideConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._RoutingGuideConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var routingGuideEdgeImplementors = []string{"RoutingGuideEdge"}
+
+func (ec *executionContext) _RoutingGuideEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RoutingGuideEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, routingGuideEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoutingGuideEdge")
+		case "node":
+			out.Values[i] = ec._RoutingGuideEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._RoutingGuideEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var routingGuideEntryImplementors = []string{"RoutingGuideEntry"}
+
+func (ec *executionContext) _RoutingGuideEntry(ctx context.Context, sel ast.SelectionSet, obj *tender.RoutingGuideEntry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, routingGuideEntryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoutingGuideEntry")
+		case "id":
+			out.Values[i] = ec._RoutingGuideEntry_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._RoutingGuideEntry_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organizationId":
+			out.Values[i] = ec._RoutingGuideEntry_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "routingGuideId":
+			out.Values[i] = ec._RoutingGuideEntry_routingGuideId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "carrierId":
+			out.Values[i] = ec._RoutingGuideEntry_carrierId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "rank":
+			out.Values[i] = ec._RoutingGuideEntry_rank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "rateMethod":
+			out.Values[i] = ec._RoutingGuideEntry_rateMethod(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "rate":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._RoutingGuideEntry_rate(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "offerTtlSeconds":
+			out.Values[i] = ec._RoutingGuideEntry_offerTtlSeconds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "channel":
+			out.Values[i] = ec._RoutingGuideEntry_channel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._RoutingGuideEntry_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._RoutingGuideEntry_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._RoutingGuideEntry_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "carrier":
+			out.Values[i] = ec._RoutingGuideEntry_carrier(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var sCIMGroupRoleMappingImplementors = []string{"SCIMGroupRoleMapping"}
 
 func (ec *executionContext) _SCIMGroupRoleMapping(ctx context.Context, sel ast.SelectionSet, obj *iam.SCIMGroupRoleMapping) graphql.Marshaler {
@@ -256996,7 +261183,7 @@ func (ec *executionContext) _SettlementException(ctx context.Context, sel ast.Se
 
 var settlementPeriodBoundsImplementors = []string{"SettlementPeriodBounds"}
 
-func (ec *executionContext) _SettlementPeriodBounds(ctx context.Context, sel ast.SelectionSet, obj *driversettlementservice.PeriodBounds) graphql.Marshaler {
+func (ec *executionContext) _SettlementPeriodBounds(ctx context.Context, sel ast.SelectionSet, obj *settlementshared.PeriodBounds) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, settlementPeriodBoundsImplementors)
 
 	out := graphql.NewFieldSet(fields)
@@ -264215,6 +268402,406 @@ func (ec *executionContext) _TelematicsStatus(ctx context.Context, sel ast.Selec
 	return out
 }
 
+var tenderImplementors = []string{"Tender"}
+
+func (ec *executionContext) _Tender(ctx context.Context, sel ast.SelectionSet, obj *tender.Tender) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tenderImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Tender")
+		case "id":
+			out.Values[i] = ec._Tender_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._Tender_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organizationId":
+			out.Values[i] = ec._Tender_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "shipmentId":
+			out.Values[i] = ec._Tender_shipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "shipmentMoveId":
+			out.Values[i] = ec._Tender_shipmentMoveId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "routingGuideId":
+			out.Values[i] = ec._Tender_routingGuideId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "mode":
+			out.Values[i] = ec._Tender_mode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "status":
+			out.Values[i] = ec._Tender_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "currentRank":
+			out.Values[i] = ec._Tender_currentRank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdById":
+			out.Values[i] = ec._Tender_createdById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "canceledById":
+			out.Values[i] = ec._Tender_canceledById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "cancellationReason":
+			out.Values[i] = ec._Tender_cancellationReason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "acceptedOfferId":
+			out.Values[i] = ec._Tender_acceptedOfferId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "acceptedAt":
+			out.Values[i] = ec._Tender_acceptedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "exhaustedAt":
+			out.Values[i] = ec._Tender_exhaustedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "canceledAt":
+			out.Values[i] = ec._Tender_canceledAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._Tender_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._Tender_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Tender_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "routingGuide":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Tender_routingGuide(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "offers":
+			out.Values[i] = ec._Tender_offers(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var tenderOfferImplementors = []string{"TenderOffer"}
+
+func (ec *executionContext) _TenderOffer(ctx context.Context, sel ast.SelectionSet, obj *tender.TenderOffer) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tenderOfferImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TenderOffer")
+		case "id":
+			out.Values[i] = ec._TenderOffer_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._TenderOffer_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organizationId":
+			out.Values[i] = ec._TenderOffer_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tenderId":
+			out.Values[i] = ec._TenderOffer_tenderId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "carrierId":
+			out.Values[i] = ec._TenderOffer_carrierId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "rank":
+			out.Values[i] = ec._TenderOffer_rank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "rateMethod":
+			out.Values[i] = ec._TenderOffer_rateMethod(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "rate":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TenderOffer_rate(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "offerTtlSeconds":
+			out.Values[i] = ec._TenderOffer_offerTtlSeconds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "channel":
+			out.Values[i] = ec._TenderOffer_channel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "status":
+			out.Values[i] = ec._TenderOffer_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "recipientEmail":
+			out.Values[i] = ec._TenderOffer_recipientEmail(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sentAt":
+			out.Values[i] = ec._TenderOffer_sentAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "expiresAt":
+			out.Values[i] = ec._TenderOffer_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "respondedAt":
+			out.Values[i] = ec._TenderOffer_respondedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "responseSource":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TenderOffer_responseSource(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "declineReason":
+			out.Values[i] = ec._TenderOffer_declineReason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "deliveryError":
+			out.Values[i] = ec._TenderOffer_deliveryError(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ediPartnerId":
+			out.Values[i] = ec._TenderOffer_ediPartnerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ediMessageId":
+			out.Values[i] = ec._TenderOffer_ediMessageId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lateResponseAction":
+			out.Values[i] = ec._TenderOffer_lateResponseAction(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "lateResponseAt":
+			out.Values[i] = ec._TenderOffer_lateResponseAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._TenderOffer_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._TenderOffer_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._TenderOffer_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "carrier":
+			out.Values[i] = ec._TenderOffer_carrier(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var tractorImplementors = []string{"Tractor"}
 
 func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, obj *tractor.Tractor) graphql.Marshaler {
@@ -269731,11 +274318,11 @@ func (ec *executionContext) marshalNCarrierSettlementLine2ᚖgithubᚗcomᚋemos
 	return ec._CarrierSettlementLine(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNCarrierSettlementPeriodBounds2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcarriersettlementserviceᚐPeriodBounds(ctx context.Context, sel ast.SelectionSet, v carriersettlementservice.PeriodBounds) graphql.Marshaler {
+func (ec *executionContext) marshalNCarrierSettlementPeriodBounds2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋsettlementsharedᚐPeriodBounds(ctx context.Context, sel ast.SelectionSet, v settlementshared.PeriodBounds) graphql.Marshaler {
 	return ec._CarrierSettlementPeriodBounds(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCarrierSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcarriersettlementserviceᚐPeriodBounds(ctx context.Context, sel ast.SelectionSet, v *carriersettlementservice.PeriodBounds) graphql.Marshaler {
+func (ec *executionContext) marshalNCarrierSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋsettlementsharedᚐPeriodBounds(ctx context.Context, sel ast.SelectionSet, v *settlementshared.PeriodBounds) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -275130,6 +279717,22 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalNInt2int16(ctx context.Context, v any) (int16, error) {
+	res, err := graphql.UnmarshalInt16(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int16(ctx context.Context, sel ast.SelectionSet, v int16) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalInt16(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v any) (int32, error) {
 	res, err := graphql.UnmarshalInt32(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -275753,6 +280356,11 @@ func (ec *executionContext) unmarshalNMarkCarrierSettlementPaidInput2githubᚗco
 
 func (ec *executionContext) unmarshalNMarkDriverSettlementPaidInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMarkDriverSettlementPaidInput(ctx context.Context, v any) (gqlmodel.MarkDriverSettlementPaidInput, error) {
 	res, err := ec.unmarshalInputMarkDriverSettlementPaidInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNMatchRoutingGuideInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐMatchRoutingGuideInput(ctx context.Context, v any) (gqlmodel.MatchRoutingGuideInput, error) {
+	res, err := ec.unmarshalInputMatchRoutingGuideInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -277828,6 +282436,66 @@ func (ec *executionContext) marshalNRoleEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenova
 	return ec._RoleEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNRoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide(ctx context.Context, sel ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RoutingGuide(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRoutingGuideConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RoutingGuideConnection) graphql.Marshaler {
+	return ec._RoutingGuideConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRoutingGuideConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RoutingGuideConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RoutingGuideConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRoutingGuideEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.RoutingGuideEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRoutingGuideEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRoutingGuideEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRoutingGuideEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RoutingGuideEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RoutingGuideEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRoutingGuideEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuideEntry(ctx context.Context, sel ast.SelectionSet, v *tender.RoutingGuideEntry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RoutingGuideEntry(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNRunReportInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRunReportInput(ctx context.Context, v any) (gqlmodel.RunReportInput, error) {
 	res, err := ec.unmarshalInputRunReportInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -278452,11 +283120,11 @@ func (ec *executionContext) marshalNSettlementPayTrigger2githubᚗcomᚋemoss08�
 	return res
 }
 
-func (ec *executionContext) marshalNSettlementPeriodBounds2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriversettlementserviceᚐPeriodBounds(ctx context.Context, sel ast.SelectionSet, v driversettlementservice.PeriodBounds) graphql.Marshaler {
+func (ec *executionContext) marshalNSettlementPeriodBounds2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋsettlementsharedᚐPeriodBounds(ctx context.Context, sel ast.SelectionSet, v settlementshared.PeriodBounds) graphql.Marshaler {
 	return ec._SettlementPeriodBounds(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋdriversettlementserviceᚐPeriodBounds(ctx context.Context, sel ast.SelectionSet, v *driversettlementservice.PeriodBounds) graphql.Marshaler {
+func (ec *executionContext) marshalNSettlementPeriodBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋsettlementsharedᚐPeriodBounds(ctx context.Context, sel ast.SelectionSet, v *settlementshared.PeriodBounds) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
@@ -280237,6 +284905,110 @@ func (ec *executionContext) marshalNTelematicsStatus2ᚖgithubᚗcomᚋemoss08�
 	return ec._TelematicsStatus(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNTender2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderᚄ(ctx context.Context, sel ast.SelectionSet, v []*tender.Tender) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTender(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTender(ctx context.Context, sel ast.SelectionSet, v *tender.Tender) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Tender(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐChannel(ctx context.Context, v any) (tender.Channel, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := tender.Channel(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐChannel(ctx context.Context, sel ast.SelectionSet, v tender.Channel) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐMode(ctx context.Context, v any) (tender.Mode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := tender.Mode(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTenderMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐMode(ctx context.Context, sel ast.SelectionSet, v tender.Mode) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNTenderOffer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderOffer(ctx context.Context, sel ast.SelectionSet, v *tender.TenderOffer) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TenderOffer(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTenderOfferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐOfferStatus(ctx context.Context, v any) (tender.OfferStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := tender.OfferStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTenderOfferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐOfferStatus(ctx context.Context, sel ast.SelectionSet, v tender.OfferStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNTenderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐStatus(ctx context.Context, v any) (tender.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := tender.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTenderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐStatus(ctx context.Context, sel ast.SelectionSet, v tender.Status) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNTimeFormat2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTimeFormat(ctx context.Context, v any) (gqlmodel.TimeFormat, error) {
 	var res gqlmodel.TimeFormat
 	err := res.UnmarshalGQL(v)
@@ -281795,6 +286567,13 @@ func (ec *executionContext) marshalODetentionWaiverReason2ᚖgithubᚗcomᚋemos
 	_ = ctx
 	res := graphql.MarshalString(string(*v))
 	return res
+}
+
+func (ec *executionContext) marshalODispatchBoardTenderSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardTenderSummary(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchBoardTenderSummary) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DispatchBoardTenderSummary(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalODispatchCarrierAccessorialInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCarrierAccessorialInputᚄ(ctx context.Context, v any) ([]*gqlmodel.DispatchCarrierAccessorialInput, error) {
@@ -283771,6 +288550,32 @@ func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec._Role(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide(ctx context.Context, sel ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RoutingGuide(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalORoutingGuideEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuideEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*tender.RoutingGuideEntry) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRoutingGuideEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuideEntry(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalOServiceFailure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋservicefailureᚐServiceFailure(ctx context.Context, sel ast.SelectionSet, v *servicefailure.ServiceFailure) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -284607,6 +289412,51 @@ func (ec *executionContext) marshalOTelematicsFormMapping2ᚖgithubᚗcomᚋemos
 		return graphql.Null
 	}
 	return ec._TelematicsFormMapping(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTender2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTender(ctx context.Context, sel ast.SelectionSet, v *tender.Tender) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Tender(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTenderOffer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderOfferᚄ(ctx context.Context, sel ast.SelectionSet, v []*tender.TenderOffer) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNTenderOffer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐTenderOffer(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOTenderResponseSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐResponseSource(ctx context.Context, v any) (*tender.ResponseSource, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := tender.ResponseSource(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTenderResponseSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐResponseSource(ctx context.Context, sel ast.SelectionSet, v *tender.ResponseSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) marshalOTractor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtractorᚐTractor(ctx context.Context, sel ast.SelectionSet, v *tractor.Tractor) graphql.Marshaler {

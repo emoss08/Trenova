@@ -29,6 +29,7 @@ type Params struct {
 	ConsoleRepo         repositories.DispatchConsoleRepository
 	DispatchControlRepo repositories.DispatchControlRepository
 	OrgCacheRepo        repositories.OrganizationCacheRepository
+	TenderRepo          repositories.TenderRepository
 	CandidateService    *dispatchcandidateservice.Service
 }
 
@@ -36,6 +37,7 @@ type Service struct {
 	consoleRepo         repositories.DispatchConsoleRepository
 	dispatchControlRepo repositories.DispatchControlRepository
 	orgCacheRepo        repositories.OrganizationCacheRepository
+	tenderRepo          repositories.TenderRepository
 	candidates          *dispatchcandidateservice.Service
 }
 
@@ -44,8 +46,61 @@ func New(p Params) *Service {
 		consoleRepo:         p.ConsoleRepo,
 		dispatchControlRepo: p.DispatchControlRepo,
 		orgCacheRepo:        p.OrgCacheRepo,
+		tenderRepo:          p.TenderRepo,
 		candidates:          p.CandidateService,
 	}
+}
+
+// attachLiveTenders decorates board cards with the tender chip in one batched
+// query so a large board never fans out per move.
+func (s *Service) attachLiveTenders(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moves []*BoardMove,
+) error {
+	if s.tenderRepo == nil || len(moves) == 0 {
+		return nil
+	}
+
+	moveIDs := make([]pulid.ID, 0, len(moves))
+	for _, move := range moves {
+		if move != nil && move.BoardMove != nil && !move.MoveID.IsNil() {
+			moveIDs = append(moveIDs, move.MoveID)
+		}
+	}
+	if len(moveIDs) == 0 {
+		return nil
+	}
+
+	tenders, err := s.tenderRepo.ListLiveByMoveIDs(
+		ctx,
+		&repositories.ListLiveTendersByMovesRequest{
+			TenantInfo: tenantInfo,
+			MoveIDs:    moveIDs,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	if len(tenders) == 0 {
+		return nil
+	}
+
+	summaries := make(map[pulid.ID]*MoveTenderSummary, len(tenders))
+	for _, entity := range tenders {
+		if entity == nil {
+			continue
+		}
+		summaries[entity.ShipmentMoveID] = summarizeTender(entity)
+	}
+
+	for _, move := range moves {
+		if move != nil && move.BoardMove != nil {
+			move.LiveTender = summaries[move.MoveID]
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) tenantDayStart(ctx context.Context, orgID pulid.ID, now int64) int64 {
@@ -121,8 +176,13 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 		return nil, err
 	}
 
+	decoratedMoves := decorateMoves(moves, now)
+	if err = s.attachLiveTenders(ctx, req.TenantInfo, decoratedMoves); err != nil {
+		return nil, err
+	}
+
 	return &Board{
-		Moves:       decorateMoves(moves, now),
+		Moves:       decoratedMoves,
 		Drivers:     decorateDrivers(snapshot, control, now),
 		Summary:     summary,
 		WindowStart: windowStart,
@@ -237,6 +297,14 @@ func (s *Service) GetDriverMoves(
 	sortMatches(matches)
 	if req.Limit > 0 && len(matches) > req.Limit {
 		matches = matches[:req.Limit]
+	}
+
+	matchedMoves := make([]*BoardMove, 0, len(matches))
+	for _, match := range matches {
+		matchedMoves = append(matchedMoves, match.Move)
+	}
+	if err = s.attachLiveTenders(ctx, req.TenantInfo, matchedMoves); err != nil {
+		return nil, err
 	}
 
 	return matches, nil

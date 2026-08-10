@@ -18,11 +18,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// LineNumber is the resolver for the lineNumber field.
-func (r *journalEntryLineResolver) LineNumber(ctx context.Context, obj *journalentry.Line) (int, error) {
-	return int(obj.LineNumber), nil
-}
-
 // GlAccount is the resolver for the glAccount field.
 func (r *journalEntryLineResolver) GlAccount(ctx context.Context, obj *journalentry.Line) (*gqlmodel.JournalEntryLineAccount, error) {
 	if obj.GLAccountID.IsNil() {

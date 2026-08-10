@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
+	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
@@ -63,6 +64,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
+	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
@@ -100,6 +102,8 @@ type Params struct {
 	GLAccountRepo                repositories.GLAccountRepository
 	CommodityService             *commodityservice.Service
 	CarrierAssignmentService     *carrierassignmentservice.Service
+	RoutingGuideService          *routingguideservice.Service
+	TenderService                *tenderservice.Service
 	CarrierService               *carrierservice.Service
 	CustomerService              *customerservice.Service
 	CustomFieldService           *customfieldservice.Service
@@ -206,6 +210,8 @@ type Resolver struct {
 	glAccountRepo                repositories.GLAccountRepository
 	commodityService             *commodityservice.Service
 	carrierAssignmentService     *carrierassignmentservice.Service
+	routingGuideService          *routingguideservice.Service
+	tenderService                *tenderservice.Service
 	carrierService               *carrierservice.Service
 	customerService              *customerservice.Service
 	customFieldService           *customfieldservice.Service
@@ -314,6 +320,8 @@ func New(p Params) *Resolver {
 		glAccountRepo:                p.GLAccountRepo,
 		commodityService:             p.CommodityService,
 		carrierAssignmentService:     p.CarrierAssignmentService,
+		routingGuideService:          p.RoutingGuideService,
+		tenderService:                p.TenderService,
 		carrierService:               p.CarrierService,
 		customerService:              p.CustomerService,
 		customFieldService:           p.CustomFieldService,

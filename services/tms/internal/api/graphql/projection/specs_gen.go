@@ -230,6 +230,10 @@ var ReportViewSpec TypeSpec
 
 var RoleSpec TypeSpec
 
+var RoutingGuideSpec TypeSpec
+
+var RoutingGuideEntrySpec TypeSpec
+
 var SCIMGroupRoleMappingSpec TypeSpec
 
 var ServiceFailureSpec TypeSpec
@@ -283,6 +287,10 @@ var StoredMileageSpec TypeSpec
 var TCASubscriptionSpec TypeSpec
 
 var TableConfigurationSpec TypeSpec
+
+var TenderSpec TypeSpec
+
+var TenderOfferSpec TypeSpec
 
 var TractorSpec TypeSpec
 
@@ -9981,6 +9989,157 @@ func init() {
 		},
 	}
 
+	RoutingGuideSpec = TypeSpec{
+		TypeName: "RoutingGuide",
+		FieldMap: buncolgen.RoutingGuideFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "originLocationId",
+				FieldMapKey: "originLocationId",
+			},
+			{
+				Name:        "destinationLocationId",
+				FieldMapKey: "destinationLocationId",
+			},
+			{
+				Name:        "originCity",
+				FieldMapKey: "originCity",
+			},
+			{
+				Name:        "originState",
+				FieldMapKey: "originState",
+			},
+			{
+				Name:        "destinationCity",
+				FieldMapKey: "destinationCity",
+			},
+			{
+				Name:        "destinationState",
+				FieldMapKey: "destinationState",
+			},
+			{
+				Name:        "specificity",
+				FieldMapKey: "specificity",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name: "entries",
+				Relation: &RelationSpec{
+					Target: &RoutingGuideEntrySpec,
+				},
+			},
+		},
+	}
+
+	RoutingGuideEntrySpec = TypeSpec{
+		TypeName: "RoutingGuideEntry",
+		FieldMap: buncolgen.RoutingGuideEntryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "routingGuideId",
+				FieldMapKey: "routingGuideId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "rank",
+				FieldMapKey: "rank",
+			},
+			{
+				Name:        "rateMethod",
+				FieldMapKey: "rateMethod",
+			},
+			{
+				Name:        "rate",
+				FieldMapKey: "rate",
+			},
+			{
+				Name:        "offerTtlSeconds",
+				FieldMapKey: "offerTtlSeconds",
+			},
+			{
+				Name:        "channel",
+				FieldMapKey: "channel",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "carrier",
+				FieldMapKey: "carrierId",
+				Relation: &RelationSpec{
+					Target: &CarrierSpec,
+				},
+			},
+		},
+	}
+
 	SCIMGroupRoleMappingSpec = TypeSpec{
 		TypeName: "SCIMGroupRoleMapping",
 		FieldMap: buncolgen.SCIMGroupRoleMappingFieldMap,
@@ -12406,6 +12565,224 @@ func init() {
 				FieldMapKey: "userId",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
+				},
+			},
+		},
+	}
+
+	TenderSpec = TypeSpec{
+		TypeName: "Tender",
+		FieldMap: buncolgen.TenderFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "shipmentMoveId",
+				FieldMapKey: "shipmentMoveId",
+			},
+			{
+				Name:        "routingGuideId",
+				FieldMapKey: "routingGuideId",
+			},
+			{
+				Name:        "mode",
+				FieldMapKey: "mode",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "currentRank",
+				FieldMapKey: "currentRank",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "canceledById",
+				FieldMapKey: "canceledById",
+			},
+			{
+				Name:        "cancellationReason",
+				FieldMapKey: "cancellationReason",
+			},
+			{
+				Name:        "acceptedOfferId",
+				FieldMapKey: "acceptedOfferId",
+			},
+			{
+				Name:        "acceptedAt",
+				FieldMapKey: "acceptedAt",
+			},
+			{
+				Name:        "exhaustedAt",
+				FieldMapKey: "exhaustedAt",
+			},
+			{
+				Name:        "canceledAt",
+				FieldMapKey: "canceledAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "routingGuide",
+				FieldMapKey: "routingGuideId",
+				Relation: &RelationSpec{
+					Target: &RoutingGuideSpec,
+				},
+			},
+			{
+				Name: "offers",
+				Relation: &RelationSpec{
+					Target: &TenderOfferSpec,
+				},
+			},
+		},
+	}
+
+	TenderOfferSpec = TypeSpec{
+		TypeName: "TenderOffer",
+		FieldMap: buncolgen.TenderOfferFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "tenderId",
+				FieldMapKey: "tenderId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "rank",
+				FieldMapKey: "rank",
+			},
+			{
+				Name:        "rateMethod",
+				FieldMapKey: "rateMethod",
+			},
+			{
+				Name:        "rate",
+				FieldMapKey: "rate",
+			},
+			{
+				Name:        "offerTtlSeconds",
+				FieldMapKey: "offerTtlSeconds",
+			},
+			{
+				Name:        "channel",
+				FieldMapKey: "channel",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "recipientEmail",
+				FieldMapKey: "recipientEmail",
+			},
+			{
+				Name:        "sentAt",
+				FieldMapKey: "sentAt",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "respondedAt",
+				FieldMapKey: "respondedAt",
+			},
+			{
+				Name:        "responseSource",
+				FieldMapKey: "responseSource",
+			},
+			{
+				Name:        "declineReason",
+				FieldMapKey: "declineReason",
+			},
+			{
+				Name:        "deliveryError",
+				FieldMapKey: "deliveryError",
+			},
+			{
+				Name:        "ediPartnerId",
+				FieldMapKey: "ediPartnerId",
+			},
+			{
+				Name:        "ediMessageId",
+				FieldMapKey: "ediMessageId",
+			},
+			{
+				Name:        "lateResponseAction",
+				FieldMapKey: "lateResponseAction",
+			},
+			{
+				Name:        "lateResponseAt",
+				FieldMapKey: "lateResponseAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "carrier",
+				FieldMapKey: "carrierId",
+				Relation: &RelationSpec{
+					Target: &CarrierSpec,
 				},
 			},
 		},

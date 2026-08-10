@@ -30,6 +30,11 @@ type GetLiveTenderByMoveRequest struct {
 	MoveID     pulid.ID              `json:"moveId"`
 }
 
+type ListLiveTendersByMovesRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	MoveIDs    []pulid.ID            `json:"moveIds"`
+}
+
 type UpdateTenderStatusRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	TenderID   pulid.ID              `json:"tenderId"`
@@ -100,6 +105,10 @@ type TenderRepository interface {
 		ctx context.Context,
 		req GetLiveTenderByMoveRequest,
 	) (*tender.Tender, error)
+	ListLiveByMoveIDs(
+		ctx context.Context,
+		req *ListLiveTendersByMovesRequest,
+	) ([]*tender.Tender, error)
 	GetOfferByID(
 		ctx context.Context,
 		req GetTenderOfferByIDRequest,

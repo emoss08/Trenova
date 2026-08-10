@@ -59,6 +59,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -1129,63 +1130,64 @@ type DispatchBoardInput struct {
 }
 
 type DispatchBoardMove struct {
-	MoveID                 string   `json:"moveId"`
-	ShipmentID             string   `json:"shipmentId"`
-	ProNumber              string   `json:"proNumber"`
-	Bol                    string   `json:"bol"`
-	MoveStatus             string   `json:"moveStatus"`
-	ShipmentStatus         string   `json:"shipmentStatus"`
-	Sequence               int      `json:"sequence"`
-	MoveCount              int      `json:"moveCount"`
-	Loaded                 bool     `json:"loaded"`
-	Distance               *float64 `json:"distance,omitempty"`
-	Revenue                *float64 `json:"revenue,omitempty"`
-	CustomerID             *string  `json:"customerId,omitempty"`
-	CustomerName           string   `json:"customerName"`
-	ServiceTypeID          *string  `json:"serviceTypeId,omitempty"`
-	ServiceTypeCode        string   `json:"serviceTypeCode"`
-	RequiredTractorTypeID  *string  `json:"requiredTractorTypeId,omitempty"`
-	RequiredTrailerTypeID  *string  `json:"requiredTrailerTypeId,omitempty"`
-	TemperatureMin         *int     `json:"temperatureMin,omitempty"`
-	TemperatureMax         *int     `json:"temperatureMax,omitempty"`
-	HasHazmat              bool     `json:"hasHazmat"`
-	HasActiveHold          bool     `json:"hasActiveHold"`
-	Urgency                string   `json:"urgency"`
-	MinutesToPickup        int      `json:"minutesToPickup"`
-	IsCovered              bool     `json:"isCovered"`
-	OriginStopID           *string  `json:"originStopId,omitempty"`
-	OriginLocationID       *string  `json:"originLocationId,omitempty"`
-	OriginName             string   `json:"originName"`
-	OriginCity             string   `json:"originCity"`
-	OriginState            string   `json:"originState"`
-	OriginLatitude         *float64 `json:"originLatitude,omitempty"`
-	OriginLongitude        *float64 `json:"originLongitude,omitempty"`
-	OriginWindowStart      int      `json:"originWindowStart"`
-	OriginWindowEnd        *int     `json:"originWindowEnd,omitempty"`
-	OriginActualArrival    *int     `json:"originActualArrival,omitempty"`
-	DestinationStopID      *string  `json:"destinationStopId,omitempty"`
-	DestinationLocationID  *string  `json:"destinationLocationId,omitempty"`
-	DestinationName        string   `json:"destinationName"`
-	DestinationCity        string   `json:"destinationCity"`
-	DestinationState       string   `json:"destinationState"`
-	DestinationLatitude    *float64 `json:"destinationLatitude,omitempty"`
-	DestinationLongitude   *float64 `json:"destinationLongitude,omitempty"`
-	DestinationWindowStart int      `json:"destinationWindowStart"`
-	DestinationWindowEnd   *int     `json:"destinationWindowEnd,omitempty"`
-	AssignmentID           *string  `json:"assignmentId,omitempty"`
-	AssignedWorkerID       *string  `json:"assignedWorkerId,omitempty"`
-	AssignedWorkerName     string   `json:"assignedWorkerName"`
-	AssignedTractorID      *string  `json:"assignedTractorId,omitempty"`
-	AssignedTractorCode    string   `json:"assignedTractorCode"`
-	AssignedTrailerID      *string  `json:"assignedTrailerId,omitempty"`
-	AssignedTrailerCode    string   `json:"assignedTrailerCode"`
-	AssignmentAckStatus    string   `json:"assignmentAckStatus"`
-	PreviousMoveTrailerID  *string  `json:"previousMoveTrailerId,omitempty"`
-	CoverageType           string   `json:"coverageType"`
-	CarrierAssignmentID    *string  `json:"carrierAssignmentId,omitempty"`
-	AssignedCarrierID      *string  `json:"assignedCarrierId,omitempty"`
-	AssignedCarrierName    string   `json:"assignedCarrierName"`
-	CarrierTotalCost       *float64 `json:"carrierTotalCost,omitempty"`
+	MoveID                 string                      `json:"moveId"`
+	ShipmentID             string                      `json:"shipmentId"`
+	ProNumber              string                      `json:"proNumber"`
+	Bol                    string                      `json:"bol"`
+	MoveStatus             string                      `json:"moveStatus"`
+	ShipmentStatus         string                      `json:"shipmentStatus"`
+	Sequence               int                         `json:"sequence"`
+	MoveCount              int                         `json:"moveCount"`
+	Loaded                 bool                        `json:"loaded"`
+	Distance               *float64                    `json:"distance,omitempty"`
+	Revenue                *float64                    `json:"revenue,omitempty"`
+	CustomerID             *string                     `json:"customerId,omitempty"`
+	CustomerName           string                      `json:"customerName"`
+	ServiceTypeID          *string                     `json:"serviceTypeId,omitempty"`
+	ServiceTypeCode        string                      `json:"serviceTypeCode"`
+	RequiredTractorTypeID  *string                     `json:"requiredTractorTypeId,omitempty"`
+	RequiredTrailerTypeID  *string                     `json:"requiredTrailerTypeId,omitempty"`
+	TemperatureMin         *int                        `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int                        `json:"temperatureMax,omitempty"`
+	HasHazmat              bool                        `json:"hasHazmat"`
+	HasActiveHold          bool                        `json:"hasActiveHold"`
+	Urgency                string                      `json:"urgency"`
+	MinutesToPickup        int                         `json:"minutesToPickup"`
+	IsCovered              bool                        `json:"isCovered"`
+	OriginStopID           *string                     `json:"originStopId,omitempty"`
+	OriginLocationID       *string                     `json:"originLocationId,omitempty"`
+	OriginName             string                      `json:"originName"`
+	OriginCity             string                      `json:"originCity"`
+	OriginState            string                      `json:"originState"`
+	OriginLatitude         *float64                    `json:"originLatitude,omitempty"`
+	OriginLongitude        *float64                    `json:"originLongitude,omitempty"`
+	OriginWindowStart      int                         `json:"originWindowStart"`
+	OriginWindowEnd        *int                        `json:"originWindowEnd,omitempty"`
+	OriginActualArrival    *int                        `json:"originActualArrival,omitempty"`
+	DestinationStopID      *string                     `json:"destinationStopId,omitempty"`
+	DestinationLocationID  *string                     `json:"destinationLocationId,omitempty"`
+	DestinationName        string                      `json:"destinationName"`
+	DestinationCity        string                      `json:"destinationCity"`
+	DestinationState       string                      `json:"destinationState"`
+	DestinationLatitude    *float64                    `json:"destinationLatitude,omitempty"`
+	DestinationLongitude   *float64                    `json:"destinationLongitude,omitempty"`
+	DestinationWindowStart int                         `json:"destinationWindowStart"`
+	DestinationWindowEnd   *int                        `json:"destinationWindowEnd,omitempty"`
+	AssignmentID           *string                     `json:"assignmentId,omitempty"`
+	AssignedWorkerID       *string                     `json:"assignedWorkerId,omitempty"`
+	AssignedWorkerName     string                      `json:"assignedWorkerName"`
+	AssignedTractorID      *string                     `json:"assignedTractorId,omitempty"`
+	AssignedTractorCode    string                      `json:"assignedTractorCode"`
+	AssignedTrailerID      *string                     `json:"assignedTrailerId,omitempty"`
+	AssignedTrailerCode    string                      `json:"assignedTrailerCode"`
+	AssignmentAckStatus    string                      `json:"assignmentAckStatus"`
+	PreviousMoveTrailerID  *string                     `json:"previousMoveTrailerId,omitempty"`
+	CoverageType           string                      `json:"coverageType"`
+	CarrierAssignmentID    *string                     `json:"carrierAssignmentId,omitempty"`
+	AssignedCarrierID      *string                     `json:"assignedCarrierId,omitempty"`
+	AssignedCarrierName    string                      `json:"assignedCarrierName"`
+	CarrierTotalCost       *float64                    `json:"carrierTotalCost,omitempty"`
+	LiveTender             *DispatchBoardTenderSummary `json:"liveTender,omitempty"`
 }
 
 // The metrics strip at the top of the console: the numbers a dispatcher is measured on.
@@ -1199,6 +1201,18 @@ type DispatchBoardSummary struct {
 	AssignedToday        int     `json:"assignedToday"`
 	AverageDeadheadMiles float64 `json:"averageDeadheadMiles"`
 	UtilizationPercent   float64 `json:"utilizationPercent"`
+}
+
+// The live tender riding on a move, condensed to what a board card chip needs: where the
+// waterfall stands and which carrier is currently holding the offer.
+type DispatchBoardTenderSummary struct {
+	ID                    string        `json:"id"`
+	Status                tender.Status `json:"status"`
+	Mode                  tender.Mode   `json:"mode"`
+	CurrentRank           int           `json:"currentRank"`
+	OfferCount            int           `json:"offerCount"`
+	CurrentCarrierName    string        `json:"currentCarrierName"`
+	CurrentOfferExpiresAt *int          `json:"currentOfferExpiresAt,omitempty"`
 }
 
 type DispatchBulkAssignResult struct {
@@ -2404,6 +2418,15 @@ type MarkDriverSettlementPaidInput struct {
 	PaymentReference *string `json:"paymentReference,omitempty"`
 }
 
+type MatchRoutingGuideInput struct {
+	OriginLocationID      *string `json:"originLocationId,omitempty"`
+	DestinationLocationID *string `json:"destinationLocationId,omitempty"`
+	OriginCity            *string `json:"originCity,omitempty"`
+	OriginState           *string `json:"originState,omitempty"`
+	DestinationCity       *string `json:"destinationCity,omitempty"`
+	DestinationState      *string `json:"destinationState,omitempty"`
+}
+
 type Mutation struct {
 }
 
@@ -3153,6 +3176,17 @@ type RoleConnection struct {
 type RoleEdge struct {
 	Node   *permission.Role `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+type RoutingGuideConnection struct {
+	Edges      []*RoutingGuideEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type RoutingGuideEdge struct {
+	Node   *tender.RoutingGuide `json:"node"`
+	Cursor string               `json:"cursor"`
 }
 
 type RunReportInput struct {

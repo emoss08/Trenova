@@ -116,6 +116,26 @@ func mapDispatchBoardMove(move *dispatchconsoleservice.BoardMove) *gqlmodel.Disp
 		AssignedTrailerCode:   move.AssignedTrailerCode,
 		AssignmentAckStatus:   string(move.AssignmentAckStatus),
 		PreviousMoveTrailerID: idPtr(move.PreviousMoveTrailerID),
+
+		LiveTender: mapDispatchBoardTenderSummary(move.LiveTender),
+	}
+}
+
+func mapDispatchBoardTenderSummary(
+	summary *dispatchconsoleservice.MoveTenderSummary,
+) *gqlmodel.DispatchBoardTenderSummary {
+	if summary == nil {
+		return nil
+	}
+
+	return &gqlmodel.DispatchBoardTenderSummary{
+		ID:                    summary.ID.String(),
+		Status:                summary.Status,
+		Mode:                  summary.Mode,
+		CurrentRank:           int(summary.CurrentRank),
+		OfferCount:            summary.OfferCount,
+		CurrentCarrierName:    summary.CurrentCarrierName,
+		CurrentOfferExpiresAt: intPtr(summary.CurrentOfferExpiresAt),
 	}
 }
 
