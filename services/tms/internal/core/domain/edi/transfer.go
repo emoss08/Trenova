@@ -16,6 +16,7 @@ import (
 
 type LoadTenderPayload struct {
 	PurposeCode              LoadTenderPurposeCode            `json:"purposeCode,omitempty"`
+	TenderOfferID            pulid.ID                         `json:"tenderOfferId,omitempty"`
 	ShipmentID               pulid.ID                         `json:"shipmentId"`
 	BusinessUnitID           pulid.ID                         `json:"businessUnitId"`
 	OrganizationID           pulid.ID                         `json:"organizationId"`

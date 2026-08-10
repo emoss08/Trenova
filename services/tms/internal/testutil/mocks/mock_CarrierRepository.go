@@ -651,3 +651,139 @@ func (_c *MockCarrierRepository_Update_Call) RunAndReturn(run func(ctx context.C
 	_c.Call.Return(run)
 	return _c
 }
+
+// ListEDIChannels provides a mock function for the type MockCarrierRepository
+func (_mock *MockCarrierRepository) ListEDIChannels(ctx context.Context, req repositories.GetCarrierEDIChannelRequest) ([]*carrier.CarrierEDIChannel, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListEDIChannels")
+	}
+
+	var r0 []*carrier.CarrierEDIChannel
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCarrierEDIChannelRequest) ([]*carrier.CarrierEDIChannel, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCarrierEDIChannelRequest) []*carrier.CarrierEDIChannel); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*carrier.CarrierEDIChannel)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetCarrierEDIChannelRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCarrierRepository_ListEDIChannels_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListEDIChannels'
+type MockCarrierRepository_ListEDIChannels_Call struct {
+	*mock.Call
+}
+
+// ListEDIChannels is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetCarrierEDIChannelRequest
+func (_e *MockCarrierRepository_Expecter) ListEDIChannels(ctx any, req any) *MockCarrierRepository_ListEDIChannels_Call {
+	return &MockCarrierRepository_ListEDIChannels_Call{Call: _e.mock.On("ListEDIChannels", ctx, req)}
+}
+
+func (_c *MockCarrierRepository_ListEDIChannels_Call) Run(run func(ctx context.Context, req repositories.GetCarrierEDIChannelRequest)) *MockCarrierRepository_ListEDIChannels_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetCarrierEDIChannelRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetCarrierEDIChannelRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCarrierRepository_ListEDIChannels_Call) Return(carrierEDIChannels []*carrier.CarrierEDIChannel, err error) *MockCarrierRepository_ListEDIChannels_Call {
+	_c.Call.Return(carrierEDIChannels, err)
+	return _c
+}
+
+func (_c *MockCarrierRepository_ListEDIChannels_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetCarrierEDIChannelRequest) ([]*carrier.CarrierEDIChannel, error)) *MockCarrierRepository_ListEDIChannels_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetDefaultEDIChannel provides a mock function for the type MockCarrierRepository
+func (_mock *MockCarrierRepository) GetDefaultEDIChannel(ctx context.Context, req repositories.GetCarrierEDIChannelRequest) (*carrier.CarrierEDIChannel, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDefaultEDIChannel")
+	}
+
+	var r0 *carrier.CarrierEDIChannel
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCarrierEDIChannelRequest) (*carrier.CarrierEDIChannel, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCarrierEDIChannelRequest) *carrier.CarrierEDIChannel); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*carrier.CarrierEDIChannel)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetCarrierEDIChannelRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCarrierRepository_GetDefaultEDIChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDefaultEDIChannel'
+type MockCarrierRepository_GetDefaultEDIChannel_Call struct {
+	*mock.Call
+}
+
+// GetDefaultEDIChannel is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetCarrierEDIChannelRequest
+func (_e *MockCarrierRepository_Expecter) GetDefaultEDIChannel(ctx any, req any) *MockCarrierRepository_GetDefaultEDIChannel_Call {
+	return &MockCarrierRepository_GetDefaultEDIChannel_Call{Call: _e.mock.On("GetDefaultEDIChannel", ctx, req)}
+}
+
+func (_c *MockCarrierRepository_GetDefaultEDIChannel_Call) Run(run func(ctx context.Context, req repositories.GetCarrierEDIChannelRequest)) *MockCarrierRepository_GetDefaultEDIChannel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetCarrierEDIChannelRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetCarrierEDIChannelRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCarrierRepository_GetDefaultEDIChannel_Call) Return(carrierEDIChannel *carrier.CarrierEDIChannel, err error) *MockCarrierRepository_GetDefaultEDIChannel_Call {
+	_c.Call.Return(carrierEDIChannel, err)
+	return _c
+}
+
+func (_c *MockCarrierRepository_GetDefaultEDIChannel_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetCarrierEDIChannelRequest) (*carrier.CarrierEDIChannel, error)) *MockCarrierRepository_GetDefaultEDIChannel_Call {
+	_c.Call.Return(run)
+	return _c
+}

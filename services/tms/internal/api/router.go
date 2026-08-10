@@ -86,6 +86,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
@@ -99,6 +100,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tenderhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tenderpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
@@ -191,6 +194,9 @@ type RouterParams struct {
 	TelematicsHandler               *telematicshandler.Handler
 	CommodityHandler                *commodityhandler.Handler
 	CarrierAssignmentHandler        *carrierassignmenthandler.Handler
+	TenderPublicHandler             *tenderpublichandler.Handler
+	TenderHandler                   *tenderhandler.Handler
+	RoutingGuideHandler             *routingguidehandler.Handler
 	CarrierHandler                  *carrierhandler.Handler
 	RateConfirmationHandler         *rateconfirmationhandler.Handler
 	CustomerHandler                 *customerhandler.Handler
@@ -305,6 +311,9 @@ type Router struct {
 	telematicsHandler               *telematicshandler.Handler
 	commodityHandler                *commodityhandler.Handler
 	carrierAssignmentHandler        *carrierassignmenthandler.Handler
+	tenderPublicHandler             *tenderpublichandler.Handler
+	tenderHandler                   *tenderhandler.Handler
+	routingGuideHandler             *routingguidehandler.Handler
 	carrierHandler                  *carrierhandler.Handler
 	rateConfirmationHandler         *rateconfirmationhandler.Handler
 	customerHandler                 *customerhandler.Handler
@@ -421,6 +430,9 @@ func NewRouter(p RouterParams) *Router {
 		telematicsHandler:               p.TelematicsHandler,
 		commodityHandler:                p.CommodityHandler,
 		carrierAssignmentHandler:        p.CarrierAssignmentHandler,
+		tenderPublicHandler:             p.TenderPublicHandler,
+		tenderHandler:                   p.TenderHandler,
+		routingGuideHandler:             p.RoutingGuideHandler,
 		carrierHandler:                  p.CarrierHandler,
 		rateConfirmationHandler:         p.RateConfirmationHandler,
 		customerHandler:                 p.CustomerHandler,
@@ -545,6 +557,7 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.telematicsHandler.RegisterPublicRoutes(rg)
 	r.invoiceHandler.RegisterPublicRoutes(rg)
 	r.ediHandler.RegisterPublicRoutes(rg)
+	r.tenderPublicHandler.RegisterPublicRoutes(rg)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
@@ -602,6 +615,8 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.emailHandler.RegisterRoutes(protected)
 	r.commodityHandler.RegisterRoutes(protected)
 	r.carrierAssignmentHandler.RegisterRoutes(protected)
+	r.tenderHandler.RegisterRoutes(protected)
+	r.routingGuideHandler.RegisterRoutes(protected)
 	r.carrierHandler.RegisterRoutes(protected)
 	r.rateConfirmationHandler.RegisterRoutes(protected)
 	r.customerHandler.RegisterRoutes(protected)

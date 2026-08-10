@@ -904,6 +904,7 @@ func testSourceContextIndex() *sourceContextIndex {
 		sourceContextField("shipment.shipmentId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipment.purposeCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipment.bol", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipment.tenderOfferId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipment.weight", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipment.pieces", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipment.totalChargeAmount", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),

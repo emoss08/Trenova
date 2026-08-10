@@ -83,6 +83,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
@@ -96,6 +97,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tenderhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tenderpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
@@ -170,6 +173,9 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	telematicshandler.New,
 	commodityhandler.New,
 	carrierassignmenthandler.New,
+	tenderpublichandler.New,
+	tenderhandler.New,
+	routingguidehandler.New,
 	carrierhandler.New,
 	rateconfirmationhandler.New,
 	customerhandler.New,

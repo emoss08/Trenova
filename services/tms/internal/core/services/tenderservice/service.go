@@ -101,6 +101,13 @@ func (s *Service) SetCarrierMoveAssigner(assigner portservices.CarrierMoveAssign
 	s.assigner = assigner
 }
 
+// SetEDITenderChannel injects the EDI delivery seam after construction:
+// providing it through FX would close the cycle ediservice -> ShipmentService
+// -> TenderGuard -> tenderservice -> EDITenderChannel.
+func (s *Service) SetEDITenderChannel(channel portservices.EDITenderChannel) {
+	s.ediChannel = channel
+}
+
 var (
 	_ portservices.TenderGuard            = (*Service)(nil)
 	_ portservices.TenderResponseRecorder = (*Service)(nil)

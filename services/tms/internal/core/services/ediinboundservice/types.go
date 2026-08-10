@@ -76,6 +76,7 @@ type tenderResponseDetails struct {
 	shipmentRef     string
 	reservationCode string
 	remarks         string
+	references      []string
 }
 
 type shipmentStatusDetails struct {

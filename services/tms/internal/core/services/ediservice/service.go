@@ -67,6 +67,8 @@ type Params struct {
 	ShipmentCommentRepo repositories.ShipmentCommentRepository
 	UserRepo            repositories.UserRepository
 	ShipmentRepo        repositories.ShipmentRepository
+	TenderRepo          repositories.TenderRepository  `optional:"true"`
+	CarrierRepo         repositories.CarrierRepository `optional:"true"`
 	ShipmentSvc         services.ShipmentService
 	WorkflowStarter     services.WorkflowStarter
 	AuditService        services.AuditService
@@ -107,6 +109,8 @@ type Service struct {
 	shipmentCommentRepo repositories.ShipmentCommentRepository
 	userRepo            repositories.UserRepository
 	shipmentRepo        repositories.ShipmentRepository
+	tenderRepo          repositories.TenderRepository
+	carrierRepo         repositories.CarrierRepository
 	shipmentSvc         services.ShipmentService
 	workflowStarter     services.WorkflowStarter
 	auditService        services.AuditService
@@ -154,6 +158,8 @@ func New(p Params) *Service {
 		shipmentCommentRepo: p.ShipmentCommentRepo,
 		userRepo:            p.UserRepo,
 		shipmentRepo:        p.ShipmentRepo,
+		tenderRepo:          p.TenderRepo,
+		carrierRepo:         p.CarrierRepo,
 		shipmentSvc:         p.ShipmentSvc,
 		workflowStarter:     p.WorkflowStarter,
 		auditService:        p.AuditService,

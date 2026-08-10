@@ -426,6 +426,12 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(s *tenderservice.Service, assigner services.CarrierMoveAssigner) {
 		s.SetCarrierMoveAssigner(assigner)
 	},
+	// Providing services.EDITenderChannel would close the constructor cycle
+	// ediservice -> ShipmentService -> TenderGuard -> tenderservice ->
+	// EDITenderChannel, so the channel arrives after both services are built.
+	func(s *tenderservice.Service, ediSvc *ediservice.Service) {
+		s.SetEDITenderChannel(ediSvc)
+	},
 	fx.Annotate(
 		func(
 			setter shipmentservice.MutationObserverSetter,
