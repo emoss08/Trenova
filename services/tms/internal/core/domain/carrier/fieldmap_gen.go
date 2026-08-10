@@ -18,6 +18,13 @@ func (e *CarrierContact) GetStaticFieldMap() map[string]string {
 	return buncolgen.CarrierContactFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierEDIChannel].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.CarrierEDIChannelFieldMap] instead of parsing struct tags via reflection.
+func (e *CarrierEDIChannel) GetStaticFieldMap() map[string]string {
+	return buncolgen.CarrierEDIChannelFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierInsurancePolicy].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.CarrierInsurancePolicyFieldMap] instead of parsing struct tags via reflection.

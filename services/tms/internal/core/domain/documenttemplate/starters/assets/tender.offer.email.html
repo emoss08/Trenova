@@ -1,0 +1,50 @@
+<div style="font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827;max-width:560px">
+  <p style="margin:0 0 16px">Hello{{ if .CarrierName }} {{ .CarrierName }}{{ end }},</p>
+
+  <p style="margin:0 0 20px">
+    {{ .CompanyName }} has a load available for you{{ if .ShipmentProNumber }} (ref {{ .ShipmentProNumber }}){{ end }}.
+  </p>
+
+  <table style="width:100%;border-collapse:collapse;margin:0 0 20px;font-size:13px">
+    <tr>
+      <td style="padding:6px 0;color:#6b7280;width:120px;vertical-align:top">Origin</td>
+      <td style="padding:6px 0">{{ .OriginSummary }}{{ if .PickupWindow }}<br><span style="color:#6b7280">{{ .PickupWindow }}</span>{{ end }}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0;color:#6b7280;vertical-align:top">Destination</td>
+      <td style="padding:6px 0">{{ .DestinationSummary }}{{ if .DeliveryWindow }}<br><span style="color:#6b7280">{{ .DeliveryWindow }}</span>{{ end }}</td>
+    </tr>
+    {{ if .EquipmentSummary }}
+    <tr>
+      <td style="padding:6px 0;color:#6b7280">Equipment</td>
+      <td style="padding:6px 0">{{ .EquipmentSummary }}</td>
+    </tr>
+    {{ end }}
+    {{ if .WeightSummary }}
+    <tr>
+      <td style="padding:6px 0;color:#6b7280">Weight</td>
+      <td style="padding:6px 0">{{ .WeightSummary }}</td>
+    </tr>
+    {{ end }}
+    <tr>
+      <td style="padding:6px 0;color:#6b7280">Rate</td>
+      <td style="padding:6px 0;font-weight:600">{{ .RateAmount }}{{ if .RateMethodLabel }} <span style="font-weight:400;color:#6b7280">({{ .RateMethodLabel }})</span>{{ end }}</td>
+    </tr>
+  </table>
+
+  <p style="margin:0 0 20px">
+    <a href="{{ .AcceptURL }}" style="display:inline-block;padding:11px 20px;background:#111827;color:#ffffff;font-weight:600;text-decoration:none;border-radius:6px;margin-right:8px">Accept load</a>
+    <a href="{{ .DeclineURL }}" style="display:inline-block;padding:11px 20px;background:#ffffff;color:#111827;font-weight:600;text-decoration:none;border-radius:6px;border:1px solid #d1d5db">Decline</a>
+  </p>
+
+  <p style="margin:0 0 20px;color:#4b5563;font-size:13px">
+    Or paste one of these links into your browser:<br>
+    Accept: <span style="word-break:break-all">{{ .AcceptURL }}</span><br>
+    Decline: <span style="word-break:break-all">{{ .DeclineURL }}</span>
+  </p>
+
+  <p style="margin:0;color:#6b7280;font-size:13px">
+    {{ if .ExpiresInHours }}This offer expires in {{ .ExpiresInHours }} hours{{ if .ExpiresAt }}, at {{ .ExpiresAt }}{{ end }}.{{ else }}{{ if .ExpiresAt }}This offer expires at {{ .ExpiresAt }}.{{ end }}{{ end }}
+    After that the load may be offered to another carrier.
+  </p>
+</div>

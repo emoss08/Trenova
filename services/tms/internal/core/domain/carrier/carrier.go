@@ -83,6 +83,7 @@ type Carrier struct {
 	RemitState        *usstate.UsState          `json:"remitState,omitempty"        bun:"rel:belongs-to,join:remit_state_id=id"`
 	Contacts          []*CarrierContact         `json:"contacts,omitempty"          bun:"rel:has-many,join:id=carrier_id"`
 	InsurancePolicies []*CarrierInsurancePolicy `json:"insurancePolicies,omitempty" bun:"rel:has-many,join:id=carrier_id"`
+	EDIChannels       []*CarrierEDIChannel      `json:"ediChannels,omitempty"       bun:"rel:has-many,join:id=carrier_id"`
 }
 
 func (c *Carrier) applyDefaults() {
@@ -185,6 +186,24 @@ func (c *Carrier) Validate(multiErr *errortypes.MultiError) {
 
 	for idx, policy := range c.InsurancePolicies {
 		policy.Validate(multiErr.WithIndex("insurancePolicies", idx))
+	}
+
+	defaultChannels := 0
+	for idx, channel := range c.EDIChannels {
+		if channel == nil {
+			continue
+		}
+		channel.Validate(multiErr.WithIndex("ediChannels", idx))
+		if channel.IsDefault {
+			defaultChannels++
+		}
+	}
+	if defaultChannels > 1 {
+		multiErr.Add(
+			"ediChannels",
+			errortypes.ErrInvalid,
+			"Only one EDI channel can be marked as default",
+		)
 	}
 }
 

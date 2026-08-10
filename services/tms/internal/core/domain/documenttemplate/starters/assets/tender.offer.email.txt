@@ -1,0 +1,17 @@
+Hello{{ if .CarrierName }} {{ .CarrierName }}{{ end }},
+
+{{ .CompanyName }} has a load available for you{{ if .ShipmentProNumber }} (ref {{ .ShipmentProNumber }}){{ end }}.
+
+Origin: {{ .OriginSummary }}{{ if .PickupWindow }} ({{ .PickupWindow }}){{ end }}
+Destination: {{ .DestinationSummary }}{{ if .DeliveryWindow }} ({{ .DeliveryWindow }}){{ end }}
+{{ if .EquipmentSummary }}Equipment: {{ .EquipmentSummary }}
+{{ end }}{{ if .WeightSummary }}Weight: {{ .WeightSummary }}
+{{ end }}Rate: {{ .RateAmount }}{{ if .RateMethodLabel }} ({{ .RateMethodLabel }}){{ end }}
+
+Accept the load:
+{{ .AcceptURL }}
+
+Decline the load:
+{{ .DeclineURL }}
+
+{{ if .ExpiresInHours }}This offer expires in {{ .ExpiresInHours }} hours{{ if .ExpiresAt }}, at {{ .ExpiresAt }}{{ end }}.{{ else }}{{ if .ExpiresAt }}This offer expires at {{ .ExpiresAt }}.{{ end }}{{ end }} After that the load may be offered to another carrier.

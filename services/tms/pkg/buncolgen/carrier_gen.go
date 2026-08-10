@@ -236,6 +236,7 @@ var CarrierRelations = struct {
 	RemitState        string
 	Contacts          string
 	InsurancePolicies string
+	EDIChannels       string
 }{
 	BusinessUnit:      "BusinessUnit",
 	Organization:      "Organization",
@@ -243,6 +244,7 @@ var CarrierRelations = struct {
 	RemitState:        "RemitState",
 	Contacts:          "Contacts",
 	InsurancePolicies: "InsurancePolicies",
+	EDIChannels:       "EDIChannels",
 }
 
 // CarrierScopeTenant restricts a query to a single tenant by adding:
@@ -651,6 +653,209 @@ var CarrierContactFilter = struct {
 	},
 	ReceivesRateConfirmations: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("receivesRateConfirmations", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// CarrierEDIChannel — table "carrier_edi_channels", alias "cec"
+// ---------------------------------------------------------------------------
+
+// CarrierEDIChannelTable holds the table name, alias, and primary key columns
+// for the "carrier_edi_channels" table. The alias "cec" is used in all generated
+// SQL fragments (e.g. "cec.id = ?").
+var CarrierEDIChannelTable = TableInfo{
+	Name:       "carrier_edi_channels",
+	Alias:      "cec",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// CarrierEDIChannelColumns provides type-safe column references for the "carrier_edi_channels" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(CarrierEDIChannelColumns.ID.String())
+//	// SELECT cec.id FROM carrier_edi_channels AS cec
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(CarrierEDIChannelColumns.ID.Eq(), id)           // WHERE cec.id = ?
+//	q.Order(CarrierEDIChannelColumns.CreatedAt.OrderDesc())  // ORDER BY cec.created_at DESC
+var CarrierEDIChannelColumns = struct {
+	ID                       Column // "id" → qualified: "cec.id"
+	BusinessUnitID           Column // "business_unit_id" → qualified: "cec.business_unit_id"
+	OrganizationID           Column // "organization_id" → qualified: "cec.organization_id"
+	CarrierID                Column // "carrier_id" → qualified: "cec.carrier_id"
+	EDIPartnerID             Column // "edi_partner_id" → qualified: "cec.edi_partner_id"
+	PartnerDocumentProfileID Column // "partner_document_profile_id" → qualified: "cec.partner_document_profile_id"
+	CommunicationProfileID   Column // "communication_profile_id" → qualified: "cec.communication_profile_id"
+	SCACOverride             Column // "scac_override" → qualified: "cec.scac_override"
+	IsDefault                Column // "is_default" → qualified: "cec.is_default"
+	Version                  Column // "version" → qualified: "cec.version"
+	CreatedAt                Column // "created_at" → qualified: "cec.created_at"
+	UpdatedAt                Column // "updated_at" → qualified: "cec.updated_at"
+}{
+	ID:                       NewColumn("id", "cec"),
+	BusinessUnitID:           NewColumn("business_unit_id", "cec"),
+	OrganizationID:           NewColumn("organization_id", "cec"),
+	CarrierID:                NewColumn("carrier_id", "cec"),
+	EDIPartnerID:             NewColumn("edi_partner_id", "cec"),
+	PartnerDocumentProfileID: NewColumn("partner_document_profile_id", "cec"),
+	CommunicationProfileID:   NewColumn("communication_profile_id", "cec"),
+	SCACOverride:             NewColumn("scac_override", "cec"),
+	IsDefault:                NewColumn("is_default", "cec"),
+	Version:                  NewColumn("version", "cec"),
+	CreatedAt:                NewColumn("created_at", "cec"),
+	UpdatedAt:                NewColumn("updated_at", "cec"),
+}
+
+// CarrierEDIChannelFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by CarrierEDIChannel.GetStaticFieldMap().
+var CarrierEDIChannelFieldMap = map[string]string{
+	"id":                       "id",
+	"businessUnitId":           "business_unit_id",
+	"organizationId":           "organization_id",
+	"carrierId":                "carrier_id",
+	"ediPartnerId":             "edi_partner_id",
+	"partnerDocumentProfileId": "partner_document_profile_id",
+	"communicationProfileId":   "communication_profile_id",
+	"scacOverride":             "scac_override",
+	"isDefault":                "is_default",
+	"version":                  "version",
+	"createdAt":                "created_at",
+	"updatedAt":                "updated_at",
+}
+
+// CarrierEDIChannelInsertableColumns lists column names suitable for INSERT statements on the "carrier_edi_channels" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var CarrierEDIChannelInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"carrier_id",
+	"edi_partner_id",
+	"partner_document_profile_id",
+	"communication_profile_id",
+	"scac_override",
+	"is_default",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// CarrierEDIChannelRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(CarrierEDIChannelRelations.Carrier)
+//	// Bun eager-loads the Carrier association via a separate query
+var CarrierEDIChannelRelations = struct {
+	Carrier    string
+	EDIPartner string
+}{
+	Carrier:    "Carrier",
+	EDIPartner: "EDIPartner",
+}
+
+// CarrierEDIChannelScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE cec.organization_id = ? AND cec.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.CarrierEDIChannelScopeTenant(sq, ti).
+//		Where(buncolgen.CarrierEDIChannelColumns.ID.Eq(), id)
+func CarrierEDIChannelScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, CarrierEDIChannelColumns.OrganizationID, CarrierEDIChannelColumns.BusinessUnitID, ti)
+}
+
+// CarrierEDIChannelScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.CarrierEDIChannelScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.CarrierEDIChannelColumns.ID.In(), bun.List(ids))
+//	})
+func CarrierEDIChannelScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, CarrierEDIChannelColumns.OrganizationID, CarrierEDIChannelColumns.BusinessUnitID, ti)
+}
+
+// CarrierEDIChannelScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.CarrierEDIChannelScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.CarrierEDIChannelColumns.ID.Eq(), id)
+//	})
+func CarrierEDIChannelScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, CarrierEDIChannelColumns.OrganizationID, CarrierEDIChannelColumns.BusinessUnitID, ti)
+}
+
+// CarrierEDIChannelApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.CarrierEDIChannelApplyTenant(tenantInfo))
+func CarrierEDIChannelApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(CarrierEDIChannelColumns.OrganizationID, CarrierEDIChannelColumns.BusinessUnitID, ti)
+}
+
+// CarrierEDIChannelFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "carrier_edi_channels" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	CarrierEDIChannelFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var CarrierEDIChannelFilter = struct {
+	ID                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	CarrierID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrierId" → DB: "carrier_id"
+	EDIPartnerID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediPartnerId" → DB: "edi_partner_id"
+	PartnerDocumentProfileID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partnerDocumentProfileId" → DB: "partner_document_profile_id"
+	CommunicationProfileID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "communicationProfileId" → DB: "communication_profile_id"
+	SCACOverride             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scacOverride" → DB: "scac_override"
+	IsDefault                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isDefault" → DB: "is_default"
+	Version                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	CarrierID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("carrierId", op, value)
+	},
+	EDIPartnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ediPartnerId", op, value)
+	},
+	PartnerDocumentProfileID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partnerDocumentProfileId", op, value)
+	},
+	CommunicationProfileID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("communicationProfileId", op, value)
+	},
+	SCACOverride: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("scacOverride", op, value)
+	},
+	IsDefault: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("isDefault", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

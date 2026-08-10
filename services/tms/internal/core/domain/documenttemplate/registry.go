@@ -140,6 +140,7 @@ func (r *Registry) registerAll() {
 	r.registerDetentionKinds()
 	r.registerRateConfirmationKinds()
 	r.registerReportingKinds()
+	r.registerTenderKinds()
 	r.registerPortalKinds()
 	r.registerAgentKinds()
 	r.registerNotificationKinds()

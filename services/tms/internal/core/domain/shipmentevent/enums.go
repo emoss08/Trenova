@@ -23,6 +23,16 @@ const (
 	TypeCarrierAssigned   = Type("CarrierAssigned")
 	TypeCarrierUnassigned = Type("CarrierUnassigned")
 
+	TypeTenderOffered         = Type("TenderOffered")
+	TypeTenderAccepted        = Type("TenderAccepted")
+	TypeTenderDeclined        = Type("TenderDeclined")
+	TypeTenderExpired         = Type("TenderExpired")
+	TypeTenderWithdrawn       = Type("TenderWithdrawn")
+	TypeTenderNeedsReview     = Type("TenderNeedsReview")
+	TypeRoutingGuideExhausted = Type("RoutingGuideExhausted")
+	TypeTenderLateResponse    = Type("TenderLateResponse")
+	TypeTenderDeliveryFailed  = Type("TenderDeliveryFailed")
+
 	TypeHoldPlaced   = Type("HoldPlaced")
 	TypeHoldUpdated  = Type("HoldUpdated")
 	TypeHoldReleased = Type("HoldReleased")
@@ -66,6 +76,15 @@ func (v Type) IsValid() bool {
 		TypeDriverUnassigned,
 		TypeCarrierAssigned,
 		TypeCarrierUnassigned,
+		TypeTenderOffered,
+		TypeTenderAccepted,
+		TypeTenderDeclined,
+		TypeTenderExpired,
+		TypeTenderWithdrawn,
+		TypeTenderNeedsReview,
+		TypeRoutingGuideExhausted,
+		TypeTenderLateResponse,
+		TypeTenderDeliveryFailed,
 		TypeHoldPlaced,
 		TypeHoldUpdated,
 		TypeHoldReleased,

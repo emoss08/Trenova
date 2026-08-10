@@ -41,6 +41,12 @@ const (
 	// KindReportDeliveryEmail is the scheduled-report delivery message.
 	KindReportDeliveryEmail Kind = "report.delivery.email"
 
+	// Tendering.
+
+	// KindTenderOfferEmail offers a brokered load to a carrier with accept and
+	// decline links.
+	KindTenderOfferEmail Kind = "tender.offer.email"
+
 	// Portal.
 
 	// KindDriverPortalInvitationEmail invites a driver to the portal.
@@ -115,6 +121,7 @@ func AllKinds() []Kind {
 		KindRateConfirmationEmail,
 		KindReportPDF,
 		KindReportDeliveryEmail,
+		KindTenderOfferEmail,
 		KindDriverPortalInvitationEmail,
 		KindAgentRequestMissingDocsEmail,
 		KindNotificationLoadAssigned,

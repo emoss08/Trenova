@@ -91,6 +91,8 @@ const (
 	ResourceCarrierSettlement        Resource = "carrier_settlement"
 	ResourceCarrierSettlementControl Resource = "carrier_settlement_control"
 	ResourceCarrierInvoiceMatch      Resource = "carrier_invoice_match"
+	ResourceRoutingGuide             Resource = "routing_guide"
+	ResourceTender                   Resource = "tender"
 
 	// Locations
 	ResourceLocation         Resource = "location"

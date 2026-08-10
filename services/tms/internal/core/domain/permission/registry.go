@@ -1517,6 +1517,48 @@ func (r *Registry) registerCarrierResources() {
 		ParentResource:     ResourceCarrierSettlement.String(),
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceRoutingGuide.String(),
+		DisplayName: "Routing Guide",
+		Description: "Ranked carrier lists per freight lane that drive waterfall tenders",
+		Category:    "Carriers",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View routing guides"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create routing guides"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify routing guides"},
+			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete routing guides"},
+		},
+		ParentResource:     ResourceCarrier.String(),
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceTender.String(),
+		DisplayName: "Carrier Tender",
+		Description: "Waterfall and spot tender offers made to carriers for brokered moves",
+		Category:    "Carriers",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View tenders and offers"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Start waterfall and spot tenders",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Record manual carrier responses",
+			},
+			{
+				Operation:   OpCancel,
+				DisplayName: "Cancel",
+				Description: "Withdraw outstanding tenders",
+			},
+		},
+		ParentResource:     ResourceCarrier.String(),
+		DefaultSensitivity: SensitivityInternal,
+	})
 }
 
 func (r *Registry) registerLocationResources() {
