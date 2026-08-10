@@ -31,8 +31,10 @@ func TestEnumValidity(t *testing.T) {
 	}
 	assert.False(t, tender.Status("Bogus").IsValid())
 	assert.False(t, tender.StatusActive.IsTerminal())
+	assert.False(t, tender.StatusNeedsReview.IsTerminal())
 	assert.True(t, tender.StatusAccepted.IsTerminal())
-	assert.True(t, tender.StatusNeedsReview.IsTerminal())
+	assert.True(t, tender.StatusExhausted.IsTerminal())
+	assert.True(t, tender.StatusCanceled.IsTerminal())
 
 	for _, s := range []tender.OfferStatus{
 		tender.OfferStatusPending,

@@ -590,7 +590,7 @@ func (s *Service) CancelFromWorkflow(
 	if err != nil {
 		return err
 	}
-	if entity.Status.IsTerminal() && entity.Status != tender.StatusNeedsReview {
+	if entity.Status.IsTerminal() {
 		return nil
 	}
 

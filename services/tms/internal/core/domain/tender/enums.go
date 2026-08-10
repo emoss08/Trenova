@@ -46,8 +46,12 @@ func (s Status) IsValid() bool {
 	return false
 }
 
+// IsTerminal reports whether the tender has fully finished. NeedsReview is
+// NOT terminal: the workflow has stopped driving it, but it is still live for
+// a dispatcher and still occupies the move's one-live-tender slot, matching
+// Tender.IsLive.
 func (s Status) IsTerminal() bool {
-	return s != StatusActive
+	return s == StatusAccepted || s == StatusExhausted || s == StatusCanceled
 }
 
 type OfferStatus string
