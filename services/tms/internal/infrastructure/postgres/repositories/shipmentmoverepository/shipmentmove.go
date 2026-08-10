@@ -586,6 +586,7 @@ func (r *repository) insertMove(
 			sm.OrganizationID.String(),
 			sm.ShipmentID.String(),
 			sm.Status.String(),
+			sm.CoverageType.String(),
 			sm.Loaded.String(),
 			sm.Sequence.String(),
 			sm.Distance.String(),
@@ -609,10 +610,17 @@ func (r *repository) updateMove(
 	sm := buncolgen.ShipmentMoveColumns
 	move.Version = existingMove.Version + 1
 
+	// A payload that never carried coverage must not reset a brokered move to
+	// driver coverage via the column default.
+	if move.CoverageType == "" {
+		move.CoverageType = existingMove.CoverageType
+	}
+
 	results, err := tx.NewUpdate().
 		Model(move).
 		Column(
 			sm.Status.String(),
+			sm.CoverageType.String(),
 			sm.Loaded.String(),
 			sm.Sequence.String(),
 			sm.Distance.String(),

@@ -269,6 +269,37 @@ func ResolvePostingAccounts(
 	return resolved, nil
 }
 
+// PostingAccountsFromSnapshot returns the accounts stamped on the settlement
+// when it was posted. Paid and void journals must build against these, never
+// against a re-resolved control row.
+func PostingAccountsFromSnapshot(
+	entity *carriersettlement.CarrierSettlement,
+) (*PostingAccounts, error) {
+	if entity.PostedAPAccountID == nil || entity.PostedAPAccountID.IsNil() {
+		return nil, errortypes.NewBusinessError(
+			"Carrier settlement has no posted account snapshot; it cannot be paid or voided",
+		).WithParam("settlementId", entity.ID.String())
+	}
+
+	accounts := &PostingAccounts{Payable: *entity.PostedAPAccountID}
+	if entity.PostedExpenseAccountID != nil {
+		accounts.Expense = *entity.PostedExpenseAccountID
+	}
+	return accounts, nil
+}
+
+func stampPostedAccounts(
+	entity *carriersettlement.CarrierSettlement,
+	accounts *PostingAccounts,
+) {
+	if !accounts.Expense.IsNil() {
+		expense := accounts.Expense
+		entity.PostedExpenseAccountID = &expense
+	}
+	payable := accounts.Payable
+	entity.PostedAPAccountID = &payable
+}
+
 func settlementHasUnmappedLines(entity *carriersettlement.CarrierSettlement) bool {
 	for _, line := range entity.Lines {
 		if line == nil || line.AmountMinor == 0 {
@@ -292,9 +323,26 @@ func (s *Service) postSettlementJournal(
 		return nil, err
 	}
 
-	accounts, err := s.resolvePostingAccounts(ctx, entity, control, false)
-	if err != nil {
-		return nil, err
+	// A void must reverse exactly the legs that were posted. The accounts are
+	// therefore resolved from the control tables only at post time and stamped
+	// onto the settlement; a control edit between post and void can never split
+	// the reversal across accounts.
+	var postingAccounts *PostingAccounts
+	if reversal {
+		postingAccounts, err = PostingAccountsFromSnapshot(entity)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		accounts, resolveErr := s.resolvePostingAccounts(ctx, entity, control, false)
+		if resolveErr != nil {
+			return nil, resolveErr
+		}
+		postingAccounts = &PostingAccounts{
+			Expense: accounts.Expense,
+			Payable: accounts.Payable,
+		}
+		stampPostedAccounts(entity, postingAccounts)
 	}
 
 	description := "Carrier settlement " + entity.SettlementNumber
@@ -306,10 +354,7 @@ func (s *Service) postSettlementJournal(
 		idempotencyPrefix = "carrier-settlement-voided:"
 	}
 
-	legs := BuildCarrierSettlementPostingLegs(entity, &PostingAccounts{
-		Expense: accounts.Expense,
-		Payable: accounts.Payable,
-	})
+	legs := BuildCarrierSettlementPostingLegs(entity, postingAccounts)
 	if len(legs) == 0 {
 		return nil, nil //nolint:nilnil // a zero-amount settlement posts no journal
 	}
@@ -338,12 +383,22 @@ func (s *Service) postPaymentJournal(
 		return nil, err
 	}
 
-	accounts, err := s.resolvePostingAccounts(ctx, entity, control, true)
+	// The payment must relieve the same AP account the posting credited, so the
+	// payable side comes from the post-time snapshot; only the cash account is
+	// resolved live.
+	accounts, err := PostingAccountsFromSnapshot(entity)
 	if err != nil {
 		return nil, err
 	}
+	if control.DefaultCashAccountID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"accountingControl",
+			errortypes.ErrRequired,
+			"A default cash account must be configured before recording carrier settlement payments",
+		)
+	}
 
-	legs := BuildCarrierSettlementPaymentLegs(entity, accounts.Payable, accounts.Cash)
+	legs := BuildCarrierSettlementPaymentLegs(entity, accounts.Payable, control.DefaultCashAccountID)
 	if len(legs) == 0 {
 		return nil, nil //nolint:nilnil // a zero-amount settlement records no payment journal
 	}

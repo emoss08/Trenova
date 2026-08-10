@@ -50,6 +50,8 @@ type CarrierSettlement struct {
 	PostedByID           pulid.ID  `json:"postedById"           bun:"posted_by_id,type:VARCHAR(100),nullzero"`
 	PostedAt             *int64    `json:"postedAt"             bun:"posted_at,type:BIGINT,nullzero"`
 	PostedJournalBatchID *pulid.ID `json:"postedJournalBatchId" bun:"posted_journal_batch_id,type:VARCHAR(100),nullzero"`
+	PostedExpenseAccountID *pulid.ID `json:"postedExpenseAccountId" bun:"posted_expense_account_id,type:VARCHAR(100),nullzero"`
+	PostedAPAccountID      *pulid.ID `json:"postedApAccountId"      bun:"posted_ap_account_id,type:VARCHAR(100),nullzero"`
 	PaidAt               *int64    `json:"paidAt"               bun:"paid_at,type:BIGINT,nullzero"`
 	PaidByID             pulid.ID  `json:"paidById"             bun:"paid_by_id,type:VARCHAR(100),nullzero"`
 	PaymentMethod        string    `json:"paymentMethod"        bun:"payment_method,type:VARCHAR(50),nullzero"`

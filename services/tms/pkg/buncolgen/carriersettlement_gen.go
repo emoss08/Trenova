@@ -49,77 +49,81 @@ var CarrierSettlementTable = TableInfo{
 //	q.Where(CarrierSettlementColumns.ID.Eq(), id)           // WHERE carstl.id = ?
 //	q.Order(CarrierSettlementColumns.CreatedAt.OrderDesc())  // ORDER BY carstl.created_at DESC
 var CarrierSettlementColumns = struct {
-	ID                   Column // "id" → qualified: "carstl.id"
-	BusinessUnitID       Column // "business_unit_id" → qualified: "carstl.business_unit_id"
-	OrganizationID       Column // "organization_id" → qualified: "carstl.organization_id"
-	CarrierID            Column // "carrier_id" → qualified: "carstl.carrier_id"
-	BatchID              Column // "batch_id" → qualified: "carstl.batch_id"
-	SettlementNumber     Column // "settlement_number" → qualified: "carstl.settlement_number"
-	Status               Column // "status" → qualified: "carstl.status"
-	PeriodStart          Column // "period_start" → qualified: "carstl.period_start"
-	PeriodEnd            Column // "period_end" → qualified: "carstl.period_end"
-	PayDate              Column // "pay_date" → qualified: "carstl.pay_date"
-	GrossCostMinor       Column // "gross_cost_minor" → qualified: "carstl.gross_cost_minor"
-	AdjustmentsMinor     Column // "adjustments_minor" → qualified: "carstl.adjustments_minor"
-	NetPayableMinor      Column // "net_payable_minor" → qualified: "carstl.net_payable_minor"
-	ShipmentCount        Column // "shipment_count" → qualified: "carstl.shipment_count"
-	CurrencyCode         Column // "currency_code" → qualified: "carstl.currency_code"
-	Notes                Column // "notes" → qualified: "carstl.notes"
-	SubmittedByID        Column // "submitted_by_id" → qualified: "carstl.submitted_by_id"
-	SubmittedAt          Column // "submitted_at" → qualified: "carstl.submitted_at"
-	ApprovedByID         Column // "approved_by_id" → qualified: "carstl.approved_by_id"
-	ApprovedAt           Column // "approved_at" → qualified: "carstl.approved_at"
-	PostedByID           Column // "posted_by_id" → qualified: "carstl.posted_by_id"
-	PostedAt             Column // "posted_at" → qualified: "carstl.posted_at"
-	PostedJournalBatchID Column // "posted_journal_batch_id" → qualified: "carstl.posted_journal_batch_id"
-	PaidAt               Column // "paid_at" → qualified: "carstl.paid_at"
-	PaidByID             Column // "paid_by_id" → qualified: "carstl.paid_by_id"
-	PaymentMethod        Column // "payment_method" → qualified: "carstl.payment_method"
-	PaymentReference     Column // "payment_reference" → qualified: "carstl.payment_reference"
-	PaidJournalBatchID   Column // "paid_journal_batch_id" → qualified: "carstl.paid_journal_batch_id"
-	VoidedByID           Column // "voided_by_id" → qualified: "carstl.voided_by_id"
-	VoidedAt             Column // "voided_at" → qualified: "carstl.voided_at"
-	VoidReason           Column // "void_reason" → qualified: "carstl.void_reason"
-	VoidJournalBatchID   Column // "void_journal_batch_id" → qualified: "carstl.void_journal_batch_id"
-	Version              Column // "version" → qualified: "carstl.version"
-	CreatedAt            Column // "created_at" → qualified: "carstl.created_at"
-	UpdatedAt            Column // "updated_at" → qualified: "carstl.updated_at"
+	ID                     Column // "id" → qualified: "carstl.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "carstl.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "carstl.organization_id"
+	CarrierID              Column // "carrier_id" → qualified: "carstl.carrier_id"
+	BatchID                Column // "batch_id" → qualified: "carstl.batch_id"
+	SettlementNumber       Column // "settlement_number" → qualified: "carstl.settlement_number"
+	Status                 Column // "status" → qualified: "carstl.status"
+	PeriodStart            Column // "period_start" → qualified: "carstl.period_start"
+	PeriodEnd              Column // "period_end" → qualified: "carstl.period_end"
+	PayDate                Column // "pay_date" → qualified: "carstl.pay_date"
+	GrossCostMinor         Column // "gross_cost_minor" → qualified: "carstl.gross_cost_minor"
+	AdjustmentsMinor       Column // "adjustments_minor" → qualified: "carstl.adjustments_minor"
+	NetPayableMinor        Column // "net_payable_minor" → qualified: "carstl.net_payable_minor"
+	ShipmentCount          Column // "shipment_count" → qualified: "carstl.shipment_count"
+	CurrencyCode           Column // "currency_code" → qualified: "carstl.currency_code"
+	Notes                  Column // "notes" → qualified: "carstl.notes"
+	SubmittedByID          Column // "submitted_by_id" → qualified: "carstl.submitted_by_id"
+	SubmittedAt            Column // "submitted_at" → qualified: "carstl.submitted_at"
+	ApprovedByID           Column // "approved_by_id" → qualified: "carstl.approved_by_id"
+	ApprovedAt             Column // "approved_at" → qualified: "carstl.approved_at"
+	PostedByID             Column // "posted_by_id" → qualified: "carstl.posted_by_id"
+	PostedAt               Column // "posted_at" → qualified: "carstl.posted_at"
+	PostedJournalBatchID   Column // "posted_journal_batch_id" → qualified: "carstl.posted_journal_batch_id"
+	PostedExpenseAccountID Column // "posted_expense_account_id" → qualified: "carstl.posted_expense_account_id"
+	PostedAPAccountID      Column // "posted_ap_account_id" → qualified: "carstl.posted_ap_account_id"
+	PaidAt                 Column // "paid_at" → qualified: "carstl.paid_at"
+	PaidByID               Column // "paid_by_id" → qualified: "carstl.paid_by_id"
+	PaymentMethod          Column // "payment_method" → qualified: "carstl.payment_method"
+	PaymentReference       Column // "payment_reference" → qualified: "carstl.payment_reference"
+	PaidJournalBatchID     Column // "paid_journal_batch_id" → qualified: "carstl.paid_journal_batch_id"
+	VoidedByID             Column // "voided_by_id" → qualified: "carstl.voided_by_id"
+	VoidedAt               Column // "voided_at" → qualified: "carstl.voided_at"
+	VoidReason             Column // "void_reason" → qualified: "carstl.void_reason"
+	VoidJournalBatchID     Column // "void_journal_batch_id" → qualified: "carstl.void_journal_batch_id"
+	Version                Column // "version" → qualified: "carstl.version"
+	CreatedAt              Column // "created_at" → qualified: "carstl.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "carstl.updated_at"
 }{
-	ID:                   NewColumn("id", "carstl"),
-	BusinessUnitID:       NewColumn("business_unit_id", "carstl"),
-	OrganizationID:       NewColumn("organization_id", "carstl"),
-	CarrierID:            NewColumn("carrier_id", "carstl"),
-	BatchID:              NewColumn("batch_id", "carstl"),
-	SettlementNumber:     NewColumn("settlement_number", "carstl"),
-	Status:               NewColumn("status", "carstl"),
-	PeriodStart:          NewColumn("period_start", "carstl"),
-	PeriodEnd:            NewColumn("period_end", "carstl"),
-	PayDate:              NewColumn("pay_date", "carstl"),
-	GrossCostMinor:       NewColumn("gross_cost_minor", "carstl"),
-	AdjustmentsMinor:     NewColumn("adjustments_minor", "carstl"),
-	NetPayableMinor:      NewColumn("net_payable_minor", "carstl"),
-	ShipmentCount:        NewColumn("shipment_count", "carstl"),
-	CurrencyCode:         NewColumn("currency_code", "carstl"),
-	Notes:                NewColumn("notes", "carstl"),
-	SubmittedByID:        NewColumn("submitted_by_id", "carstl"),
-	SubmittedAt:          NewColumn("submitted_at", "carstl"),
-	ApprovedByID:         NewColumn("approved_by_id", "carstl"),
-	ApprovedAt:           NewColumn("approved_at", "carstl"),
-	PostedByID:           NewColumn("posted_by_id", "carstl"),
-	PostedAt:             NewColumn("posted_at", "carstl"),
-	PostedJournalBatchID: NewColumn("posted_journal_batch_id", "carstl"),
-	PaidAt:               NewColumn("paid_at", "carstl"),
-	PaidByID:             NewColumn("paid_by_id", "carstl"),
-	PaymentMethod:        NewColumn("payment_method", "carstl"),
-	PaymentReference:     NewColumn("payment_reference", "carstl"),
-	PaidJournalBatchID:   NewColumn("paid_journal_batch_id", "carstl"),
-	VoidedByID:           NewColumn("voided_by_id", "carstl"),
-	VoidedAt:             NewColumn("voided_at", "carstl"),
-	VoidReason:           NewColumn("void_reason", "carstl"),
-	VoidJournalBatchID:   NewColumn("void_journal_batch_id", "carstl"),
-	Version:              NewColumn("version", "carstl"),
-	CreatedAt:            NewColumn("created_at", "carstl"),
-	UpdatedAt:            NewColumn("updated_at", "carstl"),
+	ID:                     NewColumn("id", "carstl"),
+	BusinessUnitID:         NewColumn("business_unit_id", "carstl"),
+	OrganizationID:         NewColumn("organization_id", "carstl"),
+	CarrierID:              NewColumn("carrier_id", "carstl"),
+	BatchID:                NewColumn("batch_id", "carstl"),
+	SettlementNumber:       NewColumn("settlement_number", "carstl"),
+	Status:                 NewColumn("status", "carstl"),
+	PeriodStart:            NewColumn("period_start", "carstl"),
+	PeriodEnd:              NewColumn("period_end", "carstl"),
+	PayDate:                NewColumn("pay_date", "carstl"),
+	GrossCostMinor:         NewColumn("gross_cost_minor", "carstl"),
+	AdjustmentsMinor:       NewColumn("adjustments_minor", "carstl"),
+	NetPayableMinor:        NewColumn("net_payable_minor", "carstl"),
+	ShipmentCount:          NewColumn("shipment_count", "carstl"),
+	CurrencyCode:           NewColumn("currency_code", "carstl"),
+	Notes:                  NewColumn("notes", "carstl"),
+	SubmittedByID:          NewColumn("submitted_by_id", "carstl"),
+	SubmittedAt:            NewColumn("submitted_at", "carstl"),
+	ApprovedByID:           NewColumn("approved_by_id", "carstl"),
+	ApprovedAt:             NewColumn("approved_at", "carstl"),
+	PostedByID:             NewColumn("posted_by_id", "carstl"),
+	PostedAt:               NewColumn("posted_at", "carstl"),
+	PostedJournalBatchID:   NewColumn("posted_journal_batch_id", "carstl"),
+	PostedExpenseAccountID: NewColumn("posted_expense_account_id", "carstl"),
+	PostedAPAccountID:      NewColumn("posted_ap_account_id", "carstl"),
+	PaidAt:                 NewColumn("paid_at", "carstl"),
+	PaidByID:               NewColumn("paid_by_id", "carstl"),
+	PaymentMethod:          NewColumn("payment_method", "carstl"),
+	PaymentReference:       NewColumn("payment_reference", "carstl"),
+	PaidJournalBatchID:     NewColumn("paid_journal_batch_id", "carstl"),
+	VoidedByID:             NewColumn("voided_by_id", "carstl"),
+	VoidedAt:               NewColumn("voided_at", "carstl"),
+	VoidReason:             NewColumn("void_reason", "carstl"),
+	VoidJournalBatchID:     NewColumn("void_journal_batch_id", "carstl"),
+	Version:                NewColumn("version", "carstl"),
+	CreatedAt:              NewColumn("created_at", "carstl"),
+	UpdatedAt:              NewColumn("updated_at", "carstl"),
 }
 
 // CarrierSettlementFieldMap maps JSON API field names to database column names.
@@ -127,41 +131,43 @@ var CarrierSettlementColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by CarrierSettlement.GetStaticFieldMap().
 var CarrierSettlementFieldMap = map[string]string{
-	"id":                   "id",
-	"businessUnitId":       "business_unit_id",
-	"organizationId":       "organization_id",
-	"carrierId":            "carrier_id",
-	"batchId":              "batch_id",
-	"settlementNumber":     "settlement_number",
-	"status":               "status",
-	"periodStart":          "period_start",
-	"periodEnd":            "period_end",
-	"payDate":              "pay_date",
-	"grossCostMinor":       "gross_cost_minor",
-	"adjustmentsMinor":     "adjustments_minor",
-	"netPayableMinor":      "net_payable_minor",
-	"shipmentCount":        "shipment_count",
-	"currencyCode":         "currency_code",
-	"notes":                "notes",
-	"submittedById":        "submitted_by_id",
-	"submittedAt":          "submitted_at",
-	"approvedById":         "approved_by_id",
-	"approvedAt":           "approved_at",
-	"postedById":           "posted_by_id",
-	"postedAt":             "posted_at",
-	"postedJournalBatchId": "posted_journal_batch_id",
-	"paidAt":               "paid_at",
-	"paidById":             "paid_by_id",
-	"paymentMethod":        "payment_method",
-	"paymentReference":     "payment_reference",
-	"paidJournalBatchId":   "paid_journal_batch_id",
-	"voidedById":           "voided_by_id",
-	"voidedAt":             "voided_at",
-	"voidReason":           "void_reason",
-	"voidJournalBatchId":   "void_journal_batch_id",
-	"version":              "version",
-	"createdAt":            "created_at",
-	"updatedAt":            "updated_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"carrierId":              "carrier_id",
+	"batchId":                "batch_id",
+	"settlementNumber":       "settlement_number",
+	"status":                 "status",
+	"periodStart":            "period_start",
+	"periodEnd":              "period_end",
+	"payDate":                "pay_date",
+	"grossCostMinor":         "gross_cost_minor",
+	"adjustmentsMinor":       "adjustments_minor",
+	"netPayableMinor":        "net_payable_minor",
+	"shipmentCount":          "shipment_count",
+	"currencyCode":           "currency_code",
+	"notes":                  "notes",
+	"submittedById":          "submitted_by_id",
+	"submittedAt":            "submitted_at",
+	"approvedById":           "approved_by_id",
+	"approvedAt":             "approved_at",
+	"postedById":             "posted_by_id",
+	"postedAt":               "posted_at",
+	"postedJournalBatchId":   "posted_journal_batch_id",
+	"postedExpenseAccountId": "posted_expense_account_id",
+	"postedApAccountId":      "posted_ap_account_id",
+	"paidAt":                 "paid_at",
+	"paidById":               "paid_by_id",
+	"paymentMethod":          "payment_method",
+	"paymentReference":       "payment_reference",
+	"paidJournalBatchId":     "paid_journal_batch_id",
+	"voidedById":             "voided_by_id",
+	"voidedAt":               "voided_at",
+	"voidReason":             "void_reason",
+	"voidJournalBatchId":     "void_journal_batch_id",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // CarrierSettlementInsertableColumns lists column names suitable for INSERT statements on the "carrier_settlements" table.
@@ -190,6 +196,8 @@ var CarrierSettlementInsertableColumns = []string{
 	"posted_by_id",
 	"posted_at",
 	"posted_journal_batch_id",
+	"posted_expense_account_id",
+	"posted_ap_account_id",
 	"paid_at",
 	"paid_by_id",
 	"payment_method",
@@ -273,41 +281,43 @@ func CarrierSettlementApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuer
 //	CarrierSettlementFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var CarrierSettlementFilter = struct {
-	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	CarrierID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrierId" → DB: "carrier_id"
-	BatchID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "batchId" → DB: "batch_id"
-	SettlementNumber     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settlementNumber" → DB: "settlement_number"
-	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	PeriodStart          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodStart" → DB: "period_start"
-	PeriodEnd            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodEnd" → DB: "period_end"
-	PayDate              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payDate" → DB: "pay_date"
-	GrossCostMinor       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "grossCostMinor" → DB: "gross_cost_minor"
-	AdjustmentsMinor     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "adjustmentsMinor" → DB: "adjustments_minor"
-	NetPayableMinor      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "netPayableMinor" → DB: "net_payable_minor"
-	ShipmentCount        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentCount" → DB: "shipment_count"
-	CurrencyCode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
-	Notes                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
-	SubmittedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
-	SubmittedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedAt" → DB: "submitted_at"
-	ApprovedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
-	ApprovedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedAt" → DB: "approved_at"
-	PostedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedById" → DB: "posted_by_id"
-	PostedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedAt" → DB: "posted_at"
-	PostedJournalBatchID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedJournalBatchId" → DB: "posted_journal_batch_id"
-	PaidAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidAt" → DB: "paid_at"
-	PaidByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidById" → DB: "paid_by_id"
-	PaymentMethod        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentMethod" → DB: "payment_method"
-	PaymentReference     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentReference" → DB: "payment_reference"
-	PaidJournalBatchID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidJournalBatchId" → DB: "paid_journal_batch_id"
-	VoidedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
-	VoidedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
-	VoidReason           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidReason" → DB: "void_reason"
-	VoidJournalBatchID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidJournalBatchId" → DB: "void_journal_batch_id"
-	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	CarrierID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrierId" → DB: "carrier_id"
+	BatchID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "batchId" → DB: "batch_id"
+	SettlementNumber       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settlementNumber" → DB: "settlement_number"
+	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	PeriodStart            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodStart" → DB: "period_start"
+	PeriodEnd              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodEnd" → DB: "period_end"
+	PayDate                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payDate" → DB: "pay_date"
+	GrossCostMinor         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "grossCostMinor" → DB: "gross_cost_minor"
+	AdjustmentsMinor       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "adjustmentsMinor" → DB: "adjustments_minor"
+	NetPayableMinor        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "netPayableMinor" → DB: "net_payable_minor"
+	ShipmentCount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentCount" → DB: "shipment_count"
+	CurrencyCode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	Notes                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
+	SubmittedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
+	SubmittedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedAt" → DB: "submitted_at"
+	ApprovedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
+	ApprovedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedAt" → DB: "approved_at"
+	PostedByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedById" → DB: "posted_by_id"
+	PostedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedAt" → DB: "posted_at"
+	PostedJournalBatchID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedJournalBatchId" → DB: "posted_journal_batch_id"
+	PostedExpenseAccountID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedExpenseAccountId" → DB: "posted_expense_account_id"
+	PostedAPAccountID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedApAccountId" → DB: "posted_ap_account_id"
+	PaidAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidAt" → DB: "paid_at"
+	PaidByID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidById" → DB: "paid_by_id"
+	PaymentMethod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentMethod" → DB: "payment_method"
+	PaymentReference       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentReference" → DB: "payment_reference"
+	PaidJournalBatchID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidJournalBatchId" → DB: "paid_journal_batch_id"
+	VoidedByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
+	VoidedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
+	VoidReason             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidReason" → DB: "void_reason"
+	VoidJournalBatchID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidJournalBatchId" → DB: "void_journal_batch_id"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -377,6 +387,12 @@ var CarrierSettlementFilter = struct {
 	},
 	PostedJournalBatchID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("postedJournalBatchId", op, value)
+	},
+	PostedExpenseAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("postedExpenseAccountId", op, value)
+	},
+	PostedAPAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("postedApAccountId", op, value)
 	},
 	PaidAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("paidAt", op, value)
