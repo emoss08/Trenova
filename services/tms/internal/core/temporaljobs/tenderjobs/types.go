@@ -19,11 +19,11 @@ func WorkflowID(tenderID pulid.ID) string {
 }
 
 type WorkflowInput struct {
-	TenderID       pulid.ID              `json:"tenderId"`
-	OrganizationID pulid.ID              `json:"organizationId"`
-	BusinessUnitID pulid.ID              `json:"businessUnitId"`
-	Mode           tender.Mode           `json:"mode"`
-	StartAtOfferID pulid.ID              `json:"startAtOfferId"`
+	TenderID       pulid.ID    `json:"tenderId"`
+	OrganizationID pulid.ID    `json:"organizationId"`
+	BusinessUnitID pulid.ID    `json:"businessUnitId"`
+	Mode           tender.Mode `json:"mode"`
+	StartAtOfferID pulid.ID    `json:"startAtOfferId"`
 }
 
 func (in WorkflowInput) TenantInfo() pagination.TenantInfo {
