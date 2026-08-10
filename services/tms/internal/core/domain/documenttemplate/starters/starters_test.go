@@ -588,3 +588,39 @@ func TestScheduleSkippedSaysWhenTheScheduleWasDisabled(t *testing.T) {
 	assert.Contains(t, skippedBody, "The report timed out.",
 		"the cause is the sentence the owner acts on")
 }
+
+// TestTenderOfferSubjectDropsEmptyLane pins the subject's lane segment to full
+// lanes only: a move without resolvable stops must not email a carrier a
+// subject reading "Load offer PRO123:  to  — $1,500.00".
+func TestTenderOfferSubjectDropsEmptyLane(t *testing.T) {
+	registry := documenttemplate.NewRegistry()
+	engine := newEngine(t)
+
+	starters, err := All()
+	require.NoError(t, err)
+	idx := slices.IndexFunc(starters, func(s *Starter) bool {
+		return s.Kind == documenttemplate.KindTenderOfferEmail
+	})
+	require.GreaterOrEqual(t, idx, 0)
+	starter := starters[idx]
+
+	data := documenttemplate.TenderOfferEmailContext{
+		CarrierName:       "Knight Swift",
+		ShipmentProNumber: "PRO123",
+		RateAmount:        "$1,500.00",
+	}
+	bare := renderChannel(t, engine, registry, starter, documenttemplate.ChannelSubject, data)
+	assert.NotContains(t, bare, ":")
+	assert.NotContains(t, bare, " to ")
+	assert.Contains(t, bare, "PRO123")
+	assert.Contains(t, bare, "$1,500.00")
+
+	data.OriginSummary = "Dallas, TX"
+	data.DestinationSummary = "Atlanta, GA"
+	withLane := renderChannel(t, engine, registry, starter, documenttemplate.ChannelSubject, data)
+	assert.Contains(t, withLane, "Dallas, TX to Atlanta, GA")
+
+	data.DestinationSummary = ""
+	halfLane := renderChannel(t, engine, registry, starter, documenttemplate.ChannelSubject, data)
+	assert.NotContains(t, halfLane, "Dallas, TX")
+}
