@@ -4,7 +4,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCompactCurrency } from "@trenova/shared/lib/utils";
-import { Building2Icon, FlameIcon, SnowflakeIcon, TriangleAlertIcon } from "lucide-react";
+import { Building2Icon, FlameIcon, SendIcon, SnowflakeIcon, TriangleAlertIcon } from "lucide-react";
 import { useMemo } from "react";
 import { CoverageKanbanSkeleton } from "./console-skeletons";
 import {
@@ -15,6 +15,34 @@ import {
   urgencyMeta,
   type UrgencyBucket,
 } from "./dispatch-vocabulary";
+import { formatOfferCountdown, tenderChipMeta, type TenderChipTone } from "./tender-vocabulary";
+
+const TENDER_CHIP_VARIANT: Record<TenderChipTone, "info" | "active" | "inactive"> = {
+  info: "info",
+  active: "active",
+  attention: "inactive",
+};
+
+function TenderChip({ move }: { move: DispatchBoardMove }) {
+  const summary = move.liveTender;
+  if (!summary) return null;
+
+  const meta = tenderChipMeta(summary);
+  // The countdown is computed at render; the board's periodic refetch keeps it
+  // honest without every card running its own timer.
+  const countdown =
+    summary.status === "Active"
+      ? formatOfferCountdown(summary.currentOfferExpiresAt, Math.floor(Date.now() / 1000))
+      : "";
+
+  return (
+    <Badge variant={TENDER_CHIP_VARIANT[meta.tone]} className="h-4 rounded px-1 text-[9px]">
+      <SendIcon className="mr-0.5 size-2.5" aria-hidden />
+      {meta.label}
+      {countdown ? ` · ${countdown}` : ""}
+    </Badge>
+  );
+}
 
 function MoveCard({
   move,
@@ -116,6 +144,7 @@ function MoveCard({
             On hold
           </Badge>
         )}
+        <TenderChip move={move} />
       </div>
 
       <div className="flex items-center justify-between gap-2">

@@ -72,6 +72,15 @@ query DispatchBoard($input: DispatchBoardInput!) {
       assignedCarrierId
       assignedCarrierName
       carrierTotalCost
+      liveTender {
+        id
+        status
+        mode
+        currentRank
+        offerCount
+        currentCarrierName
+        currentOfferExpiresAt
+      }
     }
     drivers {
       workerId

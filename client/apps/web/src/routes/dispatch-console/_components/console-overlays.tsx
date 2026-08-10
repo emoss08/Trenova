@@ -19,6 +19,9 @@ const CarrierAssignmentCancelDialog = lazy(() =>
     default: m.CarrierAssignmentCancelDialog,
   })),
 );
+const TenderDialog = lazy(() =>
+  import("./tender-dialog").then((m) => ({ default: m.TenderDialog })),
+);
 
 /**
  * Everything that floats above the grid: the drag label, the pre-flight a drop opens, and
@@ -33,6 +36,8 @@ export function ConsoleOverlays({ actions }: { actions: DispatchActions }) {
   const closeCarrierAssign = useDispatchConsoleStore.use.closeCarrierAssign();
   const carrierCancelTarget = useDispatchConsoleStore.use.carrierCancelTarget();
   const closeCarrierCancel = useDispatchConsoleStore.use.closeCarrierCancel();
+  const tenderTarget = useDispatchConsoleStore.use.tenderTarget();
+  const closeTender = useDispatchConsoleStore.use.closeTender();
 
   return (
     <>
@@ -98,6 +103,12 @@ export function ConsoleOverlays({ actions }: { actions: DispatchActions }) {
                 });
             }}
           />
+        </Suspense>
+      )}
+
+      {tenderTarget && (
+        <Suspense fallback={null}>
+          <TenderDialog move={tenderTarget} actions={actions} onClose={closeTender} />
         </Suspense>
       )}
 

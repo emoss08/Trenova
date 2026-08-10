@@ -48,6 +48,7 @@ export function DispatchConsoleContent() {
   const preflight = useDispatchConsoleStore.use.preflight();
   const carrierAssignTarget = useDispatchConsoleStore.use.carrierAssignTarget();
   const carrierCancelTarget = useDispatchConsoleStore.use.carrierCancelTarget();
+  const tenderTarget = useDispatchConsoleStore.use.tenderTarget();
   const resetConsole = useDispatchConsoleStore.use.reset();
 
   // A drag or a pending pre-flight belongs to the visit, not to the store's lifetime.
@@ -171,6 +172,7 @@ export function DispatchConsoleContent() {
     Boolean(preflight) ||
     Boolean(carrierAssignTarget) ||
     Boolean(carrierCancelTarget) ||
+    Boolean(tenderTarget) ||
     Boolean(actions.plan && !actions.plan.shadowMode);
 
   useDispatchHotkeys({
@@ -232,6 +234,7 @@ export function DispatchConsoleContent() {
               onSelectMove={selectMove}
               isAssigning={actions.isAssigning}
               hotkeysEnabled={!hasDialogOpen}
+              actions={actions}
             />
           </Suspense>
         </div>

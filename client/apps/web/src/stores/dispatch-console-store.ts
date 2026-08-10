@@ -17,6 +17,8 @@ interface DispatchConsoleState {
   carrierAssignTarget: DispatchBoardMove | null;
   /** Carrier-covered move whose coverage the dispatcher is canceling. */
   carrierCancelTarget: DispatchBoardMove | null;
+  /** Move the dispatcher is tendering out through a waterfall or spot offers. */
+  tenderTarget: DispatchBoardMove | null;
   setDragPreview: (label: string | null) => void;
   openPreflight: (target: PreflightTarget) => void;
   closePreflight: () => void;
@@ -24,6 +26,8 @@ interface DispatchConsoleState {
   closeCarrierAssign: () => void;
   openCarrierCancel: (move: DispatchBoardMove) => void;
   closeCarrierCancel: () => void;
+  openTender: (move: DispatchBoardMove) => void;
+  closeTender: () => void;
   reset: () => void;
 }
 
@@ -40,6 +44,7 @@ const baseStore = create<DispatchConsoleState>()(
       preflight: null,
       carrierAssignTarget: null,
       carrierCancelTarget: null,
+      tenderTarget: null,
 
       setDragPreview: (label: string | null) => set({ dragPreview: label }),
       openPreflight: (target: PreflightTarget) => set({ preflight: target, dragPreview: null }),
@@ -48,12 +53,15 @@ const baseStore = create<DispatchConsoleState>()(
       closeCarrierAssign: () => set({ carrierAssignTarget: null }),
       openCarrierCancel: (move: DispatchBoardMove) => set({ carrierCancelTarget: move }),
       closeCarrierCancel: () => set({ carrierCancelTarget: null }),
+      openTender: (move: DispatchBoardMove) => set({ tenderTarget: move }),
+      closeTender: () => set({ tenderTarget: null }),
       reset: () =>
         set({
           dragPreview: null,
           preflight: null,
           carrierAssignTarget: null,
           carrierCancelTarget: null,
+          tenderTarget: null,
         }),
     }),
     { name: "dispatch-console" },

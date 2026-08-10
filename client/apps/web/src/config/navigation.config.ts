@@ -141,6 +141,12 @@ const dispatchModule: NavModule = {
       resource: Resource.Carrier,
     },
     {
+      id: "routing-guides",
+      label: "Routing Guides",
+      path: "/dispatch/routing-guides",
+      resource: Resource.RoutingGuide,
+    },
+    {
       id: "dispatch-config-group",
       label: "Configuration Files",
       defaultOpen: false,

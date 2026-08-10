@@ -34,6 +34,7 @@ import type {
   EDIMessageDeliveryStatus,
   EDITransferStatus,
 } from "@trenova/shared/types/edi";
+import type { TenderOfferStatus, TenderStatus } from "@trenova/shared/types/tender";
 import type { PTOStatus, PTOType } from "@trenova/shared/types/worker";
 import type { VariantProps } from "class-variance-authority";
 import { CheckCheckIcon, CheckIcon, ClockIcon, LockIcon, XIcon } from "lucide-react";
@@ -1363,6 +1364,123 @@ export function CarrierAssignmentStatusBadge({
       variant: "inactive",
       text: "Canceled",
       description: "The carrier assignment was canceled or replaced.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function TenderStatusBadge({
+  status,
+  className,
+}: {
+  status?: TenderStatus | null;
+  className?: string;
+}) {
+  if (!status) return null;
+
+  const statusAttributes: Record<TenderStatus, BadgeAttrProps> = {
+    Active: {
+      variant: "info",
+      text: "Active",
+      description: "Offers are out to carriers and a response is pending.",
+    },
+    Accepted: {
+      variant: "active",
+      text: "Accepted",
+      description: "A carrier accepted the tender and the move is covered.",
+    },
+    Exhausted: {
+      variant: "orange",
+      text: "Exhausted",
+      description: "Every carrier declined or timed out — the move is still uncovered.",
+    },
+    Canceled: {
+      variant: "inactive",
+      text: "Canceled",
+      description: "The tender was canceled by a dispatcher.",
+    },
+    NeedsReview: {
+      variant: "inactive",
+      text: "Needs Review",
+      description:
+        "A carrier accepted but auto-assignment failed — assign the move manually or cancel.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function TenderOfferStatusBadge({
+  status,
+  className,
+}: {
+  status?: TenderOfferStatus | null;
+  className?: string;
+}) {
+  if (!status) return null;
+
+  const statusAttributes: Record<TenderOfferStatus, BadgeAttrProps> = {
+    Pending: {
+      variant: "secondary",
+      text: "Pending",
+      description: "Queued behind a higher-ranked carrier; nothing has been sent yet.",
+    },
+    Sent: {
+      variant: "info",
+      text: "Sent",
+      description: "Delivered to the carrier and awaiting their response.",
+    },
+    Accepted: {
+      variant: "active",
+      text: "Accepted",
+      description: "The carrier accepted this offer.",
+    },
+    Declined: {
+      variant: "inactive",
+      text: "Declined",
+      description: "The carrier declined this offer.",
+    },
+    Expired: {
+      variant: "orange",
+      text: "Expired",
+      description: "The offer window elapsed without a response.",
+    },
+    Withdrawn: {
+      variant: "outline",
+      text: "Withdrawn",
+      description: "The offer was withdrawn when the tender was canceled.",
+    },
+    Superseded: {
+      variant: "outline",
+      text: "Superseded",
+      description: "Another carrier accepted first; this offer no longer stands.",
+    },
+    Skipped: {
+      variant: "outline",
+      text: "Skipped",
+      description: "The waterfall skipped this carrier.",
+    },
+    DeliveryFailed: {
+      variant: "inactive",
+      text: "Delivery Failed",
+      description: "The offer could not be delivered on its channel.",
     },
   };
 

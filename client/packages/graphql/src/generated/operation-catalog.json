@@ -1,6 +1,6 @@
 {
-  "operationCount": 412,
-  "fragmentCount": 118,
+  "operationCount": 419,
+  "fragmentCount": 120,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -2783,7 +2783,7 @@
       "kind": "query",
       "domain": "dispatch-console",
       "sourceFile": "src/operations/dispatch-console/page.graphql",
-      "hash": "sha256:d13c27e6b099d610216d83bb1c905f949ca97b2a65d8f9200f5f17f65dfa6af6",
+      "hash": "sha256:50b6c0ad2fc90911a6afdd7c2b6407b8cc0adbe576a47aa4f1ff556862346023",
       "rootFields": [
         "dispatchBoard"
       ],
@@ -2796,7 +2796,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "query DispatchBoard($input: DispatchBoardInput!) {\n  dispatchBoard(input: $input) {\n    windowStart\n    windowEnd\n    generatedAt\n    summary {\n      uncoveredMoves\n      coveredMoves\n      lateMoves\n      atRiskMoves\n      unseatedDrivers\n      availableDrivers\n      assignedToday\n      averageDeadheadMiles\n      utilizationPercent\n    }\n    moves {\n      moveId\n      shipmentId\n      proNumber\n      bol\n      moveStatus\n      shipmentStatus\n      sequence\n      moveCount\n      loaded\n      distance\n      revenue\n      customerId\n      customerName\n      serviceTypeId\n      serviceTypeCode\n      requiredTractorTypeId\n      requiredTrailerTypeId\n      temperatureMin\n      temperatureMax\n      hasHazmat\n      hasActiveHold\n      urgency\n      minutesToPickup\n      isCovered\n      originStopId\n      originLocationId\n      originName\n      originCity\n      originState\n      originLatitude\n      originLongitude\n      originWindowStart\n      originWindowEnd\n      originActualArrival\n      destinationStopId\n      destinationLocationId\n      destinationName\n      destinationCity\n      destinationState\n      destinationLatitude\n      destinationLongitude\n      destinationWindowStart\n      destinationWindowEnd\n      assignmentId\n      assignedWorkerId\n      assignedWorkerName\n      assignedTractorId\n      assignedTractorCode\n      assignedTrailerId\n      assignedTrailerCode\n      assignmentAckStatus\n      previousMoveTrailerId\n      coverageType\n      carrierAssignmentId\n      assignedCarrierId\n      assignedCarrierName\n      carrierTotalCost\n    }\n    drivers {\n      workerId\n      firstName\n      lastName\n      workerType\n      driverType\n      fleetCodeId\n      fleetCodeName\n      city\n      stateAbbreviation\n      postalCode\n      profilePicUrl\n      assignmentBlocked\n      availableForDispatch\n      tractorId\n      tractorCode\n      tractorTypeId\n      tractorAvailable\n      openAssignments\n      availability\n      dutyStatus\n      driveRemainingMs\n      shiftRemainingMs\n      cycleRemainingMs\n      breakRemainingMs\n      hosRecordedAt\n      hosIsStale\n      latitude\n      longitude\n      formattedLocation\n      positionRecordedAt\n      projectedTimeAvailable\n      committedMiles\n      committedRevenue\n      commitments {\n        moveId\n        shipmentId\n        proNumber\n        moveStatus\n        windowStart\n        windowEnd\n        destinationCity\n        destinationState\n        destinationLatitude\n        destinationLongitude\n        trailerId\n      }\n      timeOff {\n        startDate\n        endDate\n        type\n      }\n      findings {\n        code\n        severity\n        field\n        message\n        regulation\n      }\n    }\n  }\n}"
+      "sdl": "query DispatchBoard($input: DispatchBoardInput!) {\n  dispatchBoard(input: $input) {\n    windowStart\n    windowEnd\n    generatedAt\n    summary {\n      uncoveredMoves\n      coveredMoves\n      lateMoves\n      atRiskMoves\n      unseatedDrivers\n      availableDrivers\n      assignedToday\n      averageDeadheadMiles\n      utilizationPercent\n    }\n    moves {\n      moveId\n      shipmentId\n      proNumber\n      bol\n      moveStatus\n      shipmentStatus\n      sequence\n      moveCount\n      loaded\n      distance\n      revenue\n      customerId\n      customerName\n      serviceTypeId\n      serviceTypeCode\n      requiredTractorTypeId\n      requiredTrailerTypeId\n      temperatureMin\n      temperatureMax\n      hasHazmat\n      hasActiveHold\n      urgency\n      minutesToPickup\n      isCovered\n      originStopId\n      originLocationId\n      originName\n      originCity\n      originState\n      originLatitude\n      originLongitude\n      originWindowStart\n      originWindowEnd\n      originActualArrival\n      destinationStopId\n      destinationLocationId\n      destinationName\n      destinationCity\n      destinationState\n      destinationLatitude\n      destinationLongitude\n      destinationWindowStart\n      destinationWindowEnd\n      assignmentId\n      assignedWorkerId\n      assignedWorkerName\n      assignedTractorId\n      assignedTractorCode\n      assignedTrailerId\n      assignedTrailerCode\n      assignmentAckStatus\n      previousMoveTrailerId\n      coverageType\n      carrierAssignmentId\n      assignedCarrierId\n      assignedCarrierName\n      carrierTotalCost\n      liveTender {\n        id\n        status\n        mode\n        currentRank\n        offerCount\n        currentCarrierName\n        currentOfferExpiresAt\n      }\n    }\n    drivers {\n      workerId\n      firstName\n      lastName\n      workerType\n      driverType\n      fleetCodeId\n      fleetCodeName\n      city\n      stateAbbreviation\n      postalCode\n      profilePicUrl\n      assignmentBlocked\n      availableForDispatch\n      tractorId\n      tractorCode\n      tractorTypeId\n      tractorAvailable\n      openAssignments\n      availability\n      dutyStatus\n      driveRemainingMs\n      shiftRemainingMs\n      cycleRemainingMs\n      breakRemainingMs\n      hosRecordedAt\n      hosIsStale\n      latitude\n      longitude\n      formattedLocation\n      positionRecordedAt\n      projectedTimeAvailable\n      committedMiles\n      committedRevenue\n      commitments {\n        moveId\n        shipmentId\n        proNumber\n        moveStatus\n        windowStart\n        windowEnd\n        destinationCity\n        destinationState\n        destinationLatitude\n        destinationLongitude\n        trailerId\n      }\n      timeOff {\n        startDate\n        endDate\n        type\n      }\n      findings {\n        code\n        severity\n        field\n        message\n        regulation\n      }\n    }\n  }\n}"
     },
     {
       "name": "DispatchCancelCarrierAssignment",
@@ -4461,6 +4461,26 @@
       "sdl": "mutation LinkEdiCarrierInvoiceToCarrier($invoiceId: ID!, $carrierId: ID!) {\n  linkEdiCarrierInvoiceToCarrier(invoiceId: $invoiceId, carrierId: $carrierId) {\n    id\n    carrierId\n    reconciliationStatus\n    version\n  }\n}"
     },
     {
+      "name": "LiveTenderByMove",
+      "kind": "query",
+      "domain": "tender",
+      "sourceFile": "src/operations/tender/operations.graphql",
+      "hash": "sha256:c78680524944d9d61eddd81bb36fc68cfbd4c54eb78ea54156184d287f76f01c",
+      "rootFields": [
+        "liveTenderByMove"
+      ],
+      "variables": [
+        {
+          "name": "moveId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query LiveTenderByMove($moveId: ID!) {\n  liveTenderByMove(moveId: $moveId) {\n    id\n    shipmentId\n    shipmentMoveId\n    routingGuideId\n    mode\n    status\n    currentRank\n    cancellationReason\n    acceptedOfferId\n    acceptedAt\n    exhaustedAt\n    canceledAt\n    createdAt\n    updatedAt\n    routingGuide {\n      id\n      name\n      specificity\n    }\n    offers {\n      id\n      tenderId\n      carrierId\n      rank\n      rateMethod\n      rate\n      offerTtlSeconds\n      channel\n      status\n      recipientEmail\n      sentAt\n      expiresAt\n      respondedAt\n      responseSource\n      declineReason\n      deliveryError\n      createdAt\n      updatedAt\n      carrier {\n        id\n        name\n        scac\n      }\n    }\n  }\n}"
+    },
+    {
       "name": "LocationCategoryTable",
       "kind": "query",
       "domain": "location-category",
@@ -4711,6 +4731,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation MarkNotificationsUnread($ids: [ID!]!) {\n  markNotificationsUnread(ids: $ids)\n}"
+    },
+    {
+      "name": "MatchRoutingGuide",
+      "kind": "query",
+      "domain": "routing-guide",
+      "sourceFile": "src/operations/routing-guide/table.graphql",
+      "hash": "sha256:486025d32ac9cfeaeeda8feccd9dbd3b7efb320829b23306b727962d78d0264c",
+      "rootFields": [
+        "matchRoutingGuide"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "MatchRoutingGuideInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query MatchRoutingGuide($input: MatchRoutingGuideInput!) {\n  matchRoutingGuide(input: $input) {\n    id\n    name\n    description\n    status\n    originLocationId\n    destinationLocationId\n    originCity\n    originState\n    destinationCity\n    destinationState\n    specificity\n    entries {\n      id\n      carrierId\n      rank\n      rateMethod\n      rate\n      offerTtlSeconds\n      channel\n      carrier {\n        id\n        name\n        scac\n      }\n    }\n  }\n}"
     },
     {
       "name": "MyAdvances",
@@ -6518,6 +6558,70 @@
       "sdl": "query RoleTable($input: DataTableConnectionInput!) {\n  roles(input: $input) {\n    edges {\n      node {\n        ...RoleTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RoleTableRowFields on Role {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  coreResponsibility\n  parentRoleIds\n  maxSensitivity\n  isSystem\n  createdBy\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "RoutingGuideDetail",
+      "kind": "query",
+      "domain": "routing-guide",
+      "sourceFile": "src/operations/routing-guide/table.graphql",
+      "hash": "sha256:438be74e28c75bd79e6748e519b3c700a9e5a52c0ff5c63cd04a68c9788b30bc",
+      "rootFields": [
+        "routingGuide"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query RoutingGuideDetail($id: ID!) {\n  routingGuide(id: $id) {\n    id\n    name\n    description\n    status\n    originLocationId\n    destinationLocationId\n    originCity\n    originState\n    destinationCity\n    destinationState\n    specificity\n    version\n    createdAt\n    updatedAt\n    entries {\n      id\n      carrierId\n      rank\n      rateMethod\n      rate\n      offerTtlSeconds\n      channel\n      carrier {\n        id\n        name\n        scac\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "RoutingGuideOptions",
+      "kind": "query",
+      "domain": "routing-guide",
+      "sourceFile": "src/operations/routing-guide/table.graphql",
+      "hash": "sha256:6c73ab470664021daf1a25179a906336537cf0cb97136037c6e8136be3f15263",
+      "rootFields": [
+        "routingGuides"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query RoutingGuideOptions($input: DataTableConnectionInput!) {\n  routingGuides(input: $input) {\n    edges {\n      node {\n        id\n        name\n        status\n        originLocationId\n        destinationLocationId\n        originCity\n        originState\n        destinationCity\n        destinationState\n        specificity\n        entries {\n          id\n          carrierId\n          rank\n          rateMethod\n          rate\n          offerTtlSeconds\n          channel\n          carrier {\n            id\n            name\n            scac\n          }\n        }\n      }\n    }\n    totalCount\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}"
+    },
+    {
+      "name": "RoutingGuideTable",
+      "kind": "query",
+      "domain": "routing-guide",
+      "sourceFile": "src/operations/routing-guide/table.graphql",
+      "hash": "sha256:2d13b92e01cf0ddbc49107a8e5824866a7cb64bb0af07ff5015042035f276083",
+      "rootFields": [
+        "routingGuides"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "RoutingGuideEntryFields",
+        "RoutingGuideRowFields"
+      ],
+      "usages": [],
+      "sdl": "query RoutingGuideTable($input: DataTableConnectionInput!) {\n  routingGuides(input: $input) {\n    edges {\n      node {\n        ...RoutingGuideRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RoutingGuideEntryFields on RoutingGuideEntry {\n  id\n  routingGuideId\n  carrierId\n  rank\n  rateMethod\n  rate\n  offerTtlSeconds\n  channel\n  version\n  createdAt\n  updatedAt\n  carrier {\n    id\n    name\n    scac\n  }\n}\n\nfragment RoutingGuideRowFields on RoutingGuide {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  status\n  originLocationId\n  destinationLocationId\n  originCity\n  originState\n  destinationCity\n  destinationState\n  specificity\n  version\n  createdAt\n  updatedAt\n  entries {\n    ...RoutingGuideEntryFields\n  }\n}"
+    },
+    {
       "name": "RunReport",
       "kind": "mutation",
       "domain": "reports",
@@ -7561,6 +7665,46 @@
       "fragments": [],
       "usages": [],
       "sdl": "query TelematicsStatus {\n  telematicsStatus {\n    provider\n    enabled\n    configured\n    webhookConfigured\n    lastPolledAt\n    lastSuccessAt\n    failureCount\n    lastError\n    mappedTractors\n    totalTractors\n    mappedWorkers\n  }\n}"
+    },
+    {
+      "name": "TenderDetail",
+      "kind": "query",
+      "domain": "tender",
+      "sourceFile": "src/operations/tender/operations.graphql",
+      "hash": "sha256:92ad3d150e3293bba437d66db77168de7505f646f4c87c81e495289ca7e1374d",
+      "rootFields": [
+        "tender"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query TenderDetail($id: ID!) {\n  tender(id: $id) {\n    id\n    shipmentId\n    shipmentMoveId\n    routingGuideId\n    mode\n    status\n    currentRank\n    cancellationReason\n    acceptedOfferId\n    acceptedAt\n    exhaustedAt\n    canceledAt\n    version\n    createdAt\n    updatedAt\n    routingGuide {\n      id\n      name\n      specificity\n    }\n    offers {\n      id\n      tenderId\n      carrierId\n      rank\n      rateMethod\n      rate\n      offerTtlSeconds\n      channel\n      status\n      recipientEmail\n      sentAt\n      expiresAt\n      respondedAt\n      responseSource\n      declineReason\n      deliveryError\n      createdAt\n      updatedAt\n      carrier {\n        id\n        name\n        scac\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "TendersByShipment",
+      "kind": "query",
+      "domain": "tender",
+      "sourceFile": "src/operations/tender/operations.graphql",
+      "hash": "sha256:f6ad3ca8a9af0ed699faccd13b6de03828ced3e5cd1dc6645b77ae90367b9d4c",
+      "rootFields": [
+        "tendersByShipment"
+      ],
+      "variables": [
+        {
+          "name": "shipmentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query TendersByShipment($shipmentId: ID!) {\n  tendersByShipment(shipmentId: $shipmentId) {\n    id\n    shipmentId\n    shipmentMoveId\n    routingGuideId\n    mode\n    status\n    currentRank\n    cancellationReason\n    acceptedOfferId\n    acceptedAt\n    exhaustedAt\n    canceledAt\n    createdAt\n    updatedAt\n    routingGuide {\n      id\n      name\n      specificity\n    }\n    offers {\n      id\n      tenderId\n      carrierId\n      rank\n      rateMethod\n      rate\n      offerTtlSeconds\n      channel\n      status\n      recipientEmail\n      sentAt\n      expiresAt\n      respondedAt\n      responseSource\n      declineReason\n      deliveryError\n      createdAt\n      updatedAt\n      carrier {\n        id\n        name\n        scac\n      }\n    }\n  }\n}"
     },
     {
       "name": "TractorTable",
@@ -9452,6 +9596,7 @@
         "ReportDefinitionsTable",
         "ReportRunsTable",
         "RoleTable",
+        "RoutingGuideTable",
         "SCIMGroupRoleMappingsTable",
         "ServiceFailureReasonCodeTable",
         "ServiceFailureTable",
@@ -10228,6 +10373,32 @@
       ],
       "usages": [],
       "sdl": "fragment RoleTableRowFields on Role {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  coreResponsibility\n  parentRoleIds\n  maxSensitivity\n  isSystem\n  createdBy\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "RoutingGuideEntryFields",
+      "typeCondition": "RoutingGuideEntry",
+      "domain": "routing-guide",
+      "sourceFile": "src/operations/routing-guide/table.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "RoutingGuideTable"
+      ],
+      "usages": [],
+      "sdl": "fragment RoutingGuideEntryFields on RoutingGuideEntry {\n  id\n  routingGuideId\n  carrierId\n  rank\n  rateMethod\n  rate\n  offerTtlSeconds\n  channel\n  version\n  createdAt\n  updatedAt\n  carrier {\n    id\n    name\n    scac\n  }\n}"
+    },
+    {
+      "name": "RoutingGuideRowFields",
+      "typeCondition": "RoutingGuide",
+      "domain": "routing-guide",
+      "sourceFile": "src/operations/routing-guide/table.graphql",
+      "fragments": [
+        "RoutingGuideEntryFields"
+      ],
+      "usedByOperations": [
+        "RoutingGuideTable"
+      ],
+      "usages": [],
+      "sdl": "fragment RoutingGuideRowFields on RoutingGuide {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  status\n  originLocationId\n  destinationLocationId\n  originCity\n  originState\n  destinationCity\n  destinationState\n  specificity\n  version\n  createdAt\n  updatedAt\n  entries {\n    ...RoutingGuideEntryFields\n  }\n}\n\nfragment RoutingGuideEntryFields on RoutingGuideEntry {\n  id\n  routingGuideId\n  carrierId\n  rank\n  rateMethod\n  rate\n  offerTtlSeconds\n  channel\n  version\n  createdAt\n  updatedAt\n  carrier {\n    id\n    name\n    scac\n  }\n}"
     },
     {
       "name": "SCIMGroupRoleMappingTableRowFields",
@@ -13169,6 +13340,42 @@
         }
       ],
       "sdl": "input MarkDriverSettlementPaidInput {\n  paymentMethod: String!\n  paymentReference: String\n  settlementId: ID!\n}"
+    },
+    "MatchRoutingGuideInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "destinationCity",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "destinationLocationId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "destinationState",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "originCity",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "originLocationId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "originState",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input MatchRoutingGuideInput {\n  destinationCity: String\n  destinationLocationId: ID\n  destinationState: String\n  originCity: String\n  originLocationId: ID\n  originState: String\n}"
     },
     "NotificationFilterInput": {
       "kind": "input",

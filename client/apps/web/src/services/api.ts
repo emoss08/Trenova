@@ -56,6 +56,8 @@ import { PageFavoriteService } from "./page-favorite";
 import { PlatformBillingService } from "./platform-billing";
 import { RateConfirmationService } from "./rate-confirmation";
 import { RateTableService } from "./rate-table";
+import { RoutingGuideService } from "./routing-guide";
+import { TenderService } from "./tender";
 import { RealtimeService, realtimeService } from "@trenova/shared/services/realtime";
 import { SequenceConfigService } from "./sequence-config";
 import { ServiceFailureService } from "./service-failure";
@@ -99,6 +101,8 @@ class APIService {
   public commodityService: CommodityService;
   public carrierService: CarrierService;
   public carrierAssignmentService: CarrierAssignmentService;
+  public routingGuideService: RoutingGuideService;
+  public tenderService: TenderService;
   public rateConfirmationService: RateConfirmationService;
   public customerService: CustomerService;
   public databaseSessionService: DatabaseSessionService;
@@ -179,6 +183,8 @@ class APIService {
     this.commodityService = new CommodityService();
     this.carrierService = new CarrierService();
     this.carrierAssignmentService = new CarrierAssignmentService();
+    this.routingGuideService = new RoutingGuideService();
+    this.tenderService = new TenderService();
     this.rateConfirmationService = new RateConfirmationService();
     this.customerService = new CustomerService();
     this.databaseSessionService = new DatabaseSessionService();

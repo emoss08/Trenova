@@ -5,6 +5,7 @@ import type { Commodity } from "./commodity";
 import { customerSchema } from "./customer";
 import { formulaTemplateSchema } from "./formula-template";
 import {
+  decimalNumberSchema,
   decimalStringSchema,
   nullableIntegerSchema,
   nullableStringSchema,
@@ -252,25 +253,6 @@ export function isActiveCarrierAssignment(
 ): carrierAssignment is CarrierAssignment {
   return !!carrierAssignment?.id && carrierAssignment.status !== "Canceled";
 }
-
-/**
- * Rate fields arrive as plain numbers from the form inputs but as decimal
- * strings when prefilled from GraphQL (replace flows), so both are accepted
- * and normalized to a number — mirroring the `decimalStringSchema` pattern.
- */
-const decimalNumberSchema = (requiredError: string, negativeError: string) =>
-  z
-    .union(
-      [
-        z
-          .string()
-          .transform((val) => (val.trim() === "" ? Number.NaN : Number(val)))
-          .refine((val) => Number.isFinite(val), { error: requiredError }),
-        z.number().refine((val) => Number.isFinite(val), { error: requiredError }),
-      ],
-      { error: requiredError },
-    )
-    .refine((val) => val >= 0, { error: negativeError });
 
 const carrierAssignmentAccessorialPayloadSchema = z.object({
   accessorialChargeId: nullableStringSchema,

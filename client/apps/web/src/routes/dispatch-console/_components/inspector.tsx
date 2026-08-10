@@ -16,11 +16,14 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatClockDurationMs, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Building2Icon } from "lucide-react";
+import { Building2Icon, SendIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatMiles, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
 import { ScoreBreakdown } from "./score-breakdown";
+import { TenderHistory } from "./tender-history";
+import { TenderLivePanel } from "./tender-live-panel";
+import type { DispatchActions } from "./use-dispatch-actions";
 
 const CANDIDATE_STALE_MS = 30_000;
 const MAX_HOTKEY_RANK = 9;
@@ -152,19 +155,52 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
   );
 }
 
+function TenderCoverageCard({
+  move,
+  actions,
+}: {
+  move: DispatchBoardMove;
+  actions: DispatchActions;
+}) {
+  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
+
+  const { data: liveTender, isLoading } = useQuery({
+    ...dispatchConsoleQueries.liveTender(move.moveId),
+  });
+
+  return (
+    <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto border-b bg-muted/30 px-2.5 py-2">
+      {isLoading ? (
+        <Skeleton className="h-20 rounded-md" />
+      ) : liveTender ? (
+        <TenderLivePanel
+          tender={liveTender}
+          isTendering={actions.isTendering}
+          onCancelTender={actions.cancelTender}
+          onRecordResponse={actions.recordOfferResponse}
+          onAssignManually={() => openCarrierAssign(move)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function MoveInspector({
   move,
   onAssign,
   isAssigning,
   hotkeysEnabled,
+  actions,
 }: {
   move: DispatchBoardMove;
   onAssign: (candidate: DispatchCandidate) => void;
   isAssigning: boolean;
   hotkeysEnabled: boolean;
+  actions: DispatchActions;
 }) {
   const [includeBlocked, setIncludeBlocked] = useState(false);
   const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
+  const openTender = useDispatchConsoleStore.use.openTender();
   const isCarrierCovered = move.coverageType === "carrier";
   // A carrier-covered move cannot take a driver on top; the carrier assignment has to be
   // canceled first, so driver assignment is held off rather than allowed to fail.
@@ -212,6 +248,8 @@ function MoveInspector({
 
       {isCarrierCovered && <CarrierCoverageCard move={move} />}
 
+      {move.liveTender && <TenderCoverageCard move={move} actions={actions} />}
+
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
         <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
           {candidates.length} candidates
@@ -227,6 +265,18 @@ function MoveInspector({
             >
               <Building2Icon className="size-3" aria-hidden />
               Assign to carrier
+            </Button>
+          )}
+          {!move.isCovered && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px]"
+              disabled={isAssigning}
+              onClick={() => openTender(move)}
+            >
+              <SendIcon className="size-3" aria-hidden />
+              Tender to carriers
             </Button>
           )}
           <Button
@@ -266,6 +316,8 @@ function MoveInspector({
               {!includeBlocked ? " Show ineligible drivers to see why." : ""}
             </p>
           )}
+
+          <TenderHistory shipmentId={move.shipmentId} className="mt-2" />
         </div>
       </ScrollArea>
     </div>
@@ -400,6 +452,7 @@ export function Inspector({
   onSelectMove,
   isAssigning,
   hotkeysEnabled,
+  actions,
 }: {
   selectedMove: DispatchBoardMove | null;
   selectedDriver: DispatchBoardDriver | null;
@@ -407,6 +460,7 @@ export function Inspector({
   onSelectMove: (moveId: string) => void;
   isAssigning: boolean;
   hotkeysEnabled: boolean;
+  actions: DispatchActions;
 }) {
   return (
     <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
@@ -422,6 +476,7 @@ export function Inspector({
           onAssign={onAssign}
           isAssigning={isAssigning}
           hotkeysEnabled={hotkeysEnabled}
+          actions={actions}
         />
       ) : selectedDriver ? (
         <DriverInspector driver={selectedDriver} onSelectMove={onSelectMove} />

@@ -1,0 +1,155 @@
+fragment RoutingGuideEntryFields on RoutingGuideEntry {
+  id
+  routingGuideId
+  carrierId
+  rank
+  rateMethod
+  rate
+  offerTtlSeconds
+  channel
+  version
+  createdAt
+  updatedAt
+  carrier {
+    id
+    name
+    scac
+  }
+}
+
+fragment RoutingGuideRowFields on RoutingGuide {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  status
+  originLocationId
+  destinationLocationId
+  originCity
+  originState
+  destinationCity
+  destinationState
+  specificity
+  version
+  createdAt
+  updatedAt
+  entries {
+    ...RoutingGuideEntryFields
+  }
+}
+
+query RoutingGuideTable($input: DataTableConnectionInput!) {
+  routingGuides(input: $input) {
+    edges {
+      node {
+        ...RoutingGuideRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query RoutingGuideDetail($id: ID!) {
+  routingGuide(id: $id) {
+    id
+    name
+    description
+    status
+    originLocationId
+    destinationLocationId
+    originCity
+    originState
+    destinationCity
+    destinationState
+    specificity
+    version
+    createdAt
+    updatedAt
+    entries {
+      id
+      carrierId
+      rank
+      rateMethod
+      rate
+      offerTtlSeconds
+      channel
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+}
+
+query RoutingGuideOptions($input: DataTableConnectionInput!) {
+  routingGuides(input: $input) {
+    edges {
+      node {
+        id
+        name
+        status
+        originLocationId
+        destinationLocationId
+        originCity
+        originState
+        destinationCity
+        destinationState
+        specificity
+        entries {
+          id
+          carrierId
+          rank
+          rateMethod
+          rate
+          offerTtlSeconds
+          channel
+          carrier {
+            id
+            name
+            scac
+          }
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query MatchRoutingGuide($input: MatchRoutingGuideInput!) {
+  matchRoutingGuide(input: $input) {
+    id
+    name
+    description
+    status
+    originLocationId
+    destinationLocationId
+    originCity
+    originState
+    destinationCity
+    destinationState
+    specificity
+    entries {
+      id
+      carrierId
+      rank
+      rateMethod
+      rate
+      offerTtlSeconds
+      channel
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+}

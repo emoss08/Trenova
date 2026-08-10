@@ -773,6 +773,16 @@ func (rr *RouteRegistry) registerCarrierRoutes() {
 		Category:    "Carriers",
 		ParentRoute: "/dispatch/carriers",
 	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/dispatch/routing-guides",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceRoutingGuide, Operation: OpRead},
+		},
+		DisplayName: "Routing Guides",
+		Category:    "Carriers",
+	})
 }
 
 func (rr *RouteRegistry) registerCustomerRoutes() {

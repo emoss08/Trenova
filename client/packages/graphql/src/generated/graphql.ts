@@ -1458,6 +1458,15 @@ export type MarkDriverSettlementPaidInput = {
   settlementId: string | number;
 };
 
+export type MatchRoutingGuideInput = {
+  destinationCity?: string | null | undefined;
+  destinationLocationId?: string | number | null | undefined;
+  destinationState?: string | null | undefined;
+  originCity?: string | null | undefined;
+  originLocationId?: string | number | null | undefined;
+  originState?: string | null | undefined;
+};
+
 export type MoveCoverageType =
   | 'carrier'
   | 'driver';
@@ -2537,6 +2546,38 @@ export type TelematicsFormMappingItemInput = {
   targetKind: string;
 };
 
+export type TenderChannel =
+  | 'EDI'
+  | 'Email';
+
+export type TenderMode =
+  | 'SpotBroadcast'
+  | 'SpotSequential'
+  | 'Waterfall';
+
+export type TenderOfferStatus =
+  | 'Accepted'
+  | 'Declined'
+  | 'DeliveryFailed'
+  | 'Expired'
+  | 'Pending'
+  | 'Sent'
+  | 'Skipped'
+  | 'Superseded'
+  | 'Withdrawn';
+
+export type TenderResponseSource =
+  | 'EDI'
+  | 'Email'
+  | 'Manual';
+
+export type TenderStatus =
+  | 'Accepted'
+  | 'Active'
+  | 'Canceled'
+  | 'Exhausted'
+  | 'NeedsReview';
+
 export type UpcomingWorkerPtoInput = {
   after?: string | null | undefined;
   endDate?: number | null | undefined;
@@ -3500,7 +3541,7 @@ export type DispatchBoardQueryVariables = Exact<{
 }>;
 
 
-export type DispatchBoardQuery = { dispatchBoard: { windowStart: number, windowEnd: number, generatedAt: number, summary: { uncoveredMoves: number, coveredMoves: number, lateMoves: number, atRiskMoves: number, unseatedDrivers: number, availableDrivers: number, assignedToday: number, averageDeadheadMiles: number, utilizationPercent: number }, moves: Array<{ moveId: string, shipmentId: string, proNumber: string, bol: string, moveStatus: string, shipmentStatus: string, sequence: number, moveCount: number, loaded: boolean, distance: number | null, revenue: number | null, customerId: string | null, customerName: string, serviceTypeId: string | null, serviceTypeCode: string, requiredTractorTypeId: string | null, requiredTrailerTypeId: string | null, temperatureMin: number | null, temperatureMax: number | null, hasHazmat: boolean, hasActiveHold: boolean, urgency: string, minutesToPickup: number, isCovered: boolean, originStopId: string | null, originLocationId: string | null, originName: string, originCity: string, originState: string, originLatitude: number | null, originLongitude: number | null, originWindowStart: number, originWindowEnd: number | null, originActualArrival: number | null, destinationStopId: string | null, destinationLocationId: string | null, destinationName: string, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, destinationWindowStart: number, destinationWindowEnd: number | null, assignmentId: string | null, assignedWorkerId: string | null, assignedWorkerName: string, assignedTractorId: string | null, assignedTractorCode: string, assignedTrailerId: string | null, assignedTrailerCode: string, assignmentAckStatus: string, previousMoveTrailerId: string | null, coverageType: string, carrierAssignmentId: string | null, assignedCarrierId: string | null, assignedCarrierName: string, carrierTotalCost: number | null }>, drivers: Array<{ workerId: string, firstName: string, lastName: string, workerType: string, driverType: string, fleetCodeId: string | null, fleetCodeName: string, city: string, stateAbbreviation: string, postalCode: string, profilePicUrl: string, assignmentBlocked: string, availableForDispatch: boolean, tractorId: string | null, tractorCode: string, tractorTypeId: string | null, tractorAvailable: boolean, openAssignments: number, availability: string, dutyStatus: string, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, breakRemainingMs: number, hosRecordedAt: number, hosIsStale: boolean, latitude: number | null, longitude: number | null, formattedLocation: string, positionRecordedAt: number, projectedTimeAvailable: number, committedMiles: number, committedRevenue: number, commitments: Array<{ moveId: string, shipmentId: string, proNumber: string, moveStatus: string, windowStart: number, windowEnd: number, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, trailerId: string | null }>, timeOff: Array<{ startDate: number, endDate: number, type: string }>, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
+export type DispatchBoardQuery = { dispatchBoard: { windowStart: number, windowEnd: number, generatedAt: number, summary: { uncoveredMoves: number, coveredMoves: number, lateMoves: number, atRiskMoves: number, unseatedDrivers: number, availableDrivers: number, assignedToday: number, averageDeadheadMiles: number, utilizationPercent: number }, moves: Array<{ moveId: string, shipmentId: string, proNumber: string, bol: string, moveStatus: string, shipmentStatus: string, sequence: number, moveCount: number, loaded: boolean, distance: number | null, revenue: number | null, customerId: string | null, customerName: string, serviceTypeId: string | null, serviceTypeCode: string, requiredTractorTypeId: string | null, requiredTrailerTypeId: string | null, temperatureMin: number | null, temperatureMax: number | null, hasHazmat: boolean, hasActiveHold: boolean, urgency: string, minutesToPickup: number, isCovered: boolean, originStopId: string | null, originLocationId: string | null, originName: string, originCity: string, originState: string, originLatitude: number | null, originLongitude: number | null, originWindowStart: number, originWindowEnd: number | null, originActualArrival: number | null, destinationStopId: string | null, destinationLocationId: string | null, destinationName: string, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, destinationWindowStart: number, destinationWindowEnd: number | null, assignmentId: string | null, assignedWorkerId: string | null, assignedWorkerName: string, assignedTractorId: string | null, assignedTractorCode: string, assignedTrailerId: string | null, assignedTrailerCode: string, assignmentAckStatus: string, previousMoveTrailerId: string | null, coverageType: string, carrierAssignmentId: string | null, assignedCarrierId: string | null, assignedCarrierName: string, carrierTotalCost: number | null, liveTender: { id: string, status: TenderStatus, mode: TenderMode, currentRank: number, offerCount: number, currentCarrierName: string, currentOfferExpiresAt: number | null } | null }>, drivers: Array<{ workerId: string, firstName: string, lastName: string, workerType: string, driverType: string, fleetCodeId: string | null, fleetCodeName: string, city: string, stateAbbreviation: string, postalCode: string, profilePicUrl: string, assignmentBlocked: string, availableForDispatch: boolean, tractorId: string | null, tractorCode: string, tractorTypeId: string | null, tractorAvailable: boolean, openAssignments: number, availability: string, dutyStatus: string, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, breakRemainingMs: number, hosRecordedAt: number, hosIsStale: boolean, latitude: number | null, longitude: number | null, formattedLocation: string, positionRecordedAt: number, projectedTimeAvailable: number, committedMiles: number, committedRevenue: number, commitments: Array<{ moveId: string, shipmentId: string, proNumber: string, moveStatus: string, windowStart: number, windowEnd: number, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, trailerId: string | null }>, timeOff: Array<{ startDate: number, endDate: number, type: string }>, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
 
 export type DispatchMoveCandidatesQueryVariables = Exact<{
   input: DispatchMoveCandidatesInput;
@@ -5282,6 +5323,38 @@ export type RoleTableQueryVariables = Exact<{
 
 export type RoleTableQuery = { roles: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RoleTableRowFieldsFragment': RoleTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type RoutingGuideEntryFieldsFragment = { id: string, routingGuideId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, version: number, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null } & { ' $fragmentName'?: 'RoutingGuideEntryFieldsFragment' };
+
+export type RoutingGuideRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, status: EntityStatus, originLocationId: string | null, destinationLocationId: string | null, originCity: string, originState: string, destinationCity: string, destinationState: string, specificity: number, version: number, createdAt: number, updatedAt: number, entries: Array<{ ' $fragmentRefs'?: { 'RoutingGuideEntryFieldsFragment': RoutingGuideEntryFieldsFragment } }> | null } & { ' $fragmentName'?: 'RoutingGuideRowFieldsFragment' };
+
+export type RoutingGuideTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type RoutingGuideTableQuery = { routingGuides: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RoutingGuideRowFieldsFragment': RoutingGuideRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type RoutingGuideDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RoutingGuideDetailQuery = { routingGuide: { id: string, name: string, description: string, status: EntityStatus, originLocationId: string | null, destinationLocationId: string | null, originCity: string, originState: string, destinationCity: string, destinationState: string, specificity: number, version: number, createdAt: number, updatedAt: number, entries: Array<{ id: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, carrier: { id: string, name: string, scac: string | null } | null }> | null } | null };
+
+export type RoutingGuideOptionsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type RoutingGuideOptionsQuery = { routingGuides: { totalCount: number | null, edges: Array<{ node: { id: string, name: string, status: EntityStatus, originLocationId: string | null, destinationLocationId: string | null, originCity: string, originState: string, destinationCity: string, destinationState: string, specificity: number, entries: Array<{ id: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, carrier: { id: string, name: string, scac: string | null } | null }> | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type MatchRoutingGuideQueryVariables = Exact<{
+  input: MatchRoutingGuideInput;
+}>;
+
+
+export type MatchRoutingGuideQuery = { matchRoutingGuide: { id: string, name: string, description: string, status: EntityStatus, originLocationId: string | null, destinationLocationId: string | null, originCity: string, originState: string, destinationCity: string, destinationState: string, specificity: number, entries: Array<{ id: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, carrier: { id: string, name: string, scac: string | null } | null }> | null } | null };
+
 export type ScimGroupRoleMappingTableRowFieldsFragment = { id: string, directoryId: string, externalGroupId: string, displayName: string, roleId: string, version: number, role: { id: string, name: string } | null } & { ' $fragmentName'?: 'ScimGroupRoleMappingTableRowFieldsFragment' };
 
 export type ScimGroupRoleMappingsTableQueryVariables = Exact<{
@@ -5872,6 +5945,27 @@ export type DeleteTelematicsFormMappingMutationVariables = Exact<{
 
 
 export type DeleteTelematicsFormMappingMutation = { deleteTelematicsFormMapping: boolean };
+
+export type TenderDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type TenderDetailQuery = { tender: { id: string, shipmentId: string, shipmentMoveId: string, routingGuideId: string | null, mode: TenderMode, status: TenderStatus, currentRank: number, cancellationReason: string, acceptedOfferId: string | null, acceptedAt: number | null, exhaustedAt: number | null, canceledAt: number | null, version: number, createdAt: number, updatedAt: number, routingGuide: { id: string, name: string, specificity: number } | null, offers: Array<{ id: string, tenderId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, status: TenderOfferStatus, recipientEmail: string, sentAt: number | null, expiresAt: number | null, respondedAt: number | null, responseSource: TenderResponseSource | null, declineReason: string, deliveryError: string, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null }> | null } | null };
+
+export type TendersByShipmentQueryVariables = Exact<{
+  shipmentId: string | number;
+}>;
+
+
+export type TendersByShipmentQuery = { tendersByShipment: Array<{ id: string, shipmentId: string, shipmentMoveId: string, routingGuideId: string | null, mode: TenderMode, status: TenderStatus, currentRank: number, cancellationReason: string, acceptedOfferId: string | null, acceptedAt: number | null, exhaustedAt: number | null, canceledAt: number | null, createdAt: number, updatedAt: number, routingGuide: { id: string, name: string, specificity: number } | null, offers: Array<{ id: string, tenderId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, status: TenderOfferStatus, recipientEmail: string, sentAt: number | null, expiresAt: number | null, respondedAt: number | null, responseSource: TenderResponseSource | null, declineReason: string, deliveryError: string, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null }> | null }> };
+
+export type LiveTenderByMoveQueryVariables = Exact<{
+  moveId: string | number;
+}>;
+
+
+export type LiveTenderByMoveQuery = { liveTenderByMove: { id: string, shipmentId: string, shipmentMoveId: string, routingGuideId: string | null, mode: TenderMode, status: TenderStatus, currentRank: number, cancellationReason: string, acceptedOfferId: string | null, acceptedAt: number | null, exhaustedAt: number | null, canceledAt: number | null, createdAt: number, updatedAt: number, routingGuide: { id: string, name: string, specificity: number } | null, offers: Array<{ id: string, tenderId: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, offerTtlSeconds: number, channel: TenderChannel, status: TenderOfferStatus, recipientEmail: string, sentAt: number | null, expiresAt: number | null, respondedAt: number | null, responseSource: TenderResponseSource | null, declineReason: string, deliveryError: string, createdAt: number, updatedAt: number, carrier: { id: string, name: string, scac: string | null } | null }> | null } | null };
 
 export type UserTableRowFieldsFragment = { id: string, businessUnitId: string, currentOrganizationId: string, status: EntityStatus, name: string, username: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string, timezone: string, isLocked: boolean, mustChangePassword: boolean, version: number, lastLoginAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'UserTableRowFieldsFragment' };
 
@@ -8136,6 +8230,66 @@ export const RoleTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"RoleTableRowFields"}) as unknown as TypedDocumentString<RoleTableRowFieldsFragment, unknown>;
+export const RoutingGuideEntryFieldsFragmentDoc = new TypedDocumentString(`
+    fragment RoutingGuideEntryFields on RoutingGuideEntry {
+  id
+  routingGuideId
+  carrierId
+  rank
+  rateMethod
+  rate
+  offerTtlSeconds
+  channel
+  version
+  createdAt
+  updatedAt
+  carrier {
+    id
+    name
+    scac
+  }
+}
+    `, {"fragmentName":"RoutingGuideEntryFields"}) as unknown as TypedDocumentString<RoutingGuideEntryFieldsFragment, unknown>;
+export const RoutingGuideRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment RoutingGuideRowFields on RoutingGuide {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  status
+  originLocationId
+  destinationLocationId
+  originCity
+  originState
+  destinationCity
+  destinationState
+  specificity
+  version
+  createdAt
+  updatedAt
+  entries {
+    ...RoutingGuideEntryFields
+  }
+}
+    fragment RoutingGuideEntryFields on RoutingGuideEntry {
+  id
+  routingGuideId
+  carrierId
+  rank
+  rateMethod
+  rate
+  offerTtlSeconds
+  channel
+  version
+  createdAt
+  updatedAt
+  carrier {
+    id
+    name
+    scac
+  }
+}`, {"fragmentName":"RoutingGuideRowFields"}) as unknown as TypedDocumentString<RoutingGuideRowFieldsFragment, unknown>;
 export const ScimGroupRoleMappingTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment SCIMGroupRoleMappingTableRowFields on SCIMGroupRoleMapping {
   id
@@ -12590,6 +12744,15 @@ export const DispatchBoardDocument = new TypedDocumentString(`
       assignedCarrierId
       assignedCarrierName
       carrierTotalCost
+      liveTender {
+        id
+        status
+        mode
+        currentRank
+        offerCount
+        currentCarrierName
+        currentOfferExpiresAt
+      }
     }
     drivers {
       workerId
@@ -12653,7 +12816,7 @@ export const DispatchBoardDocument = new TypedDocumentString(`
     }
   }
 }
-    `, {"hash":"sha256:d13c27e6b099d610216d83bb1c905f949ca97b2a65d8f9200f5f17f65dfa6af6"}) as unknown as TypedDocumentString<DispatchBoardQuery, DispatchBoardQueryVariables>;
+    `, {"hash":"sha256:50b6c0ad2fc90911a6afdd7c2b6407b8cc0adbe576a47aa4f1ff556862346023"}) as unknown as TypedDocumentString<DispatchBoardQuery, DispatchBoardQueryVariables>;
 export const DispatchMoveCandidatesDocument = new TypedDocumentString(`
     query DispatchMoveCandidates($input: DispatchMoveCandidatesInput!) {
   dispatchMoveCandidates(input: $input) {
@@ -18402,6 +18565,167 @@ fragment RoleTableRowFields on Role {
   createdAt
   updatedAt
 }`, {"hash":"sha256:2e3b4362769ce92ff4b9c8280388ed1d9d5a89d7fde4ced15da8a869256043e6"}) as unknown as TypedDocumentString<RoleTableQuery, RoleTableQueryVariables>;
+export const RoutingGuideTableDocument = new TypedDocumentString(`
+    query RoutingGuideTable($input: DataTableConnectionInput!) {
+  routingGuides(input: $input) {
+    edges {
+      node {
+        ...RoutingGuideRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment RoutingGuideEntryFields on RoutingGuideEntry {
+  id
+  routingGuideId
+  carrierId
+  rank
+  rateMethod
+  rate
+  offerTtlSeconds
+  channel
+  version
+  createdAt
+  updatedAt
+  carrier {
+    id
+    name
+    scac
+  }
+}
+fragment RoutingGuideRowFields on RoutingGuide {
+  id
+  businessUnitId
+  organizationId
+  name
+  description
+  status
+  originLocationId
+  destinationLocationId
+  originCity
+  originState
+  destinationCity
+  destinationState
+  specificity
+  version
+  createdAt
+  updatedAt
+  entries {
+    ...RoutingGuideEntryFields
+  }
+}`, {"hash":"sha256:2d13b92e01cf0ddbc49107a8e5824866a7cb64bb0af07ff5015042035f276083"}) as unknown as TypedDocumentString<RoutingGuideTableQuery, RoutingGuideTableQueryVariables>;
+export const RoutingGuideDetailDocument = new TypedDocumentString(`
+    query RoutingGuideDetail($id: ID!) {
+  routingGuide(id: $id) {
+    id
+    name
+    description
+    status
+    originLocationId
+    destinationLocationId
+    originCity
+    originState
+    destinationCity
+    destinationState
+    specificity
+    version
+    createdAt
+    updatedAt
+    entries {
+      id
+      carrierId
+      rank
+      rateMethod
+      rate
+      offerTtlSeconds
+      channel
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:438be74e28c75bd79e6748e519b3c700a9e5a52c0ff5c63cd04a68c9788b30bc"}) as unknown as TypedDocumentString<RoutingGuideDetailQuery, RoutingGuideDetailQueryVariables>;
+export const RoutingGuideOptionsDocument = new TypedDocumentString(`
+    query RoutingGuideOptions($input: DataTableConnectionInput!) {
+  routingGuides(input: $input) {
+    edges {
+      node {
+        id
+        name
+        status
+        originLocationId
+        destinationLocationId
+        originCity
+        originState
+        destinationCity
+        destinationState
+        specificity
+        entries {
+          id
+          carrierId
+          rank
+          rateMethod
+          rate
+          offerTtlSeconds
+          channel
+          carrier {
+            id
+            name
+            scac
+          }
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    `, {"hash":"sha256:6c73ab470664021daf1a25179a906336537cf0cb97136037c6e8136be3f15263"}) as unknown as TypedDocumentString<RoutingGuideOptionsQuery, RoutingGuideOptionsQueryVariables>;
+export const MatchRoutingGuideDocument = new TypedDocumentString(`
+    query MatchRoutingGuide($input: MatchRoutingGuideInput!) {
+  matchRoutingGuide(input: $input) {
+    id
+    name
+    description
+    status
+    originLocationId
+    destinationLocationId
+    originCity
+    originState
+    destinationCity
+    destinationState
+    specificity
+    entries {
+      id
+      carrierId
+      rank
+      rateMethod
+      rate
+      offerTtlSeconds
+      channel
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:486025d32ac9cfeaeeda8feccd9dbd3b7efb320829b23306b727962d78d0264c"}) as unknown as TypedDocumentString<MatchRoutingGuideQuery, MatchRoutingGuideQueryVariables>;
 export const ScimGroupRoleMappingsTableDocument = new TypedDocumentString(`
     query SCIMGroupRoleMappingsTable($input: DataTableConnectionInput!, $directoryId: ID!) {
   scimGroupRoleMappings(input: $input, directoryId: $directoryId) {
@@ -24381,6 +24705,157 @@ export const DeleteTelematicsFormMappingDocument = new TypedDocumentString(`
   deleteTelematicsFormMapping(id: $id)
 }
     `, {"hash":"sha256:40eca474cafce94d59c9ce91ea624bdb51a477fa552b3f43e0a773c64fd39baf"}) as unknown as TypedDocumentString<DeleteTelematicsFormMappingMutation, DeleteTelematicsFormMappingMutationVariables>;
+export const TenderDetailDocument = new TypedDocumentString(`
+    query TenderDetail($id: ID!) {
+  tender(id: $id) {
+    id
+    shipmentId
+    shipmentMoveId
+    routingGuideId
+    mode
+    status
+    currentRank
+    cancellationReason
+    acceptedOfferId
+    acceptedAt
+    exhaustedAt
+    canceledAt
+    version
+    createdAt
+    updatedAt
+    routingGuide {
+      id
+      name
+      specificity
+    }
+    offers {
+      id
+      tenderId
+      carrierId
+      rank
+      rateMethod
+      rate
+      offerTtlSeconds
+      channel
+      status
+      recipientEmail
+      sentAt
+      expiresAt
+      respondedAt
+      responseSource
+      declineReason
+      deliveryError
+      createdAt
+      updatedAt
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:92ad3d150e3293bba437d66db77168de7505f646f4c87c81e495289ca7e1374d"}) as unknown as TypedDocumentString<TenderDetailQuery, TenderDetailQueryVariables>;
+export const TendersByShipmentDocument = new TypedDocumentString(`
+    query TendersByShipment($shipmentId: ID!) {
+  tendersByShipment(shipmentId: $shipmentId) {
+    id
+    shipmentId
+    shipmentMoveId
+    routingGuideId
+    mode
+    status
+    currentRank
+    cancellationReason
+    acceptedOfferId
+    acceptedAt
+    exhaustedAt
+    canceledAt
+    createdAt
+    updatedAt
+    routingGuide {
+      id
+      name
+      specificity
+    }
+    offers {
+      id
+      tenderId
+      carrierId
+      rank
+      rateMethod
+      rate
+      offerTtlSeconds
+      channel
+      status
+      recipientEmail
+      sentAt
+      expiresAt
+      respondedAt
+      responseSource
+      declineReason
+      deliveryError
+      createdAt
+      updatedAt
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:f6ad3ca8a9af0ed699faccd13b6de03828ced3e5cd1dc6645b77ae90367b9d4c"}) as unknown as TypedDocumentString<TendersByShipmentQuery, TendersByShipmentQueryVariables>;
+export const LiveTenderByMoveDocument = new TypedDocumentString(`
+    query LiveTenderByMove($moveId: ID!) {
+  liveTenderByMove(moveId: $moveId) {
+    id
+    shipmentId
+    shipmentMoveId
+    routingGuideId
+    mode
+    status
+    currentRank
+    cancellationReason
+    acceptedOfferId
+    acceptedAt
+    exhaustedAt
+    canceledAt
+    createdAt
+    updatedAt
+    routingGuide {
+      id
+      name
+      specificity
+    }
+    offers {
+      id
+      tenderId
+      carrierId
+      rank
+      rateMethod
+      rate
+      offerTtlSeconds
+      channel
+      status
+      recipientEmail
+      sentAt
+      expiresAt
+      respondedAt
+      responseSource
+      declineReason
+      deliveryError
+      createdAt
+      updatedAt
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+}
+    `, {"hash":"sha256:c78680524944d9d61eddd81bb36fc68cfbd4c54eb78ea54156184d287f76f01c"}) as unknown as TypedDocumentString<LiveTenderByMoveQuery, LiveTenderByMoveQueryVariables>;
 export const UserTableDocument = new TypedDocumentString(`
     query UserTable($input: DataTableConnectionInput!) {
   users(input: $input) {

@@ -5,6 +5,7 @@ import {
   getDispatchDriverMovesGraphQL,
   getDispatchMoveCandidatesGraphQL,
 } from "@/lib/graphql/dispatch-console";
+import { getLiveTenderByMoveGraphQL, getTendersByShipmentGraphQL } from "@/lib/graphql/tender";
 import type {
   DispatchAssignmentPreviewInput,
   DispatchBoardInput,
@@ -23,6 +24,8 @@ export const DISPATCH_MOVE_CANDIDATES_KEY = "dispatch-move-candidates";
 export const DISPATCH_DRIVER_MOVES_KEY = "dispatch-driver-moves";
 export const DISPATCH_ASSIGNMENT_PREVIEW_KEY = "dispatch-assignment-preview";
 export const DISPATCH_CARRIER_PREVIEW_KEY = "dispatch-carrier-assignment-preview";
+export const DISPATCH_LIVE_TENDER_KEY = "dispatch-live-tender";
+export const DISPATCH_SHIPMENT_TENDERS_KEY = "dispatch-shipment-tenders";
 
 export const dispatchConsoleQueries = {
   board: (input: DispatchBoardInput) => ({
@@ -44,5 +47,13 @@ export const dispatchConsoleQueries = {
   carrierAssignmentPreview: (input: DispatchCarrierAssignmentPreviewInput) => ({
     queryKey: [DISPATCH_CARRIER_PREVIEW_KEY, input] as const,
     queryFn: () => getDispatchCarrierAssignmentPreviewGraphQL(input),
+  }),
+  liveTender: (moveId: string) => ({
+    queryKey: [DISPATCH_LIVE_TENDER_KEY, moveId] as const,
+    queryFn: () => getLiveTenderByMoveGraphQL(moveId),
+  }),
+  shipmentTenders: (shipmentId: string) => ({
+    queryKey: [DISPATCH_SHIPMENT_TENDERS_KEY, shipmentId] as const,
+    queryFn: () => getTendersByShipmentGraphQL(shipmentId),
   }),
 };

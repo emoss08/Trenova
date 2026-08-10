@@ -2646,6 +2646,7 @@ type DispatchBoardMove {
   hasActiveHold: Boolean!
   hasHazmat: Boolean!
   isCovered: Boolean!
+  liveTender: DispatchBoardTenderSummary
   loaded: Boolean!
   minutesToPickup: Int!
   moveCount: Int!
@@ -2689,6 +2690,20 @@ type DispatchBoardSummary {
   uncoveredMoves: Int!
   unseatedDrivers: Int!
   utilizationPercent: Float!
+}
+
+"""
+The live tender riding on a move, condensed to what a board card chip needs: where the
+waterfall stands and which carrier is currently holding the offer.
+"""
+type DispatchBoardTenderSummary {
+  currentCarrierName: String!
+  currentOfferExpiresAt: Int
+  currentRank: Int!
+  id: ID!
+  mode: TenderMode!
+  offerCount: Int!
+  status: TenderStatus!
 }
 
 type DispatchBulkAssignResult {
@@ -5510,6 +5525,15 @@ input MarkDriverSettlementPaidInput {
   settlementId: ID!
 }
 
+input MatchRoutingGuideInput {
+  destinationCity: String
+  destinationLocationId: ID
+  destinationState: String
+  originCity: String
+  originLocationId: ID
+  originState: String
+}
+
 enum MoveCoverageType {
   carrier
   driver
@@ -6728,12 +6752,14 @@ type Query {
   journalReversal(id: ID!): JournalReversal
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
   journalSourceByObject(sourceId: String!, sourceType: String!): JournalSourceInfo
+  liveTenderByMove(moveId: ID!): Tender
   location(id: ID!): Location
   locationCategories(input: DataTableConnectionInput!): LocationCategoryConnection!
   locationCategory(id: ID!): LocationCategory
   locations(input: DataTableConnectionInput!): LocationConnection!
   manualJournal(id: ID!): ManualJournal
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
+  matchRoutingGuide(input: MatchRoutingGuideInput!): RoutingGuide
   myAdvances: [PayAdvance!]!
   """
   The signed-in driver's qualification-file view (license, medical, contact).
@@ -6832,6 +6858,8 @@ type Query {
   resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
   role(id: ID!): Role
   roles(input: DataTableConnectionInput!): RoleConnection!
+  routingGuide(id: ID!): RoutingGuide
+  routingGuides(input: DataTableConnectionInput!): RoutingGuideConnection!
   scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
   selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
   serviceFailure(id: ID!): ServiceFailure
@@ -6881,6 +6909,8 @@ type Query {
   telematicsFormMapping(id: ID!): TelematicsFormMapping
   telematicsFormMappings: [TelematicsFormMapping!]!
   telematicsStatus: TelematicsStatus!
+  tender(id: ID!): Tender
+  tendersByShipment(shipmentId: ID!): [Tender!]!
   tractor(id: ID!): Tractor
   tractors(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, includeWorkerDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TractorConnection!
   trailer(id: ID!): Trailer
@@ -7659,6 +7689,54 @@ type RoleConnection {
 type RoleEdge {
   cursor: String!
   node: Role!
+}
+
+type RoutingGuide {
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  destinationCity: String!
+  destinationLocationId: ID
+  destinationState: String!
+  entries: [RoutingGuideEntry!]
+  id: ID!
+  name: String!
+  organizationId: ID!
+  originCity: String!
+  originLocationId: ID
+  originState: String!
+  specificity: Int!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type RoutingGuideConnection {
+  edges: [RoutingGuideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RoutingGuideEdge {
+  cursor: String!
+  node: RoutingGuide!
+}
+
+type RoutingGuideEntry {
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierId: ID!
+  channel: TenderChannel!
+  createdAt: Int!
+  id: ID!
+  offerTtlSeconds: Int!
+  organizationId: ID!
+  rank: Int!
+  rate: String!
+  rateMethod: CarrierRateMethod!
+  routingGuideId: ID!
+  updatedAt: Int!
+  version: Int!
 }
 
 input RunReportInput {
@@ -9627,6 +9705,96 @@ type TelematicsStatus {
   provider: String!
   totalTractors: Int!
   webhookConfigured: Boolean!
+}
+
+type Tender {
+  acceptedAt: Int
+  acceptedOfferId: ID
+  businessUnitId: ID!
+  canceledAt: Int
+  canceledById: ID
+  cancellationReason: String!
+  createdAt: Int!
+  createdById: ID
+  currentRank: Int!
+  exhaustedAt: Int
+  id: ID!
+  mode: TenderMode!
+  offers: [TenderOffer!]
+  organizationId: ID!
+  routingGuide: RoutingGuide
+  routingGuideId: ID
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  status: TenderStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum TenderChannel {
+  EDI
+  Email
+}
+
+enum TenderMode {
+  SpotBroadcast
+  SpotSequential
+  Waterfall
+}
+
+type TenderOffer {
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierId: ID!
+  channel: TenderChannel!
+  createdAt: Int!
+  declineReason: String!
+  deliveryError: String!
+  ediMessageId: ID
+  ediPartnerId: ID
+  expiresAt: Int
+  id: ID!
+  lateResponseAction: String!
+  lateResponseAt: Int
+  offerTtlSeconds: Int!
+  organizationId: ID!
+  rank: Int!
+  rate: String!
+  rateMethod: CarrierRateMethod!
+  recipientEmail: String!
+  respondedAt: Int
+  responseSource: TenderResponseSource
+  sentAt: Int
+  status: TenderOfferStatus!
+  tenderId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum TenderOfferStatus {
+  Accepted
+  Declined
+  DeliveryFailed
+  Expired
+  Pending
+  Sent
+  Skipped
+  Superseded
+  Withdrawn
+}
+
+enum TenderResponseSource {
+  EDI
+  Email
+  Manual
+}
+
+enum TenderStatus {
+  Accepted
+  Active
+  Canceled
+  Exhausted
+  NeedsReview
 }
 
 enum TimeFormat {

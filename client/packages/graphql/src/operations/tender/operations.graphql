@@ -1,0 +1,147 @@
+query TenderDetail($id: ID!) {
+  tender(id: $id) {
+    id
+    shipmentId
+    shipmentMoveId
+    routingGuideId
+    mode
+    status
+    currentRank
+    cancellationReason
+    acceptedOfferId
+    acceptedAt
+    exhaustedAt
+    canceledAt
+    version
+    createdAt
+    updatedAt
+    routingGuide {
+      id
+      name
+      specificity
+    }
+    offers {
+      id
+      tenderId
+      carrierId
+      rank
+      rateMethod
+      rate
+      offerTtlSeconds
+      channel
+      status
+      recipientEmail
+      sentAt
+      expiresAt
+      respondedAt
+      responseSource
+      declineReason
+      deliveryError
+      createdAt
+      updatedAt
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+}
+
+query TendersByShipment($shipmentId: ID!) {
+  tendersByShipment(shipmentId: $shipmentId) {
+    id
+    shipmentId
+    shipmentMoveId
+    routingGuideId
+    mode
+    status
+    currentRank
+    cancellationReason
+    acceptedOfferId
+    acceptedAt
+    exhaustedAt
+    canceledAt
+    createdAt
+    updatedAt
+    routingGuide {
+      id
+      name
+      specificity
+    }
+    offers {
+      id
+      tenderId
+      carrierId
+      rank
+      rateMethod
+      rate
+      offerTtlSeconds
+      channel
+      status
+      recipientEmail
+      sentAt
+      expiresAt
+      respondedAt
+      responseSource
+      declineReason
+      deliveryError
+      createdAt
+      updatedAt
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+}
+
+query LiveTenderByMove($moveId: ID!) {
+  liveTenderByMove(moveId: $moveId) {
+    id
+    shipmentId
+    shipmentMoveId
+    routingGuideId
+    mode
+    status
+    currentRank
+    cancellationReason
+    acceptedOfferId
+    acceptedAt
+    exhaustedAt
+    canceledAt
+    createdAt
+    updatedAt
+    routingGuide {
+      id
+      name
+      specificity
+    }
+    offers {
+      id
+      tenderId
+      carrierId
+      rank
+      rateMethod
+      rate
+      offerTtlSeconds
+      channel
+      status
+      recipientEmail
+      sentAt
+      expiresAt
+      respondedAt
+      responseSource
+      declineReason
+      deliveryError
+      createdAt
+      updatedAt
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+}

@@ -10,13 +10,22 @@ import {
 import {
   DISPATCH_BOARD_KEY,
   DISPATCH_DRIVER_MOVES_KEY,
+  DISPATCH_LIVE_TENDER_KEY,
   DISPATCH_MOVE_CANDIDATES_KEY,
+  DISPATCH_SHIPMENT_TENDERS_KEY,
 } from "@/lib/queries/dispatch-console";
+import { apiService } from "@/services/api";
 import type {
   DispatchAssignMoveInput,
   DispatchAssignMoveToCarrierInput,
   DispatchPlanInput,
 } from "@trenova/graphql/generated/graphql";
+import {
+  TENDER_MODE_LABEL,
+  type RecordTenderResponsePayload,
+  type SpotTenderPayload,
+  type WaterfallTenderPayload,
+} from "@trenova/shared/types/tender";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -128,6 +137,69 @@ export function useDispatchActions() {
       toast.error("Carrier cancellation failed", { description: error.message }),
   });
 
+  // Tendering shares the carrier-coverage rule: none of it is undoable. Reversing a
+  // tender means withdrawing live offers with a recorded reason, which the console cannot
+  // invent on the dispatcher's behalf, so these never enter the undo stack.
+  const invalidateTenders = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: [DISPATCH_LIVE_TENDER_KEY] });
+    void queryClient.invalidateQueries({ queryKey: [DISPATCH_SHIPMENT_TENDERS_KEY] });
+    invalidateBoard();
+  }, [queryClient, invalidateBoard]);
+
+  const waterfallMutation = useMutation({
+    mutationFn: (payload: WaterfallTenderPayload) =>
+      apiService.tenderService.createWaterfall(payload),
+    onSuccess: () => {
+      toast.success("Waterfall tender started", {
+        description: "The rank-1 carrier has been offered the move.",
+      });
+      invalidateTenders();
+    },
+    onError: (error: Error) =>
+      toast.error("Could not start the waterfall", { description: error.message }),
+  });
+
+  const spotTenderMutation = useMutation({
+    mutationFn: (payload: SpotTenderPayload) => apiService.tenderService.createSpot(payload),
+    onSuccess: (tender) => {
+      toast.success(`${TENDER_MODE_LABEL[tender.mode]} tender sent`, {
+        description:
+          tender.mode === "SpotBroadcast"
+            ? "Every carrier on the tender has been offered the move."
+            : "The first carrier on the tender has been offered the move.",
+      });
+      invalidateTenders();
+    },
+    onError: (error: Error) =>
+      toast.error("Could not send the spot tender", { description: error.message }),
+  });
+
+  const cancelTenderMutation = useMutation({
+    mutationFn: (params: { tenderId: string; reason: string }) =>
+      apiService.tenderService.cancel(params.tenderId, params.reason),
+    onSuccess: () => {
+      toast.success("Tender canceled", {
+        description: "Outstanding offers have been withdrawn.",
+      });
+      invalidateTenders();
+    },
+    onError: (error: Error) =>
+      toast.error("Could not cancel the tender", { description: error.message }),
+  });
+
+  const recordOfferResponseMutation = useMutation({
+    mutationFn: (params: { offerId: string; payload: RecordTenderResponsePayload }) =>
+      apiService.tenderService.recordResponse(params.offerId, params.payload),
+    onSuccess: (_data, params) => {
+      toast.success(
+        params.payload.action === "Accept" ? "Acceptance recorded" : "Decline recorded",
+      );
+      invalidateTenders();
+    },
+    onError: (error: Error) =>
+      toast.error("Could not record the response", { description: error.message }),
+  });
+
   const planMutation = useMutation({
     mutationFn: (input: DispatchPlanInput) => planDispatchAutoAssignGraphQL(input),
     onSuccess: (plan: DispatchPlan) => {
@@ -176,6 +248,10 @@ export function useDispatchActions() {
       runUnassign({ moveIds, restore }),
     assignToCarrier: carrierAssignMutation.mutateAsync,
     cancelCarrierAssignment: carrierCancelMutation.mutateAsync,
+    startWaterfallTender: waterfallMutation.mutateAsync,
+    sendSpotTender: spotTenderMutation.mutateAsync,
+    cancelTender: cancelTenderMutation.mutateAsync,
+    recordOfferResponse: recordOfferResponseMutation.mutateAsync,
     planAutoAssign: planMutation.mutate,
     plan: planMutation.data ?? null,
     clearPlan: planMutation.reset,
@@ -186,6 +262,11 @@ export function useDispatchActions() {
       unassignMutation.isPending ||
       carrierAssignMutation.isPending ||
       carrierCancelMutation.isPending,
+    isTendering:
+      waterfallMutation.isPending ||
+      spotTenderMutation.isPending ||
+      cancelTenderMutation.isPending ||
+      recordOfferResponseMutation.isPending,
     isPlanning: planMutation.isPending,
   };
 }

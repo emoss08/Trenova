@@ -926,6 +926,14 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/dispatch/routing-guides",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RoutingGuide)),
+            async lazy() {
+              const { RoutingGuidesPage } = await import("@/routes/routing-guide/page");
+              return { Component: RoutingGuidesPage };
+            },
+          },
+          {
             path: "/accounting/configuration-files/fiscal-years",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.FiscalYear)),
             async lazy() {
@@ -1262,6 +1270,33 @@ const routes: RouteObject[] = [
                 },
               },
             ],
+          },
+        ],
+      },
+      {
+        // Public carrier-facing pages: no auth, no app chrome. An external
+        // carrier lands here from an emailed offer link, logged in or not.
+        children: [
+          {
+            path: "/tender-offer/:token",
+            async lazy() {
+              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
+              return { Component: TenderOfferPublicPage };
+            },
+          },
+          {
+            path: "/tender-offer/:token/accept",
+            async lazy() {
+              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
+              return { Component: TenderOfferPublicPage };
+            },
+          },
+          {
+            path: "/tender-offer/:token/decline",
+            async lazy() {
+              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
+              return { Component: TenderOfferPublicPage };
+            },
           },
         ],
       },
