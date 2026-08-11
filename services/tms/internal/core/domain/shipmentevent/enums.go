@@ -32,6 +32,8 @@ const (
 	TypeRoutingGuideExhausted = Type("RoutingGuideExhausted")
 	TypeTenderLateResponse    = Type("TenderLateResponse")
 	TypeTenderDeliveryFailed  = Type("TenderDeliveryFailed")
+	TypeTenderEntrySkipped    = Type("TenderEntrySkipped")
+	TypeTenderEntryWarned     = Type("TenderEntryWarned")
 
 	TypeHoldPlaced   = Type("HoldPlaced")
 	TypeHoldUpdated  = Type("HoldUpdated")
@@ -85,6 +87,8 @@ func (v Type) IsValid() bool {
 		TypeRoutingGuideExhausted,
 		TypeTenderLateResponse,
 		TypeTenderDeliveryFailed,
+		TypeTenderEntrySkipped,
+		TypeTenderEntryWarned,
 		TypeHoldPlaced,
 		TypeHoldUpdated,
 		TypeHoldReleased,

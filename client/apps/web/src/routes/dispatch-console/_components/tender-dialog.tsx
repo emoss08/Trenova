@@ -11,6 +11,8 @@ import {
 } from "@/lib/graphql/routing-guide-table";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import { carrierRateMethodChoices, offerTtlChoices, tenderChannelChoices } from "@/lib/choices";
+import { isOverridableInsuranceWarningError } from "@/services/tender";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -47,6 +49,7 @@ import {
 } from "@trenova/shared/types/tender";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
+import { TriangleAlertIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { Link } from "react-router";
@@ -214,6 +217,11 @@ function WaterfallTab({ move, actions }: { move: DispatchBoardMove; actions: Dis
 }
 
 function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: DispatchActions }) {
+  const [overridePrompt, setOverridePrompt] = useState<{
+    message: string;
+    values: SpotTenderPayload;
+  } | null>(null);
+
   const form = useForm<SpotTenderPayloadInput, unknown, SpotTenderPayload>({
     resolver: zodResolver(spotTenderPayloadSchema),
     defaultValues: {
@@ -231,12 +239,33 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
     async (values: SpotTenderPayload) => {
       try {
         await actions.sendSpotTender(values);
-      } catch {
-        // handled by the mutation's onError; the form stays intact for a retry
+        setOverridePrompt(null);
+      } catch (error) {
+        // Insurance warnings come back overridable: surface the confirm-override
+        // prompt instead of a toast. Everything else is handled by the mutation's
+        // onError and the form stays intact for a retry.
+        if (isOverridableInsuranceWarningError(error)) {
+          setOverridePrompt({ message: error.message, values });
+          return;
+        }
+        setOverridePrompt(null);
       }
     },
     [actions],
   );
+
+  const confirmOverride = useCallback(async () => {
+    if (!overridePrompt) return;
+    try {
+      await actions.sendSpotTender({
+        ...overridePrompt.values,
+        overrideInsuranceWarnings: true,
+      });
+      setOverridePrompt(null);
+    } catch {
+      // handled by the mutation's onError; the prompt stays for a retry
+    }
+  }, [actions, overridePrompt]);
 
   return (
     <Form
@@ -335,6 +364,35 @@ function SpotTab({ move, actions }: { move: DispatchBoardMove; actions: Dispatch
             </div>
           </div>
         ))}
+
+        {overridePrompt && (
+          <Alert variant="warning">
+            <TriangleAlertIcon />
+            <AlertTitle>Insurance warnings</AlertTitle>
+            <AlertDescription>
+              <p>{overridePrompt.message}</p>
+              <div className="mt-2 flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setOverridePrompt(null)}
+                >
+                  Review carriers
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  isLoading={actions.isTendering}
+                  loadingText="Sending..."
+                  onClick={() => void confirmOverride()}
+                >
+                  Send anyway
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex items-center justify-between">
           <Button

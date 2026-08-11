@@ -151,6 +151,7 @@ export const spotTenderPayloadSchema = z
     lines: z
       .array(spotTenderLinePayloadSchema)
       .min(1, { error: "At least one carrier line is required" }),
+    overrideInsuranceWarnings: z.boolean().default(false),
   })
   .superRefine((payload, ctx) => {
     const seen = new Set<string>();

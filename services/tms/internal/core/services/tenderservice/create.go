@@ -2,6 +2,8 @@ package tenderservice
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -9,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
+	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -50,10 +53,11 @@ type SpotTenderLine struct {
 }
 
 type CreateSpotTenderRequest struct {
-	TenantInfo     pagination.TenantInfo `json:"-"`
-	ShipmentMoveID pulid.ID              `json:"shipmentMoveId"`
-	Mode           tender.Mode           `json:"mode"`
-	Lines          []SpotTenderLine      `json:"lines"`
+	TenantInfo                pagination.TenantInfo `json:"-"`
+	ShipmentMoveID            pulid.ID              `json:"shipmentMoveId"`
+	Mode                      tender.Mode           `json:"mode"`
+	Lines                     []SpotTenderLine      `json:"lines"`
+	OverrideInsuranceWarnings bool                  `json:"overrideInsuranceWarnings"`
 }
 
 func (r *CreateSpotTenderRequest) Validate() *errortypes.MultiError {
@@ -117,7 +121,7 @@ func (s *Service) CreateWaterfall(
 		return nil, err
 	}
 
-	offers, err := s.buildGuideOffers(ctx, req.TenantInfo, guide, move)
+	plan, err := s.buildGuideOffers(ctx, req.TenantInfo, guide, move)
 	if err != nil {
 		return nil, err
 	}
@@ -132,10 +136,17 @@ func (s *Service) CreateWaterfall(
 		Mode:           tender.ModeWaterfall,
 		Status:         tender.StatusActive,
 		CreatedByID:    userIDPtr(req.TenantInfo),
-		Offers:         offers,
+		Offers:         plan.offers,
 	}
 
-	return s.persistAndStart(ctx, req.TenantInfo, entity)
+	created, err := s.persistAndStart(ctx, req.TenantInfo, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.auditGuideScreening(ctx, req.TenantInfo, created, plan)
+
+	return created, nil
 }
 
 // CreateSpot starts an ad-hoc tender for a move with a dispatcher-picked
@@ -333,13 +344,58 @@ func (s *Service) buildMatchLaneRequest(
 	return req
 }
 
+// guideEntryScreening captures one routing guide entry's eligibility verdict
+// so the audit trail can be written after the tender row exists.
+type guideEntryScreening struct {
+	carrierName string
+	rank        int16
+	reasons     []string
+}
+
+// guideOfferPlan is the screened offer plan for a waterfall tender: the offers
+// that survived the eligibility gate plus the entries skipped or warned on.
+type guideOfferPlan struct {
+	offers  []*tender.TenderOffer
+	skipped []guideEntryScreening
+	warned  []guideEntryScreening
+}
+
+// buildGuideOffers screens every guide entry's carrier before it can be
+// offered: blocked carriers are skipped so one lapsed certificate cannot stall
+// the lane, carriers with insurance warnings pass through flagged, and a guide
+// with nobody eligible fails creation outright.
 func (s *Service) buildGuideOffers(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	guide *tender.RoutingGuide,
 	move *shipment.ShipmentMove,
-) ([]*tender.TenderOffer, error) {
-	offers := make([]*tender.TenderOffer, 0, len(guide.Entries))
+) (*guideOfferPlan, error) {
+	carrierIDs := make([]pulid.ID, 0, len(guide.Entries))
+	for _, entry := range guide.Entries {
+		if entry == nil {
+			continue
+		}
+		carrierIDs = append(carrierIDs, entry.CarrierID)
+	}
+	carriers, err := s.carrierRepo.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
+		TenantInfo: tenantInfo,
+		CarrierIDs: carrierIDs,
+		CarrierFilterOptions: repositories.CarrierFilterOptions{
+			IncludeInsurancePolicies: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	carrierByID := make(map[pulid.ID]*carrier.Carrier, len(carriers))
+	for _, c := range carriers {
+		carrierByID[c.ID] = c
+	}
+
+	now := timeutils.NowUnix()
+	plan := &guideOfferPlan{
+		offers: make([]*tender.TenderOffer, 0, len(guide.Entries)),
+	}
 	multiErr := errortypes.NewMultiError()
 
 	for idx, entry := range guide.Entries {
@@ -347,6 +403,26 @@ func (s *Service) buildGuideOffers(
 			continue
 		}
 		entryErr := multiErr.WithIndex("entries", idx)
+
+		carrierEntity, ok := carrierByID[entry.CarrierID]
+		if !ok {
+			plan.skipped = append(plan.skipped, guideEntryScreening{
+				carrierName: guideEntryCarrierName(entry),
+				rank:        entry.Rank,
+				reasons:     []string{"Carrier does not exist within your organization"},
+			})
+			continue
+		}
+
+		eligibility := carrier.EvaluateCarrierEligibility(carrierEntity, now)
+		if eligibility.IsBlocked() {
+			plan.skipped = append(plan.skipped, guideEntryScreening{
+				carrierName: carrierEntity.Name,
+				rank:        entry.Rank,
+				reasons:     eligibility.Blockers,
+			})
+			continue
+		}
 
 		if entry.RateMethod == shipment.CarrierRateMethodPerMile &&
 			(move.Distance == nil || *move.Distance <= 0) {
@@ -369,17 +445,91 @@ func (s *Service) buildGuideOffers(
 			Channel:         entry.Channel,
 			Status:          tender.OfferStatusPending,
 		}
-		if err := s.resolveOfferChannel(ctx, tenantInfo, offer, entry.Carrier, ""); err != nil {
+		if err = s.resolveOfferChannel(ctx, tenantInfo, offer, carrierEntity, ""); err != nil {
 			entryErr.Add("channel", errortypes.ErrInvalid, err.Error())
 			continue
 		}
-		offers = append(offers, offer)
+		if eligibility.HasWarnings() {
+			plan.warned = append(plan.warned, guideEntryScreening{
+				carrierName: carrierEntity.Name,
+				rank:        entry.Rank,
+				reasons:     eligibility.Warnings,
+			})
+		}
+		plan.offers = append(plan.offers, offer)
 	}
 
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	return offers, nil
+	if len(plan.offers) == 0 && len(plan.skipped) > 0 {
+		return nil, errortypes.NewBusinessError(
+			"No eligible carriers on the routing guide. Every entry is blocked by carrier eligibility",
+		).WithParam("routingGuideId", guide.ID.String())
+	}
+	return plan, nil
+}
+
+func guideEntryCarrierName(entry *tender.RoutingGuideEntry) string {
+	if entry.Carrier != nil && entry.Carrier.Name != "" {
+		return entry.Carrier.Name
+	}
+	return entry.CarrierID.String()
+}
+
+// auditGuideScreening writes the skip-with-audit trail after the tender row
+// exists: one shipment event per screened entry and a single dispatch
+// notification summarizing the skips. Failures never unwind the created
+// tender.
+func (s *Service) auditGuideScreening(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity *tender.Tender,
+	plan *guideOfferPlan,
+) {
+	if len(plan.skipped) == 0 && len(plan.warned) == 0 {
+		return
+	}
+
+	ref := shipmenteventservice.TenderRef{
+		ShipmentID: entity.ShipmentID,
+		MoveID:     entity.ShipmentMoveID,
+		TenderID:   entity.ID,
+	}
+	tenant := shipmenteventservice.TenantRefFor(tenantInfo)
+	actor := shipmenteventservice.ActorFor(tenantInfo)
+
+	for _, skip := range plan.skipped {
+		s.recordEvent(ctx, shipmenteventservice.BuildTenderEntrySkipped(
+			tenant, ref, skip.carrierName, skip.rank, skip.reasons, actor,
+		))
+	}
+	for _, warned := range plan.warned {
+		s.recordEvent(ctx, shipmenteventservice.BuildTenderEntryWarned(
+			tenant, ref, warned.carrierName, warned.rank, warned.reasons, actor,
+		))
+	}
+
+	if len(plan.skipped) == 0 {
+		return
+	}
+	names := make([]string, 0, len(plan.skipped))
+	for _, skip := range plan.skipped {
+		names = append(names, skip.carrierName)
+	}
+	s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+		EventType: "tender_entries_skipped",
+		Priority:  notificationPriorityMed,
+		Title:     "Ineligible carriers skipped on tender",
+		Message: fmt.Sprintf(
+			"%d of %d routing guide carriers were skipped for eligibility: %s. "+
+				"The remaining carriers are being offered the move",
+			len(plan.skipped),
+			len(plan.skipped)+len(plan.offers),
+			strings.Join(names, ", "),
+		),
+		CorrelationID: entity.ID.String(),
+	})
 }
 
 func (s *Service) buildSpotOffers(
@@ -394,6 +544,9 @@ func (s *Service) buildSpotOffers(
 	carriers, err := s.carrierRepo.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
 		TenantInfo: req.TenantInfo,
 		CarrierIDs: carrierIDs,
+		CarrierFilterOptions: repositories.CarrierFilterOptions{
+			IncludeInsurancePolicies: true,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -403,7 +556,9 @@ func (s *Service) buildSpotOffers(
 		carrierByID[c.ID] = c
 	}
 
+	now := timeutils.NowUnix()
 	offers := make([]*tender.TenderOffer, 0, len(req.Lines))
+	warnings := make([]string, 0, len(req.Lines))
 	multiErr := errortypes.NewMultiError()
 
 	for idx, line := range req.Lines {
@@ -418,9 +573,21 @@ func (s *Service) buildSpotOffers(
 			)
 			continue
 		}
-		if carrierEntity.Status != carrier.StatusActive {
-			lineErr.Add("carrierId", errortypes.ErrInvalid, "Carrier is not active")
+
+		eligibility := carrier.EvaluateCarrierEligibility(carrierEntity, now)
+		if eligibility.IsBlocked() {
+			lineErr.Add(
+				"carrierId",
+				errortypes.ErrInvalid,
+				"Carrier is not eligible for tendering: "+
+					strings.Join(eligibility.Blockers, "; "),
+			)
 			continue
+		}
+		if eligibility.HasWarnings() {
+			for _, warning := range eligibility.Warnings {
+				warnings = append(warnings, carrierEntity.Name+" — "+warning)
+			}
 		}
 
 		rateMethod := line.RateMethod
@@ -468,6 +635,12 @@ func (s *Service) buildSpotOffers(
 
 	if multiErr.HasErrors() {
 		return nil, multiErr
+	}
+	if len(warnings) > 0 && !req.OverrideInsuranceWarnings {
+		return nil, errortypes.NewBusinessError(
+			"Carrier has insurance warnings: "+strings.Join(warnings, "; ")+
+				". Confirm the override to proceed",
+		).WithParam("overridable", "true")
 	}
 	return offers, nil
 }

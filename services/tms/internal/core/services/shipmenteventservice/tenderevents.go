@@ -1,6 +1,8 @@
 package shipmenteventservice
 
 import (
+	"strings"
+
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -206,6 +208,52 @@ func BuildTenderLateResponse(
 			"carrierName": carrierName,
 			"action":      string(action),
 			"source":      string(source),
+		},
+		actor,
+	)
+}
+
+// BuildTenderEntrySkipped records a routing guide entry excluded from a new
+// tender because its carrier failed the eligibility gate.
+func BuildTenderEntrySkipped(
+	tenant TenantRef,
+	ref TenderRef,
+	carrierName string,
+	rank int16,
+	reasons []string,
+	actor services.AuditActor,
+) *services.RecordShipmentEventParams {
+	return buildTenderEvent(tenant, ref,
+		shipmentevent.TypeTenderEntrySkipped,
+		shipmentevent.SeverityDanger,
+		carrierName+" was skipped on the routing guide: "+strings.Join(reasons, "; "),
+		map[string]any{
+			"carrierName": carrierName,
+			"rank":        rank,
+			"reasons":     reasons,
+		},
+		actor,
+	)
+}
+
+// BuildTenderEntryWarned records a routing guide entry tendered despite
+// insurance warnings on its carrier.
+func BuildTenderEntryWarned(
+	tenant TenantRef,
+	ref TenderRef,
+	carrierName string,
+	rank int16,
+	warnings []string,
+	actor services.AuditActor,
+) *services.RecordShipmentEventParams {
+	return buildTenderEvent(tenant, ref,
+		shipmentevent.TypeTenderEntryWarned,
+		shipmentevent.SeverityInfo,
+		carrierName+" was tendered with insurance warnings: "+strings.Join(warnings, "; "),
+		map[string]any{
+			"carrierName": carrierName,
+			"rank":        rank,
+			"warnings":    warnings,
 		},
 		actor,
 	)

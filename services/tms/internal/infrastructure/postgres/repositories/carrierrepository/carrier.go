@@ -283,6 +283,9 @@ func (r *repository) GetByIDs(
 			return buncolgen.CarrierScopeTenant(sq, req.TenantInfo).
 				Where(cols.ID.In(), bun.List(req.CarrierIDs))
 		}).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.addOptions(sq, req.CarrierFilterOptions)
+		}).
 		Scan(ctx)
 	if err != nil {
 		log.Error("failed to get carriers", zap.Error(err))

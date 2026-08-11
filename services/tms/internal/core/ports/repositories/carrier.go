@@ -40,8 +40,9 @@ type BulkUpdateCarrierStatusRequest struct {
 }
 
 type GetCarriersByIDsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	CarrierIDs []pulid.ID            `json:"carrierIds"`
+	TenantInfo           pagination.TenantInfo `json:"-"`
+	CarrierIDs           []pulid.ID            `json:"carrierIds"`
+	CarrierFilterOptions `json:"-"`
 }
 
 type CarrierSelectOptionsRequest struct {

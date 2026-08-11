@@ -15,6 +15,7 @@ import {
   DISPATCH_SHIPMENT_TENDERS_KEY,
 } from "@/lib/queries/dispatch-console";
 import { apiService } from "@/services/api";
+import { isOverridableInsuranceWarningError } from "@/services/tender";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type {
   DispatchAssignMoveInput,
@@ -192,7 +193,12 @@ export function useDispatchActions() {
       });
       invalidateTenders();
     },
-    onError: (error: unknown) => describeTenderError("Could not send the spot tender", error),
+    onError: (error: unknown) => {
+      // Overridable insurance warnings render as a confirm-override prompt inside the
+      // tender dialog, so a toast here would double-report them.
+      if (isOverridableInsuranceWarningError(error)) return;
+      describeTenderError("Could not send the spot tender", error);
+    },
   });
 
   const cancelTenderMutation = useMutation({

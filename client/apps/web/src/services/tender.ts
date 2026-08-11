@@ -1,4 +1,4 @@
-import { api } from "@trenova/shared/lib/api";
+import { api, ApiRequestError } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   publicTenderOfferSchema,
@@ -25,6 +25,7 @@ type SpotTenderRequestBody = {
   shipmentMoveId: string;
   mode: SpotTenderPayload["mode"];
   lines: SpotTenderLineRequestBody[];
+  overrideInsuranceWarnings: boolean;
 };
 
 export function toSpotTenderRequestBody(payload: SpotTenderPayload): SpotTenderRequestBody {
@@ -39,7 +40,20 @@ export function toSpotTenderRequestBody(payload: SpotTenderPayload): SpotTenderR
       channel: line.channel,
       email: line.channel === "EDI" ? undefined : line.email || undefined,
     })),
+    overrideInsuranceWarnings: payload.overrideInsuranceWarnings,
   };
+}
+
+/**
+ * The backend flags insurance-warning rejections with an `overridable` param so the
+ * dialog can offer a confirm-and-resubmit instead of a dead-end toast.
+ */
+export function isOverridableInsuranceWarningError(error: unknown): error is ApiRequestError {
+  return (
+    error instanceof ApiRequestError &&
+    error.isBusinessError() &&
+    error.getParams().overridable === "true"
+  );
 }
 
 export class TenderService {
