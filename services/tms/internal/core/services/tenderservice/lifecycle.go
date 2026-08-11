@@ -573,6 +573,93 @@ func (s *Service) MarkExhausted(
 	return nil
 }
 
+// IssueRateConfirmation documents an accepted offer as its rate confirmation.
+// Deterministic failures (templates unconfigured, a dispatcher-managed
+// agreement in the way) end here with a high-priority dispatch notification —
+// the acceptance already stands and must never be failed by its paperwork.
+// Infra failures propagate so the activity retries into the issuer's
+// idempotent state machine.
+func (s *Service) IssueRateConfirmation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offerID pulid.ID,
+) error {
+	if s.rateConIssuer == nil {
+		s.l.Warn("rate confirmation issuance is not wired; skipping auto-issue",
+			zap.String("offerId", offerID.String()))
+		return nil
+	}
+
+	offer, err := s.repo.GetOfferByID(ctx, repositories.GetTenderOfferByIDRequest{
+		TenantInfo:    tenantInfo,
+		OfferID:       offerID,
+		IncludeTender: true,
+	})
+	if err != nil {
+		return err
+	}
+	if offer.Tender == nil {
+		s.l.Warn("accepted offer has no tender; cannot issue a rate confirmation",
+			zap.String("offerId", offerID.String()))
+		return nil
+	}
+
+	acceptedAt := int64(0)
+	if offer.RespondedAt != nil {
+		acceptedAt = *offer.RespondedAt
+	}
+
+	result, issueErr := s.rateConIssuer.IssueForTenderAcceptance(
+		ctx,
+		&portservices.IssueTenderRateConfirmationRequest{
+			TenantInfo:     tenantInfo,
+			ShipmentMoveID: offer.Tender.ShipmentMoveID,
+			OfferID:        offer.ID,
+			CarrierID:      offer.CarrierID,
+			Source:         offer.ResponseSource,
+			AcceptedAt:     acceptedAt,
+		},
+	)
+	if issueErr != nil {
+		if !isAssignBusinessFailure(issueErr) {
+			return issueErr
+		}
+		s.l.Warn("rate confirmation could not be issued for the accepted tender",
+			zap.Error(issueErr), zap.String("offerId", offer.ID.String()))
+		s.notifyRateConIssueFailed(ctx, tenantInfo, offer, issueErr.Error())
+		return nil
+	}
+	if !result.Issued {
+		s.l.Warn("rate confirmation was not issued for the accepted tender",
+			zap.String("offerId", offer.ID.String()),
+			zap.String("reason", result.Reason))
+		s.notifyRateConIssueFailed(ctx, tenantInfo, offer, result.Reason)
+		return nil
+	}
+
+	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "rate_confirmation_issued")
+
+	return nil
+}
+
+func (s *Service) notifyRateConIssueFailed(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	offer *tender.TenderOffer,
+	reason string,
+) {
+	s.notifyDispatch(ctx, tenantInfo, &dispatchNotification{
+		EventType: "rate_confirmation_issue_failed",
+		Priority:  notificationPriorityHigh,
+		Title:     "Rate confirmation could not be issued",
+		Message: fmt.Sprintf(
+			"%s accepted the tender but no rate confirmation was issued automatically: %s. Generate it manually",
+			carrierNameOf(offer), reason,
+		),
+		CorrelationID: offer.TenderID.String(),
+	})
+}
+
 // CancelFromWorkflow is the workflow-side arm of Cancel: it runs the direct
 // withdrawal with the canceling user attributed.
 func (s *Service) CancelFromWorkflow(

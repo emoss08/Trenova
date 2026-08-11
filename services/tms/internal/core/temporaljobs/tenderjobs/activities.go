@@ -91,6 +91,13 @@ func (a *Activities) FinalizeAcceptedActivity(
 	return a.lifecycle.FinalizeAccepted(ctx, in.TenantInfo, in.TenderID, in.OfferID)
 }
 
+func (a *Activities) IssueRateConfirmationActivity(
+	ctx context.Context,
+	in *TenderActivityInput,
+) error {
+	return a.lifecycle.IssueRateConfirmation(ctx, in.TenantInfo, in.OfferID)
+}
+
 func (a *Activities) MarkNeedsReviewActivity(
 	ctx context.Context,
 	in *TenderActivityInput,

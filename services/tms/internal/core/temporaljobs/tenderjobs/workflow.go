@@ -381,6 +381,17 @@ func handleResponse(
 			).Get(ctx, nil); err != nil {
 				return outcomeContinue, err
 			}
+			// The acceptance is committed; its paperwork is best-effort here.
+			// A persistent issuance failure already raised a dispatch
+			// notification service-side and must never fail the workflow.
+			if err := workflow.ExecuteActivity(
+				ctx, a.IssueRateConfirmationActivity, &in,
+			).Get(ctx, nil); err != nil {
+				workflow.GetLogger(ctx).Error(
+					"failed to issue the rate confirmation for the accepted tender",
+					"error", err,
+				)
+			}
 			return outcomeFinished, nil
 		}
 	default:

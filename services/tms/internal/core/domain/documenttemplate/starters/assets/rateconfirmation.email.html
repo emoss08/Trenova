@@ -22,9 +22,24 @@
     </tr>
     {{ end }}
   </table>
+  {{ if .SignURL }}
+  <p style="margin: 16px 0;">
+    <a href="{{ .SignURL }}" style="display: inline-block; padding: 11px 20px; background: #111827; color: #ffffff; font-weight: bold; text-decoration: none; border-radius: 6px;">Review &amp; sign</a>
+  </p>
+  <p style="color: #4b5563; font-size: 13px;">
+    Or paste this link into your browser:<br>
+    <span style="word-break: break-all;">{{ .SignURL }}</span>{{ if .SignExpiresLabel }}<br>
+    The link stops working at {{ .SignExpiresLabel }}.{{ end }}
+  </p>
+  <p>
+    Please sign before dispatching and submit the attached confirmation with your invoice. Reply to
+    this message if any detail needs review.
+  </p>
+  {{ else }}
   <p>
     Please sign and return the attached confirmation before dispatching, and submit it with your
     invoice. Reply to this message if any detail needs review.
   </p>
+  {{ end }}
   <p>{{ .CompanyName }}</p>
 </div>

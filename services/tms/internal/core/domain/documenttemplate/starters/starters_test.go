@@ -589,6 +589,48 @@ func TestScheduleSkippedSaysWhenTheScheduleWasDisabled(t *testing.T) {
 		"the cause is the sentence the owner acts on")
 }
 
+// TestRateConfirmationEmailSignLinkIsConditional pins the sign block to emails
+// that actually carry a link: a revision sent without one (no public base URL,
+// or the executed record copy) must not render a dead "Review & sign" button.
+func TestRateConfirmationEmailSignLinkIsConditional(t *testing.T) {
+	registry := documenttemplate.NewRegistry()
+	engine := newEngine(t)
+
+	starters, err := All()
+	require.NoError(t, err)
+	idx := slices.IndexFunc(starters, func(s *Starter) bool {
+		return s.Kind == documenttemplate.KindRateConfirmationEmail
+	})
+	require.GreaterOrEqual(t, idx, 0)
+	starter := starters[idx]
+
+	data := documenttemplate.RateConfirmationContext{
+		CarrierName:       "Eastline Transport",
+		ShipmentProNumber: "PRO-1001",
+		RevisionLabel:     "Revision 1",
+		TotalCost:         "1850.00",
+		Currency:          "USD",
+	}
+
+	for _, channel := range []documenttemplate.Channel{
+		documenttemplate.ChannelEmailHTML,
+		documenttemplate.ChannelEmailText,
+	} {
+		bare := renderChannel(t, engine, registry, starter, channel, data)
+		assert.NotContains(t, bare, "Review",
+			"without a SignURL the %s body must not point at a sign flow", channel)
+		assert.NotContains(t, bare, "stops working")
+		assert.Contains(t, bare, "attached confirmation")
+
+		withLink := data
+		withLink.SignURL = "https://app.example.com/rate-confirmation/tok123"
+		withLink.SignExpiresLabel = "2026-07-27 16:00 UTC"
+		linked := renderChannel(t, engine, registry, starter, channel, withLink)
+		assert.Contains(t, linked, "https://app.example.com/rate-confirmation/tok123")
+		assert.Contains(t, linked, "2026-07-27 16:00 UTC")
+	}
+}
+
 // TestTenderOfferSubjectDropsEmptyLane pins the subject's lane segment to full
 // lanes only: a move without resolvable stops must not email a carrier a
 // subject reading "Load offer PRO123:  to  — $1,500.00".

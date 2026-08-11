@@ -77,6 +77,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
@@ -178,6 +179,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	routingguidehandler.New,
 	carrierhandler.New,
 	rateconfirmationhandler.New,
+	rateconfirmationpublichandler.New,
 	customerhandler.New,
 	customerpaymenthandler.New,
 	googlemapshandler.New,

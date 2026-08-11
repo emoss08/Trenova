@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,6 +43,7 @@ type Params struct {
 	EmailService          services.EmailService
 	UploadService         services.DocumentUploadService
 	Inliner               services.AssetInliner
+	Config                *config.Config
 }
 
 type Service struct {
@@ -57,6 +59,7 @@ type Service struct {
 	emailService          services.EmailService
 	uploadService         services.DocumentUploadService
 	inliner               services.AssetInliner
+	cfg                   *config.Config
 }
 
 func New(p Params) *Service {
@@ -73,6 +76,7 @@ func New(p Params) *Service {
 		emailService:          p.EmailService,
 		uploadService:         p.UploadService,
 		inliner:               p.Inliner,
+		cfg:                   p.Config,
 	}
 }
 
@@ -90,6 +94,13 @@ func (s *Service) ListByMove(
 	return s.repo.ListByMoveID(ctx, req)
 }
 
+// generateOptions carries provenance for revisions born outside the manual
+// dispatcher flow, so the row records how it came to exist from the start.
+type generateOptions struct {
+	Via                 rateconfirmation.Via
+	SourceTenderOfferID *pulid.ID
+}
+
 // Generate renders a new rate confirmation revision for the move's active
 // carrier assignment, files the PDF as a shipment document, and voids the prior
 // active revision so exactly one agreement stands at a time.
@@ -98,6 +109,16 @@ func (s *Service) Generate(
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
 	actor *services.RequestActor,
+) (*rateconfirmation.RateConfirmation, error) {
+	return s.generate(ctx, tenantInfo, moveID, actor, nil)
+}
+
+func (s *Service) generate(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+	actor *services.RequestActor,
+	opts *generateOptions,
 ) (*rateconfirmation.RateConfirmation, error) {
 	if s.templates == nil {
 		return nil, errortypes.NewBusinessError(
@@ -194,6 +215,10 @@ func (s *Service) Generate(
 			userID := actor.UserID
 			entity.GeneratedByID = &userID
 		}
+		if opts != nil {
+			entity.GeneratedVia = opts.Via
+			entity.SourceTenderOfferID = opts.SourceTenderOfferID
+		}
 
 		multiErr := errortypes.NewMultiError()
 		entity.Validate(multiErr)
@@ -270,6 +295,15 @@ func (s *Service) Send(
 		return nil, err
 	}
 
+	// A not-yet-executed revision travels with a single-use sign link so the
+	// carrier can confirm without a login. An already-Confirmed copy is the
+	// record copy and gets no link.
+	if entity.Status != rateconfirmation.StatusConfirmed {
+		if err = s.applySignLink(ctx, tenantInfo, entity, recipients[0], templateContext); err != nil {
+			return nil, err
+		}
+	}
+
 	message, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
 		TenantInfo:  tenantInfo,
 		Kind:        documenttemplate.KindRateConfirmationEmail,
@@ -332,7 +366,11 @@ func (s *Service) Send(
 		}
 
 		now := timeutils.NowUnix()
-		fresh.Status = rateconfirmation.StatusSent
+		// Emailing the executed copy must not demote a Confirmed agreement
+		// back to Sent; only the delivery bookkeeping refreshes.
+		if fresh.Status != rateconfirmation.StatusConfirmed {
+			fresh.Status = rateconfirmation.StatusSent
+		}
 		fresh.SentAt = &now
 		fresh.SentToEmails = strings.Join(recipients, ", ")
 		updated, txErr = s.repo.Update(txCtx, fresh)
@@ -368,19 +406,46 @@ func (s *Service) MarkConfirmed(
 			"The confirming party's name is required")
 	}
 
-	now := timeutils.NowUnix()
+	return s.markConfirmed(ctx, tenantInfo, entity, confirmParams{
+		Name: confirmedByName,
+		Via:  rateconfirmation.ViaDispatcher,
+		At:   timeutils.NowUnix(),
+	})
+}
+
+// confirmParams is who executed the agreement, how, and when.
+type confirmParams struct {
+	Name  string
+	Title string
+	Via   rateconfirmation.Via
+	At    int64
+}
+
+// markConfirmed is the single execution path shared by the dispatcher's
+// MarkConfirmed, the public ConfirmByToken, and tender-acceptance issuance:
+// the confirmation and the assignment flip in one transaction so the
+// agreement and the assignment can never disagree.
+func (s *Service) markConfirmed(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity *rateconfirmation.RateConfirmation,
+	p confirmParams,
+) (*rateconfirmation.RateConfirmation, error) {
+	at := p.At
 	entity.Status = rateconfirmation.StatusConfirmed
-	entity.ConfirmedAt = &now
-	entity.ConfirmedByName = confirmedByName
+	entity.ConfirmedAt = &at
+	entity.ConfirmedByName = p.Name
+	entity.ConfirmedByTitle = p.Title
+	entity.ConfirmedVia = p.Via
 
 	var updated *rateconfirmation.RateConfirmation
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		var txErr error
 		updated, txErr = s.repo.Update(txCtx, entity)
 		if txErr != nil {
 			return txErr
 		}
-		return s.confirmAssignment(txCtx, tenantInfo, entity.CarrierAssignmentID, now)
+		return s.confirmAssignment(txCtx, tenantInfo, entity.CarrierAssignmentID, at)
 	})
 	if err != nil {
 		return nil, dberror.MapRetryableTransactionError(
@@ -441,6 +506,8 @@ func (s *Service) Void(
 		)
 	}
 
+	s.revokeTokens(ctx, tenantInfo, updated.ID)
+
 	return updated, nil
 }
 
@@ -462,8 +529,29 @@ func (s *Service) voidActiveRevision(
 	active.Status = rateconfirmation.StatusVoided
 	active.VoidedAt = &now
 	active.VoidReason = reason
-	_, err = s.repo.Update(ctx, active)
-	return err
+	if _, err = s.repo.Update(ctx, active); err != nil {
+		return err
+	}
+
+	s.revokeTokens(ctx, tenantInfo, active.ID)
+	return nil
+}
+
+// revokeTokens retires every outstanding sign link when its agreement dies.
+// Best-effort: resolveToken re-checks the rate confirmation's state, so a
+// missed revocation cannot resurrect a voided agreement.
+func (s *Service) revokeTokens(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	rateConfirmationID pulid.ID,
+) {
+	if err := s.repo.RevokeTokensForRateConfirmation(
+		ctx, tenantInfo, rateConfirmationID, timeutils.NowUnix(),
+	); err != nil {
+		s.l.Warn("failed to revoke rate confirmation tokens",
+			zap.Error(err),
+			zap.String("rateConfirmationId", rateConfirmationID.String()))
+	}
 }
 
 // confirmAssignment flips the carrier assignment to Confirmed alongside its

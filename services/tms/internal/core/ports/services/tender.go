@@ -147,6 +147,11 @@ type TenderLifecycle interface {
 		action tender.ResponseAction,
 		source tender.ResponseSource,
 	) error
+	IssueRateConfirmation(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		offerID pulid.ID,
+	) error
 }
 
 // SendTenderOfferEDIRequest asks the EDI layer to deliver one offer as an

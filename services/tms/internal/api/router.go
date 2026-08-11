@@ -80,6 +80,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
@@ -199,6 +200,7 @@ type RouterParams struct {
 	RoutingGuideHandler             *routingguidehandler.Handler
 	CarrierHandler                  *carrierhandler.Handler
 	RateConfirmationHandler         *rateconfirmationhandler.Handler
+	RateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
 	CustomerHandler                 *customerhandler.Handler
 	CustomerPaymentHandler          *customerpaymenthandler.Handler
 	GoogleMapsHandler               *googlemapshandler.Handler
@@ -316,6 +318,7 @@ type Router struct {
 	routingGuideHandler             *routingguidehandler.Handler
 	carrierHandler                  *carrierhandler.Handler
 	rateConfirmationHandler         *rateconfirmationhandler.Handler
+	rateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
 	customerHandler                 *customerhandler.Handler
 	customerPaymentHandler          *customerpaymenthandler.Handler
 	googleMapsHandler               *googlemapshandler.Handler
@@ -435,6 +438,7 @@ func NewRouter(p RouterParams) *Router {
 		routingGuideHandler:             p.RoutingGuideHandler,
 		carrierHandler:                  p.CarrierHandler,
 		rateConfirmationHandler:         p.RateConfirmationHandler,
+		rateConfirmationPublicHandler:   p.RateConfirmationPublicHandler,
 		customerHandler:                 p.CustomerHandler,
 		customerPaymentHandler:          p.CustomerPaymentHandler,
 		googleMapsHandler:               p.GoogleMapsHandler,
@@ -559,6 +563,7 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.invoiceHandler.RegisterPublicRoutes(rg)
 	r.ediHandler.RegisterPublicRoutes(rg)
 	r.tenderPublicHandler.RegisterPublicRoutes(rg)
+	r.rateConfirmationPublicHandler.RegisterPublicRoutes(rg)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together

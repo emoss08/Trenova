@@ -41,6 +41,16 @@ type RateConfirmationContext struct {
 
 	PaymentTermsLabel string
 
+	// SignURL is the single-use public sign link injected at send time for a
+	// not-yet-executed revision. Empty on the frozen snapshot and on the
+	// record copy of an already-confirmed agreement.
+	//
+	// Typed template.URL because this system builds it from the configured
+	// public base URL and a generated token, so it is ours and cannot carry a
+	// hostile scheme.
+	SignURL          template.URL
+	SignExpiresLabel string
+
 	LogoDataURI template.URL
 }
 
@@ -97,6 +107,10 @@ func newRateConfirmationSampleContext() any {
 		TotalCost:         "2067.50",
 		Currency:          sampleCurrency,
 		PaymentTermsLabel: "Net 30 from clean POD",
+		SignURL: template.URL(
+			"https://app.example.com/rate-confirmation/8f2c41a9b7e34d05",
+		),
+		SignExpiresLabel: "2026-07-27 16:00 UTC",
 		//nolint:gosec // A compile-time constant data: URI; see the field's doc comment.
 		LogoDataURI: template.URL(sampleLogoDataURI),
 	}
@@ -224,6 +238,16 @@ func rateConfirmationVariables() []VariableDefinition {
 			Path:        "PaymentTermsLabel",
 			Type:        VariableString,
 			Description: "When the carrier is paid, in words.",
+		},
+		{
+			Path:        "SignURL",
+			Type:        VariableString,
+			Description: "The single-use review-and-sign link. Present only on an email carrying a revision that still needs the carrier's signature; empty on the executed record copy.",
+		},
+		{
+			Path:        "SignExpiresLabel",
+			Type:        VariableString,
+			Description: "When the sign link stops working, in words.",
 		},
 		logoVariable(),
 	}

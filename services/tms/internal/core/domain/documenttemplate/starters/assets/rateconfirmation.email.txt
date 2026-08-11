@@ -7,6 +7,11 @@ Attached is the rate confirmation for shipment {{ .ShipmentProNumber }}{{ if .Re
 Total agreed rate: {{ moneyString .Currency .TotalCost }}
 {{ if .PaymentTermsLabel }}Payment terms: {{ .PaymentTermsLabel }}
 {{ end }}
-Please sign and return the attached confirmation before dispatching. Submit the confirmation with your invoice. Reply to this message if any detail needs review.
-
+{{ if .SignURL }}Review and sign the confirmation:
+{{ .SignURL }}
+{{ if .SignExpiresLabel }}The link stops working at {{ .SignExpiresLabel }}.
+{{ end }}
+Please sign before dispatching and submit the confirmation with your invoice. Reply to this message if any detail needs review.
+{{ else }}Please sign and return the attached confirmation before dispatching. Submit the confirmation with your invoice. Reply to this message if any detail needs review.
+{{ end }}
 {{ .CompanyName }}

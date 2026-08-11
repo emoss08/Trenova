@@ -1,6 +1,7 @@
 package tenderjobs
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -105,6 +106,8 @@ func TestCarrierTenderWorkflow_WaterfallAcceptShortCircuits(t *testing.T) {
 		Return(&serviceports.TenderAcceptResult{}, nil).Once()
 	env.OnActivity(a.FinalizeAcceptedActivity, mock.Anything, mock.Anything).
 		Return(nil).Once()
+	env.OnActivity(a.IssueRateConfirmationActivity, mock.Anything, mock.Anything).
+		Return(nil).Once()
 
 	env.RegisterDelayedCallback(func() {
 		env.SignalWorkflow(TenderSignalName, Signal{
@@ -122,6 +125,76 @@ func TestCarrierTenderWorkflow_WaterfallAcceptShortCircuits(t *testing.T) {
 	env.AssertNotCalled(t, "DispatchOfferActivity", mock.Anything, mock.MatchedBy(
 		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerTwo },
 	))
+	env.AssertNotCalled(t, "MarkExhaustedActivity", mock.Anything, mock.Anything)
+	env.AssertExpectations(t)
+}
+
+func TestCarrierTenderWorkflow_AcceptIssuesRateConfirmation(t *testing.T) {
+	env := newTenderWorkflowTestEnv(t)
+	fixture := newPlanFixture(tender.ModeWaterfall)
+	var a *Activities
+
+	env.OnActivity(a.LoadPlanActivity, mock.Anything, mock.Anything).
+		Return(fixture.plan, nil).Once()
+	env.OnActivity(a.DispatchOfferActivity, mock.Anything, mock.MatchedBy(
+		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerOne },
+	)).Return(dispatchResultIn(10*time.Minute), nil).Once()
+	env.OnActivity(a.AcceptOfferActivity, mock.Anything, mock.Anything).
+		Return(&serviceports.TenderAcceptResult{}, nil).Once()
+	env.OnActivity(a.FinalizeAcceptedActivity, mock.Anything, mock.Anything).
+		Return(nil).Once()
+	env.OnActivity(a.IssueRateConfirmationActivity, mock.Anything, mock.MatchedBy(
+		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerOne },
+	)).Return(nil).Once()
+
+	env.RegisterDelayedCallback(func() {
+		env.SignalWorkflow(TenderSignalName, Signal{
+			Kind:    SignalKindResponse,
+			OfferID: fixture.offerOne,
+			Action:  tender.ResponseActionAccept,
+			Source:  tender.ResponseSourceEmail,
+		})
+	}, time.Minute)
+
+	env.ExecuteWorkflow(CarrierTenderWorkflow, fixture.input)
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+	env.AssertExpectations(t)
+}
+
+func TestCarrierTenderWorkflow_RateConIssueFailureDoesNotFailWorkflow(t *testing.T) {
+	env := newTenderWorkflowTestEnv(t)
+	fixture := newPlanFixture(tender.ModeWaterfall)
+	var a *Activities
+
+	env.OnActivity(a.LoadPlanActivity, mock.Anything, mock.Anything).
+		Return(fixture.plan, nil).Once()
+	env.OnActivity(a.DispatchOfferActivity, mock.Anything, mock.MatchedBy(
+		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerOne },
+	)).Return(dispatchResultIn(10*time.Minute), nil).Once()
+	env.OnActivity(a.AcceptOfferActivity, mock.Anything, mock.Anything).
+		Return(&serviceports.TenderAcceptResult{}, nil).Once()
+	env.OnActivity(a.FinalizeAcceptedActivity, mock.Anything, mock.Anything).
+		Return(nil).Once()
+	env.OnActivity(a.IssueRateConfirmationActivity, mock.Anything, mock.Anything).
+		Return(errors.New("issuance is down"))
+
+	env.RegisterDelayedCallback(func() {
+		env.SignalWorkflow(TenderSignalName, Signal{
+			Kind:    SignalKindResponse,
+			OfferID: fixture.offerOne,
+			Action:  tender.ResponseActionAccept,
+			Source:  tender.ResponseSourceEmail,
+		})
+	}, time.Minute)
+
+	env.ExecuteWorkflow(CarrierTenderWorkflow, fixture.input)
+
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError(),
+		"a failed issuance must never fail the committed acceptance")
+	env.AssertNotCalled(t, "MarkNeedsReviewActivity", mock.Anything, mock.Anything)
 	env.AssertNotCalled(t, "MarkExhaustedActivity", mock.Anything, mock.Anything)
 	env.AssertExpectations(t)
 }
@@ -210,6 +283,9 @@ func TestCarrierTenderWorkflow_BroadcastFirstAcceptWins(t *testing.T) {
 	)).Return(&serviceports.TenderAcceptResult{}, nil).Once()
 	env.OnActivity(a.FinalizeAcceptedActivity, mock.Anything, mock.Anything).
 		Return(nil).Once()
+	env.OnActivity(a.IssueRateConfirmationActivity, mock.Anything, mock.MatchedBy(
+		func(in *TenderActivityInput) bool { return in.OfferID == fixture.offerTwo },
+	)).Return(nil).Once()
 
 	env.RegisterDelayedCallback(func() {
 		env.SignalWorkflow(TenderSignalName, Signal{

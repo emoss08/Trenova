@@ -324,6 +324,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(s *carrierassignmentservice.Service) services.CarrierMoveAssigner { return s },
 	carrierservice.New,
 	rateconfirmationservice.New,
+	func(s *rateconfirmationservice.Service) services.RateConfirmationIssuer { return s },
 	routingguideservice.NewValidator,
 	routingguideservice.New,
 	tenderservice.New,
