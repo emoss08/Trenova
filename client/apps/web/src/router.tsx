@@ -1298,6 +1298,14 @@ const routes: RouteObject[] = [
               return { Component: TenderOfferPublicPage };
             },
           },
+          {
+            path: "/rate-confirmation/:token",
+            async lazy() {
+              const { RateConfirmationPublicPage } =
+                await import("@/routes/rate-confirmation-public/page");
+              return { Component: RateConfirmationPublicPage };
+            },
+          },
         ],
       },
       {

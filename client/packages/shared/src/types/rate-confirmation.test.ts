@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   latestActiveRateConfirmation,
+  publicRateConfirmationSchema,
   rateConfirmationSchema,
   type RateConfirmation,
 } from "./rate-confirmation";
@@ -53,6 +54,104 @@ describe("rateConfirmationSchema", () => {
 
   it("rejects unknown statuses", () => {
     expect(() => makeRateConfirmation({ status: "Draft" as never })).toThrow();
+  });
+
+  // The Go domain serializes Via fields without omitempty, so an unconfirmed
+  // rate confirmation arrives with confirmedVia: "" — that must normalize to
+  // null, never fail parsing.
+  it("parses provenance fields and normalizes an empty confirmedVia to null", () => {
+    const parsed = rateConfirmationSchema.parse({
+      id: "ratecon_01",
+      carrierAssignmentId: "casn_01",
+      carrierId: "car_01",
+      shipmentId: "shp_01",
+      shipmentMoveId: "smv_01",
+      revision: 1,
+      status: "Sent",
+      generatedVia: "TenderAcceptance",
+      sourceTenderOfferId: "tof_01",
+      confirmedVia: "",
+      confirmedByTitle: "",
+      createdAt: 1,
+      updatedAt: 1,
+    });
+
+    expect(parsed.generatedVia).toBe("TenderAcceptance");
+    expect(parsed.sourceTenderOfferId).toBe("tof_01");
+    expect(parsed.confirmedVia).toBeNull();
+    expect(parsed.confirmedByTitle).toBeNull();
+  });
+
+  it("parses a publicly signed confirmation's provenance", () => {
+    const parsed = makeRateConfirmation({
+      status: "Confirmed",
+      confirmedVia: "PublicSignature",
+      confirmedByTitle: "Operations Manager",
+    });
+
+    expect(parsed.confirmedVia).toBe("PublicSignature");
+    expect(parsed.confirmedByTitle).toBe("Operations Manager");
+  });
+
+  it("tolerates payloads that predate provenance tracking", () => {
+    const parsed = makeRateConfirmation({});
+
+    expect(parsed.generatedVia ?? null).toBeNull();
+    expect(parsed.confirmedVia ?? null).toBeNull();
+  });
+
+  it("rejects unknown via values", () => {
+    expect(() => makeRateConfirmation({ confirmedVia: "Fax" as never })).toThrow();
+  });
+});
+
+describe("publicRateConfirmationSchema", () => {
+  // Fixture written from PublicRateConfirmationView in
+  // services/tms/internal/core/services/rateconfirmationservice/public.go:
+  // all strings are always present (possibly empty), stops is a JSON array.
+  it("parses the public preview payload", () => {
+    const parsed = publicRateConfirmationSchema.parse({
+      carrierName: "Knight Logistics LLC",
+      companyName: "Acme Brokerage",
+      shipmentProNumber: "PRO-10422",
+      revisionLabel: "Revision 2",
+      rateMethodLabel: "Flat Rate",
+      baseRateLabel: "$1,500.00",
+      totalCost: "$1,650.00",
+      currency: "USD",
+      paymentTermsLabel: "Net 30",
+      stops: [
+        { sequence: 1, type: "Pickup", name: "DC 12", address: "100 Main St", window: "Jun 1" },
+      ],
+      status: "Sent",
+      expiresAt: 1760000000,
+      confirmed: false,
+    });
+
+    expect(parsed.carrierName).toBe("Knight Logistics LLC");
+    expect(parsed.stops).toHaveLength(1);
+    expect(parsed.stops[0].sequence).toBe(1);
+  });
+
+  it("accepts empty labels and an empty stop list on a confirmed snapshot", () => {
+    const parsed = publicRateConfirmationSchema.parse({
+      carrierName: "Knight Logistics LLC",
+      companyName: "",
+      shipmentProNumber: "",
+      revisionLabel: "",
+      rateMethodLabel: "",
+      baseRateLabel: "",
+      totalCost: "$1,650.00",
+      currency: "",
+      paymentTermsLabel: "",
+      stops: [],
+      status: "Confirmed",
+      expiresAt: 0,
+      confirmed: true,
+    });
+
+    expect(parsed.confirmed).toBe(true);
+    expect(parsed.stops).toEqual([]);
   });
 });
 

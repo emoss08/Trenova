@@ -1,10 +1,17 @@
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
+  publicRateConfirmationSchema,
   rateConfirmationListSchema,
   rateConfirmationSchema,
+  type PublicRateConfirmation,
   type RateConfirmation,
 } from "@trenova/shared/types/rate-confirmation";
+
+export type ConfirmPublicRateConfirmationPayload = {
+  signerName: string;
+  signerTitle: string;
+};
 
 export class RateConfirmationService {
   public async listByMove(moveId: string): Promise<RateConfirmation[]> {
@@ -56,5 +63,23 @@ export class RateConfirmationService {
     );
 
     return safeParse(rateConfirmationSchema, response, "RateConfirmation");
+  }
+
+  public async getPublicRateConfirmation(token: string): Promise<PublicRateConfirmation> {
+    const response = await api.get<PublicRateConfirmation>(
+      `/rate-confirmation-links/${encodeURIComponent(token)}/`,
+    );
+
+    return safeParse(publicRateConfirmationSchema, response, "PublicRateConfirmation");
+  }
+
+  public async confirmPublicRateConfirmation(
+    token: string,
+    payload: ConfirmPublicRateConfirmationPayload,
+  ): Promise<void> {
+    await api.post(`/rate-confirmation-links/${encodeURIComponent(token)}/confirm/`, {
+      signerName: payload.signerName,
+      signerTitle: payload.signerTitle,
+    });
   }
 }

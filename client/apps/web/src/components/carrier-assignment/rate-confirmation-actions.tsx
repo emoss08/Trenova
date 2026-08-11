@@ -1,6 +1,7 @@
 import { documentContentUrl } from "@/services/document";
 import { apiService } from "@/services/api";
 import { RateConfirmationStatusBadge } from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -14,6 +15,7 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import {
   latestActiveRateConfirmation,
+  RATE_CONFIRMATION_VIA_LABEL,
   type RateConfirmation,
 } from "@trenova/shared/types/rate-confirmation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -92,8 +94,20 @@ export function RateConfirmationActions({
             <span className="text-2xs text-muted-foreground tabular-nums">
               rev {latest.revision}
             </span>
+            {latest.status === "Confirmed" && latest.confirmedVia && (
+              <Badge
+                variant="outline"
+                className="max-h-5 text-[10px]"
+                title="How the carrier's confirmation was captured"
+              >
+                {RATE_CONFIRMATION_VIA_LABEL[latest.confirmedVia]}
+              </Badge>
+            )}
             {latest.status === "Confirmed" && latest.confirmedByName && (
-              <span className="text-2xs text-muted-foreground">by {latest.confirmedByName}</span>
+              <span className="text-2xs text-muted-foreground">
+                by {latest.confirmedByName}
+                {latest.confirmedByTitle ? `, ${latest.confirmedByTitle}` : ""}
+              </span>
             )}
             {latest.status === "Voided" && latest.voidReason && (
               <span className="text-2xs text-muted-foreground">({latest.voidReason})</span>

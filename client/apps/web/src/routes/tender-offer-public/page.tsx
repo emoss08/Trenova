@@ -1,8 +1,9 @@
-import logoRainbow from "@/assets/logo.webp";
-import { LazyImage } from "@/components/image";
 import { Metadata } from "@/components/metadata";
+import { publicLinkErrorKind, type PublicLinkErrorKind } from "@/components/public-page/error-kind";
+import { PublicPageShell } from "@/components/public-page/public-page-shell";
+import { StatusCard } from "@/components/public-page/status-card";
+import { SummaryRow } from "@/components/public-page/summary-row";
 import { TenderService } from "@/services/tender";
-import { ApiRequestError } from "@trenova/shared/lib/api";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Separator } from "@trenova/shared/components/ui/separator";
@@ -19,55 +20,6 @@ import { useLocation, useParams } from "react-router";
 const tenderService = new TenderService();
 
 type OfferIntent = "accept" | "decline" | null;
-
-type OfferErrorKind = "invalid" | "throttled" | "unavailable";
-
-/**
- * Only a definitive 4xx rejection means the link itself is dead. A network
- * failure, a 5xx, or anything unrecognized is a transient server-side problem
- * and must not be presented as an expired offer.
- */
-function offerErrorKind(error: unknown): OfferErrorKind {
-  if (error instanceof ApiRequestError) {
-    if (error.status === 429) return "throttled";
-    if (error.status === 422 || error.isValidationError()) return "invalid";
-    if (error.status >= 400 && error.status < 500) return "invalid";
-  }
-  return "unavailable";
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  if (!value) return null;
-  return (
-    <div className="flex items-start justify-between gap-4 py-1.5">
-      <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
-      <span className="text-right text-xs font-medium">{value}</span>
-    </div>
-  );
-}
-
-function StatusCard({
-  icon,
-  title,
-  body,
-  action,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <Card className="w-full max-w-md">
-      <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
-        {icon}
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="text-xs text-muted-foreground">{body}</p>
-        {action}
-      </CardContent>
-    </Card>
-  );
-}
 
 function OfferSummary({
   offer,
@@ -196,7 +148,7 @@ export function TenderOfferPublicPage() {
   }, [pathname]);
 
   const [submitted, setSubmitted] = useState(false);
-  const [submitError, setSubmitError] = useState<OfferErrorKind | null>(null);
+  const [submitError, setSubmitError] = useState<PublicLinkErrorKind | null>(null);
 
   const previewQuery = useQuery({
     queryKey: ["public-tender-offer", token] as const,
@@ -214,7 +166,7 @@ export function TenderOfferPublicPage() {
       setSubmitted(true);
     },
     onError: (error: unknown) => {
-      setSubmitError(offerErrorKind(error));
+      setSubmitError(publicLinkErrorKind(error));
     },
   });
 
@@ -279,7 +231,7 @@ export function TenderOfferPublicPage() {
       </Card>
     );
   } else if (previewQuery.isError) {
-    const kind = offerErrorKind(previewQuery.error);
+    const kind = publicLinkErrorKind(previewQuery.error);
     content =
       kind === "throttled" ? (
         <StatusCard
@@ -344,15 +296,9 @@ export function TenderOfferPublicPage() {
   return (
     <>
       <Metadata title="Load Offer" description="Review and respond to a load offer" />
-      <div className="fixed inset-0 h-svh w-full overflow-y-auto bg-background">
-        <div className="flex min-h-full flex-col items-center justify-center gap-6 p-6 md:p-10">
-          <LazyImage src={logoRainbow} alt="Trenova Logo" className="size-12 object-contain" />
-          {content}
-          <p className="text-center text-[11px] text-muted-foreground">
-            Powered by Trenova. Questions about this load? Reply to the offer email.
-          </p>
-        </div>
-      </div>
+      <PublicPageShell footer="Powered by Trenova. Questions about this load? Reply to the offer email.">
+        {content}
+      </PublicPageShell>
     </>
   );
 }
