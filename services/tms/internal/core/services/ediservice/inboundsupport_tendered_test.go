@@ -80,16 +80,20 @@ func TestRecordTenderedShipmentStatus_WritesCommentAndEvent(t *testing.T) {
 		}).
 		Once()
 
-	err := service.RecordTenderedShipmentStatus(t.Context(), &RecordTenderedShipmentStatusRequest{
-		TenantInfo:  tenantInfo,
-		Offer:       offer,
-		StatusCode:  "A7",
-		ReasonCode:  "AM",
-		ReferenceID: "PRO-77",
-		EventAt:     1767787200,
-	})
+	warnings, err := service.RecordTenderedShipmentStatus(
+		t.Context(),
+		&RecordTenderedShipmentStatusRequest{
+			TenantInfo:  tenantInfo,
+			Offer:       offer,
+			StatusCode:  "A7",
+			ReasonCode:  "AM",
+			ReferenceID: "PRO-77",
+			EventAt:     1767787200,
+		},
+	)
 
 	require.NoError(t, err)
+	require.Empty(t, warnings)
 	require.NotNil(t, recordedComment)
 	require.Equal(t, offer.Tender.ShipmentID, recordedComment.ShipmentID)
 	require.Contains(t, recordedComment.Comment, "A7")
@@ -115,7 +119,7 @@ func TestRecordTenderedShipmentStatus_RequiresOfferWithTender(t *testing.T) {
 	offer := acceptedTenderOfferForTest()
 	offer.Tender = nil
 
-	err := service.RecordTenderedShipmentStatus(t.Context(), &RecordTenderedShipmentStatusRequest{
+	_, err := service.RecordTenderedShipmentStatus(t.Context(), &RecordTenderedShipmentStatusRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
@@ -157,16 +161,20 @@ func TestRecordTenderedShipmentStatus_EventInsertFailureIsNonFatal(t *testing.T)
 		Return(errors.New("event store unavailable")).
 		Once()
 
-	err := service.RecordTenderedShipmentStatus(t.Context(), &RecordTenderedShipmentStatusRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: pulid.MustNew("org_"),
-			BuID:  pulid.MustNew("bu_"),
+	warnings, err := service.RecordTenderedShipmentStatus(
+		t.Context(),
+		&RecordTenderedShipmentStatusRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			Offer:      acceptedTenderOfferForTest(),
+			StatusCode: "AF",
 		},
-		Offer:      acceptedTenderOfferForTest(),
-		StatusCode: "AF",
-	})
+	)
 
 	require.NoError(t, err)
+	require.Empty(t, warnings)
 }
 
 func TestRecordInboundFreightInvoice_AcceptedOfferStampsCarrierAndShipment(t *testing.T) {

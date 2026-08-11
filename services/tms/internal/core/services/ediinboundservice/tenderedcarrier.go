@@ -87,7 +87,7 @@ func (s *Service) routeTenderedShipmentStatus(
 		}
 		return nil, err
 	}
-	err = s.ediService.RecordTenderedShipmentStatus(
+	warnings, err := s.ediService.RecordTenderedShipmentStatus(
 		ctx,
 		&ediservice.RecordTenderedShipmentStatusRequest{
 			TenantInfo: pagination.TenantInfo{
@@ -117,7 +117,15 @@ func (s *Service) routeTenderedShipmentStatus(
 		}
 		return nil, err
 	}
-	return nil, nil
+	if len(warnings) > 0 {
+		s.l.Info(
+			"EDI tendered carrier shipment status produced stop actual warnings",
+			zap.String("offerId", offer.ID.String()),
+			zap.String("fileId", file.ID.String()),
+			zap.Strings("warnings", warnings),
+		)
+	}
+	return warnings, nil
 }
 
 func (s *Service) resolveFreightInvoiceOffer(

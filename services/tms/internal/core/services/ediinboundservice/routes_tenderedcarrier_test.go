@@ -34,9 +34,21 @@ type tenderedCarrierFixture struct {
 	userRepo      *mocks.MockUserRepository
 	eventRepo     *mocks.MockShipmentEventRepository
 	invoiceRepo   *mocks.MockEDICarrierInvoiceRepository
+	moveRepo      *mocks.MockShipmentMoveRepository
+	moveSvc       *mocks.MockShipmentMoveService
 }
 
 func newTenderedCarrierFixture(t *testing.T) *tenderedCarrierFixture {
+	t.Helper()
+	return buildTenderedCarrierFixture(t, false)
+}
+
+func newTenderedCarrierFixtureWithStopActuals(t *testing.T) *tenderedCarrierFixture {
+	t.Helper()
+	return buildTenderedCarrierFixture(t, true)
+}
+
+func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCarrierFixture {
 	t.Helper()
 
 	orgID := pulid.MustNew("org_")
@@ -64,13 +76,20 @@ func newTenderedCarrierFixture(t *testing.T) *tenderedCarrierFixture {
 		eventRepo:     mocks.NewMockShipmentEventRepository(t),
 		invoiceRepo:   mocks.NewMockEDICarrierInvoiceRepository(t),
 	}
-	ediSvc := ediservice.New(ediservice.Params{
+	params := ediservice.Params{
 		Logger:              zap.NewNop(),
 		ShipmentCommentRepo: fixture.commentRepo,
 		UserRepo:            fixture.userRepo,
 		ShipmentEventRepo:   fixture.eventRepo,
 		CarrierInvoiceRepo:  fixture.invoiceRepo,
-	})
+	}
+	if withStopActuals {
+		fixture.moveRepo = mocks.NewMockShipmentMoveRepository(t)
+		fixture.moveSvc = mocks.NewMockShipmentMoveService(t)
+		params.ShipmentMoveRepo = fixture.moveRepo
+		params.ShipmentMoves = fixture.moveSvc
+	}
+	ediSvc := ediservice.New(params)
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
 		metrics:             metrics.NewEDI(nil, zap.NewNop(), false),
@@ -293,6 +312,194 @@ func TestRouteShipmentStatus_OfferBusinessErrorBecomesWarning(t *testing.T) {
 	require.Len(t, warnings, 1)
 	require.Contains(t, warnings[0], offer.ID.String())
 	require.Contains(t, warnings[0], "was not applied")
+}
+
+func (f *tenderedCarrierFixture) tenderedMoveWithStops(
+	moveID pulid.ID,
+) (*shipment.ShipmentMove, *shipment.Stop, *shipment.Stop) {
+	origin := &shipment.Stop{
+		ID:       pulid.MustNew("stp_"),
+		Type:     shipment.StopTypePickup,
+		Status:   shipment.StopStatusNew,
+		Sequence: 0,
+	}
+	destination := &shipment.Stop{
+		ID:       pulid.MustNew("stp_"),
+		Type:     shipment.StopTypeDelivery,
+		Status:   shipment.StopStatusNew,
+		Sequence: 1,
+	}
+	move := &shipment.ShipmentMove{
+		ID:     moveID,
+		Status: shipment.MoveStatusAssigned,
+		Stops:  []*shipment.Stop{origin, destination},
+	}
+	return move, origin, destination
+}
+
+func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderedCarrierFixtureWithStopActuals(t)
+	offer := fixture.acceptedOffer()
+	moveID := pulid.MustNew("sm_")
+	offer.Tender.ShipmentMoveID = moveID
+	fixture.tenderRepo.acceptedOffer = offer
+	fixture.expectRecipientMiss()
+	fixture.expectSystemUser()
+	fixture.commentRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+				return comment, nil
+			},
+		).
+		Once()
+	fixture.eventRepo.EXPECT().
+		Insert(mock.Anything, mock.AnythingOfType("*shipmentevent.Event")).
+		Return(nil).
+		Once()
+
+	move, origin, _ := fixture.tenderedMoveWithStops(moveID)
+	fixture.moveRepo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetMoveByIDRequest) bool {
+			return req.MoveID == moveID && req.ExpandMoveDetails
+		})).
+		Return(move, nil).
+		Once()
+	var recorded *repositories.RecordStopActualRequest
+	fixture.moveSvc.EXPECT().
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		RunAndReturn(
+			func(_ context.Context, req *repositories.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
+				recorded = req
+				return move, nil
+			},
+		).
+		Once()
+
+	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "X3"))
+	warnings, err := fixture.service.routeShipmentStatus(
+		t.Context(),
+		fixture.file,
+		fixture.partner,
+		transaction,
+	)
+
+	require.NoError(t, err)
+	require.Empty(t, warnings)
+	require.NotNil(t, recorded)
+	require.Equal(t, repositories.StopActualActionArrive, recorded.Action)
+	require.Equal(t, origin.ID, recorded.StopID)
+	require.Equal(t, moveID, recorded.MoveID)
+	require.NotNil(t, recorded.OccurredAt)
+	require.EqualValues(t, 1767787200, *recorded.OccurredAt)
+}
+
+func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderedCarrierFixtureWithStopActuals(t)
+	offer := fixture.acceptedOffer()
+	moveID := pulid.MustNew("sm_")
+	offer.Tender.ShipmentMoveID = moveID
+	fixture.tenderRepo.acceptedOffer = offer
+	fixture.expectRecipientMiss()
+	fixture.expectSystemUser()
+	fixture.commentRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+				return comment, nil
+			},
+		).
+		Once()
+	fixture.eventRepo.EXPECT().
+		Insert(mock.Anything, mock.AnythingOfType("*shipmentevent.Event")).
+		Return(nil).
+		Once()
+
+	move, _, destination := fixture.tenderedMoveWithStops(moveID)
+	fixture.moveRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetMoveByIDRequest")).
+		Return(move, nil).
+		Once()
+	recorded := make([]*repositories.RecordStopActualRequest, 0, 2)
+	fixture.moveSvc.EXPECT().
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		RunAndReturn(
+			func(_ context.Context, req *repositories.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
+				recorded = append(recorded, req)
+				return move, nil
+			},
+		).
+		Times(2)
+
+	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "D1"))
+	warnings, err := fixture.service.routeShipmentStatus(
+		t.Context(),
+		fixture.file,
+		fixture.partner,
+		transaction,
+	)
+
+	require.NoError(t, err)
+	require.Empty(t, warnings)
+	require.Len(t, recorded, 2)
+	require.Equal(t, repositories.StopActualActionArrive, recorded[0].Action)
+	require.Equal(t, repositories.StopActualActionDepart, recorded[1].Action)
+	require.Equal(t, destination.ID, recorded[0].StopID)
+	require.Equal(t, destination.ID, recorded[1].StopID)
+}
+
+func TestRouteShipmentStatus_StopActualBusinessErrorBecomesWarningKeepsComment(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderedCarrierFixtureWithStopActuals(t)
+	offer := fixture.acceptedOffer()
+	moveID := pulid.MustNew("sm_")
+	offer.Tender.ShipmentMoveID = moveID
+	fixture.tenderRepo.acceptedOffer = offer
+	fixture.expectRecipientMiss()
+	fixture.expectSystemUser()
+	var recordedComment *shipment.ShipmentComment
+	fixture.commentRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+				recordedComment = comment
+				return comment, nil
+			},
+		).
+		Once()
+	fixture.eventRepo.EXPECT().
+		Insert(mock.Anything, mock.AnythingOfType("*shipmentevent.Event")).
+		Return(nil).
+		Once()
+
+	move, _, _ := fixture.tenderedMoveWithStops(moveID)
+	fixture.moveRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetMoveByIDRequest")).
+		Return(move, nil).
+		Once()
+	fixture.moveSvc.EXPECT().
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		Return(nil, errortypes.NewBusinessError("Complete the earlier stops on this load first")).
+		Once()
+
+	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "X1"))
+	warnings, err := fixture.service.routeShipmentStatus(
+		t.Context(),
+		fixture.file,
+		fixture.partner,
+		transaction,
+	)
+
+	require.NoError(t, err)
+	require.Len(t, warnings, 1)
+	require.Contains(t, warnings[0], "Complete the earlier stops on this load first")
+	require.NotNil(t, recordedComment)
+	require.Contains(t, recordedComment.Comment, "X1")
 }
 
 func TestRouteShipmentStatus_OfferInfrastructureErrorPropagates(t *testing.T) {

@@ -175,16 +175,19 @@ type RecordTenderedShipmentStatusRequest struct {
 }
 
 // RecordTenderedShipmentStatus applies a carrier 214 that matched an accepted
-// tender offer instead of a tender recipient row. It deliberately writes only
-// a shipment comment and a shipment event — no recipient row is created and
-// the shipment's tender status is never touched.
+// tender offer instead of a tender recipient row. The shipment comment and
+// shipment event are always written — no recipient row is created and the
+// shipment's tender status is never touched. Status codes that carry an
+// arrival/departure meaning additionally drive the move's stop actuals;
+// business rejections from that pipeline surface as warnings rather than
+// failing the inbound routing.
 func (s *Service) RecordTenderedShipmentStatus(
 	ctx context.Context,
 	req *RecordTenderedShipmentStatusRequest,
-) error {
+) ([]string, error) {
 	if req == nil || req.Offer == nil || req.Offer.Tender == nil ||
 		req.Offer.Tender.ShipmentID.IsNil() {
-		return errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"offer",
 			errortypes.ErrRequired,
 			"An accepted tender offer with its tender is required for status processing",
@@ -210,9 +213,20 @@ func (s *Service) RecordTenderedShipmentStatus(
 		comment,
 		metadata,
 	); err != nil {
-		return err
+		return nil, err
 	}
+	if err := s.recordTenderedShipmentStatusEvent(ctx, req, shipmentID); err != nil {
+		return nil, err
+	}
+	return s.applyTendered214StopActuals(ctx, req)
+}
 
+func (s *Service) recordTenderedShipmentStatusEvent(
+	ctx context.Context,
+	req *RecordTenderedShipmentStatusRequest,
+	shipmentID pulid.ID,
+) error {
+	offer := req.Offer
 	if s.shipmentEventRepo == nil {
 		return nil
 	}
