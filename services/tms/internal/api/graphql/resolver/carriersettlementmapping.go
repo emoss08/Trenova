@@ -168,6 +168,8 @@ func carrierSettlementControlFromInput(
 		AutoGenerateBatches:                     input.AutoGenerateBatches,
 		AutoPostOnApprove:                       input.AutoPostOnApprove,
 		VarianceToleranceMinor:                  int64(input.VarianceToleranceMinor),
+		AutoMatchInboundInvoices:                input.AutoMatchInboundInvoices,
+		AutoAcceptWithinTolerance:               input.AutoAcceptWithinTolerance,
 		DefaultAPAccountID:                      apAccountID,
 		DefaultPurchasedTransportationAccountID: expenseAccountID,
 	}, nil

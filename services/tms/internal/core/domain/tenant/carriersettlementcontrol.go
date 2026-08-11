@@ -30,6 +30,8 @@ type CarrierSettlementControl struct {
 	AutoGenerateBatches                     bool               `json:"autoGenerateBatches"                     bun:"auto_generate_batches,type:BOOLEAN,notnull,default:false"`
 	AutoPostOnApprove                       bool               `json:"autoPostOnApprove"                       bun:"auto_post_on_approve,type:BOOLEAN,notnull,default:false"`
 	VarianceToleranceMinor                  int64              `json:"varianceToleranceMinor"                  bun:"variance_tolerance_minor,type:BIGINT,notnull,default:0"`
+	AutoMatchInboundInvoices                bool               `json:"autoMatchInboundInvoices"                bun:"auto_match_inbound_invoices,type:BOOLEAN,notnull,default:false"`
+	AutoAcceptWithinTolerance               bool               `json:"autoAcceptWithinTolerance"               bun:"auto_accept_within_tolerance,type:BOOLEAN,notnull,default:false"`
 	DefaultAPAccountID                      *pulid.ID          `json:"defaultApAccountId"                      bun:"default_ap_account_id,type:VARCHAR(100),nullzero"`
 	DefaultPurchasedTransportationAccountID *pulid.ID          `json:"defaultPurchasedTransportationAccountId" bun:"default_purchased_transportation_account_id,type:VARCHAR(100),nullzero"`
 

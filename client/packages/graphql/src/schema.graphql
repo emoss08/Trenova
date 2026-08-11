@@ -1231,7 +1231,15 @@ purchased-transportation cost accrues, pay period cadence, batch automation,
 invoice-match variance tolerance, and GL account defaults.
 """
 type CarrierSettlementControl {
+  """
+  When on (and auto-match is on), auto-created matches within the variance tolerance are resolved into the settlement pool without review.
+  """
+  autoAcceptWithinTolerance: Boolean!
   autoGenerateBatches: Boolean!
+  """
+  When on, inbound EDI 210 invoices that resolve to an accepted tender offer are matched to their carrier assignment automatically.
+  """
+  autoMatchInboundInvoices: Boolean!
   """
   When on, approving a carrier settlement immediately posts it to the general ledger.
   """
@@ -10021,7 +10029,9 @@ input UpcomingWorkerPTOInput {
 }
 
 input UpdateCarrierSettlementControlInput {
+  autoAcceptWithinTolerance: Boolean!
   autoGenerateBatches: Boolean!
+  autoMatchInboundInvoices: Boolean!
   autoPostOnApprove: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID

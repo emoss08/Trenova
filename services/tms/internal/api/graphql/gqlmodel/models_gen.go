@@ -4714,6 +4714,8 @@ type UpdateCarrierSettlementControlInput struct {
 	AutoGenerateBatches                     bool                      `json:"autoGenerateBatches"`
 	AutoPostOnApprove                       bool                      `json:"autoPostOnApprove"`
 	VarianceToleranceMinor                  int                       `json:"varianceToleranceMinor"`
+	AutoMatchInboundInvoices                bool                      `json:"autoMatchInboundInvoices"`
+	AutoAcceptWithinTolerance               bool                      `json:"autoAcceptWithinTolerance"`
 	DefaultApAccountID                      *string                   `json:"defaultApAccountId,omitempty"`
 	DefaultPurchasedTransportationAccountID *string                   `json:"defaultPurchasedTransportationAccountId,omitempty"`
 }

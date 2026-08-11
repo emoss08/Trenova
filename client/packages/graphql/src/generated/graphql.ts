@@ -2591,7 +2591,9 @@ export type UpcomingWorkerPtoInput = {
 };
 
 export type UpdateCarrierSettlementControlInput = {
+  autoAcceptWithinTolerance: boolean;
   autoGenerateBatches: boolean;
+  autoMatchInboundInvoices: boolean;
   autoPostOnApprove: boolean;
   defaultApAccountId?: string | number | null | undefined;
   defaultPurchasedTransportationAccountId?: string | number | null | undefined;
@@ -3124,7 +3126,7 @@ export type CarrierCostEventTableQuery = { carrierCostEvents: { totalCount: numb
 export type CarrierSettlementControlQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CarrierSettlementControlQuery = { carrierSettlementControl: { id: string, organizationId: string, businessUnitId: string, payTrigger: SettlementPayTrigger, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, autoGenerateBatches: boolean, autoPostOnApprove: boolean, varianceToleranceMinor: number, defaultApAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, version: number } };
+export type CarrierSettlementControlQuery = { carrierSettlementControl: { id: string, organizationId: string, businessUnitId: string, payTrigger: SettlementPayTrigger, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, autoGenerateBatches: boolean, autoPostOnApprove: boolean, varianceToleranceMinor: number, autoMatchInboundInvoices: boolean, autoAcceptWithinTolerance: boolean, defaultApAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, version: number } };
 
 export type CurrentCarrierSettlementPeriodQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -10690,12 +10692,14 @@ export const CarrierSettlementControlDocument = new TypedDocumentString(`
     autoGenerateBatches
     autoPostOnApprove
     varianceToleranceMinor
+    autoMatchInboundInvoices
+    autoAcceptWithinTolerance
     defaultApAccountId
     defaultPurchasedTransportationAccountId
     version
   }
 }
-    `, {"hash":"sha256:2bf7c10b84e3df025b1094725b81bd351278665da7d2c6f5f7def5c9b3d70966"}) as unknown as TypedDocumentString<CarrierSettlementControlQuery, CarrierSettlementControlQueryVariables>;
+    `, {"hash":"sha256:163a29bd917af8c9a666cbe4fb7b3719add8334156a43b084a0cda9ae286e360"}) as unknown as TypedDocumentString<CarrierSettlementControlQuery, CarrierSettlementControlQueryVariables>;
 export const CurrentCarrierSettlementPeriodDocument = new TypedDocumentString(`
     query CurrentCarrierSettlementPeriod {
   currentCarrierSettlementPeriod {

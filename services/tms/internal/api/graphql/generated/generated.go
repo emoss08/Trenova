@@ -996,7 +996,9 @@ type ComplexityRoot struct {
 	}
 
 	CarrierSettlementControl struct {
+		AutoAcceptWithinTolerance               func(childComplexity int) int
 		AutoGenerateBatches                     func(childComplexity int) int
+		AutoMatchInboundInvoices                func(childComplexity int) int
 		AutoPostOnApprove                       func(childComplexity int) int
 		BusinessUnitID                          func(childComplexity int) int
 		CreatedAt                               func(childComplexity int) int
@@ -11479,12 +11481,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.CarrierSettlementConnection.TotalCount(childComplexity), true
 
+	case "CarrierSettlementControl.autoAcceptWithinTolerance":
+		if e.ComplexityRoot.CarrierSettlementControl.AutoAcceptWithinTolerance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSettlementControl.AutoAcceptWithinTolerance(childComplexity), true
 	case "CarrierSettlementControl.autoGenerateBatches":
 		if e.ComplexityRoot.CarrierSettlementControl.AutoGenerateBatches == nil {
 			break
 		}
 
 		return e.ComplexityRoot.CarrierSettlementControl.AutoGenerateBatches(childComplexity), true
+	case "CarrierSettlementControl.autoMatchInboundInvoices":
+		if e.ComplexityRoot.CarrierSettlementControl.AutoMatchInboundInvoices == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierSettlementControl.AutoMatchInboundInvoices(childComplexity), true
 	case "CarrierSettlementControl.autoPostOnApprove":
 		if e.ComplexityRoot.CarrierSettlementControl.AutoPostOnApprove == nil {
 			break
@@ -42668,6 +42682,10 @@ type CarrierSettlementControl {
   autoPostOnApprove: Boolean!
   "Invoice totals within this many minor units of the buy rate auto-match; larger gaps flag a variance."
   varianceToleranceMinor: Int!
+  "When on, inbound EDI 210 invoices that resolve to an accepted tender offer are matched to their carrier assignment automatically."
+  autoMatchInboundInvoices: Boolean!
+  "When on (and auto-match is on), auto-created matches within the variance tolerance are resolved into the settlement pool without review."
+  autoAcceptWithinTolerance: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
   version: Int!
@@ -42812,6 +42830,8 @@ input UpdateCarrierSettlementControlInput {
   autoGenerateBatches: Boolean!
   autoPostOnApprove: Boolean!
   varianceToleranceMinor: Int!
+  autoMatchInboundInvoices: Boolean!
+  autoAcceptWithinTolerance: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
 }
@@ -54318,6 +54338,10 @@ func (ec *executionContext) childFields_CarrierSettlementControl(ctx context.Con
 		return ec.fieldContext_CarrierSettlementControl_autoPostOnApprove(ctx, field)
 	case "varianceToleranceMinor":
 		return ec.fieldContext_CarrierSettlementControl_varianceToleranceMinor(ctx, field)
+	case "autoMatchInboundInvoices":
+		return ec.fieldContext_CarrierSettlementControl_autoMatchInboundInvoices(ctx, field)
+	case "autoAcceptWithinTolerance":
+		return ec.fieldContext_CarrierSettlementControl_autoAcceptWithinTolerance(ctx, field)
 	case "defaultApAccountId":
 		return ec.fieldContext_CarrierSettlementControl_defaultApAccountId(ctx, field)
 	case "defaultPurchasedTransportationAccountId":
@@ -87917,6 +87941,52 @@ func (ec *executionContext) _CarrierSettlementControl_varianceToleranceMinor(ctx
 }
 func (ec *executionContext) fieldContext_CarrierSettlementControl_varianceToleranceMinor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CarrierSettlementControl", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierSettlementControl_autoMatchInboundInvoices(ctx context.Context, field graphql.CollectedField, obj *tenant.CarrierSettlementControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierSettlementControl_autoMatchInboundInvoices(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AutoMatchInboundInvoices, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierSettlementControl_autoMatchInboundInvoices(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierSettlementControl", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierSettlementControl_autoAcceptWithinTolerance(ctx context.Context, field graphql.CollectedField, obj *tenant.CarrierSettlementControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierSettlementControl_autoAcceptWithinTolerance(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AutoAcceptWithinTolerance, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierSettlementControl_autoAcceptWithinTolerance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierSettlementControl", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _CarrierSettlementControl_defaultApAccountId(ctx context.Context, field graphql.CollectedField, obj *tenant.CarrierSettlementControl) (ret graphql.Marshaler) {
@@ -218600,7 +218670,7 @@ func (ec *executionContext) unmarshalInputUpdateCarrierSettlementControlInput(ct
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"version", "payTrigger", "payPeriodFrequency", "periodEndDayOfWeek", "payDelayDays", "autoGenerateBatches", "autoPostOnApprove", "varianceToleranceMinor", "defaultApAccountId", "defaultPurchasedTransportationAccountId"}
+	fieldsInOrder := [...]string{"version", "payTrigger", "payPeriodFrequency", "periodEndDayOfWeek", "payDelayDays", "autoGenerateBatches", "autoPostOnApprove", "varianceToleranceMinor", "autoMatchInboundInvoices", "autoAcceptWithinTolerance", "defaultApAccountId", "defaultPurchasedTransportationAccountId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -218663,6 +218733,20 @@ func (ec *executionContext) unmarshalInputUpdateCarrierSettlementControlInput(ct
 				return it, err
 			}
 			it.VarianceToleranceMinor = data
+		case "autoMatchInboundInvoices":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoMatchInboundInvoices"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoMatchInboundInvoices = data
+		case "autoAcceptWithinTolerance":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoAcceptWithinTolerance"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoAcceptWithinTolerance = data
 		case "defaultApAccountId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultApAccountId"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
@@ -226251,6 +226335,16 @@ func (ec *executionContext) _CarrierSettlementControl(ctx context.Context, sel a
 			}
 		case "varianceToleranceMinor":
 			out.Values[i] = ec._CarrierSettlementControl_varianceToleranceMinor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "autoMatchInboundInvoices":
+			out.Values[i] = ec._CarrierSettlementControl_autoMatchInboundInvoices(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "autoAcceptWithinTolerance":
+			out.Values[i] = ec._CarrierSettlementControl_autoAcceptWithinTolerance(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

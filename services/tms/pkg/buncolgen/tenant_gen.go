@@ -1123,6 +1123,8 @@ var CarrierSettlementControlColumns = struct {
 	AutoGenerateBatches                     Column // "auto_generate_batches" → qualified: "carstlc.auto_generate_batches"
 	AutoPostOnApprove                       Column // "auto_post_on_approve" → qualified: "carstlc.auto_post_on_approve"
 	VarianceToleranceMinor                  Column // "variance_tolerance_minor" → qualified: "carstlc.variance_tolerance_minor"
+	AutoMatchInboundInvoices                Column // "auto_match_inbound_invoices" → qualified: "carstlc.auto_match_inbound_invoices"
+	AutoAcceptWithinTolerance               Column // "auto_accept_within_tolerance" → qualified: "carstlc.auto_accept_within_tolerance"
 	DefaultAPAccountID                      Column // "default_ap_account_id" → qualified: "carstlc.default_ap_account_id"
 	DefaultPurchasedTransportationAccountID Column // "default_purchased_transportation_account_id" → qualified: "carstlc.default_purchased_transportation_account_id"
 	Version                                 Column // "version" → qualified: "carstlc.version"
@@ -1139,6 +1141,8 @@ var CarrierSettlementControlColumns = struct {
 	AutoGenerateBatches:                     NewColumn("auto_generate_batches", "carstlc"),
 	AutoPostOnApprove:                       NewColumn("auto_post_on_approve", "carstlc"),
 	VarianceToleranceMinor:                  NewColumn("variance_tolerance_minor", "carstlc"),
+	AutoMatchInboundInvoices:                NewColumn("auto_match_inbound_invoices", "carstlc"),
+	AutoAcceptWithinTolerance:               NewColumn("auto_accept_within_tolerance", "carstlc"),
 	DefaultAPAccountID:                      NewColumn("default_ap_account_id", "carstlc"),
 	DefaultPurchasedTransportationAccountID: NewColumn("default_purchased_transportation_account_id", "carstlc"),
 	Version:                                 NewColumn("version", "carstlc"),
@@ -1151,21 +1155,23 @@ var CarrierSettlementControlColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by CarrierSettlementControl.GetStaticFieldMap().
 var CarrierSettlementControlFieldMap = map[string]string{
-	"id":                     "id",
-	"businessUnitId":         "business_unit_id",
-	"organizationId":         "organization_id",
-	"payTrigger":             "pay_trigger",
-	"payPeriodFrequency":     "pay_period_frequency",
-	"periodEndDayOfWeek":     "period_end_day_of_week",
-	"payDelayDays":           "pay_delay_days",
-	"autoGenerateBatches":    "auto_generate_batches",
-	"autoPostOnApprove":      "auto_post_on_approve",
-	"varianceToleranceMinor": "variance_tolerance_minor",
-	"defaultApAccountId":     "default_ap_account_id",
+	"id":                                      "id",
+	"businessUnitId":                          "business_unit_id",
+	"organizationId":                          "organization_id",
+	"payTrigger":                              "pay_trigger",
+	"payPeriodFrequency":                      "pay_period_frequency",
+	"periodEndDayOfWeek":                      "period_end_day_of_week",
+	"payDelayDays":                            "pay_delay_days",
+	"autoGenerateBatches":                     "auto_generate_batches",
+	"autoPostOnApprove":                       "auto_post_on_approve",
+	"varianceToleranceMinor":                  "variance_tolerance_minor",
+	"autoMatchInboundInvoices":                "auto_match_inbound_invoices",
+	"autoAcceptWithinTolerance":               "auto_accept_within_tolerance",
+	"defaultApAccountId":                      "default_ap_account_id",
 	"defaultPurchasedTransportationAccountId": "default_purchased_transportation_account_id",
-	"version":   "version",
-	"createdAt": "created_at",
-	"updatedAt": "updated_at",
+	"version":                                 "version",
+	"createdAt":                               "created_at",
+	"updatedAt":                               "updated_at",
 }
 
 // CarrierSettlementControlInsertableColumns lists column names suitable for INSERT statements on the "carrier_settlement_controls" table.
@@ -1181,6 +1187,8 @@ var CarrierSettlementControlInsertableColumns = []string{
 	"auto_generate_batches",
 	"auto_post_on_approve",
 	"variance_tolerance_minor",
+	"auto_match_inbound_invoices",
+	"auto_accept_within_tolerance",
 	"default_ap_account_id",
 	"default_purchased_transportation_account_id",
 	"version",
@@ -1261,6 +1269,8 @@ var CarrierSettlementControlFilter = struct {
 	AutoGenerateBatches                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoGenerateBatches" → DB: "auto_generate_batches"
 	AutoPostOnApprove                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoPostOnApprove" → DB: "auto_post_on_approve"
 	VarianceToleranceMinor                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "varianceToleranceMinor" → DB: "variance_tolerance_minor"
+	AutoMatchInboundInvoices                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoMatchInboundInvoices" → DB: "auto_match_inbound_invoices"
+	AutoAcceptWithinTolerance               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAcceptWithinTolerance" → DB: "auto_accept_within_tolerance"
 	DefaultAPAccountID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultApAccountId" → DB: "default_ap_account_id"
 	DefaultPurchasedTransportationAccountID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultPurchasedTransportationAccountId" → DB: "default_purchased_transportation_account_id"
 	Version                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -1296,6 +1306,12 @@ var CarrierSettlementControlFilter = struct {
 	},
 	VarianceToleranceMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("varianceToleranceMinor", op, value)
+	},
+	AutoMatchInboundInvoices: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoMatchInboundInvoices", op, value)
+	},
+	AutoAcceptWithinTolerance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoAcceptWithinTolerance", op, value)
 	},
 	DefaultAPAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("defaultApAccountId", op, value)

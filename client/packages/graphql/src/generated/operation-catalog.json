@@ -1306,14 +1306,14 @@
       "kind": "query",
       "domain": "carrier-settlement",
       "sourceFile": "src/operations/carrier-settlement/operations.graphql",
-      "hash": "sha256:2bf7c10b84e3df025b1094725b81bd351278665da7d2c6f5f7def5c9b3d70966",
+      "hash": "sha256:163a29bd917af8c9a666cbe4fb7b3719add8334156a43b084a0cda9ae286e360",
       "rootFields": [
         "carrierSettlementControl"
       ],
       "variables": [],
       "fragments": [],
       "usages": [],
-      "sdl": "query CarrierSettlementControl {\n  carrierSettlementControl {\n    id\n    organizationId\n    businessUnitId\n    payTrigger\n    payPeriodFrequency\n    periodEndDayOfWeek\n    payDelayDays\n    autoGenerateBatches\n    autoPostOnApprove\n    varianceToleranceMinor\n    defaultApAccountId\n    defaultPurchasedTransportationAccountId\n    version\n  }\n}"
+      "sdl": "query CarrierSettlementControl {\n  carrierSettlementControl {\n    id\n    organizationId\n    businessUnitId\n    payTrigger\n    payPeriodFrequency\n    periodEndDayOfWeek\n    payDelayDays\n    autoGenerateBatches\n    autoPostOnApprove\n    varianceToleranceMinor\n    autoMatchInboundInvoices\n    autoAcceptWithinTolerance\n    defaultApAccountId\n    defaultPurchasedTransportationAccountId\n    version\n  }\n}"
     },
     {
       "name": "CarrierSettlementDetail",
@@ -14977,7 +14977,17 @@
       "kind": "input",
       "fields": [
         {
+          "name": "autoAcceptWithinTolerance",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
           "name": "autoGenerateBatches",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "autoMatchInboundInvoices",
           "type": "Boolean!",
           "defaultValue": null
         },
@@ -15027,7 +15037,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input UpdateCarrierSettlementControlInput {\n  autoGenerateBatches: Boolean!\n  autoPostOnApprove: Boolean!\n  defaultApAccountId: ID\n  defaultPurchasedTransportationAccountId: ID\n  payDelayDays: Int!\n  payPeriodFrequency: PayPeriodFrequency!\n  payTrigger: SettlementPayTrigger!\n  periodEndDayOfWeek: Int!\n  varianceToleranceMinor: Int!\n  version: Int!\n}"
+      "sdl": "input UpdateCarrierSettlementControlInput {\n  autoAcceptWithinTolerance: Boolean!\n  autoGenerateBatches: Boolean!\n  autoMatchInboundInvoices: Boolean!\n  autoPostOnApprove: Boolean!\n  defaultApAccountId: ID\n  defaultPurchasedTransportationAccountId: ID\n  payDelayDays: Int!\n  payPeriodFrequency: PayPeriodFrequency!\n  payTrigger: SettlementPayTrigger!\n  periodEndDayOfWeek: Int!\n  varianceToleranceMinor: Int!\n  version: Int!\n}"
     },
     "UpdateDashControlInput": {
       "kind": "input",

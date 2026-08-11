@@ -130,6 +130,8 @@ func (r *repository) Update(
 		Set(cols.AutoGenerateBatches.Set(), entity.AutoGenerateBatches).
 		Set(cols.AutoPostOnApprove.Set(), entity.AutoPostOnApprove).
 		Set(cols.VarianceToleranceMinor.Set(), entity.VarianceToleranceMinor).
+		Set(cols.AutoMatchInboundInvoices.Set(), entity.AutoMatchInboundInvoices).
+		Set(cols.AutoAcceptWithinTolerance.Set(), entity.AutoAcceptWithinTolerance).
 		Set(cols.DefaultAPAccountID.Set(), entity.DefaultAPAccountID).
 		Set(
 			cols.DefaultPurchasedTransportationAccountID.Set(),

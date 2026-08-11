@@ -244,6 +244,10 @@ type CarrierSettlementControl {
   autoPostOnApprove: Boolean!
   "Invoice totals within this many minor units of the buy rate auto-match; larger gaps flag a variance."
   varianceToleranceMinor: Int!
+  "When on, inbound EDI 210 invoices that resolve to an accepted tender offer are matched to their carrier assignment automatically."
+  autoMatchInboundInvoices: Boolean!
+  "When on (and auto-match is on), auto-created matches within the variance tolerance are resolved into the settlement pool without review."
+  autoAcceptWithinTolerance: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
   version: Int!
@@ -388,6 +392,8 @@ input UpdateCarrierSettlementControlInput {
   autoGenerateBatches: Boolean!
   autoPostOnApprove: Boolean!
   varianceToleranceMinor: Int!
+  autoMatchInboundInvoices: Boolean!
+  autoAcceptWithinTolerance: Boolean!
   defaultApAccountId: ID
   defaultPurchasedTransportationAccountId: ID
 }

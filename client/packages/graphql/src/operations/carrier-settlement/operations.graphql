@@ -215,6 +215,8 @@ query CarrierSettlementControl {
     autoGenerateBatches
     autoPostOnApprove
     varianceToleranceMinor
+    autoMatchInboundInvoices
+    autoAcceptWithinTolerance
     defaultApAccountId
     defaultPurchasedTransportationAccountId
     version

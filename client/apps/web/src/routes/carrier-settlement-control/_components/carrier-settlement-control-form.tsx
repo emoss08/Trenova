@@ -28,7 +28,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { FormProvider, useForm, useFormContext, type Resolver } from "react-hook-form";
+import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 
 export default function CarrierSettlementControlForm() {
@@ -50,6 +50,8 @@ export default function CarrierSettlementControlForm() {
       autoGenerateBatches: data.autoGenerateBatches,
       autoPostOnApprove: data.autoPostOnApprove,
       varianceTolerance: data.varianceToleranceMinor / 100,
+      autoMatchInboundInvoices: data.autoMatchInboundInvoices,
+      autoAcceptWithinTolerance: data.autoAcceptWithinTolerance,
       defaultApAccountId: data.defaultApAccountId ?? null,
       defaultPurchasedTransportationAccountId: data.defaultPurchasedTransportationAccountId ?? null,
     },
@@ -67,6 +69,8 @@ export default function CarrierSettlementControlForm() {
         autoGenerateBatches: values.autoGenerateBatches,
         autoPostOnApprove: values.autoPostOnApprove,
         varianceToleranceMinor: Math.round(values.varianceTolerance * 100),
+        autoMatchInboundInvoices: values.autoMatchInboundInvoices,
+        autoAcceptWithinTolerance: values.autoAcceptWithinTolerance,
         defaultApAccountId: values.defaultApAccountId || undefined,
         defaultPurchasedTransportationAccountId:
           values.defaultPurchasedTransportationAccountId || undefined,
@@ -193,6 +197,7 @@ function WorkflowCard() {
 
 function MatchingCard() {
   const { control } = useFormContext<CarrierSettlementControlFormValues>();
+  const autoMatchInboundInvoices = useWatch({ control, name: "autoMatchInboundInvoices" });
   return (
     <Card>
       <CardHeader>
@@ -213,6 +218,25 @@ function MatchingCard() {
               decimalScale={2}
               fixedDecimalScale
               description="Invoice totals within this amount of the buy rate auto-match; larger gaps flag a variance for review."
+            />
+          </FormControl>
+        </FormGroup>
+        <FormGroup cols={2} className="mt-2">
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="autoMatchInboundInvoices"
+              label="Auto-Match Inbound Invoices"
+              description="Inbound EDI 210 invoices from tendered carriers are matched to their carrier assignment automatically; gaps beyond the tolerance still land in the review workspace."
+            />
+          </FormControl>
+          <FormControl className={autoMatchInboundInvoices ? undefined : "pl-6 opacity-60"}>
+            <SwitchField
+              control={control}
+              name="autoAcceptWithinTolerance"
+              label="Auto-Accept Within Tolerance"
+              disabled={!autoMatchInboundInvoices}
+              description="Auto-matched invoices within the variance tolerance are resolved into the carrier's settlement pool without review. Requires auto-match."
             />
           </FormControl>
         </FormGroup>
