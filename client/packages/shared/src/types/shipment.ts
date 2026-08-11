@@ -595,6 +595,13 @@ export type SplitMoveResponse = {
   newMove: ShipmentMove;
 };
 
+export type StopActualAction = "Arrive" | "Depart";
+
+export type RecordStopActualPayload = {
+  action: StopActualAction;
+  occurredAt?: number;
+};
+
 export const transferOwnershipSchema = z.object({
   ownerId: z.string().min(1, { error: "Owner is required" }),
 });

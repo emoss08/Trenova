@@ -55,6 +55,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpUpdate),
 		h.splitMove,
 	)
+	moves.POST(
+		"/:moveID/stops/:stopID/record-actual/",
+		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpUpdate),
+		h.recordStopActual,
+	)
 }
 
 type updateStatusRequest struct {
@@ -64,6 +69,11 @@ type updateStatusRequest struct {
 type bulkUpdateStatusRequest struct {
 	MoveIDs []pulid.ID `json:"moveIds"`
 	Status  string     `json:"status"`
+}
+
+type recordStopActualRequest struct {
+	Action     string `json:"action"`
+	OccurredAt *int64 `json:"occurredAt,omitempty"`
 }
 
 type splitMoveRequest struct {
@@ -159,6 +169,63 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, entities)
+}
+
+// @Summary Record a stop actual arrival or departure on a shipment move
+// @ID recordShipmentMoveStopActual
+// @Tags Shipment Moves
+// @Accept json
+// @Produce json
+// @Param moveID path string true "Shipment move ID"
+// @Param stopID path string true "Stop ID"
+// @Param request body recordStopActualRequest true "Stop actual request"
+// @Success 200 {object} shipment.ShipmentMove
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /shipment-moves/{moveID}/stops/{stopID}/record-actual/ [post]
+func (h *Handler) recordStopActual(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	moveID, err := pulid.MustParse(c.Param("moveID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	stopID, err := pulid.MustParse(c.Param("stopID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	body := new(recordStopActualRequest)
+	if err = c.ShouldBindJSON(body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	entity, err := h.service.RecordStopActual(
+		c.Request.Context(),
+		&repositories.RecordStopActualRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			MoveID:     moveID,
+			StopID:     stopID,
+			Action:     repositories.StopActualAction(body.Action),
+			OccurredAt: body.OccurredAt,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, entity)
 }
 
 // @Summary Split a shipment move

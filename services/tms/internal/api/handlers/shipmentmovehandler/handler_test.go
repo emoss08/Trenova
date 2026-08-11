@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -82,6 +83,122 @@ func TestShipmentMoveHandler_BulkUpdateStatus_BadJSON(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/shipment-moves/bulk-update-status/").
+		WithDefaultAuthContext().
+		WithBody("{invalid")
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
+}
+
+func TestShipmentMoveHandler_RecordStopActual_Success(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	stopID := pulid.MustNew("stp_")
+	occurredAt := int64(1767787200)
+	service := mocks.NewMockShipmentMoveService(t)
+	service.EXPECT().
+		RecordStopActual(mock.Anything, mock.MatchedBy(func(req *repositories.RecordStopActualRequest) bool {
+			return req.MoveID == moveID &&
+				req.StopID == stopID &&
+				req.TenantInfo.OrgID == testutil.TestOrgID &&
+				req.Action == repositories.StopActualActionArrive &&
+				req.OccurredAt != nil &&
+				*req.OccurredAt == occurredAt
+		})).
+		Return(&shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusInTransit}, nil).
+		Once()
+
+	handler := setupShipmentMoveHandler(t, service)
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath(
+			"/api/v1/shipment-moves/" + moveID.String() + "/stops/" + stopID.String() + "/record-actual/",
+		).
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{"action": "Arrive", "occurredAt": occurredAt})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp shipment.ShipmentMove
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	require.Equal(t, moveID, resp.ID)
+	require.Equal(t, shipment.MoveStatusInTransit, resp.Status)
+}
+
+func TestShipmentMoveHandler_RecordStopActual_DepartWithoutOccurredAt(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	stopID := pulid.MustNew("stp_")
+	service := mocks.NewMockShipmentMoveService(t)
+	service.EXPECT().
+		RecordStopActual(mock.Anything, mock.MatchedBy(func(req *repositories.RecordStopActualRequest) bool {
+			return req.MoveID == moveID &&
+				req.StopID == stopID &&
+				req.Action == repositories.StopActualActionDepart &&
+				req.OccurredAt == nil
+		})).
+		Return(&shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusCompleted}, nil).
+		Once()
+
+	handler := setupShipmentMoveHandler(t, service)
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath(
+			"/api/v1/shipment-moves/" + moveID.String() + "/stops/" + stopID.String() + "/record-actual/",
+		).
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{"action": "Depart"})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+}
+
+func TestShipmentMoveHandler_RecordStopActual_BusinessErrorPassthrough(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	stopID := pulid.MustNew("stp_")
+	service := mocks.NewMockShipmentMoveService(t)
+	service.EXPECT().
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		Return(nil, errortypes.NewBusinessError("You've already arrived at this stop")).
+		Once()
+
+	handler := setupShipmentMoveHandler(t, service)
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath(
+			"/api/v1/shipment-moves/" + moveID.String() + "/stops/" + stopID.String() + "/record-actual/",
+		).
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{"action": "Arrive"})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusUnprocessableEntity, ginCtx.ResponseCode())
+}
+
+func TestShipmentMoveHandler_RecordStopActual_BadJSON(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	stopID := pulid.MustNew("stp_")
+	handler := setupShipmentMoveHandler(t, mocks.NewMockShipmentMoveService(t))
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath(
+			"/api/v1/shipment-moves/" + moveID.String() + "/stops/" + stopID.String() + "/record-actual/",
+		).
 		WithDefaultAuthContext().
 		WithBody("{invalid")
 

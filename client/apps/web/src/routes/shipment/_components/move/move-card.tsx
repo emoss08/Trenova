@@ -20,7 +20,9 @@ import type {
   CarrierAssignment,
   MoveStatus,
   Shipment,
+  ShipmentMove,
   Stop,
+  StopActualAction,
   StopStatus,
   StopType,
 } from "@trenova/shared/types/shipment";
@@ -44,6 +46,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { AssignmentDialog } from "../assignment-dialog";
 import { SplitMoveDialog } from "../shipment-split-move-dialog";
+import { RecordStopActualDialog } from "./record-stop-actual-dialog";
 
 export function MoveCard({
   moveIndex,
@@ -67,6 +70,11 @@ export function MoveCard({
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [cancelCarrierOpen, setCancelCarrierOpen] = useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
+  const [stopActualTarget, setStopActualTarget] = useState<{
+    stopId: string;
+    action: StopActualAction;
+    description: string;
+  } | null>(null);
 
   const stops = move?.stops ?? [];
   const statusConfig = moveStatusConfig[move?.status ?? "New"];
@@ -86,6 +94,8 @@ export function MoveCard({
     !isTerminal &&
     move?.stops?.length === 2 &&
     (move?.status === "New" || move?.status === "Assigned");
+  const canRecordStopActuals =
+    hasId && hasCarrierAssignment && (move?.status === "Assigned" || move?.status === "InTransit");
 
   const unassignMutation = useMutation({
     mutationFn: () => apiService.assignmentService.unassign(move.id!),
@@ -116,6 +126,37 @@ export function MoveCard({
     },
     onError: (error: Error) => {
       toast.error("Failed to cancel carrier assignment", { description: error.message });
+    },
+  });
+
+  const recordStopActualMutation = useMutation({
+    mutationFn: ({
+      stopId,
+      action,
+      occurredAt,
+    }: {
+      stopId: string;
+      action: StopActualAction;
+      occurredAt?: number;
+    }) =>
+      apiService.assignmentService.recordStopActual(move.id!, stopId, {
+        action,
+        ...(occurredAt !== undefined ? { occurredAt } : {}),
+      }),
+    onSuccess: (updatedMove: ShipmentMove, variables) => {
+      setValue(`moves.${moveIndex}.status`, updatedMove.status);
+      setValue(`moves.${moveIndex}.stops`, updatedMove.stops);
+      setStopActualTarget(null);
+      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+      if (move?.shipmentId) {
+        void queryClient.invalidateQueries({ queryKey: ["shipment", move.shipmentId] });
+      }
+      toast.success(variables.action === "Arrive" ? "Arrival recorded" : "Departure recorded", {
+        description: "The stop actuals and move status have been updated.",
+      });
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to record stop actual", { description: error.message });
     },
   });
 
@@ -246,6 +287,14 @@ export function MoveCard({
                   .map(([field, err]) => `${field}: ${err?.message ?? "invalid"}`)
               : [];
 
+            const priorStopsDeparted = stops
+              .slice(0, stopIdx)
+              .every((priorStop) => priorStop.status === "Canceled" || !!priorStop.actualDeparture);
+            const checkCallAction = stopCheckCallAction(
+              stop,
+              canRecordStopActuals && priorStopsDeparted,
+            );
+
             return (
               <StopTimelineItem
                 key={stopTimelineKey(stop, stopIdx)}
@@ -256,6 +305,15 @@ export function MoveCard({
                 showConnector={showConnector}
                 hasErrors={stopHasErrors}
                 errorMessages={stopErrorMessages}
+                checkCallAction={checkCallAction}
+                onCheckCall={() => {
+                  if (!checkCallAction || !stop.id) return;
+                  setStopActualTarget({
+                    stopId: stop.id,
+                    action: checkCallAction,
+                    description: stopDescription(stop),
+                  });
+                }}
               />
             );
           })}
@@ -300,6 +358,23 @@ export function MoveCard({
             carrierName={carrierAssignment?.carrier?.name}
             isSubmitting={cancelCarrierMutation.isPending}
             onConfirm={(reason) => cancelCarrierMutation.mutate(reason)}
+          />
+          <RecordStopActualDialog
+            open={!!stopActualTarget}
+            onOpenChange={(open) => {
+              if (!open) setStopActualTarget(null);
+            }}
+            action={stopActualTarget?.action ?? "Arrive"}
+            stopDescription={stopActualTarget?.description}
+            isSubmitting={recordStopActualMutation.isPending}
+            onConfirm={(occurredAt) => {
+              if (!stopActualTarget) return;
+              recordStopActualMutation.mutate({
+                stopId: stopActualTarget.stopId,
+                action: stopActualTarget.action,
+                occurredAt,
+              });
+            }}
           />
           {canSplit && (
             <SplitMoveDialog
@@ -431,6 +506,19 @@ function stopHasInfo(stop: Stop): boolean {
   );
 }
 
+function stopCheckCallAction(stop: Stop, enabled: boolean): StopActualAction | null {
+  if (!enabled || !stop.id || stop.status === "Canceled") return null;
+  if (!stop.actualArrival) return "Arrive";
+  if (!stop.actualDeparture) return "Depart";
+  return null;
+}
+
+function stopDescription(stop: Stop): string {
+  const label = stopTypeLabels[stop.type];
+  const place = stop.location?.name || stop.addressLine;
+  return place ? `${label} · ${place}` : label;
+}
+
 function stopTimelineKey(stop: Stop, fallbackIndex: number): string {
   return [
     stop.shipmentMoveId,
@@ -450,6 +538,8 @@ function StopTimelineItem({
   showConnector,
   hasErrors,
   errorMessages,
+  checkCallAction,
+  onCheckCall,
 }: {
   stop: Stop;
   isLast: boolean;
@@ -458,6 +548,8 @@ function StopTimelineItem({
   showConnector: boolean;
   hasErrors?: boolean;
   errorMessages?: string[];
+  checkCallAction?: StopActualAction | null;
+  onCheckCall?: () => void;
 }) {
   const status = stop.status ?? "New";
   const statusIcon = getStatusIcon(status, isLast, moveStatus);
@@ -554,6 +646,18 @@ function StopTimelineItem({
           </span>
         )}
       </div>
+
+      {checkCallAction && onCheckCall && (
+        <Button
+          type="button"
+          size="xs"
+          variant="outline"
+          className="mt-1 shrink-0"
+          onClick={onCheckCall}
+        >
+          {checkCallAction === "Arrive" ? "Arrive" : "Depart"}
+        </Button>
+      )}
     </div>
   );
 }
