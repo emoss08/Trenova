@@ -521,8 +521,18 @@ func (s *Service) voidActiveRateConfirmation(
 	active.Status = rateconfirmation.StatusVoided
 	active.VoidedAt = &now
 	active.VoidReason = reason
-	_, err = s.rateConRepo.Update(ctx, active)
-	return err
+	if _, err = s.rateConRepo.Update(ctx, active); err != nil {
+		return err
+	}
+
+	if revokeErr := s.rateConRepo.RevokeTokensForRateConfirmation(
+		ctx, tenantInfo, active.ID, now,
+	); revokeErr != nil {
+		s.l.Warn("failed to revoke rate confirmation tokens",
+			zap.Error(revokeErr),
+			zap.String("rateConfirmationId", active.ID.String()))
+	}
+	return nil
 }
 
 // reaccrueMove runs post-transaction, mirroring how accrual hooks fire

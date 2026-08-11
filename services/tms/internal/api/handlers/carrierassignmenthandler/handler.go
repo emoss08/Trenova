@@ -109,7 +109,7 @@ func (h *Handler) get(c *gin.Context) {
 // @Produce json
 // @Param moveID path string true "Shipment move ID"
 // @Param carrierId query string true "Carrier ID"
-// @Success 200 {object} carrierassignmentservice.EligibilityResult
+// @Success 200 {object} carrier.EligibilityResult
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
