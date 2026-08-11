@@ -320,6 +320,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
 	func(s *carriersettlementservice.Service) services.CarrierCostAccrual { return s },
+	func(s *carriersettlementservice.Service) services.CarrierInvoiceAutoMatcher { return s },
 	carrierassignmentservice.New,
 	func(s *carrierassignmentservice.Service) services.CarrierMoveAssigner { return s },
 	carrierservice.New,

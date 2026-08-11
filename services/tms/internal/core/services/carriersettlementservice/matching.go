@@ -244,35 +244,14 @@ func (s *Service) CreateMatch(
 		return nil, err
 	}
 
-	expectedTotalMinor := money.MinorUnits(assignment.TotalCost)
-	varianceMinor := invoiceTotalMinor - expectedTotalMinor
-	status := carriersettlement.InvoiceMatchStatusMatched
-	if intutils.AbsDiff(varianceMinor, 0) > control.VarianceToleranceMinor {
-		status = carriersettlement.InvoiceMatchStatusVariance
-	}
-
-	assignmentID := assignment.ID
-	match := &carriersettlement.InvoiceMatch{
-		OrganizationID:         req.TenantInfo.OrgID,
-		BusinessUnitID:         req.TenantInfo.BuID,
-		EDICarrierInvoiceID:    req.EDICarrierInvoiceID,
-		DocumentAIExtractionID: req.DocumentAIExtractionID,
-		CarrierID:              carrierID,
-		CarrierAssignmentID:    assignmentID,
-		Status:                 status,
-		InvoiceNumber:          invoiceNumber,
-		InvoiceTotalMinor:      invoiceTotalMinor,
-		ExpectedTotalMinor:     expectedTotalMinor,
-		VarianceMinor:          varianceMinor,
-		CurrencyCode:           assignment.CurrencyCode,
-	}
-	multiErr := errortypes.NewMultiError()
-	match.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	created, err := s.invoiceMatchRepo.Create(ctx, match)
+	created, err := s.createInvoiceMatch(ctx, &invoiceMatchSeed{
+		tenantInfo:             req.TenantInfo,
+		ediCarrierInvoiceID:    req.EDICarrierInvoiceID,
+		documentAIExtractionID: req.DocumentAIExtractionID,
+		carrierID:              carrierID,
+		invoiceNumber:          invoiceNumber,
+		invoiceTotalMinor:      invoiceTotalMinor,
+	}, assignment, control.VarianceToleranceMinor)
 	if err != nil {
 		return nil, err
 	}
@@ -282,6 +261,54 @@ func (s *Service) CreateMatch(
 	s.logInvoiceMatchAudit(ctx, created, nil, actor.UserID, permission.OpCreate,
 		"Carrier invoice match created")
 	return created, nil
+}
+
+type invoiceMatchSeed struct {
+	tenantInfo             pagination.TenantInfo
+	ediCarrierInvoiceID    *pulid.ID
+	documentAIExtractionID *pulid.ID
+	carrierID              pulid.ID
+	invoiceNumber          string
+	invoiceTotalMinor      int64
+}
+
+func matchStatusForVariance(
+	varianceMinor, toleranceMinor int64,
+) carriersettlement.InvoiceMatchStatus {
+	if intutils.AbsDiff(varianceMinor, 0) > toleranceMinor {
+		return carriersettlement.InvoiceMatchStatusVariance
+	}
+	return carriersettlement.InvoiceMatchStatusMatched
+}
+
+func (s *Service) createInvoiceMatch(
+	ctx context.Context,
+	seed *invoiceMatchSeed,
+	assignment *shipment.CarrierAssignment,
+	toleranceMinor int64,
+) (*carriersettlement.InvoiceMatch, error) {
+	expectedTotalMinor := money.MinorUnits(assignment.TotalCost)
+	varianceMinor := seed.invoiceTotalMinor - expectedTotalMinor
+	match := &carriersettlement.InvoiceMatch{
+		OrganizationID:         seed.tenantInfo.OrgID,
+		BusinessUnitID:         seed.tenantInfo.BuID,
+		EDICarrierInvoiceID:    seed.ediCarrierInvoiceID,
+		DocumentAIExtractionID: seed.documentAIExtractionID,
+		CarrierID:              seed.carrierID,
+		CarrierAssignmentID:    assignment.ID,
+		Status:                 matchStatusForVariance(varianceMinor, toleranceMinor),
+		InvoiceNumber:          seed.invoiceNumber,
+		InvoiceTotalMinor:      seed.invoiceTotalMinor,
+		ExpectedTotalMinor:     expectedTotalMinor,
+		VarianceMinor:          varianceMinor,
+		CurrencyCode:           assignment.CurrencyCode,
+	}
+	multiErr := errortypes.NewMultiError()
+	match.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+	return s.invoiceMatchRepo.Create(ctx, match)
 }
 
 func (s *Service) resolveMatchAssignment(
@@ -589,6 +616,10 @@ func (s *Service) logInvoiceMatchAudit(
 		CurrentState:   jsonutils.MustToJSON(current),
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
+	}
+	if userID.IsNil() {
+		params.PrincipalType = serviceports.PrincipalTypeSystem
+		params.PrincipalID = serviceports.SystemPrincipalID
 	}
 	options := []serviceports.LogOption{auditservice.WithComment(comment)}
 	if previous != nil {

@@ -390,7 +390,13 @@ func (s *Service) routeFreightInvoice(
 	if err != nil {
 		return warnings, err
 	}
-	return append(warnings, result.Warnings...), nil
+	warnings = append(warnings, result.Warnings...)
+	if acceptedOffer != nil {
+		warnings = append(
+			warnings,
+			s.autoMatchInboundFreightInvoice(ctx, file, result.Invoice)...)
+	}
+	return warnings, nil
 }
 
 func (s *Service) freightInvoiceRecipient(

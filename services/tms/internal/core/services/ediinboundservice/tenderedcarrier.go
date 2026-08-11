@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -158,4 +159,54 @@ func (s *Service) resolveFreightInvoiceOffer(
 		return nil, nil, err
 	}
 	return offer, nil, nil
+}
+
+// autoMatchInboundFreightInvoice hands a pre-linked tendered-carrier 210 to the
+// settlement auto-matcher. Failures degrade to file warnings — inbound document
+// routing never fails because reconciliation could not run.
+func (s *Service) autoMatchInboundFreightInvoice(
+	ctx context.Context,
+	file *edi.EDIInboundFile,
+	invoice *edi.CarrierInvoice,
+) []string {
+	if s.invoiceMatcher == nil || invoice == nil {
+		return nil
+	}
+	if invoice.CarrierID.IsNil() ||
+		(invoice.ShipmentID.IsNil() && invoice.ProNumber == "") {
+		return nil
+	}
+	result, err := s.invoiceMatcher.AutoMatchInboundInvoice(
+		ctx,
+		&services.AutoMatchInboundInvoiceRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: file.OrganizationID,
+				BuID:  file.BusinessUnitID,
+			},
+			EDICarrierInvoiceID: invoice.ID,
+		},
+	)
+	if err != nil {
+		s.l.Warn(
+			"failed to auto-match inbound EDI carrier invoice",
+			zap.String("invoiceId", invoice.ID.String()),
+			zap.String("fileId", file.ID.String()),
+			zap.Error(err),
+		)
+		return []string{fmt.Sprintf(
+			"carrier invoice %s could not be auto-matched: %s",
+			invoice.InvoiceNumber,
+			err.Error(),
+		)}
+	}
+	if result.Matched {
+		s.l.Info(
+			"auto-matched inbound EDI carrier invoice",
+			zap.String("invoiceId", invoice.ID.String()),
+			zap.String("fileId", file.ID.String()),
+			zap.String("status", result.Status),
+			zap.Bool("autoAccepted", result.AutoAccepted),
+		)
+	}
+	return result.Warnings
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -36,6 +37,14 @@ type tenderedCarrierFixture struct {
 	invoiceRepo   *mocks.MockEDICarrierInvoiceRepository
 	moveRepo      *mocks.MockShipmentMoveRepository
 	moveSvc       *mocks.MockShipmentMoveService
+	matcher       *mocks.MockCarrierInvoiceAutoMatcher
+}
+
+func (f *tenderedCarrierFixture) withInvoiceMatcher(t *testing.T) *mocks.MockCarrierInvoiceAutoMatcher {
+	t.Helper()
+	f.matcher = mocks.NewMockCarrierInvoiceAutoMatcher(t)
+	f.service.invoiceMatcher = f.matcher
+	return f.matcher
 }
 
 func newTenderedCarrierFixture(t *testing.T) *tenderedCarrierFixture {
@@ -663,6 +672,214 @@ func TestRouteFreightInvoice_PerMileOfferLeavesExpectedAmountNull(t *testing.T) 
 	require.NotNil(t, recordedInvoice)
 	require.Equal(t, offer.CarrierID, recordedInvoice.CarrierID)
 	require.False(t, recordedInvoice.ExpectedAmount.Valid)
+}
+
+func TestRouteFreightInvoice_TenderedOfferAutoMatches(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderedCarrierFixture(t)
+	offer := fixture.acceptedOffer()
+	fixture.tenderRepo.acceptedOffer = offer
+	fixture.expectRecipientMiss()
+	fixture.expectSystemUser()
+	matcher := fixture.withInvoiceMatcher(t)
+	fixture.commentRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+				return comment, nil
+			},
+		).
+		Once()
+
+	invoiceID := pulid.MustNew("edici_")
+	fixture.invoiceRepo.EXPECT().
+		CreateCarrierInvoice(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+				entity.ID = invoiceID
+				return entity, nil
+			},
+		).
+		Once()
+	var matchRequest *services.AutoMatchInboundInvoiceRequest
+	matcher.EXPECT().
+		AutoMatchInboundInvoice(mock.Anything, mock.Anything).
+		Run(func(_ context.Context, req *services.AutoMatchInboundInvoiceRequest) {
+			matchRequest = req
+		}).
+		Return(&services.AutoMatchInboundInvoiceResult{
+			Matched:      true,
+			AutoAccepted: true,
+			Status:       "Resolved",
+		}, nil).
+		Once()
+
+	payload := &edi.FreightInvoicePayload{
+		InvoiceNumber:    "INV-1",
+		BOL:              "BOL-42",
+		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
+		ReferenceNumbers: map[string]string{"BM": "BOL-42"},
+	}
+	message := fixture.freightInvoiceMessage(payload)
+	warnings, err := fixture.service.routeFreightInvoice(
+		t.Context(),
+		fixture.file,
+		fixture.partner,
+		message,
+		freightInvoiceTransaction(t),
+	)
+
+	require.NoError(t, err)
+	require.Empty(t, warnings)
+	require.NotNil(t, matchRequest)
+	require.Equal(t, invoiceID, matchRequest.EDICarrierInvoiceID)
+	require.Equal(t, fixture.file.OrganizationID, matchRequest.TenantInfo.OrgID)
+	require.Equal(t, fixture.file.BusinessUnitID, matchRequest.TenantInfo.BuID)
+}
+
+func TestRouteFreightInvoice_AutoMatchWarningsSurfaceOnFile(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderedCarrierFixture(t)
+	offer := fixture.acceptedOffer()
+	fixture.tenderRepo.acceptedOffer = offer
+	fixture.expectRecipientMiss()
+	fixture.expectSystemUser()
+	matcher := fixture.withInvoiceMatcher(t)
+	fixture.commentRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+				return comment, nil
+			},
+		).
+		Once()
+	fixture.invoiceRepo.EXPECT().
+		CreateCarrierInvoice(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+				entity.ID = pulid.MustNew("edici_")
+				return entity, nil
+			},
+		).
+		Once()
+	matcher.EXPECT().
+		AutoMatchInboundInvoice(mock.Anything, mock.Anything).
+		Return(&services.AutoMatchInboundInvoiceResult{
+			Warnings: []string{
+				"carrier invoice INV-1 was not auto-matched: " +
+					"no carrier assignment matches its pro number or shipment reference",
+			},
+		}, nil).
+		Once()
+
+	payload := &edi.FreightInvoicePayload{
+		InvoiceNumber:    "INV-1",
+		BOL:              "BOL-42",
+		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
+		ReferenceNumbers: map[string]string{"BM": "BOL-42"},
+	}
+	message := fixture.freightInvoiceMessage(payload)
+	warnings, err := fixture.service.routeFreightInvoice(
+		t.Context(),
+		fixture.file,
+		fixture.partner,
+		message,
+		freightInvoiceTransaction(t),
+	)
+
+	require.NoError(t, err)
+	require.Len(t, warnings, 1)
+	require.Contains(t, warnings[0], "was not auto-matched")
+}
+
+func TestRouteFreightInvoice_AutoMatchErrorDegradesToWarning(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderedCarrierFixture(t)
+	offer := fixture.acceptedOffer()
+	fixture.tenderRepo.acceptedOffer = offer
+	fixture.expectRecipientMiss()
+	fixture.expectSystemUser()
+	matcher := fixture.withInvoiceMatcher(t)
+	fixture.commentRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+				return comment, nil
+			},
+		).
+		Once()
+	fixture.invoiceRepo.EXPECT().
+		CreateCarrierInvoice(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+				entity.ID = pulid.MustNew("edici_")
+				return entity, nil
+			},
+		).
+		Once()
+	matcher.EXPECT().
+		AutoMatchInboundInvoice(mock.Anything, mock.Anything).
+		Return(nil, errors.New("settlement database unavailable")).
+		Once()
+
+	payload := &edi.FreightInvoicePayload{
+		InvoiceNumber:    "INV-1",
+		BOL:              "BOL-42",
+		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
+		ReferenceNumbers: map[string]string{"BM": "BOL-42"},
+	}
+	message := fixture.freightInvoiceMessage(payload)
+	warnings, err := fixture.service.routeFreightInvoice(
+		t.Context(),
+		fixture.file,
+		fixture.partner,
+		message,
+		freightInvoiceTransaction(t),
+	)
+
+	require.NoError(t, err)
+	require.Len(t, warnings, 1)
+	require.Contains(t, warnings[0], "carrier invoice INV-1 could not be auto-matched")
+	require.Contains(t, warnings[0], "settlement database unavailable")
+}
+
+func TestRouteFreightInvoice_NoOfferSkipsAutoMatch(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderedCarrierFixture(t)
+	fixture.expectRecipientMiss()
+	fixture.withInvoiceMatcher(t)
+
+	fixture.invoiceRepo.EXPECT().
+		CreateCarrierInvoice(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+				entity.ID = pulid.MustNew("edici_")
+				return entity, nil
+			},
+		).
+		Once()
+
+	payload := &edi.FreightInvoicePayload{
+		InvoiceNumber:    "INV-1",
+		BOL:              "BOL-42",
+		TotalAmount:      decimal.NullDecimal{Decimal: decimal.NewFromInt(1500), Valid: true},
+		ReferenceNumbers: map[string]string{},
+	}
+	message := fixture.freightInvoiceMessage(payload)
+	_, err := fixture.service.routeFreightInvoice(
+		t.Context(),
+		fixture.file,
+		fixture.partner,
+		message,
+		freightInvoiceTransaction(t),
+	)
+
+	require.NoError(t, err)
+	fixture.matcher.AssertNotCalled(t, "AutoMatchInboundInvoice")
 }
 
 func TestRouteFreightInvoice_RecipientMissAndOfferMissStillRecordsInvoice(t *testing.T) {
