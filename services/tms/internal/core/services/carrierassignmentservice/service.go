@@ -106,13 +106,13 @@ func (s *Service) PreviewEligibility(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	carrierID pulid.ID,
-) (*EligibilityResult, error) {
+) (*carrier.EligibilityResult, error) {
 	carrierEntity, err := s.loadCarrier(ctx, tenantInfo, carrierID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := EvaluateCarrierEligibility(carrierEntity, timeutils.NowUnix())
+	result := carrier.EvaluateCarrierEligibility(carrierEntity, timeutils.NowUnix())
 	return &result, nil
 }
 
@@ -595,7 +595,7 @@ func (s *Service) publishInvalidation(
 }
 
 func enforceEligibility(entity *carrier.Carrier, overrideWarnings bool) error {
-	result := EvaluateCarrierEligibility(entity, timeutils.NowUnix())
+	result := carrier.EvaluateCarrierEligibility(entity, timeutils.NowUnix())
 
 	if result.IsBlocked() {
 		return errortypes.NewBusinessError(

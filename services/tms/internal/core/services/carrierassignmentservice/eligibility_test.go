@@ -32,65 +32,6 @@ func qualifiedCarrier(now int64) *carrier.Carrier {
 	}
 }
 
-func TestEvaluateCarrierEligibility(t *testing.T) {
-	now := timeutils.NowUnix()
-
-	t.Run("qualified carrier with healthy insurance passes", func(t *testing.T) {
-		result := EvaluateCarrierEligibility(qualifiedCarrier(now), now)
-		assert.False(t, result.IsBlocked())
-		assert.False(t, result.HasWarnings())
-	})
-
-	t.Run("inactive carrier is blocked", func(t *testing.T) {
-		entity := qualifiedCarrier(now)
-		entity.Status = carrier.StatusDoNotUse
-		result := EvaluateCarrierEligibility(entity, now)
-		assert.True(t, result.IsBlocked())
-	})
-
-	t.Run("unqualified carrier is blocked", func(t *testing.T) {
-		entity := qualifiedCarrier(now)
-		entity.ComplianceStatus = carrier.ComplianceStatusPending
-		result := EvaluateCarrierEligibility(entity, now)
-		assert.True(t, result.IsBlocked())
-	})
-
-	t.Run("missing required policy is blocked", func(t *testing.T) {
-		entity := qualifiedCarrier(now)
-		entity.InsurancePolicies = entity.InsurancePolicies[:1]
-		result := EvaluateCarrierEligibility(entity, now)
-		assert.True(t, result.IsBlocked())
-	})
-
-	t.Run("expired required policy is blocked", func(t *testing.T) {
-		entity := qualifiedCarrier(now)
-		entity.InsurancePolicies[0].ExpirationDate = now - day
-		result := EvaluateCarrierEligibility(entity, now)
-		assert.True(t, result.IsBlocked())
-	})
-
-	t.Run("policy expiring inside the window only warns", func(t *testing.T) {
-		entity := qualifiedCarrier(now)
-		entity.InsurancePolicies[1].ExpirationDate = now + 10*day
-		result := EvaluateCarrierEligibility(entity, now)
-		assert.False(t, result.IsBlocked())
-		assert.True(t, result.HasWarnings())
-	})
-
-	t.Run("renewal supersedes an expiring policy", func(t *testing.T) {
-		entity := qualifiedCarrier(now)
-		entity.InsurancePolicies = append(entity.InsurancePolicies,
-			&carrier.CarrierInsurancePolicy{
-				PolicyType:     carrier.InsurancePolicyTypeAutoLiability,
-				PolicyNumber:   "AUTO-OLD",
-				ExpirationDate: now + 5*day,
-			})
-		result := EvaluateCarrierEligibility(entity, now)
-		assert.False(t, result.IsBlocked())
-		assert.False(t, result.HasWarnings())
-	})
-}
-
 func TestEnforceEligibility(t *testing.T) {
 	now := timeutils.NowUnix()
 

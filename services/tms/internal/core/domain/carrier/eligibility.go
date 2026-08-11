@@ -1,10 +1,6 @@
-package carrierassignmentservice
+package carrier
 
-import (
-	"fmt"
-
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-)
+import "fmt"
 
 const insuranceWarningWindowSeconds = int64(30 * 24 * 60 * 60)
 
@@ -24,7 +20,7 @@ func (r EligibilityResult) HasWarnings() bool {
 // EvaluateCarrierEligibility applies the coverage gate: an inactive,
 // unqualified, or uninsured carrier hard-blocks assignment, while required
 // coverage expiring inside the warning window is dispatcher-overridable.
-func EvaluateCarrierEligibility(entity *carrier.Carrier, now int64) EligibilityResult {
+func EvaluateCarrierEligibility(entity *Carrier, now int64) EligibilityResult {
 	result := EligibilityResult{}
 
 	if !entity.IsActive() {
@@ -37,7 +33,7 @@ func EvaluateCarrierEligibility(entity *carrier.Carrier, now int64) EligibilityR
 			fmt.Sprintf("Carrier compliance status is %s", entity.ComplianceStatus))
 	}
 
-	for _, policyType := range carrier.RequiredInsurancePolicyTypes {
+	for _, policyType := range RequiredInsurancePolicyTypes {
 		policy := entity.RequiredPolicy(policyType)
 		switch {
 		case policy == nil:
