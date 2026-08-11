@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -178,4 +179,102 @@ func (r *repository) Update(
 	}
 
 	return entity, nil
+}
+
+func (r *repository) CreateToken(
+	ctx context.Context,
+	entity *rateconfirmation.RateConfirmationToken,
+) (*rateconfirmation.RateConfirmationToken, error) {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
+		r.l.Error("failed to create rate confirmation token", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+// GetTokenByHash resolves a public token. It is deliberately not
+// tenant-scoped: the caller only holds the opaque token, and the row itself
+// carries the tenant that every follow-up query is scoped to.
+func (r *repository) GetTokenByHash(
+	ctx context.Context,
+	tokenHash string,
+) (*rateconfirmation.RateConfirmationToken, error) {
+	cols := buncolgen.RateConfirmationTokenColumns
+	entity := new(rateconfirmation.RateConfirmationToken)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where(cols.TokenHash.Eq(), tokenHash).
+		Scan(ctx)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // nil token represents an optional absence
+		}
+		r.l.Error("failed to get rate confirmation token", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+// MarkTokenUsed is the single-use gate for public sign links: the conditional
+// update only wins for the first caller.
+func (r *repository) MarkTokenUsed(
+	ctx context.Context,
+	req *repositories.MarkRateConfirmationTokenUsedRequest,
+) (bool, error) {
+	cols := buncolgen.RateConfirmationTokenColumns
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*rateconfirmation.RateConfirmationToken)(nil)).
+		Set("used_at = ?", req.UsedAt).
+		Set("updated_at = ?", timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.RateConfirmationTokenScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.TokenID).
+				Where(cols.UsedAt.IsNull()).
+				Where(cols.RevokedAt.IsNull())
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to mark rate confirmation token used", zap.Error(err))
+		return false, err
+	}
+
+	affected, err := results.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return affected > 0, nil
+}
+
+func (r *repository) RevokeTokensForRateConfirmation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	rateConfirmationID pulid.ID,
+	revokedAt int64,
+) error {
+	cols := buncolgen.RateConfirmationTokenColumns
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*rateconfirmation.RateConfirmationToken)(nil)).
+		Set("revoked_at = ?", revokedAt).
+		Set("updated_at = ?", timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.RateConfirmationTokenScopeTenantUpdate(uq, tenantInfo).
+				Where(cols.RateConfirmationID.Eq(), rateConfirmationID).
+				Where(cols.RevokedAt.IsNull()).
+				Where(cols.UsedAt.IsNull())
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to revoke rate confirmation tokens", zap.Error(err))
+	}
+	return err
 }

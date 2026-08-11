@@ -10,3 +10,10 @@ import "github.com/emoss08/trenova/pkg/buncolgen"
 func (e *RateConfirmation) GetStaticFieldMap() map[string]string {
 	return buncolgen.RateConfirmationFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateConfirmationToken].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.RateConfirmationTokenFieldMap] instead of parsing struct tags via reflection.
+func (e *RateConfirmationToken) GetStaticFieldMap() map[string]string {
+	return buncolgen.RateConfirmationTokenFieldMap
+}

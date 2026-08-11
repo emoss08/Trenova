@@ -38,6 +38,26 @@ func (s Status) IsActive() bool {
 	return s != StatusVoided
 }
 
+type Via string
+
+const (
+	ViaDispatcher       = Via("Dispatcher")
+	ViaTenderAcceptance = Via("TenderAcceptance")
+	ViaPublicSignature  = Via("PublicSignature")
+)
+
+func (v Via) String() string {
+	return string(v)
+}
+
+func (v Via) IsValid() bool {
+	switch v {
+	case ViaDispatcher, ViaTenderAcceptance, ViaPublicSignature:
+		return true
+	}
+	return false
+}
+
 var _ bun.BeforeAppendModelHook = (*RateConfirmation)(nil)
 
 type RateConfirmation struct {
@@ -62,9 +82,15 @@ type RateConfirmation struct {
 	VoidReason      string         `json:"voidReason"      bun:"void_reason,type:TEXT,nullzero"`
 	PayloadSnapshot map[string]any `json:"payloadSnapshot" bun:"payload_snapshot,type:JSONB,nullzero"`
 	GeneratedByID   *pulid.ID      `json:"generatedById"   bun:"generated_by_id,type:VARCHAR(100),nullzero"`
-	Version         int64          `json:"version"         bun:"version,type:BIGINT"`
-	CreatedAt       int64          `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt       int64          `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	GeneratedVia        Via       `json:"generatedVia"        bun:"generated_via,type:VARCHAR(50),notnull,default:'Dispatcher'"`
+	SourceTenderOfferID *pulid.ID `json:"sourceTenderOfferId" bun:"source_tender_offer_id,type:VARCHAR(100),nullzero"`
+	ConfirmedVia        Via       `json:"confirmedVia"        bun:"confirmed_via,type:VARCHAR(50),nullzero"`
+	ConfirmedByTitle    string    `json:"confirmedByTitle"    bun:"confirmed_by_title,type:VARCHAR(255),nullzero"`
+
+	Version   int64 `json:"version"         bun:"version,type:BIGINT"`
+	CreatedAt int64 `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt int64 `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Carrier           *carrier.Carrier            `json:"carrier,omitempty"           bun:"rel:belongs-to,join:carrier_id=id"`
 	CarrierAssignment *shipment.CarrierAssignment `json:"carrierAssignment,omitempty" bun:"rel:belongs-to,join:carrier_assignment_id=id"`
@@ -78,14 +104,20 @@ func (rc *RateConfirmation) applyDefaults() {
 	if rc.Revision == 0 {
 		rc.Revision = 1
 	}
+	if rc.GeneratedVia == "" {
+		rc.GeneratedVia = ViaDispatcher
+	}
 }
 
 func (rc *RateConfirmation) IsActive() bool {
 	return rc != nil && rc.Status.IsActive()
 }
 
+// CanSend includes Confirmed so the executed record copy can still be emailed;
+// the post-send status write preserves Confirmed rather than demoting it.
 func (rc *RateConfirmation) CanSend() bool {
-	return rc.Status == StatusGenerated || rc.Status == StatusSent
+	return rc.Status == StatusGenerated || rc.Status == StatusSent ||
+		rc.Status == StatusConfirmed
 }
 
 func (rc *RateConfirmation) CanConfirm() bool {
@@ -119,6 +151,16 @@ func (rc *RateConfirmation) Validate(multiErr *errortypes.MultiError) {
 			validation.When(
 				rc.Status == StatusVoided,
 				validation.Required.Error("A voided rate confirmation must record its reason"),
+			),
+		),
+		validation.Field(&rc.GeneratedVia,
+			validation.Required.Error("Generated via is required"),
+			domainvalidation.ValidEnum[Via]("Generated via is invalid"),
+		),
+		validation.Field(&rc.ConfirmedVia,
+			validation.When(
+				rc.ConfirmedVia != "",
+				domainvalidation.ValidEnum[Via]("Confirmed via is invalid"),
 			),
 		),
 	))

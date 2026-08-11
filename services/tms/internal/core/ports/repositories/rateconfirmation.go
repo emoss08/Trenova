@@ -18,6 +18,12 @@ type ListRateConfirmationsByMoveRequest struct {
 	ShipmentMoveID pulid.ID              `json:"shipmentMoveId"`
 }
 
+type MarkRateConfirmationTokenUsedRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	TokenID    pulid.ID              `json:"tokenId"`
+	UsedAt     int64                 `json:"usedAt"`
+}
+
 type RateConfirmationRepository interface {
 	GetByID(
 		ctx context.Context,
@@ -45,4 +51,22 @@ type RateConfirmationRepository interface {
 		ctx context.Context,
 		entity *rateconfirmation.RateConfirmation,
 	) (*rateconfirmation.RateConfirmation, error)
+	CreateToken(
+		ctx context.Context,
+		entity *rateconfirmation.RateConfirmationToken,
+	) (*rateconfirmation.RateConfirmationToken, error)
+	GetTokenByHash(
+		ctx context.Context,
+		tokenHash string,
+	) (*rateconfirmation.RateConfirmationToken, error)
+	MarkTokenUsed(
+		ctx context.Context,
+		req *MarkRateConfirmationTokenUsedRequest,
+	) (bool, error)
+	RevokeTokensForRateConfirmation(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		rateConfirmationID pulid.ID,
+		revokedAt int64,
+	) error
 }

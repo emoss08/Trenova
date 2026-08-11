@@ -67,6 +67,10 @@ var RateConfirmationColumns = struct {
 	VoidReason          Column // "void_reason" → qualified: "ratecon.void_reason"
 	PayloadSnapshot     Column // "payload_snapshot" → qualified: "ratecon.payload_snapshot"
 	GeneratedByID       Column // "generated_by_id" → qualified: "ratecon.generated_by_id"
+	GeneratedVia        Column // "generated_via" → qualified: "ratecon.generated_via"
+	SourceTenderOfferID Column // "source_tender_offer_id" → qualified: "ratecon.source_tender_offer_id"
+	ConfirmedVia        Column // "confirmed_via" → qualified: "ratecon.confirmed_via"
+	ConfirmedByTitle    Column // "confirmed_by_title" → qualified: "ratecon.confirmed_by_title"
 	Version             Column // "version" → qualified: "ratecon.version"
 	CreatedAt           Column // "created_at" → qualified: "ratecon.created_at"
 	UpdatedAt           Column // "updated_at" → qualified: "ratecon.updated_at"
@@ -89,6 +93,10 @@ var RateConfirmationColumns = struct {
 	VoidReason:          NewColumn("void_reason", "ratecon"),
 	PayloadSnapshot:     NewColumn("payload_snapshot", "ratecon"),
 	GeneratedByID:       NewColumn("generated_by_id", "ratecon"),
+	GeneratedVia:        NewColumn("generated_via", "ratecon"),
+	SourceTenderOfferID: NewColumn("source_tender_offer_id", "ratecon"),
+	ConfirmedVia:        NewColumn("confirmed_via", "ratecon"),
+	ConfirmedByTitle:    NewColumn("confirmed_by_title", "ratecon"),
 	Version:             NewColumn("version", "ratecon"),
 	CreatedAt:           NewColumn("created_at", "ratecon"),
 	UpdatedAt:           NewColumn("updated_at", "ratecon"),
@@ -117,6 +125,10 @@ var RateConfirmationFieldMap = map[string]string{
 	"voidReason":          "void_reason",
 	"payloadSnapshot":     "payload_snapshot",
 	"generatedById":       "generated_by_id",
+	"generatedVia":        "generated_via",
+	"sourceTenderOfferId": "source_tender_offer_id",
+	"confirmedVia":        "confirmed_via",
+	"confirmedByTitle":    "confirmed_by_title",
 	"version":             "version",
 	"createdAt":           "created_at",
 	"updatedAt":           "updated_at",
@@ -143,6 +155,10 @@ var RateConfirmationInsertableColumns = []string{
 	"void_reason",
 	"payload_snapshot",
 	"generated_by_id",
+	"generated_via",
+	"source_tender_offer_id",
+	"confirmed_via",
+	"confirmed_by_title",
 	"version",
 	"created_at",
 	"updated_at",
@@ -231,6 +247,10 @@ var RateConfirmationFilter = struct {
 	VoidReason          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidReason" → DB: "void_reason"
 	PayloadSnapshot     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payloadSnapshot" → DB: "payload_snapshot"
 	GeneratedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "generatedById" → DB: "generated_by_id"
+	GeneratedVia        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "generatedVia" → DB: "generated_via"
+	SourceTenderOfferID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceTenderOfferId" → DB: "source_tender_offer_id"
+	ConfirmedVia        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confirmedVia" → DB: "confirmed_via"
+	ConfirmedByTitle    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confirmedByTitle" → DB: "confirmed_by_title"
 	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -289,8 +309,208 @@ var RateConfirmationFilter = struct {
 	GeneratedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("generatedById", op, value)
 	},
+	GeneratedVia: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("generatedVia", op, value)
+	},
+	SourceTenderOfferID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceTenderOfferId", op, value)
+	},
+	ConfirmedVia: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("confirmedVia", op, value)
+	},
+	ConfirmedByTitle: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("confirmedByTitle", op, value)
+	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// RateConfirmationToken — table "rate_confirmation_tokens", alias "rct"
+// ---------------------------------------------------------------------------
+
+// RateConfirmationTokenTable holds the table name, alias, and primary key columns
+// for the "rate_confirmation_tokens" table. The alias "rct" is used in all generated
+// SQL fragments (e.g. "rct.id = ?").
+var RateConfirmationTokenTable = TableInfo{
+	Name:       "rate_confirmation_tokens",
+	Alias:      "rct",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// RateConfirmationTokenColumns provides type-safe column references for the "rate_confirmation_tokens" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(RateConfirmationTokenColumns.ID.String())
+//	// SELECT rct.id FROM rate_confirmation_tokens AS rct
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(RateConfirmationTokenColumns.ID.Eq(), id)           // WHERE rct.id = ?
+//	q.Order(RateConfirmationTokenColumns.CreatedAt.OrderDesc())  // ORDER BY rct.created_at DESC
+var RateConfirmationTokenColumns = struct {
+	ID                 Column // "id" → qualified: "rct.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "rct.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "rct.organization_id"
+	RateConfirmationID Column // "rate_confirmation_id" → qualified: "rct.rate_confirmation_id"
+	TokenHash          Column // "token_hash" → qualified: "rct.token_hash"
+	Email              Column // "email" → qualified: "rct.email"
+	ExpiresAt          Column // "expires_at" → qualified: "rct.expires_at"
+	UsedAt             Column // "used_at" → qualified: "rct.used_at"
+	RevokedAt          Column // "revoked_at" → qualified: "rct.revoked_at"
+	CreatedAt          Column // "created_at" → qualified: "rct.created_at"
+	UpdatedAt          Column // "updated_at" → qualified: "rct.updated_at"
+}{
+	ID:                 NewColumn("id", "rct"),
+	BusinessUnitID:     NewColumn("business_unit_id", "rct"),
+	OrganizationID:     NewColumn("organization_id", "rct"),
+	RateConfirmationID: NewColumn("rate_confirmation_id", "rct"),
+	TokenHash:          NewColumn("token_hash", "rct"),
+	Email:              NewColumn("email", "rct"),
+	ExpiresAt:          NewColumn("expires_at", "rct"),
+	UsedAt:             NewColumn("used_at", "rct"),
+	RevokedAt:          NewColumn("revoked_at", "rct"),
+	CreatedAt:          NewColumn("created_at", "rct"),
+	UpdatedAt:          NewColumn("updated_at", "rct"),
+}
+
+// RateConfirmationTokenFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by RateConfirmationToken.GetStaticFieldMap().
+var RateConfirmationTokenFieldMap = map[string]string{
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"rateConfirmationId": "rate_confirmation_id",
+	"email":              "email",
+	"expiresAt":          "expires_at",
+	"usedAt":             "used_at",
+	"revokedAt":          "revoked_at",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
+}
+
+// RateConfirmationTokenInsertableColumns lists column names suitable for INSERT statements on the "rate_confirmation_tokens" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var RateConfirmationTokenInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"rate_confirmation_id",
+	"token_hash",
+	"email",
+	"expires_at",
+	"used_at",
+	"revoked_at",
+	"created_at",
+	"updated_at",
+}
+
+// RateConfirmationTokenRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(RateConfirmationTokenRelations.RateConfirmation)
+//	// Bun eager-loads the RateConfirmation association via a separate query
+var RateConfirmationTokenRelations = struct {
+	RateConfirmation string
+}{
+	RateConfirmation: "RateConfirmation",
+}
+
+// RateConfirmationTokenScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE rct.organization_id = ? AND rct.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.RateConfirmationTokenScopeTenant(sq, ti).
+//		Where(buncolgen.RateConfirmationTokenColumns.ID.Eq(), id)
+func RateConfirmationTokenScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, RateConfirmationTokenColumns.OrganizationID, RateConfirmationTokenColumns.BusinessUnitID, ti)
+}
+
+// RateConfirmationTokenScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.RateConfirmationTokenScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.RateConfirmationTokenColumns.ID.In(), bun.List(ids))
+//	})
+func RateConfirmationTokenScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, RateConfirmationTokenColumns.OrganizationID, RateConfirmationTokenColumns.BusinessUnitID, ti)
+}
+
+// RateConfirmationTokenScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.RateConfirmationTokenScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.RateConfirmationTokenColumns.ID.Eq(), id)
+//	})
+func RateConfirmationTokenScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, RateConfirmationTokenColumns.OrganizationID, RateConfirmationTokenColumns.BusinessUnitID, ti)
+}
+
+// RateConfirmationTokenApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.RateConfirmationTokenApplyTenant(tenantInfo))
+func RateConfirmationTokenApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(RateConfirmationTokenColumns.OrganizationID, RateConfirmationTokenColumns.BusinessUnitID, ti)
+}
+
+// RateConfirmationTokenFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "rate_confirmation_tokens" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	RateConfirmationTokenFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var RateConfirmationTokenFilter = struct {
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RateConfirmationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateConfirmationId" → DB: "rate_confirmation_id"
+	Email              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "email" → DB: "email"
+	ExpiresAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	UsedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usedAt" → DB: "used_at"
+	RevokedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revokedAt" → DB: "revoked_at"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	RateConfirmationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rateConfirmationId", op, value)
+	},
+	Email: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("email", op, value)
+	},
+	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("expiresAt", op, value)
+	},
+	UsedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("usedAt", op, value)
+	},
+	RevokedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("revokedAt", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)
