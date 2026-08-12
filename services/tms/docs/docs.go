@@ -14628,6 +14628,472 @@ const docTemplate = `{
                 }
             }
         },
+        "/jurisdiction-rule-overrides/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Holds this organization to a stricter limit than a state requires. An override that would loosen a statutory limit is rejected.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jurisdiction Rules"
+                ],
+                "summary": "Create a carrier override",
+                "operationId": "createJurisdictionRuleOverride",
+                "parameters": [
+                    {
+                        "description": "Override payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.Override"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.Override"
+                        }
+                    }
+                }
+            }
+        },
+        "/jurisdiction-rule-overrides/{overrideID}/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jurisdiction Rules"
+                ],
+                "summary": "Get a carrier override",
+                "operationId": "getJurisdictionRuleOverride",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Override ID",
+                        "name": "overrideID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.Override"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jurisdiction Rules"
+                ],
+                "summary": "Update a carrier override",
+                "operationId": "updateJurisdictionRuleOverride",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Override ID",
+                        "name": "overrideID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Override payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.Override"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.Override"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns this jurisdiction to its statutory limits.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jurisdiction Rules"
+                ],
+                "summary": "Remove a carrier override",
+                "operationId": "deleteJurisdictionRuleOverride",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Override ID",
+                        "name": "overrideID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/jurisdiction-rules/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Shared oversize limits per state. This data is global — every organization reads the same rows.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jurisdiction Rules"
+                ],
+                "summary": "List jurisdiction rules",
+                "operationId": "listJurisdictionRules",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by verification state",
+                        "name": "verificationState",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_pagination.ListResult-github_com_emoss08_trenova_internal_core_domain_jurisdictionrule_JurisdictionRule"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a globally visible rule. It always lands unverified; use the verify endpoint to confirm it.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jurisdiction Rules"
+                ],
+                "summary": "Create a jurisdiction rule",
+                "operationId": "createJurisdictionRule",
+                "parameters": [
+                    {
+                        "description": "Rule payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.JurisdictionRule"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.JurisdictionRule"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/jurisdiction-rules/{ruleID}/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jurisdiction Rules"
+                ],
+                "summary": "Get a jurisdiction rule",
+                "operationId": "getJurisdictionRule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rule ID",
+                        "name": "ruleID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.JurisdictionRule"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Changing any limit, permit term or curfew resets the rule to unverified.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jurisdiction Rules"
+                ],
+                "summary": "Update a jurisdiction rule",
+                "operationId": "updateJurisdictionRule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rule ID",
+                        "name": "ruleID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Rule payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.JurisdictionRule"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.JurisdictionRule"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/jurisdiction-rules/{ruleID}/verify/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Records that this rule was checked against the issuing state. Writes only the verification columns, so it cannot alter the limits it is confirming.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Jurisdiction Rules"
+                ],
+                "summary": "Verify or dispute a jurisdiction rule",
+                "operationId": "verifyJurisdictionRule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rule ID",
+                        "name": "ruleID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Verification payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_jurisdictionrulehandler.verifyBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.JurisdictionRule"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/location-categories/": {
             "get": {
                 "security": [
@@ -23543,6 +24009,434 @@ const docTemplate = `{
                 }
             }
         },
+        "/shipments/{shipmentID}/permit-assessment/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the oversize/overweight assessment for a shipment: the measured envelope, every jurisdiction on the route with its limits and headroom, derived permit requirements, escorts, restrictions, estimated fees and the earliest feasible pickup.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shipments"
+                ],
+                "summary": "Get shipment permit assessment",
+                "operationId": "getShipmentPermitAssessment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Shipment ID",
+                        "name": "shipmentID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.PermitAssessment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/shipments/{shipmentID}/permit-requirements/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Permits"
+                ],
+                "summary": "List derived permit requirements for a shipment",
+                "operationId": "listShipmentPermitRequirements",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Shipment ID",
+                        "name": "shipmentID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Requirement"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/shipments/{shipmentID}/permit-requirements/{requirementID}/waive/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Marks a derived permit requirement as waived. This does not make the movement legal; it records that the organization accepts the compliance risk, and the reason is the audit trail.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Permits"
+                ],
+                "summary": "Waive a permit requirement",
+                "operationId": "waiveShipmentPermitRequirement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Shipment ID",
+                        "name": "shipmentID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Requirement ID",
+                        "name": "requirementID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Waiver payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_permithandler.waiveRequirementBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Requirement"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/shipments/{shipmentID}/permits/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Permits"
+                ],
+                "summary": "List permits for a shipment",
+                "operationId": "listShipmentPermits",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Shipment ID",
+                        "name": "shipmentID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Permit"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Permits"
+                ],
+                "summary": "Record a permit for a shipment",
+                "operationId": "createShipmentPermit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Shipment ID",
+                        "name": "shipmentID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Permit payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Permit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Permit"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/shipments/{shipmentID}/permits/{permitID}/": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Permits"
+                ],
+                "summary": "Update a recorded permit",
+                "operationId": "updateShipmentPermit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Shipment ID",
+                        "name": "shipmentID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Permit ID",
+                        "name": "permitID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Permit payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Permit"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Permit"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/shipments/{shipmentID}/recalculate-distance/": {
             "post": {
                 "security": [
@@ -28443,8 +29337,14 @@ const docTemplate = `{
                 "hazardousMaterialId": {
                     "type": "string"
                 },
+                "heightPerUnit": {
+                    "type": "number"
+                },
                 "id": {
                     "type": "string"
+                },
+                "lengthPerUnit": {
+                    "type": "number"
                 },
                 "linearFeetPerUnit": {
                     "type": "number"
@@ -28483,6 +29383,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "weightPerUnit": {
+                    "type": "number"
+                },
+                "widthPerUnit": {
                     "type": "number"
                 }
             }
@@ -31773,9 +32676,31 @@ const docTemplate = `{
                 "ClassOther"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_equipmenttype.DeckType": {
+            "type": "string",
+            "enum": [
+                "Flatbed",
+                "StepDeck",
+                "DoubleDrop",
+                "RGN",
+                "Lowboy",
+                "Conestoga"
+            ],
+            "x-enum-varnames": [
+                "DeckTypeFlatbed",
+                "DeckTypeStepDeck",
+                "DeckTypeDoubleDrop",
+                "DeckTypeRGN",
+                "DeckTypeLowboy",
+                "DeckTypeConestoga"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_equipmenttype.EquipmentType": {
             "type": "object",
             "properties": {
+                "axleCount": {
+                    "type": "integer"
+                },
                 "businessUnit": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.BusinessUnit"
                 },
@@ -31793,6 +32718,12 @@ const docTemplate = `{
                 },
                 "createdAt": {
                     "type": "integer"
+                },
+                "deckHeightInches": {
+                    "type": "number"
+                },
+                "deckType": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_equipmenttype.DeckType"
                 },
                 "description": {
                     "type": "string"
@@ -31817,6 +32748,9 @@ const docTemplate = `{
                 },
                 "version": {
                     "type": "integer"
+                },
+                "wellLengthFeet": {
+                    "type": "number"
                 }
             }
         },
@@ -33733,6 +34667,298 @@ const docTemplate = `{
                 "StatusPosted"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.EscortRequirement": {
+            "type": "object",
+            "properties": {
+                "actual": {
+                    "type": "number"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.EscortRole"
+                },
+                "threshold": {
+                    "type": "number"
+                },
+                "trigger": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.TriggerKind"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.EscortRole": {
+            "type": "string",
+            "enum": [
+                "Front",
+                "Rear",
+                "Police",
+                "RouteSurvey"
+            ],
+            "x-enum-varnames": [
+                "EscortRoleFront",
+                "EscortRoleRear",
+                "EscortRolePolice",
+                "EscortRoleSurvey"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.EscortThreshold": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "jurisdictionRuleId": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.EscortRole"
+                },
+                "thresholdValue": {
+                    "type": "number"
+                },
+                "trigger": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.TriggerKind"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.Exceedance": {
+            "type": "object",
+            "properties": {
+                "actual": {
+                    "type": "number"
+                },
+                "limit": {
+                    "type": "number"
+                },
+                "overBy": {
+                    "type": "number"
+                },
+                "superload": {
+                    "type": "boolean"
+                },
+                "trigger": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.TriggerKind"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.JurisdictionRule": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "integer"
+                },
+                "daylightOnly": {
+                    "type": "boolean"
+                },
+                "effectiveEndDate": {
+                    "type": "integer"
+                },
+                "effectiveStartDate": {
+                    "type": "integer"
+                },
+                "escortThresholds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.EscortThreshold"
+                    }
+                },
+                "holidayRestricted": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "maxHeightFeet": {
+                    "type": "number"
+                },
+                "maxLengthFeet": {
+                    "type": "number"
+                },
+                "maxWeightPounds": {
+                    "type": "integer"
+                },
+                "maxWidthFeet": {
+                    "type": "number"
+                },
+                "permitBaseFee": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "permitLeadTimeDays": {
+                    "type": "integer"
+                },
+                "permitPerMileFee": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "permitValidityDays": {
+                    "type": "integer"
+                },
+                "rushHourRestricted": {
+                    "type": "boolean"
+                },
+                "sourceNote": {
+                    "type": "string"
+                },
+                "sourceUrl": {
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_usstate.UsState"
+                },
+                "stateId": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.Status"
+                },
+                "superloadWeightPounds": {
+                    "type": "integer"
+                },
+                "superloadWidthFeet": {
+                    "type": "number"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "verificationState": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.VerificationState"
+                },
+                "verifiedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                },
+                "weekendRestricted": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.Override": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "daylightOnly": {
+                    "type": "boolean"
+                },
+                "holidayRestricted": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "maxHeightFeet": {
+                    "type": "number"
+                },
+                "maxLengthFeet": {
+                    "type": "number"
+                },
+                "maxWeightPounds": {
+                    "type": "integer"
+                },
+                "maxWidthFeet": {
+                    "type": "number"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "permitLeadTimeDays": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_usstate.UsState"
+                },
+                "stateId": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.RestrictionKind": {
+            "type": "string",
+            "enum": [
+                "DaylightOnly",
+                "RushHour",
+                "Weekend",
+                "Holiday",
+                "NightOnly"
+            ],
+            "x-enum-varnames": [
+                "RestrictionDaylightOnly",
+                "RestrictionRushHour",
+                "RestrictionWeekend",
+                "RestrictionHoliday",
+                "RestrictionNightOnly"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.Status": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Inactive",
+                "Draft"
+            ],
+            "x-enum-varnames": [
+                "StatusActive",
+                "StatusInactive",
+                "StatusDraft"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.TriggerKind": {
+            "type": "string",
+            "enum": [
+                "Width",
+                "Height",
+                "Length",
+                "Weight",
+                "Superload"
+            ],
+            "x-enum-varnames": [
+                "TriggerWidth",
+                "TriggerHeight",
+                "TriggerLength",
+                "TriggerWeight",
+                "TriggerSuperload"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.VerificationState": {
+            "type": "string",
+            "enum": [
+                "Unverified",
+                "Verified",
+                "Disputed"
+            ],
+            "x-enum-varnames": [
+                "VerificationUnverified",
+                "VerificationVerified",
+                "VerificationDisputed"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_location.Location": {
             "type": "object",
             "properties": {
@@ -33918,6 +35144,295 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_modeprofile.Capability": {
+            "type": "string",
+            "enum": [
+                "Core",
+                "TemperatureControl",
+                "Hazmat",
+                "DimensionalCargo",
+                "Permitting",
+                "CompartmentizedCargo",
+                "MeteredQuantity",
+                "PieceLevelTracking",
+                "ContainerizedEquipment",
+                "CrewBased",
+                "MultiShipmentConsolidation",
+                "AppointmentRequired"
+            ],
+            "x-enum-varnames": [
+                "CapabilityCore",
+                "CapabilityTemperatureControl",
+                "CapabilityHazmat",
+                "CapabilityDimensionalCargo",
+                "CapabilityPermitting",
+                "CapabilityCompartmentizedCargo",
+                "CapabilityMeteredQuantity",
+                "CapabilityPieceLevelTracking",
+                "CapabilityContainerizedEquipment",
+                "CapabilityCrewBased",
+                "CapabilityMultiShipmentConsolidate",
+                "CapabilityAppointmentRequired"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_modeprofile.EquipmentClass": {
+            "type": "string",
+            "enum": [
+                "DryVan",
+                "Refrigerated",
+                "Flatbed",
+                "Tank",
+                "DryBulk",
+                "Container",
+                "AutoRack",
+                "StraightTruck"
+            ],
+            "x-enum-varnames": [
+                "EquipmentClassDryVan",
+                "EquipmentClassRefrigerated",
+                "EquipmentClassFlatbed",
+                "EquipmentClassTank",
+                "EquipmentClassDryBulk",
+                "EquipmentClassContainer",
+                "EquipmentClassAutoRack",
+                "EquipmentClassStraightTruck"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_modeprofile.ExecutionParty": {
+            "type": "string",
+            "enum": [
+                "CompanyAsset",
+                "OwnerOperator",
+                "LeasedOn",
+                "PurchasedCapacity"
+            ],
+            "x-enum-varnames": [
+                "ExecutionPartyCompanyAsset",
+                "ExecutionPartyOwnerOperator",
+                "ExecutionPartyLeasedOn",
+                "ExecutionPartyPurchasedCapacity"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_modeprofile.ProfileCandidate": {
+            "type": "object",
+            "properties": {
+                "matchedOn": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "profileCode": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "string"
+                },
+                "profileName": {
+                    "type": "string"
+                },
+                "rejectionReason": {
+                    "type": "string"
+                },
+                "selected": {
+                    "type": "boolean"
+                },
+                "specificityScore": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_modeprofile.Provenance": {
+            "type": "object",
+            "properties": {
+                "capability": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.Capability"
+                },
+                "capabilityLabel": {
+                    "type": "string"
+                },
+                "defaultEnforcement": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.EnforcementLevel"
+                },
+                "enforcement": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.EnforcementLevel"
+                },
+                "isOrgDefault": {
+                    "type": "boolean"
+                },
+                "matchedOn": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "overridden": {
+                    "type": "boolean"
+                },
+                "overrideReason": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "profileCode": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "string"
+                },
+                "profileName": {
+                    "type": "string"
+                },
+                "rationale": {
+                    "type": "string"
+                },
+                "ruleKey": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.RuleKey"
+                },
+                "specificityScore": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_modeprofile.ResolvedPolicy": {
+            "type": "object",
+            "properties": {
+                "candidates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.ProfileCandidate"
+                    }
+                },
+                "capabilities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.Capability"
+                    }
+                },
+                "equipmentClass": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.EquipmentClass"
+                },
+                "executionParty": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.ExecutionParty"
+                },
+                "profileCode": {
+                    "type": "string"
+                },
+                "profileId": {
+                    "type": "string"
+                },
+                "profileName": {
+                    "type": "string"
+                },
+                "resolvedAt": {
+                    "type": "integer"
+                },
+                "rules": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.ResolvedRule"
+                    }
+                },
+                "serviceModel": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.ServiceModel"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_modeprofile.ResolvedRule": {
+            "type": "object",
+            "properties": {
+                "capability": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.Capability"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "enforcement": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.EnforcementLevel"
+                },
+                "fields": {
+                    "description": "Fields the rule targets, for explaining why a field behaves as it does.\nNot the same as the fields it makes mandatory — see RequiredFields.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "key": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.RuleKey"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "provenance": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.Provenance"
+                },
+                "requiredFields": {
+                    "description": "Fields this rule makes mandatory under its resolved parameters. Narrower\nthan the definition's list where a parameter turns a requirement off.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_modeprofile.RuleKey": {
+            "type": "string",
+            "enum": [
+                "hazmat.segregation",
+                "documentation.duplicateBol",
+                "dispatch.moveRemoval",
+                "cargo.maxShipmentWeight",
+                "cargo.temperatureRange",
+                "cargo.dimensionsRequired",
+                "cargo.envelopeExceedsEquipment",
+                "permit.requiredBeforeDispatch",
+                "permit.expiresBeforeDelivery",
+                "permit.escortsArranged",
+                "permit.leadTimeInsufficient",
+                "permit.curfewConflict"
+            ],
+            "x-enum-varnames": [
+                "RuleKeyHazmatSegregation",
+                "RuleKeyDuplicateBOL",
+                "RuleKeyMoveRemoval",
+                "RuleKeyMaxShipmentWeight",
+                "RuleKeyTemperatureRange",
+                "RuleKeyDimensionsRequired",
+                "RuleKeyEnvelopeExceedsEquipment",
+                "RuleKeyPermitRequired",
+                "RuleKeyPermitExpiry",
+                "RuleKeyPermitEscorts",
+                "RuleKeyPermitLeadTime",
+                "RuleKeyPermitCurfewConflict"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_modeprofile.ServiceModel": {
+            "type": "string",
+            "enum": [
+                "Truckload",
+                "Dedicated",
+                "LTL",
+                "Expedite",
+                "FinalMile",
+                "Drayage"
+            ],
+            "x-enum-varnames": [
+                "ServiceModelTruckload",
+                "ServiceModelDedicated",
+                "ServiceModelLTL",
+                "ServiceModelExpedite",
+                "ServiceModelFinalMile",
+                "ServiceModelDrayage"
+            ]
         },
         "github_com_emoss08_trenova_internal_core_domain_notification.PushSubscription": {
             "type": "object",
@@ -34411,6 +35926,219 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_permit.Permit": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "cost": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "expiresAt": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "issuedAt": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "permitNumber": {
+                    "type": "string"
+                },
+                "shipmentId": {
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_usstate.UsState"
+                },
+                "stateId": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Status"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_permit.Requirement": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "derivedAt": {
+                    "type": "integer"
+                },
+                "escorts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.EscortRequirement"
+                    }
+                },
+                "estimatedFee": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "exceedances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.Exceedance"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isSuperload": {
+                    "type": "boolean"
+                },
+                "leadTimeDays": {
+                    "type": "integer"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "provenance": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.RuleProvenance"
+                },
+                "restrictions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.RestrictionKind"
+                    }
+                },
+                "routeSequence": {
+                    "type": "integer"
+                },
+                "satisfiedByPermit": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Permit"
+                },
+                "satisfiedByPermitId": {
+                    "type": "string"
+                },
+                "shipmentId": {
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_usstate.UsState"
+                },
+                "stateId": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.RequirementStatus"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "validityDays": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                },
+                "waivedById": {
+                    "type": "string"
+                },
+                "waiverReason": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_permit.RequirementStatus": {
+            "type": "string",
+            "enum": [
+                "Open",
+                "Satisfied",
+                "Superseded",
+                "Waived"
+            ],
+            "x-enum-varnames": [
+                "RequirementOpen",
+                "RequirementSatisfied",
+                "RequirementSuperseded",
+                "RequirementWaived"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_permit.RuleProvenance": {
+            "type": "object",
+            "properties": {
+                "maxHeightFeet": {
+                    "type": "number"
+                },
+                "maxLengthFeet": {
+                    "type": "number"
+                },
+                "maxWeightPounds": {
+                    "type": "integer"
+                },
+                "maxWidthFeet": {
+                    "type": "number"
+                },
+                "overriddenFields": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "overrideReason": {
+                    "type": "string"
+                },
+                "ruleId": {
+                    "type": "string"
+                },
+                "sourceNote": {
+                    "type": "string"
+                },
+                "sourceUrl": {
+                    "type": "string"
+                },
+                "stateCode": {
+                    "type": "string"
+                },
+                "stateName": {
+                    "type": "string"
+                },
+                "verificationState": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.VerificationState"
+                },
+                "verifiedAt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_permit.Status": {
+            "type": "string",
+            "enum": [
+                "Pending",
+                "Active",
+                "Expired",
+                "Void"
+            ],
+            "x-enum-varnames": [
+                "StatusPending",
+                "StatusActive",
+                "StatusExpired",
+                "StatusVoid"
+            ]
         },
         "github_com_emoss08_trenova_internal_core_domain_rateconfirmation.RateConfirmation": {
             "type": "object",
@@ -35668,6 +37396,18 @@ const docTemplate = `{
                 "entryMethod": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.EntryMethod"
                 },
+                "envelopeHeightFeet": {
+                    "type": "number"
+                },
+                "envelopeLengthFeet": {
+                    "type": "number"
+                },
+                "envelopeOverallHeightFeet": {
+                    "type": "number"
+                },
+                "envelopeWidthFeet": {
+                    "type": "number"
+                },
                 "formulaTemplate": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.FormulaTemplate"
                 },
@@ -35975,8 +37715,14 @@ const docTemplate = `{
                 "createdAt": {
                     "type": "integer"
                 },
+                "heightFeet": {
+                    "type": "number"
+                },
                 "id": {
                     "type": "string"
+                },
+                "lengthFeet": {
+                    "type": "number"
                 },
                 "organization": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.Organization"
@@ -36001,6 +37747,9 @@ const docTemplate = `{
                 },
                 "weight": {
                     "type": "integer"
+                },
+                "widthFeet": {
+                    "type": "number"
                 }
             }
         },
@@ -39354,6 +41103,83 @@ const docTemplate = `{
             "type": "object",
             "additionalProperties": {}
         },
+        "github_com_emoss08_trenova_internal_core_ports_services.AssessedJurisdiction": {
+            "type": "object",
+            "properties": {
+                "heightHeadroomFeet": {
+                    "type": "number"
+                },
+                "lengthHeadroomFeet": {
+                    "type": "number"
+                },
+                "maxHeightFeet": {
+                    "type": "number"
+                },
+                "maxLengthFeet": {
+                    "type": "number"
+                },
+                "maxWeightPounds": {
+                    "type": "integer"
+                },
+                "maxWidthFeet": {
+                    "type": "number"
+                },
+                "requiresPermit": {
+                    "type": "boolean"
+                },
+                "restrictions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.RestrictionKind"
+                    }
+                },
+                "sequence": {
+                    "type": "integer"
+                },
+                "sourceNote": {
+                    "type": "string"
+                },
+                "sourceUrl": {
+                    "type": "string"
+                },
+                "stateCode": {
+                    "type": "string"
+                },
+                "stateId": {
+                    "type": "string"
+                },
+                "stateName": {
+                    "type": "string"
+                },
+                "verificationState": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.VerificationState"
+                },
+                "weightHeadroomPounds": {
+                    "type": "integer"
+                },
+                "widthHeadroomFeet": {
+                    "description": "Headroom is the limit minus the measured value. A negative number is an\nexceedance, so the same field carries both \"how much room is left\" and\n\"how far over\" without the client needing a second shape.",
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.AssessedMeasurements": {
+            "type": "object",
+            "properties": {
+                "heightFeet": {
+                    "type": "number"
+                },
+                "lengthFeet": {
+                    "type": "number"
+                },
+                "weightPounds": {
+                    "type": "integer"
+                },
+                "widthFeet": {
+                    "type": "number"
+                }
+            }
+        },
         "github_com_emoss08_trenova_internal_core_ports_services.AutoCompleteRequest": {
             "type": "object",
             "properties": {
@@ -39786,6 +41612,58 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_internal_core_ports_services.PermitAssessment": {
+            "type": "object",
+            "properties": {
+                "earliestPickup": {
+                    "type": "integer"
+                },
+                "expiringBeforeDelivery": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Requirement"
+                    }
+                },
+                "feeIsBaseOnly": {
+                    "description": "FeeIsBaseOnly records that per-mile permit fees were not included because\nper-jurisdiction mileage is unavailable. Presenting a mileage-derived fee\nwithout state-level distance would be fabricated precision on a number\ncarriers bill from.",
+                    "type": "boolean"
+                },
+                "jurisdictions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.AssessedJurisdiction"
+                    }
+                },
+                "maxLeadTimeDays": {
+                    "type": "integer"
+                },
+                "measurements": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.AssessedMeasurements"
+                },
+                "open": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Requirement"
+                    }
+                },
+                "requirements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permit.Requirement"
+                    }
+                },
+                "routeResolved": {
+                    "description": "RouteResolved distinguishes \"this route needs no permits\" from \"we could\nnot tell which states this route crosses\". Both produce an empty\nrequirement list, and conflating them would let an unmapped route read as\na clean one.",
+                    "type": "boolean"
+                },
+                "totalEscorts": {
+                    "type": "integer"
+                },
+                "totalEstimatedFee": {
+                    "type": "number"
+                }
+            }
+        },
         "github_com_emoss08_trenova_internal_core_ports_services.RealtimeToken": {
             "type": "object",
             "properties": {
@@ -40002,6 +41880,9 @@ const docTemplate = `{
                 },
                 "maxShipmentWeightLimit": {
                     "type": "integer"
+                },
+                "profile": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_modeprofile.ResolvedPolicy"
                 }
             }
         },
@@ -41001,6 +42882,23 @@ const docTemplate = `{
                     }
                 },
                 "totalCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_pagination.ListResult-github_com_emoss08_trenova_internal_core_domain_jurisdictionrule_JurisdictionRule": {
+            "type": "object",
+            "properties": {
+                "hasNextPage": {
+                    "type": "boolean"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_jurisdictionrule.JurisdictionRule"
+                    }
+                },
+                "total": {
                     "type": "integer"
                 }
             }
@@ -42145,6 +44043,20 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_api_handlers_jurisdictionrulehandler.verifyBody": {
+            "type": "object",
+            "properties": {
+                "sourceNote": {
+                    "type": "string"
+                },
+                "sourceUrl": {
+                    "type": "string"
+                },
+                "verificationState": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_api_handlers_pagefavoritehandler.toggleRequest": {
             "type": "object",
             "required": [
@@ -42190,6 +44102,14 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permission.ResourceDefinition"
                     }
+                }
+            }
+        },
+        "internal_api_handlers_permithandler.waiveRequirementBody": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
                 }
             }
         },

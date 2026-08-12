@@ -46,7 +46,7 @@ func observedLogText(t *testing.T, logs *observer.ObservedLogs) string {
 func TestTokenRedactionMiddleware_RedactsPathParamToken(t *testing.T) {
 	t.Parallel()
 
-	const secret = "01JQZX8B2M4N6P8R0T2V4X6Z8A-9f3c1d7e5b"
+	const secret = "tok_01H00000000000000000000001"
 
 	router, logs := newTokenRedactionTestRouter(t)
 
@@ -77,7 +77,7 @@ func TestTokenRedactionMiddleware_RedactsPathParamToken(t *testing.T) {
 func TestTokenRedactionMiddleware_RedactsQueryParamToken(t *testing.T) {
 	t.Parallel()
 
-	const secret = "01JQZX8B2M4N6P8R0T2V4X6Z8A-2c9e7a1f4d"
+	const secret = "tok_01H00000000000000000000002"
 
 	router, logs := newTokenRedactionTestRouter(t)
 

@@ -168,7 +168,7 @@ func (c *rewriteConn) PrepareContext(
 
 func (c *rewriteConn) Close() error { return c.inner.Close() }
 
-func (c *rewriteConn) Begin() (driver.Tx, error) { //nolint:staticcheck // required by driver.Conn
+func (c *rewriteConn) Begin() (driver.Tx, error) {
 	return c.inner.Begin() //nolint:staticcheck // delegating to the wrapped driver
 }
 

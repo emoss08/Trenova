@@ -109,29 +109,3 @@ func (r *Resolver) JurisdictionRule() generated.JurisdictionRuleResolver {
 }
 
 type jurisdictionRuleResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *jurisdictionRuleResolver) PermitLeadTimeDays(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (int, error) {
-	return int(obj.PermitLeadTimeDays), nil
-}
-func (r *jurisdictionRuleResolver) PermitValidityDays(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (int, error) {
-	return int(obj.PermitValidityDays), nil
-}
-func (r *jurisdictionRuleOverrideResolver) PermitLeadTimeDays(ctx context.Context, obj *jurisdictionrule.Override) (*int, error) {
-	if obj.PermitLeadTimeDays == nil {
-		return nil, nil
-	}
-
-	days := int(*obj.PermitLeadTimeDays)
-	return &days, nil
-}
-func (r *Resolver) JurisdictionRuleOverride() generated.JurisdictionRuleOverrideResolver {
-	return &jurisdictionRuleOverrideResolver{r}
-}
-*/
