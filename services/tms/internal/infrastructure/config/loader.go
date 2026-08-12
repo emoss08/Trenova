@@ -154,7 +154,14 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("server.requestTimeout", "55s")
 
 	// Database defaults
+	l.viper.SetDefault("database.driver", "postgres")
 	l.viper.SetDefault("database.sslMode", "prefer")
+	l.viper.SetDefault("database.sqlite.path", "trenova.db")
+	l.viper.SetDefault("database.sqlite.journalMode", "WAL")
+	l.viper.SetDefault("database.sqlite.synchronous", "NORMAL")
+	l.viper.SetDefault("database.sqlite.busyTimeout", "5s")
+	l.viper.SetDefault("database.sqlite.foreignKeys", true)
+	l.viper.SetDefault("database.sqlite.cacheSizeKb", 64000)
 	l.viper.SetDefault("database.maxIdleConns", 10)
 	l.viper.SetDefault("database.maxOpenConns", 100)
 	l.viper.SetDefault("database.connMaxLifetime", "1h")
