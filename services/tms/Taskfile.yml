@@ -269,11 +269,13 @@ tasks:
     desc: Check if seed IDs need regeneration
     cmds:
       - |
-        go generate ./internal/infrastructure/database/seeder/... 2>/dev/null || true
-        if git diff --quiet pkg/seedhelpers/seed_ids_gen.go 2>/dev/null; then
+        go generate ./internal/infrastructure/database/seeder/...
+        if git diff --quiet pkg/seedhelpers/seed_ids_gen.go; then
           echo "Seed IDs are up to date"
         else
-          echo "Seed IDs were regenerated - commit the changes"
+          echo "Seed IDs are out of date - run 'task generate-seeds' and commit"
+          git diff --stat pkg/seedhelpers/seed_ids_gen.go
+          exit 1
         fi
 
   docker-up:
