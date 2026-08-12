@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./generated": "./src/generated/index.ts",
+    "./fragment-data": "./src/fragment-data.ts",
     "./generated/operation-catalog.json": "./src/generated/operation-catalog.json",
     "./generated/graphql": "./src/generated/graphql.ts",
     "./generated/gql": "./src/generated/gql.ts",

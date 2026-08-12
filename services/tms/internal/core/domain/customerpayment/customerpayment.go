@@ -26,8 +26,8 @@ type Payment struct {
 	PaymentDate          int64    `json:"paymentDate"          bun:"payment_date,type:BIGINT,notnull"`
 	AccountingDate       int64    `json:"accountingDate"       bun:"accounting_date,type:BIGINT,notnull"`
 	AmountMinor          int64    `json:"amountMinor"          bun:"amount_minor,type:BIGINT,notnull"`
-	AppliedAmountMinor   int64    `json:"appliedAmountMinor"   bun:"applied_amount_minor,type:BIGINT,notnull,default:0"`
-	UnappliedAmountMinor int64    `json:"unappliedAmountMinor" bun:"unapplied_amount_minor,type:BIGINT,notnull,default:0"`
+	AppliedAmountMinor   int64    `json:"appliedAmountMinor"   bun:"applied_amount_minor,type:BIGINT,notnull"`
+	UnappliedAmountMinor int64    `json:"unappliedAmountMinor" bun:"unapplied_amount_minor,type:BIGINT,notnull"`
 	Status               Status   `json:"status"               bun:"status,type:VARCHAR(50),notnull"`
 	PaymentMethod        Method   `json:"paymentMethod"        bun:"payment_method,type:VARCHAR(50),notnull"`
 	ReferenceNumber      string   `json:"referenceNumber"      bun:"reference_number,type:VARCHAR(100),nullzero"`
@@ -40,7 +40,7 @@ type Payment struct {
 	ReversalReason       string   `json:"reversalReason"       bun:"reversal_reason,type:TEXT,nullzero"`
 	CreatedByID          pulid.ID `json:"createdById"          bun:"created_by_id,type:VARCHAR(100),notnull"`
 	UpdatedByID          pulid.ID `json:"updatedById"          bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version              int64    `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
+	Version              int64    `json:"version"              bun:"version,type:BIGINT,notnull"`
 	CreatedAt            int64    `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64    `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -56,7 +56,7 @@ type Application struct {
 	CustomerPaymentID   pulid.ID `json:"customerPaymentId"   bun:"customer_payment_id,type:VARCHAR(100),notnull"`
 	InvoiceID           pulid.ID `json:"invoiceId"           bun:"invoice_id,type:VARCHAR(100),notnull"`
 	AppliedAmountMinor  int64    `json:"appliedAmountMinor"  bun:"applied_amount_minor,type:BIGINT,notnull"`
-	ShortPayAmountMinor int64    `json:"shortPayAmountMinor" bun:"short_pay_amount_minor,type:BIGINT,notnull,default:0"`
+	ShortPayAmountMinor int64    `json:"shortPayAmountMinor" bun:"short_pay_amount_minor,type:BIGINT,notnull"`
 	LineNumber          int      `json:"lineNumber"          bun:"line_number,type:INTEGER,notnull"`
 	CreatedAt           int64    `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt           int64    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

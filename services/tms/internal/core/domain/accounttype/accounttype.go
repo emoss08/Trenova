@@ -35,7 +35,7 @@ type AccountType struct {
 	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
 	Category       Category           `json:"category"       bun:"category,type:account_category_enum,notnull"`
 	Color          string             `json:"color"          bun:"color,type:VARCHAR(10),nullzero"`
-	IsSystem       bool               `json:"isSystem"       bun:"is_system,type:BOOLEAN,default:false"`
+	IsSystem       bool               `json:"isSystem"       bun:"is_system,type:BOOLEAN"`
 	Version        int64              `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64              `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

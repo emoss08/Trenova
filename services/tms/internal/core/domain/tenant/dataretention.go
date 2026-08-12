@@ -22,9 +22,9 @@ type DataRetention struct {
 	ID                            pulid.ID `json:"id"                            bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID                pulid.ID `json:"businessUnitId"                bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID                pulid.ID `json:"organizationId"                bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	AuditRetentionPeriod          int      `json:"auditRetentionPeriod"          bun:"audit_retention_period,type:INTEGER,notnull,default:120"`          // In days
-	EDIInboundFileRetentionPeriod int      `json:"ediInboundFileRetentionPeriod" bun:"edi_inbound_file_retention_period,type:INTEGER,notnull,default:0"` // In days, 0 disables purging
-	EDIMessageRetentionPeriod     int      `json:"ediMessageRetentionPeriod"     bun:"edi_message_retention_period,type:INTEGER,notnull,default:0"`      // In days, 0 disables purging
+	AuditRetentionPeriod          int      `json:"auditRetentionPeriod"          bun:"audit_retention_period,type:INTEGER,notnull,default:120"` // In days
+	EDIInboundFileRetentionPeriod int      `json:"ediInboundFileRetentionPeriod" bun:"edi_inbound_file_retention_period,type:INTEGER,notnull"`  // In days, 0 disables purging
+	EDIMessageRetentionPeriod     int      `json:"ediMessageRetentionPeriod"     bun:"edi_message_retention_period,type:INTEGER,notnull"`       // In days, 0 disables purging
 	Version                       int64    `json:"version"                       bun:"version,type:BIGINT"`
 	CreatedAt                     int64    `json:"createdAt"                     bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                     int64    `json:"updatedAt"                     bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

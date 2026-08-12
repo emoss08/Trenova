@@ -81,7 +81,7 @@ type EDITransactionSegmentDefinition struct {
 	Name             string            `json:"name"             bun:"name,type:VARCHAR(200),notnull"`
 	LoopID           string            `json:"loopId"           bun:"loop_id,type:VARCHAR(50),nullzero"`
 	Sequence         int64             `json:"sequence"         bun:"sequence,type:BIGINT,notnull"`
-	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull,default:false"`
+	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull"`
 	MaxUse           int64             `json:"maxUse"           bun:"max_use,type:BIGINT,notnull,default:1"`
 	RepeatPath       string            `json:"repeatPath"       bun:"repeat_path,type:TEXT,nullzero"`
 	UsageNotes       string            `json:"usageNotes"       bun:"usage_notes,type:TEXT,nullzero"`
@@ -117,9 +117,9 @@ type EDITransactionElementDefinition struct {
 	Position         int               `json:"position"         bun:"position,type:INTEGER,notnull"`
 	ElementID        string            `json:"elementId"        bun:"element_id,type:VARCHAR(20),nullzero"`
 	Name             string            `json:"name"             bun:"name,type:VARCHAR(200),notnull"`
-	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull,default:false"`
-	MinLength        int               `json:"minLength"        bun:"min_length,type:INTEGER,notnull,default:0"`
-	MaxLength        int               `json:"maxLength"        bun:"max_length,type:INTEGER,notnull,default:0"`
+	Required         bool              `json:"required"         bun:"required,type:BOOLEAN,notnull"`
+	MinLength        int               `json:"minLength"        bun:"min_length,type:INTEGER,notnull"`
+	MaxLength        int               `json:"maxLength"        bun:"max_length,type:INTEGER,notnull"`
 	CodeListID       pulid.ID          `json:"codeListId"       bun:"code_list_id,type:VARCHAR(100),nullzero"`
 	UsageNotes       string            `json:"usageNotes"       bun:"usage_notes,type:TEXT,nullzero"`
 	CreatedAt        int64             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

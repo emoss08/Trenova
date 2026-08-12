@@ -36,7 +36,7 @@ type BillingControl struct {
 	InvoiceDraftCreationMode              InvoiceDraftCreationMode       `json:"invoiceDraftCreationMode"              bun:"invoice_draft_creation_mode,type:invoice_draft_creation_mode_enum,notnull,default:'ManualOnly'"`
 	InvoicePostingMode                    InvoicePostingMode             `json:"invoicePostingMode"                    bun:"invoice_posting_mode,type:invoice_posting_mode_enum,notnull,default:'ManualReviewRequired'"`
 	AutoInvoiceBatchSize                  int                            `json:"autoInvoiceBatchSize"                  bun:"auto_invoice_batch_size,type:INTEGER,nullzero"`
-	NotifyOnAutoInvoiceCreation           bool                           `json:"notifyOnAutoInvoiceCreation"           bun:"notify_on_auto_invoice_creation,type:BOOLEAN,notnull,default:false"`
+	NotifyOnAutoInvoiceCreation           bool                           `json:"notifyOnAutoInvoiceCreation"           bun:"notify_on_auto_invoice_creation,type:BOOLEAN,notnull"`
 	ShipmentBillingRequirementEnforcement EnforcementLevel               `json:"shipmentBillingRequirementEnforcement" bun:"shipment_billing_requirement_enforcement,type:enforcement_level_enum,notnull,default:'Block'"`
 	RateValidationEnforcement             EnforcementLevel               `json:"rateValidationEnforcement"             bun:"rate_validation_enforcement,type:enforcement_level_enum,notnull,default:'RequireReview'"`
 	BillingExceptionDisposition           BillingExceptionDisposition    `json:"billingExceptionDisposition"           bun:"billing_exception_disposition,type:billing_exception_disposition_enum,notnull,default:'RouteToBillingReview'"`
@@ -44,7 +44,7 @@ type BillingControl struct {
 	RateVarianceTolerancePercent          decimal.Decimal                `json:"rateVarianceTolerancePercent"          bun:"rate_variance_tolerance_percent,type:NUMERIC(9,6),notnull,default:0.000000"`
 	RateVarianceAutoResolutionMode        RateVarianceAutoResolutionMode `json:"rateVarianceAutoResolutionMode"        bun:"rate_variance_auto_resolution_mode,type:rate_variance_auto_resolution_mode_enum,notnull,default:'Disabled'"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

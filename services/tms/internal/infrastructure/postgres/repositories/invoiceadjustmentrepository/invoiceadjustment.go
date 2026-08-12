@@ -591,7 +591,7 @@ func (r *repository) UpdateBatchItem(
 		Set("error_message = ?", item.ErrorMessage).
 		Set("request_payload = ?", item.RequestPayload).
 		Set("result_payload = ?", item.ResultPayload).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = " + r.db.NowEpoch()).
 		Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("update batch item: %w", err)

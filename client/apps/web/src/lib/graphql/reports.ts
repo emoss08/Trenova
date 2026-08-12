@@ -46,7 +46,7 @@ import {
   type UpdateReportScheduleInput,
   type UpdateReportViewInput,
 } from "@trenova/graphql/generated/graphql";
-import { getFragmentData } from "@trenova/graphql/generated";
+import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";

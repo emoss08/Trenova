@@ -210,12 +210,12 @@ type ReportSchedule struct {
 	Formats             []string          `json:"formats"             bun:"formats,type:TEXT[],array,notnull"`
 	Delivery            *ScheduleDelivery `json:"delivery"            bun:"delivery,type:JSONB,nullzero"`
 	Alert               *ScheduleAlert    `json:"alert"               bun:"alert,type:JSONB,nullzero"`
-	AlertFiring         bool              `json:"alertFiring"         bun:"alert_firing,type:BOOLEAN,notnull,default:false"`
+	AlertFiring         bool              `json:"alertFiring"         bun:"alert_firing,type:BOOLEAN,notnull"`
 	Enabled             bool              `json:"enabled"             bun:"enabled,type:BOOLEAN,notnull,default:true"`
 	RunAsID             pulid.ID          `json:"runAsId"             bun:"run_as_id,type:VARCHAR(100),notnull"`
 	LastRunID           pulid.ID          `json:"lastRunId"           bun:"last_run_id,type:VARCHAR(100),nullzero"`
 	NextRunAt           int64             `json:"nextRunAt"           bun:"next_run_at,type:BIGINT,nullzero"`
-	ConsecutiveFailures int               `json:"consecutiveFailures" bun:"consecutive_failures,type:INTEGER,notnull,default:0"`
+	ConsecutiveFailures int               `json:"consecutiveFailures" bun:"consecutive_failures,type:INTEGER,notnull"`
 	Version             int64             `json:"version"             bun:"version,type:BIGINT"`
 	CreatedAt           int64             `json:"createdAt"           bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt           int64             `json:"updatedAt"           bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -13,6 +13,11 @@ vars:
   TEST_DB_CONTAINER: trenova-integration-postgres
   TEST_DB_PORT: "55432"
   TEST_POSTGRES_DSN: "postgres://postgres:postgres@localhost:55432/trenova_test?sslmode=disable"
+  # go-fitz needs libmupdf, which has no pure-Go build and no bundled Windows DLL.
+  # Windows dev builds drop it so the CLI starts; Linux/macOS/Docker keep PDF support.
+  # Override with `task build-cli GO_TAGS=` to force it back on.
+  GO_TAGS: '{{if eq OS "windows"}}nofitz{{end}}'
+  GO_TAG_FLAG: '{{if .GO_TAGS}}-tags {{.GO_TAGS}}{{end}}'
 
 tasks:
   default:
@@ -32,7 +37,7 @@ tasks:
     desc: Build the unified CLI tool
     cmds:
       - mkdir -p {{.BUILD_DIR}}
-      - go build -buildvcs=false -o {{.CLI_PATH}} ./cmd/cli
+      - go build -buildvcs=false {{.GO_TAG_FLAG}} -o {{.CLI_PATH}} ./cmd/cli
 
   run:
     desc: Run the API server via CLI
@@ -290,6 +295,23 @@ tasks:
     desc: Build docker images
     cmds:
       - "{{.DOCKER_COMPOSE_LOCAL}} build"
+
+  sqlite-convert:
+    desc: Regenerate the SQLite migration set from the PostgreSQL migrations
+    cmds:
+      - python3 {{.ROOT_DIR}}/scripts/dialect-convert/convert.py sqlite --check
+
+  sqlite-convert-report:
+    desc: Regenerate the SQLite migrations and write a per-statement report
+    cmds:
+      - |
+        python3 {{.ROOT_DIR}}/scripts/dialect-convert/convert.py sqlite \
+          --report {{.ROOT_DIR}}/sqlite-conversion-report.txt
+
+  test-sqlite:
+    desc: Verify the SQLite migration set applies cleanly
+    cmds:
+      - go test ./internal/infrastructure/database/migrator/ -run TestSQLite -v
 
   db-migrate:
     desc: Run database migrations

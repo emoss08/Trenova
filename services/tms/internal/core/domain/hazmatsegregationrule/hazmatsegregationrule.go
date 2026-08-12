@@ -41,7 +41,7 @@ type HazmatSegregationRule struct {
 	SearchVector     string                           `json:"-"                bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank             string                           `json:"-"                bun:"rank,type:VARCHAR(100),scanonly"`
 	SegregationType  SegregationType                  `json:"segregationType"  bun:"segregation_type,type:segregation_type_enum,notnull"`
-	HasExceptions    bool                             `json:"hasExceptions"    bun:"has_exceptions,type:BOOLEAN,default:false"`
+	HasExceptions    bool                             `json:"hasExceptions"    bun:"has_exceptions,type:BOOLEAN"`
 	Version          int64                            `json:"version"          bun:"version,type:BIGINT"`
 	CreatedAt        int64                            `json:"createdAt"        bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt        int64                            `json:"updatedAt"        bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

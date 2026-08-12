@@ -435,4 +435,3 @@ func TestFormatCellEdgeCases(t *testing.T) {
 }
 
 func zapNop() *zap.Logger { return zap.NewNop() }
-

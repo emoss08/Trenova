@@ -19,7 +19,7 @@ type BusinessUnit struct {
 	ID        pulid.ID       `json:"id"        bun:"id,pk,type:VARCHAR(100)"`
 	Name      string         `json:"name"      bun:"name,type:VARCHAR(100),notnull"`
 	Code      string         `json:"code"      bun:"code,type:VARCHAR(10),notnull"`
-	Metadata  map[string]any `json:"-"         bun:"metadata,type:JSONB,default:'{}'::jsonb"`
+	Metadata  map[string]any `json:"-"         bun:"metadata,type:JSONB,default:'{}'"`
 	Version   int64          `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64          `json:"createdAt" bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64          `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`

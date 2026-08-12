@@ -36,7 +36,7 @@ type DashControl struct {
 	ShowLoadPay                bool `json:"showLoadPay"                bun:"show_load_pay,type:BOOLEAN,notnull,default:true"`
 	ShowPayEstimates           bool `json:"showPayEstimates"           bun:"show_pay_estimates,type:BOOLEAN,notnull,default:true"`
 	AllowExpenseSubmission     bool `json:"allowExpenseSubmission"     bun:"allow_expense_submission,type:BOOLEAN,notnull,default:true"`
-	RequireExpenseReceipt      bool `json:"requireExpenseReceipt"      bun:"require_expense_receipt,type:BOOLEAN,notnull,default:false"`
+	RequireExpenseReceipt      bool `json:"requireExpenseReceipt"      bun:"require_expense_receipt,type:BOOLEAN,notnull"`
 	AllowSettlementDisputes    bool `json:"allowSettlementDisputes"    bun:"allow_settlement_disputes,type:BOOLEAN,notnull,default:true"`
 	AllowProfileDocumentUpload bool `json:"allowProfileDocumentUpload" bun:"allow_profile_document_upload,type:BOOLEAN,notnull,default:true"`
 	AllowContactInfoEdit       bool `json:"allowContactInfoEdit"       bun:"allow_contact_info_edit,type:BOOLEAN,notnull,default:true"`
@@ -46,7 +46,7 @@ type DashControl struct {
 	EnableDetentionAlerts          bool  `json:"enableDetentionAlerts"          bun:"enable_detention_alerts,type:BOOLEAN,notnull,default:true"`
 	DetentionAlertThresholdMinutes int16 `json:"detentionAlertThresholdMinutes" bun:"detention_alert_threshold_minutes,type:INTEGER,notnull,default:120"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

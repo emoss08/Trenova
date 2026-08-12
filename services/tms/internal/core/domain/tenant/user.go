@@ -23,7 +23,7 @@ type OrganizationMembership struct {
 	bun.BaseModel `bun:"table:user_organization_memberships,alias:uom" json:"-"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	IsDefault      bool     `json:"isDefault"      bun:"is_default,default:false"`
+	IsDefault      bool     `json:"isDefault"      bun:"is_default"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
 	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
@@ -74,9 +74,9 @@ type User struct {
 	ProfilePicURL         string                 `json:"profilePicUrl"         bun:"profile_pic_url,type:VARCHAR(255)"`
 	ThumbnailURL          string                 `json:"thumbnailUrl"          bun:"thumbnail_url,type:VARCHAR(255)"`
 	Timezone              string                 `json:"timezone"              bun:"timezone,type:VARCHAR(50),notnull"`
-	IsLocked              bool                   `json:"isLocked"              bun:"is_locked,type:BOOLEAN,notnull,default:false"`
-	MustChangePassword    bool                   `json:"mustChangePassword"    bun:"must_change_password,type:BOOLEAN,notnull,default:false"`
-	Version               int64                  `json:"version"               bun:"version,type:BIGINT,notnull,default:0"`
+	IsLocked              bool                   `json:"isLocked"              bun:"is_locked,type:BOOLEAN,notnull"`
+	MustChangePassword    bool                   `json:"mustChangePassword"    bun:"must_change_password,type:BOOLEAN,notnull"`
+	Version               int64                  `json:"version"               bun:"version,type:BIGINT,notnull"`
 	CreatedAt             int64                  `json:"createdAt"             bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt             int64                  `json:"updatedAt"             bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	LastLoginAt           *int64                 `json:"lastLoginAt,omitzero"  bun:"last_login_at,nullzero"`

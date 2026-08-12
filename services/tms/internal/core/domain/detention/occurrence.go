@@ -52,27 +52,27 @@ type DetentionOccurrence struct {
 	NoticeDueAt        *int64                    `json:"noticeDueAt"          bun:"notice_due_at,type:BIGINT,nullzero"`
 	NoticeDeadlineAt   *int64                    `json:"noticeDeadlineAt"     bun:"notice_deadline_at,type:BIGINT,nullzero"`
 	IsOpen             bool                      `json:"isOpen"               bun:"is_open,type:BOOLEAN,notnull,default:true"`
-	ArrivedLate        bool                      `json:"arrivedLate"          bun:"arrived_late,type:BOOLEAN,notnull,default:false"`
-	LateByMinutes      int32                     `json:"lateByMinutes"        bun:"late_by_minutes,type:INTEGER,notnull,default:0"`
-	FreeMinutesGranted int32                     `json:"freeMinutesGranted"   bun:"free_minutes_granted,type:INTEGER,notnull,default:0"`
-	RawDwellMinutes    int32                     `json:"rawDwellMinutes"      bun:"raw_dwell_minutes,type:INTEGER,notnull,default:0"`
-	BillableMinutes    int32                     `json:"billableMinutes"      bun:"billable_minutes,type:INTEGER,notnull,default:0"`
-	RoundedMinutes     int32                     `json:"roundedMinutes"       bun:"rounded_minutes,type:INTEGER,notnull,default:0"`
+	ArrivedLate        bool                      `json:"arrivedLate"          bun:"arrived_late,type:BOOLEAN,notnull"`
+	LateByMinutes      int32                     `json:"lateByMinutes"        bun:"late_by_minutes,type:INTEGER,notnull"`
+	FreeMinutesGranted int32                     `json:"freeMinutesGranted"   bun:"free_minutes_granted,type:INTEGER,notnull"`
+	RawDwellMinutes    int32                     `json:"rawDwellMinutes"      bun:"raw_dwell_minutes,type:INTEGER,notnull"`
+	BillableMinutes    int32                     `json:"billableMinutes"      bun:"billable_minutes,type:INTEGER,notnull"`
+	RoundedMinutes     int32                     `json:"roundedMinutes"       bun:"rounded_minutes,type:INTEGER,notnull"`
 	BillableUnits      decimal.Decimal           `json:"billableUnits"        bun:"billable_units,type:NUMERIC(12,4),notnull,default:0"`
 	GrossAmount        decimal.Decimal           `json:"grossAmount"          bun:"gross_amount,type:NUMERIC(19,4),notnull,default:0"`
 	BillableAmount     decimal.Decimal           `json:"billableAmount"       bun:"billable_amount,type:NUMERIC(19,4),notnull,default:0"`
-	DriverPayMinutes   int32                     `json:"driverPayMinutes"     bun:"driver_pay_minutes,type:INTEGER,notnull,default:0"`
+	DriverPayMinutes   int32                     `json:"driverPayMinutes"     bun:"driver_pay_minutes,type:INTEGER,notnull"`
 	DriverPayAmount    decimal.Decimal           `json:"driverPayAmount"      bun:"driver_pay_amount,type:NUMERIC(19,4),notnull,default:0"`
 	NetMargin          decimal.Decimal           `json:"netMargin"            bun:"net_margin,type:NUMERIC(19,4),notnull,default:0"`
 	CapApplied         CapKind                   `json:"capApplied"           bun:"cap_applied,type:detention_cap_kind_enum,notnull,default:'None'"`
-	ConvertedToLayover bool                      `json:"convertedToLayover"   bun:"converted_to_layover,type:BOOLEAN,notnull,default:false"`
+	ConvertedToLayover bool                      `json:"convertedToLayover"   bun:"converted_to_layover,type:BOOLEAN,notnull"`
 	Currency           string                    `json:"currency"             bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
 
 	Status             OccurrenceStatus   `json:"status"             bun:"status,type:detention_occurrence_status_enum,notnull,default:'Accruing'"`
 	NotificationStatus NotificationStatus `json:"notificationStatus" bun:"notification_status,type:detention_notification_status_enum,notnull,default:'NotRequired'"`
 	NoticeSentAt       *int64             `json:"noticeSentAt"       bun:"notice_sent_at,type:BIGINT,nullzero"`
-	SuppressedByGate   bool               `json:"suppressedByGate"   bun:"suppressed_by_gate,type:BOOLEAN,notnull,default:false"`
-	RequiresApproval   bool               `json:"requiresApproval"   bun:"requires_approval,type:BOOLEAN,notnull,default:false"`
+	SuppressedByGate   bool               `json:"suppressedByGate"   bun:"suppressed_by_gate,type:BOOLEAN,notnull"`
+	RequiresApproval   bool               `json:"requiresApproval"   bun:"requires_approval,type:BOOLEAN,notnull"`
 	ApprovedByID       *pulid.ID          `json:"approvedById"       bun:"approved_by_id,type:VARCHAR(100),nullzero"`
 	ApprovedAt         *int64             `json:"approvedAt"         bun:"approved_at,type:BIGINT,nullzero"`
 	WaiverReason       *WaiverReason      `json:"waiverReason"       bun:"waiver_reason,type:detention_waiver_reason_enum,nullzero"`
@@ -83,7 +83,7 @@ type DetentionOccurrence struct {
 	DisputeNote        string             `json:"disputeNote"        bun:"dispute_note,type:TEXT,nullzero"`
 	DisputedAt         *int64             `json:"disputedAt"         bun:"disputed_at,type:BIGINT,nullzero"`
 
-	CollectabilityScore int16     `json:"collectabilityScore" bun:"collectability_score,type:SMALLINT,notnull,default:0"`
+	CollectabilityScore int16     `json:"collectabilityScore" bun:"collectability_score,type:SMALLINT,notnull"`
 	EvidenceHead        string    `json:"evidenceHead"        bun:"evidence_head,type:VARCHAR(64),nullzero"`
 	AdditionalChargeID  *pulid.ID `json:"additionalChargeId"  bun:"additional_charge_id,type:VARCHAR(100),nullzero"`
 

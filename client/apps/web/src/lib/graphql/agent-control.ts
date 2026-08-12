@@ -5,7 +5,7 @@ import {
   type AgentControlFieldsFragment,
   type AgentControlInput,
 } from "@trenova/graphql/generated/graphql";
-import { getFragmentData } from "@trenova/graphql/generated";
+import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type AgentControl = AgentControlFieldsFragment;

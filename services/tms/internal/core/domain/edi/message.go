@@ -48,7 +48,7 @@ type EDIMessage struct {
 	RawPurgedAt              *int64                      `json:"rawPurgedAt"              bun:"raw_purged_at,type:BIGINT,nullzero"`
 	DeliveryStatus           MessageDeliveryStatus       `json:"deliveryStatus"           bun:"delivery_status,type:edi_message_delivery_status_enum,nullzero"`
 	DeliveryRemotePath       string                      `json:"deliveryRemotePath"       bun:"delivery_remote_path,type:TEXT,nullzero"`
-	DeliveryAttempts         int64                       `json:"deliveryAttempts"         bun:"delivery_attempts,type:BIGINT,notnull,default:0"`
+	DeliveryAttempts         int64                       `json:"deliveryAttempts"         bun:"delivery_attempts,type:BIGINT,notnull"`
 	DeliveryLastAttemptAt    *int64                      `json:"deliveryLastAttemptAt"    bun:"delivery_last_attempt_at,type:BIGINT,nullzero"`
 	DeliverySentAt           *int64                      `json:"deliverySentAt"           bun:"delivery_sent_at,type:BIGINT,nullzero"`
 	DeliveryLastError        string                      `json:"deliveryLastError"        bun:"delivery_last_error,type:TEXT,nullzero"`
@@ -60,7 +60,7 @@ type EDIMessage struct {
 	AckLastError             string                      `json:"ackLastError"             bun:"ack_last_error,type:TEXT,nullzero"`
 	GeneratedByID            pulid.ID                    `json:"generatedById"            bun:"generated_by_id,type:VARCHAR(100),nullzero"`
 	GeneratedAt              int64                       `json:"generatedAt"              bun:"generated_at,type:BIGINT,notnull"`
-	Version                  int64                       `json:"version"                  bun:"version,type:BIGINT,notnull,default:0"`
+	Version                  int64                       `json:"version"                  bun:"version,type:BIGINT,notnull"`
 	CreatedAt                int64                       `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                int64                       `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -103,7 +103,7 @@ type EDIMessageValidationError struct {
 	Severity        ValidationSeverity `json:"severity"        bun:"severity,type:edi_validation_severity_enum,notnull"`
 	Code            string             `json:"code"            bun:"code,type:VARCHAR(100),notnull"`
 	SegmentID       string             `json:"segmentId"       bun:"segment_id,type:VARCHAR(10),nullzero"`
-	ElementPosition int                `json:"elementPosition" bun:"element_position,type:INTEGER,notnull,default:0"`
+	ElementPosition int                `json:"elementPosition" bun:"element_position,type:INTEGER,notnull"`
 	Path            string             `json:"path"            bun:"path,type:TEXT,nullzero"`
 	Message         string             `json:"message"         bun:"message,type:TEXT,notnull"`
 	SuggestedFix    string             `json:"suggestedFix"    bun:"suggested_fix,type:TEXT,nullzero"`
@@ -131,15 +131,15 @@ type EDITestCase struct {
 	Name                     string          `json:"name"                     bun:"name,type:VARCHAR(200),notnull"`
 	Description              string          `json:"description"              bun:"description,type:TEXT,nullzero"`
 	Payload                  DocumentPayload `json:"payload"                  bun:"payload,type:JSONB,notnull"`
-	ExpectedWarnings         int             `json:"expectedWarnings"         bun:"expected_warnings,type:INTEGER,notnull,default:0"`
-	ExpectedErrors           int             `json:"expectedErrors"           bun:"expected_errors,type:INTEGER,notnull,default:0"`
-	ExpectedWarningCodes     []string        `json:"expectedWarningCodes"     bun:"expected_warning_codes,type:JSONB,notnull,default:'[]'::jsonb"`
-	ExpectedErrorCodes       []string        `json:"expectedErrorCodes"       bun:"expected_error_codes,type:JSONB,notnull,default:'[]'::jsonb"`
+	ExpectedWarnings         int             `json:"expectedWarnings"         bun:"expected_warnings,type:INTEGER,notnull"`
+	ExpectedErrors           int             `json:"expectedErrors"           bun:"expected_errors,type:INTEGER,notnull"`
+	ExpectedWarningCodes     []string        `json:"expectedWarningCodes"     bun:"expected_warning_codes,type:JSONB,notnull,default:'[]'"`
+	ExpectedErrorCodes       []string        `json:"expectedErrorCodes"       bun:"expected_error_codes,type:JSONB,notnull,default:'[]'"`
 	LastRunAt                *int64          `json:"lastRunAt"                bun:"last_run_at,type:BIGINT,nullzero"`
 	LastRunPassed            *bool           `json:"lastRunPassed"            bun:"last_run_passed,type:BOOLEAN"`
-	LastRunWarnings          int             `json:"lastRunWarnings"          bun:"last_run_warnings,type:INTEGER,notnull,default:0"`
-	LastRunErrors            int             `json:"lastRunErrors"            bun:"last_run_errors,type:INTEGER,notnull,default:0"`
-	Version                  int64           `json:"version"                  bun:"version,type:BIGINT,notnull,default:0"`
+	LastRunWarnings          int             `json:"lastRunWarnings"          bun:"last_run_warnings,type:INTEGER,notnull"`
+	LastRunErrors            int             `json:"lastRunErrors"            bun:"last_run_errors,type:INTEGER,notnull"`
+	Version                  int64           `json:"version"                  bun:"version,type:BIGINT,notnull"`
 	CreatedAt                int64           `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                int64           `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

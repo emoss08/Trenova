@@ -34,12 +34,12 @@ type RecurringEarning struct {
 	Description     string           `json:"description"     bun:"description,type:VARCHAR(255),notnull"`
 	AmountMinor     int64            `json:"amountMinor"     bun:"amount_minor,type:BIGINT,notnull"`
 	TotalCapMinor   *int64           `json:"totalCapMinor"   bun:"total_cap_minor,type:BIGINT,nullzero"`
-	PaidToDateMinor int64            `json:"paidToDateMinor" bun:"paid_to_date_minor,type:BIGINT,notnull,default:0"`
+	PaidToDateMinor int64            `json:"paidToDateMinor" bun:"paid_to_date_minor,type:BIGINT,notnull"`
 	StartDate       int64            `json:"startDate"       bun:"start_date,type:BIGINT,notnull"`
 	EndDate         *int64           `json:"endDate"         bun:"end_date,type:BIGINT,nullzero"`
 	CurrencyCode    string           `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
 	CreatedByID     pulid.ID         `json:"createdById"     bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	Version         int64            `json:"version"         bun:"version,type:BIGINT,notnull,default:0"`
+	Version         int64            `json:"version"         bun:"version,type:BIGINT,notnull"`
 	CreatedAt       int64            `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt       int64            `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

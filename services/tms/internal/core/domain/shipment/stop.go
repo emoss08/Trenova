@@ -23,7 +23,7 @@ type Stop struct {
 	Status                 StopStatus         `json:"status"                 bun:"status,type:stop_status_enum,notnull,default:'New'"`
 	Type                   StopType           `json:"type"                   bun:"type,type:stop_type_enum,notnull,default:'Pickup'"`
 	ScheduleType           StopScheduleType   `json:"scheduleType"           bun:"schedule_type,type:stop_schedule_type_enum,notnull,default:'Open'"`
-	Sequence               int64              `json:"sequence"               bun:"sequence,type:INTEGER,notnull,default:0"`
+	Sequence               int64              `json:"sequence"               bun:"sequence,type:INTEGER,notnull"`
 	Pieces                 *int64             `json:"pieces"                 bun:"pieces,type:INTEGER,nullzero"`
 	Weight                 *int64             `json:"weight"                 bun:"weight,type:INTEGER,nullzero"`
 	ScheduledWindowStart   int64              `json:"scheduledWindowStart"   bun:"scheduled_window_start,type:BIGINT,notnull"`

@@ -61,6 +61,11 @@ monitoring:
 
 # PostgreSQL database configuration
 database:
+  # PostgreSQL is the reference database for Trenova and the only supported
+  # production target. "sqlite" is a development-only convenience for
+  # contributors without a Postgres/PostGIS toolchain; see docs/databases.md
+  # for the feature gaps it implies.
+  driver: postgres # postgres | sqlite
   host: localhost # Database host
   port: 5432 # Database port
   name: trenova_go_db # Database name
@@ -70,6 +75,14 @@ database:
   statementTimeout: 10s # Per-statement database deadline
   lockTimeout: 5s # Maximum time a statement may wait for a lock
   idleInTransactionSessionTimeout: 30s # Maximum time a transaction may sit idle
+  # Only read when driver is "sqlite".
+  sqlite:
+    path: trenova.db # Database file path
+    journalMode: WAL # WAL keeps readers concurrent with the single writer
+    synchronous: NORMAL # NORMAL is the right durability trade for a dev database
+    busyTimeout: 5s # How long a blocked writer waits before failing
+    foreignKeys: true # SQLite enforces foreign keys only when asked
+    cacheSizeKb: 64000 # Page cache size in KiB
 
 # Search configuration
 search:

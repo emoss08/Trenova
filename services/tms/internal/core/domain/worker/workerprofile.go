@@ -39,13 +39,13 @@ type WorkerProfile struct {
 	PhysicalDueDate        *int64           `json:"physicalDueDate"        bun:"physical_due_date,type:BIGINT,nullzero"`
 	MVRDueDate             *int64           `json:"mvrDueDate"             bun:"mvr_due_date,type:BIGINT,nullzero"`
 	ComplianceStatus       ComplianceStatus `json:"complianceStatus"       bun:"compliance_status,type:compliance_status_enum,notnull,default:'Pending'"`
-	IsQualified            bool             `json:"isQualified"            bun:"is_qualified,type:BOOLEAN,notnull,default:false"`
+	IsQualified            bool             `json:"isQualified"            bun:"is_qualified,type:BOOLEAN,notnull"`
 	DisqualificationReason string           `json:"disqualificationReason" bun:"disqualification_reason,type:VARCHAR(255),nullzero"`
-	LastComplianceCheck    int64            `json:"lastComplianceCheck"    bun:"last_compliance_check,type:BIGINT,notnull,default:0"`
-	LastMVRCheck           int64            `json:"lastMvrCheck"           bun:"last_mvr_check,type:BIGINT,notnull,default:0"`
-	LastDrugTest           int64            `json:"lastDrugTest"           bun:"last_drug_test,type:BIGINT,notnull,default:0"`
-	ELDExempt              bool             `json:"eldExempt"              bun:"eld_exempt,type:BOOLEAN,notnull,default:false"`
-	ShortHaulExempt        bool             `json:"shortHaulExempt"        bun:"short_haul_exempt,type:BOOLEAN,notnull,default:false"`
+	LastComplianceCheck    int64            `json:"lastComplianceCheck"    bun:"last_compliance_check,type:BIGINT,notnull"`
+	LastMVRCheck           int64            `json:"lastMvrCheck"           bun:"last_mvr_check,type:BIGINT,notnull"`
+	LastDrugTest           int64            `json:"lastDrugTest"           bun:"last_drug_test,type:BIGINT,notnull"`
+	ELDExempt              bool             `json:"eldExempt"              bun:"eld_exempt,type:BOOLEAN,notnull"`
+	ShortHaulExempt        bool             `json:"shortHaulExempt"        bun:"short_haul_exempt,type:BOOLEAN,notnull"`
 	Version                int64            `json:"version"                bun:"version,type:BIGINT"`
 	CreatedAt              int64            `json:"createdAt"              bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt              int64            `json:"updatedAt"              bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

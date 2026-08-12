@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/pkg/dbdialect"
 )
 
 type ServerConfig struct {
@@ -138,7 +140,7 @@ type GCPKMSConfig struct {
 	CredentialsMode string        `mapstructure:"credentialsMode" validate:"omitempty,oneof=adc workload-identity credentials-file"`
 	CredentialsFile string        `mapstructure:"credentialsFile"`
 	Timeout         time.Duration `mapstructure:"timeout"`
-	RetryAttempts   int           `mapstructure:"retryAttempts" validate:"omitempty,min=1,max=10"`
+	RetryAttempts   int           `mapstructure:"retryAttempts"   validate:"omitempty,min=1,max=10"`
 }
 
 type SessionConfig struct {
@@ -235,20 +237,81 @@ type CSRFBrowserGuardConfig struct {
 }
 
 type DatabaseConfig struct {
-	Host             string        `mapstructure:"host"            validate:"required"`
-	Port             int           `mapstructure:"port"            validate:"required,min=1,max=65535"`
-	Name             string        `mapstructure:"name"            validate:"required,min=1,max=63"`
-	User             string        `mapstructure:"user"            validate:"required,min=1,max=63"`
-	Password         string        `mapstructure:"password"        validate:"required"`
-	SSLMode          string        `mapstructure:"sslMode"         validate:"required,oneof=disable require verify-ca verify-full"`
-	MaxIdleConns     int           `mapstructure:"maxIdleConns"    validate:"min=1,max=1000"`
-	MaxOpenConns     int           `mapstructure:"maxOpenConns"    validate:"min=1,max=1000"`
+	Driver           string        `mapstructure:"driver"                          validate:"omitempty,oneof=postgres sqlite"`
+	Host             string        `mapstructure:"host"                            validate:"required_if=Driver postgres"`
+	Port             int           `mapstructure:"port"                            validate:"required_if=Driver postgres,omitempty,min=1,max=65535"`
+	Name             string        `mapstructure:"name"                            validate:"required_if=Driver postgres,omitempty,min=1,max=63"`
+	User             string        `mapstructure:"user"                            validate:"required_if=Driver postgres,omitempty,min=1,max=63"`
+	Password         string        `mapstructure:"password"                        validate:"required_if=Driver postgres"`
+	SSLMode          string        `mapstructure:"sslMode"                         validate:"required_if=Driver postgres,omitempty,oneof=disable require verify-ca verify-full"`
+	MaxIdleConns     int           `mapstructure:"maxIdleConns"                    validate:"min=1,max=1000"`
+	MaxOpenConns     int           `mapstructure:"maxOpenConns"                    validate:"min=1,max=1000"`
 	Verbose          bool          `mapstructure:"verbose"`
 	ConnMaxLifetime  time.Duration `mapstructure:"connMaxLifetime"`
 	ConnMaxIdleTime  time.Duration `mapstructure:"connMaxIdleTime"`
 	StatementTimeout time.Duration `mapstructure:"statementTimeout"`
 	LockTimeout      time.Duration `mapstructure:"lockTimeout"`
 	IdleTxTimeout    time.Duration `mapstructure:"idleInTransactionSessionTimeout"`
+	SQLite           SQLiteConfig  `mapstructure:"sqlite"`
+}
+
+type SQLiteConfig struct {
+	Path        string        `mapstructure:"path"`
+	JournalMode string        `mapstructure:"journalMode" validate:"omitempty,oneof=WAL DELETE TRUNCATE PERSIST MEMORY OFF"`
+	Synchronous string        `mapstructure:"synchronous" validate:"omitempty,oneof=OFF NORMAL FULL EXTRA"`
+	BusyTimeout time.Duration `mapstructure:"busyTimeout"`
+	ForeignKeys *bool         `mapstructure:"foreignKeys"`
+	CacheSizeKB int           `mapstructure:"cacheSizeKb"`
+}
+
+func (c *SQLiteConfig) GetPath() string {
+	if c.Path == "" {
+		return "trenova.db"
+	}
+	return c.Path
+}
+
+func (c *SQLiteConfig) GetJournalMode() string {
+	if c.JournalMode == "" {
+		return "WAL"
+	}
+	return c.JournalMode
+}
+
+func (c *SQLiteConfig) GetSynchronous() string {
+	if c.Synchronous == "" {
+		return "NORMAL"
+	}
+	return c.Synchronous
+}
+
+func (c *SQLiteConfig) GetBusyTimeout() time.Duration {
+	if c.BusyTimeout <= 0 {
+		return 5 * time.Second
+	}
+	return c.BusyTimeout
+}
+
+func (c *SQLiteConfig) GetForeignKeys() bool {
+	if c.ForeignKeys == nil {
+		return true
+	}
+	return *c.ForeignKeys
+}
+
+func (c *SQLiteConfig) GetCacheSizeKB() int {
+	if c.CacheSizeKB <= 0 {
+		return 64000
+	}
+	return c.CacheSizeKB
+}
+
+func (c *DatabaseConfig) GetDialect() dbdialect.Kind {
+	kind, err := dbdialect.Parse(c.Driver)
+	if err != nil {
+		return dbdialect.DefaultKind
+	}
+	return kind
 }
 
 func (c *DatabaseConfig) GetStatementTimeout() time.Duration {
@@ -1160,7 +1223,7 @@ type PortalConfig struct {
 type PushConfig struct {
 	VAPIDPublicKey  string `mapstructure:"vapidPublicKey"`
 	VAPIDPrivateKey string `mapstructure:"vapidPrivateKey"`
-	Subject         string `mapstructure:"subject" validate:"omitempty"`
+	Subject         string `mapstructure:"subject"         validate:"omitempty"`
 }
 
 func (c *PushConfig) Enabled() bool {
@@ -1198,6 +1261,10 @@ func (c *Config) GetReportingConfig() *ReportingConfig { return &c.Reporting }
 func (c *Config) GetRendererConfig() *RendererConfig { return &c.Renderer }
 
 func (c *Config) GetDSN(password string) string {
+	if c.Database.GetDialect().IsSQLite() {
+		return c.getSQLiteDSN()
+	}
+
 	escapedPassword := url.QueryEscape(password)
 
 	dsn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s",
@@ -1215,7 +1282,34 @@ func (c *Config) GetDSN(password string) string {
 	return dsn
 }
 
+func (c *Config) getSQLiteDSN() string {
+	sqlite := &c.Database.SQLite
+
+	pragmas := []string{
+		fmt.Sprintf("_pragma=journal_mode(%s)", sqlite.GetJournalMode()),
+		fmt.Sprintf("_pragma=synchronous(%s)", sqlite.GetSynchronous()),
+		fmt.Sprintf("_pragma=busy_timeout(%d)", sqlite.GetBusyTimeout().Milliseconds()),
+		fmt.Sprintf("_pragma=foreign_keys(%d)", boolToPragma(sqlite.GetForeignKeys())),
+		fmt.Sprintf("_pragma=cache_size(-%d)", sqlite.GetCacheSizeKB()),
+		"_time_format=sqlite",
+		"_txlock=immediate",
+	}
+
+	return fmt.Sprintf("file:%s?%s", sqlite.GetPath(), strings.Join(pragmas, "&"))
+}
+
+func boolToPragma(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
+}
+
 func (c *Config) GetDSNMasked() string {
+	if c.Database.GetDialect().IsSQLite() {
+		return fmt.Sprintf("sqlite://%s", c.Database.SQLite.GetPath())
+	}
+
 	return fmt.Sprintf("postgres://%s:****@%s/%s?sslmode=%s",
 		c.Database.User,
 		net.JoinHostPort(c.Database.Host, strconv.Itoa(c.Database.Port)),

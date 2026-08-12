@@ -155,7 +155,7 @@ func (r *repository) UpdateActiveConversationStatusByDocument(
 		Model((*shipmentimportchat.Conversation)(nil)).
 		Set("status = ?", status).
 		Set("status_reason = ?", reason).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = "+r.db.NowEpoch()).
 		Where("document_id = ?", documentID).
 		Where("organization_id = ?", tenantInfo.OrgID).
 		Where("business_unit_id = ?", tenantInfo.BuID).

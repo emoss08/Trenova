@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -1812,12 +1813,14 @@ func (s *Service) setShipmentTenderStatus(
 	tenantInfo pagination.TenantInfo,
 	status shipment.TenderStatus,
 ) error {
-	results, err := s.db.DBForContext(ctx).
+	db := s.db.DBForContext(ctx)
+
+	results, err := db.
 		NewUpdate().
 		Model((*shipment.Shipment)(nil)).
 		Set("tender_status = ?", status).
 		Set("version = version + 1").
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = "+dbdialect.NowEpochFromBun(db)).
 		Where("id = ?", shipmentID).
 		Where("organization_id = ?", tenantInfo.OrgID).
 		Where("business_unit_id = ?", tenantInfo.BuID).

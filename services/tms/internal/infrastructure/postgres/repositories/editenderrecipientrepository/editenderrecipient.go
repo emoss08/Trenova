@@ -124,7 +124,7 @@ func (r *repository) UpsertTenderRecipient(
 		Set("partner_document_profile_id = COALESCE(NULLIF(EXCLUDED.partner_document_profile_id, ''), etr.partner_document_profile_id)").
 		Set("communication_profile_id = COALESCE(NULLIF(EXCLUDED.communication_profile_id, ''), etr.communication_profile_id)").
 		Set("status = ?", edi.TenderRecipientStatusActive).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = " + r.db.NowEpoch()).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {

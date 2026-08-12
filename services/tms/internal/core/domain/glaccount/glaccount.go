@@ -33,12 +33,12 @@ type GLAccount struct {
 	AccountCode    string             `json:"accountCode"    bun:"account_code,type:VARCHAR(20),notnull"`
 	Name           string             `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
 	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
-	IsSystem       bool               `json:"isSystem"       bun:"is_system,type:BOOLEAN,default:false"`
+	IsSystem       bool               `json:"isSystem"       bun:"is_system,type:BOOLEAN"`
 	AllowManualJE  bool               `json:"allowManualJe"  bun:"allow_manual_je,type:BOOLEAN,default:true"`
-	RequireProject bool               `json:"requireProject" bun:"require_project,type:BOOLEAN,default:false"`
-	CurrentBalance int64              `json:"currentBalance" bun:"current_balance,type:BIGINT,default:0"`
-	DebitBalance   int64              `json:"debitBalance"   bun:"debit_balance,type:BIGINT,default:0"`
-	CreditBalance  int64              `json:"creditBalance"  bun:"credit_balance,type:BIGINT,default:0"`
+	RequireProject bool               `json:"requireProject" bun:"require_project,type:BOOLEAN"`
+	CurrentBalance int64              `json:"currentBalance" bun:"current_balance,type:BIGINT"`
+	DebitBalance   int64              `json:"debitBalance"   bun:"debit_balance,type:BIGINT"`
+	CreditBalance  int64              `json:"creditBalance"  bun:"credit_balance,type:BIGINT"`
 	Version        int64              `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64              `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64              `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

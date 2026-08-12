@@ -133,7 +133,7 @@ type GeneratedDocument struct {
 
 	FileName string `json:"fileName" bun:"file_name,type:VARCHAR(255),notnull"`
 	FilePath string `json:"filePath" bun:"file_path,type:VARCHAR(500),nullzero"`
-	FileSize int64  `json:"fileSize" bun:"file_size,type:BIGINT,notnull,default:0"`
+	FileSize int64  `json:"fileSize" bun:"file_size,type:BIGINT,notnull"`
 	MimeType string `json:"mimeType" bun:"mime_type,type:VARCHAR(100),notnull,default:'application/pdf'"`
 	Checksum string `json:"checksum" bun:"checksum,type:VARCHAR(64),nullzero"`
 
@@ -154,7 +154,7 @@ type GeneratedDocument struct {
 	DeliveredAt    *int64         `json:"deliveredAt"    bun:"delivered_at,type:BIGINT,nullzero"`
 	DeliveredTo    string         `json:"deliveredTo"    bun:"delivered_to,type:VARCHAR(255),nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

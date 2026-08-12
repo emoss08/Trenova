@@ -35,10 +35,10 @@ type PayProfile struct {
 	Description                  string              `json:"description"                  bun:"description,type:TEXT,nullzero"`
 	Classification               PayeeClassification `json:"classification"               bun:"classification,type:VARCHAR(50),notnull,default:'CompanyDriver'"`
 	CurrencyCode                 string              `json:"currencyCode"                 bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	GuaranteedPeriodMinimumMinor int64               `json:"guaranteedPeriodMinimumMinor" bun:"guaranteed_period_minimum_minor,type:BIGINT,notnull,default:0"`
+	GuaranteedPeriodMinimumMinor int64               `json:"guaranteedPeriodMinimumMinor" bun:"guaranteed_period_minimum_minor,type:BIGINT,notnull"`
 	PerDiemRatePerMile           decimal.Decimal     `json:"perDiemRatePerMile"           bun:"per_diem_rate_per_mile,type:NUMERIC(19,4),notnull,default:0"`
-	PerDiemDailyCapMinor         int64               `json:"perDiemDailyCapMinor"         bun:"per_diem_daily_cap_minor,type:BIGINT,notnull,default:0"`
-	Version                      int64               `json:"version"                      bun:"version,type:BIGINT,notnull,default:0"`
+	PerDiemDailyCapMinor         int64               `json:"perDiemDailyCapMinor"         bun:"per_diem_daily_cap_minor,type:BIGINT,notnull"`
+	Version                      int64               `json:"version"                      bun:"version,type:BIGINT,notnull"`
 	CreatedAt                    int64               `json:"createdAt"                    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                    int64               `json:"updatedAt"                    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -66,10 +66,10 @@ type PayProfileComponent struct {
 	Rate            decimal.Decimal `json:"rate"            bun:"rate,type:NUMERIC(19,4),notnull,default:0"`
 	RevenueBasis    RevenueBasis    `json:"revenueBasis"    bun:"revenue_basis,type:VARCHAR(50),nullzero"`
 	Bands           []MileageBand   `json:"bands"           bun:"bands,type:JSONB,nullzero"`
-	FreeTimeMinutes int             `json:"freeTimeMinutes" bun:"free_time_minutes,type:INTEGER,notnull,default:0"`
+	FreeTimeMinutes int             `json:"freeTimeMinutes" bun:"free_time_minutes,type:INTEGER,notnull"`
 	MinAmountMinor  *int64          `json:"minAmountMinor"  bun:"min_amount_minor,type:BIGINT,nullzero"`
 	MaxAmountMinor  *int64          `json:"maxAmountMinor"  bun:"max_amount_minor,type:BIGINT,nullzero"`
-	Sequence        int             `json:"sequence"        bun:"sequence,type:INTEGER,notnull,default:0"`
+	Sequence        int             `json:"sequence"        bun:"sequence,type:INTEGER,notnull"`
 	IsActive        bool            `json:"isActive"        bun:"is_active,type:BOOLEAN,notnull,default:true"`
 	CreatedAt       int64           `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt       int64           `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

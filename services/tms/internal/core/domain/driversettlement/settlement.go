@@ -48,16 +48,16 @@ type Settlement struct {
 	PeriodStart          int64                         `json:"periodStart"          bun:"period_start,type:BIGINT,notnull"`
 	PeriodEnd            int64                         `json:"periodEnd"            bun:"period_end,type:BIGINT,notnull"`
 	PayDate              int64                         `json:"payDate"              bun:"pay_date,type:BIGINT,notnull"`
-	GrossEarningsMinor   int64                         `json:"grossEarningsMinor"   bun:"gross_earnings_minor,type:BIGINT,notnull,default:0"`
-	ReimbursementsMinor  int64                         `json:"reimbursementsMinor"  bun:"reimbursements_minor,type:BIGINT,notnull,default:0"`
-	DeductionsMinor      int64                         `json:"deductionsMinor"      bun:"deductions_minor,type:BIGINT,notnull,default:0"`
-	CarryForwardInMinor  int64                         `json:"carryForwardInMinor"  bun:"carry_forward_in_minor,type:BIGINT,notnull,default:0"`
-	CarryForwardOutMinor int64                         `json:"carryForwardOutMinor" bun:"carry_forward_out_minor,type:BIGINT,notnull,default:0"`
-	NetPayMinor          int64                         `json:"netPayMinor"          bun:"net_pay_minor,type:BIGINT,notnull,default:0"`
+	GrossEarningsMinor   int64                         `json:"grossEarningsMinor"   bun:"gross_earnings_minor,type:BIGINT,notnull"`
+	ReimbursementsMinor  int64                         `json:"reimbursementsMinor"  bun:"reimbursements_minor,type:BIGINT,notnull"`
+	DeductionsMinor      int64                         `json:"deductionsMinor"      bun:"deductions_minor,type:BIGINT,notnull"`
+	CarryForwardInMinor  int64                         `json:"carryForwardInMinor"  bun:"carry_forward_in_minor,type:BIGINT,notnull"`
+	CarryForwardOutMinor int64                         `json:"carryForwardOutMinor" bun:"carry_forward_out_minor,type:BIGINT,notnull"`
+	NetPayMinor          int64                         `json:"netPayMinor"          bun:"net_pay_minor,type:BIGINT,notnull"`
 	TotalMiles           decimal.Decimal               `json:"totalMiles"           bun:"total_miles,type:NUMERIC(19,4),notnull,default:0"`
-	ShipmentCount        int                           `json:"shipmentCount"        bun:"shipment_count,type:INTEGER,notnull,default:0"`
+	ShipmentCount        int                           `json:"shipmentCount"        bun:"shipment_count,type:INTEGER,notnull"`
 	CurrencyCode         string                        `json:"currencyCode"         bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	HasExceptions        bool                          `json:"hasExceptions"        bun:"has_exceptions,type:BOOLEAN,notnull,default:false"`
+	HasExceptions        bool                          `json:"hasExceptions"        bun:"has_exceptions,type:BOOLEAN,notnull"`
 	Exceptions           []Exception                   `json:"exceptions"           bun:"exceptions,type:JSONB,nullzero"`
 	Notes                string                        `json:"notes"                bun:"notes,type:TEXT,nullzero"`
 	SubmittedByID        pulid.ID                      `json:"submittedById"        bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
@@ -75,7 +75,7 @@ type Settlement struct {
 	VoidedAt             *int64                        `json:"voidedAt"             bun:"voided_at,type:BIGINT,nullzero"`
 	VoidReason           string                        `json:"voidReason"           bun:"void_reason,type:TEXT,nullzero"`
 	VoidJournalBatchID   *pulid.ID                     `json:"voidJournalBatchId"   bun:"void_journal_batch_id,type:VARCHAR(100),nullzero"`
-	Version              int64                         `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
+	Version              int64                         `json:"version"              bun:"version,type:BIGINT,notnull"`
 	CreatedAt            int64                         `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64                         `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

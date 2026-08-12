@@ -65,12 +65,12 @@ type FiscalYear struct {
 	// IsCurrent indicates this is the active fiscal year for day-to-day operations.
 	// Only one fiscal year per organization+business_unit can be current at a time.
 	// Enforced at the DB level with a partial unique index where is_current = TRUE.
-	IsCurrent bool `json:"isCurrent" bun:"is_current,type:BOOLEAN,default:false"`
+	IsCurrent bool `json:"isCurrent" bun:"is_current,type:BOOLEAN"`
 
 	// IsCalendarYear is a denormalized flag indicating the fiscal year aligns
 	// with Jan 1 – Dec 31. Saves a date comparison on every query that needs
 	// to know whether this is a standard or offset fiscal year.
-	IsCalendarYear bool `json:"isCalendarYear" bun:"is_calendar_year,type:BOOLEAN,default:false"`
+	IsCalendarYear bool `json:"isCalendarYear" bun:"is_calendar_year,type:BOOLEAN"`
 
 	// ---------------------------------------------------------------
 	// Year-End Controls
@@ -81,7 +81,7 @@ type FiscalYear struct {
 	// accept adjusting entries regardless of its own per-period setting. If true,
 	// it defers to each period's AllowAdjustingEntries flag. This gives the CFO
 	// a single kill-switch to lock down the entire year.
-	AllowAdjustingEntries bool `json:"allowAdjustingEntries" bun:"allow_adjusting_entries,type:BOOLEAN,default:false"`
+	AllowAdjustingEntries bool `json:"allowAdjustingEntries" bun:"allow_adjusting_entries,type:BOOLEAN"`
 
 	// ---------------------------------------------------------------
 	// Close Tracking

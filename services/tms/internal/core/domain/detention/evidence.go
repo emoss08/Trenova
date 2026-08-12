@@ -38,7 +38,7 @@ type DetentionEvidence struct {
 	BusinessUnitID        pulid.ID       `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID        pulid.ID       `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	DetentionOccurrenceID pulid.ID       `json:"detentionOccurrenceId" bun:"detention_occurrence_id,type:VARCHAR(100),notnull"`
-	Sequence              int32          `json:"sequence"              bun:"sequence,type:INTEGER,notnull,default:0"`
+	Sequence              int32          `json:"sequence"              bun:"sequence,type:INTEGER,notnull"`
 	Kind                  EvidenceKind   `json:"kind"                  bun:"kind,type:detention_evidence_kind_enum,notnull"`
 	Source                EvidenceSource `json:"source"                bun:"source,type:detention_evidence_source_enum,notnull"`
 	Summary               string         `json:"summary"               bun:"summary,type:TEXT,notnull"`
