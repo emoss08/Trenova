@@ -348,6 +348,7 @@ type CORSConfig struct {
 type CacheConfig struct {
 	Host            string        `mapstructure:"host"            validate:"required"`
 	Port            int           `mapstructure:"port"            validate:"required,min=1,max=65535"`
+	Username        string        `mapstructure:"username"        validate:"omitempty,min=1,max=63"`
 	Password        string        `mapstructure:"password"`
 	DB              int           `mapstructure:"db"              validate:"min=0,max=15"`
 	PoolSize        int           `mapstructure:"poolSize"        validate:"min=0,max=1000"`
@@ -1267,7 +1268,8 @@ func (c *Config) GetDSN(password string) string {
 
 	escapedPassword := url.QueryEscape(password)
 
-	dsn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s",
+	dsn := fmt.Sprintf(
+		"postgres://%s:%s@%s/%s?sslmode=%s",
 		c.Database.User,
 		escapedPassword,
 		net.JoinHostPort(c.Database.Host, strconv.Itoa(c.Database.Port)),
@@ -1310,7 +1312,8 @@ func (c *Config) GetDSNMasked() string {
 		return fmt.Sprintf("sqlite://%s", c.Database.SQLite.GetPath())
 	}
 
-	return fmt.Sprintf("postgres://%s:****@%s/%s?sslmode=%s",
+	return fmt.Sprintf(
+		"postgres://%s:****@%s/%s?sslmode=%s",
 		c.Database.User,
 		net.JoinHostPort(c.Database.Host, strconv.Itoa(c.Database.Port)),
 		c.Database.Name,

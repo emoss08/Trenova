@@ -2,7 +2,7 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "GOEXPERIMENT=greenteagc go build -o ./tmp/trenova-cli ./cmd/cli"
+cmd = "go build -tags nofitz -o ./tmp/trenova-cli.exe ./cmd/cli"
 bin = "./tmp/trenova-cli"
 delay = 100
 exclude_dir = ["assets", "tmp", "vendor", "ui", "platform", "microservices"]

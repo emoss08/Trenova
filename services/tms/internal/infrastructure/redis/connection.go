@@ -41,6 +41,7 @@ func NewConnection(p ConnectionParams) (*redis.Client, error) {
 
 	client := redis.NewClient(&redis.Options{
 		Addr:            cacheConfig.GetRedisAddr(),
+		Username:        cacheConfig.Username,
 		Password:        cacheConfig.Password,
 		DB:              cacheConfig.DB,
 		PoolSize:        poolSize,
@@ -73,7 +74,8 @@ func NewConnection(p ConnectionParams) (*redis.Client, error) {
 			if err := client.Ping(ctx).Err(); err != nil {
 				return fmt.Errorf("failed to ping Redis: %w", err)
 			}
-			logger.Info("Redis connection established",
+			logger.Info(
+				"Redis connection established",
 				zap.String("host", cacheConfig.Host),
 				zap.Int("port", cacheConfig.Port),
 				zap.Int("db", cacheConfig.DB),

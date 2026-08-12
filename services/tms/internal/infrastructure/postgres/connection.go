@@ -162,7 +162,8 @@ func (c *Connection) connect(ctx context.Context) error {
 	maskedDSN := c.cfg.GetDSNMasked()
 	dialect := c.cfg.Database.GetDialect()
 
-	c.logger.Debug(ctx, "Connecting to database",
+	c.logger.Debug(
+		ctx, "Connecting to database",
 		zap.String("driver", dialect.String()),
 		zap.String("dsn", maskedDSN),
 	)
@@ -188,7 +189,8 @@ func (c *Connection) connect(ctx context.Context) error {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	c.logger.Info(ctx, "Database connection established",
+	c.logger.Info(
+		ctx, "Database connection established",
 		zap.String("driver", dialect.String()),
 		zap.String("database", c.databaseName()),
 		zap.Int("max_open_conns", c.settings.maxOpenConns),
