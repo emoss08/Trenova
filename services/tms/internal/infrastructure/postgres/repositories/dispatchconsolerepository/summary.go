@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
@@ -87,14 +88,7 @@ func (r *repository) scanMoveSummary(
 			asnCols.ID.IsNotNull(),
 			asnCols.CreatedAt.Gte(),
 		), dayStart).
-		ColumnExpr(buncolgen.Expr(
-			"COALESCE(AVG(ST_DistanceSphere(ST_MakePoint({0}, {1}), "+
-				"ST_MakePoint(orig.longitude, orig.latitude)) / ?) "+
-				"FILTER (WHERE {2} IS NOT NULL AND {3} IS NOT NULL "+
-				"AND orig.latitude IS NOT NULL AND orig.longitude IS NOT NULL), 0)::float8 "+
-				"AS average_deadhead",
-			posCols.Longitude, posCols.Latitude, asnCols.ID, posCols.TractorID,
-		), metersPerMile).
+		Apply(averageDeadheadColumn(posCols, asnCols)).
 		Join(shipmentJoin).
 		Join(customerJoin).
 		Join(assignmentJoin).
@@ -144,4 +138,24 @@ func (r *repository) scanDriverSummary(
 	summary.UnseatedDrivers = counts.UnseatedDrivers
 
 	return nil
+}
+
+func averageDeadheadColumn(
+	posCols buncolgen.VehiclePositionColumnSet,
+	asnCols buncolgen.AssignmentColumnSet,
+) func(*bun.SelectQuery) *bun.SelectQuery {
+	return func(q *bun.SelectQuery) *bun.SelectQuery {
+		if !dbdialect.FromBun(q.DB()).Supports(dbdialect.CapPostGIS) {
+			return q.ColumnExpr("NULL AS average_deadhead")
+		}
+
+		return q.ColumnExpr(buncolgen.Expr(
+			"COALESCE(AVG(ST_DistanceSphere(ST_MakePoint({0}, {1}), "+
+				"ST_MakePoint(orig.longitude, orig.latitude)) / ?) "+
+				"FILTER (WHERE {2} IS NOT NULL AND {3} IS NOT NULL "+
+				"AND orig.latitude IS NOT NULL AND orig.longitude IS NOT NULL), 0)::float8 "+
+				"AS average_deadhead",
+			posCols.Longitude, posCols.Latitude, asnCols.ID, posCols.TractorID,
+		), metersPerMile)
+	}
 }

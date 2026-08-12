@@ -291,6 +291,23 @@ tasks:
     cmds:
       - "{{.DOCKER_COMPOSE_LOCAL}} build"
 
+  sqlite-convert:
+    desc: Regenerate the SQLite migration set from the PostgreSQL migrations
+    cmds:
+      - python3 {{.ROOT_DIR}}/scripts/dialect-convert/convert.py sqlite --check
+
+  sqlite-convert-report:
+    desc: Regenerate the SQLite migrations and write a per-statement report
+    cmds:
+      - |
+        python3 {{.ROOT_DIR}}/scripts/dialect-convert/convert.py sqlite \
+          --report {{.ROOT_DIR}}/sqlite-conversion-report.txt
+
+  test-sqlite:
+    desc: Verify the SQLite migration set applies cleanly
+    cmds:
+      - go test ./internal/infrastructure/database/migrator/ -run TestSQLite -v
+
   db-migrate:
     desc: Run database migrations
     deps: [build-cli]
