@@ -2524,20 +2524,22 @@ type OrderLeg struct {
 }
 
 type OrganizationInput struct {
-	Version      int     `json:"version"`
-	Name         string  `json:"name"`
-	LoginSlug    *string `json:"loginSlug,omitempty"`
-	ScacCode     string  `json:"scacCode"`
-	DotNumber    string  `json:"dotNumber"`
-	LogoURL      *string `json:"logoUrl,omitempty"`
-	BucketName   *string `json:"bucketName,omitempty"`
-	AddressLine1 string  `json:"addressLine1"`
-	AddressLine2 *string `json:"addressLine2,omitempty"`
-	City         string  `json:"city"`
-	StateID      string  `json:"stateId"`
-	PostalCode   string  `json:"postalCode"`
-	Timezone     string  `json:"timezone"`
-	TaxID        *string `json:"taxId,omitempty"`
+	Version                int     `json:"version"`
+	Name                   string  `json:"name"`
+	LoginSlug              *string `json:"loginSlug,omitempty"`
+	ScacCode               string  `json:"scacCode"`
+	DotNumber              string  `json:"dotNumber"`
+	LogoURL                *string `json:"logoUrl,omitempty"`
+	BucketName             *string `json:"bucketName,omitempty"`
+	AddressLine1           string  `json:"addressLine1"`
+	AddressLine2           *string `json:"addressLine2,omitempty"`
+	City                   string  `json:"city"`
+	StateID                string  `json:"stateId"`
+	PostalCode             string  `json:"postalCode"`
+	Timezone               string  `json:"timezone"`
+	TaxID                  *string `json:"taxId,omitempty"`
+	BrokerageEnabled       *bool   `json:"brokerageEnabled,omitempty"`
+	AssetOperationsEnabled *bool   `json:"assetOperationsEnabled,omitempty"`
 }
 
 type PageInfo struct {

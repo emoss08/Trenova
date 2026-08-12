@@ -98,6 +98,10 @@ func (s *service) Update(
 		return nil, err
 	}
 
+	if err := s.guardBrokerageDisable(ctx, entity); err != nil {
+		return nil, err
+	}
+
 	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
 		log.Error("failed to update organization", zap.Error(err))

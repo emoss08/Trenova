@@ -64,6 +64,15 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, id string, in
 		entity.TaxID = *input.TaxID
 	}
 
+	if err = r.applyOrganizationCapabilities(
+		ctx,
+		entity,
+		input.BrokerageEnabled,
+		input.AssetOperationsEnabled,
+	); err != nil {
+		return nil, err
+	}
+
 	return r.organizationService.Update(ctx, entity)
 }
 

@@ -38814,6 +38814,12 @@ const docTemplate = `{
                 "addressLine2": {
                     "type": "string"
                 },
+                "assetOperationsEnabled": {
+                    "type": "boolean"
+                },
+                "brokerageEnabled": {
+                    "type": "boolean"
+                },
                 "bucketName": {
                     "type": "string"
                 },

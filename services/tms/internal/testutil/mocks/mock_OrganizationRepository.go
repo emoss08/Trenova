@@ -115,6 +115,74 @@ func (_c *MockOrganizationRepository_ClearLogoURL_Call) RunAndReturn(run func(ct
 	return _c
 }
 
+// CountBrokerageDependencies provides a mock function for the type MockOrganizationRepository
+func (_mock *MockOrganizationRepository) CountBrokerageDependencies(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositories.BrokerageDependencyCounts, error) {
+	ret := _mock.Called(ctx, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountBrokerageDependencies")
+	}
+
+	var r0 *repositories.BrokerageDependencyCounts
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (*repositories.BrokerageDependencyCounts, error)); ok {
+		return returnFunc(ctx, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) *repositories.BrokerageDependencyCounts); ok {
+		r0 = returnFunc(ctx, tenantInfo)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.BrokerageDependencyCounts)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationRepository_CountBrokerageDependencies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountBrokerageDependencies'
+type MockOrganizationRepository_CountBrokerageDependencies_Call struct {
+	*mock.Call
+}
+
+// CountBrokerageDependencies is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockOrganizationRepository_Expecter) CountBrokerageDependencies(ctx any, tenantInfo any) *MockOrganizationRepository_CountBrokerageDependencies_Call {
+	return &MockOrganizationRepository_CountBrokerageDependencies_Call{Call: _e.mock.On("CountBrokerageDependencies", ctx, tenantInfo)}
+}
+
+func (_c *MockOrganizationRepository_CountBrokerageDependencies_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockOrganizationRepository_CountBrokerageDependencies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationRepository_CountBrokerageDependencies_Call) Return(brokerageDependencyCounts *repositories.BrokerageDependencyCounts, err error) *MockOrganizationRepository_CountBrokerageDependencies_Call {
+	_c.Call.Return(brokerageDependencyCounts, err)
+	return _c
+}
+
+func (_c *MockOrganizationRepository_CountBrokerageDependencies_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositories.BrokerageDependencyCounts, error)) *MockOrganizationRepository_CountBrokerageDependencies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByID provides a mock function for the type MockOrganizationRepository
 func (_mock *MockOrganizationRepository) GetByID(ctx context.Context, req repositories.GetOrganizationByIDRequest) (*tenant.Organization, error) {
 	ret := _mock.Called(ctx, req)

@@ -4079,26 +4079,28 @@ type ComplexityRoot struct {
 	}
 
 	Organization struct {
-		AddressLine1   func(childComplexity int) int
-		AddressLine2   func(childComplexity int) int
-		BucketName     func(childComplexity int) int
-		BusinessUnit   func(childComplexity int) int
-		BusinessUnitID func(childComplexity int) int
-		City           func(childComplexity int) int
-		CreatedAt      func(childComplexity int) int
-		DOTNumber      func(childComplexity int) int
-		ID             func(childComplexity int) int
-		LoginSlug      func(childComplexity int) int
-		LogoURL        func(childComplexity int) int
-		Name           func(childComplexity int) int
-		PostalCode     func(childComplexity int) int
-		ScacCode       func(childComplexity int) int
-		State          func(childComplexity int) int
-		StateID        func(childComplexity int) int
-		TaxID          func(childComplexity int) int
-		Timezone       func(childComplexity int) int
-		UpdatedAt      func(childComplexity int) int
-		Version        func(childComplexity int) int
+		AddressLine1           func(childComplexity int) int
+		AddressLine2           func(childComplexity int) int
+		AssetOperationsEnabled func(childComplexity int) int
+		BrokerageEnabled       func(childComplexity int) int
+		BucketName             func(childComplexity int) int
+		BusinessUnit           func(childComplexity int) int
+		BusinessUnitID         func(childComplexity int) int
+		City                   func(childComplexity int) int
+		CreatedAt              func(childComplexity int) int
+		DOTNumber              func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		LoginSlug              func(childComplexity int) int
+		LogoURL                func(childComplexity int) int
+		Name                   func(childComplexity int) int
+		PostalCode             func(childComplexity int) int
+		ScacCode               func(childComplexity int) int
+		State                  func(childComplexity int) int
+		StateID                func(childComplexity int) int
+		TaxID                  func(childComplexity int) int
+		Timezone               func(childComplexity int) int
+		UpdatedAt              func(childComplexity int) int
+		Version                func(childComplexity int) int
 	}
 
 	PTOChartDataPoint struct {
@@ -27147,6 +27149,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Organization.AddressLine2(childComplexity), true
+	case "Organization.assetOperationsEnabled":
+		if e.ComplexityRoot.Organization.AssetOperationsEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.AssetOperationsEnabled(childComplexity), true
+	case "Organization.brokerageEnabled":
+		if e.ComplexityRoot.Organization.BrokerageEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Organization.BrokerageEnabled(childComplexity), true
 	case "Organization.bucketName":
 		if e.ComplexityRoot.Organization.BucketName == nil {
 			break
@@ -52604,6 +52618,8 @@ type Organization {
   postalCode: String!
   timezone: String!
   taxId: String!
+  brokerageEnabled: Boolean!
+  assetOperationsEnabled: Boolean!
   version: Int!
   createdAt: Int!
   updatedAt: Int!
@@ -52626,6 +52642,8 @@ input OrganizationInput {
   postalCode: String!
   timezone: String!
   taxId: String
+  brokerageEnabled: Boolean
+  assetOperationsEnabled: Boolean
 }
 
 type User {
@@ -60716,6 +60734,10 @@ func (ec *executionContext) childFields_Organization(ctx context.Context, field 
 		return ec.fieldContext_Organization_timezone(ctx, field)
 	case "taxId":
 		return ec.fieldContext_Organization_taxId(ctx, field)
+	case "brokerageEnabled":
+		return ec.fieldContext_Organization_brokerageEnabled(ctx, field)
+	case "assetOperationsEnabled":
+		return ec.fieldContext_Organization_assetOperationsEnabled(ctx, field)
 	case "version":
 		return ec.fieldContext_Organization_version(ctx, field)
 	case "createdAt":
@@ -150581,6 +150603,52 @@ func (ec *executionContext) fieldContext_Organization_taxId(_ context.Context, f
 	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _Organization_brokerageEnabled(ctx context.Context, field graphql.CollectedField, obj *tenant.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Organization_brokerageEnabled(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BrokerageEnabled, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Organization_brokerageEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Organization_assetOperationsEnabled(ctx context.Context, field graphql.CollectedField, obj *tenant.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Organization_assetOperationsEnabled(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AssetOperationsEnabled, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Organization_assetOperationsEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Organization", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _Organization_version(ctx context.Context, field graphql.CollectedField, obj *tenant.Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -215195,7 +215263,7 @@ func (ec *executionContext) unmarshalInputOrganizationInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"version", "name", "loginSlug", "scacCode", "dotNumber", "logoUrl", "bucketName", "addressLine1", "addressLine2", "city", "stateId", "postalCode", "timezone", "taxId"}
+	fieldsInOrder := [...]string{"version", "name", "loginSlug", "scacCode", "dotNumber", "logoUrl", "bucketName", "addressLine1", "addressLine2", "city", "stateId", "postalCode", "timezone", "taxId", "brokerageEnabled", "assetOperationsEnabled"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -215300,6 +215368,20 @@ func (ec *executionContext) unmarshalInputOrganizationInput(ctx context.Context,
 				return it, err
 			}
 			it.TaxID = data
+		case "brokerageEnabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("brokerageEnabled"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BrokerageEnabled = data
+		case "assetOperationsEnabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assetOperationsEnabled"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssetOperationsEnabled = data
 		}
 	}
 	return it, nil
@@ -250336,6 +250418,16 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 		case "taxId":
 			out.Values[i] = ec._Organization_taxId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "brokerageEnabled":
+			out.Values[i] = ec._Organization_brokerageEnabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "assetOperationsEnabled":
+			out.Values[i] = ec._Organization_assetOperationsEnabled(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

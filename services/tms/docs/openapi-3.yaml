@@ -7342,6 +7342,10 @@ components:
                     type: string
                 addressLine2:
                     type: string
+                assetOperationsEnabled:
+                    type: boolean
+                brokerageEnabled:
+                    type: boolean
                 bucketName:
                     type: string
                 businessUnit:
