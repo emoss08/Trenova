@@ -1547,6 +1547,8 @@ export type OrderStatus =
 export type OrganizationInput = {
   addressLine1: string;
   addressLine2?: string | null | undefined;
+  assetOperationsEnabled?: boolean | null | undefined;
+  brokerageEnabled?: boolean | null | undefined;
   bucketName?: string | null | undefined;
   city: string;
   dotNumber: string;
@@ -5115,7 +5117,7 @@ export type OrderTableQuery = { orders: { totalCount: number | null, edges: Arra
 
 export type OrganizationSettingsStateFieldsFragment = { id: string, name: string, abbreviation: string } & { ' $fragmentName'?: 'OrganizationSettingsStateFieldsFragment' };
 
-export type OrganizationSettingsFieldsFragment = { id: string, version: number, createdAt: number, updatedAt: number, bucketName: string, businessUnitId: string, loginSlug: string, name: string, scacCode: string, dotNumber: string, logoUrl: string, addressLine1: string, addressLine2: string, city: string, stateId: string, postalCode: string, timezone: string, taxId: string, state: { ' $fragmentRefs'?: { 'OrganizationSettingsStateFieldsFragment': OrganizationSettingsStateFieldsFragment } } | null } & { ' $fragmentName'?: 'OrganizationSettingsFieldsFragment' };
+export type OrganizationSettingsFieldsFragment = { id: string, version: number, createdAt: number, updatedAt: number, bucketName: string, businessUnitId: string, loginSlug: string, name: string, scacCode: string, dotNumber: string, logoUrl: string, addressLine1: string, addressLine2: string, city: string, stateId: string, postalCode: string, timezone: string, taxId: string, brokerageEnabled: boolean, assetOperationsEnabled: boolean, state: { ' $fragmentRefs'?: { 'OrganizationSettingsStateFieldsFragment': OrganizationSettingsStateFieldsFragment } } | null } & { ' $fragmentName'?: 'OrganizationSettingsFieldsFragment' };
 
 export type OrganizationSettingsQueryVariables = Exact<{
   id: string | number;
@@ -8085,6 +8087,8 @@ export const OrganizationSettingsFieldsFragmentDoc = new TypedDocumentString(`
   postalCode
   timezone
   taxId
+  brokerageEnabled
+  assetOperationsEnabled
   state {
     ...OrganizationSettingsStateFields
   }
@@ -17849,10 +17853,12 @@ fragment OrganizationSettingsFields on Organization {
   postalCode
   timezone
   taxId
+  brokerageEnabled
+  assetOperationsEnabled
   state {
     ...OrganizationSettingsStateFields
   }
-}`, {"hash":"sha256:f0607e7e7bb70dae8caafba84295b7a0c947b86d75e5502a1756f46bb3be4304"}) as unknown as TypedDocumentString<OrganizationSettingsQuery, OrganizationSettingsQueryVariables>;
+}`, {"hash":"sha256:f59e843fddaab74c31d9f3aa0a606e4b81cc2d14a917c3d66acea23683149f6e"}) as unknown as TypedDocumentString<OrganizationSettingsQuery, OrganizationSettingsQueryVariables>;
 export const UpdateOrganizationSettingsDocument = new TypedDocumentString(`
     mutation UpdateOrganizationSettings($id: ID!, $input: OrganizationInput!) {
   updateOrganization(id: $id, input: $input) {
@@ -17883,10 +17889,12 @@ fragment OrganizationSettingsFields on Organization {
   postalCode
   timezone
   taxId
+  brokerageEnabled
+  assetOperationsEnabled
   state {
     ...OrganizationSettingsStateFields
   }
-}`, {"hash":"sha256:9c93ea23726c32ce8a2683f6ff0e4f38d5a63a9ef0ddd9a86b9b98899aeaefe8"}) as unknown as TypedDocumentString<UpdateOrganizationSettingsMutation, UpdateOrganizationSettingsMutationVariables>;
+}`, {"hash":"sha256:2570700a28884d232092d9f71c54fedff5dd1a7323568e57a8c4b571869f400e"}) as unknown as TypedDocumentString<UpdateOrganizationSettingsMutation, UpdateOrganizationSettingsMutationVariables>;
 export const RateTableTableDocument = new TypedDocumentString(`
     query RateTableTable($input: DataTableConnectionInput!) {
   rateTables(input: $input) {

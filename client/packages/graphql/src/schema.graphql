@@ -6111,6 +6111,8 @@ enum OrderStatus {
 type Organization {
   addressLine1: String!
   addressLine2: String!
+  assetOperationsEnabled: Boolean!
+  brokerageEnabled: Boolean!
   bucketName: String!
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -6134,6 +6136,8 @@ type Organization {
 input OrganizationInput {
   addressLine1: String!
   addressLine2: String
+  assetOperationsEnabled: Boolean
+  brokerageEnabled: Boolean
   bucketName: String
   city: String!
   dotNumber: String!

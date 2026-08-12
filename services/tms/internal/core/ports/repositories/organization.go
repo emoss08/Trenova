@@ -27,6 +27,25 @@ type SelectOrganizationOptionsRequest struct {
 	ExcludeCurrent     bool   `json:"excludeCurrent"`
 }
 
+// BrokerageDependencyCounts reports outstanding brokerage work for an
+// organization. It backs the guard that refuses to turn brokerage off while
+// any of these remain open.
+type BrokerageDependencyCounts struct {
+	ActiveTenders             int `json:"activeTenders"`
+	ActiveRateConfirmations   int `json:"activeRateConfirmations"`
+	UnpaidCarrierSettlements  int `json:"unpaidCarrierSettlements"`
+	OpenCarrierInvoiceMatches int `json:"openCarrierInvoiceMatches"`
+	ActiveCarrierAssignments  int `json:"activeCarrierAssignments"`
+}
+
+func (c BrokerageDependencyCounts) HasOutstandingWork() bool {
+	return c.ActiveTenders > 0 ||
+		c.ActiveRateConfirmations > 0 ||
+		c.UnpaidCarrierSettlements > 0 ||
+		c.OpenCarrierInvoiceMatches > 0 ||
+		c.ActiveCarrierAssignments > 0
+}
+
 type OrganizationRepository interface {
 	GetByID(ctx context.Context, req GetOrganizationByIDRequest) (*tenant.Organization, error)
 	GetByIDs(ctx context.Context, req GetOrganizationsByIDsRequest) ([]*tenant.Organization, error)
@@ -38,6 +57,10 @@ type OrganizationRepository interface {
 	ListLoginSlugsByPrefix(ctx context.Context, prefix string) ([]string, error)
 	Update(ctx context.Context, entity *tenant.Organization) (*tenant.Organization, error)
 	ClearLogoURL(ctx context.Context, orgID pulid.ID, version int64) (*tenant.Organization, error)
+	CountBrokerageDependencies(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*BrokerageDependencyCounts, error)
 }
 
 type OrganizationCacheRepository interface {

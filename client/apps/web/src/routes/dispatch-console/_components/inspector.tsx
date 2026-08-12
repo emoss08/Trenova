@@ -1,3 +1,4 @@
+import { CapabilityGate } from "@/components/capability-gate";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { PermissionGate } from "@/components/permission-gate";
 import { isTypingTarget } from "@/lib/dom";
@@ -16,6 +17,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatClockDurationMs, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { Building2Icon, SendIcon } from "lucide-react";
@@ -135,15 +137,19 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
         />
       )}
       <div className="flex flex-wrap items-center gap-1.5">
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-6 px-2 text-[10px]"
-          title="Broker this move to a different carrier — the current assignment is replaced"
-          onClick={() => openCarrierAssign(move)}
-        >
-          Replace carrier
-        </Button>
+        {/* Re-brokering is a brokerage action; canceling is the way an
+            asset-only org unwinds coverage it inherited, so it always stays. */}
+        <CapabilityGate capability={OrganizationCapability.Brokerage}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px]"
+            title="Broker this move to a different carrier — the current assignment is replaced"
+            onClick={() => openCarrierAssign(move)}
+          >
+            Replace carrier
+          </Button>
+        </CapabilityGate>
         <Button
           size="sm"
           variant="outline"
@@ -257,41 +263,47 @@ function MoveInspector({
 
       {isCarrierCovered && <CarrierCoverageCard move={move} />}
 
-      {move.liveTender && <TenderCoverageCard move={move} actions={actions} />}
+      {move.liveTender && (
+        <CapabilityGate capability={OrganizationCapability.Brokerage}>
+          <TenderCoverageCard move={move} actions={actions} />
+        </CapabilityGate>
+      )}
 
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
         <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
           {candidates.length} candidates
         </span>
         <div className="flex items-center gap-1.5">
-          {!move.isCovered && (
-            <PermissionGate resource={Resource.ShipmentMove} operation={Operation.Assign}>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-6 px-2 text-[10px]"
-                disabled={isAssigning}
-                onClick={() => openCarrierAssign(move)}
-              >
-                <Building2Icon className="size-3" aria-hidden />
-                Assign to carrier
-              </Button>
-            </PermissionGate>
-          )}
-          {!move.isCovered && (
-            <PermissionGate resource={Resource.Tender} operation={Operation.Create}>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-6 px-2 text-[10px]"
-                disabled={isAssigning}
-                onClick={() => openTender(move)}
-              >
-                <SendIcon className="size-3" aria-hidden />
-                Tender to carriers
-              </Button>
-            </PermissionGate>
-          )}
+          <CapabilityGate capability={OrganizationCapability.Brokerage}>
+            {!move.isCovered && (
+              <PermissionGate resource={Resource.ShipmentMove} operation={Operation.Assign}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[10px]"
+                  disabled={isAssigning}
+                  onClick={() => openCarrierAssign(move)}
+                >
+                  <Building2Icon className="size-3" aria-hidden />
+                  Assign to carrier
+                </Button>
+              </PermissionGate>
+            )}
+            {!move.isCovered && (
+              <PermissionGate resource={Resource.Tender} operation={Operation.Create}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[10px]"
+                  disabled={isAssigning}
+                  onClick={() => openTender(move)}
+                >
+                  <SendIcon className="size-3" aria-hidden />
+                  Tender to carriers
+                </Button>
+              </PermissionGate>
+            )}
+          </CapabilityGate>
           <Button
             size="sm"
             variant="outline"
@@ -330,7 +342,9 @@ function MoveInspector({
             </p>
           )}
 
-          <TenderHistory shipmentId={move.shipmentId} className="mt-2" />
+          <CapabilityGate capability={OrganizationCapability.Brokerage}>
+            <TenderHistory shipmentId={move.shipmentId} className="mt-2" />
+          </CapabilityGate>
         </div>
       </ScrollArea>
     </div>

@@ -2323,45 +2323,49 @@ var OrganizationTable = TableInfo{
 //	q.Where(OrganizationColumns.ID.Eq(), id)           // WHERE org.id = ?
 //	q.Order(OrganizationColumns.CreatedAt.OrderDesc())  // ORDER BY org.created_at DESC
 var OrganizationColumns = struct {
-	ID             Column // "id" → qualified: "org.id"
-	StateID        Column // "state_id" → qualified: "org.state_id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "org.business_unit_id"
-	Name           Column // "name" → qualified: "org.name"
-	LoginSlug      Column // "login_slug" → qualified: "org.login_slug"
-	ScacCode       Column // "scac_code" → qualified: "org.scac_code"
-	DOTNumber      Column // "dot_number" → qualified: "org.dot_number"
-	LogoURL        Column // "logo_url" → qualified: "org.logo_url"
-	BucketName     Column // "bucket_name" → qualified: "org.bucket_name"
-	AddressLine1   Column // "address_line1" → qualified: "org.address_line1"
-	AddressLine2   Column // "address_line2" → qualified: "org.address_line2"
-	City           Column // "city" → qualified: "org.city"
-	PostalCode     Column // "postal_code" → qualified: "org.postal_code"
-	Timezone       Column // "timezone" → qualified: "org.timezone"
-	TaxID          Column // "tax_id" → qualified: "org.tax_id"
-	Metadata       Column // "metadata" → qualified: "org.metadata"
-	Version        Column // "version" → qualified: "org.version"
-	CreatedAt      Column // "created_at" → qualified: "org.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "org.updated_at"
+	ID                     Column // "id" → qualified: "org.id"
+	StateID                Column // "state_id" → qualified: "org.state_id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "org.business_unit_id"
+	Name                   Column // "name" → qualified: "org.name"
+	LoginSlug              Column // "login_slug" → qualified: "org.login_slug"
+	ScacCode               Column // "scac_code" → qualified: "org.scac_code"
+	DOTNumber              Column // "dot_number" → qualified: "org.dot_number"
+	LogoURL                Column // "logo_url" → qualified: "org.logo_url"
+	BucketName             Column // "bucket_name" → qualified: "org.bucket_name"
+	AddressLine1           Column // "address_line1" → qualified: "org.address_line1"
+	AddressLine2           Column // "address_line2" → qualified: "org.address_line2"
+	City                   Column // "city" → qualified: "org.city"
+	PostalCode             Column // "postal_code" → qualified: "org.postal_code"
+	Timezone               Column // "timezone" → qualified: "org.timezone"
+	TaxID                  Column // "tax_id" → qualified: "org.tax_id"
+	BrokerageEnabled       Column // "brokerage_enabled" → qualified: "org.brokerage_enabled"
+	AssetOperationsEnabled Column // "asset_operations_enabled" → qualified: "org.asset_operations_enabled"
+	Metadata               Column // "metadata" → qualified: "org.metadata"
+	Version                Column // "version" → qualified: "org.version"
+	CreatedAt              Column // "created_at" → qualified: "org.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "org.updated_at"
 }{
-	ID:             NewColumn("id", "org"),
-	StateID:        NewColumn("state_id", "org"),
-	BusinessUnitID: NewColumn("business_unit_id", "org"),
-	Name:           NewColumn("name", "org"),
-	LoginSlug:      NewColumn("login_slug", "org"),
-	ScacCode:       NewColumn("scac_code", "org"),
-	DOTNumber:      NewColumn("dot_number", "org"),
-	LogoURL:        NewColumn("logo_url", "org"),
-	BucketName:     NewColumn("bucket_name", "org"),
-	AddressLine1:   NewColumn("address_line1", "org"),
-	AddressLine2:   NewColumn("address_line2", "org"),
-	City:           NewColumn("city", "org"),
-	PostalCode:     NewColumn("postal_code", "org"),
-	Timezone:       NewColumn("timezone", "org"),
-	TaxID:          NewColumn("tax_id", "org"),
-	Metadata:       NewColumn("metadata", "org"),
-	Version:        NewColumn("version", "org"),
-	CreatedAt:      NewColumn("created_at", "org"),
-	UpdatedAt:      NewColumn("updated_at", "org"),
+	ID:                     NewColumn("id", "org"),
+	StateID:                NewColumn("state_id", "org"),
+	BusinessUnitID:         NewColumn("business_unit_id", "org"),
+	Name:                   NewColumn("name", "org"),
+	LoginSlug:              NewColumn("login_slug", "org"),
+	ScacCode:               NewColumn("scac_code", "org"),
+	DOTNumber:              NewColumn("dot_number", "org"),
+	LogoURL:                NewColumn("logo_url", "org"),
+	BucketName:             NewColumn("bucket_name", "org"),
+	AddressLine1:           NewColumn("address_line1", "org"),
+	AddressLine2:           NewColumn("address_line2", "org"),
+	City:                   NewColumn("city", "org"),
+	PostalCode:             NewColumn("postal_code", "org"),
+	Timezone:               NewColumn("timezone", "org"),
+	TaxID:                  NewColumn("tax_id", "org"),
+	BrokerageEnabled:       NewColumn("brokerage_enabled", "org"),
+	AssetOperationsEnabled: NewColumn("asset_operations_enabled", "org"),
+	Metadata:               NewColumn("metadata", "org"),
+	Version:                NewColumn("version", "org"),
+	CreatedAt:              NewColumn("created_at", "org"),
+	UpdatedAt:              NewColumn("updated_at", "org"),
 }
 
 // OrganizationFieldMap maps JSON API field names to database column names.
@@ -2369,24 +2373,26 @@ var OrganizationColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Organization.GetStaticFieldMap().
 var OrganizationFieldMap = map[string]string{
-	"id":             "id",
-	"stateId":        "state_id",
-	"businessUnitId": "business_unit_id",
-	"name":           "name",
-	"loginSlug":      "login_slug",
-	"scacCode":       "scac_code",
-	"dotNumber":      "dot_number",
-	"logoUrl":        "logo_url",
-	"bucketName":     "bucket_name",
-	"addressLine1":   "address_line1",
-	"addressLine2":   "address_line2",
-	"city":           "city",
-	"postalCode":     "postal_code",
-	"timezone":       "timezone",
-	"taxId":          "tax_id",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":                     "id",
+	"stateId":                "state_id",
+	"businessUnitId":         "business_unit_id",
+	"name":                   "name",
+	"loginSlug":              "login_slug",
+	"scacCode":               "scac_code",
+	"dotNumber":              "dot_number",
+	"logoUrl":                "logo_url",
+	"bucketName":             "bucket_name",
+	"addressLine1":           "address_line1",
+	"addressLine2":           "address_line2",
+	"city":                   "city",
+	"postalCode":             "postal_code",
+	"timezone":               "timezone",
+	"taxId":                  "tax_id",
+	"brokerageEnabled":       "brokerage_enabled",
+	"assetOperationsEnabled": "asset_operations_enabled",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // OrganizationInsertableColumns lists column names suitable for INSERT statements on the "organizations" table.
@@ -2407,6 +2413,8 @@ var OrganizationInsertableColumns = []string{
 	"postal_code",
 	"timezone",
 	"tax_id",
+	"brokerage_enabled",
+	"asset_operations_enabled",
 	"metadata",
 	"version",
 	"created_at",
@@ -2434,24 +2442,26 @@ var OrganizationRelations = struct {
 //	OrganizationFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var OrganizationFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	StateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	LoginSlug      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loginSlug" → DB: "login_slug"
-	ScacCode       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scacCode" → DB: "scac_code"
-	DOTNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
-	LogoURL        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "logoUrl" → DB: "logo_url"
-	BucketName     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bucketName" → DB: "bucket_name"
-	AddressLine1   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine1" → DB: "address_line1"
-	AddressLine2   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line2"
-	City           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
-	PostalCode     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
-	Timezone       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
-	TaxID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxId" → DB: "tax_id"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	StateID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Name                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	LoginSlug              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loginSlug" → DB: "login_slug"
+	ScacCode               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scacCode" → DB: "scac_code"
+	DOTNumber              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
+	LogoURL                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "logoUrl" → DB: "logo_url"
+	BucketName             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bucketName" → DB: "bucket_name"
+	AddressLine1           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine1" → DB: "address_line1"
+	AddressLine2           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line2"
+	City                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
+	PostalCode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
+	Timezone               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
+	TaxID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxId" → DB: "tax_id"
+	BrokerageEnabled       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "brokerageEnabled" → DB: "brokerage_enabled"
+	AssetOperationsEnabled func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assetOperationsEnabled" → DB: "asset_operations_enabled"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -2497,6 +2507,12 @@ var OrganizationFilter = struct {
 	},
 	TaxID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("taxId", op, value)
+	},
+	BrokerageEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("brokerageEnabled", op, value)
+	},
+	AssetOperationsEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("assetOperationsEnabled", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

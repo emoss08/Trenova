@@ -1,4 +1,5 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
+import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   BarChart3Icon,
@@ -139,12 +140,14 @@ const dispatchModule: NavModule = {
       label: "Carriers",
       path: "/dispatch/carriers",
       resource: Resource.Carrier,
+      capability: OrganizationCapability.Brokerage,
     },
     {
       id: "routing-guides",
       label: "Routing Guides",
       path: "/dispatch/routing-guides",
       resource: Resource.RoutingGuide,
+      capability: OrganizationCapability.Brokerage,
     },
     {
       id: "dispatch-config-group",
@@ -436,6 +439,7 @@ const carrierSettlementsModule: NavModule = {
   icon: HandshakeIcon,
   description: "Carrier payables and invoice reconciliation",
   basePath: "/carrier-settlements",
+  capability: OrganizationCapability.Brokerage,
   navigation: [
     {
       id: "carrier-settlement-workspace",
@@ -1097,6 +1101,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Organization",
     resource: Resource.CarrierSettlementControl,
     requiredOperation: Operation.Read,
+    capability: OrganizationCapability.Brokerage,
   },
   {
     href: "/admin/dash-control",

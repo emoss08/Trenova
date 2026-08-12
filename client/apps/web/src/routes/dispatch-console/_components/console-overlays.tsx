@@ -1,4 +1,6 @@
+import { CapabilityGate } from "@/components/capability-gate";
 import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
+import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { DragOverlay } from "@dnd-kit/core";
 import { Suspense, lazy } from "react";
 import type { DispatchActions } from "./use-dispatch-actions";
@@ -72,17 +74,19 @@ export function ConsoleOverlays({ actions }: { actions: DispatchActions }) {
       )}
 
       {carrierAssignTarget && (
-        <Suspense fallback={null}>
-          <CarrierAssignDialog
-            move={carrierAssignTarget}
-            isAssigning={actions.isAssigning}
-            onCancel={closeCarrierAssign}
-            onConfirm={async (input) => {
-              await actions.assignToCarrier(input);
-              closeCarrierAssign();
-            }}
-          />
-        </Suspense>
+        <CapabilityGate capability={OrganizationCapability.Brokerage}>
+          <Suspense fallback={null}>
+            <CarrierAssignDialog
+              move={carrierAssignTarget}
+              isAssigning={actions.isAssigning}
+              onCancel={closeCarrierAssign}
+              onConfirm={async (input) => {
+                await actions.assignToCarrier(input);
+                closeCarrierAssign();
+              }}
+            />
+          </Suspense>
+        </CapabilityGate>
       )}
 
       {carrierCancelTarget && (
@@ -107,9 +111,11 @@ export function ConsoleOverlays({ actions }: { actions: DispatchActions }) {
       )}
 
       {tenderTarget && (
-        <Suspense fallback={null}>
-          <TenderDialog move={tenderTarget} actions={actions} onClose={closeTender} />
-        </Suspense>
+        <CapabilityGate capability={OrganizationCapability.Brokerage}>
+          <Suspense fallback={null}>
+            <TenderDialog move={tenderTarget} actions={actions} onClose={closeTender} />
+          </Suspense>
+        </CapabilityGate>
       )}
 
       {actions.plan && (

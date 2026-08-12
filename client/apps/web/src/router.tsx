@@ -1,8 +1,13 @@
 import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
-import { combineLoaders, createPermissionLoader } from "@/lib/route-permission";
+import {
+  combineLoaders,
+  createCapabilityLoader,
+  createPermissionLoader,
+} from "@/lib/route-permission";
 import { AppLayout } from "@/routes/app-layout";
 import { RootLayout } from "@/routes/root-layout";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
@@ -370,6 +375,7 @@ const routes: RouteObject[] = [
             path: "/carrier-settlements/workspace",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
               createPermissionLoader(Resource.CarrierSettlement),
             ),
             async lazy() {
@@ -382,6 +388,7 @@ const routes: RouteObject[] = [
             path: "/carrier-settlements/settlements",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
               createPermissionLoader(Resource.CarrierSettlement),
             ),
             async lazy() {
@@ -393,6 +400,7 @@ const routes: RouteObject[] = [
             path: "/carrier-settlements/batches",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
               createPermissionLoader(Resource.CarrierSettlement),
             ),
             async lazy() {
@@ -405,6 +413,7 @@ const routes: RouteObject[] = [
             path: "/carrier-settlements/cost-events",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
               createPermissionLoader(Resource.CarrierSettlement),
             ),
             async lazy() {
@@ -416,6 +425,7 @@ const routes: RouteObject[] = [
             path: "/carrier-settlements/invoice-matching",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
               createPermissionLoader(Resource.CarrierInvoiceMatch),
             ),
             async lazy() {
@@ -919,7 +929,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/dispatch/carriers",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Carrier)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPermissionLoader(Resource.Carrier),
+            ),
             async lazy() {
               const { CarriersPage } = await import("@/routes/carrier/page");
               return { Component: CarriersPage };
@@ -927,7 +941,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/dispatch/routing-guides",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RoutingGuide)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPermissionLoader(Resource.RoutingGuide),
+            ),
             async lazy() {
               const { RoutingGuidesPage } = await import("@/routes/routing-guide/page");
               return { Component: RoutingGuidesPage };
@@ -1026,7 +1044,10 @@ const routes: RouteObject[] = [
               },
               {
                 path: "carrier-settlement-control",
-                loader: createPermissionLoader(Resource.CarrierSettlementControl, Operation.Read),
+                loader: combineLoaders(
+                  createCapabilityLoader(OrganizationCapability.Brokerage),
+                  createPermissionLoader(Resource.CarrierSettlementControl, Operation.Read),
+                ),
                 async lazy() {
                   const { CarrierSettlementControlPage } =
                     await import("@/routes/carrier-settlement-control/page");

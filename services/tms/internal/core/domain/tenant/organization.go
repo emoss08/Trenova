@@ -23,25 +23,27 @@ var _ bun.BeforeAppendModelHook = (*Organization)(nil)
 type Organization struct {
 	bun.BaseModel `bun:"table:organizations,alias:org" json:"-"`
 
-	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	StateID        pulid.ID  `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	Name           string    `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	LoginSlug      string    `json:"loginSlug"      bun:"login_slug,type:VARCHAR(100)"`
-	ScacCode       string    `json:"scacCode"       bun:"scac_code,type:VARCHAR(4),notnull"`
-	DOTNumber      string    `json:"dotNumber"      bun:"dot_number,type:VARCHAR(8),notnull"`
-	LogoURL        string    `json:"logoUrl"        bun:"logo_url,type:VARCHAR(255)"`
-	BucketName     string    `json:"bucketName"     bun:"bucket_name,type:VARCHAR(63),notnull"`
-	AddressLine1   string    `json:"addressLine1"   bun:"address_line1,type:VARCHAR(150),notnull"`
-	AddressLine2   string    `json:"addressLine2"   bun:"address_line2,type:VARCHAR(150)"`
-	City           string    `json:"city"           bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode     string    `json:"postalCode"     bun:"postal_code,type:us_postal_code,notnull"`
-	Timezone       string    `json:"timezone"       bun:"timezone,type:VARCHAR(100),notnull,default:'America/New_York'"`
-	TaxID          string    `json:"taxId"          bun:"tax_id,type:VARCHAR(50)"`
-	Metadata       *Metadata `json:"-"              bun:"metadata,type:JSONB"`
-	Version        int64     `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64     `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64     `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID  `json:"id"                     bun:"id,pk,type:VARCHAR(100)"`
+	StateID                pulid.ID  `json:"stateId"                bun:"state_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID         pulid.ID  `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	Name                   string    `json:"name"                   bun:"name,type:VARCHAR(100),notnull"`
+	LoginSlug              string    `json:"loginSlug"              bun:"login_slug,type:VARCHAR(100)"`
+	ScacCode               string    `json:"scacCode"               bun:"scac_code,type:VARCHAR(4),notnull"`
+	DOTNumber              string    `json:"dotNumber"              bun:"dot_number,type:VARCHAR(8),notnull"`
+	LogoURL                string    `json:"logoUrl"                bun:"logo_url,type:VARCHAR(255)"`
+	BucketName             string    `json:"bucketName"             bun:"bucket_name,type:VARCHAR(63),notnull"`
+	AddressLine1           string    `json:"addressLine1"           bun:"address_line1,type:VARCHAR(150),notnull"`
+	AddressLine2           string    `json:"addressLine2"           bun:"address_line2,type:VARCHAR(150)"`
+	City                   string    `json:"city"                   bun:"city,type:VARCHAR(100),notnull"`
+	PostalCode             string    `json:"postalCode"             bun:"postal_code,type:us_postal_code,notnull"`
+	Timezone               string    `json:"timezone"               bun:"timezone,type:VARCHAR(100),notnull,default:'America/New_York'"`
+	TaxID                  string    `json:"taxId"                  bun:"tax_id,type:VARCHAR(50)"`
+	BrokerageEnabled       bool      `json:"brokerageEnabled"       bun:"brokerage_enabled,type:BOOLEAN,notnull,default:true"`
+	AssetOperationsEnabled bool      `json:"assetOperationsEnabled" bun:"asset_operations_enabled,type:BOOLEAN,notnull,default:true"`
+	Metadata               *Metadata `json:"-"                      bun:"metadata,type:JSONB"`
+	Version                int64     `json:"version"                bun:"version,type:BIGINT"`
+	CreatedAt              int64     `json:"createdAt"              bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt              int64     `json:"updatedAt"              bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	State        *usstate.UsState `json:"state"        bun:"rel:belongs-to,join:state_id=id"`

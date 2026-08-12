@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  capabilityFlagSchema,
   optionalStringSchema,
   statusSchema,
   stringArraySchema,
@@ -44,6 +45,8 @@ export const userOrganizationMembershipSchema = z.object({
           name: z.string().nullish(),
         })
         .nullish(),
+      brokerageEnabled: capabilityFlagSchema,
+      assetOperationsEnabled: capabilityFlagSchema,
     })
     .nullish(),
 });

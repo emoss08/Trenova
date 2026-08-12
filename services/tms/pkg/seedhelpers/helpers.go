@@ -83,6 +83,9 @@ func (sc *SeedContext) CreateOrganization(
 		LogoURL:        opts.LogoURL,
 		CreatedAt:      now,
 		UpdatedAt:      now,
+
+		BrokerageEnabled:       true,
+		AssetOperationsEnabled: true,
 	}
 
 	if _, err := tx.NewInsert().Model(org).Exec(ctx); err != nil {

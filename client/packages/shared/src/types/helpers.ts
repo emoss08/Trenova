@@ -74,6 +74,17 @@ export type Status = z.infer<typeof statusSchema>;
 export const equipmentStatusSchema = z.enum(["Available", "OutOfService", "AtMaintenance", "Sold"]);
 export type EquipmentStatus = z.infer<typeof equipmentStatusSchema>;
 
+/**
+ * Organization capability flags gate what the UI *shows*, never what the API
+ * allows. An older payload that predates a flag — or omits it from a narrow
+ * projection — must never hide a feature, so an absent or null value fails open
+ * to enabled.
+ */
+export const capabilityFlagSchema = z
+  .boolean()
+  .nullish()
+  .transform((value) => value ?? true);
+
 export const nullableIntegerSchema = z
   .union([
     z.string().transform((val) => (val === "" ? null : parseInt(val, 10))),

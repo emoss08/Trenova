@@ -1,11 +1,16 @@
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
+import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import {
+  SegmentedControl,
+  type SegmentedControlItem,
+} from "@trenova/shared/components/ui/segmented-control";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import {
@@ -20,6 +25,11 @@ import { queries } from "@/lib/queries";
 import { isAbsoluteUrl } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import {
+  organizationCapabilityPresetValues,
+  resolveOrganizationCapabilityPreset,
+  type OrganizationCapabilityPreset,
+} from "@trenova/shared/types/organization-capability";
 import { organizationSettingsSchema, type OrganizationSettings } from "@trenova/shared/types/organization";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +37,13 @@ import { Building2Icon, CircleXIcon, CreditCardIcon, ShieldIcon, UploadIcon } fr
 import { useQueryState } from "nuqs";
 import type { ChangeEvent } from "react";
 import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
+import {
+  FormProvider,
+  useForm,
+  useFormContext,
+  useWatch,
+  type Resolver,
+} from "react-hook-form";
 import { toast } from "sonner";
 import { BillingUsageTab } from "./billing-usage-tab";
 import { SecurityAccessWorkspace } from "./security-access-workspace";
@@ -51,6 +67,8 @@ const emptyOrganizationDefaults: OrganizationSettings = {
   postalCode: "",
   timezone: "",
   taxId: "",
+  brokerageEnabled: true,
+  assetOperationsEnabled: true,
   state: null,
 };
 
@@ -64,7 +82,7 @@ export default function OrganizationSettingsForm() {
   });
 
   const form = useForm<OrganizationSettings>({
-    resolver: zodResolver(organizationSettingsSchema),
+    resolver: zodResolver(organizationSettingsSchema) as Resolver<OrganizationSettings>,
     defaultValues: emptyOrganizationDefaults,
   });
 
@@ -170,6 +188,7 @@ export default function OrganizationSettingsForm() {
             <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
               <LogoForm organizationId={organizationId} onLogoUpdated={handleLogoUpdated} />
               <GeneralForm />
+              <OperatingModelForm />
               <ComplianceForm />
               <AddressForm />
               <FormSaveDock saveButtonContent="Save Changes" />
@@ -394,6 +413,93 @@ function GeneralForm() {
             />
           </FormControl>
         </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+const OPERATING_MODEL_PRESETS: SegmentedControlItem<OrganizationCapabilityPreset>[] = [
+  { value: "asset", label: "Asset", caption: "Runs its own fleet" },
+  { value: "brokerage", label: "Brokerage", caption: "Buys capacity" },
+  { value: "hybrid", label: "Hybrid", caption: "Both" },
+];
+
+function OperatingModelForm() {
+  const { control, setValue } = useFormContext<OrganizationSettings>();
+  const brokerageEnabled = useWatch({ control, name: "brokerageEnabled" });
+  const assetOperationsEnabled = useWatch({ control, name: "assetOperationsEnabled" });
+
+  const preset = useMemo(
+    () => resolveOrganizationCapabilityPreset({ brokerageEnabled, assetOperationsEnabled }),
+    [brokerageEnabled, assetOperationsEnabled],
+  );
+
+  const applyPreset = useCallback(
+    (value: OrganizationCapabilityPreset) => {
+      // "custom" describes a combination the presets do not cover; it is never
+      // offered as a segment, only reflected when neither preset matches.
+      if (value === "custom") {
+        return;
+      }
+
+      const values = organizationCapabilityPresetValues(value);
+      setValue("brokerageEnabled", values.brokerageEnabled, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+      setValue("assetOperationsEnabled", values.assetOperationsEnabled, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    },
+    [setValue],
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Operating Model</CardTitle>
+        <CardDescription>
+          Tailors the menus to the freight this organization actually moves. This controls
+          visibility only — it hides features from menus and navigation. It does not restrict
+          permissions or API access, and it never changes existing records.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">Preset</span>
+            <SegmentedControl
+              aria-label="Operating model preset"
+              items={OPERATING_MODEL_PRESETS}
+              value={preset}
+              onValueChange={applyPreset}
+              fullWidth
+            />
+            <span className="text-2xs text-muted-foreground">
+              A preset simply sets the two switches below. Adjust either one on its own for a
+              combination the presets do not cover.
+            </span>
+          </div>
+          <FormGroup cols={1}>
+            <FormControl>
+              <SwitchField
+                control={control}
+                name="brokerageEnabled"
+                label="Brokerage Features"
+                description="Shows carriers, routing guides, tendering, and carrier settlements. Turning this off hides them from menus and navigation; it does not restrict permissions or API access."
+              />
+            </FormControl>
+            <FormControl>
+              <SwitchField
+                control={control}
+                name="assetOperationsEnabled"
+                label="Asset Operations"
+                description="Marks this organization as running its own fleet. Recorded for reporting today — it does not hide anything yet."
+              />
+            </FormControl>
+          </FormGroup>
+        </div>
       </CardContent>
     </Card>
   );

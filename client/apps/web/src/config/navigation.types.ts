@@ -1,3 +1,4 @@
+import type { OrganizationCapabilityType } from "@trenova/shared/types/organization-capability";
 import type { OperationType } from "@trenova/shared/types/permission";
 import type { LucideIcon } from "lucide-react";
 
@@ -32,6 +33,13 @@ export interface NavItem {
   includeBetaTag?: boolean;
   external?: boolean;
   resource?: string;
+  /**
+   * Hides the entry when the organization has the capability turned off. It sits
+   * alongside `resource` rather than replacing it: permissions are access
+   * control, a capability is only whether the organization uses that half of the
+   * product at all.
+   */
+  capability?: OrganizationCapabilityType;
   badge?: NavItemBadgeKind;
 }
 
@@ -42,6 +50,7 @@ export interface NavGroup {
   items: NavItem[];
   defaultOpen?: boolean;
   resource?: string;
+  capability?: OrganizationCapabilityType;
 }
 
 export interface NavModule {
@@ -57,6 +66,7 @@ export interface NavModule {
   navigation: (NavItem | NavGroup)[];
   hideSecondarySidebar?: boolean;
   resource?: string;
+  capability?: OrganizationCapabilityType;
 }
 
 export interface NavigationConfig {

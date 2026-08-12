@@ -105,6 +105,17 @@ func (m *mockOrganizationRepo) ClearLogoURL(
 	return args.Get(0).(*tenant.Organization), args.Error(1)
 }
 
+func (m *mockOrganizationRepo) CountBrokerageDependencies(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*repositories.BrokerageDependencyCounts, error) {
+	args := m.Called(ctx, tenantInfo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*repositories.BrokerageDependencyCounts), args.Error(1)
+}
+
 type testDeps struct {
 	repo *mockOrganizationRepo
 	svc  *service
@@ -222,6 +233,9 @@ func newTestOrganization() *tenant.Organization {
 		PostalCode:     "12345",
 		Timezone:       "America/New_York",
 		Version:        1,
+
+		BrokerageEnabled:       true,
+		AssetOperationsEnabled: true,
 	}
 }
 
