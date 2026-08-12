@@ -5665,6 +5665,7 @@ input MatchRoutingGuideInput {
 enum MoveCoverageType {
   carrier
   driver
+  unassigned
 }
 
 enum MoveStatus {
