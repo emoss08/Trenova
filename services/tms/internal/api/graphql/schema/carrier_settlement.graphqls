@@ -42,6 +42,15 @@ enum CarrierInvoiceMatchStatus {
 }
 
 """
+How an invoice match came to exist: Manual for a dispatcher-created match, Auto
+for one created by the inbound EDI 210 auto-match sweep.
+"""
+enum CarrierInvoiceMatchVia {
+  Manual
+  Auto
+}
+
+"""
 The purchased-transportation accrual ledger: one cost event per buy-rate line
 on a carrier assignment, created automatically when a carrier-covered shipment
 reaches the organization's pay trigger. Events are recomputed while Pending,
@@ -332,6 +341,7 @@ type CarrierInvoiceMatch {
   carrierSettlementId: ID
   adjustmentCostEventId: ID
   status: CarrierInvoiceMatchStatus!
+  matchedVia: CarrierInvoiceMatchVia!
   invoiceNumber: String!
   invoiceTotalMinor: Int!
   expectedTotalMinor: Int!

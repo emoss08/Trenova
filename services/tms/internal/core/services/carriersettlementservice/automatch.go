@@ -100,6 +100,7 @@ func (s *Service) AutoMatchInboundInvoice(
 		carrierID:           invoice.CarrierID,
 		invoiceNumber:       invoice.InvoiceNumber,
 		invoiceTotalMinor:   money.MinorUnits(invoice.TotalAmount.Decimal),
+		matchedVia:          carriersettlement.MatchViaAuto,
 	}, assignment, control.VarianceToleranceMinor)
 	if err != nil {
 		return nil, err

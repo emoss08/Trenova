@@ -265,6 +265,14 @@ export type CarrierInvoiceMatchStatus =
   | 'Suggested'
   | 'Variance';
 
+/**
+ * How an invoice match came to exist: Manual for a dispatcher-created match, Auto
+ * for one created by the inbound EDI 210 auto-match sweep.
+ */
+export type CarrierInvoiceMatchVia =
+  | 'Auto'
+  | 'Manual';
+
 export type CarrierLedgerEntryType =
   | 'Adjustment'
   | 'Bill'
@@ -3170,7 +3178,7 @@ export type CarrierInvoiceMatchesQueryVariables = Exact<{
 }>;
 
 
-export type CarrierInvoiceMatchesQuery = { carrierInvoiceMatches: { totalCount: number, items: Array<{ id: string, ediCarrierInvoiceId: string | null, documentAiExtractionId: string | null, carrierId: string, carrierAssignmentId: string, carrierSettlementId: string | null, adjustmentCostEventId: string | null, status: CarrierInvoiceMatchStatus, invoiceNumber: string, invoiceTotalMinor: number, expectedTotalMinor: number, varianceMinor: number, currencyCode: string, resolutionNote: string, resolvedById: string | null, resolvedAt: number | null, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null, carrierAssignment: { id: string, shipmentMoveId: string, status: CarrierAssignmentStatus, rateMethod: CarrierRateMethod, baseRate: string, baseAmount: string, fuelSurcharge: string, accessorialTotal: string, totalCost: string, currencyCode: string, proNumber: string | null, accessorials: Array<{ id: string, description: string, amount: string }> | null } | null }> } };
+export type CarrierInvoiceMatchesQuery = { carrierInvoiceMatches: { totalCount: number, items: Array<{ id: string, ediCarrierInvoiceId: string | null, documentAiExtractionId: string | null, carrierId: string, carrierAssignmentId: string, carrierSettlementId: string | null, adjustmentCostEventId: string | null, status: CarrierInvoiceMatchStatus, matchedVia: CarrierInvoiceMatchVia, invoiceNumber: string, invoiceTotalMinor: number, expectedTotalMinor: number, varianceMinor: number, currencyCode: string, resolutionNote: string, resolvedById: string | null, resolvedAt: number | null, version: number, createdAt: number, updatedAt: number, carrier: { id: string, code: string, name: string, scac: string | null } | null, carrierAssignment: { id: string, shipmentMoveId: string, status: CarrierAssignmentStatus, rateMethod: CarrierRateMethod, baseRate: string, baseAmount: string, fuelSurcharge: string, accessorialTotal: string, totalCost: string, currencyCode: string, proNumber: string | null, accessorials: Array<{ id: string, description: string, amount: string }> | null } | null }> } };
 
 export type EdiCarrierInvoicesQueryVariables = Exact<{
   reconciliationStatus?: string | null | undefined;
@@ -10781,6 +10789,7 @@ export const CarrierInvoiceMatchesDocument = new TypedDocumentString(`
       carrierSettlementId
       adjustmentCostEventId
       status
+      matchedVia
       invoiceNumber
       invoiceTotalMinor
       expectedTotalMinor
@@ -10820,7 +10829,7 @@ export const CarrierInvoiceMatchesDocument = new TypedDocumentString(`
     totalCount
   }
 }
-    `, {"hash":"sha256:73fbe63b0c2d0c45bdba9588a2a2f2ba8e707e6fd6102359adff09a9162961d4"}) as unknown as TypedDocumentString<CarrierInvoiceMatchesQuery, CarrierInvoiceMatchesQueryVariables>;
+    `, {"hash":"sha256:342bebfd33438b8caa7ec38fa67c34c7bef06005a70f0da7fcfd47edbb73f190"}) as unknown as TypedDocumentString<CarrierInvoiceMatchesQuery, CarrierInvoiceMatchesQueryVariables>;
 export const EdiCarrierInvoicesDocument = new TypedDocumentString(`
     query EdiCarrierInvoices($reconciliationStatus: String, $limit: Int, $offset: Int) {
   ediCarrierInvoices(

@@ -5,7 +5,11 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { TENDER_CHANNEL_LABEL, TENDER_MODE_LABEL } from "@trenova/shared/types/tender";
+import {
+  TENDER_CHANNEL_LABEL,
+  TENDER_MODE_LABEL,
+  TENDER_RESPONSE_SOURCE_LABEL,
+} from "@trenova/shared/types/tender";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
@@ -85,6 +89,11 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
                 {offer.sentAt != null && <span>· sent {formatUnixDateTime(offer.sentAt)}</span>}
                 {offer.respondedAt != null && (
                   <span>· responded {formatUnixDateTime(offer.respondedAt)}</span>
+                )}
+                {offer.respondedAt != null && offer.responseSource && (
+                  <span title="How the carrier's response reached us">
+                    · {TENDER_RESPONSE_SOURCE_LABEL[offer.responseSource]}
+                  </span>
                 )}
               </div>
               {offer.status === "Declined" && offer.declineReason && (

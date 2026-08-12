@@ -1830,6 +1830,10 @@ func init() {
 				FieldMapKey: "status",
 			},
 			{
+				Name:        "matchedVia",
+				FieldMapKey: "matchedVia",
+			},
+			{
 				Name:        "invoiceNumber",
 				FieldMapKey: "invoiceNumber",
 			},
@@ -2298,6 +2302,14 @@ func init() {
 			{
 				Name:        "varianceToleranceMinor",
 				FieldMapKey: "varianceToleranceMinor",
+			},
+			{
+				Name:        "autoMatchInboundInvoices",
+				FieldMapKey: "autoMatchInboundInvoices",
+			},
+			{
+				Name:        "autoAcceptWithinTolerance",
+				FieldMapKey: "autoAcceptWithinTolerance",
 			},
 			{
 				Name:        "defaultApAccountId",

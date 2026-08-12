@@ -96,6 +96,7 @@ func createMatchWithVariance(
 	require.NoError(t, err)
 	require.NotNil(t, match)
 	require.Same(t, created, match)
+	assert.Equal(t, carriersettlement.MatchViaManual, match.MatchedVia)
 	return match
 }
 

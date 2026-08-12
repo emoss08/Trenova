@@ -1044,6 +1044,7 @@ type CarrierInvoiceMatch {
   id: ID!
   invoiceNumber: String!
   invoiceTotalMinor: Int!
+  matchedVia: CarrierInvoiceMatchVia!
   organizationId: ID!
   resolutionNote: String!
   resolvedAt: Int
@@ -1070,6 +1071,15 @@ enum CarrierInvoiceMatchStatus {
   Resolved
   Suggested
   Variance
+}
+
+"""
+How an invoice match came to exist: Manual for a dispatcher-created match, Auto
+for one created by the inbound EDI 210 auto-match sweep.
+"""
+enum CarrierInvoiceMatchVia {
+  Auto
+  Manual
 }
 
 """

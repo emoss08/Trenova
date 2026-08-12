@@ -1,6 +1,7 @@
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { EmptyState } from "@/components/empty-state";
 import { CarrierInvoiceMatchStatusBadge } from "@trenova/shared/components/status-badge";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -27,6 +28,7 @@ import {
   type EdiCarrierInvoiceRow,
 } from "@/lib/graphql/carrier-settlement";
 import { carrierInvoiceMatchStatusChoices } from "@/lib/choices";
+import type { CarrierInvoiceMatchVia } from "@trenova/shared/types/carrier-settlement";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { formatSettlementDate } from "@trenova/shared/lib/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,6 +43,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { LinkCarrierDialog } from "./link-carrier-dialog";
 
@@ -49,6 +52,8 @@ type QueueTab = "invoices" | "matches";
 type InvoiceFilter = "attention" | "all";
 
 type MatchFilter = "open" | "Suggested" | "Matched" | "Variance" | "Resolved" | "Rejected";
+
+type MatchViaFilter = "all" | CarrierInvoiceMatchVia;
 
 const OPEN_MATCH_STATUSES = new Set(["Suggested", "Matched", "Variance"]);
 
@@ -59,6 +64,23 @@ const matchFilterChips: ReadonlyArray<{ value: MatchFilter; label: string }> = [
     label: choice.label,
   })),
 ];
+
+const matchViaFilterChips: ReadonlyArray<{ value: MatchViaFilter; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "Auto", label: "Auto" },
+  { value: "Manual", label: "Manual" },
+];
+
+/**
+ * A resolution with a timestamp but no actor can only have come from the
+ * auto-accept sweep: every dispatcher-driven resolution passes through the
+ * service's actor guard, which refuses a nil user, while the sweep resolves
+ * with no user at all. The resolution note is deliberately not consulted —
+ * free text is not a provenance signal.
+ */
+function wasAutoAccepted(match: CarrierInvoiceMatchRow): boolean {
+  return match.resolvedAt != null && !match.resolvedById;
+}
 
 function invoiceNeedsAttention(invoice: EdiCarrierInvoiceRow): boolean {
   return (
@@ -84,6 +106,7 @@ export default function MatchingWorkspace() {
   const [tab, setTab] = useState<QueueTab>("invoices");
   const [invoiceFilter, setInvoiceFilter] = useState<InvoiceFilter>("attention");
   const [matchFilter, setMatchFilter] = useState<MatchFilter>("open");
+  const [matchViaFilter, setMatchViaFilter] = useState<MatchViaFilter>("all");
   const [search, setSearch] = useState("");
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
@@ -124,6 +147,7 @@ export default function MatchingWorkspace() {
     return (matchesQuery.data?.items ?? []).filter((match) => {
       if (matchFilter === "open" && !OPEN_MATCH_STATUSES.has(match.status)) return false;
       if (matchFilter !== "open" && match.status !== matchFilter) return false;
+      if (matchViaFilter !== "all" && match.matchedVia !== matchViaFilter) return false;
       if (!term) return true;
       return (
         match.invoiceNumber.toLowerCase().includes(term) ||
@@ -131,7 +155,7 @@ export default function MatchingWorkspace() {
         (match.carrierAssignment?.proNumber ?? "").toLowerCase().includes(term)
       );
     });
-  }, [matchesQuery.data, matchFilter, search]);
+  }, [matchesQuery.data, matchFilter, matchViaFilter, search]);
 
   const selectedInvoice =
     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0] ?? null;
@@ -144,8 +168,29 @@ export default function MatchingWorkspace() {
   const suggestedCount = allMatches.filter((match) => match.status === "Suggested").length;
   const resolvedCount = allMatches.filter((match) => match.status === "Resolved").length;
 
+  const settlementControl = controlQuery.data ?? null;
+
   return (
     <div className="flex flex-col gap-3">
+      {settlementControl && (
+        <p
+          data-testid="carrier-match-automation-status"
+          className="flex flex-wrap items-center gap-x-1.5 text-[11px] text-muted-foreground"
+        >
+          <span>Auto-match: {settlementControl.autoMatchInboundInvoices ? "On" : "Off"}</span>
+          <span aria-hidden>·</span>
+          <span>
+            Auto-accept within tolerance:{" "}
+            {settlementControl.autoAcceptWithinTolerance ? "On" : "Off"}
+          </span>
+          <Link
+            to="/admin/carrier-settlement-control"
+            className="font-medium text-foreground underline underline-offset-2"
+          >
+            Automation settings
+          </Link>
+        </p>
+      )}
       <div className="grid gap-3 md:grid-cols-4">
         <SummaryCard label="Invoices Needing Attention" value={String(attentionInvoiceCount)} />
         <SummaryCard label="Variance Matches" value={String(varianceCount)} />
@@ -190,15 +235,30 @@ export default function MatchingWorkspace() {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-wrap gap-1">
-                {matchFilterChips.map((chip) => (
-                  <FilterChip
-                    key={chip.value}
-                    active={matchFilter === chip.value}
-                    label={chip.label}
-                    onClick={() => setMatchFilter(chip.value)}
-                  />
-                ))}
+              <div className="flex flex-col gap-1">
+                <div className="flex flex-wrap gap-1">
+                  {matchFilterChips.map((chip) => (
+                    <FilterChip
+                      key={chip.value}
+                      active={matchFilter === chip.value}
+                      label={chip.label}
+                      onClick={() => setMatchFilter(chip.value)}
+                    />
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
+                    Created
+                  </span>
+                  {matchViaFilterChips.map((chip) => (
+                    <FilterChip
+                      key={chip.value}
+                      active={matchViaFilter === chip.value}
+                      label={chip.label}
+                      onClick={() => setMatchViaFilter(chip.value)}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -429,7 +489,7 @@ function MatchList({
   }
 
   return (
-    <div className="flex flex-col gap-1.5 p-2">
+    <div className="flex flex-col gap-1.5 p-2" data-testid="carrier-match-list">
       {matches.map((match) => (
         <button
           key={match.id}
@@ -444,7 +504,27 @@ function MatchList({
             <span className="font-mono text-xs font-medium">
               {match.invoiceNumber || "No invoice #"}
             </span>
-            <CarrierInvoiceMatchStatusBadge status={match.status} />
+            <div className="flex shrink-0 items-center gap-1">
+              {match.matchedVia === "Auto" && (
+                <Badge
+                  variant="info"
+                  className="h-4 px-1 text-[9px]"
+                  title="Created by the inbound EDI 210 auto-match sweep"
+                >
+                  Auto-matched
+                </Badge>
+              )}
+              {wasAutoAccepted(match) && (
+                <Badge
+                  variant="active"
+                  className="h-4 px-1 text-[9px]"
+                  title="Resolved automatically because the variance was within tolerance"
+                >
+                  Auto-accepted
+                </Badge>
+              )}
+              <CarrierInvoiceMatchStatusBadge status={match.status} />
+            </div>
           </div>
           <p className="mt-1 truncate text-[11px] text-muted-foreground">
             {match.carrier?.name ?? "Unknown carrier"}

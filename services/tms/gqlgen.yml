@@ -1168,6 +1168,9 @@ models:
   CarrierInvoiceMatchStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/carriersettlement.InvoiceMatchStatus
+  CarrierInvoiceMatchVia:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.MatchVia
   CarrierCostEvent:
     model:
       - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CostEvent

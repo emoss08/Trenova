@@ -879,6 +879,7 @@ type ComplexityRoot struct {
 		ID                     func(childComplexity int) int
 		InvoiceNumber          func(childComplexity int) int
 		InvoiceTotalMinor      func(childComplexity int) int
+		MatchedVia             func(childComplexity int) int
 		OrganizationID         func(childComplexity int) int
 		ResolutionNote         func(childComplexity int) int
 		ResolvedAt             func(childComplexity int) int
@@ -10915,6 +10916,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CarrierInvoiceMatch.InvoiceTotalMinor(childComplexity), true
+	case "CarrierInvoiceMatch.matchedVia":
+		if e.ComplexityRoot.CarrierInvoiceMatch.MatchedVia == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CarrierInvoiceMatch.MatchedVia(childComplexity), true
 	case "CarrierInvoiceMatch.organizationId":
 		if e.ComplexityRoot.CarrierInvoiceMatch.OrganizationID == nil {
 			break
@@ -42480,6 +42487,15 @@ enum CarrierInvoiceMatchStatus {
 }
 
 """
+How an invoice match came to exist: Manual for a dispatcher-created match, Auto
+for one created by the inbound EDI 210 auto-match sweep.
+"""
+enum CarrierInvoiceMatchVia {
+  Manual
+  Auto
+}
+
+"""
 The purchased-transportation accrual ledger: one cost event per buy-rate line
 on a carrier assignment, created automatically when a carrier-covered shipment
 reaches the organization's pay trigger. Events are recomputed while Pending,
@@ -42770,6 +42786,7 @@ type CarrierInvoiceMatch {
   carrierSettlementId: ID
   adjustmentCostEventId: ID
   status: CarrierInvoiceMatchStatus!
+  matchedVia: CarrierInvoiceMatchVia!
   invoiceNumber: String!
   invoiceTotalMinor: Int!
   expectedTotalMinor: Int!
@@ -54087,6 +54104,8 @@ func (ec *executionContext) childFields_CarrierInvoiceMatch(ctx context.Context,
 		return ec.fieldContext_CarrierInvoiceMatch_adjustmentCostEventId(ctx, field)
 	case "status":
 		return ec.fieldContext_CarrierInvoiceMatch_status(ctx, field)
+	case "matchedVia":
+		return ec.fieldContext_CarrierInvoiceMatch_matchedVia(ctx, field)
 	case "invoiceNumber":
 		return ec.fieldContext_CarrierInvoiceMatch_invoiceNumber(ctx, field)
 	case "invoiceTotalMinor":
@@ -85371,6 +85390,29 @@ func (ec *executionContext) _CarrierInvoiceMatch_status(ctx context.Context, fie
 }
 func (ec *executionContext) fieldContext_CarrierInvoiceMatch_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CarrierInvoiceMatch", field, false, false, errors.New("field of type CarrierInvoiceMatchStatus does not have child fields"))
+}
+
+func (ec *executionContext) _CarrierInvoiceMatch_matchedVia(ctx context.Context, field graphql.CollectedField, obj *carriersettlement.InvoiceMatch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CarrierInvoiceMatch_matchedVia(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MatchedVia, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v carriersettlement.MatchVia) graphql.Marshaler {
+			return ec.marshalNCarrierInvoiceMatchVia2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriersettlementᚐMatchVia(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CarrierInvoiceMatch_matchedVia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CarrierInvoiceMatch", field, false, false, errors.New("field of type CarrierInvoiceMatchVia does not have child fields"))
 }
 
 func (ec *executionContext) _CarrierInvoiceMatch_invoiceNumber(ctx context.Context, field graphql.CollectedField, obj *carriersettlement.InvoiceMatch) (ret graphql.Marshaler) {
@@ -225547,6 +225589,11 @@ func (ec *executionContext) _CarrierInvoiceMatch(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "matchedVia":
+			out.Values[i] = ec._CarrierInvoiceMatch_matchedVia(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "invoiceNumber":
 			out.Values[i] = ec._CarrierInvoiceMatch_invoiceNumber(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -274167,6 +274214,23 @@ func (ec *executionContext) unmarshalNCarrierInvoiceMatchStatus2githubᚗcomᚋe
 }
 
 func (ec *executionContext) marshalNCarrierInvoiceMatchStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriersettlementᚐInvoiceMatchStatus(ctx context.Context, sel ast.SelectionSet, v carriersettlement.InvoiceMatchStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNCarrierInvoiceMatchVia2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriersettlementᚐMatchVia(ctx context.Context, v any) (carriersettlement.MatchVia, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := carriersettlement.MatchVia(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCarrierInvoiceMatchVia2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarriersettlementᚐMatchVia(ctx context.Context, sel ast.SelectionSet, v carriersettlement.MatchVia) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {

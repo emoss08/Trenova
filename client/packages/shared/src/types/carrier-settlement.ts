@@ -37,6 +37,9 @@ export const carrierInvoiceMatchStatusSchema = z.enum([
 ]);
 export type CarrierInvoiceMatchStatus = z.infer<typeof carrierInvoiceMatchStatusSchema>;
 
+export const carrierInvoiceMatchViaSchema = z.enum(["Manual", "Auto"]);
+export type CarrierInvoiceMatchVia = z.infer<typeof carrierInvoiceMatchViaSchema>;
+
 export const generateCarrierBatchFormSchema = z.object({
   name: optionalStringSchema,
   notes: optionalStringSchema,

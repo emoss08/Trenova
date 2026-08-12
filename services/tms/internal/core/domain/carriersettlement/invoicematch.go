@@ -34,6 +34,7 @@ type InvoiceMatch struct {
 	CarrierSettlementID    *pulid.ID          `json:"carrierSettlementId"     bun:"carrier_settlement_id,type:VARCHAR(100),nullzero"`
 	AdjustmentCostEventID  *pulid.ID          `json:"adjustmentCostEventId"   bun:"adjustment_cost_event_id,type:VARCHAR(100),nullzero"`
 	Status                 InvoiceMatchStatus `json:"status"                  bun:"status,type:VARCHAR(50),notnull,default:'Suggested'"`
+	MatchedVia             MatchVia           `json:"matchedVia"              bun:"matched_via,type:VARCHAR(50),notnull,default:'Manual'"`
 	InvoiceNumber          string             `json:"invoiceNumber"           bun:"invoice_number,type:VARCHAR(100),nullzero"`
 	InvoiceTotalMinor      int64              `json:"invoiceTotalMinor"       bun:"invoice_total_minor,type:BIGINT,notnull,default:0"`
 	ExpectedTotalMinor     int64              `json:"expectedTotalMinor"      bun:"expected_total_minor,type:BIGINT,notnull,default:0"`
@@ -73,6 +74,9 @@ func (m *InvoiceMatch) Validate(multiErr *errortypes.MultiError) {
 
 	if !m.Status.IsValid() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Invoice match status is invalid")
+	}
+	if !m.MatchedVia.IsValid() {
+		multiErr.Add("matchedVia", errortypes.ErrInvalid, "Invoice match provenance is invalid")
 	}
 	if m.HasEDISource() == m.HasDocumentAISource() {
 		multiErr.Add(

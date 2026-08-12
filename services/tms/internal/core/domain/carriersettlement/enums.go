@@ -144,3 +144,21 @@ func (i InvoiceMatchStatus) IsOpen() bool {
 		return false
 	}
 }
+
+type MatchVia string
+
+const (
+	MatchViaManual = MatchVia("Manual")
+	MatchViaAuto   = MatchVia("Auto")
+)
+
+func (m MatchVia) String() string { return string(m) }
+
+func (m MatchVia) IsValid() bool {
+	switch m {
+	case MatchViaManual, MatchViaAuto:
+		return true
+	default:
+		return false
+	}
+}

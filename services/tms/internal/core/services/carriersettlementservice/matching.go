@@ -251,6 +251,7 @@ func (s *Service) CreateMatch(
 		carrierID:              carrierID,
 		invoiceNumber:          invoiceNumber,
 		invoiceTotalMinor:      invoiceTotalMinor,
+		matchedVia:             carriersettlement.MatchViaManual,
 	}, assignment, control.VarianceToleranceMinor)
 	if err != nil {
 		return nil, err
@@ -270,6 +271,7 @@ type invoiceMatchSeed struct {
 	carrierID              pulid.ID
 	invoiceNumber          string
 	invoiceTotalMinor      int64
+	matchedVia             carriersettlement.MatchVia
 }
 
 func matchStatusForVariance(
@@ -297,6 +299,7 @@ func (s *Service) createInvoiceMatch(
 		CarrierID:              seed.carrierID,
 		CarrierAssignmentID:    assignment.ID,
 		Status:                 matchStatusForVariance(varianceMinor, toleranceMinor),
+		MatchedVia:             seed.matchedVia,
 		InvoiceNumber:          seed.invoiceNumber,
 		InvoiceTotalMinor:      seed.invoiceTotalMinor,
 		ExpectedTotalMinor:     expectedTotalMinor,

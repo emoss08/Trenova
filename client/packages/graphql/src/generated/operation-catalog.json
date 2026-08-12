@@ -1204,7 +1204,7 @@
       "kind": "query",
       "domain": "carrier-settlement",
       "sourceFile": "src/operations/carrier-settlement/operations.graphql",
-      "hash": "sha256:73fbe63b0c2d0c45bdba9588a2a2f2ba8e707e6fd6102359adff09a9162961d4",
+      "hash": "sha256:342bebfd33438b8caa7ec38fa67c34c7bef06005a70f0da7fcfd47edbb73f190",
       "rootFields": [
         "carrierInvoiceMatches"
       ],
@@ -1232,7 +1232,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "query CarrierInvoiceMatches($status: CarrierInvoiceMatchStatus, $carrierId: ID, $limit: Int, $offset: Int) {\n  carrierInvoiceMatches(\n    status: $status\n    carrierId: $carrierId\n    limit: $limit\n    offset: $offset\n  ) {\n    items {\n      id\n      ediCarrierInvoiceId\n      documentAiExtractionId\n      carrierId\n      carrierAssignmentId\n      carrierSettlementId\n      adjustmentCostEventId\n      status\n      invoiceNumber\n      invoiceTotalMinor\n      expectedTotalMinor\n      varianceMinor\n      currencyCode\n      resolutionNote\n      resolvedById\n      resolvedAt\n      version\n      createdAt\n      updatedAt\n      carrier {\n        id\n        code\n        name\n        scac\n      }\n      carrierAssignment {\n        id\n        shipmentMoveId\n        status\n        rateMethod\n        baseRate\n        baseAmount\n        fuelSurcharge\n        accessorialTotal\n        totalCost\n        currencyCode\n        proNumber\n        accessorials {\n          id\n          description\n          amount\n        }\n      }\n    }\n    totalCount\n  }\n}"
+      "sdl": "query CarrierInvoiceMatches($status: CarrierInvoiceMatchStatus, $carrierId: ID, $limit: Int, $offset: Int) {\n  carrierInvoiceMatches(\n    status: $status\n    carrierId: $carrierId\n    limit: $limit\n    offset: $offset\n  ) {\n    items {\n      id\n      ediCarrierInvoiceId\n      documentAiExtractionId\n      carrierId\n      carrierAssignmentId\n      carrierSettlementId\n      adjustmentCostEventId\n      status\n      matchedVia\n      invoiceNumber\n      invoiceTotalMinor\n      expectedTotalMinor\n      varianceMinor\n      currencyCode\n      resolutionNote\n      resolvedById\n      resolvedAt\n      version\n      createdAt\n      updatedAt\n      carrier {\n        id\n        code\n        name\n        scac\n      }\n      carrierAssignment {\n        id\n        shipmentMoveId\n        status\n        rateMethod\n        baseRate\n        baseAmount\n        fuelSurcharge\n        accessorialTotal\n        totalCost\n        currencyCode\n        proNumber\n        accessorials {\n          id\n          description\n          amount\n        }\n      }\n    }\n    totalCount\n  }\n}"
     },
     {
       "name": "CarrierLedgerEntries",

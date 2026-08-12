@@ -1240,6 +1240,7 @@ var InvoiceMatchColumns = struct {
 	CarrierSettlementID    Column // "carrier_settlement_id" → qualified: "cim.carrier_settlement_id"
 	AdjustmentCostEventID  Column // "adjustment_cost_event_id" → qualified: "cim.adjustment_cost_event_id"
 	Status                 Column // "status" → qualified: "cim.status"
+	MatchedVia             Column // "matched_via" → qualified: "cim.matched_via"
 	InvoiceNumber          Column // "invoice_number" → qualified: "cim.invoice_number"
 	InvoiceTotalMinor      Column // "invoice_total_minor" → qualified: "cim.invoice_total_minor"
 	ExpectedTotalMinor     Column // "expected_total_minor" → qualified: "cim.expected_total_minor"
@@ -1262,6 +1263,7 @@ var InvoiceMatchColumns = struct {
 	CarrierSettlementID:    NewColumn("carrier_settlement_id", "cim"),
 	AdjustmentCostEventID:  NewColumn("adjustment_cost_event_id", "cim"),
 	Status:                 NewColumn("status", "cim"),
+	MatchedVia:             NewColumn("matched_via", "cim"),
 	InvoiceNumber:          NewColumn("invoice_number", "cim"),
 	InvoiceTotalMinor:      NewColumn("invoice_total_minor", "cim"),
 	ExpectedTotalMinor:     NewColumn("expected_total_minor", "cim"),
@@ -1290,6 +1292,7 @@ var InvoiceMatchFieldMap = map[string]string{
 	"carrierSettlementId":    "carrier_settlement_id",
 	"adjustmentCostEventId":  "adjustment_cost_event_id",
 	"status":                 "status",
+	"matchedVia":             "matched_via",
 	"invoiceNumber":          "invoice_number",
 	"invoiceTotalMinor":      "invoice_total_minor",
 	"expectedTotalMinor":     "expected_total_minor",
@@ -1316,6 +1319,7 @@ var InvoiceMatchInsertableColumns = []string{
 	"carrier_settlement_id",
 	"adjustment_cost_event_id",
 	"status",
+	"matched_via",
 	"invoice_number",
 	"invoice_total_minor",
 	"expected_total_minor",
@@ -1402,6 +1406,7 @@ var InvoiceMatchFilter = struct {
 	CarrierSettlementID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrierSettlementId" → DB: "carrier_settlement_id"
 	AdjustmentCostEventID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "adjustmentCostEventId" → DB: "adjustment_cost_event_id"
 	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	MatchedVia             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "matchedVia" → DB: "matched_via"
 	InvoiceNumber          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceNumber" → DB: "invoice_number"
 	InvoiceTotalMinor      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceTotalMinor" → DB: "invoice_total_minor"
 	ExpectedTotalMinor     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedTotalMinor" → DB: "expected_total_minor"
@@ -1443,6 +1448,9 @@ var InvoiceMatchFilter = struct {
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)
+	},
+	MatchedVia: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("matchedVia", op, value)
 	},
 	InvoiceNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceNumber", op, value)

@@ -111,6 +111,33 @@ describe("RateConfirmationActions provenance badge", () => {
     expect(await screen.findByText("Confirmed by dispatcher")).toBeInTheDocument();
   });
 
+  it("marks a rate confirmation that the tender acceptance issued on its own", async () => {
+    mocks.listByMove.mockResolvedValue([
+      rateCon({
+        generatedVia: "TenderAcceptance",
+        sourceTenderOfferId: "tof_01",
+      }),
+    ]);
+
+    renderActions();
+
+    const badge = await screen.findByText("Auto-issued from tender");
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveAttribute(
+      "title",
+      "Generated automatically when the carrier accepted the tender",
+    );
+  });
+
+  it("omits the auto-issue badge for a dispatcher-generated rate confirmation", async () => {
+    mocks.listByMove.mockResolvedValue([rateCon({ generatedVia: "Dispatcher" })]);
+
+    renderActions();
+
+    expect(await screen.findByText("Confirmed by dispatcher")).toBeInTheDocument();
+    expect(screen.queryByText("Auto-issued from tender")).not.toBeInTheDocument();
+  });
+
   it("omits the provenance badge when the rate confirmation predates provenance tracking", async () => {
     mocks.listByMove.mockResolvedValue([rateCon({ confirmedVia: null })]);
 

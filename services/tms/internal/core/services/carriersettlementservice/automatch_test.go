@@ -217,6 +217,7 @@ func TestAutoMatchWithinToleranceCreatesMatched(t *testing.T) {
 	require.NotNil(t, match.EDICarrierInvoiceID)
 	assert.Equal(t, invoice.ID, *match.EDICarrierInvoiceID)
 	assert.Equal(t, assignment.ID, match.CarrierAssignmentID)
+	assert.Equal(t, carriersettlement.MatchViaAuto, match.MatchedVia)
 	assert.True(t, match.ResolvedByID.IsNil())
 
 	require.Len(t, auditParams, 1)
