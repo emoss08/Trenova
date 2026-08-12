@@ -16,7 +16,7 @@ import {
   type SaveHomeLayoutPresetInput,
   type UpdateHomeLayoutPresetInput,
 } from "@trenova/graphql/generated/graphql";
-import { getFragmentData, type FragmentType } from "@trenova/graphql/generated";
+import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type HomeWidget = HomeWidgetFieldsFragment;
