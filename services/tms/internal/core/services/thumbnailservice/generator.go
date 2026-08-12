@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chai2010/webp"
 	"github.com/disintegration/imaging"
-	"github.com/gen2brain/go-fitz"
+	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/fitzdoc"
+	"github.com/gen2brain/webp"
 )
 
 var (
@@ -37,7 +37,7 @@ const (
 type Generator struct {
 	maxWidth     int
 	maxHeight    int
-	webpQuality  float32
+	webpQuality  int
 	pdfInProcess bool
 }
 
@@ -96,7 +96,7 @@ func (g *Generator) generateFromPDF(reader io.Reader) ([]byte, error) {
 		return nil, fmt.Errorf("failed to read PDF data: %w", err)
 	}
 
-	doc, err := fitz.NewFromMemory(data)
+	doc, err := fitzdoc.NewFromMemory(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open PDF: %w", err)
 	}
@@ -174,7 +174,7 @@ func (g *Generator) encodeThumbnail(img image.Image) ([]byte, error) {
 	thumbnail := imaging.Fit(img, g.maxWidth, g.maxHeight, imaging.Lanczos)
 
 	var buf bytes.Buffer
-	if err := webp.Encode(&buf, thumbnail, &webp.Options{Quality: g.webpQuality}); err != nil {
+	if err := webp.Encode(&buf, thumbnail, webp.Options{Quality: g.webpQuality}); err != nil {
 		return nil, fmt.Errorf("failed to encode thumbnail: %w", err)
 	}
 

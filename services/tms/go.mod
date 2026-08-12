@@ -6,9 +6,12 @@ require (
 	github.com/Foony-Limited/realtime-go v0.1.1
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/emoss08/trenova/shared v0.0.0
+	github.com/gen2brain/webp v0.6.4
 	github.com/hashicorp/golang-lru/v2 v2.0.7
+	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
 	github.com/xuri/excelize/v2 v2.11.0
 	go.uber.org/goleak v1.3.0
+	modernc.org/sqlite v1.56.0
 )
 
 require (
@@ -16,7 +19,6 @@ require (
 	github.com/99designs/gqlgen v0.17.94
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/bytedance/sonic v1.15.2
-	github.com/chai2010/webp v1.4.0
 	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/expr-lang/expr v1.17.8
@@ -99,7 +101,6 @@ require (
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.20 // indirect
 	github.com/kr/fs v0.1.0 // indirect
-	github.com/lib/pq v1.12.3 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nexus-rpc/nexus-proto-annotations v0.1.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
@@ -109,7 +110,6 @@ require (
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sosodev/duration v1.4.0 // indirect
 	github.com/tiendc/go-deepcopy v1.7.2 // indirect
-	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.70.0 // indirect
@@ -118,7 +118,6 @@ require (
 	modernc.org/libc v1.74.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.56.0 // indirect
 )
 
 require (
