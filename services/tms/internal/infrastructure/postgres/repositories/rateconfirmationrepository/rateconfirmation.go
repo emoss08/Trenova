@@ -25,6 +25,8 @@ type Params struct {
 	Logger *zap.Logger
 }
 
+const defaultTokenPurgeLimit = 500
+
 type repository struct {
 	db *postgres.Connection
 	l  *zap.Logger
@@ -277,4 +279,41 @@ func (r *repository) RevokeTokensForRateConfirmation(
 		r.l.Error("failed to revoke rate confirmation tokens", zap.Error(err))
 	}
 	return err
+}
+
+// PurgeDeadSignTokens deletes signing links that can no longer authorize
+// anything — used, revoked, or expired — once the retention window past their
+// terminal moment has elapsed. A live link always coalesces to a future
+// expires_at, so it can never match.
+func (r *repository) PurgeDeadSignTokens(
+	ctx context.Context,
+	req repositories.PurgeDeadTokensRequest,
+) (int64, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = defaultTokenPurgeLimit
+	}
+
+	cols := buncolgen.RateConfirmationTokenColumns
+	deadAt := buncolgen.Expr(
+		"COALESCE({0}, {1}, {2})", cols.UsedAt, cols.RevokedAt, cols.ExpiresAt,
+	)
+	dba := r.db.DBForContext(ctx)
+
+	dead := dba.NewSelect().
+		Model((*rateconfirmation.RateConfirmationToken)(nil)).
+		Column(cols.ID.Bare()).
+		Where(deadAt+" < ?", req.DeadBefore).
+		Limit(limit)
+
+	result, err := dba.NewDelete().
+		Model((*rateconfirmation.RateConfirmationToken)(nil)).
+		Where(cols.ID.Expr("{} IN (?)"), dead).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to purge dead rate confirmation tokens", zap.Error(err))
+		return 0, err
+	}
+
+	return result.RowsAffected()
 }

@@ -22,6 +22,16 @@ func allWorkflows() []temporaltype.WorkflowDefinition {
 		Fn:          TenderSweepWorkflow,
 		TaskQueue:   temporaltype.TaskQueueDispatch.String(),
 		Description: "Nudge or recover live tenders whose offers are overdue",
+	}, temporaltype.WorkflowDefinition{
+		Name:        RateConfirmationIssueSweepWorkflowName,
+		Fn:          RateConfirmationIssueSweepWorkflow,
+		TaskQueue:   temporaltype.TaskQueueDispatch.String(),
+		Description: "Issue rate confirmations for accepted tenders whose paperwork never landed",
+	}, temporaltype.WorkflowDefinition{
+		Name:        PurgeTenderTokensWorkflowName,
+		Fn:          PurgeTenderTokensWorkflow,
+		TaskQueue:   temporaltype.TaskQueueDispatch.String(),
+		Description: "Purge tender offer and rate confirmation tokens that are no longer usable",
 	})
 	return defs
 }

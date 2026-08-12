@@ -3,6 +3,8 @@ package tenderrepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -23,6 +25,11 @@ type Params struct {
 	DB     *postgres.Connection
 	Logger *zap.Logger
 }
+
+const (
+	defaultSweepLimit      = 100
+	defaultTokenPurgeLimit = 500
+)
 
 type repository struct {
 	db *postgres.Connection
@@ -312,7 +319,7 @@ func (r *repository) ListForSweep(
 ) ([]*tender.Tender, error) {
 	limit := req.Limit
 	if limit <= 0 {
-		limit = 100
+		limit = defaultSweepLimit
 	}
 
 	entities := make([]*tender.Tender, 0, limit)
@@ -653,4 +660,106 @@ func (r *repository) RevokeTokensForOffer(
 		r.l.Error("failed to revoke tender offer tokens", zap.Error(err))
 	}
 	return err
+}
+
+// ListAcceptedMissingRateConfirmation is the recovery sweep's cross-tenant
+// read: accepted tenders whose carrier is already covering the move but whose
+// rate confirmation never landed. The NOT EXISTS arm deliberately treats any
+// non-voided revision as covered, so a dispatcher-managed agreement is never
+// re-entered, and the assignment arm excludes the needs-review family because
+// those moves have no matching-carrier assignment at all.
+func (r *repository) ListAcceptedMissingRateConfirmation(
+	ctx context.Context,
+	req repositories.ListAcceptedMissingRateConfirmationRequest,
+) ([]*tender.Tender, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = defaultSweepLimit
+	}
+
+	tenderCols := buncolgen.TenderColumns
+	offerCols := buncolgen.TenderOfferColumns
+	assignCols := buncolgen.CarrierAssignmentColumns
+	rateConCols := buncolgen.RateConfirmationColumns
+	dba := r.db.DBForContext(ctx)
+
+	acceptedOfferCarrier := dba.NewSelect().
+		Model((*tender.TenderOffer)(nil)).
+		ColumnExpr(offerCols.CarrierID.Qualified()).
+		Where(offerCols.ID.EqColumn(tenderCols.AcceptedOfferID)).
+		Where(offerCols.OrganizationID.EqColumn(tenderCols.OrganizationID)).
+		Where(offerCols.BusinessUnitID.EqColumn(tenderCols.BusinessUnitID))
+
+	standingRateConfirmation := dba.NewSelect().
+		Model((*rateconfirmation.RateConfirmation)(nil)).
+		ColumnExpr("1").
+		Where(rateConCols.CarrierAssignmentID.EqColumn(assignCols.ID)).
+		Where(rateConCols.OrganizationID.EqColumn(assignCols.OrganizationID)).
+		Where(rateConCols.BusinessUnitID.EqColumn(assignCols.BusinessUnitID)).
+		Where(rateConCols.Status.NotEq(), rateconfirmation.StatusVoided)
+
+	coveringAssignment := dba.NewSelect().
+		Model((*shipment.CarrierAssignment)(nil)).
+		ColumnExpr("1").
+		Where(assignCols.ShipmentMoveID.EqColumn(tenderCols.ShipmentMoveID)).
+		Where(assignCols.OrganizationID.EqColumn(tenderCols.OrganizationID)).
+		Where(assignCols.BusinessUnitID.EqColumn(tenderCols.BusinessUnitID)).
+		Where(assignCols.Status.NotEq(), shipment.CarrierAssignmentStatusCanceled).
+		Where(assignCols.CarrierID.Expr("{} = (?)"), acceptedOfferCarrier).
+		Where("NOT EXISTS (?)", standingRateConfirmation)
+
+	entities := make([]*tender.Tender, 0, limit)
+	err := dba.NewSelect().
+		Model(&entities).
+		Where(tenderCols.Status.Eq(), tender.StatusAccepted).
+		Where(tenderCols.AcceptedOfferID.IsNotNull()).
+		Where(tenderCols.AcceptedAt.Gt(), req.AcceptedAfter).
+		Where(tenderCols.AcceptedAt.Lte(), req.AcceptedBefore).
+		Where("EXISTS (?)", coveringAssignment).
+		Order(tenderCols.AcceptedAt.OrderAsc()).
+		Limit(limit).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list accepted tenders missing a rate confirmation", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+// PurgeDeadOfferTokens deletes offer links that can no longer authorize
+// anything — used, revoked, or expired — once the retention window past their
+// terminal moment has elapsed. A live link always coalesces to a future
+// expires_at, so it can never match.
+func (r *repository) PurgeDeadOfferTokens(
+	ctx context.Context,
+	req repositories.PurgeDeadTokensRequest,
+) (int64, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = defaultTokenPurgeLimit
+	}
+
+	cols := buncolgen.TenderOfferTokenColumns
+	deadAt := buncolgen.Expr(
+		"COALESCE({0}, {1}, {2})", cols.UsedAt, cols.RevokedAt, cols.ExpiresAt,
+	)
+	dba := r.db.DBForContext(ctx)
+
+	dead := dba.NewSelect().
+		Model((*tender.TenderOfferToken)(nil)).
+		Column(cols.ID.Bare()).
+		Where(deadAt+" < ?", req.DeadBefore).
+		Limit(limit)
+
+	result, err := dba.NewDelete().
+		Model((*tender.TenderOfferToken)(nil)).
+		Where(cols.ID.Expr("{} IN (?)"), dead).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to purge dead tender offer tokens", zap.Error(err))
+		return 0, err
+	}
+
+	return result.RowsAffected()
 }

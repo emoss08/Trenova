@@ -94,6 +94,17 @@ type ListTendersForSweepRequest struct {
 	Limit      int                    `json:"limit"`
 }
 
+type ListAcceptedMissingRateConfirmationRequest struct {
+	AcceptedAfter  int64 `json:"acceptedAfter"`
+	AcceptedBefore int64 `json:"acceptedBefore"`
+	Limit          int   `json:"limit"`
+}
+
+type PurgeDeadTokensRequest struct {
+	DeadBefore int64 `json:"deadBefore"`
+	Limit      int   `json:"limit"`
+}
+
 type MarkTokenUsedRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	TokenID    pulid.ID              `json:"tokenId"`
@@ -131,6 +142,10 @@ type TenderRepository interface {
 	ListForSweep(
 		ctx context.Context,
 		req ListTendersForSweepRequest,
+	) ([]*tender.Tender, error)
+	ListAcceptedMissingRateConfirmation(
+		ctx context.Context,
+		req ListAcceptedMissingRateConfirmationRequest,
 	) ([]*tender.Tender, error)
 	SetWorkflowID(
 		ctx context.Context,
@@ -172,4 +187,8 @@ type TenderRepository interface {
 		offerID pulid.ID,
 		revokedAt int64,
 	) error
+	PurgeDeadOfferTokens(
+		ctx context.Context,
+		req PurgeDeadTokensRequest,
+	) (int64, error)
 }

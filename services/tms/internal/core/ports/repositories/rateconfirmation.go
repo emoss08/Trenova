@@ -69,4 +69,8 @@ type RateConfirmationRepository interface {
 		rateConfirmationID pulid.ID,
 		revokedAt int64,
 	) error
+	PurgeDeadSignTokens(
+		ctx context.Context,
+		req PurgeDeadTokensRequest,
+	) (int64, error)
 }
