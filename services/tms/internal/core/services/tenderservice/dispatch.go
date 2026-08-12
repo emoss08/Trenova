@@ -288,6 +288,7 @@ func (s *Service) markDeliveryFailed(
 			carrierNameOf(offer), reason,
 		),
 		CorrelationID: offer.ID.String(),
+		Link:          dispatchConsoleOfferLink(offer),
 	})
 }
 

@@ -173,10 +173,19 @@ export function useDispatchActions() {
   const waterfallMutation = useMutation({
     mutationFn: (payload: WaterfallTenderPayload) =>
       apiService.tenderService.createWaterfall(payload),
-    onSuccess: () => {
-      toast.success("Waterfall tender started", {
-        description: "The rank-1 carrier has been offered the move.",
-      });
+    onSuccess: (result) => {
+      // Screened-out routing guide carriers change what the dispatcher actually
+      // got, so the outcome is reported as a warning rather than a plain success.
+      const skipped = result.screening?.skipped.length ?? 0;
+      if (skipped > 0) {
+        toast.warning("Waterfall tender started with skipped carriers", {
+          description: `${skipped} routing-guide carrier(s) were skipped for eligibility.`,
+        });
+      } else {
+        toast.success("Waterfall tender started", {
+          description: "The rank-1 carrier has been offered the move.",
+        });
+      }
       invalidateTenders();
     },
     onError: (error: unknown) => describeTenderError("Could not start the waterfall", error),

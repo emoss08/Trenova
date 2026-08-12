@@ -5,11 +5,13 @@ import {
   spotTenderPayloadSchema,
   tenderSchema,
   waterfallTenderPayloadSchema,
+  waterfallTenderResultSchema,
   type PublicTenderOffer,
   type RecordTenderResponsePayload,
   type SpotTenderPayload,
   type Tender,
   type WaterfallTenderPayload,
+  type WaterfallTenderResult,
 } from "@trenova/shared/types/tender";
 
 type SpotTenderLineRequestBody = {
@@ -57,13 +59,13 @@ export function isOverridableInsuranceWarningError(error: unknown): error is Api
 }
 
 export class TenderService {
-  public async createWaterfall(payload: WaterfallTenderPayload): Promise<Tender> {
+  public async createWaterfall(payload: WaterfallTenderPayload): Promise<WaterfallTenderResult> {
     const parsed = waterfallTenderPayloadSchema.parse(payload);
-    const response = await api.post<Tender>("/tenders/waterfall/", {
+    const response = await api.post<WaterfallTenderResult>("/tenders/waterfall/", {
       shipmentMoveId: parsed.shipmentMoveId,
       routingGuideId: parsed.routingGuideId ?? undefined,
     });
-    return safeParse(tenderSchema, response, "Tender");
+    return safeParse(waterfallTenderResultSchema, response, "Tender");
   }
 
   public async createSpot(payload: SpotTenderPayload): Promise<Tender> {

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -43,6 +44,7 @@ type Params struct {
 	EmailService          services.EmailService
 	UploadService         services.DocumentUploadService
 	Inliner               services.AssetInliner
+	AuditService          services.AuditService
 	Config                *config.Config
 }
 
@@ -59,6 +61,7 @@ type Service struct {
 	emailService          services.EmailService
 	uploadService         services.DocumentUploadService
 	inliner               services.AssetInliner
+	auditService          services.AuditService
 	cfg                   *config.Config
 }
 
@@ -76,6 +79,7 @@ func New(p Params) *Service {
 		emailService:          p.EmailService,
 		uploadService:         p.UploadService,
 		inliner:               p.Inliner,
+		auditService:          p.AuditService,
 		cfg:                   p.Config,
 	}
 }
@@ -110,7 +114,20 @@ func (s *Service) Generate(
 	moveID pulid.ID,
 	actor *services.RequestActor,
 ) (*rateconfirmation.RateConfirmation, error) {
-	return s.generate(ctx, tenantInfo, moveID, actor, nil)
+	created, err := s.generate(ctx, tenantInfo, moveID, actor, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+		TenantInfo: tenantInfo,
+		Operation:  permission.OpCreate,
+		UserID:     actor.UserIDOrNil(),
+		Comment:    fmt.Sprintf("Rate confirmation rev %d generated", created.Revision),
+		Current:    created,
+	})
+
+	return created, nil
 }
 
 func (s *Service) generate(
@@ -379,6 +396,16 @@ func (s *Service) Send(
 	if err != nil {
 		return nil, err
 	}
+
+	s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+		TenantInfo: tenantInfo,
+		Operation:  permission.OpUpdate,
+		UserID:     tenantInfo.UserID,
+		Comment:    "Rate confirmation sent to " + strings.Join(recipients, ", "),
+		Previous:   entity,
+		Current:    updated,
+	})
+
 	return updated, nil
 }
 
@@ -406,11 +433,26 @@ func (s *Service) MarkConfirmed(
 			"The confirming party's name is required")
 	}
 
-	return s.markConfirmed(ctx, tenantInfo, entity, confirmParams{
+	previous := *entity
+	confirmed, err := s.markConfirmed(ctx, tenantInfo, entity, confirmParams{
 		Name: confirmedByName,
 		Via:  rateconfirmation.ViaDispatcher,
 		At:   timeutils.NowUnix(),
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+		TenantInfo: tenantInfo,
+		Operation:  permission.OpApprove,
+		UserID:     tenantInfo.UserID,
+		Comment:    "Rate confirmation marked confirmed by dispatcher",
+		Previous:   &previous,
+		Current:    confirmed,
+	})
+
+	return confirmed, nil
 }
 
 // confirmParams is who executed the agreement, how, and when.
@@ -479,6 +521,7 @@ func (s *Service) Void(
 		return entity, nil
 	}
 	wasConfirmed := entity.Status == rateconfirmation.StatusConfirmed
+	previous := *entity
 
 	now := timeutils.NowUnix()
 	entity.Status = rateconfirmation.StatusVoided
@@ -507,6 +550,15 @@ func (s *Service) Void(
 	}
 
 	s.revokeTokens(ctx, tenantInfo, updated.ID)
+
+	s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+		TenantInfo: tenantInfo,
+		Operation:  permission.OpUpdate,
+		UserID:     tenantInfo.UserID,
+		Comment:    "Rate confirmation voided: " + reason,
+		Previous:   &previous,
+		Current:    updated,
+	})
 
 	return updated, nil
 }

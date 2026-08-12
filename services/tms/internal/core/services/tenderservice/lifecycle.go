@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -162,6 +163,16 @@ func (s *Service) DeclineOffer(
 		source,
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
+	s.logTenderAudit(&tenderAuditParams{
+		TenantInfo: tenantInfo,
+		TenderID:   offer.TenderID,
+		Operation:  permission.OpUpdate,
+		UserID:     tenantInfo.UserID,
+		Comment: fmt.Sprintf(
+			"Offer declined by %s via %s", carrierNameOf(offer), source.String(),
+		),
+		Current: offer.Tender,
+	})
 	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_offer_declined")
 
 	return nil
@@ -288,6 +299,22 @@ func (s *Service) AcceptOffer(
 			carrierNameOf(offer),
 		),
 		CorrelationID: offer.TenderID.String(),
+		Link:          dispatchConsoleOfferLink(offer),
+	})
+	acceptedTender := *offer.Tender
+	acceptedTender.Status = tender.StatusAccepted
+	acceptedTender.AcceptedOfferID = &offer.ID
+	acceptedTender.AcceptedAt = &now
+	s.logTenderAudit(&tenderAuditParams{
+		TenantInfo: tenantInfo,
+		TenderID:   offer.TenderID,
+		Operation:  permission.OpUpdate,
+		UserID:     tenantInfo.UserID,
+		Comment: fmt.Sprintf(
+			"Offer accepted by %s via %s", carrierNameOf(offer), source.String(),
+		),
+		Previous: offer.Tender,
+		Current:  &acceptedTender,
 	})
 	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_accepted")
 
@@ -504,6 +531,14 @@ func (s *Service) MarkNeedsReview(
 			carrierNameOf(offer), reason,
 		),
 		CorrelationID: tenderID.String(),
+		Link:          dispatchConsoleOfferLink(offer),
+	})
+	s.logTenderAudit(&tenderAuditParams{
+		TenantInfo: tenantInfo,
+		TenderID:   tenderID,
+		Operation:  permission.OpUpdate,
+		Comment:    "Tender needs review: " + reason,
+		Current:    offer.Tender,
 	})
 	s.publishTenderShipmentInvalidation(ctx, tenantInfo, offer, "tender_needs_review")
 
@@ -567,6 +602,14 @@ func (s *Service) MarkExhausted(
 			entity.ShipmentMoveID.String(),
 		),
 		CorrelationID: entity.ID.String(),
+		Link:          dispatchConsoleMoveLink(entity.ShipmentMoveID),
+	})
+	s.logTenderAudit(&tenderAuditParams{
+		TenantInfo: tenantInfo,
+		TenderID:   entity.ID,
+		Operation:  permission.OpUpdate,
+		Comment:    "Tender exhausted with no acceptance",
+		Current:    entity,
 	})
 	s.publishInvalidation(ctx, tenantInfo, entity.ShipmentID, "tender_exhausted")
 
@@ -657,6 +700,7 @@ func (s *Service) notifyRateConIssueFailed(
 			carrierNameOf(offer), reason,
 		),
 		CorrelationID: offer.TenderID.String(),
+		Link:          dispatchConsoleOfferLink(offer),
 	})
 }
 

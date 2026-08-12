@@ -322,6 +322,7 @@ func handleSignal(
 			lateIn.OfferID = sig.OfferID
 			lateIn.Action = sig.Action
 			lateIn.Source = sig.Source
+			lateIn.ActorUserID = sig.ActorUserID
 			if err := workflow.ExecuteActivity(
 				ctx, a.RecordLateResponseActivity, &lateIn,
 			).Get(ctx, nil); err != nil {
@@ -347,6 +348,7 @@ func handleResponse(
 	in.OfferID = sig.OfferID
 	in.Source = sig.Source
 	in.Reason = sig.DeclineReason
+	in.ActorUserID = sig.ActorUserID
 
 	switch sig.Action {
 	case tender.ResponseActionDecline:

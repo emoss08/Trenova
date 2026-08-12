@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -101,12 +102,35 @@ func (r *CreateSpotTenderRequest) Validate() *errortypes.MultiError {
 	return nil
 }
 
+// GuideEntryScreeningResult is one routing guide entry's eligibility verdict as
+// reported back to the caller that started the tender.
+type GuideEntryScreeningResult struct {
+	CarrierName string   `json:"carrierName"`
+	Rank        int16    `json:"rank"`
+	Reasons     []string `json:"reasons"`
+}
+
+// GuideScreeningSummary reports which routing guide entries never became offers
+// and which were offered despite a warning.
+type GuideScreeningSummary struct {
+	Skipped []GuideEntryScreeningResult `json:"skipped"`
+	Warned  []GuideEntryScreeningResult `json:"warned"`
+}
+
+// CreateWaterfallResult embeds the created tender so the response body stays a
+// superset of the tender itself, with the screening summary attached.
+type CreateWaterfallResult struct {
+	*tender.Tender
+
+	Screening *GuideScreeningSummary `json:"screening,omitempty"`
+}
+
 // CreateWaterfall starts a routing-guide-driven tender for a move. The guide
 // is auto-matched from the move's lane unless one is named explicitly.
 func (s *Service) CreateWaterfall(
 	ctx context.Context,
 	req *CreateWaterfallTenderRequest,
-) (*tender.Tender, error) {
+) (*CreateWaterfallResult, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -144,9 +168,17 @@ func (s *Service) CreateWaterfall(
 		return nil, err
 	}
 
+	s.logTenderAudit(&tenderAuditParams{
+		TenantInfo: req.TenantInfo,
+		TenderID:   created.ID,
+		Operation:  permission.OpCreate,
+		UserID:     req.TenantInfo.UserID,
+		Comment:    fmt.Sprintf("Waterfall tender created from routing guide %s", guide.Name),
+		Current:    created,
+	})
 	s.auditGuideScreening(ctx, req.TenantInfo, created, plan)
 
-	return created, nil
+	return &CreateWaterfallResult{Tender: created, Screening: plan.screeningSummary()}, nil
 }
 
 // CreateSpot starts an ad-hoc tender for a move with a dispatcher-picked
@@ -180,7 +212,23 @@ func (s *Service) CreateSpot(
 		Offers:         offers,
 	}
 
-	return s.persistAndStart(ctx, req.TenantInfo, entity)
+	created, err := s.persistAndStart(ctx, req.TenantInfo, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logTenderAudit(&tenderAuditParams{
+		TenantInfo: req.TenantInfo,
+		TenderID:   created.ID,
+		Operation:  permission.OpCreate,
+		UserID:     req.TenantInfo.UserID,
+		Comment: fmt.Sprintf(
+			"Spot tender created (%s, %d carriers)", req.Mode.String(), len(offers),
+		),
+		Current: created,
+	})
+
+	return created, nil
 }
 
 // loadTenderableMove enforces every precondition shared by both tender modes:
@@ -470,6 +518,28 @@ func (s *Service) buildGuideOffers(
 	return plan, nil
 }
 
+func (p *guideOfferPlan) screeningSummary() *GuideScreeningSummary {
+	if len(p.skipped) == 0 && len(p.warned) == 0 {
+		return nil
+	}
+	return &GuideScreeningSummary{
+		Skipped: screeningResults(p.skipped),
+		Warned:  screeningResults(p.warned),
+	}
+}
+
+func screeningResults(entries []guideEntryScreening) []GuideEntryScreeningResult {
+	results := make([]GuideEntryScreeningResult, 0, len(entries))
+	for _, entry := range entries {
+		results = append(results, GuideEntryScreeningResult{
+			CarrierName: entry.carrierName,
+			Rank:        entry.rank,
+			Reasons:     entry.reasons,
+		})
+	}
+	return results
+}
+
 func guideEntryCarrierName(entry *tender.RoutingGuideEntry) string {
 	if entry.Carrier != nil && entry.Carrier.Name != "" {
 		return entry.Carrier.Name
@@ -529,6 +599,7 @@ func (s *Service) auditGuideScreening(
 			strings.Join(names, ", "),
 		),
 		CorrelationID: entity.ID.String(),
+		Link:          dispatchConsoleMoveLink(entity.ShipmentMoveID),
 	})
 }
 

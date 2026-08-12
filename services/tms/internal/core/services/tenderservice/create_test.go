@@ -153,6 +153,7 @@ type createTestDeps struct {
 	workflows             *fakeWorkflowStarter
 	events                *recordingEventService
 	notifRepo             *mocks.MockNotificationRepository
+	audit                 *recordingAuditService
 	svc                   *Service
 }
 
@@ -170,6 +171,7 @@ func setupCreateTest(t *testing.T) *createTestDeps {
 		workflows:             &fakeWorkflowStarter{},
 		events:                &recordingEventService{},
 		notifRepo:             mocks.NewMockNotificationRepository(t),
+		audit:                 &recordingAuditService{},
 	}
 
 	deps.svc = &Service{
@@ -184,6 +186,7 @@ func setupCreateTest(t *testing.T) *createTestDeps {
 		holdRepo:              deps.holdRepo,
 		workflows:             deps.workflows,
 		eventService:          deps.events,
+		auditService:          deps.audit,
 		notifications: notificationservice.New(notificationservice.Params{
 			Logger:   zap.NewNop(),
 			Repo:     deps.notifRepo,
@@ -437,6 +440,15 @@ func TestCreateWaterfallSkipsBlockedEntriesWithAudit(t *testing.T) {
 	warns := deps.events.eventsOfType(shipmentevent.TypeTenderEntryWarned)
 	require.Len(t, warns, 1)
 	assert.Equal(t, "expiring", warns[0].Metadata["carrierName"])
+
+	require.NotNil(t, created.Screening)
+	require.Len(t, created.Screening.Skipped, 1)
+	assert.Equal(t, "lapsed", created.Screening.Skipped[0].CarrierName)
+	assert.Equal(t, int16(1), created.Screening.Skipped[0].Rank)
+	assert.NotEmpty(t, created.Screening.Skipped[0].Reasons)
+	require.Len(t, created.Screening.Warned, 1)
+	assert.Equal(t, "expiring", created.Screening.Warned[0].CarrierName)
+	assert.Equal(t, int16(2), created.Screening.Warned[0].Rank)
 
 	require.NotNil(t, notified)
 	assert.Equal(t, "tender_entries_skipped", notified.EventType)

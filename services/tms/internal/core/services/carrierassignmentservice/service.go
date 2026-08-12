@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
@@ -40,6 +41,7 @@ type Params struct {
 	ShipmentValidator *shipmentservice.Validator
 	Coordinator       *shipmentstate.Coordinator
 	EventService      portservices.ShipmentEventService
+	AuditService      portservices.AuditService
 	Realtime          portservices.RealtimeService
 	CostAccrual       portservices.CarrierCostAccrual `optional:"true"`
 	TenderGuard       portservices.TenderGuard        `optional:"true"`
@@ -58,6 +60,7 @@ type Service struct {
 	shipmentValidator *shipmentservice.Validator
 	coordinator       *shipmentstate.Coordinator
 	eventService      portservices.ShipmentEventService
+	auditService      portservices.AuditService
 	realtime          portservices.RealtimeService
 	costAccrual       portservices.CarrierCostAccrual
 	tenderGuard       portservices.TenderGuard
@@ -77,6 +80,7 @@ func New(p Params) *Service {
 		shipmentValidator: p.ShipmentValidator,
 		coordinator:       p.Coordinator,
 		eventService:      p.EventService,
+		auditService:      p.AuditService,
 		realtime:          p.Realtime,
 		costAccrual:       p.CostAccrual,
 		tenderGuard:       p.TenderGuard,
@@ -236,6 +240,14 @@ func (s *Service) AssignToMove(
 		carrierEntity.Name,
 		shipmenteventservice.ActorFor(req.TenantInfo),
 	))
+	s.logCarrierAssignmentAudit(&carrierAssignmentAuditParams{
+		TenantInfo: req.TenantInfo,
+		MoveID:     req.ShipmentMoveID,
+		Operation:  permission.OpAssign,
+		UserID:     req.TenantInfo.UserID,
+		Comment:    "Carrier " + carrierEntity.Name + " assigned to move",
+		Current:    result,
+	})
 	s.publishInvalidation(ctx, req.TenantInfo, shipmentIDOf(result), "carrier_assigned")
 	if replaced {
 		s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
@@ -269,11 +281,26 @@ func (s *Service) ConfirmAssignment(
 		).WithParam("carrierAssignmentId", assignmentID.String())
 	}
 
+	previous := *entity
 	now := timeutils.NowUnix()
 	entity.Status = shipment.CarrierAssignmentStatusConfirmed
 	entity.ConfirmedAt = &now
-	_, err = s.repo.Update(ctx, entity)
-	return err
+	updated, err := s.repo.Update(ctx, entity)
+	if err != nil {
+		return err
+	}
+
+	s.logCarrierAssignmentAudit(&carrierAssignmentAuditParams{
+		TenantInfo: tenantInfo,
+		MoveID:     updated.ShipmentMoveID,
+		Operation:  permission.OpUpdate,
+		UserID:     tenantInfo.UserID,
+		Comment:    "Carrier assignment confirmed",
+		Previous:   &previous,
+		Current:    updated,
+	})
+
+	return nil
 }
 
 // withdrawLiveTender runs post-transaction: a move covered outside its tender
@@ -306,6 +333,7 @@ func (s *Service) Cancel(
 
 	var carrierName string
 	var shipmentID pulid.ID
+	var canceled *shipment.CarrierAssignment
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		existing, txErr := s.repo.GetActiveByMoveID(txCtx, req.TenantInfo, req.ShipmentMoveID)
@@ -349,6 +377,7 @@ func (s *Service) Cancel(
 		); txErr != nil {
 			return txErr
 		}
+		canceled = existing
 
 		return s.applyCoverageChange(txCtx, req.TenantInfo, original, req.ShipmentMoveID, nil)
 	})
@@ -369,6 +398,14 @@ func (s *Service) Cancel(
 		req.Reason,
 		shipmenteventservice.ActorFor(req.TenantInfo),
 	))
+	s.logCarrierAssignmentAudit(&carrierAssignmentAuditParams{
+		TenantInfo: req.TenantInfo,
+		MoveID:     req.ShipmentMoveID,
+		Operation:  permission.OpUnassign,
+		UserID:     req.TenantInfo.UserID,
+		Comment:    "Carrier assignment canceled: " + req.Reason,
+		Current:    canceled,
+	})
 	s.publishInvalidation(ctx, req.TenantInfo, shipmentID, "carrier_unassigned")
 	s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
 

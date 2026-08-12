@@ -15,25 +15,28 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Lifecycle serviceports.TenderLifecycle
-	Repo      repositories.TenderRepository
-	Workflows serviceports.WorkflowStarter
-	Logger    *zap.Logger
+	Lifecycle   serviceports.TenderLifecycle
+	Repo        repositories.TenderRepository
+	RateConRepo repositories.RateConfirmationRepository
+	Workflows   serviceports.WorkflowStarter
+	Logger      *zap.Logger
 }
 
 type Activities struct {
-	lifecycle serviceports.TenderLifecycle
-	repo      repositories.TenderRepository
-	workflows serviceports.WorkflowStarter
-	l         *zap.Logger
+	lifecycle   serviceports.TenderLifecycle
+	repo        repositories.TenderRepository
+	rateConRepo repositories.RateConfirmationRepository
+	workflows   serviceports.WorkflowStarter
+	l           *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		lifecycle: p.Lifecycle,
-		repo:      p.Repo,
-		workflows: p.Workflows,
-		l:         p.Logger.Named("temporal.tender-activities"),
+		lifecycle:   p.Lifecycle,
+		repo:        p.Repo,
+		rateConRepo: p.RateConRepo,
+		workflows:   p.Workflows,
+		l:           p.Logger.Named("temporal.tender-activities"),
 	}
 }
 
@@ -74,6 +77,9 @@ func (a *Activities) DeclineOfferActivity(
 	ctx context.Context,
 	in *TenderActivityInput,
 ) error {
+	if !in.ActorUserID.IsNil() {
+		in.TenantInfo.UserID = in.ActorUserID
+	}
 	return a.lifecycle.DeclineOffer(ctx, in.TenantInfo, in.OfferID, in.Source, in.Reason)
 }
 
@@ -81,6 +87,9 @@ func (a *Activities) AcceptOfferActivity(
 	ctx context.Context,
 	in *TenderActivityInput,
 ) (*serviceports.TenderAcceptResult, error) {
+	if !in.ActorUserID.IsNil() {
+		in.TenantInfo.UserID = in.ActorUserID
+	}
 	return a.lifecycle.AcceptOffer(ctx, in.TenantInfo, in.OfferID, in.Source)
 }
 
@@ -125,5 +134,8 @@ func (a *Activities) RecordLateResponseActivity(
 	ctx context.Context,
 	in *TenderActivityInput,
 ) error {
+	if !in.ActorUserID.IsNil() {
+		in.TenantInfo.UserID = in.ActorUserID
+	}
 	return a.lifecycle.RecordLateResponse(ctx, in.TenantInfo, in.OfferID, in.Action, in.Source)
 }

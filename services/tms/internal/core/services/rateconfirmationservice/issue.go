@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -70,6 +71,14 @@ func (s *Service) IssueForTenderAcceptance(
 		if genErr != nil {
 			return nil, genErr
 		}
+		s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+			TenantInfo: req.TenantInfo,
+			Operation:  permission.OpCreate,
+			Comment: fmt.Sprintf(
+				"Auto-issued from tender acceptance (offer %s)", req.OfferID.String(),
+			),
+			Current: created,
+		})
 		return s.completeTenderIssued(ctx, req, created)
 	case issuedFromOffer(active, req):
 		if active.Status == rateconfirmation.StatusConfirmed {
@@ -110,6 +119,7 @@ func (s *Service) completeTenderIssued(
 		at = timeutils.NowUnix()
 	}
 
+	previous := *entity
 	confirmed, err := s.markConfirmed(ctx, req.TenantInfo, entity, confirmParams{
 		Name:  s.tenderConfirmingName(ctx, req, entity),
 		Title: tenderConfirmingTitle(req),
@@ -119,6 +129,16 @@ func (s *Service) completeTenderIssued(
 	if err != nil {
 		return nil, err
 	}
+
+	s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+		TenantInfo: req.TenantInfo,
+		Operation:  permission.OpApprove,
+		Comment: fmt.Sprintf(
+			"Auto-issued from tender acceptance (offer %s)", req.OfferID.String(),
+		),
+		Previous: &previous,
+		Current:  confirmed,
+	})
 
 	if _, sendErr := s.Send(ctx, req.TenantInfo, confirmed.ID); sendErr != nil {
 		s.l.Warn("failed to email the auto-issued rate confirmation record copy",

@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -174,14 +175,23 @@ func (s *Service) ConfirmByToken(
 		if !entity.CanConfirm() {
 			return invalidTokenError()
 		}
-		if _, err = s.markConfirmed(ctx, tenantInfo, entity, confirmParams{
+		previous := *entity
+		confirmed, confirmErr := s.markConfirmed(ctx, tenantInfo, entity, confirmParams{
 			Name:  signerName,
 			Title: signerTitle,
 			Via:   rateconfirmation.ViaPublicSignature,
 			At:    timeutils.NowUnix(),
-		}); err != nil {
-			return err
+		})
+		if confirmErr != nil {
+			return confirmErr
 		}
+		s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+			TenantInfo: tenantInfo,
+			Operation:  permission.OpApprove,
+			Comment:    "Confirmed via public signing token by " + signerName,
+			Previous:   &previous,
+			Current:    confirmed,
+		})
 	}
 
 	if _, err = s.repo.MarkTokenUsed(ctx, &repositories.MarkRateConfirmationTokenUsedRequest{

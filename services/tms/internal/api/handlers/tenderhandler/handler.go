@@ -126,7 +126,7 @@ func (h *Handler) get(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body tenderservice.CreateWaterfallTenderRequest true "Waterfall tender request"
-// @Success 201 {object} tender.Tender
+// @Success 201 {object} tenderservice.CreateWaterfallResult
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail

@@ -39,6 +39,7 @@ type Params struct {
 	OrgRepo               repositories.OrganizationRepository
 	Workflows             portservices.WorkflowStarter
 	EventService          portservices.ShipmentEventService
+	AuditService          portservices.AuditService
 	Realtime              portservices.RealtimeService
 	Config                *config.Config
 	Templates             portservices.DocumentTemplateResolver `optional:"true"`
@@ -61,6 +62,7 @@ type Service struct {
 	orgRepo               repositories.OrganizationRepository
 	workflows             portservices.WorkflowStarter
 	eventService          portservices.ShipmentEventService
+	auditService          portservices.AuditService
 	realtime              portservices.RealtimeService
 	cfg                   *config.Config
 	templates             portservices.DocumentTemplateResolver
@@ -85,6 +87,7 @@ func New(p Params) *Service {
 		orgRepo:               p.OrgRepo,
 		workflows:             p.Workflows,
 		eventService:          p.EventService,
+		auditService:          p.AuditService,
 		realtime:              p.Realtime,
 		cfg:                   p.Config,
 		templates:             p.Templates,

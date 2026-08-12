@@ -3,6 +3,7 @@ package tenderservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
@@ -206,6 +207,21 @@ func (s *Service) CancelDirect(
 		reason,
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
+
+	canceled := *entity
+	canceled.Status = tender.StatusCanceled
+	canceled.CancellationReason = reason
+	canceled.CanceledAt = &now
+	canceled.CanceledByID = userIDPtr(tenantInfo)
+	s.logTenderAudit(&tenderAuditParams{
+		TenantInfo: tenantInfo,
+		TenderID:   entity.ID,
+		Operation:  permission.OpCancel,
+		UserID:     tenantInfo.UserID,
+		Comment:    "Tender canceled: " + reason,
+		Previous:   entity,
+		Current:    &canceled,
+	})
 	s.publishInvalidation(ctx, tenantInfo, entity.ShipmentID, "tender_canceled")
 
 	return nil

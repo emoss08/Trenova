@@ -43,6 +43,8 @@ import {
   emptySpotTenderLine,
   spotTenderPayloadSchema,
   TENDER_CHANNEL_LABEL,
+  type GuideEntryScreening,
+  type GuideScreeningSummary,
   type SpotTenderMode,
   type SpotTenderPayload,
   type SpotTenderPayloadInput,
@@ -113,7 +115,65 @@ function GuideEntriesPreview({ guide }: { guide: GuidePreview }) {
   );
 }
 
-function WaterfallTab({ move, actions }: { move: DispatchBoardMove; actions: DispatchActions }) {
+function formatScreeningEntry(entry: GuideEntryScreening): string {
+  return `#${entry.rank} ${entry.carrierName} — ${entry.reasons.join("; ")}`;
+}
+
+/**
+ * The screening verdict outlives the tab that produced it: once the live tender
+ * query refetches, the dialog swaps to the live panel and the waterfall form
+ * unmounts. The summary is therefore owned by the dialog and rendered above the
+ * swap, so a dispatcher never loses the list of carriers that were passed over.
+ */
+function ScreeningAlert({ screening }: { screening: GuideScreeningSummary }) {
+  const hasSkipped = screening.skipped.length > 0;
+  const hasWarned = screening.warned.length > 0;
+  if (!hasSkipped && !hasWarned) return null;
+
+  return (
+    <Alert variant="warning" className="mb-3">
+      <TriangleAlertIcon />
+      <AlertTitle>
+        {hasSkipped ? "Some carriers were not offered" : "Some carriers were offered with warnings"}
+      </AlertTitle>
+      <AlertDescription>
+        {hasSkipped && (
+          <ul className="flex flex-col gap-0.5">
+            {screening.skipped.map((entry) => (
+              <li key={`skipped-${entry.rank}-${entry.carrierName}`} className="text-xs">
+                {formatScreeningEntry(entry)}
+              </li>
+            ))}
+          </ul>
+        )}
+        {hasWarned && (
+          <div className="mt-1 flex flex-col gap-0.5">
+            <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
+              Offered with warnings
+            </span>
+            <ul className="flex flex-col gap-0.5">
+              {screening.warned.map((entry) => (
+                <li key={`warned-${entry.rank}-${entry.carrierName}`} className="text-xs">
+                  {formatScreeningEntry(entry)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+function WaterfallTab({
+  move,
+  actions,
+  onScreening,
+}: {
+  move: DispatchBoardMove;
+  actions: DispatchActions;
+  onScreening: (screening: GuideScreeningSummary | null) => void;
+}) {
   const [overrideGuideId, setOverrideGuideId] = useState("");
 
   const matchInput = useMemo(
@@ -150,10 +210,11 @@ function WaterfallTab({ move, actions }: { move: DispatchBoardMove; actions: Dis
         shipmentMoveId: move.moveId,
         routingGuideId: overrideGuideId || null,
       })
+      .then((result) => onScreening(result.screening ?? null))
       .catch(() => {
         // handled by the mutation's onError; the dialog stays open for a retry
       });
-  }, [actions, move.moveId, overrideGuideId]);
+  }, [actions, move.moveId, onScreening, overrideGuideId]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -429,9 +490,19 @@ export function TenderDialog({
   const { data: liveTender, isLoading } = useQuery({
     ...dispatchConsoleQueries.liveTender(move.moveId),
   });
+  const [screening, setScreening] = useState<GuideScreeningSummary | null>(null);
+
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) return;
+      setScreening(null);
+      onClose();
+    },
+    [onClose],
+  );
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[680px]">
         <DialogHeader>
           <DialogTitle>{liveTender ? "Live Tender" : "Tender to Carriers"}</DialogTitle>
@@ -442,6 +513,7 @@ export function TenderDialog({
         </DialogHeader>
 
         <ScrollArea className="max-h-[65vh] pr-2">
+          {screening && <ScreeningAlert screening={screening} />}
           {isLoading ? (
             <div className="flex flex-col gap-2 py-1">
               <Skeleton className="h-6 w-40 rounded" />
@@ -462,7 +534,7 @@ export function TenderDialog({
                 <TabsTrigger value="spot">Spot</TabsTrigger>
               </TabsList>
               <TabsContent value="waterfall">
-                <WaterfallTab move={move} actions={actions} />
+                <WaterfallTab move={move} actions={actions} onScreening={setScreening} />
               </TabsContent>
               <TabsContent value="spot">
                 <SpotTab move={move} actions={actions} />

@@ -54,6 +54,12 @@ export const TENDER_CHANNEL_LABEL: Record<TenderChannel, string> = {
   EDI: "EDI",
 };
 
+export const TENDER_RESPONSE_SOURCE_LABEL: Record<TenderResponseSource, string> = {
+  Email: "via email link",
+  EDI: "via EDI 990",
+  Manual: "recorded by dispatcher",
+};
+
 export const tenderCarrierSummarySchema = z.object({
   id: optionalStringSchema,
   name: optionalStringSchema,
@@ -99,6 +105,35 @@ export const tenderSchema = z.object({
   offers: z.array(tenderOfferSchema).nullish(),
 });
 export type Tender = z.infer<typeof tenderSchema>;
+
+export const guideEntryScreeningSchema = z.object({
+  carrierName: z.string(),
+  rank: z.number().int(),
+  reasons: z.array(z.string()).nullish().transform((value) => value ?? []),
+});
+export type GuideEntryScreening = z.infer<typeof guideEntryScreeningSchema>;
+
+export const guideScreeningSummarySchema = z.object({
+  skipped: z
+    .array(guideEntryScreeningSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  warned: z
+    .array(guideEntryScreeningSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+export type GuideScreeningSummary = z.infer<typeof guideScreeningSummarySchema>;
+
+/**
+ * The waterfall endpoint embeds the tender, so the response body is a superset of
+ * a plain tender: the screening summary is absent when every routing-guide entry
+ * was offered.
+ */
+export const waterfallTenderResultSchema = tenderSchema.extend({
+  screening: guideScreeningSummarySchema.nullish().transform((value) => value ?? null),
+});
+export type WaterfallTenderResult = z.infer<typeof waterfallTenderResultSchema>;
 
 export const waterfallTenderPayloadSchema = z.object({
   shipmentMoveId: z.string().min(1, { error: "Shipment move is required" }),
