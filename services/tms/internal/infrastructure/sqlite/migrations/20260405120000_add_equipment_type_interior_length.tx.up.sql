@@ -3,4 +3,4 @@
 -- stop regenerating this file; see docs/databases.md.
 -- Source: 20260405120000_add_equipment_type_interior_length.tx.up.sql
 
-ALTER TABLE "equipment_types" ADD COLUMN "interior_length" NUMERIC;
+ALTER TABLE "equipment_types" ADD COLUMN "interior_length" REAL;

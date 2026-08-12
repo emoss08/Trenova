@@ -59,9 +59,9 @@ type DetentionNotice struct {
 	FailureReason        string              `json:"failureReason"         bun:"failure_reason,type:TEXT,nullzero"`
 	ProviderMessageID    string              `json:"providerMessageId"     bun:"provider_message_id,type:VARCHAR(255),nullzero"`
 	SentByID             *pulid.ID           `json:"sentById"              bun:"sent_by_id,type:VARCHAR(100),nullzero"`
-	WasAutomatic         bool                `json:"wasAutomatic"          bun:"was_automatic,type:BOOLEAN,notnull,default:false"`
-	SatisfiesRequirement bool                `json:"satisfiesRequirement"  bun:"satisfies_requirement,type:BOOLEAN,notnull,default:false"`
-	QuotedFreeMinutes    int32               `json:"quotedFreeMinutes"     bun:"quoted_free_minutes,type:INTEGER,notnull,default:0"`
+	WasAutomatic         bool                `json:"wasAutomatic"          bun:"was_automatic,type:BOOLEAN,notnull"`
+	SatisfiesRequirement bool                `json:"satisfiesRequirement"  bun:"satisfies_requirement,type:BOOLEAN,notnull"`
+	QuotedFreeMinutes    int32               `json:"quotedFreeMinutes"     bun:"quoted_free_minutes,type:INTEGER,notnull"`
 	QuotedRate           decimal.NullDecimal `json:"quotedRate"            bun:"quoted_rate,type:NUMERIC(19,4),nullzero"`
 	QuotedAmount         decimal.NullDecimal `json:"quotedAmount"          bun:"quoted_amount,type:NUMERIC(19,4),nullzero"`
 	Version              int64               `json:"version"               bun:"version,type:BIGINT"`

@@ -41,7 +41,7 @@ type WeatherAlert struct {
 	FirstSeenAt    int64             `json:"firstSeenAt"    bun:"first_seen_at,type:BIGINT,notnull"`
 	LastUpdatedAt  int64             `json:"lastUpdatedAt"  bun:"last_updated_at,type:BIGINT,notnull"`
 	ExpiredAt      *int64            `json:"expiredAt"      bun:"expired_at,type:BIGINT,nullzero"`
-	Version        int64             `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
+	Version        int64             `json:"version"        bun:"version,type:BIGINT,notnull"`
 	CreatedAt      int64             `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64             `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

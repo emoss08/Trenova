@@ -19,15 +19,15 @@ type BankReceiptBatch struct {
 	Source               string   `json:"source"               bun:"source,type:VARCHAR(100),notnull"`
 	Reference            string   `json:"reference"            bun:"reference,type:VARCHAR(100),nullzero"`
 	Status               Status   `json:"status"               bun:"status,type:VARCHAR(50),notnull"`
-	ImportedCount        int64    `json:"importedCount"        bun:"imported_count,type:BIGINT,notnull,default:0"`
-	MatchedCount         int64    `json:"matchedCount"         bun:"matched_count,type:BIGINT,notnull,default:0"`
-	ExceptionCount       int64    `json:"exceptionCount"       bun:"exception_count,type:BIGINT,notnull,default:0"`
-	ImportedAmountMinor  int64    `json:"importedAmountMinor"  bun:"imported_amount_minor,type:BIGINT,notnull,default:0"`
-	MatchedAmountMinor   int64    `json:"matchedAmountMinor"   bun:"matched_amount_minor,type:BIGINT,notnull,default:0"`
-	ExceptionAmountMinor int64    `json:"exceptionAmountMinor" bun:"exception_amount_minor,type:BIGINT,notnull,default:0"`
+	ImportedCount        int64    `json:"importedCount"        bun:"imported_count,type:BIGINT,notnull"`
+	MatchedCount         int64    `json:"matchedCount"         bun:"matched_count,type:BIGINT,notnull"`
+	ExceptionCount       int64    `json:"exceptionCount"       bun:"exception_count,type:BIGINT,notnull"`
+	ImportedAmountMinor  int64    `json:"importedAmountMinor"  bun:"imported_amount_minor,type:BIGINT,notnull"`
+	MatchedAmountMinor   int64    `json:"matchedAmountMinor"   bun:"matched_amount_minor,type:BIGINT,notnull"`
+	ExceptionAmountMinor int64    `json:"exceptionAmountMinor" bun:"exception_amount_minor,type:BIGINT,notnull"`
 	CreatedByID          pulid.ID `json:"createdById"          bun:"created_by_id,type:VARCHAR(100),notnull"`
 	UpdatedByID          pulid.ID `json:"updatedById"          bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version              int64    `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
+	Version              int64    `json:"version"              bun:"version,type:BIGINT,notnull"`
 	CreatedAt            int64    `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64    `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

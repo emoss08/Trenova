@@ -36,7 +36,15 @@ ALTER TABLE "recurring_earnings" ADD COLUMN "pay_code_id" TEXT;
 
 --bun:split
 
+ALTER TABLE "recurring_earnings" DROP COLUMN "type";
+
+--bun:split
+
 ALTER TABLE "recurring_deductions" ADD COLUMN "pay_code_id" TEXT;
+
+--bun:split
+
+ALTER TABLE "recurring_deductions" DROP COLUMN "type";
 
 --bun:split
 

@@ -36,10 +36,10 @@ type Entry struct {
 	BusinessUnitID pulid.ID             `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID             `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),notnull"`
 	Timestamp      int64                `json:"timestamp"               bun:"timestamp,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	Changes        map[string]any       `json:"changes,omitempty"       bun:"changes,type:JSONB,default:'{}'::jsonb"`
-	PreviousState  map[string]any       `json:"previousState,omitempty" bun:"previous_state,type:JSONB,default:'{}'::jsonb"`
-	CurrentState   map[string]any       `json:"currentState,omitempty"  bun:"current_state,type:JSONB,default:'{}'::jsonb"`
-	Metadata       map[string]any       `json:"metadata,omitempty"      bun:"metadata,type:JSONB,default:'{}'::jsonb"`
+	Changes        map[string]any       `json:"changes,omitempty"       bun:"changes,type:JSONB,default:'{}'"`
+	PreviousState  map[string]any       `json:"previousState,omitempty" bun:"previous_state,type:JSONB,default:'{}'"`
+	CurrentState   map[string]any       `json:"currentState,omitempty"  bun:"current_state,type:JSONB,default:'{}'"`
+	Metadata       map[string]any       `json:"metadata,omitempty"      bun:"metadata,type:JSONB,default:'{}'"`
 	Resource       permission.Resource  `json:"resource"                bun:"resource,type:VARCHAR(50),notnull"`  // Should be the same as the resource in the permission service
 	Operation      permission.Operation `json:"operation"               bun:"operation,type:VARCHAR(50),notnull"` // Should be the same as the operation in the permission service
 	ResourceID     string               `json:"resourceId"              bun:"resource_id,type:VARCHAR(100),notnull"`
@@ -48,8 +48,8 @@ type Entry struct {
 	Comment        string               `json:"comment,omitempty"       bun:"comment,type:TEXT"`
 	IPAddress      string               `json:"ipAddress,omitempty"     bun:"ip_address,type:VARCHAR(45)"` // IPv6 addresses need space
 	Category       Category             `json:"category"                bun:"category,type:audit_category_enum,notnull,default:'System'"`
-	SensitiveData  bool                 `json:"sensitiveData"           bun:"sensitive_data,notnull,default:false"`
-	Critical       bool                 `json:"critical"                bun:"critical,notnull,default:false"`
+	SensitiveData  bool                 `json:"sensitiveData"           bun:"sensitive_data,notnull"`
+	Critical       bool                 `json:"critical"                bun:"critical,notnull"`
 	User           *tenant.User         `json:"user,omitempty"          bun:"rel:belongs-to,join:user_id=id"`
 	APIKey         *apikey.Key          `json:"apiKey,omitempty"        bun:"rel:belongs-to,join:api_key_id=id"`
 	Organization   *tenant.Organization `json:"-"                       bun:"rel:belongs-to,join:organization_id=id"`

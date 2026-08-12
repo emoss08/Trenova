@@ -40,13 +40,13 @@ type ReportView struct {
 	// Shared publishes the view to everyone who can read the report. A private
 	// view stays with its owner, which is what keeps one person's working set
 	// out of everybody else's list.
-	Shared bool `json:"shared" bun:"shared,type:BOOLEAN,notnull,default:false"`
+	Shared bool `json:"shared" bun:"shared,type:BOOLEAN,notnull"`
 	// Pinned is per-owner ordering intent: a pinned view sorts to the front of
 	// the picker so the one someone opens daily is never buried.
-	Pinned    bool   `json:"pinned"    bun:"pinned,type:BOOLEAN,notnull,default:false"`
+	Pinned    bool   `json:"pinned"    bun:"pinned,type:BOOLEAN,notnull"`
 	Format    Format `json:"format"    bun:"format,type:VARCHAR(10),nullzero"`
 	LastRunAt int64  `json:"lastRunAt" bun:"last_run_at,type:BIGINT,nullzero"`
-	RunCount  int64  `json:"runCount"  bun:"run_count,type:BIGINT,notnull,default:0"`
+	RunCount  int64  `json:"runCount"  bun:"run_count,type:BIGINT,notnull"`
 	Version   int64  `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64  `json:"createdAt" bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64  `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`

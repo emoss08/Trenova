@@ -62,8 +62,8 @@ type TableConfiguration struct {
 	Visibility     Visibility   `json:"visibility"     bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'"`
 	SearchVector   string       `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank           string       `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
-	IsDefault      bool         `json:"isDefault"      bun:"is_default,type:BOOLEAN,notnull,default:false"`
-	IsOrgDefault   bool         `json:"isOrgDefault"   bun:"is_org_default,type:BOOLEAN,notnull,default:false"`
+	IsDefault      bool         `json:"isDefault"      bun:"is_default,type:BOOLEAN,notnull"`
+	IsOrgDefault   bool         `json:"isOrgDefault"   bun:"is_org_default,type:BOOLEAN,notnull"`
 	Version        int64        `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64        `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64        `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`

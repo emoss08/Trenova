@@ -48,16 +48,16 @@ type PayEvent struct {
 	IdempotencyKey   string              `json:"idempotencyKey"   bun:"idempotency_key,type:VARCHAR(255),notnull"`
 	Status           PayEventStatus      `json:"status"           bun:"status,type:VARCHAR(50),notnull,default:'Accrued'"`
 	EventDate        int64               `json:"eventDate"        bun:"event_date,type:BIGINT,notnull"`
-	GrossAmountMinor int64               `json:"grossAmountMinor" bun:"gross_amount_minor,type:BIGINT,notnull,default:0"`
+	GrossAmountMinor int64               `json:"grossAmountMinor" bun:"gross_amount_minor,type:BIGINT,notnull"`
 	TotalMiles       decimal.Decimal     `json:"totalMiles"       bun:"total_miles,type:NUMERIC(19,4),notnull,default:0"`
 	CurrencyCode     string              `json:"currencyCode"     bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
 	Components       []PayEventComponent `json:"components"       bun:"components,type:JSONB,nullzero"`
 	ProNumber        string              `json:"proNumber"        bun:"pro_number,type:VARCHAR(100),nullzero"`
-	OnHold           bool                `json:"onHold"           bun:"on_hold,type:BOOLEAN,notnull,default:false"`
+	OnHold           bool                `json:"onHold"           bun:"on_hold,type:BOOLEAN,notnull"`
 	HoldReason       string              `json:"holdReason"       bun:"hold_reason,type:TEXT,nullzero"`
 	VoidedAt         *int64              `json:"voidedAt"         bun:"voided_at,type:BIGINT,nullzero"`
 	VoidReason       string              `json:"voidReason"       bun:"void_reason,type:TEXT,nullzero"`
-	Version          int64               `json:"version"          bun:"version,type:BIGINT,notnull,default:0"`
+	Version          int64               `json:"version"          bun:"version,type:BIGINT,notnull"`
 	CreatedAt        int64               `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt        int64               `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

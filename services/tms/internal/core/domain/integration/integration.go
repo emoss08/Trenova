@@ -22,16 +22,16 @@ type Integration struct {
 	Type           Type           `json:"type"           bun:"type,type:integration_type,notnull"`
 	Name           string         `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
 	Description    string         `json:"description"    bun:"description,type:TEXT,nullzero"`
-	Enabled        bool           `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull,default:false"`
+	Enabled        bool           `json:"enabled"        bun:"enabled,type:BOOLEAN,notnull"`
 	BuiltBy        string         `json:"builtBy"        bun:"built_by,type:VARCHAR(100),nullzero"`
 	Category       Category       `json:"category"       bun:"category,type:integration_category,notnull"`
 	Configuration  map[string]any `json:"configuration"  bun:"configuration,type:jsonb,nullzero"`
 	DocsURL        string         `json:"docsUrl"        bun:"docs_url,type:TEXT,nullzero"`
-	Featured       bool           `json:"featured"       bun:"featured,type:BOOLEAN,notnull,default:false"`
+	Featured       bool           `json:"featured"       bun:"featured,type:BOOLEAN,notnull"`
 	LogoURL        string         `json:"logoUrl"        bun:"logo_url,type:TEXT,nullzero"`
 	WebsiteURL     string         `json:"websiteUrl"     bun:"website_url,type:TEXT,nullzero"`
 	EnabledByID    pulid.ID       `json:"enabledById"    bun:"enabled_by_id,type:VARCHAR(100),nullzero"`
-	Version        int64          `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
+	Version        int64          `json:"version"        bun:"version,type:BIGINT,notnull"`
 	CreatedAt      int64          `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

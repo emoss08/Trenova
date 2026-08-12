@@ -29,8 +29,8 @@ type FormSubmission struct {
 	StopID               pulid.ID         `json:"stopId"               bun:"stop_id,type:VARCHAR(100),nullzero"`
 	SubmittedAt          int64            `json:"submittedAt"          bun:"submitted_at,type:BIGINT,notnull"`
 	Fields               []FormFieldValue `json:"fields"               bun:"fields,type:JSONB,nullzero"`
-	Applied              bool             `json:"applied"              bun:"applied,type:BOOLEAN,notnull,default:false"`
-	AppliedFields        int              `json:"appliedFields"        bun:"applied_fields,type:INT,notnull,default:0"`
+	Applied              bool             `json:"applied"              bun:"applied,type:BOOLEAN,notnull"`
+	AppliedFields        int              `json:"appliedFields"        bun:"applied_fields,type:INT,notnull"`
 	AppliedAt            *int64           `json:"appliedAt"            bun:"applied_at,type:BIGINT,nullzero"`
 	CreatedAt            int64            `json:"createdAt"            bun:"created_at,type:BIGINT,notnull"`
 }

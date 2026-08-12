@@ -7,11 +7,11 @@ ALTER TABLE "formula_templates" ADD COLUMN "breakdown_definitions" TEXT NOT NULL
 
 --bun:split
 
-ALTER TABLE "formula_templates" ADD COLUMN "min_charge" NUMERIC;
+ALTER TABLE "formula_templates" ADD COLUMN "min_charge" REAL;
 
 --bun:split
 
-ALTER TABLE "formula_templates" ADD COLUMN "max_charge" NUMERIC;
+ALTER TABLE "formula_templates" ADD COLUMN "max_charge" REAL;
 
 --bun:split
 
@@ -39,11 +39,11 @@ ALTER TABLE "formula_template_versions" ADD COLUMN "breakdown_definitions" TEXT 
 
 --bun:split
 
-ALTER TABLE "formula_template_versions" ADD COLUMN "min_charge" NUMERIC;
+ALTER TABLE "formula_template_versions" ADD COLUMN "min_charge" REAL;
 
 --bun:split
 
-ALTER TABLE "formula_template_versions" ADD COLUMN "max_charge" NUMERIC;
+ALTER TABLE "formula_template_versions" ADD COLUMN "max_charge" REAL;
 
 --bun:split
 
@@ -89,9 +89,9 @@ CREATE TABLE IF NOT EXISTS "rate_table_entries"(
     "organization_id" TEXT NOT NULL,
     "rate_table_id" TEXT NOT NULL,
     "match_key" TEXT,
-    "range_min" NUMERIC,
-    "range_max" NUMERIC,
-    "value" NUMERIC NOT NULL,
+    "range_min" REAL,
+    "range_max" REAL,
+    "value" REAL NOT NULL,
     "sort_order" INTEGER NOT NULL DEFAULT 0,
     "created_at" INTEGER NOT NULL DEFAULT (unixepoch()),
     "updated_at" INTEGER NOT NULL DEFAULT (unixepoch()),

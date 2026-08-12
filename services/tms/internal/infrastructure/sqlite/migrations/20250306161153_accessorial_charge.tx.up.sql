@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS "accessorial_charges"(
     "description" TEXT NOT NULL,
     "rate_unit" TEXT,
     "method" TEXT NOT NULL,
-    "amount" NUMERIC NOT NULL DEFAULT 0,
+    "amount" REAL NOT NULL DEFAULT 0,
     "version" INTEGER NOT NULL DEFAULT 0,
     "created_at" INTEGER NOT NULL DEFAULT (unixepoch()),
     "updated_at" INTEGER NOT NULL DEFAULT (unixepoch()),

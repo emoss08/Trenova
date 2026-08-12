@@ -36,14 +36,14 @@ type ShipmentHold struct {
 	ReasonCode        string                  `json:"reasonCode"        bun:"reason_code,type:VARCHAR(100),nullzero"`
 	Notes             string                  `json:"notes"             bun:"notes,type:TEXT,nullzero"`
 	Source            HoldSource              `json:"source"            bun:"source,type:hold_source_enum,notnull,default:'User'"`
-	BlocksDispatch    bool                    `json:"blocksDispatch"    bun:"blocks_dispatch,type:BOOLEAN,notnull,default:false"`
-	BlocksDelivery    bool                    `json:"blocksDelivery"    bun:"blocks_delivery,type:BOOLEAN,notnull,default:false"`
-	BlocksBilling     bool                    `json:"blocksBilling"     bun:"blocks_billing,type:BOOLEAN,notnull,default:false"`
-	VisibleToCustomer bool                    `json:"visibleToCustomer" bun:"visible_to_customer,type:BOOLEAN,notnull,default:false"`
+	BlocksDispatch    bool                    `json:"blocksDispatch"    bun:"blocks_dispatch,type:BOOLEAN,notnull"`
+	BlocksDelivery    bool                    `json:"blocksDelivery"    bun:"blocks_delivery,type:BOOLEAN,notnull"`
+	BlocksBilling     bool                    `json:"blocksBilling"     bun:"blocks_billing,type:BOOLEAN,notnull"`
+	VisibleToCustomer bool                    `json:"visibleToCustomer" bun:"visible_to_customer,type:BOOLEAN,notnull"`
 	StartedAt         int64                   `json:"startedAt"         bun:"started_at,type:BIGINT,notnull"`
 	CreatedAt         int64                   `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt         int64                   `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	Version           int64                   `json:"version"           bun:"version,type:BIGINT,notnull,default:0"`
+	Version           int64                   `json:"version"           bun:"version,type:BIGINT,notnull"`
 	ReleasedAt        *int64                  `json:"releasedAt"        bun:"released_at,type:BIGINT,nullzero"`
 	CreatedByID       *pulid.ID               `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
 	ReleasedByID      *pulid.ID               `json:"releasedById"      bun:"released_by_id,type:VARCHAR(100),nullzero"`

@@ -51,10 +51,10 @@ type HoldReason struct {
 	Description              string         `json:"description"              bun:"description,type:TEXT,nullzero"`
 	Active                   bool           `json:"active"                   bun:"active,type:BOOLEAN,notnull,default:true"`
 	DefaultSeverity          HoldSeverity   `json:"defaultSeverity"          bun:"default_severity,type:hold_severity_enum,notnull"`
-	DefaultBlocksDispatch    bool           `json:"defaultBlocksDispatch"    bun:"default_blocks_dispatch,type:BOOLEAN,notnull,default:false"`
-	DefaultBlocksDelivery    bool           `json:"defaultBlocksDelivery"    bun:"default_blocks_delivery,type:BOOLEAN,notnull,default:false"`
-	DefaultBlocksBilling     bool           `json:"defaultBlocksBilling"     bun:"default_blocks_billing,type:BOOLEAN,notnull,default:false"`
-	DefaultVisibleToCustomer bool           `json:"defaultVisibleToCustomer" bun:"default_visible_to_customer,type:BOOLEAN,notnull,default:false"`
+	DefaultBlocksDispatch    bool           `json:"defaultBlocksDispatch"    bun:"default_blocks_dispatch,type:BOOLEAN,notnull"`
+	DefaultBlocksDelivery    bool           `json:"defaultBlocksDelivery"    bun:"default_blocks_delivery,type:BOOLEAN,notnull"`
+	DefaultBlocksBilling     bool           `json:"defaultBlocksBilling"     bun:"default_blocks_billing,type:BOOLEAN,notnull"`
+	DefaultVisibleToCustomer bool           `json:"defaultVisibleToCustomer" bun:"default_visible_to_customer,type:BOOLEAN,notnull"`
 	SortOrder                int32          `json:"sortOrder"                bun:"sort_order,type:INTEGER,notnull,default:100"`
 	ExternalMap              map[string]any `json:"externalMap"              bun:"external_map,type:JSONB,nullzero"`
 	Version                  int64          `json:"version"                  bun:"version,type:BIGINT"`

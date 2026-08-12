@@ -31,14 +31,14 @@ type EscrowAccount struct {
 	OrganizationID          pulid.ID            `json:"organizationId"          bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	WorkerID                pulid.ID            `json:"workerId"                bun:"worker_id,type:VARCHAR(100),notnull"`
 	Status                  EscrowAccountStatus `json:"status"                  bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
-	TargetAmountMinor       int64               `json:"targetAmountMinor"       bun:"target_amount_minor,type:BIGINT,notnull,default:0"`
-	BalanceMinor            int64               `json:"balanceMinor"            bun:"balance_minor,type:BIGINT,notnull,default:0"`
+	TargetAmountMinor       int64               `json:"targetAmountMinor"       bun:"target_amount_minor,type:BIGINT,notnull"`
+	BalanceMinor            int64               `json:"balanceMinor"            bun:"balance_minor,type:BIGINT,notnull"`
 	AnnualInterestRate      decimal.Decimal     `json:"annualInterestRate"      bun:"annual_interest_rate,type:NUMERIC(7,4),notnull,default:0"`
 	LastInterestAccrualDate *int64              `json:"lastInterestAccrualDate" bun:"last_interest_accrual_date,type:BIGINT,nullzero"`
 	OpenedDate              int64               `json:"openedDate"              bun:"opened_date,type:BIGINT,notnull"`
 	ClosedDate              *int64              `json:"closedDate"              bun:"closed_date,type:BIGINT,nullzero"`
 	CurrencyCode            string              `json:"currencyCode"            bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	Version                 int64               `json:"version"                 bun:"version,type:BIGINT,notnull,default:0"`
+	Version                 int64               `json:"version"                 bun:"version,type:BIGINT,notnull"`
 	CreatedAt               int64               `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt               int64               `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

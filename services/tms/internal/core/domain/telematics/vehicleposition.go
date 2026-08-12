@@ -19,8 +19,8 @@ type VehiclePosition struct {
 	ProviderVehicleID string      `json:"providerVehicleId" bun:"provider_vehicle_id,type:TEXT,notnull"`
 	Latitude          float64     `json:"latitude"          bun:"latitude,type:DOUBLE PRECISION,notnull"`
 	Longitude         float64     `json:"longitude"         bun:"longitude,type:DOUBLE PRECISION,notnull"`
-	HeadingDegrees    float64     `json:"headingDegrees"    bun:"heading_degrees,type:DOUBLE PRECISION,notnull,default:0"`
-	SpeedMph          float64     `json:"speedMph"          bun:"speed_mph,type:DOUBLE PRECISION,notnull,default:0"`
+	HeadingDegrees    float64     `json:"headingDegrees"    bun:"heading_degrees,type:DOUBLE PRECISION,notnull"`
+	SpeedMph          float64     `json:"speedMph"          bun:"speed_mph,type:DOUBLE PRECISION,notnull"`
 	EngineState       EngineState `json:"engineState"       bun:"engine_state,type:VARCHAR(16),nullzero"`
 	FuelPercent       *float64    `json:"fuelPercent"       bun:"fuel_percent,type:DOUBLE PRECISION,nullzero"`
 	OdometerMeters    *int64      `json:"odometerMeters"    bun:"odometer_meters,type:BIGINT,nullzero"`

@@ -3,7 +3,7 @@
 -- stop regenerating this file; see docs/databases.md.
 -- Source: 20260407100000_shipment_base_rate.tx.up.sql
 
-ALTER TABLE "shipments" ADD COLUMN "base_rate" NUMERIC NOT NULL DEFAULT 0;
+ALTER TABLE "shipments" ADD COLUMN "base_rate" REAL NOT NULL DEFAULT 0;
 
 --bun:split
 

@@ -45,9 +45,9 @@ type EDIConnection struct {
 	TargetPartnerID      pulid.ID                `json:"targetPartnerId"      bun:"target_partner_id,type:VARCHAR(100),nullzero"`
 	Method               ConnectionMethod        `json:"method"               bun:"method,type:edi_connection_method_enum,notnull"`
 	Status               ConnectionStatus        `json:"status"               bun:"status,type:edi_connection_status_enum,notnull,default:'PendingAcceptance'"`
-	Capabilities         ConnectionCapabilities  `json:"capabilities"         bun:"capabilities,type:JSONB,notnull,default:'{}'::jsonb"`
-	SourcePartnerConfig  ConnectionPartnerConfig `json:"sourcePartnerConfig"  bun:"source_partner_config,type:JSONB,notnull,default:'{}'::jsonb"`
-	TargetPartnerConfig  ConnectionPartnerConfig `json:"targetPartnerConfig"  bun:"target_partner_config,type:JSONB,notnull,default:'{}'::jsonb"`
+	Capabilities         ConnectionCapabilities  `json:"capabilities"         bun:"capabilities,type:JSONB,notnull,default:'{}'"`
+	SourcePartnerConfig  ConnectionPartnerConfig `json:"sourcePartnerConfig"  bun:"source_partner_config,type:JSONB,notnull,default:'{}'"`
+	TargetPartnerConfig  ConnectionPartnerConfig `json:"targetPartnerConfig"  bun:"target_partner_config,type:JSONB,notnull,default:'{}'"`
 	RequestedByID        pulid.ID                `json:"requestedById"        bun:"requested_by_id,type:VARCHAR(100),nullzero"`
 	RequestedAt          int64                   `json:"requestedAt"          bun:"requested_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	AcceptedByID         pulid.ID                `json:"acceptedById"         bun:"accepted_by_id,type:VARCHAR(100),nullzero"`
@@ -59,7 +59,7 @@ type EDIConnection struct {
 	SuspendedAt          *int64                  `json:"suspendedAt"          bun:"suspended_at,type:BIGINT,nullzero"`
 	RevokedByID          pulid.ID                `json:"revokedById"          bun:"revoked_by_id,type:VARCHAR(100),nullzero"`
 	RevokedAt            *int64                  `json:"revokedAt"            bun:"revoked_at,type:BIGINT,nullzero"`
-	Version              int64                   `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
+	Version              int64                   `json:"version"              bun:"version,type:BIGINT,notnull"`
 	CreatedAt            int64                   `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64                   `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

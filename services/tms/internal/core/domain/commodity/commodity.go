@@ -63,8 +63,8 @@ type Commodity struct {
 	MaxQuantityPerShipment *float64           `json:"maxQuantityPerShipment" bun:"max_quantity_per_shipment,type:NUMERIC(10,2),nullzero"`
 	FreightClass           FreightClass       `json:"freightClass"           bun:"freight_class,type:freight_class_enum,nullzero"`
 	LoadingInstructions    string             `json:"loadingInstructions"    bun:"loading_instructions,type:TEXT,nullzero"`
-	Stackable              bool               `json:"stackable"              bun:"stackable,type:BOOLEAN,default:false"`
-	Fragile                bool               `json:"fragile"                bun:"fragile,type:BOOLEAN,default:false"`
+	Stackable              bool               `json:"stackable"              bun:"stackable,type:BOOLEAN"`
+	Fragile                bool               `json:"fragile"                bun:"fragile,type:BOOLEAN"`
 	SearchVector           string             `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank                   string             `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"`
 	Version                int64              `json:"version"                bun:"version,type:BIGINT"`

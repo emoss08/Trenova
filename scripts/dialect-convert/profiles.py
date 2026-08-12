@@ -15,7 +15,10 @@ SQLITE = {
         "int4": "INTEGER", "smallint": "INTEGER", "int2": "INTEGER", "bigserial": "INTEGER",
         "serial": "INTEGER", "smallserial": "INTEGER", "boolean": "INTEGER", "bool": "INTEGER",
         "real": "REAL", "float4": "REAL", "float8": "REAL", "double precision": "REAL",
-        "numeric": "NUMERIC", "decimal": "NUMERIC", "money": "NUMERIC",
+        # REAL rather than NUMERIC: NUMERIC affinity demotes integral values to
+        # INTEGER, which then refuses to scan into a Go float64. Precision is the
+        # same either way, and SQLite has no exact decimal regardless.
+        "numeric": "REAL", "decimal": "REAL", "money": "REAL",
         "text": "TEXT", "citext": "TEXT", "varchar": "TEXT", "character varying": "TEXT",
         "char": "TEXT", "character": "TEXT", "uuid": "TEXT", "json": "TEXT", "jsonb": "TEXT",
         "xml": "TEXT", "inet": "TEXT", "cidr": "TEXT", "macaddr": "TEXT", "interval": "TEXT",
@@ -51,7 +54,7 @@ SQLITE = {
     "index_methods": {"", "btree"},
     "supports_add_constraint": False,
     "supports_alter_column": False,
-    "supports_drop_column": False,
+    "supports_drop_column": True,
     "supports_stored_generated_in_alter": False,
     "materialized_view_as_view": True,
 }

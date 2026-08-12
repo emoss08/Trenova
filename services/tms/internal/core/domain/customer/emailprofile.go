@@ -28,8 +28,8 @@ type CustomerEmailProfile struct {
 	CCRecipients          string `json:"ccRecipients"            bun:"cc_recipients,type:TEXT,nullzero"`
 	BCCRecipients         string `json:"bccRecipients"           bun:"bcc_recipients,type:TEXT,nullzero"`
 	AttachmentName        string `json:"attachmentName"          bun:"attachment_name,type:VARCHAR(255)"`
-	ReadReceipt           bool   `json:"readReceipt"           bun:"read_receipt,type:BOOLEAN,notnull,default:false"`
-	IncludeShipmentDetail bool   `json:"includeShipmentDetail" bun:"include_shipment_detail,type:BOOLEAN,notnull,default:false"`
+	ReadReceipt           bool   `json:"readReceipt"           bun:"read_receipt,type:BOOLEAN,notnull"`
+	IncludeShipmentDetail bool   `json:"includeShipmentDetail" bun:"include_shipment_detail,type:BOOLEAN,notnull"`
 	Version               int64  `json:"version"               bun:"version,type:BIGINT"`
 	CreatedAt             int64  `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt             int64  `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

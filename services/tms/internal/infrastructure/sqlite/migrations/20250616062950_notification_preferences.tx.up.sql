@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS "notification_preferences"(
     "organization_id" TEXT NOT NULL,
     "business_unit_id" TEXT NOT NULL,
     "resource" TEXT NOT NULL,
-    "update_types" TEXT NOT NULL DEFAULT '{}',
+    "update_types" TEXT NOT NULL DEFAULT '[]',
     "notify_on_all_updates" INTEGER NOT NULL DEFAULT 0,
     "notify_only_owned_records" INTEGER NOT NULL DEFAULT 1,
     "excluded_user_ids" TEXT,

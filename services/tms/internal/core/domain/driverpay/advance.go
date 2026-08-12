@@ -33,15 +33,15 @@ type PayAdvance struct {
 	Reference       string        `json:"reference"       bun:"reference,type:VARCHAR(100),nullzero"`
 	IssuedDate      int64         `json:"issuedDate"      bun:"issued_date,type:BIGINT,notnull"`
 	AmountMinor     int64         `json:"amountMinor"     bun:"amount_minor,type:BIGINT,notnull"`
-	RecoveredMinor  int64         `json:"recoveredMinor"  bun:"recovered_minor,type:BIGINT,notnull,default:0"`
-	WrittenOffMinor int64         `json:"writtenOffMinor" bun:"written_off_minor,type:BIGINT,notnull,default:0"`
+	RecoveredMinor  int64         `json:"recoveredMinor"  bun:"recovered_minor,type:BIGINT,notnull"`
+	WrittenOffMinor int64         `json:"writtenOffMinor" bun:"written_off_minor,type:BIGINT,notnull"`
 	WriteOffReason  string        `json:"writeOffReason"  bun:"write_off_reason,type:TEXT,nullzero"`
 	Notes           string        `json:"notes"           bun:"notes,type:TEXT,nullzero"`
 	CurrencyCode    string        `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
 	CreatedByID     pulid.ID      `json:"createdById"     bun:"created_by_id,type:VARCHAR(100),nullzero"`
 	WrittenOffByID  pulid.ID      `json:"writtenOffById"  bun:"written_off_by_id,type:VARCHAR(100),nullzero"`
 	WrittenOffAt    *int64        `json:"writtenOffAt"    bun:"written_off_at,type:BIGINT,nullzero"`
-	Version         int64         `json:"version"         bun:"version,type:BIGINT,notnull,default:0"`
+	Version         int64         `json:"version"         bun:"version,type:BIGINT,notnull"`
 	CreatedAt       int64         `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt       int64         `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

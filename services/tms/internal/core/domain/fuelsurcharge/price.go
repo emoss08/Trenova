@@ -31,7 +31,7 @@ type FuelIndexPrice struct {
 	PriceDate      string          `json:"priceDate"      bun:"price_date,type:DATE,notnull"`
 	Price          decimal.Decimal `json:"price"          bun:"price,type:NUMERIC(19,4),notnull"`
 	Currency       string          `json:"currency"       bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
-	IsManual       bool            `json:"isManual"       bun:"is_manual,type:BOOLEAN,notnull,default:false"`
+	IsManual       bool            `json:"isManual"       bun:"is_manual,type:BOOLEAN,notnull"`
 	EnteredByID    *pulid.ID       `json:"enteredById"    bun:"entered_by_id,type:VARCHAR(100),nullzero"`
 	SourceRaw      string          `json:"sourceRaw"      bun:"source_raw,type:VARCHAR(64),nullzero"`
 	FetchedAt      time.Time       `json:"fetchedAt"      bun:"fetched_at,type:TIMESTAMPTZ,notnull,default:current_timestamp"`

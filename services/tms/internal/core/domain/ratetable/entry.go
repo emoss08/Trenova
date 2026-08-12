@@ -26,7 +26,7 @@ type RateTableEntry struct {
 	RangeMin       decimal.NullDecimal `json:"rangeMin"       bun:"range_min,type:NUMERIC(19,4)"`
 	RangeMax       decimal.NullDecimal `json:"rangeMax"       bun:"range_max,type:NUMERIC(19,4)"`
 	Value          decimal.Decimal     `json:"value"          bun:"value,type:NUMERIC(19,4),notnull"`
-	SortOrder      int32               `json:"sortOrder"      bun:"sort_order,type:INTEGER,notnull,default:0"`
+	SortOrder      int32               `json:"sortOrder"      bun:"sort_order,type:INTEGER,notnull"`
 	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

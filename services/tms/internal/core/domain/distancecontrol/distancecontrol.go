@@ -50,7 +50,7 @@ type DistanceControl struct {
 	EtaOutOfRouteDistanceProfileID               pulid.ID `json:"etaOutOfRouteDistanceProfileId"              bun:"eta_out_of_route_distance_profile_id,type:VARCHAR(100),notnull"`
 	DistanceCalculatorShortestDistanceProfileID  pulid.ID `json:"distanceCalculatorShortestDistanceProfileId" bun:"distance_calculator_shortest_distance_profile_id,type:VARCHAR(100),notnull"`
 	DistanceCalculatorPracticalDistanceProfileID pulid.ID `json:"distanceCalculatorPracticalDistanceProfileId" bun:"distance_calculator_practical_distance_profile_id,type:VARCHAR(100),notnull"`
-	Version                                      int64    `json:"version"                                     bun:"version,type:BIGINT,notnull,default:0"`
+	Version                                      int64    `json:"version"                                     bun:"version,type:BIGINT,notnull"`
 	CreatedAt                                    int64    `json:"createdAt"                                   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                                    int64    `json:"updatedAt"                                   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector                                 string   `json:"-"                                           bun:"search_vector,type:TSVECTOR,scanonly"`

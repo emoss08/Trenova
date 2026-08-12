@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS "billing_controls"(
     "send_auto_bill_notifications" INTEGER NOT NULL DEFAULT 1,
     "auto_bill_batch_size" INTEGER NOT NULL DEFAULT 100 CHECK ("auto_bill_batch_size" >= 1),
     "billing_exception_handling" TEXT NOT NULL DEFAULT 'Queue',
-    "rate_discrepancy_threshold" NUMERIC NOT NULL DEFAULT 5.00 CHECK ("rate_discrepancy_threshold" >= 0),
+    "rate_discrepancy_threshold" REAL NOT NULL DEFAULT 5.00 CHECK ("rate_discrepancy_threshold" >= 0),
     "auto_resolve_minor_discrepancies" INTEGER NOT NULL DEFAULT 0,
     "allow_invoice_consolidation" INTEGER NOT NULL DEFAULT 0,
     "consolidation_period_days" INTEGER NOT NULL DEFAULT 7 CHECK ("consolidation_period_days" >= 1),

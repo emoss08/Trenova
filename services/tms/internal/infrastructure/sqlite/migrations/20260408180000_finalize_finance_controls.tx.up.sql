@@ -19,7 +19,7 @@ ALTER TABLE "accounting_controls" ADD COLUMN "journal_posting_mode" TEXT NOT NUL
 
 --bun:split
 
-ALTER TABLE "accounting_controls" ADD COLUMN "auto_post_source_events" TEXT NOT NULL DEFAULT '{}';
+ALTER TABLE "accounting_controls" ADD COLUMN "auto_post_source_events" TEXT NOT NULL DEFAULT '[]';
 
 --bun:split
 
@@ -59,7 +59,7 @@ ALTER TABLE "accounting_controls" ADD COLUMN "reconciliation_mode" TEXT NOT NULL
 
 --bun:split
 
-ALTER TABLE "accounting_controls" ADD COLUMN "reconciliation_tolerance_amount" NUMERIC NOT NULL DEFAULT 0.0000;
+ALTER TABLE "accounting_controls" ADD COLUMN "reconciliation_tolerance_amount" REAL NOT NULL DEFAULT 0.0000;
 
 --bun:split
 
@@ -96,6 +96,70 @@ ALTER TABLE "accounting_controls" ADD COLUMN "realized_fx_gain_account_id" TEXT;
 --bun:split
 
 ALTER TABLE "accounting_controls" ADD COLUMN "realized_fx_loss_account_id" TEXT;
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "auto_create_journal_entries";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "journal_entry_criteria";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "restrict_manual_journal_entries";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "require_journal_entry_approval";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "enable_journal_entry_reversal";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "allow_posting_to_closed_periods";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "require_period_end_approval";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "auto_close_periods";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "enable_reconciliation";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "reconciliation_threshold_action";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "halt_on_pending_reconciliation";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "enable_reconciliation_notifications";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "enable_automatic_tax_calculation";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "require_document_attachment";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "retain_deleted_entries";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "enable_multi_currency";
 
 --bun:split
 
@@ -167,11 +231,75 @@ ALTER TABLE "billing_controls" ADD COLUMN "notify_on_billing_exceptions" INTEGER
 
 --bun:split
 
-ALTER TABLE "billing_controls" ADD COLUMN "rate_variance_tolerance_percent" NUMERIC NOT NULL DEFAULT 0.000000;
+ALTER TABLE "billing_controls" ADD COLUMN "rate_variance_tolerance_percent" REAL NOT NULL DEFAULT 0.000000;
 
 --bun:split
 
 ALTER TABLE "billing_controls" ADD COLUMN "rate_variance_auto_resolution_mode" TEXT NOT NULL DEFAULT 'Disabled';
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "payment_term";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "show_invoice_due_date";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "invoice_terms";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "invoice_footer";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "show_amount_due";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "auto_transfer";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "transfer_schedule";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "auto_mark_ready_to_bill";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "enforce_customer_billing_req";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "validate_customer_rates";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "auto_bill";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "send_auto_bill_notifications";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "billing_exception_handling";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "auto_resolve_minor_discrepancies";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "allow_invoice_consolidation";
+
+--bun:split
+
+ALTER TABLE "billing_controls" DROP COLUMN "group_consolidated_invoices";
 
 --bun:split
 
@@ -187,10 +315,10 @@ CREATE TABLE IF NOT EXISTS invoice_adjustment_controls (
     "adjustment_reason_requirement" TEXT NOT NULL DEFAULT 'Required',
     "adjustment_attachment_requirement" TEXT NOT NULL DEFAULT 'RequiredForAll',
     "standard_adjustment_approval_policy" TEXT NOT NULL DEFAULT 'AmountThreshold',
-    "standard_adjustment_approval_threshold" NUMERIC,
+    "standard_adjustment_approval_threshold" REAL,
     "write_off_approval_policy" TEXT NOT NULL DEFAULT 'RequireApprovalAboveThreshold',
-    "write_off_approval_threshold" NUMERIC,
-    "rerate_variance_tolerance_percent" NUMERIC NOT NULL DEFAULT 0.000000,
+    "write_off_approval_threshold" REAL,
+    "rerate_variance_tolerance_percent" REAL NOT NULL DEFAULT 0.000000,
     "replacement_invoice_review_policy" TEXT NOT NULL DEFAULT 'RequireReviewWhenEconomicTermsChange',
     "customer_credit_balance_policy" TEXT NOT NULL DEFAULT 'AllowUnappliedCredit',
     "over_credit_policy" TEXT NOT NULL DEFAULT 'Block',

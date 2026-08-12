@@ -35,10 +35,10 @@ type AgentProposal struct {
 
 	RunID        pulid.ID        `json:"runId"        bun:"run_id,type:VARCHAR(100),notnull"`
 	ToolName     string          `json:"toolName"     bun:"tool_name,type:VARCHAR(100),notnull"`
-	ToolParams   map[string]any  `json:"toolParams"   bun:"tool_params,type:JSONB,notnull,default:'{}'::jsonb"`
+	ToolParams   map[string]any  `json:"toolParams"   bun:"tool_params,type:JSONB,notnull,default:'{}'"`
 	Confidence   decimal.Decimal `json:"confidence"   bun:"confidence,type:NUMERIC(5,4),notnull,default:0"`
 	Rationale    string          `json:"rationale"    bun:"rationale,type:TEXT,notnull"`
-	Evidence     []EvidenceRef   `json:"evidence"     bun:"evidence,type:JSONB,notnull,default:'[]'::jsonb"`
+	Evidence     []EvidenceRef   `json:"evidence"     bun:"evidence,type:JSONB,notnull,default:'[]'"`
 	AutonomyTier AutonomyTier    `json:"autonomyTier" bun:"autonomy_tier,type:agent_autonomy_tier_enum,notnull,default:'Propose'"`
 	Status       ProposalStatus  `json:"status"       bun:"status,type:agent_proposal_status_enum,notnull,default:'Pending'"`
 
