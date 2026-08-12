@@ -6255,23 +6255,36 @@ func (e ShipmentEventSeverity) MarshalJSON() ([]byte, error) {
 type ShipmentEventType string
 
 const (
-	ShipmentEventTypeShipmentCreated      ShipmentEventType = "ShipmentCreated"
-	ShipmentEventTypeShipmentUpdated      ShipmentEventType = "ShipmentUpdated"
-	ShipmentEventTypeStatusChanged        ShipmentEventType = "StatusChanged"
-	ShipmentEventTypeShipmentCanceled     ShipmentEventType = "ShipmentCanceled"
-	ShipmentEventTypeShipmentUncanceled   ShipmentEventType = "ShipmentUncanceled"
-	ShipmentEventTypeOwnershipTransferred ShipmentEventType = "OwnershipTransferred"
-	ShipmentEventTypeMoveStatusChanged    ShipmentEventType = "MoveStatusChanged"
-	ShipmentEventTypeMoveDeparted         ShipmentEventType = "MoveDeparted"
-	ShipmentEventTypeMoveArrived          ShipmentEventType = "MoveArrived"
-	ShipmentEventTypeStopCompleted        ShipmentEventType = "StopCompleted"
-	ShipmentEventTypeDriverAssigned       ShipmentEventType = "DriverAssigned"
-	ShipmentEventTypeDriverReassigned     ShipmentEventType = "DriverReassigned"
-	ShipmentEventTypeDriverUnassigned     ShipmentEventType = "DriverUnassigned"
-	ShipmentEventTypeHoldPlaced           ShipmentEventType = "HoldPlaced"
-	ShipmentEventTypeHoldUpdated          ShipmentEventType = "HoldUpdated"
-	ShipmentEventTypeHoldReleased         ShipmentEventType = "HoldReleased"
-	ShipmentEventTypeCommentPosted        ShipmentEventType = "CommentPosted"
+	ShipmentEventTypeShipmentCreated       ShipmentEventType = "ShipmentCreated"
+	ShipmentEventTypeShipmentUpdated       ShipmentEventType = "ShipmentUpdated"
+	ShipmentEventTypeStatusChanged         ShipmentEventType = "StatusChanged"
+	ShipmentEventTypeShipmentCanceled      ShipmentEventType = "ShipmentCanceled"
+	ShipmentEventTypeShipmentUncanceled    ShipmentEventType = "ShipmentUncanceled"
+	ShipmentEventTypeOwnershipTransferred  ShipmentEventType = "OwnershipTransferred"
+	ShipmentEventTypeMoveStatusChanged     ShipmentEventType = "MoveStatusChanged"
+	ShipmentEventTypeMoveDeparted          ShipmentEventType = "MoveDeparted"
+	ShipmentEventTypeMoveArrived           ShipmentEventType = "MoveArrived"
+	ShipmentEventTypeStopCompleted         ShipmentEventType = "StopCompleted"
+	ShipmentEventTypeDriverAssigned        ShipmentEventType = "DriverAssigned"
+	ShipmentEventTypeDriverReassigned      ShipmentEventType = "DriverReassigned"
+	ShipmentEventTypeDriverUnassigned      ShipmentEventType = "DriverUnassigned"
+	ShipmentEventTypeCarrierAssigned       ShipmentEventType = "CarrierAssigned"
+	ShipmentEventTypeCarrierUnassigned     ShipmentEventType = "CarrierUnassigned"
+	ShipmentEventTypeTenderOffered         ShipmentEventType = "TenderOffered"
+	ShipmentEventTypeTenderAccepted        ShipmentEventType = "TenderAccepted"
+	ShipmentEventTypeTenderDeclined        ShipmentEventType = "TenderDeclined"
+	ShipmentEventTypeTenderExpired         ShipmentEventType = "TenderExpired"
+	ShipmentEventTypeTenderWithdrawn       ShipmentEventType = "TenderWithdrawn"
+	ShipmentEventTypeTenderNeedsReview     ShipmentEventType = "TenderNeedsReview"
+	ShipmentEventTypeRoutingGuideExhausted ShipmentEventType = "RoutingGuideExhausted"
+	ShipmentEventTypeTenderLateResponse    ShipmentEventType = "TenderLateResponse"
+	ShipmentEventTypeTenderDeliveryFailed  ShipmentEventType = "TenderDeliveryFailed"
+	ShipmentEventTypeTenderEntrySkipped    ShipmentEventType = "TenderEntrySkipped"
+	ShipmentEventTypeTenderEntryWarned     ShipmentEventType = "TenderEntryWarned"
+	ShipmentEventTypeHoldPlaced            ShipmentEventType = "HoldPlaced"
+	ShipmentEventTypeHoldUpdated           ShipmentEventType = "HoldUpdated"
+	ShipmentEventTypeHoldReleased          ShipmentEventType = "HoldReleased"
+	ShipmentEventTypeCommentPosted         ShipmentEventType = "CommentPosted"
 )
 
 var AllShipmentEventType = []ShipmentEventType{
@@ -6288,6 +6301,19 @@ var AllShipmentEventType = []ShipmentEventType{
 	ShipmentEventTypeDriverAssigned,
 	ShipmentEventTypeDriverReassigned,
 	ShipmentEventTypeDriverUnassigned,
+	ShipmentEventTypeCarrierAssigned,
+	ShipmentEventTypeCarrierUnassigned,
+	ShipmentEventTypeTenderOffered,
+	ShipmentEventTypeTenderAccepted,
+	ShipmentEventTypeTenderDeclined,
+	ShipmentEventTypeTenderExpired,
+	ShipmentEventTypeTenderWithdrawn,
+	ShipmentEventTypeTenderNeedsReview,
+	ShipmentEventTypeRoutingGuideExhausted,
+	ShipmentEventTypeTenderLateResponse,
+	ShipmentEventTypeTenderDeliveryFailed,
+	ShipmentEventTypeTenderEntrySkipped,
+	ShipmentEventTypeTenderEntryWarned,
 	ShipmentEventTypeHoldPlaced,
 	ShipmentEventTypeHoldUpdated,
 	ShipmentEventTypeHoldReleased,
@@ -6296,7 +6322,7 @@ var AllShipmentEventType = []ShipmentEventType{
 
 func (e ShipmentEventType) IsValid() bool {
 	switch e {
-	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
+	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeCarrierAssigned, ShipmentEventTypeCarrierUnassigned, ShipmentEventTypeTenderOffered, ShipmentEventTypeTenderAccepted, ShipmentEventTypeTenderDeclined, ShipmentEventTypeTenderExpired, ShipmentEventTypeTenderWithdrawn, ShipmentEventTypeTenderNeedsReview, ShipmentEventTypeRoutingGuideExhausted, ShipmentEventTypeTenderLateResponse, ShipmentEventTypeTenderDeliveryFailed, ShipmentEventTypeTenderEntrySkipped, ShipmentEventTypeTenderEntryWarned, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
 		return true
 	}
 	return false

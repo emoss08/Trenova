@@ -51021,6 +51021,19 @@ enum ShipmentEventType {
   DriverAssigned
   DriverReassigned
   DriverUnassigned
+  CarrierAssigned
+  CarrierUnassigned
+  TenderOffered
+  TenderAccepted
+  TenderDeclined
+  TenderExpired
+  TenderWithdrawn
+  TenderNeedsReview
+  RoutingGuideExhausted
+  TenderLateResponse
+  TenderDeliveryFailed
+  TenderEntrySkipped
+  TenderEntryWarned
   HoldPlaced
   HoldUpdated
   HoldReleased

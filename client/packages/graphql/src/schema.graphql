@@ -8886,6 +8886,8 @@ type ShipmentEventShipmentReference {
 }
 
 enum ShipmentEventType {
+  CarrierAssigned
+  CarrierUnassigned
   CommentPosted
   DriverAssigned
   DriverReassigned
@@ -8897,12 +8899,23 @@ enum ShipmentEventType {
   MoveDeparted
   MoveStatusChanged
   OwnershipTransferred
+  RoutingGuideExhausted
   ShipmentCanceled
   ShipmentCreated
   ShipmentUncanceled
   ShipmentUpdated
   StatusChanged
   StopCompleted
+  TenderAccepted
+  TenderDeclined
+  TenderDeliveryFailed
+  TenderEntrySkipped
+  TenderEntryWarned
+  TenderExpired
+  TenderLateResponse
+  TenderNeedsReview
+  TenderOffered
+  TenderWithdrawn
 }
 
 input ShipmentEventsInput {

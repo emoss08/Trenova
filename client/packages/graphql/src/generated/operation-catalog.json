@@ -17041,6 +17041,8 @@
     "ShipmentEventType": {
       "kind": "enum",
       "values": [
+        "CarrierAssigned",
+        "CarrierUnassigned",
         "CommentPosted",
         "DriverAssigned",
         "DriverReassigned",
@@ -17052,14 +17054,25 @@
         "MoveDeparted",
         "MoveStatusChanged",
         "OwnershipTransferred",
+        "RoutingGuideExhausted",
         "ShipmentCanceled",
         "ShipmentCreated",
         "ShipmentUncanceled",
         "ShipmentUpdated",
         "StatusChanged",
-        "StopCompleted"
+        "StopCompleted",
+        "TenderAccepted",
+        "TenderDeclined",
+        "TenderDeliveryFailed",
+        "TenderEntrySkipped",
+        "TenderEntryWarned",
+        "TenderExpired",
+        "TenderLateResponse",
+        "TenderNeedsReview",
+        "TenderOffered",
+        "TenderWithdrawn"
       ],
-      "sdl": "enum ShipmentEventType {\n  CommentPosted\n  DriverAssigned\n  DriverReassigned\n  DriverUnassigned\n  HoldPlaced\n  HoldReleased\n  HoldUpdated\n  MoveArrived\n  MoveDeparted\n  MoveStatusChanged\n  OwnershipTransferred\n  ShipmentCanceled\n  ShipmentCreated\n  ShipmentUncanceled\n  ShipmentUpdated\n  StatusChanged\n  StopCompleted\n}"
+      "sdl": "enum ShipmentEventType {\n  CarrierAssigned\n  CarrierUnassigned\n  CommentPosted\n  DriverAssigned\n  DriverReassigned\n  DriverUnassigned\n  HoldPlaced\n  HoldReleased\n  HoldUpdated\n  MoveArrived\n  MoveDeparted\n  MoveStatusChanged\n  OwnershipTransferred\n  RoutingGuideExhausted\n  ShipmentCanceled\n  ShipmentCreated\n  ShipmentUncanceled\n  ShipmentUpdated\n  StatusChanged\n  StopCompleted\n  TenderAccepted\n  TenderDeclined\n  TenderDeliveryFailed\n  TenderEntrySkipped\n  TenderEntryWarned\n  TenderExpired\n  TenderLateResponse\n  TenderNeedsReview\n  TenderOffered\n  TenderWithdrawn\n}"
     },
     "ShipmentAdditionalChargeInput": {
       "kind": "input",

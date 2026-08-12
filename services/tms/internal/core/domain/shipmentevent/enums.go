@@ -61,42 +61,46 @@ const (
 	ActorEDI    = ActorType("edi")
 )
 
+var AllTypes = []Type{
+	TypeShipmentCreated,
+	TypeShipmentUpdated,
+	TypeStatusChanged,
+	TypeShipmentCanceled,
+	TypeShipmentUncanceled,
+	TypeOwnershipTransferred,
+	TypeMoveStatusChanged,
+	TypeMoveDeparted,
+	TypeMoveArrived,
+	TypeStopCompleted,
+	TypeDriverAssigned,
+	TypeDriverReassigned,
+	TypeDriverUnassigned,
+	TypeCarrierAssigned,
+	TypeCarrierUnassigned,
+	TypeTenderOffered,
+	TypeTenderAccepted,
+	TypeTenderDeclined,
+	TypeTenderExpired,
+	TypeTenderWithdrawn,
+	TypeTenderNeedsReview,
+	TypeRoutingGuideExhausted,
+	TypeTenderLateResponse,
+	TypeTenderDeliveryFailed,
+	TypeTenderEntrySkipped,
+	TypeTenderEntryWarned,
+	TypeHoldPlaced,
+	TypeHoldUpdated,
+	TypeHoldReleased,
+	TypeCommentPosted,
+}
+
 func (v Type) IsValid() bool {
-	switch v {
-	case TypeShipmentCreated,
-		TypeShipmentUpdated,
-		TypeStatusChanged,
-		TypeShipmentCanceled,
-		TypeShipmentUncanceled,
-		TypeOwnershipTransferred,
-		TypeMoveStatusChanged,
-		TypeMoveDeparted,
-		TypeMoveArrived,
-		TypeStopCompleted,
-		TypeDriverAssigned,
-		TypeDriverReassigned,
-		TypeDriverUnassigned,
-		TypeCarrierAssigned,
-		TypeCarrierUnassigned,
-		TypeTenderOffered,
-		TypeTenderAccepted,
-		TypeTenderDeclined,
-		TypeTenderExpired,
-		TypeTenderWithdrawn,
-		TypeTenderNeedsReview,
-		TypeRoutingGuideExhausted,
-		TypeTenderLateResponse,
-		TypeTenderDeliveryFailed,
-		TypeTenderEntrySkipped,
-		TypeTenderEntryWarned,
-		TypeHoldPlaced,
-		TypeHoldUpdated,
-		TypeHoldReleased,
-		TypeCommentPosted:
-		return true
-	default:
-		return false
+	for _, t := range AllTypes {
+		if v == t {
+			return true
+		}
 	}
+	return false
 }
 
 func (v Severity) IsValid() bool {

@@ -2295,6 +2295,8 @@ export type ShipmentEventSeverity =
   | 'success';
 
 export type ShipmentEventType =
+  | 'CarrierAssigned'
+  | 'CarrierUnassigned'
   | 'CommentPosted'
   | 'DriverAssigned'
   | 'DriverReassigned'
@@ -2306,12 +2308,23 @@ export type ShipmentEventType =
   | 'MoveDeparted'
   | 'MoveStatusChanged'
   | 'OwnershipTransferred'
+  | 'RoutingGuideExhausted'
   | 'ShipmentCanceled'
   | 'ShipmentCreated'
   | 'ShipmentUncanceled'
   | 'ShipmentUpdated'
   | 'StatusChanged'
-  | 'StopCompleted';
+  | 'StopCompleted'
+  | 'TenderAccepted'
+  | 'TenderDeclined'
+  | 'TenderDeliveryFailed'
+  | 'TenderEntrySkipped'
+  | 'TenderEntryWarned'
+  | 'TenderExpired'
+  | 'TenderLateResponse'
+  | 'TenderNeedsReview'
+  | 'TenderOffered'
+  | 'TenderWithdrawn';
 
 export type ShipmentEventsInput = {
   before?: number | null | undefined;
