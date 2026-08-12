@@ -28,6 +28,7 @@ export const ErrorCode = z.enum([
   "COMPLIANCE_VIOLATION",
   "RESOURCE_IN_USE",
   "BREAKING_CHANGE",
+  "NOT_IMPLEMENTED",
 ]);
 
 export type ErrorCode = z.infer<typeof ErrorCode>;
