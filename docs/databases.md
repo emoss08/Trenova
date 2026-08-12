@@ -58,6 +58,7 @@ tables.**
 | `numeric(p,s)` | `REAL` (NUMERIC affinity demotes integers and breaks float64 scans) |
 | `bytea` | `BLOB` |
 | `EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint` | `(unixepoch())` |
+| `ILIKE` | `LIKE`, rewritten in the driver (see below) |
 | `now()` | `CURRENT_TIMESTAMP` |
 | `TRIM(BOTH FROM x)` | `TRIM(x)` |
 | `char_length` | `length` |
@@ -148,13 +149,27 @@ only emits those for zero values, and `BeforeAppendModel` sets the fields first.
 A file that is deliberately Postgres-only opts out with a `dialect:postgres-only`
 marker near its package clause, and must gate itself on a capability instead.
 
+### ILIKE
+
+`ILIKE` is rewritten to `LIKE` in the SQLite driver rather than at the call site.
+It appears in roughly fifty places, and almost none of them can be fixed where
+they are written: `buncolgen` and `querybuilder` precompute their SQL fragments
+into package-level values at init, before configuration is read, and most of
+`buncolgen` is generated. The driver is the only single point that covers all of
+them.
+
+The substitution is sound because SQLite's `LIKE` is already case-insensitive for
+ASCII, which is what `ILIKE` is used for here. It is **not** equivalent for
+non-ASCII text — one more reason SQLite is development-only. The rewrite skips
+string literals and quoted identifiers, so a stored value containing the word is
+left alone.
+
 ### Known gaps not yet addressed
 
 These still contain Postgres-only SQL and will fail at runtime on SQLite:
 
 | Construct | Extent | Note |
 |---|---|---|
-| `ILIKE` | 17 files | SQLite `LIKE` is already case-insensitive for ASCII, so this is a mechanical swap |
 | `::int`, `::float`, `::bigint`, `::numeric`, `::text`, `::jsonb` casts | ~109 occurrences | mostly in analytics and reporting aggregates |
 | `date_trunc` bucketing | reporting compiler, A/R analytics | marked `dialect:postgres-only`; needs a `strftime` equivalent |
 | `pg_stat_activity`, `pg_blocking_pids` | database session diagnostics | gated on `CapSessionDiagnostic`, returns 501 on SQLite |

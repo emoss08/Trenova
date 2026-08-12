@@ -5,3 +5,6 @@ build
 config/config.yaml/cli
 config/*
 *.db
+*.db-shm
+*.db-wal
+*.db-journal
