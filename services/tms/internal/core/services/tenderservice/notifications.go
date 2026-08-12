@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
+	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
@@ -13,7 +15,7 @@ const (
 	notificationPriorityHigh = notification.PriorityHigh
 	notificationPriorityMed  = notification.PriorityMedium
 
-	dispatchConsoleLink = "/dispatch-console"
+	dispatchConsoleLink = "/dispatch/console"
 )
 
 type dispatchNotification struct {
@@ -62,4 +64,18 @@ func (s *Service) notifyDispatch(
 		s.l.Warn("failed to create tender notification",
 			zap.Error(err), zap.String("eventType", n.EventType))
 	}
+}
+
+func dispatchConsoleMoveLink(moveID pulid.ID) string {
+	if moveID.IsNil() {
+		return dispatchConsoleLink
+	}
+	return dispatchConsoleLink + "?move=" + moveID.String()
+}
+
+func dispatchConsoleOfferLink(offer *tender.TenderOffer) string {
+	if offer == nil || offer.Tender == nil {
+		return dispatchConsoleLink
+	}
+	return dispatchConsoleMoveLink(offer.Tender.ShipmentMoveID)
 }
