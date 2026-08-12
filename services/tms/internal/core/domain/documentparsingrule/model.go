@@ -96,9 +96,9 @@ type RuleVersion struct {
 	Status            VersionStatus  `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Draft'"`
 	Label             string         `json:"label"             bun:"label,type:VARCHAR(255),nullzero"`
 	ParserMode        ParserMode     `json:"parserMode"        bun:"parser_mode,type:VARCHAR(50),notnull,default:'merge_with_base'"`
-	MatchConfig       MatchConfig    `json:"matchConfig"       bun:"match_config,type:JSONB,notnull,default:'{}'::jsonb"`
-	RuleDocument      RuleDocument   `json:"ruleDocument"      bun:"rule_document,type:JSONB,notnull,default:'{}'::jsonb"`
-	ValidationSummary map[string]any `json:"validationSummary" bun:"validation_summary,type:JSONB,notnull,default:'{}'::jsonb"`
+	MatchConfig       MatchConfig    `json:"matchConfig"       bun:"match_config,type:JSONB,notnull,default:'{}'"`
+	RuleDocument      RuleDocument   `json:"ruleDocument"      bun:"rule_document,type:JSONB,notnull,default:'{}'"`
+	ValidationSummary map[string]any `json:"validationSummary" bun:"validation_summary,type:JSONB,notnull,default:'{}'"`
 	PublishedAt       *int64         `json:"publishedAt"       bun:"published_at,type:BIGINT,nullzero"`
 	PublishedByID     *pulid.ID      `json:"publishedById"     bun:"published_by_id,type:VARCHAR(100),nullzero"`
 	Version           int64          `json:"version"           bun:"version,type:BIGINT,notnull,default:0"`
@@ -189,8 +189,8 @@ type Fixture struct {
 	FileName            string            `json:"fileName"            bun:"file_name,type:VARCHAR(255),nullzero"`
 	ProviderFingerprint string            `json:"providerFingerprint" bun:"provider_fingerprint,type:VARCHAR(100),nullzero"`
 	TextSnapshot        string            `json:"textSnapshot"        bun:"text_snapshot,type:TEXT,notnull"`
-	PageSnapshots       []PageSnapshot    `json:"pageSnapshots"       bun:"page_snapshots,type:JSONB,notnull,default:'[]'::jsonb"`
-	Assertions          FixtureAssertions `json:"assertions"          bun:"assertions,type:JSONB,notnull,default:'{}'::jsonb"`
+	PageSnapshots       []PageSnapshot    `json:"pageSnapshots"       bun:"page_snapshots,type:JSONB,notnull,default:'[]'"`
+	Assertions          FixtureAssertions `json:"assertions"          bun:"assertions,type:JSONB,notnull,default:'{}'"`
 	Version             int64             `json:"version"             bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt           int64             `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt           int64             `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

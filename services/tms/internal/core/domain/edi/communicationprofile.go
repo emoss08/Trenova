@@ -34,8 +34,8 @@ type EDICommunicationProfile struct {
 	Status            domaintypes.Status                `json:"status"            bun:"status,type:status_enum,notnull,default:'Active'"`
 	Name              string                            `json:"name"              bun:"name,type:VARCHAR(200),notnull"`
 	Description       string                            `json:"description"       bun:"description,type:TEXT,nullzero"`
-	Config            map[string]any                    `json:"config"            bun:"config,type:JSONB,notnull,default:'{}'::jsonb"`
-	EncryptedSecrets  map[string]string                 `json:"-"                 bun:"encrypted_secrets,type:JSONB,notnull,default:'{}'::jsonb"`
+	Config            map[string]any                    `json:"config"            bun:"config,type:JSONB,notnull,default:'{}'"`
+	EncryptedSecrets  map[string]string                 `json:"-"                 bun:"encrypted_secrets,type:JSONB,notnull,default:'{}'"`
 	SecretState       []CommunicationProfileSecretState `json:"secretState"       bun:"-"`
 	LastPollAttemptAt *int64                            `json:"lastPollAttemptAt" bun:"last_poll_attempt_at,type:BIGINT,nullzero"`
 	LastPollSuccessAt *int64                            `json:"lastPollSuccessAt" bun:"last_poll_success_at,type:BIGINT,nullzero"`

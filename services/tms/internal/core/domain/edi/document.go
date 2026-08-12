@@ -221,7 +221,7 @@ type EDITemplateSegment struct {
 	Condition         string            `json:"condition"         bun:"condition,type:TEXT,nullzero"`
 	Required          bool              `json:"required"          bun:"required,type:BOOLEAN,notnull,default:false"`
 	MaxUse            int64             `json:"maxUse"            bun:"max_use,type:BIGINT,notnull,default:1"`
-	Elements          []TemplateElement `json:"elements"          bun:"elements,type:JSONB,notnull,default:'[]'::jsonb"`
+	Elements          []TemplateElement `json:"elements"          bun:"elements,type:JSONB,notnull,default:'[]'"`
 	UsageNotes        string            `json:"usageNotes"        bun:"usage_notes,type:TEXT,nullzero"`
 	CreatedAt         int64             `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

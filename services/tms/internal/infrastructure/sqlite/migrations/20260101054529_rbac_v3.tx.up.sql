@@ -27,6 +27,14 @@ DROP TABLE IF EXISTS policies;
 
 --bun:split
 
+ALTER TABLE "user_organization_memberships" DROP COLUMN "role_ids";
+
+--bun:split
+
+ALTER TABLE "user_organization_memberships" DROP COLUMN "direct_policies";
+
+--bun:split
+
 CREATE TABLE IF NOT EXISTS roles(
     "id" TEXT NOT NULL,
     "business_unit_id" TEXT NOT NULL,

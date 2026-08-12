@@ -61,8 +61,8 @@ type CarrierInvoice struct {
 	TotalAmount          decimal.NullDecimal                `json:"totalAmount"          bun:"total_amount,type:NUMERIC(19,4),nullzero"`
 	ExpectedAmount       decimal.NullDecimal                `json:"expectedAmount"       bun:"expected_amount,type:NUMERIC(19,4),nullzero"`
 	VarianceAmount       decimal.NullDecimal                `json:"varianceAmount"       bun:"variance_amount,type:NUMERIC(19,4),nullzero"`
-	LineCharges          []FreightInvoiceCharge             `json:"lineCharges"          bun:"line_charges,type:JSONB,notnull,default:'[]'::jsonb"`
-	ReferenceNumbers     map[string]string                  `json:"referenceNumbers"     bun:"reference_numbers,type:JSONB,notnull,default:'{}'::jsonb"`
+	LineCharges          []FreightInvoiceCharge             `json:"lineCharges"          bun:"line_charges,type:JSONB,notnull,default:'[]'"`
+	ReferenceNumbers     map[string]string                  `json:"referenceNumbers"     bun:"reference_numbers,type:JSONB,notnull,default:'{}'"`
 	ReconciliationStatus CarrierInvoiceReconciliationStatus `json:"reconciliationStatus" bun:"reconciliation_status,type:edi_carrier_invoice_reconciliation_status_enum,notnull,default:'Unmatched'"`
 	ReconciliationNotes  string                             `json:"reconciliationNotes"  bun:"reconciliation_notes,type:TEXT,nullzero"`
 	Version              int64                              `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`

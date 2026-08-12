@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS "accounting_controls"(
     "require_period_end_approval" INTEGER NOT NULL DEFAULT 1,
     "auto_close_periods" INTEGER NOT NULL DEFAULT 0,
     "enable_reconciliation" INTEGER NOT NULL DEFAULT 0,
-    "reconciliation_threshold" NUMERIC NOT NULL DEFAULT 0.0050,
+    "reconciliation_threshold" REAL NOT NULL DEFAULT 0.0050,
     "reconciliation_threshold_action" TEXT NOT NULL DEFAULT 'Warn',
     "halt_on_pending_reconciliation" INTEGER NOT NULL DEFAULT 0,
     "enable_reconciliation_notifications" INTEGER NOT NULL DEFAULT 1,

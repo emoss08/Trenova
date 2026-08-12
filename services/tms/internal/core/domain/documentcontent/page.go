@@ -25,7 +25,7 @@ type Page struct {
 	PreprocessingApplied bool           `json:"preprocessingApplied" bun:"preprocessing_applied,type:BOOLEAN,notnull,default:false"`
 	Width                int            `json:"width"                bun:"width,type:INTEGER,notnull,default:0"`
 	Height               int            `json:"height"               bun:"height,type:INTEGER,notnull,default:0"`
-	Metadata             map[string]any `json:"metadata"             bun:"metadata,type:JSONB,notnull,default:'{}'::jsonb"`
+	Metadata             map[string]any `json:"metadata"             bun:"metadata,type:JSONB,notnull,default:'{}'"`
 	Version              int64          `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt            int64          `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64          `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

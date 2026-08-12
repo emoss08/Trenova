@@ -35,7 +35,7 @@ type Event struct {
 	ActorLabel string    `json:"actorLabel"        bun:"actor_label,type:VARCHAR(100)"`
 	Summary    string    `json:"summary"           bun:"summary,type:TEXT,notnull"`
 
-	Metadata      map[string]any `json:"metadata,omitempty"      bun:"metadata,type:JSONB,default:'{}'::jsonb"`
+	Metadata      map[string]any `json:"metadata,omitempty"      bun:"metadata,type:JSONB,default:'{}'"`
 	OccurredAt    int64          `json:"occurredAt"              bun:"occurred_at,type:BIGINT,notnull"`
 	CorrelationID string         `json:"correlationId,omitempty" bun:"correlation_id,type:VARCHAR(100)"`
 

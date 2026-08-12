@@ -41,7 +41,7 @@ type Content struct {
 	DetectedLanguage         string         `json:"detectedLanguage"         bun:"detected_language,type:VARCHAR(20),nullzero"`
 	DetectedDocumentKind     string         `json:"detectedDocumentKind"     bun:"detected_document_kind,type:VARCHAR(100),nullzero"`
 	ClassificationConfidence float64        `json:"classificationConfidence" bun:"classification_confidence,type:DOUBLE PRECISION,notnull,default:0"`
-	StructuredData           map[string]any `json:"structuredData"           bun:"structured_data,type:JSONB,notnull,default:'{}'::jsonb"`
+	StructuredData           map[string]any `json:"structuredData"           bun:"structured_data,type:JSONB,notnull,default:'{}'"`
 	FailureCode              string         `json:"failureCode"              bun:"failure_code,type:VARCHAR(100),nullzero"`
 	FailureMessage           string         `json:"failureMessage"           bun:"failure_message,type:TEXT,nullzero"`
 	SearchVector             string         `json:"-"                        bun:"search_vector,type:TSVECTOR,scanonly"`

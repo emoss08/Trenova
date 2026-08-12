@@ -26,7 +26,7 @@ type InvoiceAdjustmentBatch struct {
 	PendingCount     int            `json:"pendingCount"     bun:"pending_count,scanonly"`
 	LastFailure      string         `json:"lastFailure"      bun:"last_failure,scanonly"`
 	LastFailureCount int            `json:"lastFailureCount" bun:"last_failure_count,scanonly"`
-	Metadata         map[string]any `json:"metadata"         bun:"metadata,type:JSONB,notnull,default:'{}'::jsonb"`
+	Metadata         map[string]any `json:"metadata"         bun:"metadata,type:JSONB,notnull,default:'{}'"`
 	Version          int64          `json:"version"          bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt        int64          `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt        int64          `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -46,8 +46,8 @@ type InvoiceAdjustmentBatchItem struct {
 	IdempotencyKey string          `json:"idempotencyKey" bun:"idempotency_key,type:VARCHAR(200),notnull"`
 	Status         BatchItemStatus `json:"status"         bun:"status,type:VARCHAR(50),notnull,default:'Pending'"`
 	ErrorMessage   string          `json:"errorMessage"   bun:"error_message,type:TEXT,nullzero"`
-	RequestPayload map[string]any  `json:"requestPayload" bun:"request_payload,type:JSONB,notnull,default:'{}'::jsonb"`
-	ResultPayload  map[string]any  `json:"resultPayload"  bun:"result_payload,type:JSONB,notnull,default:'{}'::jsonb"`
+	RequestPayload map[string]any  `json:"requestPayload" bun:"request_payload,type:JSONB,notnull,default:'{}'"`
+	ResultPayload  map[string]any  `json:"resultPayload"  bun:"result_payload,type:JSONB,notnull,default:'{}'"`
 	CreatedAt      int64           `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

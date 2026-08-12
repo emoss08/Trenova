@@ -50,7 +50,7 @@ type BillingQueueItem struct {
 	RebillStrategy            string               `json:"rebillStrategy"            bun:"rebill_strategy,type:VARCHAR(50),nullzero"`
 	RequiresReplacementReview bool                 `json:"requiresReplacementReview" bun:"requires_replacement_review,type:BOOLEAN,notnull,default:false"`
 	RerateVariancePercent     decimal.Decimal      `json:"rerateVariancePercent"     bun:"rerate_variance_percent,type:NUMERIC(9,6),notnull,default:0"`
-	AdjustmentContext         map[string]any       `json:"adjustmentContext"         bun:"adjustment_context,type:JSONB,notnull,default:'{}'::jsonb"`
+	AdjustmentContext         map[string]any       `json:"adjustmentContext"         bun:"adjustment_context,type:JSONB,notnull,default:'{}'"`
 	Version                   int64                `json:"version"                   bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt                 int64                `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                 int64                `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

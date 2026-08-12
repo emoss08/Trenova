@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS "detention_policies"(
     "rate_source" TEXT NOT NULL DEFAULT 'Accessorial',
     "accessorial_charge_id" TEXT NOT NULL,
     "max_billable_minutes_per_stop" INTEGER,
-    "max_charge_per_stop" NUMERIC,
-    "max_charge_per_day" NUMERIC,
-    "max_charge_per_shipment" NUMERIC,
+    "max_charge_per_stop" REAL,
+    "max_charge_per_day" REAL,
+    "max_charge_per_shipment" REAL,
     "day_boundary_mode" TEXT NOT NULL DEFAULT 'PerStop',
     "convert_to_layover_at_minutes" INTEGER,
     "layover_accessorial_charge_id" TEXT,
@@ -48,8 +48,8 @@ CREATE TABLE IF NOT EXISTS "detention_policies"(
     "unnotified_behavior" TEXT NOT NULL DEFAULT 'Bill',
     "auto_send_notice" INTEGER NOT NULL DEFAULT 0,
     "send_departure_summary" INTEGER NOT NULL DEFAULT 0,
-    "require_approval_over_amount" NUMERIC,
-    "auto_approve_under_amount" NUMERIC,
+    "require_approval_over_amount" REAL,
+    "auto_approve_under_amount" REAL,
     "currency" TEXT NOT NULL DEFAULT 'USD',
     "comments" TEXT,
     "version" INTEGER NOT NULL DEFAULT 0,
@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS "detention_policy_tiers"(
     "detention_policy_id" TEXT NOT NULL,
     "from_minute" INTEGER NOT NULL DEFAULT 0,
     "to_minute" INTEGER,
-    "rate" NUMERIC NOT NULL DEFAULT 0,
+    "rate" REAL NOT NULL DEFAULT 0,
     "rate_unit" TEXT NOT NULL DEFAULT 'Hour',
     "label" TEXT,
     "sort_order" INTEGER NOT NULL DEFAULT 0,
@@ -158,12 +158,12 @@ CREATE TABLE IF NOT EXISTS "detention_occurrences"(
     "raw_dwell_minutes" INTEGER NOT NULL DEFAULT 0,
     "billable_minutes" INTEGER NOT NULL DEFAULT 0,
     "rounded_minutes" INTEGER NOT NULL DEFAULT 0,
-    "billable_units" NUMERIC NOT NULL DEFAULT 0,
-    "gross_amount" NUMERIC NOT NULL DEFAULT 0,
-    "billable_amount" NUMERIC NOT NULL DEFAULT 0,
+    "billable_units" REAL NOT NULL DEFAULT 0,
+    "gross_amount" REAL NOT NULL DEFAULT 0,
+    "billable_amount" REAL NOT NULL DEFAULT 0,
     "driver_pay_minutes" INTEGER NOT NULL DEFAULT 0,
-    "driver_pay_amount" NUMERIC NOT NULL DEFAULT 0,
-    "net_margin" NUMERIC NOT NULL DEFAULT 0,
+    "driver_pay_amount" REAL NOT NULL DEFAULT 0,
+    "net_margin" REAL NOT NULL DEFAULT 0,
     "cap_applied" TEXT NOT NULL DEFAULT 'None',
     "converted_to_layover" INTEGER NOT NULL DEFAULT 0,
     "currency" TEXT NOT NULL DEFAULT 'USD',
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS "detention_occurrences"(
     "waiver_note" TEXT,
     "waived_by_id" TEXT,
     "waived_at" INTEGER,
-    "waived_amount" NUMERIC NOT NULL DEFAULT 0,
+    "waived_amount" REAL NOT NULL DEFAULT 0,
     "dispute_note" TEXT,
     "disputed_at" INTEGER,
     "collectability_score" INTEGER NOT NULL DEFAULT 0,
@@ -285,8 +285,8 @@ CREATE TABLE IF NOT EXISTS "detention_notices"(
     "was_automatic" INTEGER NOT NULL DEFAULT 0,
     "satisfies_requirement" INTEGER NOT NULL DEFAULT 0,
     "quoted_free_minutes" INTEGER NOT NULL DEFAULT 0,
-    "quoted_rate" NUMERIC,
-    "quoted_amount" NUMERIC,
+    "quoted_rate" REAL,
+    "quoted_amount" REAL,
     "version" INTEGER NOT NULL DEFAULT 0,
     "created_at" INTEGER NOT NULL DEFAULT (unixepoch()),
     "updated_at" INTEGER NOT NULL DEFAULT (unixepoch()),
@@ -316,6 +316,18 @@ ALTER TABLE "shipment_controls" ADD COLUMN "default_detention_policy_id" TEXT;
 --bun:split
 
 ALTER TABLE "shipment_controls" ADD COLUMN "use_detention_policy_engine" INTEGER NOT NULL DEFAULT 0;
+
+--bun:split
+
+ALTER TABLE "customer_billing_profiles" DROP COLUMN "detention_billing_enabled";
+
+--bun:split
+
+ALTER TABLE "customer_billing_profiles" DROP COLUMN "detention_rate_per_hour";
+
+--bun:split
+
+ALTER TABLE "customer_billing_profiles" DROP COLUMN "count_detention_only_on_appointment_stops";
 
 --bun:split
 

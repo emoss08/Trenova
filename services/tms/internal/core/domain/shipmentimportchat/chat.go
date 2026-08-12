@@ -71,10 +71,10 @@ type Turn struct {
 	Model                  string           `json:"model"                  bun:"model,type:VARCHAR(100),nullzero"`
 	ResultStatus           TurnResultStatus `json:"resultStatus"           bun:"result_status,type:VARCHAR(32),notnull,default:'Completed'"`
 	ErrorMessage           string           `json:"errorMessage"           bun:"error_message,type:TEXT,nullzero"`
-	ContextJSON            rawJSON          `json:"contextJson"            bun:"context_json,type:JSONB,notnull,default:'{}'::jsonb"`
-	SuggestionsJSON        rawJSON          `json:"suggestionsJson"        bun:"suggestions_json,type:JSONB,notnull,default:'[]'::jsonb"`
-	ToolCallsJSON          rawJSON          `json:"toolCallsJson"          bun:"tool_calls_json,type:JSONB,notnull,default:'[]'::jsonb"`
-	ActionsJSON            rawJSON          `json:"actionsJson"            bun:"actions_json,type:JSONB,notnull,default:'[]'::jsonb"`
+	ContextJSON            rawJSON          `json:"contextJson"            bun:"context_json,type:JSONB,notnull,default:'{}'"`
+	SuggestionsJSON        rawJSON          `json:"suggestionsJson"        bun:"suggestions_json,type:JSONB,notnull,default:'[]'"`
+	ToolCallsJSON          rawJSON          `json:"toolCallsJson"          bun:"tool_calls_json,type:JSONB,notnull,default:'[]'"`
+	ActionsJSON            rawJSON          `json:"actionsJson"            bun:"actions_json,type:JSONB,notnull,default:'[]'"`
 	CreatedAt              int64            `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 

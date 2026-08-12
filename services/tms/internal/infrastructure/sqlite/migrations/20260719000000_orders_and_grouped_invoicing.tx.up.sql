@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS "orders"(
     "po_number" TEXT,
     "bol" TEXT,
     "currency_code" TEXT NOT NULL DEFAULT 'USD',
-    "quoted_amount" NUMERIC,
-    "base_amount" NUMERIC,
-    "total_amount" NUMERIC NOT NULL DEFAULT 0,
+    "quoted_amount" REAL,
+    "base_amount" REAL,
+    "total_amount" REAL NOT NULL DEFAULT 0,
     "version" INTEGER NOT NULL DEFAULT 0,
     "created_at" INTEGER NOT NULL DEFAULT (unixepoch()),
     "updated_at" INTEGER NOT NULL DEFAULT (unixepoch()),
@@ -73,6 +73,10 @@ WHERE
     o."backfill_shipment_id" = "shipments"."id"
     AND o."organization_id" = "shipments"."organization_id"
     AND o."business_unit_id" = "shipments"."business_unit_id";
+
+--bun:split
+
+ALTER TABLE "orders" DROP COLUMN "backfill_shipment_id";
 
 --bun:split
 

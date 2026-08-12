@@ -29,7 +29,7 @@ type DocumentShipmentDraft struct {
 	Status             Status         `json:"status"             bun:"status,type:document_shipment_draft_status_enum,notnull,default:'Unavailable'"`
 	DocumentKind       string         `json:"documentKind"       bun:"document_kind,type:VARCHAR(100),nullzero"`
 	Confidence         float64        `json:"confidence"         bun:"confidence,type:DOUBLE PRECISION,notnull,default:0"`
-	DraftData          map[string]any `json:"draftData"          bun:"draft_data,type:JSONB,notnull,default:'{}'::jsonb"`
+	DraftData          map[string]any `json:"draftData"          bun:"draft_data,type:JSONB,notnull,default:'{}'"`
 	FailureCode        string         `json:"failureCode"        bun:"failure_code,type:VARCHAR(100),nullzero"`
 	FailureMessage     string         `json:"failureMessage"     bun:"failure_message,type:TEXT,nullzero"`
 	AttachedShipmentID *pulid.ID      `json:"attachedShipmentId" bun:"attached_shipment_id,type:VARCHAR(100),nullzero"`

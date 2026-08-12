@@ -44,7 +44,7 @@ type ShipmentComment struct {
 	Visibility             CommentVisibility    `json:"visibility"                      bun:"visibility,type:VARCHAR(50),notnull,default:'Internal'"`
 	Priority               CommentPriority      `json:"priority"                        bun:"priority,type:VARCHAR(20),notnull,default:'Normal'"`
 	Source                 CommentSource        `json:"source"                          bun:"source,type:VARCHAR(20),notnull,default:'User'"`
-	Metadata               map[string]any       `json:"metadata,omitempty"              bun:"metadata,type:JSONB,default:'{}'::jsonb"`
+	Metadata               map[string]any       `json:"metadata,omitempty"              bun:"metadata,type:JSONB,default:'{}'"`
 	EditedAt               *int64               `json:"editedAt"                        bun:"edited_at,type:BIGINT,nullzero"`
 	PinnedAt               *int64               `json:"pinnedAt"                        bun:"pinned_at,type:BIGINT,nullzero"`
 	PinnedByID             *pulid.ID            `json:"pinnedById"                      bun:"pinned_by_id,type:VARCHAR(100),nullzero"`

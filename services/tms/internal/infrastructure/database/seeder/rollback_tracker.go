@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/uptrace/bun"
 )
 
@@ -18,22 +19,15 @@ func NewRollbackTracker(db *bun.DB) *RollbackTracker {
 }
 
 func (rt *RollbackTracker) Initialize(ctx context.Context) error {
-	query := `
-		CREATE TABLE IF NOT EXISTS seed_rollbacks (
-			id SERIAL PRIMARY KEY,
-			seed_name VARCHAR(255) NOT NULL,
-			seed_version VARCHAR(50) NOT NULL,
-			environment VARCHAR(50) NOT NULL,
-			rolled_back_at TIMESTAMP NOT NULL DEFAULT NOW(),
-			entities_deleted INT NOT NULL DEFAULT 0,
-			duration_ms BIGINT NOT NULL DEFAULT 0,
-			error_message TEXT
-		)
-	`
-
-	_, err := rt.db.ExecContext(ctx, query)
+	statements, err := loadSchema(dbdialect.FromBun(rt.db), seedRollbacksSchema)
 	if err != nil {
-		return fmt.Errorf("create seed_rollbacks table: %w", err)
+		return err
+	}
+
+	for _, statement := range statements {
+		if _, execErr := rt.db.ExecContext(ctx, statement); execErr != nil {
+			return fmt.Errorf("create seed_rollbacks table: %w", execErr)
+		}
 	}
 
 	return nil

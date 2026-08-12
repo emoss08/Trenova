@@ -7,7 +7,7 @@ ALTER TABLE "dispatch_controls" ADD COLUMN "scoring_weights" TEXT NOT NULL DEFAU
 
 --bun:split
 
-ALTER TABLE "dispatch_controls" ADD COLUMN "auto_assign_confidence_threshold" NUMERIC NOT NULL DEFAULT 0.8500;
+ALTER TABLE "dispatch_controls" ADD COLUMN "auto_assign_confidence_threshold" REAL NOT NULL DEFAULT 0.8500;
 
 --bun:split
 

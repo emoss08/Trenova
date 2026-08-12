@@ -57,8 +57,8 @@ type TenderChange struct {
 	NewTenderPayload        LoadTenderPayload   `json:"newTenderPayload" bun:"new_tender_payload,type:JSONB,notnull"`
 	PreviousBaselineHash    string              `json:"previousBaselineHash" bun:"previous_baseline_hash,type:VARCHAR(128),notnull"`
 	NewPayloadHash          string              `json:"newPayloadHash" bun:"new_payload_hash,type:VARCHAR(128),notnull"`
-	DiffSummary             map[string]any      `json:"diffSummary" bun:"diff_summary,type:JSONB,notnull,default:'{}'::jsonb"`
-	ConflictMetadata        map[string]any      `json:"conflictMetadata" bun:"conflict_metadata,type:JSONB,notnull,default:'{}'::jsonb"`
+	DiffSummary             map[string]any      `json:"diffSummary" bun:"diff_summary,type:JSONB,notnull,default:'{}'"`
+	ConflictMetadata        map[string]any      `json:"conflictMetadata" bun:"conflict_metadata,type:JSONB,notnull,default:'{}'"`
 	InternalTransferID      pulid.ID            `json:"internalTransferId" bun:"internal_transfer_id,type:VARCHAR(100),nullzero"`
 	ShipmentLinkID          pulid.ID            `json:"shipmentLinkId" bun:"shipment_link_id,type:VARCHAR(100),nullzero"`
 	OutboundMessageID       pulid.ID            `json:"outboundMessageId" bun:"outbound_message_id,type:VARCHAR(100),nullzero"`

@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS "document_upload_sessions"(
     "strategy" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'Initiated',
     "description" TEXT,
-    "tags" TEXT NOT NULL DEFAULT '{}',
+    "tags" TEXT NOT NULL DEFAULT '[]',
     "uploaded_parts" TEXT NOT NULL DEFAULT '[]',
     "part_size" INTEGER NOT NULL DEFAULT 0,
     "failure_code" TEXT,

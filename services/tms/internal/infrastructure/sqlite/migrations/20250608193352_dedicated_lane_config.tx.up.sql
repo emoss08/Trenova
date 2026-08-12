@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS "pattern_configs"(
     "enabled" INTEGER NOT NULL DEFAULT 1,
     "min_frequency" INTEGER NOT NULL DEFAULT 3,
     "analysis_window_days" INTEGER NOT NULL DEFAULT 90,
-    "min_confidence_score" NUMERIC NOT NULL DEFAULT 0.7,
+    "min_confidence_score" REAL NOT NULL DEFAULT 0.7,
     "suggestion_ttl_days" INTEGER NOT NULL DEFAULT 30,
     "require_exact_match" INTEGER NOT NULL DEFAULT 0,
     "weight_recent_shipments" INTEGER NOT NULL DEFAULT 1,

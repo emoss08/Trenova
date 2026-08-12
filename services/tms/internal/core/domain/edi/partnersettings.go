@@ -60,7 +60,7 @@ type EDIPartnerSettingField struct {
 	Required          bool                   `json:"required"          bun:"required,type:BOOLEAN,notnull,default:false"`
 	Nullable          bool                   `json:"nullable"          bun:"nullable,type:BOOLEAN,notnull,default:false"`
 	DefaultValue      any                    `json:"defaultValue"      bun:"default_value,type:JSONB,nullzero"`
-	AllowedValues     []string               `json:"allowedValues"     bun:"allowed_values,type:JSONB,notnull,default:'[]'::jsonb"`
+	AllowedValues     []string               `json:"allowedValues"     bun:"allowed_values,type:JSONB,notnull,default:'[]'"`
 	Secret            bool                   `json:"secret"            bun:"secret,type:BOOLEAN,notnull,default:false"`
 	GroupKey          string                 `json:"groupKey"          bun:"group_key,type:VARCHAR(100),nullzero"`
 	DisplayOrder      int                    `json:"displayOrder"      bun:"display_order,type:INTEGER,notnull,default:0"`

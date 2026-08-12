@@ -3,7 +3,7 @@
 -- stop regenerating this file; see docs/databases.md.
 -- Source: 20260408210000_invoice_adjustment_engine.tx.up.sql
 
-ALTER TABLE "invoices" ADD COLUMN "applied_amount" NUMERIC NOT NULL DEFAULT 0;
+ALTER TABLE "invoices" ADD COLUMN "applied_amount" REAL NOT NULL DEFAULT 0;
 
 --bun:split
 
@@ -63,7 +63,7 @@ ALTER TABLE "billing_queue_items" ADD COLUMN "requires_replacement_review" INTEG
 
 --bun:split
 
-ALTER TABLE "billing_queue_items" ADD COLUMN "rerate_variance_percent" NUMERIC;
+ALTER TABLE "billing_queue_items" ADD COLUMN "rerate_variance_percent" REAL;
 
 --bun:split
 
@@ -108,10 +108,10 @@ CREATE TABLE IF NOT EXISTS invoice_adjustments(
     "policy_reason" TEXT,
     "idempotency_key" TEXT NOT NULL,
     "accounting_date" INTEGER NOT NULL,
-    "credit_total_amount" NUMERIC NOT NULL DEFAULT 0,
-    "rebill_total_amount" NUMERIC NOT NULL DEFAULT 0,
-    "net_delta_amount" NUMERIC NOT NULL DEFAULT 0,
-    "rerate_variance_percent" NUMERIC NOT NULL DEFAULT 0,
+    "credit_total_amount" REAL NOT NULL DEFAULT 0,
+    "rebill_total_amount" REAL NOT NULL DEFAULT 0,
+    "net_delta_amount" REAL NOT NULL DEFAULT 0,
+    "rerate_variance_percent" REAL NOT NULL DEFAULT 0,
     "would_create_unapplied_credit" INTEGER NOT NULL DEFAULT 0,
     "requires_reconciliation_exception" INTEGER NOT NULL DEFAULT 0,
     "approval_required" INTEGER NOT NULL DEFAULT 0,
@@ -154,11 +154,11 @@ CREATE TABLE IF NOT EXISTS invoice_adjustment_lines(
     "replacement_line_id" TEXT,
     "line_number" INTEGER NOT NULL,
     "description" TEXT NOT NULL,
-    "credit_quantity" NUMERIC NOT NULL DEFAULT 0,
-    "credit_amount" NUMERIC NOT NULL DEFAULT 0,
-    "remaining_eligible_amount" NUMERIC NOT NULL DEFAULT 0,
-    "rebill_quantity" NUMERIC NOT NULL DEFAULT 0,
-    "rebill_amount" NUMERIC NOT NULL DEFAULT 0,
+    "credit_quantity" REAL NOT NULL DEFAULT 0,
+    "credit_amount" REAL NOT NULL DEFAULT 0,
+    "remaining_eligible_amount" REAL NOT NULL DEFAULT 0,
+    "rebill_quantity" REAL NOT NULL DEFAULT 0,
+    "rebill_amount" REAL NOT NULL DEFAULT 0,
     "replacement_payload" TEXT NOT NULL DEFAULT '{}',
     "created_at" INTEGER NOT NULL DEFAULT (unixepoch()),
     "updated_at" INTEGER NOT NULL DEFAULT (unixepoch()),
@@ -201,7 +201,7 @@ CREATE TABLE IF NOT EXISTS invoice_reconciliation_exceptions(
     "credit_memo_invoice_id" TEXT,
     "status" TEXT NOT NULL DEFAULT 'Open',
     "reason" TEXT NOT NULL,
-    "amount" NUMERIC NOT NULL DEFAULT 0,
+    "amount" REAL NOT NULL DEFAULT 0,
     "metadata" TEXT NOT NULL DEFAULT '{}',
     "created_at" INTEGER NOT NULL DEFAULT (unixepoch()),
     "updated_at" INTEGER NOT NULL DEFAULT (unixepoch()),

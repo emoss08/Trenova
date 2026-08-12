@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS "agent_proposals"(
     "run_id" TEXT NOT NULL,
     "tool_name" TEXT NOT NULL,
     "tool_params" TEXT NOT NULL DEFAULT '{}',
-    "confidence" NUMERIC NOT NULL DEFAULT 0,
+    "confidence" REAL NOT NULL DEFAULT 0,
     "rationale" TEXT NOT NULL,
     "evidence" TEXT NOT NULL DEFAULT '[]',
     "autonomy_tier" TEXT NOT NULL DEFAULT 'Propose',

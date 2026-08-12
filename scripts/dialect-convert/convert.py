@@ -274,6 +274,11 @@ class Converter:
         self.table_columns: dict[str, set[str]] = collections.defaultdict(set)
         self.dropped_columns: dict[str, set[str]] = collections.defaultdict(set)
         self.relations: set[str] = set()
+        self.pending_statements: list[str] = []
+        # SQLite refuses DROP COLUMN when an index or CHECK still references the
+        # column, so track both to decide whether a drop can be emitted.
+        self.check_columns: dict[str, set[str]] = collections.defaultdict(set)
+        self.table_indexes: dict[str, list[tuple[str, set[str]]]] = collections.defaultdict(list)
         self.skipped: list[tuple[str, str, str]] = []
         self.downgrades: list[tuple[str, str, str]] = []
 
@@ -318,8 +323,10 @@ class Converter:
         candidate = _rename_functions(RE["cast"].sub("", expr).strip(), self.p)
         return candidate if self.is_portable(candidate) else None
 
-    def portable_default(self, expr: str) -> str | None:
+    def portable_default(self, expr: str, is_array: bool = False) -> str | None:
         value = RE["epoch"].sub("__EPOCH__", expr.strip())
+        if is_array and value.strip() in ("'{}'", '"{}"'):
+            return "'[]'"
         value = RE["cast"].sub("", value).strip()
         low = value.lower()
         if "nextval(" in low or "gen_random_uuid" in low or "uuid_generate" in low:
@@ -466,6 +473,13 @@ class Converter:
             return self._table_constraint(f, table, item)
         return self._column(f, table, item)
 
+    def _pin(self, table: str, expr: str) -> None:
+        """Record columns a surviving constraint references.
+
+        SQLite refuses DROP COLUMN while any index or constraint mentions the
+        column, so every emitted constraint pins whatever it names."""
+        self.check_columns[table.lower()].update(_identifiers(expr))
+
     def _table_constraint(self, f: str, table: str, c: str) -> str:
         up = c.upper()
         if "EXCLUDE USING" in up:
@@ -496,7 +510,10 @@ class Converter:
             if portable is None:
                 self.skip(f, "non_portable_check", c)
                 return ""
+            self._pin(table, portable)
             out = out[:open_idx + 1] + portable + out[close_idx:]
+
+        self._pin(table, out)
         return out
 
     def _column(self, f: str, table: str, col: str) -> str:
@@ -518,7 +535,9 @@ class Converter:
             return ""
 
         self.table_columns[table.lower()].add(name.lower())
-        suffix = self._modifiers(f, table, name, modifiers)
+        suffix = self._modifiers(
+            f, table, name, modifiers, is_array=bool(RE["array_suffix"].search(sql_type))
+        )
         return f'"{name}" {mapped}' + (f" {suffix}" if suffix else "")
 
     def _generated_column(self, f: str, table: str, name: str, rest: str) -> str:
@@ -543,7 +562,9 @@ class Converter:
         self.table_columns[table.lower()].add(name.lower())
         return f'"{name}" {mapped} GENERATED ALWAYS AS ({portable}) {stored}'
 
-    def _modifiers(self, f: str, table: str, column: str, mods: str) -> str:
+    def _modifiers(
+        self, f: str, table: str, column: str, mods: str, is_array: bool = False
+    ) -> str:
         value = RE["collate"].sub("", RE["identity"].sub("", mods.strip()))
         value = RE["not_valid"].sub("", value)
         parts: list[str] = []
@@ -552,7 +573,7 @@ class Converter:
         if dm:
             expr, remainder = _split_default(value[dm.end():])
             value = (value[:dm.start()] + " " + remainder).strip()
-            portable = self.portable_default(expr)
+            portable = self.portable_default(expr, is_array=is_array)
             if portable is not None:
                 parts.append("DEFAULT " + portable)
             else:
@@ -566,6 +587,8 @@ class Converter:
                 portable = self.portable_check(value[open_idx + 1:close_idx])
                 if portable is not None:
                     parts.append(f"CHECK ({portable})")
+                    self._pin(table, portable)
+                    self._pin(table, column)
                 else:
                     self.skip(f, "non_portable_check", f"{table}.{column}")
                 value = (value[:cm.start()] + value[close_idx + 1:]).strip()
@@ -594,6 +617,9 @@ class Converter:
         emitted = []
         for action in split_top_level(actions):
             converted = self._alter_action(f, table, action)
+            if self.pending_statements:
+                emitted.extend(self.pending_statements)
+                self.pending_statements = []
             if converted:
                 emitted.append(f'ALTER TABLE "{table}" {converted};')
         return ("\n\n" + SPLIT_MARKER + "\n\n").join(emitted)
@@ -605,14 +631,7 @@ class Converter:
         if RE["add_column"].match(a):
             return self._add_column(f, table, a)
         if up.startswith("DROP COLUMN"):
-            if not self.p["supports_drop_column"]:
-                self.skip(f, "drop_column_unsupported", f"{table}: {a}")
-                return ""
-            dm = RE["drop_column"].match(a)
-            col = (dm.group(2) or dm.group(1)) if dm else ""
-            self.dropped_columns[table.lower()].add(col.lower())
-            self.table_columns[table.lower()].discard(col.lower())
-            return f'DROP COLUMN "{col}"'
+            return self._drop_column(f, table, a)
         if up.startswith(("RENAME COLUMN", "RENAME TO")):
             return a
         if up.startswith(("ADD CONSTRAINT", "ADD PRIMARY KEY", "ADD FOREIGN KEY", "ADD UNIQUE", "ADD CHECK", "ADD EXCLUDE")):
@@ -630,6 +649,41 @@ class Converter:
             return a
         self.skip(f, "no_op", f"{table}: {a}")
         return ""
+
+    def _drop_column(self, f: str, table: str, action: str) -> str:
+        dm = RE["drop_column"].match(action)
+        if not dm:
+            self.skip(f, "unrecognized_statement", f"{table}: {action}")
+            return ""
+
+        col = (dm.group(2) or dm.group(1)).lower()
+        key = table.lower()
+
+        if not self.p["supports_drop_column"]:
+            self.skip(f, "drop_column_unsupported", f"{table}.{col}")
+            return ""
+
+        # A surviving CHECK pinned to the column makes the drop illegal, and there
+        # is no way to alter a CHECK out of the way in SQLite.
+        if col not in self.table_columns[key]:
+            self.skip(f, "drop_column_never_created", f"{table}.{col}")
+            return ""
+
+        if col in self.check_columns[key]:
+            self.skip(f, "drop_column_pinned_by_constraint", f"{table}.{col}")
+            return ""
+
+        blocking = [name for name, cols in self.table_indexes[key] if col in cols]
+        for name in blocking:
+            self.pending_statements.append(f'DROP INDEX IF EXISTS "{name}";')
+        self.table_indexes[key] = [
+            (name, cols) for name, cols in self.table_indexes[key] if col not in cols
+        ]
+
+        self.dropped_columns[key].add(col)
+        self.table_columns[key].discard(col)
+
+        return f'DROP COLUMN "{col}"'
 
     def _add_column(self, f: str, table: str, action: str) -> str:
         definition = RE["add_column"].match(action).group(1).strip()
@@ -687,6 +741,11 @@ class Converter:
         columns = RE["cast"].sub("", RE["nulls_order"].sub("", RE["opclass"].sub("", columns)))
         tail = RE["cast"].sub("", RE["with_opts"].sub("", RE["include"].sub("", tail)))
         tail = re.sub(r"(?i)\s+TABLESPACE\s+\w+", "", tail).strip() or ";"
+
+        self.table_indexes[table.lower()].append(
+            (_unquote(m.group(2)), _identifiers(columns) | _identifiers(tail))
+        )
+
         return f"{header.rstrip()} ({columns}){tail}"
 
     def _view(self, f: str, s: str) -> str:
@@ -715,6 +774,20 @@ class Converter:
 # --------------------------------------------------------------------------
 # helpers
 # --------------------------------------------------------------------------
+
+IDENTIFIER_RE = re.compile(r'"([^"]+)"|\b([a-z_][a-z0-9_]*)\b', re.I)
+
+
+def _identifiers(expr: str) -> set[str]:
+    """Lowercased identifiers appearing in an expression, keywords included.
+
+    Over-approximating is safe here: an extra name only makes a DROP COLUMN more
+    conservative, never less."""
+    found = set()
+    for quoted, bare in IDENTIFIER_RE.findall(expr or ""):
+        found.add((quoted or bare).lower())
+    return found
+
 
 def _unquote(v: str) -> str:
     return v.strip().strip('"')

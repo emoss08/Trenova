@@ -28,10 +28,10 @@ type EDIPartnerDocumentProfile struct {
 	TransactionSet               TransactionSet       `json:"transactionSet"               bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
 	X12VersionOverride           string               `json:"x12VersionOverride"           bun:"x12_version_override,type:VARCHAR(20),nullzero"`
 	FunctionalGroupID            string               `json:"functionalGroupId"            bun:"functional_group_id,type:VARCHAR(2),notnull"`
-	Envelope                     X12EnvelopeSettings  `json:"envelope"                     bun:"envelope,type:JSONB,notnull,default:'{}'::jsonb"`
-	Acknowledgment               AcknowledgmentConfig `json:"acknowledgment"               bun:"acknowledgment,type:JSONB,notnull,default:'{}'::jsonb"`
+	Envelope                     X12EnvelopeSettings  `json:"envelope"                     bun:"envelope,type:JSONB,notnull,default:'{}'"`
+	Acknowledgment               AcknowledgmentConfig `json:"acknowledgment"               bun:"acknowledgment,type:JSONB,notnull,default:'{}'"`
 	ValidationMode               ValidationMode       `json:"validationMode"               bun:"validation_mode,type:edi_validation_mode_enum,notnull"`
-	PartnerSettings              map[string]any       `json:"partnerSettings"              bun:"partner_settings,type:JSONB,notnull,default:'{}'::jsonb"`
+	PartnerSettings              map[string]any       `json:"partnerSettings"              bun:"partner_settings,type:JSONB,notnull,default:'{}'"`
 	PartnerSettingsSchemaID      pulid.ID             `json:"partnerSettingsSchemaId"      bun:"partner_settings_schema_id,type:VARCHAR(100),nullzero"`
 	PartnerSettingsSchemaVersion int64                `json:"partnerSettingsSchemaVersion" bun:"partner_settings_schema_version,type:BIGINT,nullzero"`
 	Version                      int64                `json:"version"                      bun:"version,type:BIGINT,notnull,default:0"`
