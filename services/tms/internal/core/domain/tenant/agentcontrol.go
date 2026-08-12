@@ -23,11 +23,11 @@ type AgentControl struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 
-	ShadowMode          bool `json:"shadowMode"             bun:"shadow_mode,type:BOOLEAN,notnull,default:true"`
-	BillingAgentEnabled bool `json:"billingAgentEnabled"    bun:"billing_agent_enabled,type:BOOLEAN,notnull"`
+	ShadowMode          bool `json:"shadowMode"          bun:"shadow_mode,type:BOOLEAN,notnull,default:true"`
+	BillingAgentEnabled bool `json:"billingAgentEnabled" bun:"billing_agent_enabled,type:BOOLEAN,notnull"`
 	// DispatchAgentEnabled gates the auto-assign agent separately from the billing agent,
 	// so enabling one never enables the other.
-	DispatchAgentEnabled bool `json:"dispatchAgentEnabled"   bun:"dispatch_agent_enabled,type:BOOLEAN,notnull"`
+	DispatchAgentEnabled bool `json:"dispatchAgentEnabled" bun:"dispatch_agent_enabled,type:BOOLEAN,notnull"`
 	// DispatchAutonomyTier is an agent.AutonomyTier. It is held as a string because the
 	// agent domain already depends on this package, and importing it back would cycle.
 	DispatchAutonomyTier   string `json:"dispatchAutonomyTier"   bun:"dispatch_autonomy_tier,type:agent_autonomy_tier_enum,notnull,default:'Propose'"`
