@@ -269,7 +269,7 @@ func (r *repository) SaveMappingItems(
 		Set(itemCols.TargetLabel.SetExcluded()).
 		Set(itemCols.SourceLabel.SetExcluded()).
 		Set(itemCols.UpdatedByID.SetExcluded()).
-		Set(itemCols.UpdatedAt.SetExpr("extract(epoch FROM current_timestamp)::bigint")).
+		Set(itemCols.UpdatedAt.SetExpr(r.db.NowEpoch())).
 		Set(itemCols.Version.SetExpr(itemCols.Version.Qualified() + " + 1")).
 		Returning("*").
 		Exec(ctx)

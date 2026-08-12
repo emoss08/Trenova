@@ -409,7 +409,7 @@ func (r *repository) ClearOrgDefaultForResource(
 		NewUpdate().
 		Model((*tableconfiguration.TableConfiguration)(nil)).
 		Set("is_org_default = ?", false).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = "+r.db.NowEpoch()).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return uq.Where("tc.resource = ?", resource).
 				Where("tc.is_org_default = ?", true).
@@ -441,7 +441,7 @@ func (r *repository) ClearDefaultForResource(
 		NewUpdate().
 		Model((*tableconfiguration.TableConfiguration)(nil)).
 		Set("is_default = ?", false).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = "+r.db.NowEpoch()).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return uq.Where("tc.user_id = ?", userID).
 				Where("tc.resource = ?", resource).

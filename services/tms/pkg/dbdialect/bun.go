@@ -20,3 +20,7 @@ func FromBun(db bun.IDB) Kind {
 func RequireFromBun(db bun.IDB, capability Capability) error {
 	return Require(FromBun(db), capability)
 }
+
+func NowEpochFromBun(db bun.IDB) string {
+	return FromBun(db).NowEpoch()
+}

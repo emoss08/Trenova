@@ -160,7 +160,7 @@ func (r *repository) SupersedeActionableTenderChanges(
 		NewUpdate().
 		Model((*edi.TenderChange)(nil)).
 		Set("status = ?", edi.TenderChangeStatusSuperseded).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = "+r.db.NowEpoch()).
 		Where("recipient_id = ?", req.RecipientID).
 		Where("status IN (?)", bun.List(req.Statuses))
 	if req.ExcludeChangeID.IsNotNil() {

@@ -59,6 +59,7 @@ const (
 	CapTrigram           = Capability("trigram")
 	CapConcurrentIndex   = Capability("concurrent_index")
 	CapPartitionedTable  = Capability("partitioned_table")
+	CapSessionDiagnostic = Capability("session_diagnostics")
 )
 
 var postgresOnly = map[Capability]struct{}{
@@ -73,6 +74,7 @@ var postgresOnly = map[Capability]struct{}{
 	CapTrigram:           {},
 	CapConcurrentIndex:   {},
 	CapPartitionedTable:  {},
+	CapSessionDiagnostic: {},
 }
 
 func (k Kind) Supports(capability Capability) bool {
@@ -109,7 +111,20 @@ func (c Capability) DisplayName() string {
 		return "concurrent index creation"
 	case CapPartitionedTable:
 		return "declarative table partitioning"
+	case CapSessionDiagnostic:
+		return "database session diagnostics"
 	default:
 		return string(c)
 	}
+}
+
+// NowEpoch returns the SQL expression for the current Unix timestamp as an
+// integer. PostgreSQL has no portable spelling of this and SQLite has no
+// extract(), so query builders must ask for it rather than hardcoding either.
+func (k Kind) NowEpoch() string {
+	if k.IsSQLite() {
+		return "unixepoch()"
+	}
+
+	return "extract(epoch from current_timestamp)::bigint"
 }

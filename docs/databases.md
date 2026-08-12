@@ -43,7 +43,7 @@ another dialect means adding a profile to `scripts/dialect-convert/profiles.py`,
 not writing a second converter — `profiles.py` already carries a starting sketch
 for SQL Server.
 
-Current state: **1471 of 1471 translated statements apply cleanly, producing 273
+Current state: **1518 of 1518 translated statements apply cleanly, producing 273
 tables.**
 
 ### What the converter translates
@@ -55,7 +55,7 @@ tables.**
 | `jsonb` / `json` | `TEXT` |
 | `varchar(n)`, `uuid`, `timestamptz`, ranges | `TEXT` |
 | `bigint`, `smallint`, `boolean`, identity columns | `INTEGER` |
-| `numeric(p,s)` | `NUMERIC` |
+| `numeric(p,s)` | `REAL` (NUMERIC affinity demotes integers and breaks float64 scans) |
 | `bytea` | `BLOB` |
 | `EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint` | `(unixepoch())` |
 | `now()` | `CURRENT_TIMESTAMP` |
@@ -83,7 +83,7 @@ Every dropped statement is reported by reason rather than silently discarded.
 | `EXCLUDE USING gist` constraints | no exclusion constraints |
 | `ALTER TABLE ... ADD CONSTRAINT` | SQLite cannot add constraints after creation |
 | `ALTER TABLE ... ALTER COLUMN` | SQLite cannot alter column definitions |
-| `ALTER TABLE ... DROP COLUMN` | rejected whenever an index or `CHECK` still references the column |
+| `ALTER TABLE ... DROP COLUMN` | only when an index or constraint still pins the column; otherwise it is emitted, dropping blocking indexes first |
 | `CREATE STATISTICS`, publications, RLS policies | no planner statistics or replication objects |
 
 The practical consequence: **a SQLite database has weaker integrity guarantees
@@ -127,6 +127,37 @@ correct, coverage is narrower. Stemming, ranking and multi-word queries are lost
 - **Advisory locks, `SELECT ... FOR UPDATE`, `SET LOCAL lock_timeout`.** The
   connection layer skips these on SQLite; concurrency is serialised by SQLite's
   single-writer model instead.
+
+## Postgres-only SQL in query code
+
+Migrations are not the only place Postgres dialect leaks in. Query code can hardcode
+it too, and that only fails when the code path runs — the RBAC role lookup broke login
+on SQLite this way, long after migrations and seeding both passed.
+
+The current-timestamp idiom is the common case and now has a helper:
+
+```go
+r.db.NowEpoch()                    // on a *postgres.Connection
+dbdialect.NowEpochFromBun(db)      // when you only have a bun.IDB or a tx
+```
+
+`TestNoHardcodedEpochExpression` in `pkg/dbdialect` fails the build if
+`extract(epoch ...)` reappears in query SQL. Model `default:` tags are exempt: bun
+only emits those for zero values, and `BeforeAppendModel` sets the fields first.
+
+A file that is deliberately Postgres-only opts out with a `dialect:postgres-only`
+marker near its package clause, and must gate itself on a capability instead.
+
+### Known gaps not yet addressed
+
+These still contain Postgres-only SQL and will fail at runtime on SQLite:
+
+| Construct | Extent | Note |
+|---|---|---|
+| `ILIKE` | 17 files | SQLite `LIKE` is already case-insensitive for ASCII, so this is a mechanical swap |
+| `::int`, `::float`, `::bigint`, `::numeric`, `::text`, `::jsonb` casts | ~109 occurrences | mostly in analytics and reporting aggregates |
+| `date_trunc` bucketing | reporting compiler, A/R analytics | marked `dialect:postgres-only`; needs a `strftime` equivalent |
+| `pg_stat_activity`, `pg_blocking_pids` | database session diagnostics | gated on `CapSessionDiagnostic`, returns 501 on SQLite |
 
 ## Error handling
 

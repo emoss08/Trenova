@@ -316,7 +316,7 @@ func (r *repository) upsertPeriodBalance(
 			period_credit_minor = gb.period_credit_minor + EXCLUDED.period_credit_minor,
 			net_change_minor = gb.net_change_minor + EXCLUDED.net_change_minor,
 			last_journal_entry_id = EXCLUDED.last_journal_entry_id,
-			updated_at = extract(epoch from current_timestamp)::bigint
+			updated_at = `+r.db.NowEpoch()+`
 	`,
 		params.OrganizationID,
 		params.BusinessUnitID,
@@ -346,7 +346,7 @@ func (r *repository) updateGLAccountRunningBalance(
 		Set("current_balance = current_balance + ?", aggregate.net).
 		Set("debit_balance = debit_balance + ?", aggregate.debit).
 		Set("credit_balance = credit_balance + ?", aggregate.credit).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = "+r.db.NowEpoch()).
 		Where("id = ?", aggregate.glAccountID).
 		Where("organization_id = ?", params.OrganizationID).
 		Where("business_unit_id = ?", params.BusinessUnitID).

@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	fitz "github.com/gen2brain/go-fitz"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	fitz "github.com/gen2brain/go-fitz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
