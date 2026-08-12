@@ -8,7 +8,7 @@ import { equipmentClassChoices, statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { EquipmentType } from "@/types/equipment-type";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -90,10 +90,7 @@ export function getColumns(): ColumnDef<EquipmentType>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.description}
-          truncateLength={50}
-        />
+        <DataTableDescription description={row.original.description} truncateLength={50} />
       ),
       meta: {
         label: "Description",

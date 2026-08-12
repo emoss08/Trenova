@@ -4,12 +4,9 @@ import {
 } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import {
-  documentCategoryChoices,
-  documentClassificationChoices,
-} from "@/lib/choices";
+import { documentCategoryChoices, documentClassificationChoices } from "@/lib/choices";
 import type { DocumentType } from "@trenova/shared/types/document-type";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<DocumentType>[] {
   return [
@@ -17,10 +14,7 @@ export function getColumns(): ColumnDef<DocumentType>[] {
       accessorKey: "code",
       header: "Code",
       cell: ({ row }) => (
-        <DataTableColorColumn
-          color={row.original.color ?? undefined}
-          text={row.original.code}
-        />
+        <DataTableColorColumn color={row.original.color ?? undefined} text={row.original.code} />
       ),
       meta: {
         label: "Code",

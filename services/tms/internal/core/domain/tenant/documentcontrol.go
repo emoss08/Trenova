@@ -31,8 +31,8 @@ type DocumentControl struct {
 	EnableAutoDocumentTypeAssociate bool     `json:"enableAutoDocumentTypeAssociate" bun:"enable_auto_document_type_associate,type:BOOLEAN,notnull,default:true"`
 	EnableAutoCreateDocumentTypes   bool     `json:"enableAutoCreateDocumentTypes"   bun:"enable_auto_create_document_types,type:BOOLEAN,notnull,default:true"`
 	EnableShipmentDraftExtraction   bool     `json:"enableShipmentDraftExtraction"   bun:"enable_shipment_draft_extraction,type:BOOLEAN,notnull,default:true"`
-	EnableAIAssistedClassification  bool     `json:"enableAiAssistedClassification"  bun:"enable_ai_assisted_classification,type:BOOLEAN,notnull,default:false"`
-	EnableAIAssistedExtraction      bool     `json:"enableAiAssistedExtraction"      bun:"enable_ai_assisted_extraction,type:BOOLEAN,notnull,default:false"`
+	EnableAIAssistedClassification  bool     `json:"enableAiAssistedClassification"  bun:"enable_ai_assisted_classification,type:BOOLEAN,notnull"`
+	EnableAIAssistedExtraction      bool     `json:"enableAiAssistedExtraction"      bun:"enable_ai_assisted_extraction,type:BOOLEAN,notnull"`
 	ShipmentDraftAllowedResources   []string `json:"shipmentDraftAllowedResources"   bun:"shipment_draft_allowed_resources,type:VARCHAR(100)[],notnull,default:'{}'"`
 	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing"          bun:"enable_full_text_indexing,type:BOOLEAN,notnull,default:true"`
 	Version                         int64    `json:"version"                         bun:"version,type:BIGINT"`

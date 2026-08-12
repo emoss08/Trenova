@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import type { ReportRun } from "@/lib/graphql/reports";
 import { formatFileSize } from "@trenova/shared/lib/utils";
 import { REPORT_RUN_STATUS_LABELS, REPORT_RUN_TRIGGER_LABELS } from "@/types/report";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { CircleAlertIcon, ZapIcon } from "lucide-react";
 import { ReportFormatBadge, ReportRunStatusBadge } from "./report-badges";
 

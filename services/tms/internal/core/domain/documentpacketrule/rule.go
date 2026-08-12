@@ -58,10 +58,10 @@ type DocumentPacketRule struct {
 	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	ResourceType          string   `json:"resourceType"          bun:"resource_type,type:VARCHAR(100),notnull"`
 	DocumentTypeID        pulid.ID `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),notnull"`
-	Required              bool     `json:"required"              bun:"required,type:BOOLEAN,notnull,default:false"`
-	AllowMultiple         bool     `json:"allowMultiple"         bun:"allow_multiple,type:BOOLEAN,notnull,default:false"`
-	DisplayOrder          int      `json:"displayOrder"          bun:"display_order,type:INTEGER,notnull,default:0"`
-	ExpirationRequired    bool     `json:"expirationRequired"    bun:"expiration_required,type:BOOLEAN,notnull,default:false"`
+	Required              bool     `json:"required"              bun:"required,type:BOOLEAN,notnull"`
+	AllowMultiple         bool     `json:"allowMultiple"         bun:"allow_multiple,type:BOOLEAN,notnull"`
+	DisplayOrder          int      `json:"displayOrder"          bun:"display_order,type:INTEGER,notnull"`
+	ExpirationRequired    bool     `json:"expirationRequired"    bun:"expiration_required,type:BOOLEAN,notnull"`
 	ExpirationWarningDays int      `json:"expirationWarningDays" bun:"expiration_warning_days,type:INTEGER,notnull,default:30"`
 	Version               int64    `json:"version"               bun:"version,type:BIGINT"`
 	CreatedAt             int64    `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

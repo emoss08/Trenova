@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.17.0",
+  "packageManager": "pnpm@11.20.0",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -15,8 +15,8 @@
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.101.4",
     "eslint-plugin-better-tailwindcss": "^4.7.0",
-    "oxlint": "^1.75.0",
+    "oxlint": "^1.77.0",
     "oxlint-tsgolint": "^7.0.2001",
-    "turbo": "^2.10.6"
+    "turbo": "^2.10.8"
   }
 }

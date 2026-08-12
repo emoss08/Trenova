@@ -46,10 +46,10 @@ type HazardousMaterial struct {
 	QuantityThreshold           string             `json:"quantityThreshold"           bun:"quantity_threshold,type:VARCHAR(20)"`
 	SearchVector                string             `json:"-"                           bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank                        string             `json:"-"                           bun:"rank,type:VARCHAR(100),scanonly"`
-	PlacardRequired             bool               `json:"placardRequired"             bun:"placard_required,type:BOOLEAN,default:false"`
-	IsReportableQuantity        bool               `json:"isReportableQuantity"        bun:"is_reportable_quantity,type:BOOLEAN,default:false"`
-	MarinePollutant             bool               `json:"marinePollutant"             bun:"marine_pollutant,type:BOOLEAN,default:false"`
-	InhalationHazard            bool               `json:"inhalationHazard"            bun:"inhalation_hazard,type:BOOLEAN,default:false"`
+	PlacardRequired             bool               `json:"placardRequired"             bun:"placard_required,type:BOOLEAN"`
+	IsReportableQuantity        bool               `json:"isReportableQuantity"        bun:"is_reportable_quantity,type:BOOLEAN"`
+	MarinePollutant             bool               `json:"marinePollutant"             bun:"marine_pollutant,type:BOOLEAN"`
+	InhalationHazard            bool               `json:"inhalationHazard"            bun:"inhalation_hazard,type:BOOLEAN"`
 	Version                     int64              `json:"version"                     bun:"version,type:BIGINT"`
 	CreatedAt                   int64              `json:"createdAt"                   bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                   int64              `json:"updatedAt"                   bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

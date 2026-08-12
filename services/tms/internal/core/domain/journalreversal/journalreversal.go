@@ -45,7 +45,7 @@ type Reversal struct {
 	PostedAt                *int64   `json:"postedAt"                bun:"posted_at,type:BIGINT,nullzero"`
 	CreatedAt               int64    `json:"createdAt"               bun:"created_at,type:BIGINT,notnull"`
 	UpdatedAt               int64    `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull"`
-	Version                 int64    `json:"version"                 bun:"version,type:BIGINT,notnull,default:0"`
+	Version                 int64    `json:"version"                 bun:"version,type:BIGINT,notnull"`
 }
 
 func (r *Reversal) GetID() pulid.ID {

@@ -1,17 +1,17 @@
 import "@tanstack/react-table";
-import type {
-  FilterOperator,
-  FilterState,
-  FilterVariant,
-} from "@trenova/shared/types/data-table";
+import type { FilterOperator, FilterVariant } from "@trenova/shared/types/data-table";
 import type { SelectOption } from "@trenova/shared/types/fields";
 
 declare module "@tanstack/react-table" {
-  interface TableMeta<TData extends Record<string, any>> {
-    getRowClassName?: (row: Row<TData>) => string;
+  interface TableMeta<in out TFeatures extends TableFeatures, in out TData extends RowData> {
+    getRowClassName?: (row: Row<TFeatures, TData>) => string;
   }
 
-  interface ColumnMeta {
+  interface ColumnMeta<
+    in out TFeatures extends TableFeatures,
+    in out TData extends RowData,
+    TValue extends CellData = CellData,
+  > {
     headerClassName?: string;
     cellClassName?: string;
     label?: string;
@@ -24,18 +24,5 @@ declare module "@tanstack/react-table" {
     exportable?: boolean;
     exportValue?: (row: any) => unknown;
     [key: string]: any;
-  }
-
-  interface TableState {
-    filters: FilterState;
-  }
-
-  interface FilterFns {
-    inDateRange?: FilterFn<any>;
-    arrSome?: FilterFn<any>;
-  }
-
-  interface ColumnFiltersOptions<TData extends RowData> {
-    filterFns?: Record<string, FilterFn<TData>>;
   }
 }

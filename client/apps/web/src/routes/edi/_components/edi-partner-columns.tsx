@@ -6,7 +6,7 @@ import { partnerReadinessQueryOptions } from "./edi-partner-readiness";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { statusChoices } from "@/lib/choices";
 import type { EDIPartner } from "@trenova/shared/types/edi";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
   return [

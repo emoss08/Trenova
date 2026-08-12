@@ -9,10 +9,9 @@ import {
   getBulkExportFilename,
 } from "@/lib/formula-template-export";
 import { apiService } from "@/services/api";
-import type { DockAction, RowAction } from "@trenova/shared/types/data-table";
+import type { DockAction, RowAction, Row } from "@trenova/shared/types/data-table";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import {
   ArchiveIcon,
   CircleCheckIcon,
@@ -33,18 +32,13 @@ export default function FormulaTemplatesDataTable() {
   const queryClient = useQueryClient();
 
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
-  const [pendingDuplicateRows, setPendingDuplicateRows] = useState<
-    FormulaTemplate[]
-  >([]);
+  const [pendingDuplicateRows, setPendingDuplicateRows] = useState<FormulaTemplate[]>([]);
   const [isDuplicating, setIsDuplicating] = useState(false);
 
-  const [exportDialogTemplate, setExportDialogTemplate] =
-    useState<FormulaTemplate | null>(null);
+  const [exportDialogTemplate, setExportDialogTemplate] = useState<FormulaTemplate | null>(null);
 
-  const [forkDialogTemplate, setForkDialogTemplate] =
-    useState<FormulaTemplate | null>(null);
-  const [lineageDialogTemplate, setLineageDialogTemplate] =
-    useState<FormulaTemplate | null>(null);
+  const [forkDialogTemplate, setForkDialogTemplate] = useState<FormulaTemplate | null>(null);
+  const [lineageDialogTemplate, setLineageDialogTemplate] = useState<FormulaTemplate | null>(null);
 
   const handleExportClick = useCallback((template: FormulaTemplate) => {
     setExportDialogTemplate(template);
@@ -102,9 +96,7 @@ export default function FormulaTemplatesDataTable() {
         })
         .then(() => {
           toast.success(
-            templates.length === 1
-              ? "Formula template archived"
-              : "Formula templates archived",
+            templates.length === 1 ? "Formula template archived" : "Formula templates archived",
           );
         })
         .catch((error: unknown) => {
@@ -160,8 +152,7 @@ export default function FormulaTemplatesDataTable() {
         label: "Archive",
         icon: ArchiveIcon,
         variant: "destructive",
-        onClick: (row) =>
-          void handleArchiveTemplates([row.original]).catch(() => undefined),
+        onClick: (row) => void handleArchiveTemplates([row.original]).catch(() => undefined),
       },
     ],
     [handleArchiveTemplates, handleDuplicate, handleExportClick],
@@ -262,12 +253,7 @@ export default function FormulaTemplatesDataTable() {
         clearSelectionOnSuccess: true,
       },
     ],
-    [
-      handleArchiveTemplates,
-      handleBulkExport,
-      handleBulkDuplicate,
-      handleBulkStatusUpdate,
-    ],
+    [handleArchiveTemplates, handleBulkExport, handleBulkDuplicate, handleBulkStatusUpdate],
   );
 
   return (

@@ -50,9 +50,9 @@ type DetentionPolicy struct {
 	Description    string       `json:"description"    bun:"description,type:TEXT,nullzero"`
 	Status         PolicyStatus `json:"status"         bun:"status,type:detention_policy_status_enum,notnull,default:'Draft'"`
 
-	IsOrgDefault     bool       `json:"isOrgDefault"     bun:"is_org_default,type:BOOLEAN,notnull,default:false"`
-	Priority         int16      `json:"priority"         bun:"priority,type:SMALLINT,notnull,default:0"`
-	SpecificityScore int32      `json:"specificityScore" bun:"specificity_score,type:INTEGER,notnull,default:0"`
+	IsOrgDefault     bool       `json:"isOrgDefault"     bun:"is_org_default,type:BOOLEAN,notnull"`
+	Priority         int16      `json:"priority"         bun:"priority,type:SMALLINT,notnull"`
+	SpecificityScore int32      `json:"specificityScore" bun:"specificity_score,type:INTEGER,notnull"`
 	CustomerID       *pulid.ID  `json:"customerId"       bun:"customer_id,type:VARCHAR(100),nullzero"`
 	LocationID       *pulid.ID  `json:"locationId"       bun:"location_id,type:VARCHAR(100),nullzero"`
 	ShipmentTypeIDs  []pulid.ID `json:"shipmentTypeIds"  bun:"shipment_type_ids,type:JSONB,nullzero"`
@@ -60,17 +60,17 @@ type DetentionPolicy struct {
 	CommodityIDs     []pulid.ID `json:"commodityIds"     bun:"commodity_ids,type:JSONB,nullzero"`
 
 	StopTypes                  []shipment.StopType `json:"stopTypes"                  bun:"stop_types,type:JSONB,nullzero"`
-	AppointmentStopsOnly       bool                `json:"appointmentStopsOnly"       bun:"appointment_stops_only,type:BOOLEAN,notnull,default:false"`
+	AppointmentStopsOnly       bool                `json:"appointmentStopsOnly"       bun:"appointment_stops_only,type:BOOLEAN,notnull"`
 	EffectiveStartDate         *int64              `json:"effectiveStartDate"         bun:"effective_start_date,type:BIGINT,nullzero"`
 	EffectiveEndDate           *int64              `json:"effectiveEndDate"           bun:"effective_end_date,type:BIGINT,nullzero"`
 	ClockStartBasis            ClockStartBasis     `json:"clockStartBasis"            bun:"clock_start_basis,type:detention_clock_start_basis_enum,notnull,default:'LaterOfArrivalOrAppointment'"`
 	LateArrivalRule            LateArrivalRule     `json:"lateArrivalRule"            bun:"late_arrival_rule,type:detention_late_arrival_rule_enum,notnull,default:'NoEffect'"`
-	LateArrivalGraceMinutes    int16               `json:"lateArrivalGraceMinutes"    bun:"late_arrival_grace_minutes,type:SMALLINT,notnull,default:0"`
+	LateArrivalGraceMinutes    int16               `json:"lateArrivalGraceMinutes"    bun:"late_arrival_grace_minutes,type:SMALLINT,notnull"`
 	BillingFreeMinutes         int32               `json:"billingFreeMinutes"         bun:"billing_free_minutes,type:INTEGER,notnull,default:120"`
 	PickupFreeMinutes          *int32              `json:"pickupFreeMinutes"          bun:"pickup_free_minutes,type:INTEGER,nullzero"`
 	DeliveryFreeMinutes        *int32              `json:"deliveryFreeMinutes"        bun:"delivery_free_minutes,type:INTEGER,nullzero"`
 	PayFreeMinutes             *int32              `json:"payFreeMinutes"             bun:"pay_free_minutes,type:INTEGER,nullzero"`
-	MinimumBillableMinutes     int32               `json:"minimumBillableMinutes"     bun:"minimum_billable_minutes,type:INTEGER,notnull,default:0"`
+	MinimumBillableMinutes     int32               `json:"minimumBillableMinutes"     bun:"minimum_billable_minutes,type:INTEGER,notnull"`
 	BillingIncrementMinutes    int16               `json:"billingIncrementMinutes"    bun:"billing_increment_minutes,type:SMALLINT,notnull,default:15"`
 	RoundingMode               RoundingMode        `json:"roundingMode"               bun:"rounding_mode,type:detention_rounding_mode_enum,notnull,default:'Up'"`
 	RateSource                 RateSource          `json:"rateSource"                 bun:"rate_source,type:detention_rate_source_enum,notnull,default:'Accessorial'"`
@@ -85,11 +85,11 @@ type DetentionPolicy struct {
 
 	NotificationRequirement     NotificationRequirement `json:"notificationRequirement"     bun:"notification_requirement,type:detention_notification_requirement_enum,notnull,default:'None'"`
 	NotificationLeadMinutes     int16                   `json:"notificationLeadMinutes"     bun:"notification_lead_minutes,type:SMALLINT,notnull,default:30"`
-	NotificationDeadlineMinutes int16                   `json:"notificationDeadlineMinutes" bun:"notification_deadline_minutes,type:SMALLINT,notnull,default:0"`
+	NotificationDeadlineMinutes int16                   `json:"notificationDeadlineMinutes" bun:"notification_deadline_minutes,type:SMALLINT,notnull"`
 	UnnotifiedBehavior          UnnotifiedBehavior      `json:"unnotifiedBehavior"          bun:"unnotified_behavior,type:detention_unnotified_behavior_enum,notnull,default:'Bill'"`
-	AutoSendNotice              bool                    `json:"autoSendNotice"              bun:"auto_send_notice,type:BOOLEAN,notnull,default:false"`
-	AttachNoticePDF             bool                    `json:"attachNoticePdf"             bun:"attach_notice_pdf,type:BOOLEAN,notnull,default:false"`
-	SendDepartureSummary        bool                    `json:"sendDepartureSummary"        bun:"send_departure_summary,type:BOOLEAN,notnull,default:false"`
+	AutoSendNotice              bool                    `json:"autoSendNotice"              bun:"auto_send_notice,type:BOOLEAN,notnull"`
+	AttachNoticePDF             bool                    `json:"attachNoticePdf"             bun:"attach_notice_pdf,type:BOOLEAN,notnull"`
+	SendDepartureSummary        bool                    `json:"sendDepartureSummary"        bun:"send_departure_summary,type:BOOLEAN,notnull"`
 	RequireApprovalOverAmount   decimal.NullDecimal     `json:"requireApprovalOverAmount"   bun:"require_approval_over_amount,type:NUMERIC(19,4),nullzero"`
 	AutoApproveUnderAmount      decimal.NullDecimal     `json:"autoApproveUnderAmount"      bun:"auto_approve_under_amount,type:NUMERIC(19,4),nullzero"`
 	Currency                    string                  `json:"currency"                    bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`

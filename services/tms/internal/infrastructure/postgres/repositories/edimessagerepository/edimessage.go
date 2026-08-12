@@ -290,7 +290,7 @@ func (r *repository) UpdateMessageDelivery(
 		Set("delivery_last_attempt_at = ?", req.DeliveryLastAttemptAt).
 		Set("delivery_sent_at = ?", req.DeliverySentAt).
 		Set("delivery_last_error = ?", req.DeliveryLastError).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = "+r.db.NowEpoch()).
 		Where("id = ?", req.ID).
 		Where("organization_id = ?", req.TenantInfo.OrgID).
 		Where("business_unit_id = ?", req.TenantInfo.BuID).
@@ -627,7 +627,7 @@ func (r *repository) UpdateMessageAcknowledgment(
 		Set("ack_message_id = ?", req.AckMessageID).
 		Set("ack_received_at = ?", req.AckReceivedAt).
 		Set("ack_last_error = ?", req.AckLastError).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = "+r.db.NowEpoch()).
 		Where("id = ?", req.ID).
 		Where("organization_id = ?", req.TenantInfo.OrgID).
 		Where("business_unit_id = ?", req.TenantInfo.BuID).

@@ -3,9 +3,12 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formulaTemplateStatusChoices, formulaTypeChoices } from "@/lib/choices";
 import { patchFormulaTemplate } from "@/lib/formula-template-api";
-import type { FormulaTemplate, FormulaTemplateStatus } from "@trenova/shared/types/formula-template";
+import type {
+  FormulaTemplate,
+  FormulaTemplateStatus,
+} from "@trenova/shared/types/formula-template";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
 const editableStatusChoices = formulaTemplateStatusChoices.filter(

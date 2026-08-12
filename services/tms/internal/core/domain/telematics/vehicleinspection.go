@@ -31,9 +31,9 @@ type VehicleInspection struct {
 	EndedAt               int64                     `json:"endedAt"               bun:"ended_at,type:BIGINT,notnull"`
 	OdometerMeters        *int64                    `json:"odometerMeters"        bun:"odometer_meters,type:BIGINT,nullzero"`
 	Location              string                    `json:"location"              bun:"location,type:TEXT,nullzero"`
-	Signed                bool                      `json:"signed"                bun:"signed,type:BOOLEAN,notnull,default:false"`
-	DefectCount           int                       `json:"defectCount"           bun:"defect_count,type:INT,notnull,default:0"`
-	UnresolvedDefectCount int                       `json:"unresolvedDefectCount" bun:"unresolved_defect_count,type:INT,notnull,default:0"`
+	Signed                bool                      `json:"signed"                bun:"signed,type:BOOLEAN,notnull"`
+	DefectCount           int                       `json:"defectCount"           bun:"defect_count,type:INT,notnull"`
+	UnresolvedDefectCount int                       `json:"unresolvedDefectCount" bun:"unresolved_defect_count,type:INT,notnull"`
 	Defects               []VehicleInspectionDefect `json:"defects"               bun:"defects,type:JSONB,nullzero"`
 	CreatedAt             int64                     `json:"createdAt"             bun:"created_at,type:BIGINT,notnull"`
 }

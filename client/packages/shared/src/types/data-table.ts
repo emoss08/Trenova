@@ -1,9 +1,61 @@
-import type { ColumnDef, Row, Table } from "@tanstack/react-table";
+import type {
+  CellContext as TanStackCellContext,
+  Cell as TanStackCell,
+  ColumnDef as TanStackColumnDef,
+  Column as TanStackColumn,
+  HeaderContext as TanStackHeaderContext,
+  HeaderGroup as TanStackHeaderGroup,
+  Header as TanStackHeader,
+  ReactTable as TanStackReactTable,
+  Row as TanStackRow,
+  CellData,
+  RowData,
+} from "@tanstack/react-table";
 import type { LucideIcon } from "lucide-react";
 import { z } from "zod";
+import type { DataTableFeatures } from "../lib/table-features";
 import type { SelectOption } from "./fields";
 import type { GraphQLExecutableDocument } from "./graphql";
 import type { API_ENDPOINTS } from "./server";
+
+export type ColumnDef<
+  TData extends RowData,
+  TValue extends CellData = CellData,
+> = TanStackColumnDef<DataTableFeatures, TData, TValue>;
+
+export type Column<TData extends RowData, TValue extends CellData = CellData> = TanStackColumn<
+  DataTableFeatures,
+  TData,
+  TValue
+>;
+
+export type Row<TData extends RowData> = TanStackRow<DataTableFeatures, TData>;
+
+export type Table<TData extends RowData> = TanStackReactTable<DataTableFeatures, TData>;
+
+export type Cell<TData extends RowData, TValue extends CellData = CellData> = TanStackCell<
+  DataTableFeatures,
+  TData,
+  TValue
+>;
+
+export type Header<TData extends RowData, TValue extends CellData = CellData> = TanStackHeader<
+  DataTableFeatures,
+  TData,
+  TValue
+>;
+
+export type HeaderGroup<TData extends RowData> = TanStackHeaderGroup<DataTableFeatures, TData>;
+
+export type CellContext<
+  TData extends RowData,
+  TValue extends CellData = CellData,
+> = TanStackCellContext<DataTableFeatures, TData, TValue>;
+
+export type HeaderContext<
+  TData extends RowData,
+  TValue extends CellData = CellData,
+> = TanStackHeaderContext<DataTableFeatures, TData, TValue>;
 
 export type TableSheetProps = {
   open: boolean;
@@ -56,7 +108,7 @@ type SelectDockAction<TData> = BaseDockAction & {
 
 export type DockAction<TData> = SimpleDockAction<TData> | SelectDockAction<TData>;
 
-export type RowAction<TData> = {
+export type RowAction<TData extends RowData> = {
   id: string;
   label: string;
   icon?: LucideIcon;

@@ -1,14 +1,10 @@
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import {
-  hazardousClassChoices,
-  packingGroupChoices,
-  statusChoices,
-} from "@/lib/choices";
+import { hazardousClassChoices, packingGroupChoices, statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { HazardousMaterial } from "@/types/hazardous-material";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
 function HazardousMaterialStatusCell({ row }: { row: HazardousMaterial }) {
@@ -69,9 +65,7 @@ export function getColumns(): ColumnDef<HazardousMaterial>[] {
     {
       accessorKey: "name",
       header: "Name",
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.name}</span>
-      ),
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
       meta: {
         apiField: "name",
         filterable: true,
@@ -84,9 +78,7 @@ export function getColumns(): ColumnDef<HazardousMaterial>[] {
       accessorKey: "class",
       header: "Class",
       cell: ({ row }) => {
-        const classLabel = hazardousClassChoices.find(
-          (c) => c.value === row.original.class,
-        )?.label;
+        const classLabel = hazardousClassChoices.find((c) => c.value === row.original.class)?.label;
         return <span>{classLabel || row.original.class}</span>;
       },
       size: 250,

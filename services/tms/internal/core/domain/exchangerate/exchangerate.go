@@ -49,7 +49,7 @@ type ExchangeRate struct {
 	Date               string          `json:"date"               bun:"date,type:DATE,notnull"`
 	SourceTimestamp    time.Time       `json:"sourceTimestamp"    bun:"source_timestamp,type:TIMESTAMPTZ,notnull"`
 	FetchedAt          time.Time       `json:"fetchedAt"          bun:"fetched_at,type:TIMESTAMPTZ,notnull,default:current_timestamp"`
-	SettlementEligible bool            `json:"settlementEligible" bun:"settlement_eligible,type:BOOLEAN,notnull,default:false"`
+	SettlementEligible bool            `json:"settlementEligible" bun:"settlement_eligible,type:BOOLEAN,notnull"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`

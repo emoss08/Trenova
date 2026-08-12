@@ -210,12 +210,18 @@ func (r *repository) GetProfile(
 	return entity, dberror.HandleNotFoundError(err, "EmailProfile")
 }
 
-func (r *repository) CreateProfile(ctx context.Context, entity *email.Profile) (*email.Profile, error) {
+func (r *repository) CreateProfile(
+	ctx context.Context,
+	entity *email.Profile,
+) (*email.Profile, error) {
 	_, err := r.db.DB().NewInsert().Model(entity).Returning(profileReturningColumns).Exec(ctx)
 	return entity, err
 }
 
-func (r *repository) UpdateProfile(ctx context.Context, entity *email.Profile) (*email.Profile, error) {
+func (r *repository) UpdateProfile(
+	ctx context.Context,
+	entity *email.Profile,
+) (*email.Profile, error) {
 	previousVersion := entity.Version
 	entity.Version++
 	result, err := r.db.DB().NewUpdate().
@@ -234,7 +240,10 @@ func (r *repository) UpdateProfile(ctx context.Context, entity *email.Profile) (
 	return entity, nil
 }
 
-func (r *repository) DeleteProfile(ctx context.Context, req repositories.GetEmailEntityRequest) error {
+func (r *repository) DeleteProfile(
+	ctx context.Context,
+	req repositories.GetEmailEntityRequest,
+) error {
 	result, err := r.db.DB().NewDelete().
 		Model((*email.Profile)(nil)).
 		Where("id = ?", req.ID).
@@ -283,7 +292,7 @@ func (r *repository) UpsertAssignments(
 				Model(assignment).
 				On("CONFLICT (organization_id, business_unit_id, purpose) DO UPDATE").
 				Set("profile_id = EXCLUDED.profile_id").
-				Set("updated_at = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint").
+				Set("updated_at = " + r.db.NowEpoch()).
 				Returning("*").
 				Exec(ctx)
 			if err != nil {
@@ -336,12 +345,18 @@ func (r *repository) GetAssignedProfile(
 	return entity, dberror.HandleNotFoundError(err, "EmailProfile")
 }
 
-func (r *repository) CreateMessage(ctx context.Context, entity *email.Message) (*email.Message, error) {
+func (r *repository) CreateMessage(
+	ctx context.Context,
+	entity *email.Message,
+) (*email.Message, error) {
 	_, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx)
 	return entity, err
 }
 
-func (r *repository) UpdateMessage(ctx context.Context, entity *email.Message) (*email.Message, error) {
+func (r *repository) UpdateMessage(
+	ctx context.Context,
+	entity *email.Message,
+) (*email.Message, error) {
 	_, err := r.db.DB().
 		NewUpdate().
 		Model(entity).
@@ -526,7 +541,10 @@ func (r *repository) CreateSuppression(
 	return entity, err
 }
 
-func (r *repository) DeleteSuppression(ctx context.Context, req repositories.GetEmailEntityRequest) error {
+func (r *repository) DeleteSuppression(
+	ctx context.Context,
+	req repositories.GetEmailEntityRequest,
+) error {
 	result, err := r.db.DB().NewDelete().
 		Model((*email.Suppression)(nil)).
 		Where("id = ?", req.ID).

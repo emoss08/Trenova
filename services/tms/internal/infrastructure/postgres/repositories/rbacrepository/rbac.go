@@ -167,7 +167,7 @@ func (r *repository) GetAuthorizedRoles(
 		Where("ura.organization_id = ?", orgID).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("ura.expires_at IS NULL").
-				WhereOr("ura.expires_at > extract(epoch from current_timestamp)::bigint")
+				WhereOr("ura.expires_at > " + r.db.NowEpoch())
 		}).
 		Order("r.name ASC").
 		Scan(ctx)

@@ -1,4 +1,4 @@
-import { getFragmentData } from "@trenova/graphql/generated";
+import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
   ReportDashboardFieldsFragmentDoc,
   ReportDefinitionFieldsFragmentDoc,

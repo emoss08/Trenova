@@ -2,7 +2,7 @@ import { AmountDisplay } from "@trenova/shared/components/accounting/amount-disp
 import { PlainCustomerPaymentStatusBadge } from "@trenova/shared/components/status-badge";
 import type { CustomerPaymentRow } from "@/lib/graphql/customer-payment";
 import type { CustomerPaymentStatus } from "@trenova/shared/types/customer-payment";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 
 function formatDate(unix: number): string {
@@ -15,9 +15,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <PlainCustomerPaymentStatusBadge
-          status={row.original.status as CustomerPaymentStatus}
-        />
+        <PlainCustomerPaymentStatusBadge status={row.original.status as CustomerPaymentStatus} />
       ),
       size: 100,
       meta: { apiField: "status" },
@@ -26,9 +24,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
       accessorKey: "referenceNumber",
       header: "Reference",
       cell: ({ row }) => (
-        <span className="font-mono text-xs font-medium">
-          {row.original.referenceNumber || "—"}
-        </span>
+        <span className="font-mono text-xs font-medium">{row.original.referenceNumber || "—"}</span>
       ),
       size: 140,
       meta: { apiField: "referenceNumber" },
@@ -55,18 +51,14 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
     {
       accessorKey: "paymentDate",
       header: "Payment Date",
-      cell: ({ row }) => (
-        <span className="text-xs">{formatDate(row.original.paymentDate)}</span>
-      ),
+      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.paymentDate)}</span>,
       size: 120,
       meta: { apiField: "paymentDate" },
     },
     {
       accessorKey: "accountingDate",
       header: "Accounting Date",
-      cell: ({ row }) => (
-        <span className="text-xs">{formatDate(row.original.accountingDate)}</span>
-      ),
+      cell: ({ row }) => <span className="text-xs">{formatDate(row.original.accountingDate)}</span>,
       size: 120,
       meta: { apiField: "accountingDate" },
     },

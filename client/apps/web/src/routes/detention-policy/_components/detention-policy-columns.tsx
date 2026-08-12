@@ -5,7 +5,7 @@ import { detentionPolicyStatusChoices, detentionRateSourceChoices } from "@/lib/
 import { formatDetentionMinutes } from "@trenova/shared/lib/detention";
 import type { DetentionPolicy } from "@trenova/shared/types/detention";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<DetentionPolicy>[] {
   return [
@@ -120,9 +120,7 @@ export function getColumns(): ColumnDef<DetentionPolicy>[] {
       accessorKey: "specificityScore",
       header: "Specificity",
       cell: ({ row }) => (
-        <span className="text-muted-foreground tabular-nums">
-          {row.original.specificityScore}
-        </span>
+        <span className="text-muted-foreground tabular-nums">{row.original.specificityScore}</span>
       ),
       size: 110,
       minSize: 100,

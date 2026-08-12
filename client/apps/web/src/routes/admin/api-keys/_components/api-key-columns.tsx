@@ -2,7 +2,7 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { PermissionScopeBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { ApiKey } from "@/types/api-key";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<ApiKey>[] {
   return [

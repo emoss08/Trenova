@@ -4,7 +4,7 @@ import { EDITransferStatusBadge } from "@trenova/shared/components/status-badge"
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { ediTransferStatusChoices } from "@/lib/choices";
 import type { EDITransfer } from "@trenova/shared/types/edi";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { LinkIcon } from "lucide-react";
 import { Link } from "react-router";
 

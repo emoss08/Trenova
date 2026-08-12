@@ -3,7 +3,7 @@ import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { recurringShipmentSchema, type RecurringShipment } from "@/types/recurring-shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, type DefaultValues, type Resolver } from "react-hook-form";
 import { RecurringShipmentForm } from "./recurring-shipment-form";
 
 const defaultValues: Partial<RecurringShipment> = {
@@ -29,9 +29,9 @@ export function RecurringShipmentPanel({
   mode,
   row,
 }: DataTablePanelProps<RecurringShipment>) {
-  const form = useForm({
-    resolver: zodResolver(recurringShipmentSchema),
-    defaultValues,
+  const form = useForm<RecurringShipment>({
+    resolver: zodResolver(recurringShipmentSchema) as Resolver<RecurringShipment>,
+    defaultValues: defaultValues as DefaultValues<RecurringShipment>,
     mode: "onChange",
   });
 

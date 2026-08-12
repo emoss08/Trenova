@@ -489,6 +489,46 @@ func (e *NotFoundError) WithContext(ctx *ErrorContext) *NotFoundError {
 	return e
 }
 
+type NotImplementedError struct {
+	BaseError
+	Driver     string `json:"driver,omitempty"`
+	Capability string `json:"capability,omitempty"`
+}
+
+func NewNotImplementedError(message string) *NotImplementedError {
+	return &NotImplementedError{
+		BaseError: BaseError{
+			Code:    ErrNotImplemented,
+			Message: message,
+		},
+	}
+}
+
+func IsNotImplementedError(err error) bool {
+	_, ok := errors.AsType[*NotImplementedError](err)
+	return ok
+}
+
+func (e *NotImplementedError) WithDriver(driver string) *NotImplementedError {
+	e.Driver = driver
+	return e
+}
+
+func (e *NotImplementedError) WithCapability(capability string) *NotImplementedError {
+	e.Capability = capability
+	return e
+}
+
+func (e *NotImplementedError) WithInternal(err error) *NotImplementedError {
+	e.Internal = err
+	return e
+}
+
+func (e *NotImplementedError) WithContext(ctx *ErrorContext) *NotImplementedError {
+	e.Context = ctx
+	return e
+}
+
 type RateLimitError struct {
 	BaseError
 	Field string `json:"field,omitempty"`

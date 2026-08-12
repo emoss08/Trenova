@@ -1,8 +1,12 @@
+import type { RowData } from "@tanstack/react-table";
 import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
-import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@trenova/shared/types/data-table";
-import type { Column } from "@tanstack/react-table";
+import type {
+  DataTableGraphQLConfig,
+  DataTableQueryOptions,
+  Column,
+} from "@trenova/shared/types/data-table";
 
-export type ExportColumn<TData> = {
+export type ExportColumn<TData extends RowData> = {
   id: string;
   header: string;
   getValue: (row: TData) => unknown;
@@ -26,7 +30,7 @@ function getNestedValue(row: unknown, path: string): unknown {
   return current;
 }
 
-export function buildExportColumns<TData>(
+export function buildExportColumns<TData extends RowData>(
   leafColumns: Column<TData, unknown>[],
   visibleOnly: boolean,
 ): ExportColumn<TData>[] {
@@ -42,8 +46,7 @@ export function buildExportColumns<TData>(
     const exportValue = meta?.exportValue;
     if (!accessorKey && !exportValue) continue;
 
-    const header =
-      typeof def.header === "string" ? def.header : (meta?.label ?? column.id);
+    const header = typeof def.header === "string" ? def.header : (meta?.label ?? column.id);
 
     exportColumns.push({
       id: column.id,
@@ -70,15 +73,16 @@ function escapeCsvValue(value: string): string {
   return value;
 }
 
-export function buildCsv<TData>(rows: TData[], columns: ExportColumn<TData>[]): string {
+export function buildCsv<TData extends RowData>(
+  rows: TData[],
+  columns: ExportColumn<TData>[],
+): string {
   const lines: string[] = Array.from({ length: rows.length + 1 }, () => "");
   lines[0] = columns.map((c) => escapeCsvValue(c.header)).join(",");
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    lines[i + 1] = columns
-      .map((c) => escapeCsvValue(formatCsvValue(c.getValue(row))))
-      .join(",");
+    lines[i + 1] = columns.map((c) => escapeCsvValue(formatCsvValue(c.getValue(row)))).join(",");
   }
 
   return lines.join("\r\n");

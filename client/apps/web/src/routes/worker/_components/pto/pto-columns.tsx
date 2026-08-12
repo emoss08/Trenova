@@ -2,7 +2,7 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { PTOStatusBadge, PTOTypeBadge } from "@trenova/shared/components/status-badge";
 import { ptoStatusChoices, ptoTypeChoices } from "@/lib/choices";
 import type { WorkerPTO } from "@trenova/shared/types/worker";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<WorkerPTO>[] {
   return [

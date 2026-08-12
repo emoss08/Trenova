@@ -35,10 +35,10 @@ type LocationCategory struct {
 	Type                Category     `json:"type"                bun:"type,type:location_category_type,notnull"`
 	FacilityType        FacilityType `json:"facilityType"        bun:"facility_type,type:facility_type,nullzero"`
 	Color               string       `json:"color"               bun:"color,type:VARCHAR(10),nullzero"`
-	HasSecureParking    bool         `json:"hasSecureParking"    bun:"has_secure_parking,type:BOOLEAN,default:false"`
-	RequiresAppointment bool         `json:"requiresAppointment" bun:"requires_appointment,type:BOOLEAN,default:false"`
-	AllowsOvernight     bool         `json:"allowsOvernight"     bun:"allows_overnight,type:BOOLEAN,default:false"`
-	HasRestroom         bool         `json:"hasRestroom"         bun:"has_restroom,type:BOOLEAN,default:false"`
+	HasSecureParking    bool         `json:"hasSecureParking"    bun:"has_secure_parking,type:BOOLEAN"`
+	RequiresAppointment bool         `json:"requiresAppointment" bun:"requires_appointment,type:BOOLEAN"`
+	AllowsOvernight     bool         `json:"allowsOvernight"     bun:"allows_overnight,type:BOOLEAN"`
+	HasRestroom         bool         `json:"hasRestroom"         bun:"has_restroom,type:BOOLEAN"`
 	Version             int64        `json:"version"             bun:"version,type:BIGINT"`
 	CreatedAt           int64        `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt           int64        `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

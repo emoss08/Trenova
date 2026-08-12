@@ -62,7 +62,7 @@ type Worker struct {
 	Rank                  string             `json:"-"                           bun:"rank,type:VARCHAR(100),scanonly"`
 	AssignmentBlocked     string             `json:"assignmentBlocked,omitempty" bun:"assignment_blocked,type:VARCHAR(255),nullzero"`
 	Gender                Gender             `json:"gender"                      bun:"gender,type:gender_enum,notnull"`
-	CanBeAssigned         bool               `json:"canBeAssigned"               bun:"can_be_assigned,type:BOOLEAN,notnull,default:false"`
+	CanBeAssigned         bool               `json:"canBeAssigned"               bun:"can_be_assigned,type:BOOLEAN,notnull"`
 	AvailableForDispatch  bool               `json:"availableForDispatch"        bun:"available_for_dispatch,type:BOOLEAN,notnull,default:true"`
 	Version               int64              `json:"version"                     bun:"version,type:BIGINT"`
 	CreatedAt             int64              `json:"createdAt"                   bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

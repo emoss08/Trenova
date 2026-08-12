@@ -16,7 +16,7 @@ type UsageDaily struct {
 	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
 	UsageDate      time.Time `json:"usageDate"      bun:"usage_date,pk,type:date,notnull"`
-	RequestCount   int64     `json:"requestCount"   bun:"request_count,notnull,default:0"`
+	RequestCount   int64     `json:"requestCount"   bun:"request_count,notnull"`
 }
 
 func (u *UsageDaily) Validate(multiErr *errortypes.MultiError) {

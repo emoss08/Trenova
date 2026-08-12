@@ -161,7 +161,7 @@ type Document struct {
 	StorageVersionID      string              `json:"storageVersionId"      bun:"storage_version_id,type:VARCHAR(255),nullzero"`
 	StorageRetentionMode  string              `json:"storageRetentionMode"  bun:"storage_retention_mode,type:VARCHAR(50),nullzero"`
 	StorageRetentionUntil *int64              `json:"storageRetentionUntil" bun:"storage_retention_until,type:BIGINT,nullzero"`
-	StorageLegalHold      bool                `json:"storageLegalHold"      bun:"storage_legal_hold,type:BOOLEAN,notnull,default:false"`
+	StorageLegalHold      bool                `json:"storageLegalHold"      bun:"storage_legal_hold,type:BOOLEAN,notnull"`
 	CryptoMode            string              `json:"cryptoMode"            bun:"crypto_mode,type:VARCHAR(32),notnull,default:'envelope_v1'"`
 	CryptoVersion         int16               `json:"cryptoVersion"         bun:"crypto_version,type:SMALLINT,notnull,default:1"`
 	Status                Status              `json:"status"                bun:"status,type:document_status_enum,notnull,default:'Active'"`
@@ -171,7 +171,7 @@ type Document struct {
 	ProcessingProfile     ProcessingProfile   `json:"processingProfile"     bun:"processing_profile,type:VARCHAR(64),notnull,default:'none'"`
 	ExpirationDate        *int64              `json:"expirationDate"        bun:"expiration_date,type:BIGINT,nullzero"`
 	Tags                  []string            `json:"tags"                  bun:"tags,type:VARCHAR(100)[],default:'{}'"`
-	IsPublic              bool                `json:"isPublic"              bun:"is_public,type:BOOLEAN,notnull,default:false"`
+	IsPublic              bool                `json:"isPublic"              bun:"is_public,type:BOOLEAN,notnull"`
 	UploadedByID          pulid.ID            `json:"uploadedById"          bun:"uploaded_by_id,type:VARCHAR(100),notnull"`
 	ApprovedByID          pulid.ID            `json:"approvedById"          bun:"approved_by_id,type:VARCHAR(100),nullzero"`
 	ApprovedAt            *int64              `json:"approvedAt"            bun:"approved_at,type:BIGINT,nullzero"`
@@ -180,7 +180,7 @@ type Document struct {
 	ContentStatus         ContentStatus       `json:"contentStatus"         bun:"content_status,type:document_content_status_enum,notnull,nullzero,default:'Pending'"`
 	ContentError          string              `json:"contentError"          bun:"content_error,type:TEXT,nullzero"`
 	DetectedKind          string              `json:"detectedKind"          bun:"detected_kind,type:VARCHAR(100),nullzero"`
-	HasExtractedText      bool                `json:"hasExtractedText"      bun:"has_extracted_text,type:BOOLEAN,notnull,default:false"`
+	HasExtractedText      bool                `json:"hasExtractedText"      bun:"has_extracted_text,type:BOOLEAN,notnull"`
 	ShipmentDraftStatus   ShipmentDraftStatus `json:"shipmentDraftStatus"   bun:"shipment_draft_status,type:document_shipment_draft_status_enum,notnull,nullzero,default:'Unavailable'"`
 	DocumentTypeID        *pulid.ID           `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),nullzero"`
 	SearchVector          string              `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`

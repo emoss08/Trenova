@@ -4,7 +4,7 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { BooleanBadge } from "@trenova/shared/components/status-badge";
 import { holdSeverityChoices, holdTypeChoices } from "@/lib/choices";
 import type { HoldReason } from "@/types/hold-reason";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<HoldReason>[] {
   return [
@@ -28,9 +28,7 @@ export function getColumns(): ColumnDef<HoldReason>[] {
       accessorKey: "type",
       header: "Type",
       cell: ({ row }) => {
-        const choice = holdTypeChoices.find(
-          (c) => c.value === row.original.type,
-        );
+        const choice = holdTypeChoices.find((c) => c.value === row.original.type);
         return choice ? (
           <ColorOptionValue color={choice.color} value={choice.label} />
         ) : (
@@ -86,10 +84,7 @@ export function getColumns(): ColumnDef<HoldReason>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.description}
-          truncateLength={100}
-        />
+        <DataTableDescription description={row.original.description} truncateLength={100} />
       ),
       size: 400,
       minSize: 300,
@@ -107,9 +102,7 @@ export function getColumns(): ColumnDef<HoldReason>[] {
       accessorKey: "defaultSeverity",
       header: "Default Severity",
       cell: ({ row }) => {
-        const choice = holdSeverityChoices.find(
-          (c) => c.value === row.original.defaultSeverity,
-        );
+        const choice = holdSeverityChoices.find((c) => c.value === row.original.defaultSeverity);
         return choice ? (
           <ColorOptionValue color={choice.color} value={choice.label} />
         ) : (
@@ -132,9 +125,7 @@ export function getColumns(): ColumnDef<HoldReason>[] {
     {
       accessorKey: "defaultBlocksDispatch",
       header: "Blocks Dispatch",
-      cell: ({ row }) => (
-        <BooleanBadge value={row.original.defaultBlocksDispatch} />
-      ),
+      cell: ({ row }) => <BooleanBadge value={row.original.defaultBlocksDispatch} />,
       size: 150,
       minSize: 130,
       maxSize: 180,
@@ -150,9 +141,7 @@ export function getColumns(): ColumnDef<HoldReason>[] {
     {
       accessorKey: "defaultBlocksDelivery",
       header: "Blocks Delivery",
-      cell: ({ row }) => (
-        <BooleanBadge value={row.original.defaultBlocksDelivery} />
-      ),
+      cell: ({ row }) => <BooleanBadge value={row.original.defaultBlocksDelivery} />,
       size: 150,
       minSize: 130,
       maxSize: 180,
@@ -168,9 +157,7 @@ export function getColumns(): ColumnDef<HoldReason>[] {
     {
       accessorKey: "defaultBlocksBilling",
       header: "Blocks Billing",
-      cell: ({ row }) => (
-        <BooleanBadge value={row.original.defaultBlocksBilling} />
-      ),
+      cell: ({ row }) => <BooleanBadge value={row.original.defaultBlocksBilling} />,
       size: 150,
       minSize: 130,
       maxSize: 180,

@@ -1,23 +1,28 @@
 "use no memo";
+import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDataTable } from "@/contexts/data-table-context";
 import { cn } from "@trenova/shared/lib/utils";
-import type { DockAction } from "@trenova/shared/types/data-table";
-import type { Table } from "@tanstack/react-table";
+import type { DockAction, Table } from "@trenova/shared/types/data-table";
 import { ChevronDownIcon, XIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useState } from "react";
-import { Command, CommandGroup, CommandItem, CommandList } from "@trenova/shared/components/ui/command";
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 
-type DataTableDockProps<TData> = {
+type DataTableDockProps<TData extends RowData> = {
   table: Table<TData>;
   actions: DockAction<TData>[];
 };
 
-export function DataTableDock<TData>({
+export function DataTableDock<TData extends RowData>({
   table,
   actions,
 }: DataTableDockProps<TData>) {
@@ -134,18 +139,12 @@ export function DataTableDock<TData>({
                     <Popover
                       key={action.id}
                       open={openSelectId === action.id}
-                      onOpenChange={(open) =>
-                        setOpenSelectId(open ? action.id : null)
-                      }
+                      onOpenChange={(open) => setOpenSelectId(open ? action.id : null)}
                     >
                       <PopoverTrigger
                         render={
                           <Button
-                            variant={
-                              action.variant === "destructive"
-                                ? "destructive"
-                                : "ghost"
-                            }
+                            variant={action.variant === "destructive" ? "destructive" : "ghost"}
                             size="sm"
                             disabled={isLoading}
                             className={cn(
@@ -159,9 +158,7 @@ export function DataTableDock<TData>({
                             ) : (
                               ActionIcon && <ActionIcon className="size-4" />
                             )}
-                            {isLoading && action.loadingLabel
-                              ? action.loadingLabel
-                              : action.label}
+                            {isLoading && action.loadingLabel ? action.loadingLabel : action.label}
                             <ChevronDownIcon className="size-3 opacity-50 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                           </Button>
                         }
@@ -178,9 +175,7 @@ export function DataTableDock<TData>({
                                 <CommandItem
                                   key={option.value}
                                   value={option.value}
-                                  onSelect={() =>
-                                    handleSelectAction(action, option.value)
-                                  }
+                                  onSelect={() => handleSelectAction(action, option.value)}
                                   className="flex items-center gap-2 text-xs"
                                 >
                                   {option.color && (
@@ -203,9 +198,7 @@ export function DataTableDock<TData>({
                 return (
                   <Button
                     key={action.id}
-                    variant={
-                      action.variant === "destructive" ? "destructive" : "ghost"
-                    }
+                    variant={action.variant === "destructive" ? "destructive" : "ghost"}
                     size="sm"
                     disabled={isLoading}
                     className={cn(
@@ -215,14 +208,8 @@ export function DataTableDock<TData>({
                     )}
                     onClick={() => handleSimpleActionClick(action)}
                   >
-                    {isLoading ? (
-                      <Spinner />
-                    ) : (
-                      ActionIcon && <ActionIcon className="size-4" />
-                    )}
-                    {isLoading && action.loadingLabel
-                      ? action.loadingLabel
-                      : action.label}
+                    {isLoading ? <Spinner /> : ActionIcon && <ActionIcon className="size-4" />}
+                    {isLoading && action.loadingLabel ? action.loadingLabel : action.label}
                   </Button>
                 );
               })}

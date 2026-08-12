@@ -1,3 +1,5 @@
+// dialect:postgres-only — reads pg_stat_activity and pg_blocking_pids, which
+// have no counterpart outside PostgreSQL. Callers gate on CapSessionDiagnostics.
 package databasesessionrepository
 
 import (
@@ -9,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/uptrace/bun"
@@ -38,6 +41,10 @@ func New(p Params) repositories.DatabaseSessionRepository {
 }
 
 func (r *repository) ListBlocked(ctx context.Context) ([]*system.DatabaseSessionChain, error) {
+	if err := dbdialect.RequireFromBun(r.db.DB(), dbdialect.CapSessionDiagnostic); err != nil {
+		return nil, err
+	}
+
 	var rows []*system.DatabaseSessionChain
 
 	err := r.db.DBForContext(ctx).NewRaw(`
@@ -76,6 +83,10 @@ func (r *repository) Terminate(
 	ctx context.Context,
 	pid int64,
 ) (*system.TerminateDatabaseSessionResult, error) {
+	if err := dbdialect.RequireFromBun(r.db.DB(), dbdialect.CapSessionDiagnostic); err != nil {
+		return nil, err
+	}
+
 	if pid <= 0 {
 		return nil, errortypes.NewValidationError(
 			"pid",

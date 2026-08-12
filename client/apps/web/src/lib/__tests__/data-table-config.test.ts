@@ -1,7 +1,13 @@
 import type { TableConfig } from "@/types/table-configuration";
-import type { Column, Row } from "@tanstack/react-table";
+import type { Column, Row } from "@trenova/shared/types/data-table";
 import { describe, expect, it } from "vitest";
-import { compileFormatRules, isTableConfigEqual, stringifyUnknown } from "../data-table";
+import {
+  compileFormatRules,
+  fromColumnPinningState,
+  isTableConfigEqual,
+  stringifyUnknown,
+  toColumnPinningState,
+} from "../data-table";
 
 function makeConfig(overrides: Partial<TableConfig> = {}): TableConfig {
   return {
@@ -47,7 +53,10 @@ describe("isTableConfigEqual", () => {
   it("detects density and pinning differences", () => {
     expect(isTableConfigEqual(makeConfig({ density: "compact" }), makeConfig())).toBe(false);
     expect(
-      isTableConfigEqual(makeConfig({ columnPinning: { left: ["name"], right: [] } }), makeConfig()),
+      isTableConfigEqual(
+        makeConfig({ columnPinning: { left: ["name"], right: [] } }),
+        makeConfig(),
+      ),
     ).toBe(false);
   });
 
@@ -144,5 +153,39 @@ describe("stringifyUnknown", () => {
     expect(stringifyUnknown(undefined)).toBe("");
     expect(stringifyUnknown({ a: 1 })).toBe('{"a":1}');
     expect(stringifyUnknown([1, 2])).toBe("[1,2]");
+  });
+});
+
+describe("column pinning wire <-> table state", () => {
+  it("maps persisted left/right onto logical start/end", () => {
+    expect(toColumnPinningState({ left: ["select", "pro"], right: ["actions"] })).toEqual({
+      start: ["select", "pro"],
+      end: ["actions"],
+    });
+  });
+
+  it("maps logical start/end back onto persisted left/right", () => {
+    expect(fromColumnPinningState({ start: ["select"], end: ["actions", "menu"] })).toEqual({
+      left: ["select"],
+      right: ["actions", "menu"],
+    });
+  });
+
+  it("does not swap the two sides on a round trip", () => {
+    const persisted = { left: ["a"], right: ["b"] };
+    expect(fromColumnPinningState(toColumnPinningState(persisted))).toEqual(persisted);
+  });
+
+  it("keeps a one-sided pin on its own side", () => {
+    expect(fromColumnPinningState(toColumnPinningState({ left: [], right: ["actions"] }))).toEqual({
+      left: [],
+      right: ["actions"],
+    });
+  });
+
+  it("defaults absent pinning to empty sides", () => {
+    expect(toColumnPinningState(undefined)).toEqual({ start: [], end: [] });
+    expect(toColumnPinningState(null)).toEqual({ start: [], end: [] });
+    expect(fromColumnPinningState(undefined)).toEqual({ left: [], right: [] });
   });
 });

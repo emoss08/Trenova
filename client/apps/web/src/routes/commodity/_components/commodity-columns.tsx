@@ -6,7 +6,7 @@ import { freightClassChoices, statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { Commodity } from "@trenova/shared/types/commodity";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
 function CommodityStatusCell({ row }: { row: Commodity }) {

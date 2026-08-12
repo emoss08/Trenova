@@ -57,8 +57,8 @@ type PayCode struct {
 	CountsTowardGuarantee bool               `json:"countsTowardGuarantee" bun:"counts_toward_guarantee,type:BOOLEAN,notnull,default:true"`
 	GLAccountID           *pulid.ID          `json:"glAccountId"           bun:"gl_account_id,type:VARCHAR(100),nullzero"`
 	DefaultAmountMinor    *int64             `json:"defaultAmountMinor"    bun:"default_amount_minor,type:BIGINT,nullzero"`
-	IsSystem              bool               `json:"isSystem"              bun:"is_system,type:BOOLEAN,notnull,default:false"`
-	Version               int64              `json:"version"               bun:"version,type:BIGINT,notnull,default:0"`
+	IsSystem              bool               `json:"isSystem"              bun:"is_system,type:BOOLEAN,notnull"`
+	Version               int64              `json:"version"               bun:"version,type:BIGINT,notnull"`
 	CreatedAt             int64              `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt             int64              `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

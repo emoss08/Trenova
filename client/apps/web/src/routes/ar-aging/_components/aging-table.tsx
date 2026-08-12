@@ -10,14 +10,9 @@ import {
 } from "@trenova/shared/components/ui/table";
 import type { ARAgingRow, ARAgingSummary } from "@/lib/graphql/accounts-receivable";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type SortingState,
-} from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
+import { flexRender, useTable, type SortingState } from "@tanstack/react-table";
+import { dataTableFeatures } from "@trenova/shared/lib/table-features";
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -29,10 +24,7 @@ const OVERDUE_CELL_CLASSES: Record<string, string> = {
   daysOver90Minor: "font-medium text-red-700 dark:text-red-400",
 };
 
-function bucketColumn(
-  key: keyof ARAgingRow["buckets"],
-  header: string,
-): ColumnDef<ARAgingRow> {
+function bucketColumn(key: keyof ARAgingRow["buckets"], header: string): ColumnDef<ARAgingRow> {
   return {
     id: key,
     header,
@@ -60,9 +52,7 @@ export function AgingTable({
   totals: ARAgingSummary["totals"];
   rows: ARAgingRow[];
 }) {
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "totalOpenMinor", desc: true },
-  ]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "totalOpenMinor", desc: true }]);
 
   const columns = useMemo<ColumnDef<ARAgingRow>[]>(
     () => [
@@ -116,13 +106,12 @@ export function AgingTable({
     [],
   );
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data: rows,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   return (
@@ -167,8 +156,7 @@ export function AgingTable({
           {table.getRowModel().rows.map((row) => (
             <TableRow key={row.id} className="transition-colors">
               {row.getVisibleCells().map((cell) => {
-                const align = (cell.column.columnDef.meta as { align?: string } | undefined)
-                  ?.align;
+                const align = (cell.column.columnDef.meta as { align?: string } | undefined)?.align;
                 return (
                   <TableCell
                     key={cell.id}

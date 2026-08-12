@@ -1,14 +1,21 @@
 "use no memo";
+import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
 import type { TableDensity } from "@/types/table-configuration";
-import type { Table } from "@tanstack/react-table";
-import { ChevronRightIcon, PaintbrushIcon, Rows2Icon, Rows4Icon, SlidersHorizontalIcon } from "lucide-react";
+import type { Table } from "@trenova/shared/types/data-table";
+import {
+  ChevronRightIcon,
+  PaintbrushIcon,
+  Rows2Icon,
+  Rows4Icon,
+  SlidersHorizontalIcon,
+} from "lucide-react";
 import { useState } from "react";
 
 type DataTableDisplayMenuProps = {
-  table: Table<unknown>;
+  table: Table<RowData>;
   density?: TableDensity;
   onDensityChange?: (density: TableDensity) => void;
   formatRuleCount?: number;

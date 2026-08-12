@@ -9,7 +9,7 @@ import {
   statusChoices,
 } from "@/lib/choices";
 import type { HazmatSegregationRule } from "@/types/hazmat-segregation-rule";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
   return [
@@ -17,9 +17,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const choice = statusChoices.find(
-          (c) => c.value === row.original.status,
-        );
+        const choice = statusChoices.find((c) => c.value === row.original.status);
         return choice ? (
           <ColorOptionValue color={choice.color} value={choice.label} />
         ) : (
@@ -58,10 +56,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.description}
-          truncateLength={100}
-        />
+        <DataTableDescription description={row.original.description} truncateLength={100} />
       ),
       size: 320,
       minSize: 280,
@@ -79,9 +74,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
       accessorKey: "classA",
       header: "Class A",
       cell: ({ row }) => {
-        const choice = hazardousClassChoices.find(
-          (c) => c.value === row.original.classA,
-        );
+        const choice = hazardousClassChoices.find((c) => c.value === row.original.classA);
         return choice ? choice.label : row.original.classA;
       },
       size: 240,
@@ -101,9 +94,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
       accessorKey: "classB",
       header: "Class B",
       cell: ({ row }) => {
-        const choice = hazardousClassChoices.find(
-          (c) => c.value === row.original.classB,
-        );
+        const choice = hazardousClassChoices.find((c) => c.value === row.original.classB);
         return choice ? choice.label : row.original.classB;
       },
       size: 240,
@@ -123,9 +114,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
       accessorKey: "segregationType",
       header: "Segregation Type",
       cell: ({ row }) => {
-        const choice = segregationTypeChoices.find(
-          (c) => c.value === row.original.segregationType,
-        );
+        const choice = segregationTypeChoices.find((c) => c.value === row.original.segregationType);
         return choice ? (
           <ColorOptionValue color={choice.color} value={choice.label} />
         ) : (
@@ -190,9 +179,7 @@ export function getColumns(): ColumnDef<HazmatSegregationRule>[] {
     {
       accessorKey: "updatedAt",
       header: "Updated At",
-      cell: ({ row }) => (
-        <HoverCardTimestamp timestamp={row.original.updatedAt} />
-      ),
+      cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.updatedAt} />,
       size: 180,
       minSize: 160,
       maxSize: 220,

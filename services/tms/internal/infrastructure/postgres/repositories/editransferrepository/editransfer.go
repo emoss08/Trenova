@@ -339,7 +339,7 @@ func (r *repository) SetApprovalWorkflowRunID(
 		NewUpdate().
 		Model(entity).
 		Set(cols.ApprovalWorkflowRunID.Set(), req.RunID).
-		Set(cols.UpdatedAt.SetExpr("extract(epoch from current_timestamp)::bigint")).
+		Set(cols.UpdatedAt.SetExpr(r.db.NowEpoch())).
 		Where(cols.ID.Eq(), req.ID).
 		Where(cols.TargetOrganizationID.Eq(), req.TenantInfo.OrgID).
 		Where(cols.TargetBusinessUnitID.Eq(), req.TenantInfo.BuID).

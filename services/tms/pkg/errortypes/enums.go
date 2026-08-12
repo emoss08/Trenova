@@ -22,4 +22,5 @@ const (
 	ErrComplianceViolation = ErrorCode("COMPLIANCE_VIOLATION")
 	ErrResourceInUse       = ErrorCode("RESOURCE_IN_USE")
 	ErrBreakingChange      = ErrorCode("BREAKING_CHANGE")
+	ErrNotImplemented      = ErrorCode("NOT_IMPLEMENTED")
 )

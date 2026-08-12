@@ -9,7 +9,7 @@ import { apiService } from "@/services/api";
 import type { Location } from "@trenova/shared/types/location";
 import type { Trailer } from "@/types/trailer";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 import { toast } from "sonner";
 

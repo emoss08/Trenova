@@ -21,12 +21,12 @@ type Page struct {
 	PageNumber           int            `json:"pageNumber"           bun:"page_number,type:INTEGER,notnull"`
 	SourceKind           SourceKind     `json:"sourceKind"           bun:"source_kind,type:VARCHAR(20),notnull"`
 	ExtractedText        string         `json:"extractedText"        bun:"extracted_text,type:TEXT,nullzero"`
-	OCRConfidence        float64        `json:"ocrConfidence"        bun:"ocr_confidence,type:DOUBLE PRECISION,notnull,default:0"`
-	PreprocessingApplied bool           `json:"preprocessingApplied" bun:"preprocessing_applied,type:BOOLEAN,notnull,default:false"`
-	Width                int            `json:"width"                bun:"width,type:INTEGER,notnull,default:0"`
-	Height               int            `json:"height"               bun:"height,type:INTEGER,notnull,default:0"`
-	Metadata             map[string]any `json:"metadata"             bun:"metadata,type:JSONB,notnull,default:'{}'::jsonb"`
-	Version              int64          `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
+	OCRConfidence        float64        `json:"ocrConfidence"        bun:"ocr_confidence,type:DOUBLE PRECISION,notnull"`
+	PreprocessingApplied bool           `json:"preprocessingApplied" bun:"preprocessing_applied,type:BOOLEAN,notnull"`
+	Width                int            `json:"width"                bun:"width,type:INTEGER,notnull"`
+	Height               int            `json:"height"               bun:"height,type:INTEGER,notnull"`
+	Metadata             map[string]any `json:"metadata"             bun:"metadata,type:JSONB,notnull,default:'{}'"`
+	Version              int64          `json:"version"              bun:"version,type:BIGINT,notnull"`
 	CreatedAt            int64          `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64          `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

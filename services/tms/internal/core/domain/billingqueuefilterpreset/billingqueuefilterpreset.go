@@ -25,8 +25,8 @@ type BillingQueueFilterPreset struct {
 	UserID         pulid.ID       `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
 	Name           string         `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
 	Filters        map[string]any `json:"filters"        bun:"filters,type:JSONB,notnull,default:'{}'"`
-	IsDefault      bool           `json:"isDefault"      bun:"is_default,type:BOOLEAN,notnull,default:false"`
-	Version        int64          `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
+	IsDefault      bool           `json:"isDefault"      bun:"is_default,type:BOOLEAN,notnull"`
+	Version        int64          `json:"version"        bun:"version,type:BIGINT,notnull"`
 	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

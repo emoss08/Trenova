@@ -32,10 +32,10 @@ type SettlementBatch struct {
 	PeriodStart     int64       `json:"periodStart"     bun:"period_start,type:BIGINT,notnull"`
 	PeriodEnd       int64       `json:"periodEnd"       bun:"period_end,type:BIGINT,notnull"`
 	PayDate         int64       `json:"payDate"         bun:"pay_date,type:BIGINT,notnull"`
-	SettlementCount int         `json:"settlementCount" bun:"settlement_count,type:INTEGER,notnull,default:0"`
-	ExceptionCount  int         `json:"exceptionCount"  bun:"exception_count,type:INTEGER,notnull,default:0"`
-	TotalGrossMinor int64       `json:"totalGrossMinor" bun:"total_gross_minor,type:BIGINT,notnull,default:0"`
-	TotalNetMinor   int64       `json:"totalNetMinor"   bun:"total_net_minor,type:BIGINT,notnull,default:0"`
+	SettlementCount int         `json:"settlementCount" bun:"settlement_count,type:INTEGER,notnull"`
+	ExceptionCount  int         `json:"exceptionCount"  bun:"exception_count,type:INTEGER,notnull"`
+	TotalGrossMinor int64       `json:"totalGrossMinor" bun:"total_gross_minor,type:BIGINT,notnull"`
+	TotalNetMinor   int64       `json:"totalNetMinor"   bun:"total_net_minor,type:BIGINT,notnull"`
 	CurrencyCode    string      `json:"currencyCode"    bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
 	Notes           string      `json:"notes"           bun:"notes,type:TEXT,nullzero"`
 	GeneratedByID   pulid.ID    `json:"generatedById"   bun:"generated_by_id,type:VARCHAR(100),nullzero"`
@@ -43,7 +43,7 @@ type SettlementBatch struct {
 	CompletedAt     *int64      `json:"completedAt"     bun:"completed_at,type:BIGINT,nullzero"`
 	CanceledByID    pulid.ID    `json:"canceledById"    bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
 	CanceledAt      *int64      `json:"canceledAt"      bun:"canceled_at,type:BIGINT,nullzero"`
-	Version         int64       `json:"version"         bun:"version,type:BIGINT,notnull,default:0"`
+	Version         int64       `json:"version"         bun:"version,type:BIGINT,notnull"`
 	CreatedAt       int64       `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt       int64       `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

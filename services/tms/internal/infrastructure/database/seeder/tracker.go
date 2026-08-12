@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -60,39 +61,15 @@ func NewTracker(db *bun.DB) *Tracker {
 }
 
 func (t *Tracker) Initialize(ctx context.Context) error {
-	query := `
-		DO $$
-		BEGIN
-			IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'seed_status_enum') THEN
-				CREATE TYPE seed_status_enum AS ENUM ('Active', 'Inactive', 'Orphaned');
-			END IF;
-		END $$;
-
-		CREATE TABLE IF NOT EXISTS seed_history (
-			id VARCHAR(100) PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			version VARCHAR(50) NOT NULL,
-			environment VARCHAR(50) NOT NULL,
-			checksum VARCHAR(32) NOT NULL,
-			applied_at BIGINT NOT NULL,
-			applied_by VARCHAR(255) NOT NULL,
-			status seed_status_enum NOT NULL DEFAULT 'Active',
-			details JSONB,
-			error TEXT,
-			notes TEXT,
-			duration_ms BIGINT,
-			UNIQUE(name, version, environment)
-		);
-
-		CREATE INDEX IF NOT EXISTS idx_seed_history_name ON seed_history(name);
-		CREATE INDEX IF NOT EXISTS idx_seed_history_environment ON seed_history(environment);
-		CREATE INDEX IF NOT EXISTS idx_seed_history_applied_at ON seed_history(applied_at);
-		CREATE INDEX IF NOT EXISTS idx_seed_history_status ON seed_history(status);
-	`
-
-	_, err := t.db.ExecContext(ctx, query)
+	statements, err := loadSchema(dbdialect.FromBun(t.db), seedHistorySchema)
 	if err != nil {
-		return fmt.Errorf("failed to initialize seed tracking table: %w", err)
+		return err
+	}
+
+	for _, statement := range statements {
+		if _, execErr := t.db.ExecContext(ctx, statement); execErr != nil {
+			return fmt.Errorf("failed to initialize seed tracking table: %w", execErr)
+		}
 	}
 
 	return nil
@@ -172,11 +149,8 @@ func (t *Tracker) RecordFailure(
 		Model(record).
 		On("CONFLICT (name, version, environment) DO UPDATE").
 		Set("applied_at = EXCLUDED.applied_at").
-		// sh, not seed_history: bun aliases the target as "sh", and PostgreSQL
-		// rejects the original name once an alias is in play, so referring to it
-		// here made every recorded failure fail with SQLSTATE 42P01.
-		Set("status = CASE WHEN sh.status = 'Active' " +
-			"THEN sh.status ELSE EXCLUDED.status END").
+		Set("status = CASE WHEN sh.status = ? THEN sh.status ELSE EXCLUDED.status END",
+			SeedStatusActive).
 		Set("error = EXCLUDED.error").
 		Exec(ctx)
 	if err != nil {

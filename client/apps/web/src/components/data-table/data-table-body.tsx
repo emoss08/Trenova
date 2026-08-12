@@ -8,9 +8,9 @@ import {
   type CompiledFormatRules,
 } from "@/lib/data-table";
 import { cn } from "@trenova/shared/lib/utils";
-import type { DataTableBodyProps, RowAction } from "@trenova/shared/types/data-table";
-import type { ColumnPinningState } from "@tanstack/react-table";
-import { flexRender, type Row, type Table } from "@tanstack/react-table";
+import type { DataTableBodyProps, RowAction, Row, Table } from "@trenova/shared/types/data-table";
+import type { ColumnPinningState, RowData, RowSelectionState } from "@tanstack/react-table";
+import { flexRender } from "@tanstack/react-table";
 import { memo, useCallback, useRef } from "react";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { DataTableContextMenu } from "./_components/data-table-context-menu";
@@ -19,7 +19,7 @@ import { DataTableEmptyState } from "./data-table-empty-state";
 const INTERACTIVE_SELECTOR =
   'button, a, input, select, textarea, [role="button"], [role="checkbox"], [role="switch"]';
 
-type DataTableRowProps<TData> = {
+type DataTableRowProps<TData extends RowData> = {
   row: Row<TData>;
   rowIndex: number;
   selected?: boolean;
@@ -33,7 +33,7 @@ type DataTableRowProps<TData> = {
   onRowClick?: (row: Row<TData>) => void;
 };
 
-function DataTableRowInner<TData>({
+function DataTableRowInner<TData extends RowData>({
   row,
   rowIndex,
   selected,
@@ -144,7 +144,7 @@ export function DataTableBody<TData extends Record<string, any>>({
   onClearFilters?: () => void;
 }) {
   const rows = table.getRowModel().rows;
-  const { columnVisibility, columnOrder, columnPinning } = table.getState();
+  const { columnVisibility, columnOrder, columnPinning } = table.state;
   const enableSelection = table.options.enableRowSelection === true;
   const selectionAnchorRef = useRef<number | null>(null);
   const bodyRef = useRef<HTMLTableSectionElement>(null);
@@ -220,7 +220,7 @@ export function DataTableBody<TData extends Record<string, any>>({
         const start = Math.min(selectionAnchorRef.current, rowIndex);
         const end = Math.max(selectionAnchorRef.current, rowIndex);
         const pageRows = table.getRowModel().rows;
-        const rangeSelection: Record<string, boolean> = {};
+        const rangeSelection: RowSelectionState = {};
         for (let i = start; i <= end; i++) {
           const row = pageRows[i];
           if (row?.getCanSelect()) rangeSelection[row.id] = true;

@@ -83,7 +83,7 @@ func TestGeofenceWebhookEmissionsDetectsEntryAndExit(t *testing.T) {
 	t.Parallel()
 
 	live := newGeofenceLiveSimulator()
-	now := time.Now().UTC()
+	now := stopRichSimTime()
 	emissions := live.GeofenceWebhookEmissions(now, now.Add(-70*time.Minute), now, nil)
 	if len(emissions) == 0 {
 		t.Fatal("expected geofence transitions across a full route loop")

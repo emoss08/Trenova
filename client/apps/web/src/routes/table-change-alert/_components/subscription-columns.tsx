@@ -1,6 +1,6 @@
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import type { NotificationPriority, TCASubscription } from "@/types/table-change-alert";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 const PRIORITY_BADGE_VARIANT: Record<NotificationPriority, BadgeVariant> = {
   critical: "inactive",
@@ -14,9 +14,7 @@ export function getColumns(): ColumnDef<TCASubscription>[] {
     {
       accessorKey: "name",
       header: "Name",
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.name}</span>
-      ),
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
     },
     {
       accessorKey: "tableName",
@@ -39,9 +37,7 @@ export function getColumns(): ColumnDef<TCASubscription>[] {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <Badge
-          variant={row.original.status === "Active" ? "active" : "secondary"}
-        >
+        <Badge variant={row.original.status === "Active" ? "active" : "secondary"}>
           {row.original.status}
         </Badge>
       ),
@@ -51,11 +47,7 @@ export function getColumns(): ColumnDef<TCASubscription>[] {
       header: "Priority",
       cell: ({ row }) => {
         const p = row.original.priority ?? "medium";
-        return (
-          <Badge variant={PRIORITY_BADGE_VARIANT[p as NotificationPriority]}>
-            {p}
-          </Badge>
-        );
+        return <Badge variant={PRIORITY_BADGE_VARIANT[p as NotificationPriority]}>{p}</Badge>;
       },
     },
     {

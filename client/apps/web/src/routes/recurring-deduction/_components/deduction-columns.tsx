@@ -7,7 +7,7 @@ import {
 } from "@/lib/graphql/driver-settlement";
 import type { RecurringDeductionStatus } from "@trenova/shared/types/driver-pay";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { toast } from "sonner";
 
 export function deductionStatusInput(row: RecurringDeductionRow, status: RecurringDeductionStatus) {

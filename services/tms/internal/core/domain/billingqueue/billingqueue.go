@@ -42,16 +42,16 @@ type BillingQueueItem struct {
 	CanceledByID              *pulid.ID            `json:"canceledById"              bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
 	CanceledAt                *int64               `json:"canceledAt"                bun:"canceled_at,type:BIGINT,nullzero"`
 	CancelReason              string               `json:"cancelReason"              bun:"cancel_reason,type:VARCHAR(100),nullzero"`
-	IsAdjustmentOrigin        bool                 `json:"isAdjustmentOrigin"        bun:"is_adjustment_origin,type:BOOLEAN,notnull,default:false"`
+	IsAdjustmentOrigin        bool                 `json:"isAdjustmentOrigin"        bun:"is_adjustment_origin,type:BOOLEAN,notnull"`
 	SourceInvoiceID           *pulid.ID            `json:"sourceInvoiceId"           bun:"source_invoice_id,type:VARCHAR(100),nullzero"`
 	SourceInvoiceAdjustmentID *pulid.ID            `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
 	SourceCreditMemoInvoiceID *pulid.ID            `json:"sourceCreditMemoInvoiceId" bun:"source_credit_memo_invoice_id,type:VARCHAR(100),nullzero"`
 	CorrectionGroupID         *pulid.ID            `json:"correctionGroupId"         bun:"correction_group_id,type:VARCHAR(100),nullzero"`
 	RebillStrategy            string               `json:"rebillStrategy"            bun:"rebill_strategy,type:VARCHAR(50),nullzero"`
-	RequiresReplacementReview bool                 `json:"requiresReplacementReview" bun:"requires_replacement_review,type:BOOLEAN,notnull,default:false"`
+	RequiresReplacementReview bool                 `json:"requiresReplacementReview" bun:"requires_replacement_review,type:BOOLEAN,notnull"`
 	RerateVariancePercent     decimal.Decimal      `json:"rerateVariancePercent"     bun:"rerate_variance_percent,type:NUMERIC(9,6),notnull,default:0"`
-	AdjustmentContext         map[string]any       `json:"adjustmentContext"         bun:"adjustment_context,type:JSONB,notnull,default:'{}'::jsonb"`
-	Version                   int64                `json:"version"                   bun:"version,type:BIGINT,notnull,default:0"`
+	AdjustmentContext         map[string]any       `json:"adjustmentContext"         bun:"adjustment_context,type:JSONB,notnull,default:'{}'"`
+	Version                   int64                `json:"version"                   bun:"version,type:BIGINT,notnull"`
 	CreatedAt                 int64                `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                 int64                `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

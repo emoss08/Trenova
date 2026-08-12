@@ -16,7 +16,7 @@ import type { FleetCode } from "@trenova/shared/types/fleet-code";
 import type { UsState } from "@trenova/shared/types/us-state";
 import type { DriverType, Worker, WorkerType } from "@trenova/shared/types/worker";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
@@ -266,12 +266,7 @@ export function getColumns(): ColumnDef<Worker>[] {
       accessorKey: "createdAt",
       header: "Created At",
       cell: ({ row }) => {
-        return (
-          <HoverCardTimestamp
-            className="shrink-0"
-            timestamp={row.original.createdAt}
-          />
-        );
+        return <HoverCardTimestamp className="shrink-0" timestamp={row.original.createdAt} />;
       },
       size: 200,
       minSize: 200,

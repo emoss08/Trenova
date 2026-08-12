@@ -18,6 +18,10 @@ require_command() {
 require_command curl
 require_command jq
 
+response_header() {
+  grep -i "^$1:" "$2" | head -n 1 | cut -d: -f2- | tr -d ' \r'
+}
+
 request_json() {
   local method="$1"
   local path="$2"
@@ -171,8 +175,27 @@ if [[ -z "${route_progress_before}" || -z "${route_status_before}" ]]; then
 fi
 
 hos_before="$(get_json "/fleet/hos/clocks?limit=512")"
+# Prefer a driver whose HOS clocks are actively counting down (drive remaining
+# below the fleet maximum, shift remaining above zero). Drivers of moving
+# vehicles report a "driving" duty status even while their ELD timeline is in
+# an off-duty rest block, and those drivers legitimately keep full, frozen
+# clocks across a time step — asserting on one of them fails the HOS check.
 driver_id="$(echo "${hos_before}" | jq -r --arg vid "${moving_vehicle_id}" '
-  ([
+  ([.data[].clocks.drive.driveRemainingDurationMs // 0] | max) as $max_drive
+  | ([
+    .data[]
+    | select(((.currentVehicle // {}).id // "") == $vid)
+    | select((.currentDutyStatus.hosStatusType // "") == "driving")
+    | select(((.clocks.drive.driveRemainingDurationMs // 0) < $max_drive)
+        and ((.clocks.shift.shiftRemainingDurationMs // 0) > 0))
+    | .driver.id
+  ] + [
+    .data[]
+    | select((.currentDutyStatus.hosStatusType // "") == "driving")
+    | select(((.clocks.drive.driveRemainingDurationMs // 0) < $max_drive)
+        and ((.clocks.shift.shiftRemainingDurationMs // 0) > 0))
+    | .driver.id
+  ] + [
     .data[]
     | select(((.currentVehicle // {}).id // "") == $vid)
     | select((.currentDutyStatus.hosStatusType // "") == "driving")
@@ -278,22 +301,37 @@ rate_limit_limit=""
 rate_limit_remaining=""
 rate_limit_reset=""
 rate_limit_retry_after=""
-for _ in $(seq 1 260); do
-  header_file="$(mktemp)"
-  status_code="$(curl -sS -o /dev/null -D "${header_file}" -w "%{http_code}" \
+# The GET budget (180/min) is shared across every /fleet endpoint for the
+# token and counted on request arrival, before the handler runs. A serial
+# request loop cannot outrun the wall-clock window when individual responses
+# are slow, so exhaust the budget with a concurrent burst against a cheap
+# endpoint, then confirm the 429 and its headers with serial requests. The
+# outer retry covers a burst that straddles a window boundary.
+for _ in $(seq 1 3); do
+  seq 1 240 | xargs -P 16 -I. curl -sS -o /dev/null \
     -H "${AUTH_HEADER}" \
     -H "${PROFILE_HEADER}" \
-    "${BASE_URL}/fleet/vehicles/stats?vehicleIds=${moving_vehicle_id}")"
-  if [[ "${status_code}" == "429" ]]; then
-    rate_limited=1
-    rate_limit_limit="$(awk 'BEGIN{IGNORECASE=1}/^X-RateLimit-Limit:/{gsub("\r","",$2); print $2; exit}' "${header_file}")"
-    rate_limit_remaining="$(awk 'BEGIN{IGNORECASE=1}/^X-RateLimit-Remaining:/{gsub("\r","",$2); print $2; exit}' "${header_file}")"
-    rate_limit_reset="$(awk 'BEGIN{IGNORECASE=1}/^X-RateLimit-Reset:/{gsub("\r","",$2); print $2; exit}' "${header_file}")"
-    rate_limit_retry_after="$(awk 'BEGIN{IGNORECASE=1}/^Retry-After:/{gsub("\r","",$2); print $2; exit}' "${header_file}")"
+    "${BASE_URL}/fleet/routes?limit=1" >/dev/null 2>&1 || true
+  for _ in $(seq 1 20); do
+    header_file="$(mktemp)"
+    status_code="$(curl -sS -o /dev/null -D "${header_file}" -w "%{http_code}" \
+      -H "${AUTH_HEADER}" \
+      -H "${PROFILE_HEADER}" \
+      "${BASE_URL}/fleet/vehicles/stats?vehicleIds=${moving_vehicle_id}")"
+    if [[ "${status_code}" == "429" ]]; then
+      rate_limited=1
+      rate_limit_limit="$(response_header "X-RateLimit-Limit" "${header_file}")"
+      rate_limit_remaining="$(response_header "X-RateLimit-Remaining" "${header_file}")"
+      rate_limit_reset="$(response_header "X-RateLimit-Reset" "${header_file}")"
+      rate_limit_retry_after="$(response_header "Retry-After" "${header_file}")"
+      rm -f "${header_file}"
+      break
+    fi
     rm -f "${header_file}"
+  done
+  if [[ "${rate_limited}" == "1" ]]; then
     break
   fi
-  rm -f "${header_file}"
 done
 
 if [[ "${rate_limited}" != "1" ]]; then

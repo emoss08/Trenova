@@ -2,19 +2,19 @@
 import { TableHead } from "@trenova/shared/components/ui/table";
 import { columnSizeVar, pinnedCellClass, pinnedCellStyle } from "@/lib/data-table";
 import { cn } from "@trenova/shared/lib/utils";
-import type { SortDirection, SortField } from "@trenova/shared/types/data-table";
+import type { SortDirection, SortField, Header } from "@trenova/shared/types/data-table";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { flexRender, type Header } from "@tanstack/react-table";
+import { flexRender, type RowData } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
 
-type DataTableHeaderCellProps<TData> = {
+type DataTableHeaderCellProps<TData extends RowData> = {
   header: Header<TData, unknown>;
   sort: SortField[];
   onSort: (field: string, direction: SortDirection | null) => void;
 };
 
-export function DataTableHeaderCell<TData>({
+export function DataTableHeaderCell<TData extends RowData>({
   header,
   sort,
   onSort,

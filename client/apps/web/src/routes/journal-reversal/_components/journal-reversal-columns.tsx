@@ -3,7 +3,7 @@ import { DataTableDescription } from "@/components/data-table/_components/data-t
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { journalReversalStatusChoices } from "@/lib/choices";
 import type { JournalReversal } from "@/types/journal-reversal";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link } from "react-router";
 
 export function getColumns(): ColumnDef<JournalReversal>[] {
@@ -49,9 +49,7 @@ export function getColumns(): ColumnDef<JournalReversal>[] {
     {
       accessorKey: "reasonCode",
       header: "Reason Code",
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.reasonCode}</span>
-      ),
+      cell: ({ row }) => <span className="font-medium">{row.original.reasonCode}</span>,
       size: 150,
       minSize: 120,
       maxSize: 200,
@@ -67,10 +65,7 @@ export function getColumns(): ColumnDef<JournalReversal>[] {
       accessorKey: "reasonText",
       header: "Reason",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.reasonText}
-          truncateLength={80}
-        />
+        <DataTableDescription description={row.original.reasonText} truncateLength={80} />
       ),
       size: 250,
       minSize: 200,

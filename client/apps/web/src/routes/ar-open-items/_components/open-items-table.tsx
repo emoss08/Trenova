@@ -15,15 +15,14 @@ import {
 import type { AROpenItem } from "@/lib/graphql/accounts-receivable";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SettlementStatus } from "@trenova/shared/types/invoice";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import {
   flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
+  useTable,
   type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table";
+import { dataTableFeatures } from "@trenova/shared/lib/table-features";
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -54,7 +53,7 @@ export function OpenItemsTable({
         header: ({ table }) => (
           <Checkbox
             checked={table.getIsAllRowsSelected()}
-            indeterminate={table.getIsSomeRowsSelected()}
+            indeterminate={table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
             onCheckedChange={(checked) => table.toggleAllRowsSelected(checked === true)}
             aria-label="Select all"
           />
@@ -95,9 +94,7 @@ export function OpenItemsTable({
         header: "Type",
         accessorFn: (row) => row.billType,
         cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground capitalize">
-            {row.original.billType}
-          </span>
+          <span className="text-xs text-muted-foreground capitalize">{row.original.billType}</span>
         ),
       },
       {
@@ -114,9 +111,7 @@ export function OpenItemsTable({
         id: "invoiceDate",
         header: "Invoice Date",
         accessorFn: (row) => row.invoiceDate,
-        cell: ({ row }) => (
-          <span className="text-xs">{formatDate(row.original.invoiceDate)}</span>
-        ),
+        cell: ({ row }) => <span className="text-xs">{formatDate(row.original.invoiceDate)}</span>,
       },
       {
         id: "dueDate",
@@ -167,10 +162,7 @@ export function OpenItemsTable({
         header: "Open",
         accessorFn: (row) => row.openAmountMinor,
         cell: ({ row }) => (
-          <AmountDisplay
-            value={row.original.openAmountMinor}
-            className="text-xs font-semibold"
-          />
+          <AmountDisplay value={row.original.openAmountMinor} className="text-xs font-semibold" />
         ),
         meta: { align: "right" },
       },
@@ -178,7 +170,8 @@ export function OpenItemsTable({
     [],
   );
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data: items,
     columns,
     state: { sorting, rowSelection },
@@ -186,8 +179,6 @@ export function OpenItemsTable({
     onRowSelectionChange,
     enableRowSelection: true,
     getRowId: (row) => row.invoiceId,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   const totals = useMemo(
@@ -211,9 +202,8 @@ export function OpenItemsTable({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
-                  const align = (
-                    header.column.columnDef.meta as { align?: string } | undefined
-                  )?.align;
+                  const align = (header.column.columnDef.meta as { align?: string } | undefined)
+                    ?.align;
                   const sorted = header.column.getIsSorted();
                   return (
                     <TableHead
@@ -256,9 +246,8 @@ export function OpenItemsTable({
                 onClick={() => row.toggleSelected()}
               >
                 {row.getVisibleCells().map((cell) => {
-                  const align = (
-                    cell.column.columnDef.meta as { align?: string } | undefined
-                  )?.align;
+                  const align = (cell.column.columnDef.meta as { align?: string } | undefined)
+                    ?.align;
                   return (
                     <TableCell
                       key={cell.id}

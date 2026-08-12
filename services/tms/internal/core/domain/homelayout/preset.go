@@ -39,9 +39,9 @@ type Preset struct {
 	Layout             *Layout                       `json:"layout"             bun:"layout,type:JSONB,notnull"`
 	RoleIDs            []pulid.ID                    `json:"roleIds"            bun:"role_ids,type:TEXT[],array,nullzero"`
 	CoreResponsibility permission.CoreResponsibility `json:"coreResponsibility" bun:"core_responsibility,type:VARCHAR(50),nullzero"`
-	IsOrgDefault       bool                          `json:"isOrgDefault"       bun:"is_org_default,type:BOOLEAN,notnull,default:false"`
-	Locked             bool                          `json:"locked"             bun:"locked,type:BOOLEAN,notnull,default:false"`
-	Priority           int                           `json:"priority"           bun:"priority,type:INTEGER,notnull,default:0"`
+	IsOrgDefault       bool                          `json:"isOrgDefault"       bun:"is_org_default,type:BOOLEAN,notnull"`
+	Locked             bool                          `json:"locked"             bun:"locked,type:BOOLEAN,notnull"`
+	Priority           int                           `json:"priority"           bun:"priority,type:INTEGER,notnull"`
 	CreatedBy          pulid.ID                      `json:"createdBy"          bun:"created_by,type:VARCHAR(100),nullzero"`
 	Version            int64                         `json:"version"            bun:"version,type:BIGINT"`
 	CreatedAt          int64                         `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -4,9 +4,8 @@ import { shipmentStatusChoices, shipmentTenderStatusChoices } from "@/lib/choice
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import type { Customer } from "@trenova/shared/types/customer";
-import type { RowAction } from "@trenova/shared/types/data-table";
+import type { RowAction, ColumnDef } from "@trenova/shared/types/data-table";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
-import { type ColumnDef } from "@tanstack/react-table";
 import { Link } from "react-router";
 import { ActionsCell } from "./command-center/cells/actions-cell";
 import { DriverCell } from "./command-center/cells/driver-cell";

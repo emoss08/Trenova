@@ -35,7 +35,7 @@ type DocumentType struct {
 	Color                  string                 `json:"color"                  bun:"color,type:VARCHAR(10),nullzero"`
 	DocumentClassification DocumentClassification `json:"documentClassification" bun:"document_classification,type:document_classification_enum,notnull,default:'Public'"`
 	DocumentCategory       DocumentCategory       `json:"documentCategory"       bun:"document_category,type:document_category_enum,notnull,default:'Other'"`
-	IsSystem               bool                   `json:"isSystem"               bun:"is_system,type:BOOLEAN,default:false"`
+	IsSystem               bool                   `json:"isSystem"               bun:"is_system,type:BOOLEAN"`
 	Version                int64                  `json:"version"                bun:"version,type:BIGINT"`
 	CreatedAt              int64                  `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt              int64                  `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

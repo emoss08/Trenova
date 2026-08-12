@@ -1,4 +1,5 @@
 "use no memo";
+import type { RowData } from "@tanstack/react-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +13,8 @@ import type {
   DataTableQueryOptions,
   FilterItem,
   SortField,
+  ColumnDef,
+  Table,
 } from "@trenova/shared/types/data-table";
 import type {
   ActiveTableView,
@@ -21,7 +24,6 @@ import type {
   TableFormatRule,
   TableViewSource,
 } from "@/types/table-configuration";
-import type { ColumnDef, Table } from "@tanstack/react-table";
 import { ChevronDownIcon, DownloadIcon, PlusIcon } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -29,25 +31,19 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { DataTableSaveConfigDialog } from "./data-table-save-config-dialog";
 
-const DataTableSearch = lazy(
-  () => import("@/components/data-table/data-table-search"),
-);
+const DataTableSearch = lazy(() => import("@/components/data-table/data-table-search"));
 
 const DataTableFilterBuilder = lazy(
   () => import("@/components/data-table/data-table-filter-builder"),
 );
 
-const DataTableSortBuilder = lazy(
-  () => import("@/components/data-table/data-table-sort-builder"),
-);
+const DataTableSortBuilder = lazy(() => import("@/components/data-table/data-table-sort-builder"));
 
 const DataTableFormatBuilder = lazy(
   () => import("@/components/data-table/data-table-format-builder"),
 );
 
-const DataTableDisplayMenu = lazy(
-  () => import("@/components/data-table/data-table-display-menu"),
-);
+const DataTableDisplayMenu = lazy(() => import("@/components/data-table/data-table-display-menu"));
 
 const DataTableConfigManager = lazy(
   () => import("@/components/data-table/data-table-config-manager"),
@@ -136,14 +132,14 @@ export function DataTableToolbar<TData extends Record<string, any>>({
           </Suspense>
           <Suspense fallback={<ToolbarButtonSkeleton />}>
             <DataTableFilterBuilder
-              columns={columns as unknown as ColumnDef<unknown>[]}
+              columns={columns as unknown as ColumnDef<RowData>[]}
               filters={filters}
               onFiltersChange={onFiltersChange}
             />
           </Suspense>
           <Suspense fallback={<ToolbarButtonSkeleton />}>
             <DataTableSortBuilder
-              columns={columns as unknown as ColumnDef<unknown>[]}
+              columns={columns as unknown as ColumnDef<RowData>[]}
               sort={sort}
               onSortChange={onSortChange}
             />
@@ -153,13 +149,11 @@ export function DataTableToolbar<TData extends Record<string, any>>({
         <div className="flex items-center gap-2">
           <Suspense fallback={<ToolbarButtonSkeleton />}>
             <DataTableDisplayMenu
-              table={table as Table<unknown>}
+              table={table as Table<RowData>}
               density={density}
               onDensityChange={onDensityChange}
               formatRuleCount={formatRules.length}
-              onEditFormatRules={
-                onFormatRulesChange ? () => setFormatDialogOpen(true) : undefined
-              }
+              onEditFormatRules={onFormatRulesChange ? () => setFormatDialogOpen(true) : undefined}
             />
           </Suspense>
           {showExport && (
@@ -195,11 +189,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
             )}
           </Suspense>
           {hasSingleAddRecordAction ? (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={addRecordActions[0]?.onClick}
-            >
+            <Button variant="default" size="sm" onClick={addRecordActions[0]?.onClick}>
               <PlusIcon className="size-3.5" />
               Add Record
             </Button>
@@ -241,7 +231,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
           <DataTableFormatBuilder
             open={formatDialogOpen}
             onOpenChange={setFormatDialogOpen}
-            columns={columns as unknown as ColumnDef<unknown>[]}
+            columns={columns as unknown as ColumnDef<RowData>[]}
             rules={formatRules}
             onRulesChange={onFormatRulesChange}
           />
@@ -253,7 +243,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
             open={exportDialogOpen}
             onOpenChange={setExportDialogOpen}
             resource={resource}
-            table={table}
+            table={table as Table<Record<string, any>>}
             graphql={exportContext.graphql}
             queryOptions={exportContext.queryOptions}
             currentPageRows={exportContext.currentPageRows}

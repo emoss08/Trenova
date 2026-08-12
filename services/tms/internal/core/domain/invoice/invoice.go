@@ -70,13 +70,13 @@ type Invoice struct {
 	BillToPostalCode          string                `json:"billToPostalCode"          bun:"bill_to_postal_code,type:VARCHAR(20),nullzero"`
 	BillToCountry             string                `json:"billToCountry"             bun:"bill_to_country,type:VARCHAR(100),nullzero"`
 	SubtotalAmount            decimal.Decimal       `json:"subtotalAmount"            bun:"subtotal_amount,type:NUMERIC(19,4),notnull,default:0"`
-	SubtotalAmountMinor       int64                 `json:"subtotalAmountMinor"       bun:"subtotal_amount_minor,type:BIGINT,notnull,default:0"`
+	SubtotalAmountMinor       int64                 `json:"subtotalAmountMinor"       bun:"subtotal_amount_minor,type:BIGINT,notnull"`
 	OtherAmount               decimal.Decimal       `json:"otherAmount"               bun:"other_amount,type:NUMERIC(19,4),notnull,default:0"`
-	OtherAmountMinor          int64                 `json:"otherAmountMinor"          bun:"other_amount_minor,type:BIGINT,notnull,default:0"`
+	OtherAmountMinor          int64                 `json:"otherAmountMinor"          bun:"other_amount_minor,type:BIGINT,notnull"`
 	TotalAmount               decimal.Decimal       `json:"totalAmount"               bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"`
-	TotalAmountMinor          int64                 `json:"totalAmountMinor"          bun:"total_amount_minor,type:BIGINT,notnull,default:0"`
+	TotalAmountMinor          int64                 `json:"totalAmountMinor"          bun:"total_amount_minor,type:BIGINT,notnull"`
 	AppliedAmount             decimal.Decimal       `json:"appliedAmount"             bun:"applied_amount,type:NUMERIC(19,4),notnull,default:0"`
-	AppliedAmountMinor        int64                 `json:"appliedAmountMinor"        bun:"applied_amount_minor,type:BIGINT,notnull,default:0"`
+	AppliedAmountMinor        int64                 `json:"appliedAmountMinor"        bun:"applied_amount_minor,type:BIGINT,notnull"`
 	SettlementStatus          SettlementStatus      `json:"settlementStatus"          bun:"settlement_status,type:VARCHAR(50),notnull,default:'Unpaid'"`
 	DisputeStatus             DisputeStatus         `json:"disputeStatus"             bun:"dispute_status,type:VARCHAR(50),notnull,default:'None'"`
 	PDFDocumentID             pulid.ID              `json:"pdfDocumentId"             bun:"pdf_document_id,type:VARCHAR(100),nullzero"`
@@ -96,8 +96,8 @@ type Invoice struct {
 	SupersedesInvoiceID       pulid.ID              `json:"supersedesInvoiceId"       bun:"supersedes_invoice_id,type:VARCHAR(100),nullzero"`
 	SupersededByInvoiceID     pulid.ID              `json:"supersededByInvoiceId"     bun:"superseded_by_invoice_id,type:VARCHAR(100),nullzero"`
 	SourceInvoiceAdjustmentID pulid.ID              `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
-	IsAdjustmentArtifact      bool                  `json:"isAdjustmentArtifact"      bun:"is_adjustment_artifact,type:BOOLEAN,notnull,default:false"`
-	Version                   int64                 `json:"version"                   bun:"version,type:BIGINT,notnull,default:0"`
+	IsAdjustmentArtifact      bool                  `json:"isAdjustmentArtifact"      bun:"is_adjustment_artifact,type:BOOLEAN,notnull"`
+	Version                   int64                 `json:"version"                   bun:"version,type:BIGINT,notnull"`
 	CreatedAt                 int64                 `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                 int64                 `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -127,8 +127,8 @@ type InoviceLine struct {
 	Quantity          decimal.Decimal `json:"quantity"          bun:"quantity,type:NUMERIC(19,4),notnull,default:0"`
 	UnitPrice         decimal.Decimal `json:"unitPrice"         bun:"unit_price,type:NUMERIC(19,4),notnull,default:0"`
 	Amount            decimal.Decimal `json:"amount"            bun:"amount,type:NUMERIC(19,4),notnull,default:0"`
-	AmountMinor       int64           `json:"amountMinor"       bun:"amount_minor,type:BIGINT,notnull,default:0"`
-	Version           int64           `json:"version"           bun:"version,type:BIGINT,notnull,default:0"`
+	AmountMinor       int64           `json:"amountMinor"       bun:"amount_minor,type:BIGINT,notnull"`
+	Version           int64           `json:"version"           bun:"version,type:BIGINT,notnull"`
 	CreatedAt         int64           `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt         int64           `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -144,7 +144,7 @@ type Attachment struct {
 	InvoiceID      pulid.ID `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull"`
 	DocumentID     pulid.ID `json:"documentId"     bun:"document_id,type:VARCHAR(100),notnull"`
 	Selected       bool     `json:"selected"       bun:"selected,type:BOOLEAN,notnull,default:true"`
-	SortOrder      int      `json:"sortOrder"      bun:"sort_order,type:INTEGER,notnull,default:0"`
+	SortOrder      int      `json:"sortOrder"      bun:"sort_order,type:INTEGER,notnull"`
 	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -171,7 +171,7 @@ type EmailAttempt struct {
 	BCCRecipients     []string       `json:"bccRecipients"     bun:"bcc_recipients,array,type:text[],nullzero"`
 	Subject           string         `json:"subject"           bun:"subject,type:VARCHAR(998),notnull"`
 	Body              string         `json:"body"              bun:"body,type:TEXT,nullzero"`
-	EstimatedSize     int64          `json:"estimatedSize"     bun:"estimated_size,type:BIGINT,notnull,default:0"`
+	EstimatedSize     int64          `json:"estimatedSize"     bun:"estimated_size,type:BIGINT,notnull"`
 	Warnings          []string       `json:"warnings"          bun:"warnings,array,type:text[],nullzero"`
 	Error             string         `json:"error"             bun:"error,type:TEXT,nullzero"`
 	SentAt            *int64         `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero"`

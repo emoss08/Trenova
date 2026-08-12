@@ -51,15 +51,15 @@ type InvoiceAdjustment struct {
 	IdempotencyKey                   string                                             `json:"idempotencyKey"                   bun:"idempotency_key,type:VARCHAR(200),notnull"`
 	AccountingDate                   int64                                              `json:"accountingDate"                   bun:"accounting_date,type:BIGINT,notnull"`
 	CreditTotalAmount                decimal.Decimal                                    `json:"creditTotalAmount"                bun:"credit_total_amount,type:NUMERIC(19,4),notnull,default:0"`
-	CreditTotalAmountMinor           int64                                              `json:"creditTotalAmountMinor"           bun:"credit_total_amount_minor,type:BIGINT,notnull,default:0"`
+	CreditTotalAmountMinor           int64                                              `json:"creditTotalAmountMinor"           bun:"credit_total_amount_minor,type:BIGINT,notnull"`
 	RebillTotalAmount                decimal.Decimal                                    `json:"rebillTotalAmount"                bun:"rebill_total_amount,type:NUMERIC(19,4),notnull,default:0"`
-	RebillTotalAmountMinor           int64                                              `json:"rebillTotalAmountMinor"           bun:"rebill_total_amount_minor,type:BIGINT,notnull,default:0"`
+	RebillTotalAmountMinor           int64                                              `json:"rebillTotalAmountMinor"           bun:"rebill_total_amount_minor,type:BIGINT,notnull"`
 	NetDeltaAmount                   decimal.Decimal                                    `json:"netDeltaAmount"                   bun:"net_delta_amount,type:NUMERIC(19,4),notnull,default:0"`
-	NetDeltaAmountMinor              int64                                              `json:"netDeltaAmountMinor"              bun:"net_delta_amount_minor,type:BIGINT,notnull,default:0"`
+	NetDeltaAmountMinor              int64                                              `json:"netDeltaAmountMinor"              bun:"net_delta_amount_minor,type:BIGINT,notnull"`
 	RerateVariancePercent            decimal.Decimal                                    `json:"rerateVariancePercent"            bun:"rerate_variance_percent,type:NUMERIC(9,6),notnull,default:0"`
-	WouldCreateUnappliedCredit       bool                                               `json:"wouldCreateUnappliedCredit"       bun:"would_create_unapplied_credit,type:BOOLEAN,notnull,default:false"`
-	RequiresReconciliationException  bool                                               `json:"requiresReconciliationException"  bun:"requires_reconciliation_exception,type:BOOLEAN,notnull,default:false"`
-	ApprovalRequired                 bool                                               `json:"approvalRequired"                 bun:"approval_required,type:BOOLEAN,notnull,default:false"`
+	WouldCreateUnappliedCredit       bool                                               `json:"wouldCreateUnappliedCredit"       bun:"would_create_unapplied_credit,type:BOOLEAN,notnull"`
+	RequiresReconciliationException  bool                                               `json:"requiresReconciliationException"  bun:"requires_reconciliation_exception,type:BOOLEAN,notnull"`
+	ApprovalRequired                 bool                                               `json:"approvalRequired"                 bun:"approval_required,type:BOOLEAN,notnull"`
 	SubmittedByID                    pulid.ID                                           `json:"submittedById"                    bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
 	SubmittedAt                      *int64                                             `json:"submittedAt"                      bun:"submitted_at,type:BIGINT,nullzero"`
 	ApprovedByID                     pulid.ID                                           `json:"approvedById"                     bun:"approved_by_id,type:VARCHAR(100),nullzero"`
@@ -68,11 +68,11 @@ type InvoiceAdjustment struct {
 	RejectedAt                       *int64                                             `json:"rejectedAt"                       bun:"rejected_at,type:BIGINT,nullzero"`
 	RejectionReason                  string                                             `json:"rejectionReason"                  bun:"rejection_reason,type:TEXT,nullzero"`
 	ExecutionError                   string                                             `json:"executionError"                   bun:"execution_error,type:TEXT,nullzero"`
-	Metadata                         map[string]any                                     `json:"metadata"                         bun:"metadata,type:JSONB,notnull,default:'{}'::jsonb"`
+	Metadata                         map[string]any                                     `json:"metadata"                         bun:"metadata,type:JSONB,notnull,default:'{}'"`
 	CustomerSupportingDocumentPolicy customer.InvoiceAdjustmentSupportingDocumentPolicy `json:"customerSupportingDocumentPolicy" bun:"-"`
 	SupportingDocumentsRequired      bool                                               `json:"supportingDocumentsRequired"      bun:"-"`
 	SupportingDocumentPolicySource   string                                             `json:"supportingDocumentPolicySource"   bun:"-"`
-	Version                          int64                                              `json:"version"                          bun:"version,type:BIGINT,notnull,default:0"`
+	Version                          int64                                              `json:"version"                          bun:"version,type:BIGINT,notnull"`
 	CreatedAt                        int64                                              `json:"createdAt"                        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                        int64                                              `json:"updatedAt"                        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -98,7 +98,7 @@ type InvoiceAdjustmentDocumentReference struct {
 	SnapshotFileType     string   `json:"snapshotFileType"     bun:"snapshot_file_type,type:VARCHAR(100),notnull"`
 	SnapshotResourceType string   `json:"snapshotResourceType" bun:"snapshot_resource_type,type:VARCHAR(100),notnull"`
 	SnapshotResourceID   string   `json:"snapshotResourceId"   bun:"snapshot_resource_id,type:VARCHAR(100),notnull"`
-	Version              int64    `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
+	Version              int64    `json:"version"              bun:"version,type:BIGINT,notnull"`
 	CreatedAt            int64    `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64    `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -120,12 +120,12 @@ type InvoiceAdjustmentLine struct {
 	Description             string          `json:"description"             bun:"description,type:TEXT,notnull"`
 	CreditQuantity          decimal.Decimal `json:"creditQuantity"          bun:"credit_quantity,type:NUMERIC(19,4),notnull,default:0"`
 	CreditAmount            decimal.Decimal `json:"creditAmount"            bun:"credit_amount,type:NUMERIC(19,4),notnull,default:0"`
-	CreditAmountMinor       int64           `json:"creditAmountMinor"       bun:"credit_amount_minor,type:BIGINT,notnull,default:0"`
+	CreditAmountMinor       int64           `json:"creditAmountMinor"       bun:"credit_amount_minor,type:BIGINT,notnull"`
 	RemainingEligibleAmount decimal.Decimal `json:"remainingEligibleAmount" bun:"remaining_eligible_amount,type:NUMERIC(19,4),notnull,default:0"`
 	RebillQuantity          decimal.Decimal `json:"rebillQuantity"          bun:"rebill_quantity,type:NUMERIC(19,4),notnull,default:0"`
 	RebillAmount            decimal.Decimal `json:"rebillAmount"            bun:"rebill_amount,type:NUMERIC(19,4),notnull,default:0"`
-	RebillAmountMinor       int64           `json:"rebillAmountMinor"       bun:"rebill_amount_minor,type:BIGINT,notnull,default:0"`
-	ReplacementPayload      map[string]any  `json:"replacementPayload"      bun:"replacement_payload,type:JSONB,notnull,default:'{}'::jsonb"`
+	RebillAmountMinor       int64           `json:"rebillAmountMinor"       bun:"rebill_amount_minor,type:BIGINT,notnull"`
+	ReplacementPayload      map[string]any  `json:"replacementPayload"      bun:"replacement_payload,type:JSONB,notnull,default:'{}'"`
 	CreatedAt               int64           `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt               int64           `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
@@ -139,7 +139,7 @@ type InvoiceAdjustmentSnapshot struct {
 	AdjustmentID   pulid.ID       `json:"adjustmentId"   bun:"adjustment_id,type:VARCHAR(100),notnull"`
 	InvoiceID      pulid.ID       `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),notnull"`
 	Kind           SnapshotKind   `json:"kind"           bun:"kind,type:VARCHAR(50),notnull"`
-	Payload        map[string]any `json:"payload"        bun:"payload,type:JSONB,notnull,default:'{}'::jsonb"`
+	Payload        map[string]any `json:"payload"        bun:"payload,type:JSONB,notnull,default:'{}'"`
 	CreatedByID    pulid.ID       `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero"`
 	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
@@ -152,7 +152,7 @@ type InvoiceAdjustmentCorrectionGroup struct {
 	BusinessUnitID   pulid.ID       `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	RootInvoiceID    pulid.ID       `json:"rootInvoiceId"    bun:"root_invoice_id,type:VARCHAR(100),notnull"`
 	CurrentInvoiceID pulid.ID       `json:"currentInvoiceId" bun:"current_invoice_id,type:VARCHAR(100),nullzero"`
-	Metadata         map[string]any `json:"metadata"         bun:"metadata,type:JSONB,notnull,default:'{}'::jsonb"`
+	Metadata         map[string]any `json:"metadata"         bun:"metadata,type:JSONB,notnull,default:'{}'"`
 	CreatedAt        int64          `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt        int64          `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
@@ -169,7 +169,7 @@ type InvoiceAdjustmentReconciliationException struct {
 	Status              ExceptionStatus `json:"status"              bun:"status,type:VARCHAR(50),notnull,default:'Open'"`
 	Reason              string          `json:"reason"              bun:"reason,type:TEXT,notnull"`
 	Amount              decimal.Decimal `json:"amount"              bun:"amount,type:NUMERIC(19,4),notnull,default:0"`
-	Metadata            map[string]any  `json:"metadata"            bun:"metadata,type:JSONB,notnull,default:'{}'::jsonb"`
+	Metadata            map[string]any  `json:"metadata"            bun:"metadata,type:JSONB,notnull,default:'{}'"`
 	CreatedAt           int64           `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt           int64           `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

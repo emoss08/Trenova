@@ -27,7 +27,7 @@ type Message struct {
 	IdempotencyKey    string        `json:"idempotencyKey"    bun:"idempotency_key,type:VARCHAR(160),notnull"`
 	ProviderMessageID string        `json:"providerMessageId" bun:"provider_message_id,type:VARCHAR(160),nullzero"`
 	Status            MessageStatus `json:"status"            bun:"status,type:email_message_status_enum,notnull"`
-	Attempts          int32         `json:"attempts"          bun:"attempts,type:INTEGER,notnull,default:0"`
+	Attempts          int32         `json:"attempts"          bun:"attempts,type:INTEGER,notnull"`
 	FromEmail         string        `json:"fromEmail"         bun:"from_email,type:VARCHAR(320),notnull"`
 	FromName          string        `json:"fromName"          bun:"from_name,type:VARCHAR(100),notnull"`
 	ReplyToEmail      string        `json:"replyToEmail"      bun:"reply_to_email,type:VARCHAR(320),nullzero"`
@@ -35,8 +35,8 @@ type Message struct {
 	CCRecipients      []string      `json:"ccRecipients"      bun:"cc_recipients,array,type:text[],nullzero"`
 	BCCRecipients     []string      `json:"bccRecipients"     bun:"bcc_recipients,array,type:text[],nullzero"`
 	Subject           string        `json:"subject"           bun:"subject,type:VARCHAR(998),notnull"`
-	BodyTextSize      int64         `json:"bodyTextSize"      bun:"body_text_size,type:BIGINT,notnull,default:0"`
-	BodyHTMLSize      int64         `json:"bodyHtmlSize"      bun:"body_html_size,type:BIGINT,notnull,default:0"`
+	BodyTextSize      int64         `json:"bodyTextSize"      bun:"body_text_size,type:BIGINT,notnull"`
+	BodyHTMLSize      int64         `json:"bodyHtmlSize"      bun:"body_html_size,type:BIGINT,notnull"`
 	LastError         string        `json:"lastError"         bun:"last_error,type:TEXT,nullzero"`
 	SentAt            int64         `json:"sentAt"            bun:"sent_at,type:BIGINT,nullzero"`
 	DeliveredAt       int64         `json:"deliveredAt"       bun:"delivered_at,type:BIGINT,nullzero"`

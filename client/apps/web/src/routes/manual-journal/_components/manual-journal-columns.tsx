@@ -2,7 +2,7 @@ import { AccountingStatusBadge } from "@/components/accounting/accounting-status
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { manualJournalStatusChoices } from "@/lib/choices";
 import type { ManualJournal } from "@/types/manual-journal";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 
 export function getManualJournalColumns(): ColumnDef<ManualJournal>[] {
@@ -39,9 +39,7 @@ export function getManualJournalColumns(): ColumnDef<ManualJournal>[] {
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ row }) => (
-        <span className="line-clamp-1 text-xs">{row.original.description}</span>
-      ),
+      cell: ({ row }) => <span className="line-clamp-1 text-xs">{row.original.description}</span>,
       meta: {
         apiField: "description",
         label: "Description",
@@ -55,9 +53,7 @@ export function getManualJournalColumns(): ColumnDef<ManualJournal>[] {
       accessorKey: "accountingDate",
       header: "Accounting Date",
       cell: ({ row }) => (
-        <span className="text-xs">
-          {formatUnixDate(row.original.accountingDate)}
-        </span>
+        <span className="text-xs">{formatUnixDate(row.original.accountingDate)}</span>
       ),
       meta: {
         apiField: "accountingDate",
@@ -69,9 +65,7 @@ export function getManualJournalColumns(): ColumnDef<ManualJournal>[] {
     {
       accessorKey: "totalDebit",
       header: "Total Debit",
-      cell: ({ row }) => (
-        <AmountDisplay value={row.original.totalDebit} className="text-xs" />
-      ),
+      cell: ({ row }) => <AmountDisplay value={row.original.totalDebit} className="text-xs" />,
       meta: {
         apiField: "totalDebit",
         label: "Total Debit",
@@ -82,9 +76,7 @@ export function getManualJournalColumns(): ColumnDef<ManualJournal>[] {
     {
       accessorKey: "totalCredit",
       header: "Total Credit",
-      cell: ({ row }) => (
-        <AmountDisplay value={row.original.totalCredit} className="text-xs" />
-      ),
+      cell: ({ row }) => <AmountDisplay value={row.original.totalCredit} className="text-xs" />,
       meta: {
         apiField: "totalCredit",
         label: "Total Credit",

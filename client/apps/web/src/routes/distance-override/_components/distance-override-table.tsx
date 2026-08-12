@@ -12,11 +12,10 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { distanceOverrideTableGraphQLConfig } from "@/lib/graphql/distance-override-table";
 import { DistanceOverrideService } from "@/services/distance-override";
-import type { RowAction } from "@trenova/shared/types/data-table";
+import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import type { DistanceOverride } from "@/types/distance-override";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 import { Loader2Icon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -28,8 +27,7 @@ const distanceOverrideService = new DistanceOverrideService();
 export default function DistanceOverrideTable() {
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedOverride, setSelectedOverride] =
-    useState<DistanceOverride | null>(null);
+  const [selectedOverride, setSelectedOverride] = useState<DistanceOverride | null>(null);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -45,10 +43,7 @@ export default function DistanceOverrideTable() {
     },
     onError: (error) => {
       toast.error("Failed to delete distance override", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     },
   });
@@ -92,8 +87,7 @@ export default function DistanceOverrideTable() {
             </AlertDialogMedia>
             <AlertDialogTitle>Delete Distance Override</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this distance override? This action
-              cannot be undone.
+              Are you sure you want to delete this distance override? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -107,9 +101,7 @@ export default function DistanceOverrideTable() {
               }}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending && (
-                <Loader2Icon className="mr-2 size-4 animate-spin" />
-              )}
+              {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

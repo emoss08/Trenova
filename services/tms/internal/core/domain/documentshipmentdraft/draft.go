@@ -28,14 +28,14 @@ type DocumentShipmentDraft struct {
 	BusinessUnitID     pulid.ID       `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
 	Status             Status         `json:"status"             bun:"status,type:document_shipment_draft_status_enum,notnull,default:'Unavailable'"`
 	DocumentKind       string         `json:"documentKind"       bun:"document_kind,type:VARCHAR(100),nullzero"`
-	Confidence         float64        `json:"confidence"         bun:"confidence,type:DOUBLE PRECISION,notnull,default:0"`
-	DraftData          map[string]any `json:"draftData"          bun:"draft_data,type:JSONB,notnull,default:'{}'::jsonb"`
+	Confidence         float64        `json:"confidence"         bun:"confidence,type:DOUBLE PRECISION,notnull"`
+	DraftData          map[string]any `json:"draftData"          bun:"draft_data,type:JSONB,notnull,default:'{}'"`
 	FailureCode        string         `json:"failureCode"        bun:"failure_code,type:VARCHAR(100),nullzero"`
 	FailureMessage     string         `json:"failureMessage"     bun:"failure_message,type:TEXT,nullzero"`
 	AttachedShipmentID *pulid.ID      `json:"attachedShipmentId" bun:"attached_shipment_id,type:VARCHAR(100),nullzero"`
 	AttachedAt         *int64         `json:"attachedAt"         bun:"attached_at,type:BIGINT,nullzero"`
 	AttachedByID       *pulid.ID      `json:"attachedById"       bun:"attached_by_id,type:VARCHAR(100),nullzero"`
-	Version            int64          `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
+	Version            int64          `json:"version"            bun:"version,type:BIGINT,notnull"`
 	CreatedAt          int64          `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt          int64          `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

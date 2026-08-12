@@ -18,14 +18,14 @@ type WorkerHOSState struct {
 	Provider                string     `json:"provider"                bun:"provider,type:VARCHAR(32),notnull,default:'Samsara'"`
 	ProviderDriverID        string     `json:"providerDriverId"        bun:"provider_driver_id,type:TEXT,notnull"`
 	DutyStatus              DutyStatus `json:"dutyStatus"              bun:"duty_status,type:VARCHAR(32),nullzero"`
-	DriveRemainingMs        int64      `json:"driveRemainingMs"        bun:"drive_remaining_ms,type:BIGINT,notnull,default:0"`
-	ShiftRemainingMs        int64      `json:"shiftRemainingMs"        bun:"shift_remaining_ms,type:BIGINT,notnull,default:0"`
-	CycleRemainingMs        int64      `json:"cycleRemainingMs"        bun:"cycle_remaining_ms,type:BIGINT,notnull,default:0"`
-	CycleTomorrowMs         int64      `json:"cycleTomorrowMs"         bun:"cycle_tomorrow_ms,type:BIGINT,notnull,default:0"`
-	BreakRemainingMs        int64      `json:"breakRemainingMs"        bun:"break_remaining_ms,type:BIGINT,notnull,default:0"`
+	DriveRemainingMs        int64      `json:"driveRemainingMs"        bun:"drive_remaining_ms,type:BIGINT,notnull"`
+	ShiftRemainingMs        int64      `json:"shiftRemainingMs"        bun:"shift_remaining_ms,type:BIGINT,notnull"`
+	CycleRemainingMs        int64      `json:"cycleRemainingMs"        bun:"cycle_remaining_ms,type:BIGINT,notnull"`
+	CycleTomorrowMs         int64      `json:"cycleTomorrowMs"         bun:"cycle_tomorrow_ms,type:BIGINT,notnull"`
+	BreakRemainingMs        int64      `json:"breakRemainingMs"        bun:"break_remaining_ms,type:BIGINT,notnull"`
 	CycleStartedAt          *int64     `json:"cycleStartedAt"          bun:"cycle_started_at,type:BIGINT,nullzero"`
-	ShiftDrivingViolationMs int64      `json:"shiftDrivingViolationMs" bun:"shift_driving_violation_ms,type:BIGINT,notnull,default:0"`
-	CycleViolationMs        int64      `json:"cycleViolationMs"        bun:"cycle_violation_ms,type:BIGINT,notnull,default:0"`
+	ShiftDrivingViolationMs int64      `json:"shiftDrivingViolationMs" bun:"shift_driving_violation_ms,type:BIGINT,notnull"`
+	CycleViolationMs        int64      `json:"cycleViolationMs"        bun:"cycle_violation_ms,type:BIGINT,notnull"`
 	CurrentVehicleID        string     `json:"currentVehicleId"        bun:"current_vehicle_id,type:TEXT,nullzero"`
 	RulesetCycle            string     `json:"rulesetCycle"            bun:"ruleset_cycle,type:VARCHAR(64),nullzero"`
 	RulesetShift            string     `json:"rulesetShift"            bun:"ruleset_shift,type:VARCHAR(64),nullzero"`

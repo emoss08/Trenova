@@ -38,6 +38,7 @@ func TestListByShipmentID_ReturnsHolds(t *testing.T) {
 	t.Parallel()
 
 	repo, mock := newTestRepository(t)
+	mock.MatchExpectationsInOrder(false)
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	shipmentID := pulid.MustNew("shp_")

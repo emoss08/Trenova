@@ -5,9 +5,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
-import type { RowAction } from "@trenova/shared/types/data-table";
+import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import type { Row } from "@tanstack/react-table";
 import { MoreHorizontalIcon } from "lucide-react";
 
 export function ActionsCell({

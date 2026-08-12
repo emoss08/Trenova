@@ -4,7 +4,7 @@ import { formatLocation } from "@trenova/shared/lib/utils";
 import type { Customer } from "@trenova/shared/types/customer";
 import type { DistanceOverride } from "@/types/distance-override";
 import type { Location } from "@trenova/shared/types/location";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<DistanceOverride>[] {
   return [

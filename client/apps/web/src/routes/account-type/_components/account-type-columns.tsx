@@ -8,7 +8,7 @@ import { accountCategoryChoices, statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { AccountType } from "@/types/account-type";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
 function AccountTypeStatusCell({ row }: { row: AccountType }) {
@@ -86,9 +86,7 @@ export function getColumns(): ColumnDef<AccountType>[] {
       accessorKey: "category",
       header: "Category",
       cell: ({ row }) => {
-        const choice = accountCategoryChoices.find(
-          (c) => c.value === row.original.category,
-        );
+        const choice = accountCategoryChoices.find((c) => c.value === row.original.category);
         if (!choice) return row.original.category;
         return <DataTableColorColumn text={choice.label} color={choice.color} />;
       },
@@ -105,10 +103,7 @@ export function getColumns(): ColumnDef<AccountType>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.description}
-          truncateLength={100}
-        />
+        <DataTableDescription description={row.original.description} truncateLength={100} />
       ),
       size: 400,
       minSize: 300,

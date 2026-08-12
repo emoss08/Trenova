@@ -4,7 +4,7 @@ import { recurringShipmentStatusChoices } from "@/lib/choices";
 import { describeCron } from "@/lib/cron";
 import { cn } from "@trenova/shared/lib/utils";
 import type { RecurringShipment, RecurringShipmentStatus } from "@/types/recurring-shipment";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { ArrowRightIcon } from "lucide-react";
 
 const statusStyles: Record<RecurringShipmentStatus, string> = {

@@ -5,14 +5,10 @@ import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
 
-function EquipmentManufacturerStatusCell({
-  row,
-}: {
-  row: EquipmentManufacturer;
-}) {
+function EquipmentManufacturerStatusCell({ row }: { row: EquipmentManufacturer }) {
   const queryClient = useQueryClient();
 
   const handleStatusChange = useCallback(
@@ -73,10 +69,7 @@ export function getColumns(): ColumnDef<EquipmentManufacturer>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <DataTableDescription
-          description={row.original.description}
-          truncateLength={50}
-        />
+        <DataTableDescription description={row.original.description} truncateLength={50} />
       ),
       meta: {
         label: "Description",
