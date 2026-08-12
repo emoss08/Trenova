@@ -236,5 +236,5 @@ func extractPostgresErrorDetails(err error) (postgresErrorDetails, bool) {
 		}, true
 	}
 
-	return postgresErrorDetails{}, false
+	return extractSQLiteErrorDetails(err)
 }

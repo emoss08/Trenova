@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/migrations"
 	"github.com/fatih/color"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -24,7 +23,7 @@ type Migrator struct {
 }
 
 func NewMigrator(config *common.DatabaseConfig) *Migrator {
-	migrator := migrate.NewMigrator(config.DB, migrations.Migrations)
+	migrator := migrate.NewMigrator(config.DB, migrationsFor(config.DB))
 
 	return &Migrator{
 		db:       config.DB,

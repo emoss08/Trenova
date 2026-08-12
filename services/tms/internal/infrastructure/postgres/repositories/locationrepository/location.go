@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -215,6 +216,9 @@ func applyLocationGeofence(
 		}
 
 		if insertQuery != nil {
+			if err = dbdialect.RequireFromBun(insertQuery.DB(), dbdialect.CapPostGIS); err != nil {
+				return err
+			}
 			insertQuery.Value(
 				"geofence_geometry",
 				"ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)",
@@ -222,6 +226,9 @@ func applyLocationGeofence(
 			)
 		}
 		if updateQuery != nil {
+			if err = dbdialect.RequireFromBun(updateQuery.DB(), dbdialect.CapPostGIS); err != nil {
+				return err
+			}
 			updateQuery.Set(
 				"geofence_geometry = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)",
 				geometryJSON,
