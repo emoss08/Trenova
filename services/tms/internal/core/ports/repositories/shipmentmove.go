@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
@@ -41,11 +42,14 @@ func (a StopActualAction) IsValid() bool {
 	return a == StopActualActionArrive || a == StopActualActionDepart
 }
 
+const StopActualClockSkewSeconds = int64(300)
+
 type RecordStopActualRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	MoveID     pulid.ID              `json:"moveId"`
 	StopID     pulid.ID              `json:"stopId"`
 	Action     StopActualAction      `json:"action"`
+	OccurredAt *int64                `json:"occurredAt,omitempty"`
 }
 
 func (r *RecordStopActualRequest) Validate() *errortypes.MultiError {
@@ -68,6 +72,22 @@ func (r *RecordStopActualRequest) Validate() *errortypes.MultiError {
 	}
 	if !r.Action.IsValid() {
 		multiErr.Add("action", errortypes.ErrInvalid, "Action must be Arrive or Depart")
+	}
+	if r.OccurredAt != nil {
+		switch {
+		case *r.OccurredAt <= 0:
+			multiErr.Add(
+				"occurredAt",
+				errortypes.ErrInvalid,
+				"Occurred at must be a valid timestamp",
+			)
+		case *r.OccurredAt > timeutils.NowUnix()+StopActualClockSkewSeconds:
+			multiErr.Add(
+				"occurredAt",
+				errortypes.ErrInvalid,
+				"Occurred at cannot be in the future",
+			)
+		}
 	}
 	if multiErr.HasErrors() {
 		return multiErr

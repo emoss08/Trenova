@@ -58,6 +58,20 @@ type DispatchCandidate {
   factors: [DispatchScoreFactor!]!
 }
 
+"""
+The live tender riding on a move, condensed to what a board card chip needs: where the
+waterfall stands and which carrier is currently holding the offer.
+"""
+type DispatchBoardTenderSummary {
+  id: ID!
+  status: TenderStatus!
+  mode: TenderMode!
+  currentRank: Int!
+  offerCount: Int!
+  currentCarrierName: String!
+  currentOfferExpiresAt: Int
+}
+
 type DispatchBoardMove {
   moveId: ID!
   shipmentId: ID!
@@ -115,6 +129,14 @@ type DispatchBoardMove {
   assignedTrailerCode: String!
   assignmentAckStatus: String!
   previousMoveTrailerId: ID
+
+  coverageType: String!
+  carrierAssignmentId: ID
+  assignedCarrierId: ID
+  assignedCarrierName: String!
+  carrierTotalCost: Float
+
+  liveTender: DispatchBoardTenderSummary
 }
 
 """
@@ -292,6 +314,45 @@ input DispatchAssignMoveInput {
   reassign: Boolean
 }
 
+input DispatchCarrierAccessorialInput {
+  accessorialChargeId: ID
+  description: String!
+  amount: String!
+}
+
+input DispatchAssignMoveToCarrierInput {
+  moveId: ID!
+  carrierId: ID!
+  rateMethod: CarrierRateMethod!
+  baseRate: String!
+  fuelSurcharge: String
+  accessorials: [DispatchCarrierAccessorialInput!]
+  proNumber: String
+  externalDriverName: String
+  externalDriverPhone: String
+  externalTractorNumber: String
+  externalTrailerNumber: String
+  """
+  Replace an existing carrier assignment rather than rejecting the request. The console
+  sets this when a dispatcher re-covers a move that already has carrier coverage.
+  """
+  replace: Boolean
+  """
+  Proceed despite insurance policies that expire inside the warning window. Hard blockers
+  (inactive, unqualified, or expired coverage) can never be overridden.
+  """
+  overrideInsuranceWarning: Boolean
+}
+
+input DispatchCarrierAssignmentPreviewInput {
+  carrierId: ID!
+}
+
+type DispatchCarrierEligibility {
+  blockers: [String!]!
+  warnings: [String!]!
+}
+
 extend type Query {
   dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
   dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
@@ -304,6 +365,14 @@ extend type Query {
 extend type Mutation {
   dispatchAssignMoves(input: [DispatchAssignMoveInput!]!): DispatchBulkAssignResult!
   dispatchUnassignMoves(moveIds: [ID!]!): DispatchBulkAssignResult!
+  dispatchAssignMoveToCarrier(input: DispatchAssignMoveToCarrierInput!): CarrierAssignment!
+  dispatchCancelCarrierAssignment(moveId: ID!, reason: String!): Boolean!
+}
+
+extend type Query {
+  dispatchCarrierAssignmentPreview(
+    input: DispatchCarrierAssignmentPreviewInput!
+  ): DispatchCarrierEligibility!
 }
 
 """

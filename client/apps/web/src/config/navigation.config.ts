@@ -5,6 +5,7 @@ import {
   CalculatorIcon,
   ContainerIcon,
   FileSlidersIcon,
+  HandshakeIcon,
   HomeIcon,
   Package,
   ReceiptTextIcon,
@@ -132,6 +133,18 @@ const dispatchModule: NavModule = {
       label: "Workers",
       path: "/dispatch/workers",
       resource: Resource.Worker,
+    },
+    {
+      id: "carriers",
+      label: "Carriers",
+      path: "/dispatch/carriers",
+      resource: Resource.Carrier,
+    },
+    {
+      id: "routing-guides",
+      label: "Routing Guides",
+      path: "/dispatch/routing-guides",
+      resource: Resource.RoutingGuide,
     },
     {
       id: "dispatch-config-group",
@@ -417,6 +430,46 @@ const payrollModule: NavModule = {
   ],
 };
 
+const carrierSettlementsModule: NavModule = {
+  id: "carrier-settlements",
+  label: "Carrier Settlements",
+  icon: HandshakeIcon,
+  description: "Carrier payables and invoice reconciliation",
+  basePath: "/carrier-settlements",
+  navigation: [
+    {
+      id: "carrier-settlement-workspace",
+      label: "Workspace",
+      path: "/carrier-settlements/workspace",
+      resource: Resource.CarrierSettlement,
+    },
+    {
+      id: "carrier-settlements-history",
+      label: "Settlement History",
+      path: "/carrier-settlements/settlements",
+      resource: Resource.CarrierSettlement,
+    },
+    {
+      id: "carrier-settlement-batches",
+      label: "Settlement Batches",
+      path: "/carrier-settlements/batches",
+      resource: Resource.CarrierSettlement,
+    },
+    {
+      id: "carrier-cost-events",
+      label: "Cost Events",
+      path: "/carrier-settlements/cost-events",
+      resource: Resource.CarrierSettlement,
+    },
+    {
+      id: "carrier-invoice-matching",
+      label: "Invoice Matching",
+      path: "/carrier-settlements/invoice-matching",
+      resource: Resource.CarrierInvoiceMatch,
+    },
+  ],
+};
+
 const ediModule: NavModule = {
   id: "edi",
   label: "EDI",
@@ -655,6 +708,7 @@ export const navigationConfig: NavigationConfig = {
     billingModule,
     detentionModule,
     payrollModule,
+    carrierSettlementsModule,
     ediModule,
     reportsModule,
     accountingModule,
@@ -1006,7 +1060,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "financial",
     label: "Financial",
-    moduleIds: ["billing", "detention", "payroll", "reports", "accounting"],
+    moduleIds: ["billing", "detention", "payroll", "carrier-settlements", "reports", "accounting"],
   },
   {
     id: "admin",
@@ -1035,6 +1089,13 @@ export const adminLinks: SidebarLink[] = [
     title: "Settlement Control",
     group: "Organization",
     resource: Resource.SettlementControl,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/carrier-settlement-control",
+    title: "Carrier Settlement Control",
+    group: "Organization",
+    resource: Resource.CarrierSettlementControl,
     requiredOperation: Operation.Read,
   },
   {

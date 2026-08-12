@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
@@ -518,7 +517,7 @@ func (s *service) refreshShipmentState(
 
 	s.coordinator.RefreshShipmentStateWithDelayThreshold(
 		entity,
-		resolveDelayThresholdMinutes(control),
+		shipmentstate.ResolveControlDelayThreshold(control),
 	)
 	if err = s.commercial.Recalculate(ctx, entity, control, pulid.Nil); err != nil {
 		return err
@@ -532,17 +531,6 @@ func (s *service) refreshShipmentState(
 	}
 
 	return nil
-}
-
-func resolveDelayThresholdMinutes(control *tenant.ShipmentControl) int16 {
-	if control == nil || !control.AutoDelayShipments {
-		return shipmentstate.DisabledDelayThresholdMinutes
-	}
-	if control.AutoDelayShipmentsThreshold == nil {
-		return shipmentstate.ResolveDelayThresholdMinutes(0)
-	}
-
-	return shipmentstate.ResolveDelayThresholdMinutes(*control.AutoDelayShipmentsThreshold)
 }
 
 func (s *service) ensureNoDeliveryHold(

@@ -2,7 +2,7 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { formatFeetInches, formatPounds } from "@trenova/shared/lib/permit";
 import type { JurisdictionRule, JurisdictionVerificationState } from "@/types/jurisdiction-rule";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 const VERIFICATION_VARIANT: Record<
   JurisdictionVerificationState,

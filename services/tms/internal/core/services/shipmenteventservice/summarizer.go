@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -11,6 +12,27 @@ import (
 type TenantRef struct {
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
+}
+
+// TenantRefFor derives the event tenant reference from request tenant info.
+func TenantRefFor(tenantInfo pagination.TenantInfo) TenantRef {
+	return TenantRef{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	}
+}
+
+// ActorFor derives the audit actor from request tenant info; system-originated
+// requests without a user yield an empty actor.
+func ActorFor(tenantInfo pagination.TenantInfo) services.AuditActor {
+	if tenantInfo.UserID.IsNil() {
+		return services.AuditActor{}
+	}
+	return services.AuditActor{
+		PrincipalType: services.PrincipalTypeUser,
+		PrincipalID:   tenantInfo.UserID,
+		UserID:        tenantInfo.UserID,
+	}
 }
 
 // AssignmentRef captures the IDs needed to wire an assignment event to its
@@ -216,6 +238,62 @@ func BuildDriverUnassigned(
 		Severity:       shipmentevent.SeverityMuted,
 		Summary:        "Driver unassigned",
 		Actor:          actor,
+	}
+}
+
+// BuildCarrierAssigned emits an external-carrier coverage event.
+func BuildCarrierAssigned(
+	tenant TenantRef,
+	ref AssignmentRef,
+	assignment *shipment.CarrierAssignment,
+	carrierName string,
+	actor services.AuditActor,
+) *services.RecordShipmentEventParams {
+	metadata := map[string]any{
+		"carrierName": carrierName,
+	}
+	if assignment != nil {
+		metadata["carrierId"] = assignment.CarrierID.String()
+		metadata["totalCost"] = assignment.TotalCost.String()
+		if assignment.ProNumber != "" {
+			metadata["proNumber"] = assignment.ProNumber
+		}
+	}
+
+	return &services.RecordShipmentEventParams{
+		OrganizationID: tenant.OrganizationID,
+		BusinessUnitID: tenant.BusinessUnitID,
+		ShipmentID:     ref.ShipmentID,
+		MoveID:         ref.MoveID,
+		Type:           shipmentevent.TypeCarrierAssigned,
+		Severity:       shipmentevent.SeverityMuted,
+		Summary:        "Carrier assigned",
+		Metadata:       metadata,
+		Actor:          actor,
+	}
+}
+
+// BuildCarrierUnassigned emits an external-carrier coverage removal event.
+func BuildCarrierUnassigned(
+	tenant TenantRef,
+	ref AssignmentRef,
+	carrierName string,
+	reason string,
+	actor services.AuditActor,
+) *services.RecordShipmentEventParams {
+	return &services.RecordShipmentEventParams{
+		OrganizationID: tenant.OrganizationID,
+		BusinessUnitID: tenant.BusinessUnitID,
+		ShipmentID:     ref.ShipmentID,
+		MoveID:         ref.MoveID,
+		Type:           shipmentevent.TypeCarrierUnassigned,
+		Severity:       shipmentevent.SeverityMuted,
+		Summary:        "Carrier unassigned",
+		Metadata: map[string]any{
+			"carrierName": carrierName,
+			"reason":      reason,
+		},
+		Actor: actor,
 	}
 }
 

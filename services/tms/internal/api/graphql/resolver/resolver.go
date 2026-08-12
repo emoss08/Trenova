@@ -13,6 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierservice"
+	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
@@ -52,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
+	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
@@ -60,6 +64,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
+	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
@@ -92,9 +97,14 @@ type Params struct {
 	AccountsReceivableService    *accountsreceivableservice.Service
 	CustomerPaymentService       services.CustomerPaymentService
 	CustomerPaymentRepo          repositories.CustomerPaymentRepository
+	CarrierRepo                  repositories.CarrierRepository
 	CustomerRepo                 repositories.CustomerRepository
 	GLAccountRepo                repositories.GLAccountRepository
 	CommodityService             *commodityservice.Service
+	CarrierAssignmentService     *carrierassignmentservice.Service
+	RoutingGuideService          *routingguideservice.Service
+	TenderService                *tenderservice.Service
+	CarrierService               *carrierservice.Service
 	CustomerService              *customerservice.Service
 	CustomFieldService           *customfieldservice.Service
 	FleetCodeService             *fleetcodeservice.Service
@@ -175,6 +185,10 @@ type Params struct {
 	DriverSettlementRepo         repositories.DriverSettlementRepository
 	SettlementBatchRepo          repositories.SettlementBatchRepository
 	PayEventRepo                 repositories.PayEventRepository
+	CarrierSettlementService     *carriersettlementservice.Service
+	CarrierSettlementRepo        repositories.CarrierSettlementRepository
+	CarrierSettlementBatchRepo   repositories.CarrierSettlementBatchRepository
+	CarrierCostEventRepo         repositories.CarrierCostEventRepository
 }
 
 type Resolver struct {
@@ -193,9 +207,14 @@ type Resolver struct {
 	accountsReceivableService    *accountsreceivableservice.Service
 	customerPaymentService       services.CustomerPaymentService
 	customerPaymentRepo          repositories.CustomerPaymentRepository
+	carrierRepo                  repositories.CarrierRepository
 	customerRepo                 repositories.CustomerRepository
 	glAccountRepo                repositories.GLAccountRepository
 	commodityService             *commodityservice.Service
+	carrierAssignmentService     *carrierassignmentservice.Service
+	routingGuideService          *routingguideservice.Service
+	tenderService                *tenderservice.Service
+	carrierService               *carrierservice.Service
 	customerService              *customerservice.Service
 	customFieldService           *customfieldservice.Service
 	fleetCodeService             *fleetcodeservice.Service
@@ -275,6 +294,10 @@ type Resolver struct {
 	driverSettlementRepo         repositories.DriverSettlementRepository
 	settlementBatchRepo          repositories.SettlementBatchRepository
 	payEventRepo                 repositories.PayEventRepository
+	carrierSettlementService     *carriersettlementservice.Service
+	carrierSettlementRepo        repositories.CarrierSettlementRepository
+	carrierSettlementBatchRepo   repositories.CarrierSettlementBatchRepository
+	carrierCostEventRepo         repositories.CarrierCostEventRepository
 	reportingService             *reportingservice.Service
 	permissionEngine             services.PermissionEngine
 }
@@ -296,9 +319,14 @@ func New(p Params) *Resolver {
 		accountsReceivableService:    p.AccountsReceivableService,
 		customerPaymentService:       p.CustomerPaymentService,
 		customerPaymentRepo:          p.CustomerPaymentRepo,
+		carrierRepo:                  p.CarrierRepo,
 		customerRepo:                 p.CustomerRepo,
 		glAccountRepo:                p.GLAccountRepo,
 		commodityService:             p.CommodityService,
+		carrierAssignmentService:     p.CarrierAssignmentService,
+		routingGuideService:          p.RoutingGuideService,
+		tenderService:                p.TenderService,
+		carrierService:               p.CarrierService,
 		customerService:              p.CustomerService,
 		customFieldService:           p.CustomFieldService,
 		fleetCodeService:             p.FleetCodeService,
@@ -380,6 +408,10 @@ func New(p Params) *Resolver {
 		driverSettlementRepo:         p.DriverSettlementRepo,
 		settlementBatchRepo:          p.SettlementBatchRepo,
 		payEventRepo:                 p.PayEventRepo,
+		carrierSettlementService:     p.CarrierSettlementService,
+		carrierSettlementRepo:        p.CarrierSettlementRepo,
+		carrierSettlementBatchRepo:   p.CarrierSettlementBatchRepo,
+		carrierCostEventRepo:         p.CarrierCostEventRepo,
 	}
 }
 

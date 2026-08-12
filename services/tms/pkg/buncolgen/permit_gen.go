@@ -59,7 +59,6 @@ var PermitColumns = struct {
 	IssuedAt       Column // "issued_at" → qualified: "pmt.issued_at"
 	ExpiresAt      Column // "expires_at" → qualified: "pmt.expires_at"
 	Cost           Column // "cost" → qualified: "pmt.cost"
-	DocumentID     Column // "document_id" → qualified: "pmt.document_id"
 	Notes          Column // "notes" → qualified: "pmt.notes"
 	Version        Column // "version" → qualified: "pmt.version"
 	CreatedAt      Column // "created_at" → qualified: "pmt.created_at"
@@ -77,7 +76,6 @@ var PermitColumns = struct {
 	IssuedAt:       NewColumn("issued_at", "pmt"),
 	ExpiresAt:      NewColumn("expires_at", "pmt"),
 	Cost:           NewColumn("cost", "pmt"),
-	DocumentID:     NewColumn("document_id", "pmt"),
 	Notes:          NewColumn("notes", "pmt"),
 	Version:        NewColumn("version", "pmt"),
 	CreatedAt:      NewColumn("created_at", "pmt"),
@@ -101,7 +99,6 @@ var PermitFieldMap = map[string]string{
 	"issuedAt":       "issued_at",
 	"expiresAt":      "expires_at",
 	"cost":           "cost",
-	"documentId":     "document_id",
 	"notes":          "notes",
 	"version":        "version",
 	"createdAt":      "created_at",
@@ -121,7 +118,6 @@ var PermitInsertableColumns = []string{
 	"issued_at",
 	"expires_at",
 	"cost",
-	"document_id",
 	"notes",
 	"version",
 	"created_at",
@@ -203,7 +199,6 @@ var PermitFilter = struct {
 	IssuedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "issuedAt" → DB: "issued_at"
 	ExpiresAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
 	Cost           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cost" → DB: "cost"
-	DocumentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
 	Notes          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
 	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
@@ -238,9 +233,6 @@ var PermitFilter = struct {
 	},
 	Cost: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("cost", op, value)
-	},
-	DocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("documentId", op, value)
 	},
 	Notes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("notes", op, value)

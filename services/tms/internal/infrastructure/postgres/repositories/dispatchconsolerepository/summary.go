@@ -68,29 +68,35 @@ func (r *repository) scanMoveSummary(
 		}
 	}
 
+	casnCols := buncolgen.CarrierAssignmentColumns
+	uncoveredCond := "(" + asnCols.ID.IsNull() + " AND " + casnCols.ID.IsNull() + ")"
+	coveredCond := "(" + asnCols.ID.IsNotNull() + " OR " + casnCols.ID.IsNotNull() + ")"
+
 	err := r.db.DB().NewSelect().
 		Model((*shipment.ShipmentMove)(nil)).
-		ColumnExpr(buncolgen.CountFilter("uncovered_moves", asnCols.ID.IsNull())).
-		ColumnExpr(buncolgen.CountFilter("covered_moves", asnCols.ID.IsNotNull())).
+		ColumnExpr(buncolgen.CountFilter("uncovered_moves", uncoveredCond)).
+		ColumnExpr(buncolgen.CountFilter("covered_moves", coveredCond)).
 		ColumnExpr(buncolgen.CountFilter("late_moves",
-			asnCols.ID.IsNull(),
+			uncoveredCond,
 			"COALESCE(orig.window_start, 0) > 0",
 			"orig.window_start < ?",
 		), now).
 		ColumnExpr(buncolgen.CountFilter("at_risk_moves",
-			asnCols.ID.IsNull(),
+			uncoveredCond,
 			"COALESCE(orig.window_start, 0) > 0",
 			"orig.window_start >= ?",
 			"orig.window_start <= ?",
 		), now, now+atRiskLeadSeconds).
 		ColumnExpr(buncolgen.CountFilter("assigned_today",
-			asnCols.ID.IsNotNull(),
-			asnCols.CreatedAt.Gte(),
+			coveredCond,
+			"COALESCE("+asnCols.CreatedAt.Qualified()+", "+
+				casnCols.CreatedAt.Qualified()+") >= ?",
 		), dayStart).
 		Apply(averageDeadheadColumn()).
 		Join(shipmentJoin).
 		Join(customerJoin).
 		Join(assignmentJoin).
+		Join(carrierAssignmentJoin).
 		Join(vehiclePositionJoin, now-positionFreshnessSeconds).
 		Apply(joinMoveStopEdges).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {

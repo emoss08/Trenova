@@ -46,9 +46,7 @@ export function getUserDatePreferences(): UserDatePreferences {
 
 export function resolveUserTimezone(userTimezone?: string): string {
   const timezone = userTimezone || userDatePreferences.timezone;
-  return timezone === AUTO_TIMEZONE
-    ? Intl.DateTimeFormat().resolvedOptions().timeZone
-    : timezone;
+  return timezone === AUTO_TIMEZONE ? Intl.DateTimeFormat().resolvedOptions().timeZone : timezone;
 }
 
 export function resolveUserTimeFormat(timeFormat?: TimeFormatType): TimeFormatType {
@@ -553,9 +551,7 @@ export function getEndOfDay(date: Date = new Date(), timezone?: string): number 
 
 export function getStartOfMonth(date: Date = new Date(), timezone?: string): number {
   const resolved = resolveUserTimezone(timezone);
-  return dateToUnixTimestamp(
-    fromZonedTime(startOfMonth(toZonedTime(date, resolved)), resolved),
-  );
+  return dateToUnixTimestamp(fromZonedTime(startOfMonth(toZonedTime(date, resolved)), resolved));
 }
 
 export function getEndOfMonth(date: Date = new Date(), timezone?: string): number {
@@ -704,6 +700,26 @@ export function formatUnixDateOrDash(
 }
 
 /**
+ * The settlement surfaces (driver and carrier statements, batches, cost
+ * events, invoice matching) all render dates as a medium date with an em-dash
+ * fallback for unset timestamps — one formatter so they cannot drift apart.
+ */
+export function formatSettlementDate(
+  value: number | null | undefined,
+  options?: UnixFormatOptions,
+) {
+  return formatUnixDateMedium(value, { fallback: "—", ...options });
+}
+
+/** Compact month/day variant of {@link formatSettlementDate} for dense rails and lists. */
+export function formatSettlementMonthDay(
+  value: number | null | undefined,
+  options?: UnixFormatOptions,
+) {
+  return formatUnixMonthDay(value, { fallback: "—", ...options });
+}
+
+/**
  * Presets are anchored to *today in the user's timezone*, so "Today" means the
  * day they are living in rather than the day the browser happens to be in.
  * Every boundary below is computed on wall-clock dates and converted back to an
@@ -761,10 +777,7 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
         const firstDayNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         return {
           startDate: startOfWallClockDay(firstDayNextMonth, resolved),
-          endDate: endOfWallClockDay(
-            new Date(now.getFullYear(), now.getMonth() + 2, 0),
-            resolved,
-          ),
+          endDate: endOfWallClockDay(new Date(now.getFullYear(), now.getMonth() + 2, 0), resolved),
         };
       },
     },

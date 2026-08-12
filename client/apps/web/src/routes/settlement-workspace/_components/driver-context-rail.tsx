@@ -34,11 +34,7 @@ import { ArrowLeftToLine, Pause, PauseCircle, Play, PlusCircle } from "lucide-re
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
-import { formatUnixMonthDay } from "@trenova/shared/lib/date";
-
-function formatDate(unix?: number | null): string {
-  return formatUnixMonthDay(unix, { fallback: "—" });
-}
+import { formatSettlementMonthDay } from "@trenova/shared/lib/date";
 
 export function DriverContextRail({
   workerId,
@@ -190,7 +186,7 @@ function UnsettledPaySection({
                   {event.proNumber || "No PRO"}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  {formatDate(event.eventDate)}
+                  {formatSettlementMonthDay(event.eventDate)}
                 </span>
                 <span className="ml-auto text-xs font-semibold">
                   <AmountDisplay value={event.grossAmountMinor} currency={event.currencyCode} />
@@ -546,7 +542,7 @@ function AdvancesSection({ workerId }: { workerId: string }) {
                   {advance.reference || advance.source}
                 </p>
                 <p className="text-[10px] text-muted-foreground">
-                  issued {formatDate(advance.issuedDate)}
+                  issued {formatSettlementMonthDay(advance.issuedDate)}
                 </p>
               </div>
               <span className="text-[11px] font-semibold">

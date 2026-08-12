@@ -26,6 +26,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierservice"
+	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
@@ -102,6 +105,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/permission"
 	"github.com/emoss08/trenova/internal/core/services/permitservice"
 	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
+	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
@@ -109,6 +113,7 @@ import (
 	reportingcompiler "github.com/emoss08/trenova/internal/core/services/reporting/compiler"
 	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
+	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
 	"github.com/emoss08/trenova/internal/core/services/sequenceconfigservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailurereasoncodeservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailureservice"
@@ -128,6 +133,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/tenantprovisioningservice"
+	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
@@ -307,6 +313,28 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		func(s *driversettlementservice.Service) services.MoveStatusObserver { return s },
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
+	carriersettlementservice.New,
+	fx.Annotate(
+		func(s *carriersettlementservice.Service) services.ShipmentMutationObserver { return s },
+		fx.ResultTags(`group:"shipment_mutation_observers"`),
+	),
+	fx.Annotate(
+		func(s *carriersettlementservice.Service) services.MoveStatusObserver { return s },
+		fx.ResultTags(`group:"move_status_observers"`),
+	),
+	func(s *carriersettlementservice.Service) services.CarrierCostAccrual { return s },
+	func(s *carriersettlementservice.Service) services.CarrierInvoiceAutoMatcher { return s },
+	carrierassignmentservice.New,
+	func(s *carrierassignmentservice.Service) services.CarrierMoveAssigner { return s },
+	carrierservice.New,
+	rateconfirmationservice.New,
+	func(s *rateconfirmationservice.Service) services.RateConfirmationIssuer { return s },
+	routingguideservice.NewValidator,
+	routingguideservice.New,
+	tenderservice.New,
+	func(s *tenderservice.Service) services.TenderGuard { return s },
+	func(s *tenderservice.Service) services.TenderResponseRecorder { return s },
+	func(s *tenderservice.Service) services.TenderLifecycle { return s },
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,
 	fx.Annotate(
@@ -402,6 +430,15 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 ), fx.Invoke(
 	func(setter servicefailureservice.EDIServiceSetter, service services.EDIService) {
 		setter.SetEDIService(service)
+	},
+	func(s *tenderservice.Service, assigner services.CarrierMoveAssigner) {
+		s.SetCarrierMoveAssigner(assigner)
+	},
+	// Providing services.EDITenderChannel would close the constructor cycle
+	// ediservice -> ShipmentService -> TenderGuard -> tenderservice ->
+	// EDITenderChannel, so the channel arrives after both services are built.
+	func(s *tenderservice.Service, ediSvc *ediservice.Service) {
+		s.SetEDITenderChannel(ediSvc)
 	},
 	fx.Annotate(
 		func(

@@ -3,8 +3,11 @@ import { safeParse } from "@trenova/shared/lib/parse";
 import {
   assignmentPayloadSchema,
   assignmentSchema,
+  shipmentMoveSchema,
   type Assignment,
   type AssignmentPayload,
+  type RecordStopActualPayload,
+  type ShipmentMove,
   type SplitMovePayload,
   type SplitMoveResponse,
 } from "@trenova/shared/types/shipment";
@@ -51,5 +54,14 @@ export class AssignmentService {
 
   public async splitMove(moveId: string, payload: SplitMovePayload) {
     return api.post<SplitMoveResponse>(`/shipment-moves/${moveId}/split/`, payload);
+  }
+
+  public async recordStopActual(moveId: string, stopId: string, payload: RecordStopActualPayload) {
+    const response = await api.post<ShipmentMove>(
+      `/shipment-moves/${moveId}/stops/${stopId}/record-actual/`,
+      payload,
+    );
+
+    return safeParse(shipmentMoveSchema, response, "ShipmentMove");
   }
 }

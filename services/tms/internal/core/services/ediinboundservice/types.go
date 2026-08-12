@@ -76,6 +76,7 @@ type tenderResponseDetails struct {
 	shipmentRef     string
 	reservationCode string
 	remarks         string
+	references      []string
 }
 
 type shipmentStatusDetails struct {
@@ -84,6 +85,7 @@ type shipmentStatusDetails struct {
 	statusCode  string
 	reasonCode  string
 	eventAt     int64
+	references  []string
 }
 
 const inboundDefaultMappingKey = "DEFAULT"

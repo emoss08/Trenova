@@ -157,6 +157,10 @@ function selectOptionDateRange(option: GraphQLSelectOption) {
   return formatRange(startDate, endDate);
 }
 
+const carrierSelectOptionsGraphQL = {
+  resource: "CARRIER",
+} satisfies GraphQLSelectOptionsConfig;
+
 const customerSelectOptionsGraphQL = {
   resource: "CUSTOMER",
 } satisfies GraphQLSelectOptionsConfig;
@@ -657,6 +661,32 @@ export function CustomerAutocompleteField<T extends FieldValues>({
       link="/customers/select-options/"
       graphql={customerSelectOptionsGraphQL}
       popoutLink="/billing/configuration-files/customers"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return code ? `${code} - ${option.label}` : option.label;
+      }}
+      renderOption={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return (
+          <div className="flex size-full flex-col items-start">
+            <span>{code ? `${code} - ${option.label}` : option.label}</span>
+          </div>
+        );
+      }}
+      {...props}
+    />
+  );
+}
+
+export function CarrierAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/carriers/select-options/"
+      graphql={carrierSelectOptionsGraphQL}
+      popoutLink="/dispatch/carriers"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => {
         const code = selectOptionMetaString(option, "code");

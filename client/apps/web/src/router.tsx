@@ -367,6 +367,64 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/carrier-settlements/workspace",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierSettlementWorkspacePage } =
+                await import("@/routes/carrier-settlement-workspace/page");
+              return { Component: CarrierSettlementWorkspacePage };
+            },
+          },
+          {
+            path: "/carrier-settlements/settlements",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierSettlementsPage } = await import("@/routes/carrier-settlement/page");
+              return { Component: CarrierSettlementsPage };
+            },
+          },
+          {
+            path: "/carrier-settlements/batches",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierSettlementBatchesPage } =
+                await import("@/routes/carrier-settlement-batch/page");
+              return { Component: CarrierSettlementBatchesPage };
+            },
+          },
+          {
+            path: "/carrier-settlements/cost-events",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierCostEventsPage } = await import("@/routes/carrier-cost-event/page");
+              return { Component: CarrierCostEventsPage };
+            },
+          },
+          {
+            path: "/carrier-settlements/invoice-matching",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CarrierInvoiceMatch),
+            ),
+            async lazy() {
+              const { CarrierInvoiceMatchingPage } =
+                await import("@/routes/carrier-invoice-matching/page");
+              return { Component: CarrierInvoiceMatchingPage };
+            },
+          },
+          {
             path: "/billing/invoices",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
             async lazy() {
@@ -860,6 +918,22 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/dispatch/carriers",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Carrier)),
+            async lazy() {
+              const { CarriersPage } = await import("@/routes/carrier/page");
+              return { Component: CarriersPage };
+            },
+          },
+          {
+            path: "/dispatch/routing-guides",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RoutingGuide)),
+            async lazy() {
+              const { RoutingGuidesPage } = await import("@/routes/routing-guide/page");
+              return { Component: RoutingGuidesPage };
+            },
+          },
+          {
             path: "/accounting/configuration-files/fiscal-years",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.FiscalYear)),
             async lazy() {
@@ -948,6 +1022,15 @@ const routes: RouteObject[] = [
                   const { SettlementControlPage } =
                     await import("@/routes/settlement-control/page");
                   return { Component: SettlementControlPage };
+                },
+              },
+              {
+                path: "carrier-settlement-control",
+                loader: createPermissionLoader(Resource.CarrierSettlementControl, Operation.Read),
+                async lazy() {
+                  const { CarrierSettlementControlPage } =
+                    await import("@/routes/carrier-settlement-control/page");
+                  return { Component: CarrierSettlementControlPage };
                 },
               },
               {
@@ -1210,6 +1293,41 @@ const routes: RouteObject[] = [
                 },
               },
             ],
+          },
+        ],
+      },
+      {
+        // Public carrier-facing pages: no auth, no app chrome. An external
+        // carrier lands here from an emailed offer link, logged in or not.
+        children: [
+          {
+            path: "/tender-offer/:token",
+            async lazy() {
+              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
+              return { Component: TenderOfferPublicPage };
+            },
+          },
+          {
+            path: "/tender-offer/:token/accept",
+            async lazy() {
+              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
+              return { Component: TenderOfferPublicPage };
+            },
+          },
+          {
+            path: "/tender-offer/:token/decline",
+            async lazy() {
+              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
+              return { Component: TenderOfferPublicPage };
+            },
+          },
+          {
+            path: "/rate-confirmation/:token",
+            async lazy() {
+              const { RateConfirmationPublicPage } =
+                await import("@/routes/rate-confirmation-public/page");
+              return { Component: RateConfirmationPublicPage };
+            },
           },
         ],
       },

@@ -256,12 +256,72 @@ type ShipmentFormulaVariableDefinition {
   source: String
 }
 
+enum MoveCoverageType {
+  driver
+  carrier
+}
+
+enum CarrierAssignmentStatus {
+  Pending
+  Confirmed
+  Canceled
+}
+
+enum CarrierRateMethod {
+  Flat
+  PerMile
+}
+
+type CarrierAssignmentAccessorial {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  carrierAssignmentId: ID!
+  accessorialChargeId: ID
+  description: String!
+  amount: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type CarrierAssignment {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentMoveId: ID!
+  carrierId: ID!
+  status: CarrierAssignmentStatus!
+  rateMethod: CarrierRateMethod!
+  baseRate: String!
+  baseAmount: String!
+  fuelSurcharge: String!
+  accessorialTotal: String!
+  totalCost: String!
+  currencyCode: String!
+  proNumber: String
+  externalDriverName: String
+  externalDriverPhone: String
+  externalTractorNumber: String
+  externalTrailerNumber: String
+  assignedById: ID
+  confirmedAt: Int
+  canceledAt: Int
+  cancellationReason: String
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  carrier: Carrier
+  accessorials: [CarrierAssignmentAccessorial!]
+}
+
 type ShipmentMove {
   id: ID
   businessUnitId: ID!
   organizationId: ID!
   shipmentId: ID
   status: MoveStatus!
+  coverageType: MoveCoverageType!
   loaded: Boolean!
   sequence: Int!
   distance: Float
@@ -279,6 +339,7 @@ type ShipmentMove {
   updatedAt: Int!
   stops: [ShipmentStop!]!
   assignment: ShipmentAssignment
+  carrierAssignment: CarrierAssignment
 }
 
 type ShipmentStop {
@@ -830,6 +891,19 @@ enum ShipmentEventType {
   DriverAssigned
   DriverReassigned
   DriverUnassigned
+  CarrierAssigned
+  CarrierUnassigned
+  TenderOffered
+  TenderAccepted
+  TenderDeclined
+  TenderExpired
+  TenderWithdrawn
+  TenderNeedsReview
+  RoutingGuideExhausted
+  TenderLateResponse
+  TenderDeliveryFailed
+  TenderEntrySkipped
+  TenderEntryWarned
   HoldPlaced
   HoldUpdated
   HoldReleased

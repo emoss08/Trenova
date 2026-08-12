@@ -1,3 +1,5 @@
+import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
+import { PermissionGate } from "@/components/permission-gate";
 import { isTypingTarget } from "@/lib/dom";
 import type {
   DispatchBoardDriver,
@@ -6,18 +8,24 @@ import type {
   DispatchDriverMoveMatch,
 } from "@/lib/graphql/dispatch-console";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
+import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatClockDurationMs, formatUnixDateTime } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
+import { Building2Icon, SendIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatMiles, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
 import { ScoreBreakdown } from "./score-breakdown";
+import { TenderHistory } from "./tender-history";
+import { TenderLivePanel } from "./tender-live-panel";
+import type { DispatchActions } from "./use-dispatch-actions";
 
 const CANDIDATE_STALE_MS = 30_000;
 const MAX_HOTKEY_RANK = 9;
@@ -102,18 +110,110 @@ function CandidateRow({
   );
 }
 
+function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
+  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
+  const openCarrierCancel = useDispatchConsoleStore.use.openCarrierCancel();
+
+  return (
+    <div className="flex flex-col gap-1.5 border-b bg-muted/30 px-2.5 py-2">
+      <div className="flex items-center gap-1.5">
+        <Building2Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+        <span className="truncate text-xs font-medium">{move.assignedCarrierName}</span>
+        <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
+          Carrier
+        </Badge>
+      </div>
+      {move.carrierTotalCost != null && (
+        <span className="text-[10px] text-muted-foreground tabular-nums">
+          Total cost {formatCurrency(move.carrierTotalCost)}
+        </span>
+      )}
+      {move.carrierAssignmentId && (
+        <RateConfirmationActions
+          moveId={move.moveId}
+          carrierAssignmentId={move.carrierAssignmentId}
+        />
+      )}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[10px]"
+          title="Broker this move to a different carrier — the current assignment is replaced"
+          onClick={() => openCarrierAssign(move)}
+        >
+          Replace carrier
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[10px]"
+          onClick={() => openCarrierCancel(move)}
+        >
+          Cancel carrier assignment
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function TenderCoverageCard({
+  move,
+  actions,
+}: {
+  move: DispatchBoardMove;
+  actions: DispatchActions;
+}) {
+  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
+
+  const { data: liveTender, isLoading } = useQuery({
+    ...dispatchConsoleQueries.liveTender(move.moveId),
+  });
+
+  // The board summary can lag the live query: a tender that just resolved still
+  // flags the move while liveTender comes back null. Rendering the frame anyway
+  // would leave an empty bordered strip in the inspector.
+  if (!isLoading && !liveTender) {
+    return null;
+  }
+
+  return (
+    <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto border-b bg-muted/30 px-2.5 py-2">
+      {isLoading ? (
+        <Skeleton className="h-20 rounded-md" />
+      ) : liveTender ? (
+        <TenderLivePanel
+          tender={liveTender}
+          isTendering={actions.isTendering}
+          onCancelTender={actions.cancelTender}
+          onRecordResponse={actions.recordOfferResponse}
+          onAssignManually={() => openCarrierAssign(move)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function MoveInspector({
   move,
   onAssign,
   isAssigning,
   hotkeysEnabled,
+  actions,
 }: {
   move: DispatchBoardMove;
   onAssign: (candidate: DispatchCandidate) => void;
   isAssigning: boolean;
   hotkeysEnabled: boolean;
+  actions: DispatchActions;
 }) {
   const [includeBlocked, setIncludeBlocked] = useState(false);
+  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
+  const openTender = useDispatchConsoleStore.use.openTender();
+  const isCarrierCovered = move.coverageType === "carrier";
+  // A carrier-covered move cannot take a driver on top; the carrier assignment has to be
+  // canceled first, so driver assignment is held off rather than allowed to fail.
+  const assignLocked = isAssigning || isCarrierCovered;
 
   const { data, isLoading } = useQuery({
     ...dispatchConsoleQueries.moveCandidates({ moveId: move.moveId, includeBlocked }),
@@ -125,7 +225,7 @@ function MoveInspector({
   // The rank shown next to each candidate doubles as its keyboard shortcut: pressing the
   // digit assigns without touching the mouse.
   useEffect(() => {
-    if (!hotkeysEnabled || isAssigning) return;
+    if (!hotkeysEnabled || assignLocked) return;
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -140,7 +240,7 @@ function MoveInspector({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [candidates, hotkeysEnabled, isAssigning, onAssign]);
+  }, [candidates, hotkeysEnabled, assignLocked, onAssign]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -155,18 +255,52 @@ function MoveInspector({
         </span>
       </div>
 
+      {isCarrierCovered && <CarrierCoverageCard move={move} />}
+
+      {move.liveTender && <TenderCoverageCard move={move} actions={actions} />}
+
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
         <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
           {candidates.length} candidates
         </span>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-6 px-2 text-[10px]"
-          onClick={() => setIncludeBlocked((value) => !value)}
-        >
-          {includeBlocked ? "Hide ineligible" : "Show ineligible"}
-        </Button>
+        <div className="flex items-center gap-1.5">
+          {!move.isCovered && (
+            <PermissionGate resource={Resource.ShipmentMove} operation={Operation.Assign}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px]"
+                disabled={isAssigning}
+                onClick={() => openCarrierAssign(move)}
+              >
+                <Building2Icon className="size-3" aria-hidden />
+                Assign to carrier
+              </Button>
+            </PermissionGate>
+          )}
+          {!move.isCovered && (
+            <PermissionGate resource={Resource.Tender} operation={Operation.Create}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px]"
+                disabled={isAssigning}
+                onClick={() => openTender(move)}
+              >
+                <SendIcon className="size-3" aria-hidden />
+                Tender to carriers
+              </Button>
+            </PermissionGate>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px]"
+            onClick={() => setIncludeBlocked((value) => !value)}
+          >
+            {includeBlocked ? "Hide ineligible" : "Show ineligible"}
+          </Button>
+        </div>
       </div>
 
       <ScrollArea
@@ -186,7 +320,7 @@ function MoveInspector({
                   candidate={candidate}
                   rank={index + 1}
                   onAssign={onAssign}
-                  isAssigning={isAssigning}
+                  isAssigning={assignLocked}
                 />
               ))}
           {!isLoading && candidates.length === 0 && (
@@ -195,6 +329,8 @@ function MoveInspector({
               {!includeBlocked ? " Show ineligible drivers to see why." : ""}
             </p>
           )}
+
+          <TenderHistory shipmentId={move.shipmentId} className="mt-2" />
         </div>
       </ScrollArea>
     </div>
@@ -329,6 +465,7 @@ export function Inspector({
   onSelectMove,
   isAssigning,
   hotkeysEnabled,
+  actions,
 }: {
   selectedMove: DispatchBoardMove | null;
   selectedDriver: DispatchBoardDriver | null;
@@ -336,6 +473,7 @@ export function Inspector({
   onSelectMove: (moveId: string) => void;
   isAssigning: boolean;
   hotkeysEnabled: boolean;
+  actions: DispatchActions;
 }) {
   return (
     <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
@@ -351,6 +489,7 @@ export function Inspector({
           onAssign={onAssign}
           isAssigning={isAssigning}
           hotkeysEnabled={hotkeysEnabled}
+          actions={actions}
         />
       ) : selectedDriver ? (
         <DriverInspector driver={selectedDriver} onSelectMove={onSelectMove} />

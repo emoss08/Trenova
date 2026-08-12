@@ -12,14 +12,12 @@ import { BillingControlService } from "./billing-control";
 import { BillingQueueService } from "./billing-queue";
 import { CommodityService } from "./commodity";
 import { CustomFieldService } from "./custom-field";
+import { CarrierService } from "./carrier";
+import { CarrierAssignmentService } from "./carrier-assignment";
 import { CustomerService } from "./customer";
 import { DataEntryControlService } from "./data-entry-control";
 import { DatabaseSessionService } from "./database-session";
-import {
-  DetentionAnalyticsService,
-  DetentionPolicyService,
-  DetentionService,
-} from "./detention";
+import { DetentionAnalyticsService, DetentionPolicyService, DetentionService } from "./detention";
 import { DispatchControlService } from "./dispatch-control";
 import { DistanceOverrideService } from "./distance-override";
 import { DistanceControlService } from "./distance-control";
@@ -56,7 +54,10 @@ import { NotificationService, notificationService } from "@trenova/shared/servic
 import { OrganizationService } from "./organization";
 import { PageFavoriteService } from "./page-favorite";
 import { PlatformBillingService } from "./platform-billing";
+import { RateConfirmationService } from "./rate-confirmation";
 import { RateTableService } from "./rate-table";
+import { RoutingGuideService } from "./routing-guide";
+import { TenderService } from "./tender";
 import { RealtimeService, realtimeService } from "@trenova/shared/services/realtime";
 import { SequenceConfigService } from "./sequence-config";
 import { ServiceFailureService } from "./service-failure";
@@ -98,6 +99,11 @@ class APIService {
   public hazardousMaterialService: HazardousMaterialService;
   public hazmatSegregationRuleService: HazmatSegregationRuleService;
   public commodityService: CommodityService;
+  public carrierService: CarrierService;
+  public carrierAssignmentService: CarrierAssignmentService;
+  public routingGuideService: RoutingGuideService;
+  public tenderService: TenderService;
+  public rateConfirmationService: RateConfirmationService;
   public customerService: CustomerService;
   public databaseSessionService: DatabaseSessionService;
   public googleMapsService: GoogleMapsService;
@@ -175,6 +181,11 @@ class APIService {
     this.hazardousMaterialService = new HazardousMaterialService();
     this.hazmatSegregationRuleService = new HazmatSegregationRuleService();
     this.commodityService = new CommodityService();
+    this.carrierService = new CarrierService();
+    this.carrierAssignmentService = new CarrierAssignmentService();
+    this.routingGuideService = new RoutingGuideService();
+    this.tenderService = new TenderService();
+    this.rateConfirmationService = new RateConfirmationService();
     this.customerService = new CustomerService();
     this.databaseSessionService = new DatabaseSessionService();
     this.googleMapsService = new GoogleMapsService();

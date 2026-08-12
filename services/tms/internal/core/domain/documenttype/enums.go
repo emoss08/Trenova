@@ -37,3 +37,8 @@ const (
 func (dc DocumentCategory) String() string {
 	return string(dc)
 }
+
+// CodeRateConfirmation files a rendered carrier rate confirmation against its
+// shipment. Like CodeDetentionNotice, the seed, the backfill migration, and the
+// generate path all have to agree on it.
+const CodeRateConfirmation = "RATECON"

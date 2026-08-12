@@ -91,6 +91,15 @@ export const Resource = {
   Customer: "customer",
   CustomerContact: "customer_contact",
 
+  // Carriers
+  Carrier: "carrier",
+  RateConfirmation: "rate_confirmation",
+  CarrierSettlement: "carrier_settlement",
+  CarrierSettlementControl: "carrier_settlement_control",
+  CarrierInvoiceMatch: "carrier_invoice_match",
+  RoutingGuide: "routing_guide",
+  Tender: "tender",
+
   // Locations
   Location: "location",
   LocationCategory: "location_category",

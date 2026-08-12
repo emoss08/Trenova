@@ -10,15 +10,19 @@ import (
 )
 
 type DocumentPayload struct {
-	TransactionSet               TransactionSet                   `json:"transactionSet,omitempty"`
-	PurposeCode                  LoadTenderPurposeCode            `json:"purposeCode,omitempty"`
-	LoadTender                   *LoadTenderPayload               `json:"loadTender,omitempty"`
-	Shipment                     *LoadTenderPayload               `json:"shipment,omitempty"`
-	FreightInvoice               *FreightInvoicePayload           `json:"invoice,omitempty"`
-	ShipmentStatus               *ShipmentStatusPayload           `json:"shipmentStatus,omitempty"`
-	TenderResponse               *TenderResponsePayload           `json:"tenderResponse,omitempty"`
-	FunctionalAcknowledgment     *FunctionalAcknowledgmentPayload `json:"functionalAck,omitempty"`
-	ImplementationAcknowledgment *ImplementationAckPayload        `json:"implementationAck,omitempty"`
+	TransactionSet TransactionSet        `json:"transactionSet,omitempty"`
+	PurposeCode    LoadTenderPurposeCode `json:"purposeCode,omitempty"`
+	// DeliveryCommunicationProfileID pins outbound delivery to one
+	// communication profile; delivery falls back to the partner's active
+	// profile when unset.
+	DeliveryCommunicationProfileID pulid.ID                         `json:"deliveryCommunicationProfileId,omitempty"`
+	LoadTender                     *LoadTenderPayload               `json:"loadTender,omitempty"`
+	Shipment                       *LoadTenderPayload               `json:"shipment,omitempty"`
+	FreightInvoice                 *FreightInvoicePayload           `json:"invoice,omitempty"`
+	ShipmentStatus                 *ShipmentStatusPayload           `json:"shipmentStatus,omitempty"`
+	TenderResponse                 *TenderResponsePayload           `json:"tenderResponse,omitempty"`
+	FunctionalAcknowledgment       *FunctionalAcknowledgmentPayload `json:"functionalAck,omitempty"`
+	ImplementationAcknowledgment   *ImplementationAckPayload        `json:"implementationAck,omitempty"`
 }
 
 type FreightInvoicePayload struct {

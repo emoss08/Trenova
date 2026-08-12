@@ -1,0 +1,65 @@
+package tenderjobs
+
+import (
+	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+var DomainConfig = registry.DomainConfig{
+	Name:         "tender-worker",
+	TaskQueue:    temporaltype.TaskQueueDispatch.String(),
+	WorkerConfig: registry.DefaultWorkerConfig(),
+}
+
+var Workflows = convertWorkflows(allWorkflows())
+
+func allWorkflows() []temporaltype.WorkflowDefinition {
+	defs := RegisterWorkflows()
+	defs = append(defs, temporaltype.WorkflowDefinition{
+		Name:        TenderSweepWorkflowName,
+		Fn:          TenderSweepWorkflow,
+		TaskQueue:   temporaltype.TaskQueueDispatch.String(),
+		Description: "Nudge or recover live tenders whose offers are overdue",
+	}, temporaltype.WorkflowDefinition{
+		Name:        RateConfirmationIssueSweepWorkflowName,
+		Fn:          RateConfirmationIssueSweepWorkflow,
+		TaskQueue:   temporaltype.TaskQueueDispatch.String(),
+		Description: "Issue rate confirmations for accepted tenders whose paperwork never landed",
+	}, temporaltype.WorkflowDefinition{
+		Name:        PurgeTenderTokensWorkflowName,
+		Fn:          PurgeTenderTokensWorkflow,
+		TaskQueue:   temporaltype.TaskQueueDispatch.String(),
+		Description: "Purge tender offer and rate confirmation tokens that are no longer usable",
+	})
+	return defs
+}
+
+func convertWorkflows(wfs []temporaltype.WorkflowDefinition) []registry.WorkflowDefinition {
+	result := make([]registry.WorkflowDefinition, len(wfs))
+	for i, wf := range wfs {
+		result[i] = registry.WorkflowDefinition{
+			Name:        wf.Name,
+			Fn:          wf.Fn,
+			Description: wf.Description,
+		}
+	}
+	return result
+}
+
+type RegistryParams struct {
+	fx.In
+
+	Activities *Activities
+	Logger     *zap.Logger
+}
+
+func NewRegistry(p RegistryParams) registry.WorkerRegistry {
+	return registry.NewDomainRegistry(
+		&DomainConfig,
+		p.Activities,
+		Workflows,
+		p.Logger,
+	)
+}

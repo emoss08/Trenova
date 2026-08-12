@@ -1,4 +1,5 @@
 enum SelectOptionResource {
+  CARRIER
   CUSTOMER
   EQUIPMENT_TYPE
   EQUIPMENT_MANUFACTURER

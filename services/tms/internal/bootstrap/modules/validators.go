@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
@@ -138,6 +139,7 @@ var ValidatorModule = fx.Module("validators",
 		hazmatsegregationruleservice.NewValidator,
 		commodityservice.NewValidator,
 		customerpaymentservice.NewValidator,
+		carrierservice.NewValidator,
 		customerservice.NewValidator,
 		accountingcontrolservice.NewValidator,
 		accounttypeservice.NewValidator,

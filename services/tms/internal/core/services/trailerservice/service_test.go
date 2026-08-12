@@ -615,12 +615,12 @@ func ptrInt16Trailer(v int16) *int16 {
 func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, resolveDelayThresholdMinutes(nil))
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, resolveDelayThresholdMinutes(&tenant.ShipmentControl{
+	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, shipmentstate.ResolveControlDelayThreshold(nil))
+	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
 		AutoDelayShipments:          false,
 		AutoDelayShipmentsThreshold: new(int16(30)),
 	}))
-	assert.Equal(t, int16(30), resolveDelayThresholdMinutes(&tenant.ShipmentControl{
+	assert.Equal(t, int16(30), shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
 		AutoDelayShipments:          true,
 		AutoDelayShipmentsThreshold: new(int16(30)),
 	}))

@@ -249,6 +249,71 @@ var tagCatalog = map[string]tagDescriptor{
 		DisplayName: "Custom Fields",
 		Group:       "Platform & Observability",
 	},
+	"Carriers": {
+		Name:        "Carriers",
+		DisplayName: "Carriers",
+		Group:       "Master Data",
+	},
+	"Routing Guides": {
+		Name:        "Routing Guides",
+		DisplayName: "Routing Guides",
+		Group:       "Master Data",
+	},
+	"Rate Tables": {
+		Name:        "Rate Tables",
+		DisplayName: "Rate Tables",
+		Group:       "Master Data",
+	},
+	"Tenders": {
+		Name:        "Tenders",
+		DisplayName: "Tenders",
+		Group:       "Operations",
+	},
+	"CarrierAssignments": {
+		Name:        "CarrierAssignments",
+		DisplayName: "Carrier Assignments",
+		Group:       "Operations",
+	},
+	"RateConfirmations": {
+		Name:        "RateConfirmations",
+		DisplayName: "Rate Confirmations",
+		Group:       "Operations",
+	},
+	"Detention": {
+		Name:        "Detention",
+		DisplayName: "Detention",
+		Group:       "Operations",
+	},
+	"Invoices": {
+		Name:        "Invoices",
+		DisplayName: "Invoices",
+		Group:       "Operations",
+	},
+	"Recurring Shipments": {
+		Name:        "Recurring Shipments",
+		DisplayName: "Recurring Shipments",
+		Group:       "Operations",
+	},
+	"Shipment Events": {
+		Name:        "Shipment Events",
+		DisplayName: "Shipment Events",
+		Group:       "Operations",
+	},
+	"DriverPortal": {
+		Name:        "DriverPortal",
+		DisplayName: "Driver Portal",
+		Group:       "Operations",
+	},
+	"Detention Policies": {
+		Name:        "Detention Policies",
+		DisplayName: "Detention Policies",
+		Group:       "Controls & Configuration",
+	},
+	"Push": {
+		Name:        "Push",
+		DisplayName: "Push Notifications",
+		Group:       "Getting Started",
+	},
 }
 
 var groupOrder = []string{

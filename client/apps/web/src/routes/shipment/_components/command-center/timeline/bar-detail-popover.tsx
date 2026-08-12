@@ -2,11 +2,7 @@ import { ShipmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent } from "@trenova/shared/components/ui/popover";
 import { formatDurationFromSeconds, formatToUserTimezone } from "@trenova/shared/lib/date";
-import {
-  getDestinationLocation,
-  getOriginLocation,
-  getTotalMiles,
-} from "@/lib/shipment-utils";
+import { getDestinationLocation, getOriginLocation, getTotalMiles } from "@/lib/shipment-utils";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import {
   ArrowLeftRightIcon,
@@ -66,6 +62,9 @@ export function BarDetailPopover({
   const miles = getTotalMiles(shipment);
   const workerName = bar.assignment?.primaryWorker?.wholeName;
   const tractorCode = bar.assignment?.tractor?.code;
+  const carrierName = bar.carrierAssignment
+    ? bar.carrierAssignment.carrier?.name || "External carrier"
+    : null;
 
   return (
     <Popover open onOpenChange={onOpenChange}>
@@ -110,7 +109,10 @@ export function BarDetailPopover({
             {bar.stops.map((stop) => {
               const isDone = stop.status === "Completed";
               const isAtStop =
-                !isDone && !!stop.actualArrival && !stop.actualDeparture && stop.status !== "Canceled";
+                !isDone &&
+                !!stop.actualArrival &&
+                !stop.actualDeparture &&
+                stop.status !== "Canceled";
               return (
                 <li key={stop.id} className="flex items-center gap-1.5 text-[10.5px]">
                   {isDone ? (
@@ -131,7 +133,11 @@ export function BarDetailPopover({
             })}
           </ol>
           <p className="font-table text-[10px] text-muted-foreground tabular-nums">
-            {workerName ? `${workerName}${tractorCode ? ` · ${tractorCode}` : ""}` : "Unassigned"}
+            {carrierName
+              ? `Carrier: ${carrierName}`
+              : workerName
+                ? `${workerName}${tractorCode ? ` · ${tractorCode}` : ""}`
+                : "Unassigned"}
           </p>
         </div>
 
@@ -153,7 +159,7 @@ export function BarDetailPopover({
               onClick={() => onReassign(bar)}
             >
               <ArrowLeftRightIcon className="size-3" />
-              {bar.assignment ? "Reassign" : "Assign"}
+              {bar.assignment || bar.carrierAssignment ? "Reassign" : "Assign"}
             </Button>
           )}
         </div>

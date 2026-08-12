@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	_ "github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/webpushservice"
 	"github.com/emoss08/trenova/pkg/authctx"

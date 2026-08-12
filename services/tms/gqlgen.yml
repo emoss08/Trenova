@@ -22,6 +22,12 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.ID
       - github.com/emoss08/trenova/shared/pulid.ID
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int32
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int16
   Shipment:
     fields:
       orderNumber:
@@ -666,6 +672,123 @@ models:
         resolver: true
       currentLocationName:
         resolver: true
+  MoveCoverageType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.MoveCoverageType
+  CarrierAssignmentStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.CarrierAssignmentStatus
+  CarrierRateMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.CarrierRateMethod
+  CarrierAssignment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.CarrierAssignment
+    fields:
+      baseRate:
+        resolver: true
+      baseAmount:
+        resolver: true
+      fuelSurcharge:
+        resolver: true
+      accessorialTotal:
+        resolver: true
+      totalCost:
+        resolver: true
+  CarrierAssignmentAccessorial:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.CarrierAssignmentAccessorial
+    fields:
+      amount:
+        resolver: true
+  TenderMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.Mode
+  TenderStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.Status
+  TenderOfferStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.OfferStatus
+  TenderChannel:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.Channel
+  TenderResponseSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.ResponseSource
+  RoutingGuide:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.RoutingGuide
+  RoutingGuideEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.RoutingGuideEntry
+    fields:
+      rate:
+        resolver: true
+      offerTtlSeconds:
+        fieldName: OfferTTLSeconds
+  Tender:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.Tender
+    fields:
+      routingGuide:
+        resolver: true
+  TenderOffer:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tender.TenderOffer
+    fields:
+      rate:
+        resolver: true
+      responseSource:
+        resolver: true
+      offerTtlSeconds:
+        fieldName: OfferTTLSeconds
+      ediPartnerId:
+        fieldName: EDIPartnerID
+      ediMessageId:
+        fieldName: EDIMessageID
+  Carrier:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.Carrier
+    fields:
+      dotNumber:
+        fieldName: DOTNumber
+      mcNumber:
+        fieldName: MCNumber
+      scac:
+        fieldName: SCAC
+      taxIdType:
+        fieldName: TaxIDType
+  CarrierStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.Status
+  CarrierType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.Type
+  CarrierComplianceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.ComplianceStatus
+  CarrierSafetyRating:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.SafetyRating
+  CarrierTaxIDType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.TaxIDType
+  CarrierPaymentMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.PaymentMethod
+  CarrierInsurancePolicyType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.InsurancePolicyType
+  CarrierContact:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.CarrierContact
+  CarrierInsurancePolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carrier.CarrierInsurancePolicy
+    fields:
+      coverageAmount:
+        resolver: true
   Customer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customer.Customer
@@ -1039,6 +1162,57 @@ models:
   BulkSettlementActionPayload:
     model:
       - github.com/emoss08/trenova/internal/core/services/driversettlementservice.BulkActionPayload
+  CarrierSettlementStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.Status
+  CarrierCostEventType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CostEventType
+  CarrierCostEventStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CostEventStatus
+  CarrierSettlementBatchStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.BatchStatus
+  CarrierLedgerEntryType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.LedgerEntryType
+  CarrierInvoiceMatchStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.InvoiceMatchStatus
+  CarrierInvoiceMatchVia:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.MatchVia
+  CarrierCostEvent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CostEvent
+  CarrierSettlement:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CarrierSettlement
+  CarrierSettlementLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CarrierSettlementLine
+  CarrierSettlementBatch:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.CarrierSettlementBatch
+  CarrierLedgerEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.LedgerEntry
+  CarrierInvoiceMatch:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/carriersettlement.InvoiceMatch
+  CarrierSettlementControl:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.CarrierSettlementControl
+  CarrierSettlementPeriodBounds:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/carriersettlementservice.PeriodBounds
+  CarrierSettlementWorkspaceSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/carriersettlementservice.WorkspaceSummary
+  EdiCarrierInvoice:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.CarrierInvoice
   CustomerPaymentStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/customerpayment.Status

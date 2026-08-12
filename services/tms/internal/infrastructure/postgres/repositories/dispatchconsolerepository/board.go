@@ -93,6 +93,7 @@ func (r *repository) ListBoardMoves(
 	moveCols := buncolgen.ShipmentMoveColumns
 	shipCols := buncolgen.ShipmentColumns
 	asnCols := buncolgen.AssignmentColumns
+	casnCols := buncolgen.CarrierAssignmentColumns
 
 	entities := make([]*repositories.BoardMove, 0, boardLimit(filter.Limit))
 
@@ -150,13 +151,21 @@ func (r *repository) ListBoardMoves(
 		ColumnExpr("dest.longitude AS destination_longitude").
 		ColumnExpr("COALESCE(dest.window_start, 0) AS destination_window_start").
 		ColumnExpr("dest.window_end AS destination_window_end").
+		ColumnExpr(moveCols.CoverageType.As("coverage_type")).
+		ColumnExpr(casnCols.ID.As("carrier_assignment_id")).
+		ColumnExpr(casnCols.CarrierID.As("assigned_carrier_id")).
+		ColumnExpr(casnCols.TotalCost.Expr("{}::float8 AS carrier_total_cost")).
+		ColumnExpr(buncolgen.CarrierColumns.Name.Expr(
+			"COALESCE({}, '') AS assigned_carrier_name")).
 		Join(shipmentJoin).
 		Join(customerJoin).
 		Join(serviceTypeJoin).
 		Join(assignmentJoin).
 		Join(assignedWorkerJoin).
 		Join(assignedTractorJoin).
-		Join(assignedTrailerJoin)
+		Join(assignedTrailerJoin).
+		Join(carrierAssignmentJoin).
+		Join(assignedCarrierJoin)
 
 	q = joinMoveStopEdges(q)
 	q = joinMoveAggregates(q)
@@ -165,7 +174,8 @@ func (r *repository) ListBoardMoves(
 		sq = buncolgen.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
 		sq = applyMoveFilters(sq, filter)
 		if !filter.IncludeCovered {
-			sq = sq.Where(asnCols.ID.IsNull())
+			sq = sq.Where(asnCols.ID.IsNull()).
+				Where(casnCols.ID.IsNull())
 		}
 		return sq
 	}).

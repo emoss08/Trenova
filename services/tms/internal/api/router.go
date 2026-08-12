@@ -22,6 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/controlplaneprovisioninghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
@@ -79,12 +81,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
@@ -98,6 +103,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tenderhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tenderpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
@@ -191,6 +198,13 @@ type RouterParams struct {
 	EmailHandler                    *emailhandler.Handler
 	TelematicsHandler               *telematicshandler.Handler
 	CommodityHandler                *commodityhandler.Handler
+	CarrierAssignmentHandler        *carrierassignmenthandler.Handler
+	TenderPublicHandler             *tenderpublichandler.Handler
+	TenderHandler                   *tenderhandler.Handler
+	RoutingGuideHandler             *routingguidehandler.Handler
+	CarrierHandler                  *carrierhandler.Handler
+	RateConfirmationHandler         *rateconfirmationhandler.Handler
+	RateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
 	CustomerHandler                 *customerhandler.Handler
 	CustomerPaymentHandler          *customerpaymenthandler.Handler
 	GoogleMapsHandler               *googlemapshandler.Handler
@@ -304,6 +318,13 @@ type Router struct {
 	emailHandler                    *emailhandler.Handler
 	telematicsHandler               *telematicshandler.Handler
 	commodityHandler                *commodityhandler.Handler
+	carrierAssignmentHandler        *carrierassignmenthandler.Handler
+	tenderPublicHandler             *tenderpublichandler.Handler
+	tenderHandler                   *tenderhandler.Handler
+	routingGuideHandler             *routingguidehandler.Handler
+	carrierHandler                  *carrierhandler.Handler
+	rateConfirmationHandler         *rateconfirmationhandler.Handler
+	rateConfirmationPublicHandler   *rateconfirmationpublichandler.Handler
 	customerHandler                 *customerhandler.Handler
 	customerPaymentHandler          *customerpaymenthandler.Handler
 	googleMapsHandler               *googlemapshandler.Handler
@@ -419,6 +440,13 @@ func NewRouter(p RouterParams) *Router {
 		emailHandler:                    p.EmailHandler,
 		telematicsHandler:               p.TelematicsHandler,
 		commodityHandler:                p.CommodityHandler,
+		carrierAssignmentHandler:        p.CarrierAssignmentHandler,
+		tenderPublicHandler:             p.TenderPublicHandler,
+		tenderHandler:                   p.TenderHandler,
+		routingGuideHandler:             p.RoutingGuideHandler,
+		carrierHandler:                  p.CarrierHandler,
+		rateConfirmationHandler:         p.RateConfirmationHandler,
+		rateConfirmationPublicHandler:   p.RateConfirmationPublicHandler,
 		customerHandler:                 p.CustomerHandler,
 		customerPaymentHandler:          p.CustomerPaymentHandler,
 		googleMapsHandler:               p.GoogleMapsHandler,
@@ -511,6 +539,7 @@ func (r *Router) setupMiddleware() {
 			}),
 		),
 	)
+	r.s.router.Use(middleware.NewTokenRedactionMiddleware())
 	r.s.router.Use(ginzap.Ginzap(r.l, time.RFC3339, true))
 	r.s.router.Use(r.observabilityMiddleware.TracingMiddleware())
 	r.s.router.Use(middleware.NewRateLimiter(r.cfg, r.errorHandler).Middleware())
@@ -541,6 +570,8 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.telematicsHandler.RegisterPublicRoutes(rg)
 	r.invoiceHandler.RegisterPublicRoutes(rg)
 	r.ediHandler.RegisterPublicRoutes(rg)
+	r.tenderPublicHandler.RegisterPublicRoutes(rg)
+	r.rateConfirmationPublicHandler.RegisterPublicRoutes(rg)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
@@ -599,6 +630,11 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.ediHandler.RegisterRoutes(protected)
 	r.emailHandler.RegisterRoutes(protected)
 	r.commodityHandler.RegisterRoutes(protected)
+	r.carrierAssignmentHandler.RegisterRoutes(protected)
+	r.tenderHandler.RegisterRoutes(protected)
+	r.routingGuideHandler.RegisterRoutes(protected)
+	r.carrierHandler.RegisterRoutes(protected)
+	r.rateConfirmationHandler.RegisterRoutes(protected)
 	r.customerHandler.RegisterRoutes(protected)
 	r.customerPaymentHandler.RegisterRoutes(protected)
 	r.googleMapsHandler.RegisterRoutes(protected)

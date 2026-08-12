@@ -1,0 +1,135 @@
+/* A rate confirmation is a contract on one page. The agreed total is the figure
+   both sides will quote in a dispute, so it gets the visual weight; everything
+   else — routing, equipment, terms — is laid out to be checkable line by line. */
+
+body {
+  font-size: 10pt;
+  line-height: 1.5;
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.masthead {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: start;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #111827;
+}
+
+.logo {
+  max-height: 40px;
+  margin-bottom: 6px;
+}
+
+.issuer-name {
+  font-size: 12pt;
+  font-weight: 700;
+}
+
+.doc-id {
+  text-align: right;
+}
+
+.doc-type {
+  font-size: 13pt;
+  font-weight: 700;
+}
+
+.doc-stage {
+  color: #6b7280;
+}
+
+.lede {
+  margin: 12px 0;
+}
+
+.parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 12px 0;
+}
+
+.party {
+  break-inside: avoid;
+}
+
+.party-name {
+  font-weight: 700;
+}
+
+.block {
+  margin: 14px 0;
+  break-inside: avoid;
+}
+
+table.grid,
+table.stops {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.grid td,
+table.stops td,
+table.stops th {
+  padding: 4px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+table.stops th {
+  text-align: left;
+  font-size: 7.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+td.label {
+  width: 40%;
+  color: #6b7280;
+}
+
+tr.total td {
+  border-top: 2px solid #111827;
+  border-bottom: none;
+  font-weight: 700;
+  font-size: 11pt;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.terms p {
+  font-size: 8.5pt;
+  color: #374151;
+}
+
+.signoff {
+  break-inside: avoid;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin-top: 36px;
+}
+
+.sig-line {
+  border-bottom: 1px solid #111827;
+  height: 28px;
+}
+
+.sig-label {
+  font-size: 8pt;
+  color: #6b7280;
+  margin-top: 4px;
+}

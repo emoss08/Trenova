@@ -246,7 +246,10 @@ func applyStopActual(
 		return nil, errortypes.NewNotFoundError("Stop not found on this load")
 	}
 
-	now := timeutils.NowUnix()
+	occurredAt := timeutils.NowUnix()
+	if req.OccurredAt != nil {
+		occurredAt = *req.OccurredAt
+	}
 	switch req.Action {
 	case repositories.StopActualActionArrive:
 		if stop.ActualArrival != nil {
@@ -261,8 +264,13 @@ func applyStopActual(
 					"Complete the earlier stops on this load first",
 				)
 			}
+			if req.OccurredAt != nil && *prior.ActualDeparture > occurredAt {
+				return nil, errortypes.NewBusinessError(
+					"Event time predates the previous stop's departure",
+				)
+			}
 		}
-		stop.ActualArrival = &now
+		stop.ActualArrival = &occurredAt
 		stop.Status = shipment.StopStatusInTransit
 	case repositories.StopActualActionDepart:
 		if stop.ActualArrival == nil {
@@ -271,7 +279,12 @@ func applyStopActual(
 		if stop.ActualDeparture != nil {
 			return nil, errortypes.NewBusinessError("You've already departed this stop")
 		}
-		stop.ActualDeparture = &now
+		if req.OccurredAt != nil && *stop.ActualArrival > occurredAt {
+			return nil, errortypes.NewBusinessError(
+				"Event time predates the arrival at this stop",
+			)
+		}
+		stop.ActualDeparture = &occurredAt
 		stop.Status = shipment.StopStatusCompleted
 	default:
 		return nil, errortypes.NewValidationError(

@@ -8,7 +8,6 @@ package resolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
@@ -59,15 +58,3 @@ func (r *queryResolver) RecurringShipment(ctx context.Context, id string) (*recu
 		TenantInfo: tenantInfo(authCtx),
 	})
 }
-
-// LeadTimeDays is the resolver for the leadTimeDays field.
-func (r *recurringShipmentResolver) LeadTimeDays(ctx context.Context, obj *recurringshipment.RecurringShipment) (int, error) {
-	return int(obj.LeadTimeDays), nil
-}
-
-// RecurringShipment returns generated.RecurringShipmentResolver implementation.
-func (r *Resolver) RecurringShipment() generated.RecurringShipmentResolver {
-	return &recurringShipmentResolver{r}
-}
-
-type recurringShipmentResolver struct{ *Resolver }

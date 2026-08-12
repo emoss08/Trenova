@@ -68,6 +68,7 @@ export type BaseEndpoint =
   | "/hazardous-materials/"
   | "/commodities/"
   | "/customers/"
+  | "/carriers/"
   | "/account-types/"
   | "/custom-fields/definitions/"
   | "/custom-fields/resource-types/"

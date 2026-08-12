@@ -267,6 +267,49 @@ func (r *repository) hydrateActiveAssignments(
 		}
 	}
 
+	return r.hydrateActiveCarrierAssignments(ctx, tenantInfo, moveIDs, moveByID)
+}
+
+func (r *repository) hydrateActiveCarrierAssignments(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveIDs []pulid.ID,
+	moveByID map[pulid.ID]*shipment.ShipmentMove,
+) error {
+	casn := buncolgen.CarrierAssignmentColumns
+
+	for _, move := range moveByID {
+		move.CarrierAssignment = nil
+	}
+
+	carrierAssignments := make([]*shipment.CarrierAssignment, 0, len(moveIDs))
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&carrierAssignments).
+		Where(casn.ShipmentMoveID.In(), bun.List(moveIDs)).
+		Where(casn.OrganizationID.Eq(), tenantInfo.OrgID).
+		Where(casn.BusinessUnitID.Eq(), tenantInfo.BuID).
+		Where(casn.Status.Ne(), shipment.CarrierAssignmentStatusCanceled).
+		Relation(buncolgen.CarrierAssignmentRelations.Carrier).
+		Relation(buncolgen.CarrierAssignmentRelations.Accessorials).
+		Scan(ctx); err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil
+		}
+
+		return fmt.Errorf("load move carrier assignments: %w", err)
+	}
+
+	for _, carrierAssignment := range carrierAssignments {
+		if carrierAssignment == nil {
+			continue
+		}
+
+		if move := moveByID[carrierAssignment.ShipmentMoveID]; move != nil {
+			move.CarrierAssignment = carrierAssignment
+		}
+	}
+
 	return nil
 }
 
@@ -543,6 +586,7 @@ func (r *repository) insertMove(
 			sm.OrganizationID.String(),
 			sm.ShipmentID.String(),
 			sm.Status.String(),
+			sm.CoverageType.String(),
 			sm.Loaded.String(),
 			sm.Sequence.String(),
 			sm.Distance.String(),
@@ -566,10 +610,17 @@ func (r *repository) updateMove(
 	sm := buncolgen.ShipmentMoveColumns
 	move.Version = existingMove.Version + 1
 
+	// A payload that never carried coverage must not reset a brokered move to
+	// driver coverage via the column default.
+	if move.CoverageType == "" {
+		move.CoverageType = existingMove.CoverageType
+	}
+
 	results, err := tx.NewUpdate().
 		Model(move).
 		Column(
 			sm.Status.String(),
+			sm.CoverageType.String(),
 			sm.Loaded.String(),
 			sm.Sequence.String(),
 			sm.Distance.String(),

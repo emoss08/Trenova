@@ -1,0 +1,45 @@
+<div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #111827; line-height: 1.6;">
+  <p>{{ .CarrierName }},</p>
+  <p>
+    Attached is the rate confirmation for shipment <strong>{{ .ShipmentProNumber }}</strong>{{ if .RevisionLabel }}
+    ({{ .RevisionLabel }}){{ end }}.
+  </p>
+  <table style="border-collapse: collapse; margin: 12px 0;">
+    {{ range .Stops }}
+    <tr>
+      <td style="padding: 4px 12px 4px 0; color: #6b7280;">{{ .Type }}</td>
+      <td style="padding: 4px 0;">{{ .Name }} — {{ .Window }}</td>
+    </tr>
+    {{ end }}
+    <tr>
+      <td style="padding: 4px 12px 4px 0; color: #6b7280;">Total agreed rate</td>
+      <td style="padding: 4px 0; font-weight: bold;">{{ moneyString .Currency .TotalCost }}</td>
+    </tr>
+    {{ if .PaymentTermsLabel }}
+    <tr>
+      <td style="padding: 4px 12px 4px 0; color: #6b7280;">Payment terms</td>
+      <td style="padding: 4px 0;">{{ .PaymentTermsLabel }}</td>
+    </tr>
+    {{ end }}
+  </table>
+  {{ if .SignURL }}
+  <p style="margin: 16px 0;">
+    <a href="{{ .SignURL }}" style="display: inline-block; padding: 11px 20px; background: #111827; color: #ffffff; font-weight: bold; text-decoration: none; border-radius: 6px;">Review &amp; sign</a>
+  </p>
+  <p style="color: #4b5563; font-size: 13px;">
+    Or paste this link into your browser:<br>
+    <span style="word-break: break-all;">{{ .SignURL }}</span>{{ if .SignExpiresLabel }}<br>
+    The link stops working at {{ .SignExpiresLabel }}.{{ end }}
+  </p>
+  <p>
+    Please sign before dispatching and submit the attached confirmation with your invoice. Reply to
+    this message if any detail needs review.
+  </p>
+  {{ else }}
+  <p>
+    Please sign and return the attached confirmation before dispatching, and submit it with your
+    invoice. Reply to this message if any detail needs review.
+  </p>
+  {{ end }}
+  <p>{{ .CompanyName }}</p>
+</div>

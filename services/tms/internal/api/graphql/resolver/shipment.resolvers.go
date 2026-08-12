@@ -22,6 +22,36 @@ import (
 	"go.uber.org/zap"
 )
 
+// BaseRate is the resolver for the baseRate field.
+func (r *carrierAssignmentResolver) BaseRate(ctx context.Context, obj *shipmentdomain.CarrierAssignment) (string, error) {
+	return obj.BaseRate.String(), nil
+}
+
+// BaseAmount is the resolver for the baseAmount field.
+func (r *carrierAssignmentResolver) BaseAmount(ctx context.Context, obj *shipmentdomain.CarrierAssignment) (string, error) {
+	return obj.BaseAmount.String(), nil
+}
+
+// FuelSurcharge is the resolver for the fuelSurcharge field.
+func (r *carrierAssignmentResolver) FuelSurcharge(ctx context.Context, obj *shipmentdomain.CarrierAssignment) (string, error) {
+	return obj.FuelSurcharge.String(), nil
+}
+
+// AccessorialTotal is the resolver for the accessorialTotal field.
+func (r *carrierAssignmentResolver) AccessorialTotal(ctx context.Context, obj *shipmentdomain.CarrierAssignment) (string, error) {
+	return obj.AccessorialTotal.String(), nil
+}
+
+// TotalCost is the resolver for the totalCost field.
+func (r *carrierAssignmentResolver) TotalCost(ctx context.Context, obj *shipmentdomain.CarrierAssignment) (string, error) {
+	return obj.TotalCost.String(), nil
+}
+
+// Amount is the resolver for the amount field.
+func (r *carrierAssignmentAccessorialResolver) Amount(ctx context.Context, obj *shipmentdomain.CarrierAssignmentAccessorial) (string, error) {
+	return obj.Amount.String(), nil
+}
+
 // CreateShipment is the resolver for the createShipment field.
 func (r *mutationResolver) CreateShipment(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpCreate)
@@ -979,7 +1009,21 @@ func (r *shipmentResolver) ProfitabilityEstimate(ctx context.Context, obj *gqlmo
 	return shipmentProfitabilityEstimateToModel(estimate), nil
 }
 
+// CarrierAssignment returns generated.CarrierAssignmentResolver implementation.
+func (r *Resolver) CarrierAssignment() generated.CarrierAssignmentResolver {
+	return &carrierAssignmentResolver{r}
+}
+
+// CarrierAssignmentAccessorial returns generated.CarrierAssignmentAccessorialResolver implementation.
+func (r *Resolver) CarrierAssignmentAccessorial() generated.CarrierAssignmentAccessorialResolver {
+	return &carrierAssignmentAccessorialResolver{r}
+}
+
 // Shipment returns generated.ShipmentResolver implementation.
 func (r *Resolver) Shipment() generated.ShipmentResolver { return &shipmentResolver{r} }
 
-type shipmentResolver struct{ *Resolver }
+type (
+	carrierAssignmentResolver            struct{ *Resolver }
+	carrierAssignmentAccessorialResolver struct{ *Resolver }
+	shipmentResolver                     struct{ *Resolver }
+)

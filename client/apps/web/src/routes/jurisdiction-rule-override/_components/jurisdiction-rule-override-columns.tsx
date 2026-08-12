@@ -2,7 +2,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { overriddenLimits } from "@trenova/shared/lib/permit";
 import { truncateText } from "@trenova/shared/lib/utils";
 import type { JurisdictionRuleOverride } from "@/types/jurisdiction-rule-override";
-import { type ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 export function getColumns(): ColumnDef<JurisdictionRuleOverride>[] {
   return [

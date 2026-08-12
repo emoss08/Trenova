@@ -55,6 +55,7 @@ import { TimelineToolbar } from "./timeline-toolbar";
 import { BarDetailPopover } from "./bar-detail-popover";
 import {
   barMatchesFocus,
+  isValidDropTarget,
   sortTimelineRows,
   UNASSIGNED_ROW_KEY,
   useTimelineData,
@@ -69,6 +70,7 @@ type PendingAssignment = {
   moveId: string;
   shipmentId: string | null;
   existingAssignment: TimelineBar["assignment"];
+  existingCarrierAssignment: TimelineBar["carrierAssignment"];
   prefill: Partial<AssignmentPayload> | null;
 };
 
@@ -282,17 +284,23 @@ export default function CommandCenterTimeline({
     const bar = event.active.data.current?.bar as TimelineBar | undefined;
     const row = event.over?.data.current?.row as TimelineRow | undefined;
     if (!bar || !row) return;
+    // Re-check validity even though invalid rows disable their droppable: it
+    // guards carrier rows (whose `carrier:` keys are not worker IDs) and
+    // carrier-covered bars against ever reaching the assignment dialog.
+    if (!isValidDropTarget(bar, row)) return;
 
     if (row.key === UNASSIGNED_ROW_KEY) {
-      if (bar.assignment) setPendingUnassign(bar);
+      // Carrier coverage cannot be dropped away: canceling it requires a recorded
+      // reason, which lives behind the bar's detail popover instead.
+      setPendingUnassign(bar);
       return;
     }
-    if (bar.assignment?.primaryWorker?.id === row.key) return;
 
     setPendingAssignment({
       moveId: bar.moveId,
       shipmentId: bar.shipment.id ?? null,
       existingAssignment: bar.assignment,
+      existingCarrierAssignment: bar.carrierAssignment,
       prefill: { primaryWorkerId: row.key },
     });
   }, []);
@@ -337,6 +345,7 @@ export default function CommandCenterTimeline({
       moveId: bar.moveId,
       shipmentId: bar.shipment.id ?? null,
       existingAssignment: bar.assignment,
+      existingCarrierAssignment: bar.carrierAssignment,
       prefill: null,
     });
   }, []);
@@ -544,8 +553,10 @@ export default function CommandCenterTimeline({
           moveId={pendingAssignment.moveId}
           shipmentId={pendingAssignment.shipmentId}
           existingAssignment={pendingAssignment.existingAssignment}
+          existingCarrierAssignment={pendingAssignment.existingCarrierAssignment}
           prefill={pendingAssignment.prefill}
           onAssigned={() => setPendingAssignment(null)}
+          onCarrierAssigned={() => setPendingAssignment(null)}
         />
       )}
 

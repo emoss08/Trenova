@@ -15,6 +15,7 @@ const (
 	SequenceTypeManualJournalRequest = SequenceType("manual_journal_request")
 	SequenceTypeLocationCode         = SequenceType("location_code")
 	SequenceTypeDriverSettlement     = SequenceType("driver_settlement")
+	SequenceTypeCarrierSettlement    = SequenceType("carrier_settlement")
 )
 
 type AccountingBasisType string
@@ -156,6 +157,9 @@ const (
 	JournalSourceEventDriverSettlementPosted  = JournalSourceEventType("DriverSettlementPosted")
 	JournalSourceEventDriverSettlementVoided  = JournalSourceEventType("DriverSettlementVoided")
 	JournalSourceEventEscrowInterestAccrued   = JournalSourceEventType("EscrowInterestAccrued")
+	JournalSourceEventCarrierSettlementPosted = JournalSourceEventType("CarrierSettlementPosted")
+	JournalSourceEventCarrierSettlementVoided = JournalSourceEventType("CarrierSettlementVoided")
+	JournalSourceEventCarrierSettlementPaid   = JournalSourceEventType("CarrierSettlementPaid")
 )
 
 func (j JournalSourceEventType) String() string {
@@ -174,7 +178,10 @@ func (j JournalSourceEventType) IsValid() bool {
 		JournalSourceEventVendorPaymentPosted,
 		JournalSourceEventDriverSettlementPosted,
 		JournalSourceEventDriverSettlementVoided,
-		JournalSourceEventEscrowInterestAccrued:
+		JournalSourceEventEscrowInterestAccrued,
+		JournalSourceEventCarrierSettlementPosted,
+		JournalSourceEventCarrierSettlementVoided,
+		JournalSourceEventCarrierSettlementPaid:
 		return true
 	}
 	return false
@@ -204,6 +211,12 @@ func (j JournalSourceEventType) GetDescription() string {
 		return "Trigger on voided driver settlement"
 	case JournalSourceEventEscrowInterestAccrued:
 		return "Trigger on accrued escrow interest"
+	case JournalSourceEventCarrierSettlementPosted:
+		return "Trigger on posted carrier settlement"
+	case JournalSourceEventCarrierSettlementVoided:
+		return "Trigger on voided carrier settlement"
+	case JournalSourceEventCarrierSettlementPaid:
+		return "Trigger on paid carrier settlement"
 	default:
 		return "Unknown journal source event"
 	}
@@ -488,7 +501,8 @@ func (v SequenceType) IsValid() bool {
 		SequenceTypeJournalEntry,
 		SequenceTypeManualJournalRequest,
 		SequenceTypeLocationCode,
-		SequenceTypeDriverSettlement:
+		SequenceTypeDriverSettlement,
+		SequenceTypeCarrierSettlement:
 		return true
 	default:
 		return false

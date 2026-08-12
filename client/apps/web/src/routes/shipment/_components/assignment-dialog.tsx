@@ -4,6 +4,11 @@ import {
   WorkerAutocompleteField,
 } from "@/components/autocomplete-fields";
 import {
+  CarrierAssignmentFields,
+  CarrierEligibilityAlerts,
+  carrierEligibilityBlocksSubmit,
+} from "@/components/carrier-assignment/carrier-assignment-fields";
+import {
   Alert,
   AlertAction,
   AlertDescription,
@@ -19,20 +24,40 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { LocateTrailerDialog } from "@/routes/trailer/_components/locate-trailer-dialog";
 import { apiService } from "@/services/api";
-import type { Assignment, AssignmentPayload } from "@trenova/shared/types/shipment";
-import { assignmentPayloadSchema } from "@trenova/shared/types/shipment";
+import type {
+  Assignment,
+  AssignmentPayload,
+  CarrierAssignment,
+  CarrierAssignmentPayload,
+  CarrierAssignmentPayloadInput,
+} from "@trenova/shared/types/shipment";
+import {
+  assignmentPayloadSchema,
+  carrierAssignmentPayloadSchema,
+  emptyCarrierAssignmentPayload,
+  isActiveCarrierAssignment,
+} from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { TriangleAlertIcon } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Building2Icon, TriangleAlertIcon, UserIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { AssignmentHosFeasibility } from "./assignment-hos-feasibility";
+
+type CoverageMode = "driver" | "carrier";
+
+const COVERAGE_MODE_ITEMS = [
+  { value: "driver" as const, label: "Driver", icon: UserIcon },
+  { value: "carrier" as const, label: "Carrier", icon: Building2Icon },
+];
 
 type AssignmentDialogProps = {
   open: boolean;
@@ -40,6 +65,7 @@ type AssignmentDialogProps = {
   moveId: string;
   shipmentId?: string | null;
   existingAssignment?: Assignment | null;
+  existingCarrierAssignment?: CarrierAssignment | null;
   /**
    * Field values that take precedence over the existing assignment when the
    * dialog opens — e.g. the target driver after a drag-to-reassign on the
@@ -47,6 +73,7 @@ type AssignmentDialogProps = {
    */
   prefill?: Partial<AssignmentPayload> | null;
   onAssigned?: (assignment: Assignment) => void;
+  onCarrierAssigned?: (carrierAssignment: CarrierAssignment) => void;
 };
 
 export function AssignmentDialog({
@@ -55,11 +82,15 @@ export function AssignmentDialog({
   moveId,
   shipmentId,
   existingAssignment,
+  existingCarrierAssignment,
   prefill,
   onAssigned,
+  onCarrierAssigned,
 }: AssignmentDialogProps) {
   const queryClient = useQueryClient();
   const isEditing = !!existingAssignment?.id;
+  const hasCarrierCoverage = isActiveCarrierAssignment(existingCarrierAssignment);
+  const [mode, setMode] = useState<CoverageMode>(hasCarrierCoverage ? "carrier" : "driver");
 
   const [continuityError, setContinuityError] = useState<{
     message: string;
@@ -98,6 +129,11 @@ export function AssignmentDialog({
       ...prefill,
     });
   }, [open, existingAssignment, prefill, reset]);
+
+  useEffect(() => {
+    if (!open) return;
+    setMode(hasCarrierCoverage ? "carrier" : "driver");
+  }, [open, hasCarrierCoverage]);
 
   const watchedTrailerId = useWatch({ control, name: "trailerId" });
   useEffect(() => {
@@ -187,106 +223,171 @@ export function AssignmentDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Reassign Move" : "Assign Move"}</DialogTitle>
+          <DialogTitle>
+            {mode === "carrier"
+              ? hasCarrierCoverage
+                ? "Replace Carrier Assignment"
+                : "Assign Move to Carrier"
+              : isEditing
+                ? "Reassign Move"
+                : "Assign Move"}
+          </DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "Update the tractor, trailer, and worker assignments for this move."
-              : "Assign a tractor, trailer, and workers to this move."}
+            {mode === "carrier"
+              ? "Broker this move to an external carrier with its rate and reference details."
+              : isEditing
+                ? "Update the tractor, trailer, and worker assignments for this move."
+                : "Assign a tractor, trailer, and workers to this move."}
           </DialogDescription>
         </DialogHeader>
-        {complianceViolations.length > 0 && (
-          <Alert variant="destructive">
-            <TriangleAlertIcon />
-            <AlertTitle>Compliance Violations</AlertTitle>
-            <AlertDescription>
-              <ul className="list-disc pl-4">
-                {complianceViolations.map((msg, idx) => (
-                  <li key={idx}>{msg}</li>
-                ))}
-              </ul>
-            </AlertDescription>
-          </Alert>
-        )}
-        {continuityError && (
-          <Alert variant="default">
-            <TriangleAlertIcon />
-            <AlertTitle>Trailer Location Mismatch</AlertTitle>
-            <AlertDescription>{continuityError.message}</AlertDescription>
-            <AlertAction>
-              <Button
-                type="button"
-                size="xs"
-                variant="outline"
-                onClick={() => setLocateDialogOpen(true)}
-              >
-                Locate Trailer
+        <SegmentedControl
+          items={COVERAGE_MODE_ITEMS}
+          value={mode}
+          onValueChange={setMode}
+          fullWidth
+          aria-label="Coverage type"
+        />
+        {mode === "carrier" ? (
+          isEditing ? (
+            <>
+              <Alert variant="default">
+                <TriangleAlertIcon />
+                <AlertTitle>Move is covered by a driver</AlertTitle>
+                <AlertDescription>
+                  This move already has a driver assignment. Unassign the driver before brokering
+                  the move to an external carrier.
+                </AlertDescription>
+              </Alert>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleClose}>
+                  Close
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <CarrierAssignmentTab
+              moveId={moveId}
+              existingCarrierAssignment={hasCarrierCoverage ? existingCarrierAssignment : null}
+              onCarrierAssigned={onCarrierAssigned}
+              onClose={handleClose}
+            />
+          )
+        ) : hasCarrierCoverage ? (
+          <>
+            <Alert variant="default">
+              <TriangleAlertIcon />
+              <AlertTitle>Move is covered by a carrier</AlertTitle>
+              <AlertDescription>
+                This move is brokered to
+                {existingCarrierAssignment?.carrier?.name
+                  ? ` ${existingCarrierAssignment.carrier.name}`
+                  : " an external carrier"}
+                . Cancel the carrier assignment before assigning a driver.
+              </AlertDescription>
+            </Alert>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Close
               </Button>
-            </AlertAction>
-          </Alert>
+            </DialogFooter>
+          </>
+        ) : (
+          <>
+            {complianceViolations.length > 0 && (
+              <Alert variant="destructive">
+                <TriangleAlertIcon />
+                <AlertTitle>Compliance Violations</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc pl-4">
+                    {complianceViolations.map((msg, idx) => (
+                      <li key={idx}>{msg}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+            {continuityError && (
+              <Alert variant="default">
+                <TriangleAlertIcon />
+                <AlertTitle>Trailer Location Mismatch</AlertTitle>
+                <AlertDescription>{continuityError.message}</AlertDescription>
+                <AlertAction>
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="outline"
+                    onClick={() => setLocateDialogOpen(true)}
+                  >
+                    Locate Trailer
+                  </Button>
+                </AlertAction>
+              </Alert>
+            )}
+            <Form
+              onSubmit={(e) => {
+                e.stopPropagation();
+                void handleSubmit(onSubmit)(e);
+              }}
+            >
+              <FormGroup cols={2} className="pb-4">
+                <FormControl>
+                  <TractorAutocompleteField
+                    control={control}
+                    name="tractorId"
+                    label="Tractor"
+                    placeholder="Select tractor"
+                    rules={{ required: true }}
+                    onOptionChange={handleTractorChange}
+                  />
+                </FormControl>
+                <FormControl>
+                  <TrailerAutocompleteField
+                    control={control}
+                    name="trailerId"
+                    label="Trailer"
+                    placeholder="Select trailer"
+                    clearable
+                  />
+                </FormControl>
+                <FormControl>
+                  <WorkerAutocompleteField
+                    control={control}
+                    name="primaryWorkerId"
+                    label="Primary Worker"
+                    placeholder="Select primary worker"
+                    rules={{ required: true }}
+                    clearable
+                  />
+                </FormControl>
+                <FormControl>
+                  <WorkerAutocompleteField
+                    control={control}
+                    name="secondaryWorkerId"
+                    label="Secondary Worker"
+                    placeholder="Select secondary worker"
+                    clearable
+                  />
+                </FormControl>
+              </FormGroup>
+              <AssignmentHosFeasibility
+                open={open}
+                shipmentId={shipmentId}
+                selectedWorkerId={watchedPrimaryWorker}
+                onSelectWorker={(workerId) =>
+                  setValue("primaryWorkerId", workerId, { shouldDirty: true, shouldValidate: true })
+                }
+              />
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
+                  {isEditing ? "Reassign" : "Assign"}
+                </Button>
+              </DialogFooter>
+            </Form>
+          </>
         )}
-        <Form
-          onSubmit={(e) => {
-            e.stopPropagation();
-            void handleSubmit(onSubmit)(e);
-          }}
-        >
-          <FormGroup cols={2} className="pb-4">
-            <FormControl>
-              <TractorAutocompleteField
-                control={control}
-                name="tractorId"
-                label="Tractor"
-                placeholder="Select tractor"
-                rules={{ required: true }}
-                onOptionChange={handleTractorChange}
-              />
-            </FormControl>
-            <FormControl>
-              <TrailerAutocompleteField
-                control={control}
-                name="trailerId"
-                label="Trailer"
-                placeholder="Select trailer"
-                clearable
-              />
-            </FormControl>
-            <FormControl>
-              <WorkerAutocompleteField
-                control={control}
-                name="primaryWorkerId"
-                label="Primary Worker"
-                placeholder="Select primary worker"
-                rules={{ required: true }}
-                clearable
-              />
-            </FormControl>
-            <FormControl>
-              <WorkerAutocompleteField
-                control={control}
-                name="secondaryWorkerId"
-                label="Secondary Worker"
-                placeholder="Select secondary worker"
-                clearable
-              />
-            </FormControl>
-          </FormGroup>
-          <AssignmentHosFeasibility
-            open={open}
-            shipmentId={shipmentId}
-            selectedWorkerId={watchedPrimaryWorker}
-            onSelectWorker={(workerId) =>
-              setValue("primaryWorkerId", workerId, { shouldDirty: true, shouldValidate: true })
-            }
-          />
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
-              {isEditing ? "Reassign" : "Assign"}
-            </Button>
-          </DialogFooter>
-        </Form>
       </DialogContent>
       {continuityError && (
         <LocateTrailerDialog
@@ -298,5 +399,127 @@ export function AssignmentDialog({
         />
       )}
     </Dialog>
+  );
+}
+
+function toCarrierAssignmentDefaults(
+  existing: CarrierAssignment | null | undefined,
+): CarrierAssignmentPayload {
+  if (!existing) return { ...emptyCarrierAssignmentPayload };
+  return {
+    carrierId: existing.carrierId ?? "",
+    rateMethod: existing.rateMethod,
+    baseRate: Number(existing.baseRate ?? 0),
+    fuelSurcharge: existing.fuelSurcharge != null ? Number(existing.fuelSurcharge) : null,
+    accessorials: (existing.accessorials ?? []).map((accessorial) => ({
+      accessorialChargeId: accessorial.accessorialChargeId ?? null,
+      description: accessorial.description,
+      amount: Number(accessorial.amount ?? 0),
+    })),
+    proNumber: existing.proNumber ?? "",
+    externalDriverName: existing.externalDriverName ?? "",
+    externalDriverPhone: existing.externalDriverPhone ?? "",
+    externalTractorNumber: existing.externalTractorNumber ?? "",
+    externalTrailerNumber: existing.externalTrailerNumber ?? "",
+    overrideInsuranceWarning: false,
+  };
+}
+
+function CarrierAssignmentTab({
+  moveId,
+  existingCarrierAssignment,
+  onCarrierAssigned,
+  onClose,
+}: {
+  moveId: string;
+  existingCarrierAssignment?: CarrierAssignment | null;
+  onCarrierAssigned?: (carrierAssignment: CarrierAssignment) => void;
+  onClose: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const isReplacing = isActiveCarrierAssignment(existingCarrierAssignment);
+
+  const form = useForm<CarrierAssignmentPayloadInput, unknown, CarrierAssignmentPayload>({
+    resolver: zodResolver(carrierAssignmentPayloadSchema),
+    defaultValues: toCarrierAssignmentDefaults(existingCarrierAssignment),
+  });
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = form;
+
+  const carrierId = useWatch({ control, name: "carrierId" });
+  const overrideInsuranceWarning = useWatch({ control, name: "overrideInsuranceWarning" });
+
+  const { data: eligibility, isLoading: isPreviewLoading } = useQuery({
+    queryKey: ["carrier-assignment-preview", moveId, carrierId],
+    queryFn: () => apiService.carrierAssignmentService.preview(moveId, carrierId),
+    enabled: !!carrierId,
+    staleTime: 30_000,
+  });
+
+  const { mutateAsync } = useMutation({
+    mutationFn: (payload: CarrierAssignmentPayload) =>
+      apiService.carrierAssignmentService.assign(moveId, payload, { replace: isReplacing }),
+    onSuccess: (carrierAssignment: CarrierAssignment) => {
+      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+      onCarrierAssigned?.(carrierAssignment);
+      toast.success(isReplacing ? "Carrier assignment replaced" : "Move assigned to carrier");
+    },
+    onError: (error: ApiRequestError) => {
+      handleMutationError({ error, form, resourceName: "Carrier Assignment" });
+    },
+  });
+
+  const onSubmit = useCallback(
+    async (values: CarrierAssignmentPayload) => {
+      // Failures are surfaced by handleMutationError; keep the dialog open with the
+      // entered rate intact so the dispatcher can correct and retry.
+      try {
+        await mutateAsync(values);
+        onClose();
+      } catch {
+        // handled by the mutation's onError
+      }
+    },
+    [mutateAsync, onClose],
+  );
+
+  const submitBlocked =
+    !!carrierId &&
+    (isPreviewLoading || carrierEligibilityBlocksSubmit(eligibility, overrideInsuranceWarning));
+
+  return (
+    <Form
+      onSubmit={(e) => {
+        e.stopPropagation();
+        void handleSubmit(onSubmit)(e);
+      }}
+    >
+      <ScrollArea className="max-h-[60vh] pr-2">
+        <div className="flex flex-col gap-3 pb-4">
+          <CarrierEligibilityAlerts
+            control={control}
+            eligibility={carrierId ? eligibility : undefined}
+            isLoading={!!carrierId && isPreviewLoading}
+          />
+          <CarrierAssignmentFields form={form} />
+        </div>
+      </ScrollArea>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={submitBlocked}
+          isLoading={isSubmitting}
+          loadingText="Saving..."
+        >
+          {isReplacing ? "Replace carrier" : "Assign to carrier"}
+        </Button>
+      </DialogFooter>
+    </Form>
   );
 }

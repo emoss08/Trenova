@@ -11,6 +11,17 @@ const PreflightDialog = lazy(() =>
 const PlanReviewDialog = lazy(() =>
   import("./plan-review-dialog").then((m) => ({ default: m.PlanReviewDialog })),
 );
+const CarrierAssignDialog = lazy(() =>
+  import("./carrier-assign-dialog").then((m) => ({ default: m.CarrierAssignDialog })),
+);
+const CarrierAssignmentCancelDialog = lazy(() =>
+  import("@/components/carrier-assignment/carrier-assignment-cancel-dialog").then((m) => ({
+    default: m.CarrierAssignmentCancelDialog,
+  })),
+);
+const TenderDialog = lazy(() =>
+  import("./tender-dialog").then((m) => ({ default: m.TenderDialog })),
+);
 
 /**
  * Everything that floats above the grid: the drag label, the pre-flight a drop opens, and
@@ -21,6 +32,12 @@ export function ConsoleOverlays({ actions }: { actions: DispatchActions }) {
   const dragPreview = useDispatchConsoleStore.use.dragPreview();
   const preflight = useDispatchConsoleStore.use.preflight();
   const closePreflight = useDispatchConsoleStore.use.closePreflight();
+  const carrierAssignTarget = useDispatchConsoleStore.use.carrierAssignTarget();
+  const closeCarrierAssign = useDispatchConsoleStore.use.closeCarrierAssign();
+  const carrierCancelTarget = useDispatchConsoleStore.use.carrierCancelTarget();
+  const closeCarrierCancel = useDispatchConsoleStore.use.closeCarrierCancel();
+  const tenderTarget = useDispatchConsoleStore.use.tenderTarget();
+  const closeTender = useDispatchConsoleStore.use.closeTender();
 
   return (
     <>
@@ -51,6 +68,47 @@ export function ConsoleOverlays({ actions }: { actions: DispatchActions }) {
               closePreflight();
             }}
           />
+        </Suspense>
+      )}
+
+      {carrierAssignTarget && (
+        <Suspense fallback={null}>
+          <CarrierAssignDialog
+            move={carrierAssignTarget}
+            isAssigning={actions.isAssigning}
+            onCancel={closeCarrierAssign}
+            onConfirm={async (input) => {
+              await actions.assignToCarrier(input);
+              closeCarrierAssign();
+            }}
+          />
+        </Suspense>
+      )}
+
+      {carrierCancelTarget && (
+        <Suspense fallback={null}>
+          <CarrierAssignmentCancelDialog
+            open
+            onOpenChange={(open) => {
+              if (!open) closeCarrierCancel();
+            }}
+            carrierName={carrierCancelTarget.assignedCarrierName || null}
+            isSubmitting={actions.isAssigning}
+            onConfirm={(reason) => {
+              void actions
+                .cancelCarrierAssignment({ moveId: carrierCancelTarget.moveId, reason })
+                .then(closeCarrierCancel)
+                .catch(() => {
+                  // handled by the mutation's onError; the dialog stays open for a retry
+                });
+            }}
+          />
+        </Suspense>
+      )}
+
+      {tenderTarget && (
+        <Suspense fallback={null}>
+          <TenderDialog move={tenderTarget} actions={actions} onClose={closeTender} />
         </Suspense>
       )}
 

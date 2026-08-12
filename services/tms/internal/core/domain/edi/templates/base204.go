@@ -11,7 +11,7 @@ func Base204Segments(
 	versionID pulid.ID,
 ) []*edi.EDITemplateSegment {
 	builder := base204Builder{tenantInfo: tenantInfo, versionID: versionID}
-	segments := make([]*edi.EDITemplateSegment, 0, 19)
+	segments := make([]*edi.EDITemplateSegment, 0, 20)
 	segments = append(segments, builder.envelopeSegments()...)
 	segments = append(segments, builder.headerSegments()...)
 	segments = append(segments, builder.stopSegments()...)
@@ -168,6 +168,26 @@ func (b base204Builder) envelopeSegments() []*edi.EDITemplateSegment {
 }
 
 func (b base204Builder) headerSegments() []*edi.EDITemplateSegment {
+	// Carrier tender offers echo this reference back on the 990 so the
+	// response can be correlated to one offer instead of a shipment.
+	offerReference := b.segment(
+		65,
+		"L11",
+		"Tender Offer Reference",
+		"",
+		false,
+		[]edi.TemplateElement{
+			b.field(1, "Reference Identification", "tenderOfferId", ""),
+			b.el(
+				2,
+				"Reference Identification Qualifier",
+				edi.TemplateElementSourceConstant,
+				"CR",
+				false,
+			),
+		},
+	)
+	offerReference.Condition = "shipment.tenderOfferId"
 	return []*edi.EDITemplateSegment{
 		b.segment(30, "ST", "Transaction Set Header", "", true, []edi.TemplateElement{
 			b.el(1, "Transaction Set Identifier", edi.TemplateElementSourceConstant, "204", true),
@@ -198,6 +218,7 @@ func (b base204Builder) headerSegments() []*edi.EDITemplateSegment {
 				false,
 			),
 		}),
+		offerReference,
 		b.segment(70, "G62", "Date Time", "moves.0.stops", false, []edi.TemplateElement{
 			b.el(1, "Date Qualifier", edi.TemplateElementSourceConstant, "37"),
 			b.repeat(2, "Date", "scheduledWindowStart", ""),

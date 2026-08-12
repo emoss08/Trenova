@@ -1,0 +1,1 @@
+Load offer{{ if .ShipmentProNumber }} {{ .ShipmentProNumber }}{{ end }}{{ if and .OriginSummary .DestinationSummary }}: {{ .OriginSummary }} to {{ .DestinationSummary }}{{ end }} — {{ .RateAmount }}

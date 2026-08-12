@@ -16,16 +16,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// PermitLeadTimeDays is the resolver for the permitLeadTimeDays field.
-func (r *jurisdictionRuleResolver) PermitLeadTimeDays(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (int, error) {
-	return int(obj.PermitLeadTimeDays), nil
-}
-
-// PermitValidityDays is the resolver for the permitValidityDays field.
-func (r *jurisdictionRuleResolver) PermitValidityDays(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (int, error) {
-	return int(obj.PermitValidityDays), nil
-}
-
 // PermitBaseFee is the resolver for the permitBaseFee field.
 func (r *jurisdictionRuleResolver) PermitBaseFee(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (*string, error) {
 	return nullDecimalToString(obj.PermitBaseFee), nil
@@ -34,16 +24,6 @@ func (r *jurisdictionRuleResolver) PermitBaseFee(ctx context.Context, obj *juris
 // PermitPerMileFee is the resolver for the permitPerMileFee field.
 func (r *jurisdictionRuleResolver) PermitPerMileFee(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (*string, error) {
 	return nullDecimalToString(obj.PermitPerMileFee), nil
-}
-
-// PermitLeadTimeDays is the resolver for the permitLeadTimeDays field.
-func (r *jurisdictionRuleOverrideResolver) PermitLeadTimeDays(ctx context.Context, obj *jurisdictionrule.Override) (*int, error) {
-	if obj.PermitLeadTimeDays == nil {
-		return nil, nil
-	}
-
-	days := int(*obj.PermitLeadTimeDays)
-	return &days, nil
 }
 
 // JurisdictionRules is the resolver for the jurisdictionRules field.
@@ -128,12 +108,4 @@ func (r *Resolver) JurisdictionRule() generated.JurisdictionRuleResolver {
 	return &jurisdictionRuleResolver{r}
 }
 
-// JurisdictionRuleOverride returns generated.JurisdictionRuleOverrideResolver implementation.
-func (r *Resolver) JurisdictionRuleOverride() generated.JurisdictionRuleOverrideResolver {
-	return &jurisdictionRuleOverrideResolver{r}
-}
-
-type (
-	jurisdictionRuleResolver         struct{ *Resolver }
-	jurisdictionRuleOverrideResolver struct{ *Resolver }
-)
+type jurisdictionRuleResolver struct{ *Resolver }

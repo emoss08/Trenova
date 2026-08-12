@@ -49,6 +49,7 @@ type CarrierInvoice struct {
 	ShipmentID           pulid.ID                           `json:"shipmentId"           bun:"shipment_id,type:VARCHAR(100),nullzero"`
 	TenderRecipientID    pulid.ID                           `json:"tenderRecipientId"    bun:"tender_recipient_id,type:VARCHAR(100),nullzero"`
 	CustomerID           pulid.ID                           `json:"customerId"           bun:"customer_id,type:VARCHAR(100),nullzero"`
+	CarrierID            pulid.ID                           `json:"carrierId"            bun:"carrier_id,type:VARCHAR(100),nullzero"`
 	InvoiceNumber        string                             `json:"invoiceNumber"        bun:"invoice_number,type:VARCHAR(100),notnull"`
 	InvoiceDate          *int64                             `json:"invoiceDate"          bun:"invoice_date,type:BIGINT,nullzero"`
 	DeliveryDate         *int64                             `json:"deliveryDate"         bun:"delivery_date,type:BIGINT,nullzero"`

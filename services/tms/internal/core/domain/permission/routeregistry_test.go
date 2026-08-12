@@ -715,3 +715,55 @@ func TestRouteRegistry_HasShipmentControlsRoute(t *testing.T) {
 	assert.Equal(t, ResourceShipmentControl, def.Requirements[0].Resource)
 	assert.Equal(t, OpRead, def.Requirements[0].Operation)
 }
+
+func TestRouteRegistry_HasDispatchConsoleRoute(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	def, ok := rr.Get("/dispatch/console")
+	require.True(t, ok)
+	assert.Equal(t, "Dispatch Console", def.DisplayName)
+	assert.Equal(t, "Operations", def.Category)
+	assert.Equal(t, RouteMatchExact, def.MatchType)
+	require.Len(t, def.Requirements, 1)
+	assert.Equal(t, ResourceShipmentMove, def.Requirements[0].Resource)
+	assert.Equal(t, OpRead, def.Requirements[0].Operation)
+}
+
+func TestRouteRegistry_HasCarrierSettlementRoutes(t *testing.T) {
+	t.Parallel()
+
+	rr := NewRouteRegistry()
+
+	tests := []struct {
+		path        string
+		displayName string
+		resource    Resource
+	}{
+		{"/carrier-settlements/workspace", "Settlement Workspace", ResourceCarrierSettlement},
+		{"/carrier-settlements/settlements", "Carrier Settlements", ResourceCarrierSettlement},
+		{"/carrier-settlements/batches", "Settlement Batches", ResourceCarrierSettlement},
+		{"/carrier-settlements/cost-events", "Carrier Cost Events", ResourceCarrierSettlement},
+		{
+			"/carrier-settlements/invoice-matching",
+			"Invoice Matching",
+			ResourceCarrierInvoiceMatch,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			t.Parallel()
+
+			def, ok := rr.Get(tt.path)
+			require.True(t, ok, "expected route %s to be registered", tt.path)
+			assert.Equal(t, tt.displayName, def.DisplayName)
+			assert.Equal(t, "Carrier Settlements", def.Category)
+			assert.Equal(t, RouteMatchExact, def.MatchType)
+			require.Len(t, def.Requirements, 1)
+			assert.Equal(t, tt.resource, def.Requirements[0].Resource)
+			assert.Equal(t, OpRead, def.Requirements[0].Operation)
+		})
+	}
+}

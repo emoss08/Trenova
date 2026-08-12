@@ -81,6 +81,33 @@ func (c *BunReferenceChecker) CheckReference(
 
 type CustomReferenceCheckFunc func(ctx context.Context, orgID, buID, refID pulid.ID) (bool, error)
 
+// NewUSStateReferenceCheck builds the shared existence check for the global
+// us_states table (which carries no tenant columns). The DB is resolved
+// lazily through the getter so validators can be constructed before the
+// connection is ready, mirroring NewBunUniquenessCheckerLazy.
+func NewUSStateReferenceCheck(getter DBGetter) CustomReferenceCheckFunc {
+	return func(ctx context.Context, _, _ pulid.ID, refID pulid.ID) (bool, error) {
+		if refID.IsNil() {
+			return true, nil
+		}
+
+		db := getter()
+		if db == nil {
+			return false, errors.New("database connection is not initialized")
+		}
+
+		exists, err := db.NewSelect().
+			TableExpr("us_states").
+			ColumnExpr("1").
+			Where("id = ?", refID).
+			Exists(ctx)
+		if err != nil {
+			return false, err
+		}
+		return exists, nil
+	}
+}
+
 type ReferenceFieldConfig[T TenantedEntity] struct {
 	FieldName   string
 	TableName   string

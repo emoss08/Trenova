@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
@@ -52,11 +54,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -85,6 +89,14 @@ type AccountTypeConnection struct {
 type AccountTypeEdge struct {
 	Node   *accounttype.AccountType `json:"node"`
 	Cursor string                   `json:"cursor"`
+}
+
+type AddCarrierSettlementAdjustmentInput struct {
+	SettlementID string `json:"settlementId"`
+	Description  string `json:"description"`
+	AmountMinor  int    `json:"amountMinor"`
+	// Optional GL account override — the adjustment posts there instead of the default expense account.
+	GlAccountID *string `json:"glAccountId,omitempty"`
 }
 
 type AddSettlementAdjustmentInput struct {
@@ -301,6 +313,65 @@ type CannedReport struct {
 	Definition    map[string]any `json:"definition"`
 }
 
+type CarrierConnection struct {
+	Edges      []*CarrierEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount *int           `json:"totalCount,omitempty"`
+}
+
+type CarrierCostEventConnection struct {
+	Edges      []*CarrierCostEventEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type CarrierCostEventEdge struct {
+	Node   *carriersettlement.CostEvent `json:"node"`
+	Cursor string                       `json:"cursor"`
+}
+
+type CarrierEdge struct {
+	Node   *carrier.Carrier `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
+type CarrierInvoiceMatchActionInput struct {
+	MatchID string  `json:"matchId"`
+	Note    *string `json:"note,omitempty"`
+}
+
+type CarrierInvoiceMatchList struct {
+	Items      []*carriersettlement.InvoiceMatch `json:"items"`
+	TotalCount int                               `json:"totalCount"`
+}
+
+type CarrierSettlementActionInput struct {
+	SettlementID string  `json:"settlementId"`
+	Reason       *string `json:"reason,omitempty"`
+}
+
+type CarrierSettlementBatchConnection struct {
+	Edges      []*CarrierSettlementBatchEdge `json:"edges"`
+	PageInfo   *PageInfo                     `json:"pageInfo"`
+	TotalCount *int                          `json:"totalCount,omitempty"`
+}
+
+type CarrierSettlementBatchEdge struct {
+	Node   *carriersettlement.CarrierSettlementBatch `json:"node"`
+	Cursor string                                    `json:"cursor"`
+}
+
+type CarrierSettlementConnection struct {
+	Edges      []*CarrierSettlementEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type CarrierSettlementEdge struct {
+	Node   *carriersettlement.CarrierSettlement `json:"node"`
+	Cursor string                               `json:"cursor"`
+}
+
 type CategoryCostLine struct {
 	Category        CostCategoryType    `json:"category"`
 	Name            string              `json:"name"`
@@ -380,6 +451,24 @@ type CostingControlInput struct {
 	PlannedMonthlyMiles  *int    `json:"plannedMonthlyMiles,omitempty"`
 	TargetMarginPercent  *string `json:"targetMarginPercent,omitempty"`
 	Version              int     `json:"version"`
+}
+
+type CreateCarrierInvoiceMatchInput struct {
+	// Exactly one source is required: an EDI carrier invoice or a document AI extraction.
+	EdiCarrierInvoiceID    *string `json:"ediCarrierInvoiceId,omitempty"`
+	DocumentAiExtractionID *string `json:"documentAiExtractionId,omitempty"`
+	// Required for document AI sources; EDI sources take the carrier from the linked invoice.
+	CarrierID *string `json:"carrierId,omitempty"`
+	// Optional explicit assignment; otherwise resolved by pro number or shipment reference.
+	CarrierAssignmentID *string `json:"carrierAssignmentId,omitempty"`
+	// Document AI sources only: the extracted invoice number.
+	InvoiceNumber *string `json:"invoiceNumber,omitempty"`
+	// Document AI sources only: the extracted invoice total in minor units.
+	InvoiceTotalMinor *int `json:"invoiceTotalMinor,omitempty"`
+	// Document AI sources only: the pro number used to locate the assignment.
+	ProNumber *string `json:"proNumber,omitempty"`
+	// Document AI sources only: the shipment used to locate the assignment.
+	ShipmentID *string `json:"shipmentId,omitempty"`
 }
 
 type CreateDocumentTemplateVersionInput struct {
@@ -931,6 +1020,26 @@ type DispatchAssignMoveInput struct {
 	Reassign *bool `json:"reassign,omitempty"`
 }
 
+type DispatchAssignMoveToCarrierInput struct {
+	MoveID                string                             `json:"moveId"`
+	CarrierID             string                             `json:"carrierId"`
+	RateMethod            shipment.CarrierRateMethod         `json:"rateMethod"`
+	BaseRate              string                             `json:"baseRate"`
+	FuelSurcharge         *string                            `json:"fuelSurcharge,omitempty"`
+	Accessorials          []*DispatchCarrierAccessorialInput `json:"accessorials,omitempty"`
+	ProNumber             *string                            `json:"proNumber,omitempty"`
+	ExternalDriverName    *string                            `json:"externalDriverName,omitempty"`
+	ExternalDriverPhone   *string                            `json:"externalDriverPhone,omitempty"`
+	ExternalTractorNumber *string                            `json:"externalTractorNumber,omitempty"`
+	ExternalTrailerNumber *string                            `json:"externalTrailerNumber,omitempty"`
+	// Replace an existing carrier assignment rather than rejecting the request. The console
+	// sets this when a dispatcher re-covers a move that already has carrier coverage.
+	Replace *bool `json:"replace,omitempty"`
+	// Proceed despite insurance policies that expire inside the warning window. Hard blockers
+	// (inactive, unqualified, or expired coverage) can never be overridden.
+	OverrideInsuranceWarning *bool `json:"overrideInsuranceWarning,omitempty"`
+}
+
 // Per-move outcome of a bulk assignment. Failures carry their reason rather than aborting
 // the batch: covering nine of ten moves and saying which one failed beats covering none.
 type DispatchAssignResult struct {
@@ -1022,58 +1131,64 @@ type DispatchBoardInput struct {
 }
 
 type DispatchBoardMove struct {
-	MoveID                 string   `json:"moveId"`
-	ShipmentID             string   `json:"shipmentId"`
-	ProNumber              string   `json:"proNumber"`
-	Bol                    string   `json:"bol"`
-	MoveStatus             string   `json:"moveStatus"`
-	ShipmentStatus         string   `json:"shipmentStatus"`
-	Sequence               int      `json:"sequence"`
-	MoveCount              int      `json:"moveCount"`
-	Loaded                 bool     `json:"loaded"`
-	Distance               *float64 `json:"distance,omitempty"`
-	Revenue                *float64 `json:"revenue,omitempty"`
-	CustomerID             *string  `json:"customerId,omitempty"`
-	CustomerName           string   `json:"customerName"`
-	ServiceTypeID          *string  `json:"serviceTypeId,omitempty"`
-	ServiceTypeCode        string   `json:"serviceTypeCode"`
-	RequiredTractorTypeID  *string  `json:"requiredTractorTypeId,omitempty"`
-	RequiredTrailerTypeID  *string  `json:"requiredTrailerTypeId,omitempty"`
-	TemperatureMin         *int     `json:"temperatureMin,omitempty"`
-	TemperatureMax         *int     `json:"temperatureMax,omitempty"`
-	HasHazmat              bool     `json:"hasHazmat"`
-	HasActiveHold          bool     `json:"hasActiveHold"`
-	Urgency                string   `json:"urgency"`
-	MinutesToPickup        int      `json:"minutesToPickup"`
-	IsCovered              bool     `json:"isCovered"`
-	OriginStopID           *string  `json:"originStopId,omitempty"`
-	OriginLocationID       *string  `json:"originLocationId,omitempty"`
-	OriginName             string   `json:"originName"`
-	OriginCity             string   `json:"originCity"`
-	OriginState            string   `json:"originState"`
-	OriginLatitude         *float64 `json:"originLatitude,omitempty"`
-	OriginLongitude        *float64 `json:"originLongitude,omitempty"`
-	OriginWindowStart      int      `json:"originWindowStart"`
-	OriginWindowEnd        *int     `json:"originWindowEnd,omitempty"`
-	OriginActualArrival    *int     `json:"originActualArrival,omitempty"`
-	DestinationStopID      *string  `json:"destinationStopId,omitempty"`
-	DestinationLocationID  *string  `json:"destinationLocationId,omitempty"`
-	DestinationName        string   `json:"destinationName"`
-	DestinationCity        string   `json:"destinationCity"`
-	DestinationState       string   `json:"destinationState"`
-	DestinationLatitude    *float64 `json:"destinationLatitude,omitempty"`
-	DestinationLongitude   *float64 `json:"destinationLongitude,omitempty"`
-	DestinationWindowStart int      `json:"destinationWindowStart"`
-	DestinationWindowEnd   *int     `json:"destinationWindowEnd,omitempty"`
-	AssignmentID           *string  `json:"assignmentId,omitempty"`
-	AssignedWorkerID       *string  `json:"assignedWorkerId,omitempty"`
-	AssignedWorkerName     string   `json:"assignedWorkerName"`
-	AssignedTractorID      *string  `json:"assignedTractorId,omitempty"`
-	AssignedTractorCode    string   `json:"assignedTractorCode"`
-	AssignedTrailerID      *string  `json:"assignedTrailerId,omitempty"`
-	AssignedTrailerCode    string   `json:"assignedTrailerCode"`
-	AssignmentAckStatus    string   `json:"assignmentAckStatus"`
-	PreviousMoveTrailerID  *string  `json:"previousMoveTrailerId,omitempty"`
+	MoveID                 string                      `json:"moveId"`
+	ShipmentID             string                      `json:"shipmentId"`
+	ProNumber              string                      `json:"proNumber"`
+	Bol                    string                      `json:"bol"`
+	MoveStatus             string                      `json:"moveStatus"`
+	ShipmentStatus         string                      `json:"shipmentStatus"`
+	Sequence               int                         `json:"sequence"`
+	MoveCount              int                         `json:"moveCount"`
+	Loaded                 bool                        `json:"loaded"`
+	Distance               *float64                    `json:"distance,omitempty"`
+	Revenue                *float64                    `json:"revenue,omitempty"`
+	CustomerID             *string                     `json:"customerId,omitempty"`
+	CustomerName           string                      `json:"customerName"`
+	ServiceTypeID          *string                     `json:"serviceTypeId,omitempty"`
+	ServiceTypeCode        string                      `json:"serviceTypeCode"`
+	RequiredTractorTypeID  *string                     `json:"requiredTractorTypeId,omitempty"`
+	RequiredTrailerTypeID  *string                     `json:"requiredTrailerTypeId,omitempty"`
+	TemperatureMin         *int                        `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int                        `json:"temperatureMax,omitempty"`
+	HasHazmat              bool                        `json:"hasHazmat"`
+	HasActiveHold          bool                        `json:"hasActiveHold"`
+	Urgency                string                      `json:"urgency"`
+	MinutesToPickup        int                         `json:"minutesToPickup"`
+	IsCovered              bool                        `json:"isCovered"`
+	OriginStopID           *string                     `json:"originStopId,omitempty"`
+	OriginLocationID       *string                     `json:"originLocationId,omitempty"`
+	OriginName             string                      `json:"originName"`
+	OriginCity             string                      `json:"originCity"`
+	OriginState            string                      `json:"originState"`
+	OriginLatitude         *float64                    `json:"originLatitude,omitempty"`
+	OriginLongitude        *float64                    `json:"originLongitude,omitempty"`
+	OriginWindowStart      int                         `json:"originWindowStart"`
+	OriginWindowEnd        *int                        `json:"originWindowEnd,omitempty"`
+	OriginActualArrival    *int                        `json:"originActualArrival,omitempty"`
+	DestinationStopID      *string                     `json:"destinationStopId,omitempty"`
+	DestinationLocationID  *string                     `json:"destinationLocationId,omitempty"`
+	DestinationName        string                      `json:"destinationName"`
+	DestinationCity        string                      `json:"destinationCity"`
+	DestinationState       string                      `json:"destinationState"`
+	DestinationLatitude    *float64                    `json:"destinationLatitude,omitempty"`
+	DestinationLongitude   *float64                    `json:"destinationLongitude,omitempty"`
+	DestinationWindowStart int                         `json:"destinationWindowStart"`
+	DestinationWindowEnd   *int                        `json:"destinationWindowEnd,omitempty"`
+	AssignmentID           *string                     `json:"assignmentId,omitempty"`
+	AssignedWorkerID       *string                     `json:"assignedWorkerId,omitempty"`
+	AssignedWorkerName     string                      `json:"assignedWorkerName"`
+	AssignedTractorID      *string                     `json:"assignedTractorId,omitempty"`
+	AssignedTractorCode    string                      `json:"assignedTractorCode"`
+	AssignedTrailerID      *string                     `json:"assignedTrailerId,omitempty"`
+	AssignedTrailerCode    string                      `json:"assignedTrailerCode"`
+	AssignmentAckStatus    string                      `json:"assignmentAckStatus"`
+	PreviousMoveTrailerID  *string                     `json:"previousMoveTrailerId,omitempty"`
+	CoverageType           string                      `json:"coverageType"`
+	CarrierAssignmentID    *string                     `json:"carrierAssignmentId,omitempty"`
+	AssignedCarrierID      *string                     `json:"assignedCarrierId,omitempty"`
+	AssignedCarrierName    string                      `json:"assignedCarrierName"`
+	CarrierTotalCost       *float64                    `json:"carrierTotalCost,omitempty"`
+	LiveTender             *DispatchBoardTenderSummary `json:"liveTender,omitempty"`
 }
 
 // The metrics strip at the top of the console: the numbers a dispatcher is measured on.
@@ -1087,6 +1202,18 @@ type DispatchBoardSummary struct {
 	AssignedToday        int     `json:"assignedToday"`
 	AverageDeadheadMiles float64 `json:"averageDeadheadMiles"`
 	UtilizationPercent   float64 `json:"utilizationPercent"`
+}
+
+// The live tender riding on a move, condensed to what a board card chip needs: where the
+// waterfall stands and which carrier is currently holding the offer.
+type DispatchBoardTenderSummary struct {
+	ID                    string        `json:"id"`
+	Status                tender.Status `json:"status"`
+	Mode                  tender.Mode   `json:"mode"`
+	CurrentRank           int           `json:"currentRank"`
+	OfferCount            int           `json:"offerCount"`
+	CurrentCarrierName    string        `json:"currentCarrierName"`
+	CurrentOfferExpiresAt *int          `json:"currentOfferExpiresAt,omitempty"`
 }
 
 type DispatchBulkAssignResult struct {
@@ -1123,6 +1250,21 @@ type DispatchCandidate struct {
 	HosProjectedCycleMs  int                    `json:"hosProjectedCycleMs"`
 	Findings             []*DispatchFinding     `json:"findings"`
 	Factors              []*DispatchScoreFactor `json:"factors"`
+}
+
+type DispatchCarrierAccessorialInput struct {
+	AccessorialChargeID *string `json:"accessorialChargeId,omitempty"`
+	Description         string  `json:"description"`
+	Amount              string  `json:"amount"`
+}
+
+type DispatchCarrierAssignmentPreviewInput struct {
+	CarrierID string `json:"carrierId"`
+}
+
+type DispatchCarrierEligibility struct {
+	Blockers []string `json:"blockers"`
+	Warnings []string `json:"warnings"`
 }
 
 // An assignment a driver already holds inside the planning horizon. The console draws these
@@ -1462,6 +1604,11 @@ type EIASeriesOption struct {
 	Name     string                 `json:"name"`
 	Region   string                 `json:"region"`
 	FuelType fuelsurcharge.FuelType `json:"fuelType"`
+}
+
+type EdiCarrierInvoiceList struct {
+	Items      []*edi.CarrierInvoice `json:"items"`
+	TotalCount int                   `json:"totalCount"`
 }
 
 type EdiCommunicationProfileConnection struct {
@@ -1966,6 +2113,13 @@ type GLActualsWindow struct {
 	HasPostings bool    `json:"hasPostings"`
 }
 
+type GenerateCarrierSettlementBatchInput struct {
+	PeriodStart *int    `json:"periodStart,omitempty"`
+	PeriodEnd   *int    `json:"periodEnd,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Notes       *string `json:"notes,omitempty"`
+}
+
 type GenerateDriverSettlementInput struct {
 	WorkerID    string  `json:"workerId"`
 	PeriodStart int     `json:"periodStart"`
@@ -2275,10 +2429,25 @@ type ManualJournalEdge struct {
 	Cursor string                 `json:"cursor"`
 }
 
+type MarkCarrierSettlementPaidInput struct {
+	SettlementID     string  `json:"settlementId"`
+	PaymentMethod    string  `json:"paymentMethod"`
+	PaymentReference *string `json:"paymentReference,omitempty"`
+}
+
 type MarkDriverSettlementPaidInput struct {
 	SettlementID     string  `json:"settlementId"`
 	PaymentMethod    string  `json:"paymentMethod"`
 	PaymentReference *string `json:"paymentReference,omitempty"`
+}
+
+type MatchRoutingGuideInput struct {
+	OriginLocationID      *string `json:"originLocationId,omitempty"`
+	DestinationLocationID *string `json:"destinationLocationId,omitempty"`
+	OriginCity            *string `json:"originCity,omitempty"`
+	OriginState           *string `json:"originState,omitempty"`
+	DestinationCity       *string `json:"destinationCity,omitempty"`
+	DestinationState      *string `json:"destinationState,omitempty"`
 }
 
 type Mutation struct {
@@ -2515,6 +2684,11 @@ type RecurringShipmentConnection struct {
 type RecurringShipmentEdge struct {
 	Node   *recurringshipment.RecurringShipment `json:"node"`
 	Cursor string                               `json:"cursor"`
+}
+
+type RemoveCarrierSettlementAdjustmentInput struct {
+	SettlementID string `json:"settlementId"`
+	LineID       string `json:"lineId"`
 }
 
 type RemoveOrderChargeInput struct {
@@ -3025,6 +3199,17 @@ type RoleConnection struct {
 type RoleEdge struct {
 	Node   *permission.Role `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+type RoutingGuideConnection struct {
+	Edges      []*RoutingGuideEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type RoutingGuideEdge struct {
+	Node   *tender.RoutingGuide `json:"node"`
+	Cursor string               `json:"cursor"`
 }
 
 type RunReportInput struct {
@@ -3934,28 +4119,30 @@ type ShipmentLoadingWarning struct {
 }
 
 type ShipmentMove struct {
-	ID                     *string    `json:"id,omitempty"`
-	BusinessUnitID         string     `json:"businessUnitId"`
-	OrganizationID         string     `json:"organizationId"`
-	ShipmentID             *string    `json:"shipmentId,omitempty"`
-	Status                 MoveStatus `json:"status"`
-	Loaded                 bool       `json:"loaded"`
-	Sequence               int        `json:"sequence"`
-	Distance               *float64   `json:"distance,omitempty"`
-	DistanceSource         *string    `json:"distanceSource,omitempty"`
-	DistanceProvider       *string    `json:"distanceProvider,omitempty"`
-	DistanceCalculatedAt   *int       `json:"distanceCalculatedAt,omitempty"`
-	DistanceRouteSignature *string    `json:"distanceRouteSignature,omitempty"`
-	DistanceDataVersion    *string    `json:"distanceDataVersion,omitempty"`
-	DistanceRoutingType    *string    `json:"distanceRoutingType,omitempty"`
-	DistanceUnits          *string    `json:"distanceUnits,omitempty"`
+	ID                     *string                   `json:"id,omitempty"`
+	BusinessUnitID         string                    `json:"businessUnitId"`
+	OrganizationID         string                    `json:"organizationId"`
+	ShipmentID             *string                   `json:"shipmentId,omitempty"`
+	Status                 MoveStatus                `json:"status"`
+	CoverageType           shipment.MoveCoverageType `json:"coverageType"`
+	Loaded                 bool                      `json:"loaded"`
+	Sequence               int                       `json:"sequence"`
+	Distance               *float64                  `json:"distance,omitempty"`
+	DistanceSource         *string                   `json:"distanceSource,omitempty"`
+	DistanceProvider       *string                   `json:"distanceProvider,omitempty"`
+	DistanceCalculatedAt   *int                      `json:"distanceCalculatedAt,omitempty"`
+	DistanceRouteSignature *string                   `json:"distanceRouteSignature,omitempty"`
+	DistanceDataVersion    *string                   `json:"distanceDataVersion,omitempty"`
+	DistanceRoutingType    *string                   `json:"distanceRoutingType,omitempty"`
+	DistanceUnits          *string                   `json:"distanceUnits,omitempty"`
 	// Distance providers may return provider-specific route details, so this remains intentionally open-ended.
-	DistanceMetadata map[string]any      `json:"distanceMetadata,omitempty"`
-	Version          int                 `json:"version"`
-	CreatedAt        int                 `json:"createdAt"`
-	UpdatedAt        int                 `json:"updatedAt"`
-	Stops            []*ShipmentStop     `json:"stops"`
-	Assignment       *ShipmentAssignment `json:"assignment,omitempty"`
+	DistanceMetadata  map[string]any              `json:"distanceMetadata,omitempty"`
+	Version           int                         `json:"version"`
+	CreatedAt         int                         `json:"createdAt"`
+	UpdatedAt         int                         `json:"updatedAt"`
+	Stops             []*ShipmentStop             `json:"stops"`
+	Assignment        *ShipmentAssignment         `json:"assignment,omitempty"`
+	CarrierAssignment *shipment.CarrierAssignment `json:"carrierAssignment,omitempty"`
 }
 
 type ShipmentMoveInput struct {
@@ -4548,6 +4735,21 @@ type UpcomingWorkerPTOInput struct {
 	WorkerID    *string           `json:"workerId,omitempty"`
 	FleetCodeID *string           `json:"fleetCodeId,omitempty"`
 	Timezone    *string           `json:"timezone,omitempty"`
+}
+
+type UpdateCarrierSettlementControlInput struct {
+	Version                                 int                       `json:"version"`
+	PayTrigger                              tenant.PayTrigger         `json:"payTrigger"`
+	PayPeriodFrequency                      tenant.PayPeriodFrequency `json:"payPeriodFrequency"`
+	PeriodEndDayOfWeek                      int                       `json:"periodEndDayOfWeek"`
+	PayDelayDays                            int                       `json:"payDelayDays"`
+	AutoGenerateBatches                     bool                      `json:"autoGenerateBatches"`
+	AutoPostOnApprove                       bool                      `json:"autoPostOnApprove"`
+	VarianceToleranceMinor                  int                       `json:"varianceToleranceMinor"`
+	AutoMatchInboundInvoices                bool                      `json:"autoMatchInboundInvoices"`
+	AutoAcceptWithinTolerance               bool                      `json:"autoAcceptWithinTolerance"`
+	DefaultApAccountID                      *string                   `json:"defaultApAccountId,omitempty"`
+	DefaultPurchasedTransportationAccountID *string                   `json:"defaultPurchasedTransportationAccountId,omitempty"`
 }
 
 type UpdateDashControlInput struct {
@@ -5573,6 +5775,7 @@ func (e NotificationState) MarshalJSON() ([]byte, error) {
 type SelectOptionResource string
 
 const (
+	SelectOptionResourceCarrier               SelectOptionResource = "CARRIER"
 	SelectOptionResourceCustomer              SelectOptionResource = "CUSTOMER"
 	SelectOptionResourceEquipmentType         SelectOptionResource = "EQUIPMENT_TYPE"
 	SelectOptionResourceEquipmentManufacturer SelectOptionResource = "EQUIPMENT_MANUFACTURER"
@@ -5591,6 +5794,7 @@ const (
 )
 
 var AllSelectOptionResource = []SelectOptionResource{
+	SelectOptionResourceCarrier,
 	SelectOptionResourceCustomer,
 	SelectOptionResourceEquipmentType,
 	SelectOptionResourceEquipmentManufacturer,
@@ -5610,7 +5814,7 @@ var AllSelectOptionResource = []SelectOptionResource{
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceCustomer, SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceFiscalYear, SelectOptionResourceFiscalPeriod, SelectOptionResourceGlAccount:
+	case SelectOptionResourceCarrier, SelectOptionResourceCustomer, SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceFiscalYear, SelectOptionResourceFiscalPeriod, SelectOptionResourceGlAccount:
 		return true
 	}
 	return false
@@ -6083,23 +6287,36 @@ func (e ShipmentEventSeverity) MarshalJSON() ([]byte, error) {
 type ShipmentEventType string
 
 const (
-	ShipmentEventTypeShipmentCreated      ShipmentEventType = "ShipmentCreated"
-	ShipmentEventTypeShipmentUpdated      ShipmentEventType = "ShipmentUpdated"
-	ShipmentEventTypeStatusChanged        ShipmentEventType = "StatusChanged"
-	ShipmentEventTypeShipmentCanceled     ShipmentEventType = "ShipmentCanceled"
-	ShipmentEventTypeShipmentUncanceled   ShipmentEventType = "ShipmentUncanceled"
-	ShipmentEventTypeOwnershipTransferred ShipmentEventType = "OwnershipTransferred"
-	ShipmentEventTypeMoveStatusChanged    ShipmentEventType = "MoveStatusChanged"
-	ShipmentEventTypeMoveDeparted         ShipmentEventType = "MoveDeparted"
-	ShipmentEventTypeMoveArrived          ShipmentEventType = "MoveArrived"
-	ShipmentEventTypeStopCompleted        ShipmentEventType = "StopCompleted"
-	ShipmentEventTypeDriverAssigned       ShipmentEventType = "DriverAssigned"
-	ShipmentEventTypeDriverReassigned     ShipmentEventType = "DriverReassigned"
-	ShipmentEventTypeDriverUnassigned     ShipmentEventType = "DriverUnassigned"
-	ShipmentEventTypeHoldPlaced           ShipmentEventType = "HoldPlaced"
-	ShipmentEventTypeHoldUpdated          ShipmentEventType = "HoldUpdated"
-	ShipmentEventTypeHoldReleased         ShipmentEventType = "HoldReleased"
-	ShipmentEventTypeCommentPosted        ShipmentEventType = "CommentPosted"
+	ShipmentEventTypeShipmentCreated       ShipmentEventType = "ShipmentCreated"
+	ShipmentEventTypeShipmentUpdated       ShipmentEventType = "ShipmentUpdated"
+	ShipmentEventTypeStatusChanged         ShipmentEventType = "StatusChanged"
+	ShipmentEventTypeShipmentCanceled      ShipmentEventType = "ShipmentCanceled"
+	ShipmentEventTypeShipmentUncanceled    ShipmentEventType = "ShipmentUncanceled"
+	ShipmentEventTypeOwnershipTransferred  ShipmentEventType = "OwnershipTransferred"
+	ShipmentEventTypeMoveStatusChanged     ShipmentEventType = "MoveStatusChanged"
+	ShipmentEventTypeMoveDeparted          ShipmentEventType = "MoveDeparted"
+	ShipmentEventTypeMoveArrived           ShipmentEventType = "MoveArrived"
+	ShipmentEventTypeStopCompleted         ShipmentEventType = "StopCompleted"
+	ShipmentEventTypeDriverAssigned        ShipmentEventType = "DriverAssigned"
+	ShipmentEventTypeDriverReassigned      ShipmentEventType = "DriverReassigned"
+	ShipmentEventTypeDriverUnassigned      ShipmentEventType = "DriverUnassigned"
+	ShipmentEventTypeCarrierAssigned       ShipmentEventType = "CarrierAssigned"
+	ShipmentEventTypeCarrierUnassigned     ShipmentEventType = "CarrierUnassigned"
+	ShipmentEventTypeTenderOffered         ShipmentEventType = "TenderOffered"
+	ShipmentEventTypeTenderAccepted        ShipmentEventType = "TenderAccepted"
+	ShipmentEventTypeTenderDeclined        ShipmentEventType = "TenderDeclined"
+	ShipmentEventTypeTenderExpired         ShipmentEventType = "TenderExpired"
+	ShipmentEventTypeTenderWithdrawn       ShipmentEventType = "TenderWithdrawn"
+	ShipmentEventTypeTenderNeedsReview     ShipmentEventType = "TenderNeedsReview"
+	ShipmentEventTypeRoutingGuideExhausted ShipmentEventType = "RoutingGuideExhausted"
+	ShipmentEventTypeTenderLateResponse    ShipmentEventType = "TenderLateResponse"
+	ShipmentEventTypeTenderDeliveryFailed  ShipmentEventType = "TenderDeliveryFailed"
+	ShipmentEventTypeTenderEntrySkipped    ShipmentEventType = "TenderEntrySkipped"
+	ShipmentEventTypeTenderEntryWarned     ShipmentEventType = "TenderEntryWarned"
+	ShipmentEventTypeHoldPlaced            ShipmentEventType = "HoldPlaced"
+	ShipmentEventTypeHoldUpdated           ShipmentEventType = "HoldUpdated"
+	ShipmentEventTypeHoldReleased          ShipmentEventType = "HoldReleased"
+	ShipmentEventTypeCommentPosted         ShipmentEventType = "CommentPosted"
 )
 
 var AllShipmentEventType = []ShipmentEventType{
@@ -6116,6 +6333,19 @@ var AllShipmentEventType = []ShipmentEventType{
 	ShipmentEventTypeDriverAssigned,
 	ShipmentEventTypeDriverReassigned,
 	ShipmentEventTypeDriverUnassigned,
+	ShipmentEventTypeCarrierAssigned,
+	ShipmentEventTypeCarrierUnassigned,
+	ShipmentEventTypeTenderOffered,
+	ShipmentEventTypeTenderAccepted,
+	ShipmentEventTypeTenderDeclined,
+	ShipmentEventTypeTenderExpired,
+	ShipmentEventTypeTenderWithdrawn,
+	ShipmentEventTypeTenderNeedsReview,
+	ShipmentEventTypeRoutingGuideExhausted,
+	ShipmentEventTypeTenderLateResponse,
+	ShipmentEventTypeTenderDeliveryFailed,
+	ShipmentEventTypeTenderEntrySkipped,
+	ShipmentEventTypeTenderEntryWarned,
 	ShipmentEventTypeHoldPlaced,
 	ShipmentEventTypeHoldUpdated,
 	ShipmentEventTypeHoldReleased,
@@ -6124,7 +6354,7 @@ var AllShipmentEventType = []ShipmentEventType{
 
 func (e ShipmentEventType) IsValid() bool {
 	switch e {
-	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
+	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeCarrierAssigned, ShipmentEventTypeCarrierUnassigned, ShipmentEventTypeTenderOffered, ShipmentEventTypeTenderAccepted, ShipmentEventTypeTenderDeclined, ShipmentEventTypeTenderExpired, ShipmentEventTypeTenderWithdrawn, ShipmentEventTypeTenderNeedsReview, ShipmentEventTypeRoutingGuideExhausted, ShipmentEventTypeTenderLateResponse, ShipmentEventTypeTenderDeliveryFailed, ShipmentEventTypeTenderEntrySkipped, ShipmentEventTypeTenderEntryWarned, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
 		return true
 	}
 	return false

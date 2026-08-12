@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 )
 
 const DefaultDelayThresholdMinutes int16 = 30
@@ -15,6 +16,21 @@ func ResolveDelayThresholdMinutes(delayThresholdMinutes int16) int16 {
 	}
 
 	return delayThresholdMinutes
+}
+
+// ResolveControlDelayThreshold derives the delay threshold from the tenant's
+// shipment control: delay automation is disabled when the control is missing
+// or the AutoDelayShipments flag is off; otherwise the configured threshold
+// (or the default) applies.
+func ResolveControlDelayThreshold(control *tenant.ShipmentControl) int16 {
+	if control == nil || !control.AutoDelayShipments {
+		return DisabledDelayThresholdMinutes
+	}
+	if control.AutoDelayShipmentsThreshold == nil {
+		return ResolveDelayThresholdMinutes(0)
+	}
+
+	return ResolveDelayThresholdMinutes(*control.AutoDelayShipmentsThreshold)
 }
 
 func DelayedExcludedShipmentStatuses() []shipment.Status {

@@ -20,6 +20,21 @@ const (
 	TypeDriverReassigned = Type("DriverReassigned")
 	TypeDriverUnassigned = Type("DriverUnassigned")
 
+	TypeCarrierAssigned   = Type("CarrierAssigned")
+	TypeCarrierUnassigned = Type("CarrierUnassigned")
+
+	TypeTenderOffered         = Type("TenderOffered")
+	TypeTenderAccepted        = Type("TenderAccepted")
+	TypeTenderDeclined        = Type("TenderDeclined")
+	TypeTenderExpired         = Type("TenderExpired")
+	TypeTenderWithdrawn       = Type("TenderWithdrawn")
+	TypeTenderNeedsReview     = Type("TenderNeedsReview")
+	TypeRoutingGuideExhausted = Type("RoutingGuideExhausted")
+	TypeTenderLateResponse    = Type("TenderLateResponse")
+	TypeTenderDeliveryFailed  = Type("TenderDeliveryFailed")
+	TypeTenderEntrySkipped    = Type("TenderEntrySkipped")
+	TypeTenderEntryWarned     = Type("TenderEntryWarned")
+
 	TypeHoldPlaced   = Type("HoldPlaced")
 	TypeHoldUpdated  = Type("HoldUpdated")
 	TypeHoldReleased = Type("HoldReleased")
@@ -46,29 +61,46 @@ const (
 	ActorEDI    = ActorType("edi")
 )
 
+var AllTypes = []Type{
+	TypeShipmentCreated,
+	TypeShipmentUpdated,
+	TypeStatusChanged,
+	TypeShipmentCanceled,
+	TypeShipmentUncanceled,
+	TypeOwnershipTransferred,
+	TypeMoveStatusChanged,
+	TypeMoveDeparted,
+	TypeMoveArrived,
+	TypeStopCompleted,
+	TypeDriverAssigned,
+	TypeDriverReassigned,
+	TypeDriverUnassigned,
+	TypeCarrierAssigned,
+	TypeCarrierUnassigned,
+	TypeTenderOffered,
+	TypeTenderAccepted,
+	TypeTenderDeclined,
+	TypeTenderExpired,
+	TypeTenderWithdrawn,
+	TypeTenderNeedsReview,
+	TypeRoutingGuideExhausted,
+	TypeTenderLateResponse,
+	TypeTenderDeliveryFailed,
+	TypeTenderEntrySkipped,
+	TypeTenderEntryWarned,
+	TypeHoldPlaced,
+	TypeHoldUpdated,
+	TypeHoldReleased,
+	TypeCommentPosted,
+}
+
 func (v Type) IsValid() bool {
-	switch v {
-	case TypeShipmentCreated,
-		TypeShipmentUpdated,
-		TypeStatusChanged,
-		TypeShipmentCanceled,
-		TypeShipmentUncanceled,
-		TypeOwnershipTransferred,
-		TypeMoveStatusChanged,
-		TypeMoveDeparted,
-		TypeMoveArrived,
-		TypeStopCompleted,
-		TypeDriverAssigned,
-		TypeDriverReassigned,
-		TypeDriverUnassigned,
-		TypeHoldPlaced,
-		TypeHoldUpdated,
-		TypeHoldReleased,
-		TypeCommentPosted:
-		return true
-	default:
-		return false
+	for _, t := range AllTypes {
+		if v == t {
+			return true
+		}
 	}
+	return false
 }
 
 func (v Severity) IsValid() bool {

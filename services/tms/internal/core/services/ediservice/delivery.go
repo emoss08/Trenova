@@ -591,6 +591,15 @@ func (s *Service) deliveryProfileForMessage(
 			},
 		)
 	}
+	if pinned := message.PayloadSnapshot.DeliveryCommunicationProfileID; pinned.IsNotNil() {
+		return s.profileRepo.GetProfileByID(
+			ctx,
+			repositories.GetEDICommunicationProfileByIDRequest{
+				ID:         pinned,
+				TenantInfo: messageTenantInfo(message),
+			},
+		)
+	}
 	if message.EDIPartnerID.IsNil() {
 		return nil, errors.New("EDI partner is required for message delivery")
 	}
