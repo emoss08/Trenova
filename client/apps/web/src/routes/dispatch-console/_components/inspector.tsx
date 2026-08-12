@@ -15,9 +15,13 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { formatClockDurationMs, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
+import {
+  hasOrganizationCapability,
+  OrganizationCapability,
+} from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { Building2Icon, SendIcon } from "lucide-react";
@@ -216,6 +220,14 @@ function MoveInspector({
   const [includeBlocked, setIncludeBlocked] = useState(false);
   const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
   const openTender = useDispatchConsoleStore.use.openTender();
+  const capabilities = useOrgCapabilities();
+  // Ranking drivers is the whole point of this pane, and an organization that
+  // employs none has nothing to rank — the ranking is withheld rather than shown
+  // permanently empty, and the query behind it is never issued.
+  const canRankDrivers = hasOrganizationCapability(
+    capabilities,
+    OrganizationCapability.AssetOperations,
+  );
   const isCarrierCovered = move.coverageType === "carrier";
   // A carrier-covered move cannot take a driver on top; the carrier assignment has to be
   // canceled first, so driver assignment is held off rather than allowed to fail.
@@ -224,6 +236,7 @@ function MoveInspector({
   const { data, isLoading } = useQuery({
     ...dispatchConsoleQueries.moveCandidates({ moveId: move.moveId, includeBlocked }),
     staleTime: CANDIDATE_STALE_MS,
+    enabled: canRankDrivers,
   });
 
   const candidates = useMemo(() => data ?? [], [data]);
@@ -231,7 +244,7 @@ function MoveInspector({
   // The rank shown next to each candidate doubles as its keyboard shortcut: pressing the
   // digit assigns without touching the mouse.
   useEffect(() => {
-    if (!hotkeysEnabled || assignLocked) return;
+    if (!hotkeysEnabled || assignLocked || !canRankDrivers) return;
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -246,7 +259,7 @@ function MoveInspector({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [candidates, hotkeysEnabled, assignLocked, onAssign]);
+  }, [candidates, hotkeysEnabled, assignLocked, canRankDrivers, onAssign]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -270,10 +283,12 @@ function MoveInspector({
       )}
 
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
-        <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
-          {candidates.length} candidates
-        </span>
-        <div className="flex items-center gap-1.5">
+        {canRankDrivers && (
+          <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
+            {candidates.length} candidates
+          </span>
+        )}
+        <div className="ml-auto flex items-center gap-1.5">
           <CapabilityGate capability={OrganizationCapability.Brokerage}>
             {!move.isCovered && (
               <PermissionGate resource={Resource.ShipmentMove} operation={Operation.Assign}>
@@ -304,14 +319,16 @@ function MoveInspector({
               </PermissionGate>
             )}
           </CapabilityGate>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px]"
-            onClick={() => setIncludeBlocked((value) => !value)}
-          >
-            {includeBlocked ? "Hide ineligible" : "Show ineligible"}
-          </Button>
+          {canRankDrivers && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px]"
+              onClick={() => setIncludeBlocked((value) => !value)}
+            >
+              {includeBlocked ? "Hide ineligible" : "Show ineligible"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -322,24 +339,28 @@ function MoveInspector({
         maskHeight={18}
       >
         <div className="flex flex-col gap-1.5 p-2">
-          {isLoading
-            ? Array.from({ length: 5 }, (_, index) => (
-                <Skeleton key={index} className="h-24 rounded-md" />
-              ))
-            : candidates.map((candidate, index) => (
-                <CandidateRow
-                  key={candidate.workerId}
-                  candidate={candidate}
-                  rank={index + 1}
-                  onAssign={onAssign}
-                  isAssigning={assignLocked}
-                />
-              ))}
-          {!isLoading && candidates.length === 0 && (
-            <p className="px-1 py-6 text-center text-xs text-muted-foreground">
-              No eligible driver for this move.
-              {!includeBlocked ? " Show ineligible drivers to see why." : ""}
-            </p>
+          {canRankDrivers && (
+            <>
+              {isLoading
+                ? Array.from({ length: 5 }, (_, index) => (
+                    <Skeleton key={index} className="h-24 rounded-md" />
+                  ))
+                : candidates.map((candidate, index) => (
+                    <CandidateRow
+                      key={candidate.workerId}
+                      candidate={candidate}
+                      rank={index + 1}
+                      onAssign={onAssign}
+                      isAssigning={assignLocked}
+                    />
+                  ))}
+              {!isLoading && candidates.length === 0 && (
+                <p className="px-1 py-6 text-center text-xs text-muted-foreground">
+                  No eligible driver for this move.
+                  {!includeBlocked ? " Show ineligible drivers to see why." : ""}
+                </p>
+              )}
+            </>
           )}
 
           <CapabilityGate capability={OrganizationCapability.Brokerage}>
@@ -489,11 +510,23 @@ export function Inspector({
   hotkeysEnabled: boolean;
   actions: DispatchActions;
 }) {
+  const capabilities = useOrgCapabilities();
+  const canRankDrivers = hasOrganizationCapability(
+    capabilities,
+    OrganizationCapability.AssetOperations,
+  );
+
   return (
     <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
       <header className="flex items-center justify-between border-b px-2.5 py-1.5">
         <h2 className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
-          {selectedMove ? "Rank drivers" : selectedDriver ? "Find work" : "Inspector"}
+          {selectedMove
+            ? canRankDrivers
+              ? "Rank drivers"
+              : "Cover move"
+            : selectedDriver
+              ? "Find work"
+              : "Inspector"}
         </h2>
       </header>
 
@@ -511,7 +544,9 @@ export function Inspector({
         <div className="flex flex-1 flex-col items-center justify-center gap-1 p-6 text-center">
           <p className="text-xs font-medium">Nothing selected</p>
           <p className="text-[11px] text-muted-foreground">
-            Select a move to rank drivers for it, or a driver to find them work.
+            {canRankDrivers
+              ? "Select a move to rank drivers for it, or a driver to find them work."
+              : "Select a move to see how it can be covered."}
           </p>
         </div>
       )}

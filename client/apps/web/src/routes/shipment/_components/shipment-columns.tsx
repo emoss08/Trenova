@@ -190,13 +190,13 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
     },
     {
       id: "driver",
-      header: "Driver / Equip",
+      header: "Coverage",
       accessorFn: () => null,
       cell: ({ row }) => <DriverCell shipment={row.original} />,
       size: 200,
       minSize: 160,
       maxSize: 260,
-      meta: { label: "Driver / Equip", sortable: false, filterable: false },
+      meta: { label: "Coverage", sortable: false, filterable: false },
     },
     {
       id: "eta",

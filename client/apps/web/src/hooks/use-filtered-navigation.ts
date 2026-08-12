@@ -4,6 +4,7 @@ import {
   type NavGroup,
   type NavItem,
   type NavModule,
+  type QuickActionCommand,
 } from "@/config/navigation.types";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -34,6 +35,25 @@ export function canAccessNavEntry(
 
   if (entry.resource) {
     return context.hasPermission(entry.resource, Operation.Read);
+  }
+
+  return true;
+}
+
+/**
+ * The quick-action twin of `canAccessNavEntry`. Quick actions create records
+ * rather than read them, so the permission they need defaults to Create.
+ */
+export function canAccessQuickAction(
+  action: QuickActionCommand,
+  context: NavAccessContext,
+): boolean {
+  if (action.capability && !hasOrganizationCapability(context.capabilities, action.capability)) {
+    return false;
+  }
+
+  if (action.resource) {
+    return context.hasPermission(action.resource, action.requiredOperation ?? Operation.Create);
   }
 
   return true;

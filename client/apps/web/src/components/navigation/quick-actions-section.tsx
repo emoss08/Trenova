@@ -3,9 +3,10 @@ import { SidebarSectionLabel } from "@/components/navigation/sidebar-primitives"
 import { navigationConfig } from "@/config/navigation.config";
 import type { QuickActionCommand } from "@/config/navigation.types";
 import { QUICK_ACTION_ICONS } from "@/config/quick-action-icons";
+import { canAccessQuickAction } from "@/hooks/use-filtered-navigation";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import { Operation } from "@trenova/shared/types/permission";
 import type { LucideIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
@@ -18,6 +19,7 @@ interface SidebarQuickAction {
 
 export function QuickActionsSection() {
   const hasPermission = usePermissionStore((state) => state.hasPermission);
+  const capabilities = useOrgCapabilities();
   const { data: preferences } = useSidebarPreferences();
   const quickActionIds = preferences?.quickActionIds;
 
@@ -31,17 +33,14 @@ export function QuickActionsSection() {
         if (!definition || !QUICK_ACTION_ICONS[definition.id]) {
           return false;
         }
-        if (!definition.resource) {
-          return true;
-        }
-        return hasPermission(definition.resource, definition.requiredOperation ?? Operation.Create);
+        return canAccessQuickAction(definition, { capabilities, hasPermission });
       })
       .map((definition) => ({
         definition,
         icon: QUICK_ACTION_ICONS[definition.id],
         href: buildCommandHref(definition.path, definition.query),
       }));
-  }, [hasPermission, quickActionIds]);
+  }, [capabilities, hasPermission, quickActionIds]);
 
   if (actions.length === 0) {
     return null;

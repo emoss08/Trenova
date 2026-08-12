@@ -1,3 +1,4 @@
+import { CapabilityGate } from "@/components/capability-gate";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { ScoringWeightForm } from "./scoring-weight-form";
@@ -25,6 +26,7 @@ import {
   serviceIncidentTypeSchema,
 } from "@/types/dispatch-control";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import {
@@ -68,10 +70,20 @@ export default function DispatchControlForm() {
     <FormProvider {...form}>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
-          <AutoAssignmentForm />
-          <ScoringWeightForm />
+          {/* Auto-assignment, its scoring weights and every DOT check on this
+              page act on employed drivers. An organization that brokers all of
+              its freight keeps the page — service failure monitoring is about
+              the load, not the driver — with the driver-side cards withheld.
+              The values behind them are still submitted untouched, so nothing
+              is reset by passing through here. */}
+          <CapabilityGate capability={OrganizationCapability.AssetOperations}>
+            <AutoAssignmentForm />
+            <ScoringWeightForm />
+          </CapabilityGate>
           <ServiceFailureForm />
-          <ComplianceForm />
+          <CapabilityGate capability={OrganizationCapability.AssetOperations}>
+            <ComplianceForm />
+          </CapabilityGate>
           <FormSaveDock saveButtonContent="Save Changes" />
         </div>
       </Form>

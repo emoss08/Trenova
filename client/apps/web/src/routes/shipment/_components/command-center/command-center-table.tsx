@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import {
   convertFilterItemsToFieldFilters,
   convertFilterItemsToFilterGroups,
@@ -50,7 +51,9 @@ import { FilterChipRow } from "./filter-chip-row";
 import { SavedViewsBar } from "./saved-views-bar";
 import { useCommandCenterStore } from "./store";
 import {
+  isTimelineViewAvailable,
   PAGE_SIZE_OPTIONS,
+  resolveCommandCenterViewMode,
   useCommandCenterUrl,
   type CommandCenterPageSize,
   type CommandCenterViewMode,
@@ -124,8 +127,13 @@ export function CommandCenterTable({
   onUploadDocument,
   onSummaryChange,
 }: CommandCenterTableProps) {
-  const [{ mode: viewMode, expanded: expandedId, page, size: pageSize, q: query }, setUrl] =
-    useCommandCenterUrl();
+  const [
+    { mode: requestedViewMode, expanded: expandedId, page, size: pageSize, q: query },
+    setUrl,
+  ] = useCommandCenterUrl();
+  const capabilities = useOrgCapabilities();
+  const timelineAvailable = isTimelineViewAvailable(capabilities);
+  const viewMode = resolveCommandCenterViewMode(requestedViewMode, capabilities);
   const pageIndex = Math.max(0, page - 1);
   const setQuery = (next: string) => void setUrl({ q: next.length === 0 ? null : next, page: 1 });
   const setPageIndex = (next: number) => void setUrl({ page: next + 1 });
@@ -321,7 +329,7 @@ export function CommandCenterTable({
 
   const rightSlot = (
     <>
-      <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+      {timelineAvailable && <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />}
       <Suspense fallback={<ToolbarButtonSkeleton />}>
         <DataTableConfigManager
           resource={RESOURCE_NAME}
