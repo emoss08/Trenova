@@ -40,6 +40,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 	}
 
 	original := validShipment(shipmentID, moveID, tenantInfo)
+	original.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
 
 	repo := mocks.NewMockAssignmentRepository(t)
 	repo.EXPECT().
@@ -50,6 +51,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			Status:         shipment.MoveStatusNew,
+			CoverageType:   shipment.MoveCoverageTypeUnassigned,
 		}, nil).
 		Once()
 	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
@@ -100,6 +102,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		) (*shipment.Shipment, error) {
 			assert.Equal(t, shipment.StatusAssigned, entity.Status)
 			assert.Equal(t, shipment.MoveStatusAssigned, entity.Moves[0].Status)
+			assert.Equal(t, shipment.MoveCoverageTypeDriver, entity.Moves[0].CoverageType)
 			require.NotNil(t, entity.Moves[0].Assignment)
 			return entity, nil
 		}).
@@ -513,6 +516,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 	original := validShipment(shipmentID, moveID, tenantInfo)
 	original.Status = shipment.StatusAssigned
 	original.Moves[0].Status = shipment.MoveStatusAssigned
+	original.Moves[0].CoverageType = shipment.MoveCoverageTypeDriver
 	original.Moves[0].Assignment = &shipment.Assignment{
 		ID:              assignmentID,
 		OrganizationID:  tenantInfo.OrgID,
@@ -532,6 +536,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			Status:         shipment.MoveStatusAssigned,
+			CoverageType:   shipment.MoveCoverageTypeDriver,
 		}, nil).
 		Once()
 	repo.EXPECT().
@@ -566,6 +571,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
 			assert.Equal(t, shipment.StatusNew, entity.Status)
 			assert.Equal(t, shipment.MoveStatusNew, entity.Moves[0].Status)
+			assert.Equal(t, shipment.MoveCoverageTypeUnassigned, entity.Moves[0].CoverageType)
 			assert.Nil(t, entity.Moves[0].Assignment)
 			return entity, nil
 		}).
@@ -832,6 +838,7 @@ func newAssignToMoveService(
 	t.Helper()
 
 	original := validShipment(shipmentID, moveID, tenantInfo)
+	original.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
 
 	repo := mocks.NewMockAssignmentRepository(t)
 	repo.EXPECT().
@@ -842,6 +849,7 @@ func newAssignToMoveService(
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			Status:         shipment.MoveStatusNew,
+			CoverageType:   shipment.MoveCoverageTypeUnassigned,
 		}, nil).
 		Once()
 	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
@@ -891,6 +899,7 @@ func newAssignToMoveService(
 			_ context.Context,
 			entity *shipment.Shipment,
 		) (*shipment.Shipment, error) {
+			assert.Equal(t, shipment.MoveCoverageTypeDriver, entity.Moves[0].CoverageType)
 			return entity, nil
 		}).
 		Once()

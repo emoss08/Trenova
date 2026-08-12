@@ -1487,7 +1487,8 @@ export type MatchRoutingGuideInput = {
 
 export type MoveCoverageType =
   | 'carrier'
-  | 'driver';
+  | 'driver'
+  | 'unassigned';
 
 export type MoveStatus =
   | 'Assigned'

@@ -196,7 +196,7 @@ export const assignmentSchema = z.object({
 });
 export type Assignment = z.infer<typeof assignmentSchema>;
 
-export const moveCoverageTypeSchema = z.enum(["driver", "carrier"]);
+export const moveCoverageTypeSchema = z.enum(["unassigned", "driver", "carrier"]);
 export type MoveCoverageType = z.infer<typeof moveCoverageTypeSchema>;
 
 export const carrierAssignmentStatusSchema = z.enum(["Pending", "Confirmed", "Canceled"]);

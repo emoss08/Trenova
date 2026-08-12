@@ -37220,10 +37220,12 @@ const docTemplate = `{
         "github_com_emoss08_trenova_internal_core_domain_shipment.MoveCoverageType": {
             "type": "string",
             "enum": [
+                "unassigned",
                 "driver",
                 "carrier"
             ],
             "x-enum-varnames": [
+                "MoveCoverageTypeUnassigned",
                 "MoveCoverageTypeDriver",
                 "MoveCoverageTypeCarrier"
             ]
