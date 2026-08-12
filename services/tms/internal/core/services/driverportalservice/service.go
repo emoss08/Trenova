@@ -25,6 +25,7 @@ type Params struct {
 	Logger              *zap.Logger
 	Config              *config.Config
 	PortalRepo          repositories.PortalAccessRepository
+	OrgRepo             repositories.OrganizationRepository
 	SettlementRepo      repositories.DriverSettlementRepository
 	PayEventRepo        repositories.PayEventRepository
 	AdvanceRepo         repositories.PayAdvanceRepository
@@ -49,6 +50,7 @@ type Service struct {
 	l                   *zap.Logger
 	cfg                 *config.Config
 	portalRepo          repositories.PortalAccessRepository
+	orgRepo             repositories.OrganizationRepository
 	settlementRepo      repositories.DriverSettlementRepository
 	payEventRepo        repositories.PayEventRepository
 	advanceRepo         repositories.PayAdvanceRepository
@@ -74,6 +76,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		l:                   p.Logger.Named("service.driver-portal"),
 		cfg:                 p.Config,
 		portalRepo:          p.PortalRepo,
+		orgRepo:             p.OrgRepo,
 		settlementRepo:      p.SettlementRepo,
 		payEventRepo:        p.PayEventRepo,
 		advanceRepo:         p.AdvanceRepo,

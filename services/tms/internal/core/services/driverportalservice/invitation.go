@@ -71,6 +71,10 @@ func (s *Service) InviteWorker(
 		)
 	}
 
+	if err := s.requireAssetOperations(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
 	wrk, err := s.portalRepo.GetWorkerForPortalManagement(ctx, req.TenantInfo, req.WorkerID)
 	if err != nil {
 		return nil, err
