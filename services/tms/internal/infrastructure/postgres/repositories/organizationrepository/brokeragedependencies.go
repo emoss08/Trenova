@@ -2,7 +2,6 @@ package organizationrepository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
@@ -38,30 +37,14 @@ var openInvoiceMatchStatuses = []carriersettlement.InvoiceMatchStatus{
 	carriersettlement.InvoiceMatchStatusVariance,
 }
 
-type dependencyCount struct {
-	label  string
-	model  any
-	target *int
-	scope  func(*bun.SelectQuery) *bun.SelectQuery
-}
-
 func (r *repository) CountBrokerageDependencies(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*repositories.BrokerageDependencyCounts, error) {
 	counts := new(repositories.BrokerageDependencyCounts)
 
-	for _, dep := range brokerageDependencyCounts(tenantInfo, counts) {
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(dep.model).
-			WhereGroup(" AND ", dep.scope).
-			Count(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("count %s: %w", dep.label, err)
-		}
-
-		*dep.target = total
+	if err := r.countDependencies(ctx, brokerageDependencyCounts(tenantInfo, counts)); err != nil {
+		return nil, err
 	}
 
 	return counts, nil

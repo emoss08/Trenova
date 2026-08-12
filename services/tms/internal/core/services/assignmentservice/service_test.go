@@ -29,6 +29,30 @@ import (
 	"go.uber.org/zap"
 )
 
+// assetOperationsOrgRepo stands in for the organization behind a tenant, with
+// asset operations either enabled or switched off. The expectation is optional
+// so that tests refused before the capability gate still pass.
+func assetOperationsOrgRepo(
+	t *testing.T,
+	tenantInfo pagination.TenantInfo,
+	enabled bool,
+) *mocks.MockOrganizationRepository {
+	t.Helper()
+
+	orgRepo := mocks.NewMockOrganizationRepository(t)
+	orgRepo.EXPECT().
+		GetByID(mock.Anything, repositories.GetOrganizationByIDRequest{TenantInfo: tenantInfo}).
+		Return(&tenant.Organization{
+			ID:                     tenantInfo.OrgID,
+			BusinessUnitID:         tenantInfo.BuID,
+			BrokerageEnabled:       true,
+			AssetOperationsEnabled: enabled,
+		}, nil).
+		Maybe()
+
+	return orgRepo
+}
+
 func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testing.T) {
 	t.Parallel()
 
@@ -126,6 +150,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		Once()
 
 	svc := &service{
+		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
 		db:           testDBConnection{},
 		repo:         repo,
@@ -163,8 +188,9 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 	}
 
 	svc := &service{
-		l:  zap.NewNop(),
-		db: testDBConnection{},
+		orgRepo: assetOperationsOrgRepo(t, tenantInfo, true),
+		l:       zap.NewNop(),
+		db:      testDBConnection{},
 		repo: func() *mocks.MockAssignmentRepository {
 			repo := mocks.NewMockAssignmentRepository(t)
 			repo.EXPECT().
@@ -226,6 +252,7 @@ func TestAssignToMove_RejectsDispatchBlockingHold(t *testing.T) {
 		Once()
 
 	svc := &service{
+		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
 		db:           testDBConnection{},
 		repo:         repo,
@@ -343,6 +370,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 		Once()
 
 	svc := &service{
+		orgRepo:             assetOperationsOrgRepo(t, tenantInfo, true),
 		l:                   zap.NewNop(),
 		db:                  testDBConnection{},
 		repo:                repo,
@@ -473,6 +501,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 		Once()
 
 	svc := &service{
+		orgRepo:             assetOperationsOrgRepo(t, tenantInfo, true),
 		l:                   zap.NewNop(),
 		db:                  testDBConnection{},
 		repo:                repo,
@@ -502,15 +531,13 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	require.NotNil(t, entity)
 }
 
-func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
-	t.Parallel()
-
-	moveID := pulid.MustNew("sm_")
-	shipmentID := pulid.MustNew("shp_")
-	tenantInfo := pagination.TenantInfo{
-		OrgID: pulid.MustNew("org_"),
-		BuID:  pulid.MustNew("bu_"),
-	}
+func newUnassignService(
+	t *testing.T,
+	tenantInfo pagination.TenantInfo,
+	shipmentID, moveID pulid.ID,
+	orgRepo repositories.OrganizationRepository,
+) *service {
+	t.Helper()
 
 	assignmentID := pulid.MustNew("asn_")
 	original := validShipment(shipmentID, moveID, tenantInfo)
@@ -592,6 +619,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 		l:            zap.NewNop(),
 		db:           testDBConnection{},
 		repo:         repo,
+		orgRepo:      orgRepo,
 		shipmentRepo: shipmentRepo,
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
@@ -603,6 +631,21 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 		eventService:      noopShipmentEventService{},
 		coordinator:       shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
+
+	return svc
+}
+
+func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	shipmentID := pulid.MustNew("shp_")
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+
+	svc := newUnassignService(t, tenantInfo, shipmentID, moveID, nil)
 
 	err := svc.Unassign(t.Context(), &repositories.UnassignShipmentMoveRequest{
 		TenantInfo:     tenantInfo,
@@ -923,6 +966,7 @@ func newAssignToMoveService(
 		Once()
 
 	return &service{
+		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
 		db:           testDBConnection{},
 		repo:         repo,

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/services/capabilityguard"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -53,6 +54,27 @@ func (s *Service) requireFeature(
 		)
 	}
 	return control, nil
+}
+
+// requireAssetOperations refuses driver-facing setup for organizations that run
+// brokerage-only and therefore employ no drivers to grant portal access to.
+func (s *Service) requireAssetOperations(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) error {
+	enabled, err := capabilityguard.AssetOperationsEnabled(ctx, s.orgRepo, tenantInfo)
+	if err != nil {
+		return err
+	}
+	if !enabled {
+		return errortypes.NewValidationError(
+			"feature",
+			errortypes.ErrInvalidOperation,
+			"Driver portal access requires asset operations. Enable asset operations for this organization before inviting drivers",
+		)
+	}
+
+	return nil
 }
 
 func (s *Service) MyPortalFeatures(

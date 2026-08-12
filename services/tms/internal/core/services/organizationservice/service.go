@@ -98,7 +98,7 @@ func (s *service) Update(
 		return nil, err
 	}
 
-	if err := s.guardBrokerageDisable(ctx, entity); err != nil {
+	if err := s.guardCapabilityDisable(ctx, entity); err != nil {
 		return nil, err
 	}
 
