@@ -12,7 +12,7 @@ function resolveApiBaseUrl(): string {
   return configuredUrl;
 }
 
-export const API_BASE_URL = resolveApiBaseUrl();
+export const API_BASE_URL = "http://localhost:8080/api/v1"; // resolveApiBaseUrl();
 
 export const APP_ENV = (import.meta.env.MODE as string) || "development";
 export const TERMS_URL =
