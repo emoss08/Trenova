@@ -9,35 +9,19 @@ import (
 	"sync"
 )
 
-// SQLite has no ILIKE operator, and unlike a missing function it cannot be
-// polyfilled: ILIKE is a parser keyword, so SQLite rejects the statement before
-// any user-defined function could run.
-//
-// The operator appears in roughly fifty places, but almost none of them can be
-// fixed at the call site. buncolgen and querybuilder precompute their SQL
-// fragments into package-level values at init, long before configuration is
-// read, and most of buncolgen is generated. Rewriting the statement as it
-// reaches the driver is therefore the only single point that covers all of them.
-//
-// The substitution is sound because SQLite's LIKE is already case-insensitive
-// for ASCII, which is what ILIKE is used for here. It is not equivalent for
-// non-ASCII text, and that is one more reason SQLite is development-only.
 const sqliteRewriteDriverName = "sqlite-trenova"
 
 var registerSQLiteRewriteDriver sync.Once
 
-// rewriteILike replaces the ILIKE operator with LIKE outside string literals and
-// quoted identifiers, so a value or column name containing the word is untouched.
 func rewriteILike(query string) string {
 	if !containsFold(query, "ilike") {
 		return query
 	}
 
 	var (
-		out      strings.Builder
-		inSingle bool
-		inDouble bool
-		i        int
+		out    strings.Builder
+		closer byte
+		i      int
 	)
 
 	out.Grow(len(query))
@@ -46,18 +30,14 @@ func rewriteILike(query string) string {
 		ch := query[i]
 
 		switch {
-		case inSingle:
-			if ch == '\'' {
-				inSingle = false
+		case closer != 0:
+			if ch == closer {
+				closer = 0
 			}
-		case inDouble:
-			if ch == '"' {
-				inDouble = false
-			}
-		case ch == '\'':
-			inSingle = true
-		case ch == '"':
-			inDouble = true
+		case ch == '\'' || ch == '"' || ch == '`':
+			closer = ch
+		case ch == '[':
+			closer = ']'
 		case (ch == 'i' || ch == 'I') && isILikeAt(query, i):
 			out.WriteString("LIKE")
 			i += len("ILIKE")
@@ -92,18 +72,32 @@ func isILikeAt(query string, i int) bool {
 }
 
 func isIdentifierByte(b byte) bool {
-	return b == '_' ||
+	return b == '_' || b == '$' ||
 		(b >= 'a' && b <= 'z') ||
 		(b >= 'A' && b <= 'Z') ||
 		(b >= '0' && b <= '9')
 }
 
 func containsFold(haystack, needle string) bool {
-	return strings.Contains(strings.ToLower(haystack), needle)
+	if needle == "" {
+		return true
+	}
+
+	first := needle[0] | 0x20
+
+	for i := 0; i <= len(haystack)-len(needle); i++ {
+		if haystack[i]|0x20 != first {
+			continue
+		}
+
+		if strings.EqualFold(haystack[i:i+len(needle)], needle) {
+			return true
+		}
+	}
+
+	return false
 }
 
-// openSQLiteDB returns a database handle whose statements pass through
-// rewriteILike on the way to modernc.org/sqlite.
 func openSQLiteDB(dsn string) (*sql.DB, error) {
 	base, err := sql.Open(sqliteDriverName, dsn)
 	if err != nil {
@@ -153,10 +147,6 @@ func (c *rewriteConnector) Driver() driver.Driver {
 	return &rewriteDriver{inner: c.inner}
 }
 
-// rewriteConn deliberately implements only the prepare path. database/sql falls
-// back to Prepare when a connection does not advertise QueryerContext or
-// ExecerContext, which keeps every statement going through the rewrite rather
-// than slipping past it on a fast path.
 type rewriteConn struct {
 	inner driver.Conn
 }

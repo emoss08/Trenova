@@ -1,12 +1,26 @@
 package postgres
 
 import (
+	"database/sql/driver"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// database/sql only falls back to Prepare when a connection advertises neither
+// QueryerContext nor ExecerContext. Implementing either would let statements
+// reach SQLite without passing through rewriteILike.
+func TestRewriteConnHasNoFastPath(t *testing.T) {
+	var conn any = &rewriteConn{}
+
+	_, isQueryer := conn.(driver.QueryerContext)
+	assert.False(t, isQueryer, "rewriteConn must not implement QueryerContext")
+
+	_, isExecer := conn.(driver.ExecerContext)
+	assert.False(t, isExecer, "rewriteConn must not implement ExecerContext")
+}
 
 func TestRewriteILike(t *testing.T) {
 	tests := []struct {
@@ -54,6 +68,21 @@ func TestRewriteILike(t *testing.T) {
 			query: `SELECT * FROM t WHERE ilike_count > ? AND unilike > ?`,
 			want:  `SELECT * FROM t WHERE ilike_count > ? AND unilike > ?`,
 		},
+		{
+			name:  "leaves backtick quoted identifiers untouched",
+			query: "SELECT `ilike` FROM t WHERE name ILIKE ?",
+			want:  "SELECT `ilike` FROM t WHERE name LIKE ?",
+		},
+		{
+			name:  "leaves bracket quoted identifiers untouched",
+			query: `SELECT [ilike] FROM t WHERE name ILIKE ?`,
+			want:  `SELECT [ilike] FROM t WHERE name LIKE ?`,
+		},
+		{
+			name:  "treats a dollar sign as part of an identifier",
+			query: `SELECT foo$ilike, $ilike FROM t WHERE name ILIKE ?`,
+			want:  `SELECT foo$ilike, $ilike FROM t WHERE name LIKE ?`,
+		},
 	}
 
 	for _, tt := range tests {
@@ -69,7 +98,11 @@ func TestSQLiteDriverExecutesILike(t *testing.T) {
 
 	db, err := openSQLiteDB("file:" + path)
 	require.NoError(t, err)
-	t.Cleanup(func() { _ = db.Close() })
+	t.Cleanup(func() {
+		if closeErr := db.Close(); closeErr != nil {
+			t.Errorf("failed to close database: %v", closeErr)
+		}
+	})
 
 	_, err = db.ExecContext(ctx, `CREATE TABLE people (name TEXT)`)
 	require.NoError(t, err)
@@ -98,7 +131,11 @@ func TestSQLiteDriverPreservesLiteralContainingILike(t *testing.T) {
 
 	db, err := openSQLiteDB("file:" + path)
 	require.NoError(t, err)
-	t.Cleanup(func() { _ = db.Close() })
+	t.Cleanup(func() {
+		if closeErr := db.Close(); closeErr != nil {
+			t.Errorf("failed to close database: %v", closeErr)
+		}
+	})
 
 	_, err = db.ExecContext(ctx, `CREATE TABLE notes (body TEXT)`)
 	require.NoError(t, err)
