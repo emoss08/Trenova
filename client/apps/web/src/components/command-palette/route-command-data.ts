@@ -1,7 +1,7 @@
 import { isNavGroup, type NavGroup, type NavItem, type NavModule } from "@/config/navigation.types";
 import type { SidebarLink } from "@/components/sidebar-nav";
 import type { QuickActionCommand } from "@/config/navigation.types";
-import { Operation, type OperationType } from "@trenova/shared/types/permission";
+import { canAccessQuickAction, type NavAccessContext } from "@/hooks/use-filtered-navigation";
 import { SettingsIcon } from "lucide-react";
 
 type PaletteIconComponent = React.ComponentType<{
@@ -184,14 +184,10 @@ export function buildRouteCommandGroups(
   });
 }
 
-function getRequiredOperation(action: QuickActionCommand): OperationType {
-  return action.requiredOperation ?? Operation.Create;
-}
-
 export function buildSuggestedCreateCommands(
   definitions: QuickActionCommand[],
   routeGroups: RouteCommandGroup[],
-  hasPermission: (resource: string, operation: OperationType) => boolean,
+  access: NavAccessContext,
 ): SuggestedCommandItem[] {
   const routeIconByPath = new Map<string, PaletteIconComponent>();
   for (const group of routeGroups) {
@@ -201,13 +197,7 @@ export function buildSuggestedCreateCommands(
   }
 
   return definitions
-    .filter((definition) => {
-      if (!definition.resource) {
-        return true;
-      }
-
-      return hasPermission(definition.resource, getRequiredOperation(definition));
-    })
+    .filter((definition) => canAccessQuickAction(definition, access))
     .map((definition) => ({
       id: definition.id,
       label: definition.label,

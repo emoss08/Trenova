@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { carrierAssignmentPayloadSchema, emptyCarrierAssignmentPayload } from "./shipment";
+import {
+  carrierAssignmentPayloadSchema,
+  emptyCarrierAssignmentPayload,
+  moveCoverageTypeSchema,
+} from "./shipment";
 
 function makePayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
@@ -65,5 +69,18 @@ describe("carrierAssignmentPayloadSchema", () => {
     expect(() =>
       carrierAssignmentPayloadSchema.parse(makePayload({ baseRate: "abc" })),
     ).toThrowError(/Base rate is required/);
+  });
+});
+
+describe("moveCoverageTypeSchema", () => {
+  it("accepts every coverage a move can carry, uncovered included", () => {
+    for (const coverage of ["unassigned", "driver", "carrier"]) {
+      expect(moveCoverageTypeSchema.parse(coverage)).toBe(coverage);
+    }
+  });
+
+  it("rejects a coverage the server never writes", () => {
+    expect(() => moveCoverageTypeSchema.parse("broker")).toThrow();
+    expect(() => moveCoverageTypeSchema.parse("")).toThrow();
   });
 });

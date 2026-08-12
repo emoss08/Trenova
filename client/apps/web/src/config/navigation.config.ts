@@ -134,6 +134,7 @@ const dispatchModule: NavModule = {
       label: "Workers",
       path: "/dispatch/workers",
       resource: Resource.Worker,
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "carriers",
@@ -165,6 +166,7 @@ const dispatchModule: NavModule = {
           label: "Fleet Codes",
           path: "/dispatch/configuration-files/fleet-codes",
           resource: Resource.FleetCode,
+          capability: OrganizationCapability.AssetOperations,
         },
       ],
     },
@@ -183,12 +185,14 @@ const equipmentModule: NavModule = {
       label: "Tractors",
       path: "/equipment/tractors",
       resource: Resource.Tractor,
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "trailers",
       label: "Trailers",
       path: "/equipment/trailers",
       resource: Resource.Trailer,
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "equipment-config-group",
@@ -350,6 +354,7 @@ const payrollModule: NavModule = {
   icon: WalletIcon,
   description: "Driver and owner-operator pay",
   basePath: "/payroll",
+  capability: OrganizationCapability.AssetOperations,
   navigation: [
     {
       id: "settlement-workspace",
@@ -868,6 +873,7 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["tractor", "equipment"],
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "create-trailer",
@@ -878,6 +884,7 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["trailer", "equipment"],
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "create-equipment-type",
@@ -918,6 +925,7 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { pageTab: "workers", panelType: "create" },
       keywords: ["worker", "driver", "employee"],
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "create-location-category",
@@ -938,6 +946,7 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["fleet", "code"],
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "create-hold-reason",
@@ -1094,6 +1103,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Organization",
     resource: Resource.SettlementControl,
     requiredOperation: Operation.Read,
+    capability: OrganizationCapability.AssetOperations,
   },
   {
     href: "/admin/carrier-settlement-control",
@@ -1109,6 +1119,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Organization",
     resource: Resource.DashControl,
     requiredOperation: Operation.Read,
+    capability: OrganizationCapability.AssetOperations,
   },
   {
     href: "/admin/agent-control",

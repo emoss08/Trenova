@@ -27,7 +27,12 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { handleMutationError } from "@/hooks/use-api-mutation";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { ApiRequestError } from "@trenova/shared/lib/api";
+import {
+  hasOrganizationCapability,
+  OrganizationCapability,
+} from "@trenova/shared/types/organization-capability";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { LocateTrailerDialog } from "@/routes/trailer/_components/locate-trailer-dialog";
 import { apiService } from "@/services/api";
@@ -90,7 +95,19 @@ export function AssignmentDialog({
   const queryClient = useQueryClient();
   const isEditing = !!existingAssignment?.id;
   const hasCarrierCoverage = isActiveCarrierAssignment(existingCarrierAssignment);
-  const [mode, setMode] = useState<CoverageMode>(hasCarrierCoverage ? "carrier" : "driver");
+  // Driver coverage is refused by the API for an organization without asset
+  // operations, so the mode is not offered rather than offered and rejected.
+  const capabilities = useOrgCapabilities();
+  const canAssignDrivers = hasOrganizationCapability(
+    capabilities,
+    OrganizationCapability.AssetOperations,
+  );
+  const [mode, setMode] = useState<CoverageMode>(
+    hasCarrierCoverage || !canAssignDrivers ? "carrier" : "driver",
+  );
+  // A move that already carries a driver at an organization that cannot assign
+  // one: neither mode can act on it, so the dialog explains rather than offers.
+  const driverAssignmentBlocked = !canAssignDrivers && isEditing;
 
   const [continuityError, setContinuityError] = useState<{
     message: string;
@@ -132,8 +149,8 @@ export function AssignmentDialog({
 
   useEffect(() => {
     if (!open) return;
-    setMode(hasCarrierCoverage ? "carrier" : "driver");
-  }, [open, hasCarrierCoverage]);
+    setMode(hasCarrierCoverage || !canAssignDrivers ? "carrier" : "driver");
+  }, [open, hasCarrierCoverage, canAssignDrivers]);
 
   const watchedTrailerId = useWatch({ control, name: "trailerId" });
   useEffect(() => {
@@ -224,30 +241,53 @@ export function AssignmentDialog({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            {mode === "carrier"
-              ? hasCarrierCoverage
-                ? "Replace Carrier Assignment"
-                : "Assign Move to Carrier"
-              : isEditing
-                ? "Reassign Move"
-                : "Assign Move"}
+            {driverAssignmentBlocked
+              ? "Move Coverage"
+              : mode === "carrier"
+                ? hasCarrierCoverage
+                  ? "Replace Carrier Assignment"
+                  : "Assign Move to Carrier"
+                : isEditing
+                  ? "Reassign Move"
+                  : "Assign Move"}
           </DialogTitle>
           <DialogDescription>
-            {mode === "carrier"
-              ? "Broker this move to an external carrier with its rate and reference details."
-              : isEditing
-                ? "Update the tractor, trailer, and worker assignments for this move."
-                : "Assign a tractor, trailer, and workers to this move."}
+            {driverAssignmentBlocked
+              ? "This move is covered by a driver, which this organization cannot reassign."
+              : mode === "carrier"
+                ? "Broker this move to an external carrier with its rate and reference details."
+                : isEditing
+                  ? "Update the tractor, trailer, and worker assignments for this move."
+                  : "Assign a tractor, trailer, and workers to this move."}
           </DialogDescription>
         </DialogHeader>
-        <SegmentedControl
-          items={COVERAGE_MODE_ITEMS}
-          value={mode}
-          onValueChange={setMode}
-          fullWidth
-          aria-label="Coverage type"
-        />
-        {mode === "carrier" ? (
+        {canAssignDrivers && (
+          <SegmentedControl
+            items={COVERAGE_MODE_ITEMS}
+            value={mode}
+            onValueChange={setMode}
+            fullWidth
+            aria-label="Coverage type"
+          />
+        )}
+        {driverAssignmentBlocked ? (
+          <>
+            <Alert variant="default">
+              <TriangleAlertIcon />
+              <AlertTitle>Driver assignment is not enabled</AlertTitle>
+              <AlertDescription>
+                This organization does not run its own drivers, so an existing driver assignment
+                cannot be changed here. Unassign the driver to release the move, then cover it with
+                a carrier.
+              </AlertDescription>
+            </Alert>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Close
+              </Button>
+            </DialogFooter>
+          </>
+        ) : mode === "carrier" ? (
           isEditing ? (
             <>
               <Alert variant="default">

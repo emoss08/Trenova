@@ -26,7 +26,7 @@ const PICKUP_STATUS: Record<PickupStatus, { label: string; variant: BadgeVariant
   scheduled: { label: "Scheduled", variant: "outline" },
   confirmed: { label: "Confirmed", variant: "active" },
   tentative: { label: "Tentative", variant: "warning" },
-  unassigned: { label: "Needs driver", variant: "warning" },
+  unassigned: { label: "Needs coverage", variant: "warning" },
 };
 
 const SHARE_BAR_COLORS = [

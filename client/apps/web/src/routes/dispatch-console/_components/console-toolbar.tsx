@@ -52,7 +52,7 @@ export function ConsoleToolbar({
     setZoom,
     setIncludeCovered,
   } = useDispatchWindow();
-  const { mode, setMode } = useDispatchView();
+  const { mode, setMode, timelineAvailable } = useDispatchView();
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -131,33 +131,37 @@ export function ConsoleToolbar({
         ))}
       </div>
 
-      <div
-        role="group"
-        aria-label="Center view"
-        className="inline-flex overflow-hidden rounded-md border border-border"
-      >
-        {CENTER_MODE_OPTIONS.map((option, index) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => setMode(option.id)}
-            // Reaching for the toggle is enough warning to fetch the view behind it.
-            onPointerEnter={() => preloadCenterView(option.id)}
-            onFocus={() => preloadCenterView(option.id)}
-            aria-pressed={mode === option.id}
-            className={cn(
-              "flex items-center gap-1 px-2 py-1 text-[11px] transition-colors",
-              index > 0 && "border-l border-border",
-              mode === option.id
-                ? "bg-muted text-foreground"
-                : "bg-background text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <option.Icon className="size-3" aria-hidden />
-            {option.label}
-          </button>
-        ))}
-      </div>
+      {/* With the driver timeline withheld the board is the only centre there is,
+          so the toggle goes rather than offering a choice of one. */}
+      {timelineAvailable && (
+        <div
+          role="group"
+          aria-label="Center view"
+          className="inline-flex overflow-hidden rounded-md border border-border"
+        >
+          {CENTER_MODE_OPTIONS.map((option, index) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setMode(option.id)}
+              // Reaching for the toggle is enough warning to fetch the view behind it.
+              onPointerEnter={() => preloadCenterView(option.id)}
+              onFocus={() => preloadCenterView(option.id)}
+              aria-pressed={mode === option.id}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 text-[11px] transition-colors",
+                index > 0 && "border-l border-border",
+                mode === option.id
+                  ? "bg-muted text-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <option.Icon className="size-3" aria-hidden />
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <Switch checked={includeCovered} onCheckedChange={setIncludeCovered} />

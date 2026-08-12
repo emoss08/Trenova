@@ -11,6 +11,7 @@ import { navigationConfig } from "@/config/navigation.config";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
@@ -41,6 +42,7 @@ export function RouteCommandPalette() {
   const setOpen = useCommandPaletteStore((state) => state.setOpen);
   const toggleOpen = useCommandPaletteStore((state) => state.toggleOpen);
   const hasPermission = usePermissionStore((state) => state.hasPermission);
+  const capabilities = useOrgCapabilities();
   const [searchValue, setSearchValue] = useState("");
   const [recordEntityFilter, setRecordEntityFilter] = useState<SearchableEntityType | null>(null);
   const [mentionOpen, setMentionOpen] = useState(false);
@@ -55,12 +57,11 @@ export function RouteCommandPalette() {
   );
   const suggestedCommands = useMemo(
     () =>
-      buildSuggestedCreateCommands(
-        navigationConfig.quickActions ?? [],
-        routeGroups,
-        (resource, operation) => hasPermission(resource, operation),
-      ),
-    [hasPermission, routeGroups],
+      buildSuggestedCreateCommands(navigationConfig.quickActions ?? [], routeGroups, {
+        capabilities,
+        hasPermission,
+      }),
+    [capabilities, hasPermission, routeGroups],
   );
   const hasQuery = searchValue.trim().length > 0;
   const activeEntityOption = useMemo(
