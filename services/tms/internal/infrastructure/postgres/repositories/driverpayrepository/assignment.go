@@ -110,7 +110,7 @@ func (r *workerPayAssignmentRepository) ListForProfile(
 		Where("wpa.business_unit_id = ?", tenantInfo.BuID).
 		Where("wpa.pay_profile_id = ?", profileID).
 		Where(
-			"wpa.effective_to IS NULL OR wpa.effective_to > extract(epoch from current_timestamp)::bigint",
+			"wpa.effective_to IS NULL OR wpa.effective_to > "+r.db.NowEpoch(),
 		).
 		Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 		Order("wpa.effective_from DESC").

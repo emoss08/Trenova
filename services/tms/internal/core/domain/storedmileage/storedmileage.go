@@ -71,10 +71,10 @@ type StoredMileage struct {
 	HazmatTypes         []string       `json:"hazmatTypes"         bun:"hazmat_types,array,type:TEXT[],nullzero"`
 	HazmatSignature     string         `json:"hazmatSignature"     bun:"hazmat_signature,type:TEXT,notnull"`
 	ProviderMetadata    map[string]any `json:"providerMetadata"    bun:"provider_metadata,type:JSONB,nullzero"`
-	HitCount            int64          `json:"hitCount"            bun:"hit_count,type:BIGINT,notnull,default:0"`
+	HitCount            int64          `json:"hitCount"            bun:"hit_count,type:BIGINT,notnull"`
 	LastUsedAt          *int64         `json:"lastUsedAt"          bun:"last_used_at,type:BIGINT,nullzero"`
 	LastCalculatedAt    int64          `json:"lastCalculatedAt"    bun:"last_calculated_at,type:BIGINT,notnull"`
-	Version             int64          `json:"version"             bun:"version,type:BIGINT,notnull,default:0"`
+	Version             int64          `json:"version"             bun:"version,type:BIGINT,notnull"`
 	CreatedAt           int64          `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt           int64          `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector        string         `json:"-"                   bun:"search_vector,type:TSVECTOR,scanonly"`

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -12,10 +13,11 @@ import (
 )
 
 type ShipmentUIPolicy struct {
-	AllowMoveRemovals      bool  `json:"allowMoveRemovals"`
-	CheckForDuplicateBOLs  bool  `json:"checkForDuplicateBols"`
-	CheckHazmatSegregation bool  `json:"checkHazmatSegregation"`
-	MaxShipmentWeightLimit int32 `json:"maxShipmentWeightLimit"`
+	AllowMoveRemovals      bool                        `json:"allowMoveRemovals"`
+	CheckForDuplicateBOLs  bool                        `json:"checkForDuplicateBols"`
+	CheckHazmatSegregation bool                        `json:"checkHazmatSegregation"`
+	MaxShipmentWeightLimit int32                       `json:"maxShipmentWeightLimit"`
+	Profile                *modeprofile.ResolvedPolicy `json:"profile,omitempty"`
 }
 
 type ShipmentBillingReadinessPolicy struct {

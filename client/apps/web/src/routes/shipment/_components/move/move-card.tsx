@@ -10,10 +10,12 @@ import {
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatSplitDateTime } from "@trenova/shared/lib/date";
+import { getProfile, getRule, RULE_KEYS } from "@trenova/shared/lib/capability";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { CarrierAssignmentCancelDialog } from "@/components/carrier-assignment/carrier-assignment-cancel-dialog";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { CarrierAssignmentStatusBadge } from "@trenova/shared/components/status-badge";
+import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
 import type {
@@ -65,6 +67,8 @@ export function MoveCard({
     formState: { errors },
   } = useFormContext<Shipment>();
   const queryClient = useQueryClient();
+  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+  const moveRemovalRule = getRule(getProfile(shipmentUIPolicy), RULE_KEYS.moveRemoval);
   const move = useWatch({ control, name: `moves.${moveIndex}` });
   const shipmentId = useWatch({ control, name: "id" });
   const [assignmentOpen, setAssignmentOpen] = useState(false);
@@ -86,6 +90,13 @@ export function MoveCard({
   const hasAssignment = hasDriverAssignment || hasCarrierAssignment;
   const isTerminal = move?.status === "Completed" || move?.status === "Canceled";
   const canRemove = !hasId || allowPersistedMoveRemoval;
+  // Naming the actual source matters: removal can be denied by the mode profile's
+  // dispatch.moveRemoval rule or by the organization's shipment control, and an
+  // operator who reads "shipment control" while the profile is what denied it
+  // goes looking in the wrong settings page.
+  const removalBlockedReason = moveRemovalRule
+    ? `Move removal is blocked by the ${moveRemovalRule.provenance.profileName} profile`
+    : "Move removal is disabled by shipment control";
   const canUnassign =
     hasDriverAssignment && move?.status === "Assigned" && move?.assignment?.status === "New";
   const canCancelCarrier = hasCarrierAssignment && move?.status === "Assigned";
@@ -259,9 +270,7 @@ export function MoveCard({
               title="Delete"
               label="Delete"
               description={
-                canRemove
-                  ? "Delete this move and all associated stops"
-                  : "Move removal is disabled by shipment control"
+                canRemove ? "Delete this move and all associated stops" : removalBlockedReason
               }
               color="danger"
               disabled={!canRemove}

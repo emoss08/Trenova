@@ -26,7 +26,7 @@ type EDIInboundFile struct {
 	RemotePath               string            `json:"remotePath"               bun:"remote_path,type:TEXT,notnull"`
 	FileName                 string            `json:"fileName"                 bun:"file_name,type:VARCHAR(512),notnull"`
 	Checksum                 string            `json:"checksum"                 bun:"checksum,type:VARCHAR(64),notnull"`
-	SizeBytes                int64             `json:"sizeBytes"                bun:"size_bytes,type:BIGINT,notnull,default:0"`
+	SizeBytes                int64             `json:"sizeBytes"                bun:"size_bytes,type:BIGINT,notnull"`
 	RawContent               string            `json:"rawContent"               bun:"raw_content,type:TEXT,notnull"`
 	InterchangeControlNumber string            `json:"interchangeControlNumber" bun:"interchange_control_number,type:VARCHAR(20),nullzero"`
 	ISASenderQualifier       string            `json:"isaSenderQualifier"       bun:"isa_sender_qualifier,type:VARCHAR(4),nullzero"`
@@ -35,11 +35,11 @@ type EDIInboundFile struct {
 	ISAReceiverID            string            `json:"isaReceiverId"            bun:"isa_receiver_id,type:VARCHAR(20),nullzero"`
 	Status                   InboundFileStatus `json:"status"                   bun:"status,type:edi_inbound_file_status_enum,notnull,default:'Received'"`
 	FailureReason            string            `json:"failureReason"            bun:"failure_reason,type:TEXT,nullzero"`
-	TransactionCount         int               `json:"transactionCount"         bun:"transaction_count,type:INTEGER,notnull,default:0"`
+	TransactionCount         int               `json:"transactionCount"         bun:"transaction_count,type:INTEGER,notnull"`
 	ReceivedAt               int64             `json:"receivedAt"               bun:"received_at,type:BIGINT,notnull"`
 	ProcessedAt              *int64            `json:"processedAt"              bun:"processed_at,type:BIGINT,nullzero"`
 	RawPurgedAt              *int64            `json:"rawPurgedAt"              bun:"raw_purged_at,type:BIGINT,nullzero"`
-	Version                  int64             `json:"version"                  bun:"version,type:BIGINT,notnull,default:0"`
+	Version                  int64             `json:"version"                  bun:"version,type:BIGINT,notnull"`
 	CreatedAt                int64             `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                int64             `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

@@ -844,6 +844,7 @@ func (r *queryResolver) ShipmentUIPolicy(ctx context.Context) (*gqlmodel.Shipmen
 		CheckForDuplicateBols:  policy.CheckForDuplicateBOLs,
 		CheckHazmatSegregation: policy.CheckHazmatSegregation,
 		MaxShipmentWeightLimit: int(policy.MaxShipmentWeightLimit),
+		Profile:                r.resolvedProfileToJSON(policy.Profile),
 	}, nil
 }
 

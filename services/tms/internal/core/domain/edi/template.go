@@ -32,7 +32,7 @@ type EDITemplate struct {
 	Standard       EDIStandard       `json:"standard"       bun:"standard,type:edi_standard_enum,notnull"`
 	TransactionSet TransactionSet    `json:"transactionSet" bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
 	Status         TemplateStatus    `json:"status"         bun:"status,type:edi_template_status_enum,notnull"`
-	Version        int64             `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
+	Version        int64             `json:"version"        bun:"version,type:BIGINT,notnull"`
 	CreatedAt      int64             `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64             `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector   string            `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`

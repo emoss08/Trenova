@@ -35,25 +35,25 @@ const (
 type DistanceControl struct {
 	bun.BaseModel `bun:"table:distance_controls,alias:dc" json:"-"`
 
-	ID                                           pulid.ID `json:"id"                                          bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID                               pulid.ID `json:"businessUnitId"                              bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID                               pulid.ID `json:"organizationId"                              bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	StoreMileage                                 bool     `json:"storeMileage"                                bun:"store_mileage,type:BOOLEAN,notnull"`
-	StoredDistanceUnits                          string   `json:"storedDistanceUnits"                         bun:"stored_distance_units,type:VARCHAR(50),notnull"`
-	PostalCodeFallbackToCity                     bool     `json:"postalCodeFallbackToCity"                    bun:"postal_code_fallback_to_city,type:BOOLEAN,notnull"`
-	AutoCreateStoredMileage                      bool     `json:"autoCreateStoredMileage"                     bun:"auto_create_stored_mileage,type:BOOLEAN,notnull"`
-	LoadedMoveDistanceProfileID                  pulid.ID `json:"loadedMoveDistanceProfileId"                 bun:"loaded_move_distance_profile_id,type:VARCHAR(100),notnull"`
-	EmptyMoveDistanceProfileID                   pulid.ID `json:"emptyMoveDistanceProfileId"                  bun:"empty_move_distance_profile_id,type:VARCHAR(100),notnull"`
-	PayDistanceProfileID                         pulid.ID `json:"payDistanceProfileId"                        bun:"pay_distance_profile_id,type:VARCHAR(100),notnull"`
-	BillingDistanceProfileID                     pulid.ID `json:"billingDistanceProfileId"                    bun:"billing_distance_profile_id,type:VARCHAR(100),notnull"`
-	FuelDistanceProfileID                        pulid.ID `json:"fuelDistanceProfileId"                       bun:"fuel_distance_profile_id,type:VARCHAR(100),notnull"`
-	EtaOutOfRouteDistanceProfileID               pulid.ID `json:"etaOutOfRouteDistanceProfileId"              bun:"eta_out_of_route_distance_profile_id,type:VARCHAR(100),notnull"`
-	DistanceCalculatorShortestDistanceProfileID  pulid.ID `json:"distanceCalculatorShortestDistanceProfileId" bun:"distance_calculator_shortest_distance_profile_id,type:VARCHAR(100),notnull"`
+	ID                                           pulid.ID `json:"id"                                           bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID                               pulid.ID `json:"businessUnitId"                               bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID                               pulid.ID `json:"organizationId"                               bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	StoreMileage                                 bool     `json:"storeMileage"                                 bun:"store_mileage,type:BOOLEAN,notnull"`
+	StoredDistanceUnits                          string   `json:"storedDistanceUnits"                          bun:"stored_distance_units,type:VARCHAR(50),notnull"`
+	PostalCodeFallbackToCity                     bool     `json:"postalCodeFallbackToCity"                     bun:"postal_code_fallback_to_city,type:BOOLEAN,notnull"`
+	AutoCreateStoredMileage                      bool     `json:"autoCreateStoredMileage"                      bun:"auto_create_stored_mileage,type:BOOLEAN,notnull"`
+	LoadedMoveDistanceProfileID                  pulid.ID `json:"loadedMoveDistanceProfileId"                  bun:"loaded_move_distance_profile_id,type:VARCHAR(100),notnull"`
+	EmptyMoveDistanceProfileID                   pulid.ID `json:"emptyMoveDistanceProfileId"                   bun:"empty_move_distance_profile_id,type:VARCHAR(100),notnull"`
+	PayDistanceProfileID                         pulid.ID `json:"payDistanceProfileId"                         bun:"pay_distance_profile_id,type:VARCHAR(100),notnull"`
+	BillingDistanceProfileID                     pulid.ID `json:"billingDistanceProfileId"                     bun:"billing_distance_profile_id,type:VARCHAR(100),notnull"`
+	FuelDistanceProfileID                        pulid.ID `json:"fuelDistanceProfileId"                        bun:"fuel_distance_profile_id,type:VARCHAR(100),notnull"`
+	EtaOutOfRouteDistanceProfileID               pulid.ID `json:"etaOutOfRouteDistanceProfileId"               bun:"eta_out_of_route_distance_profile_id,type:VARCHAR(100),notnull"`
+	DistanceCalculatorShortestDistanceProfileID  pulid.ID `json:"distanceCalculatorShortestDistanceProfileId"  bun:"distance_calculator_shortest_distance_profile_id,type:VARCHAR(100),notnull"`
 	DistanceCalculatorPracticalDistanceProfileID pulid.ID `json:"distanceCalculatorPracticalDistanceProfileId" bun:"distance_calculator_practical_distance_profile_id,type:VARCHAR(100),notnull"`
-	Version                                      int64    `json:"version"                                     bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt                                    int64    `json:"createdAt"                                   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                                    int64    `json:"updatedAt"                                   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector                                 string   `json:"-"                                           bun:"search_vector,type:TSVECTOR,scanonly"`
+	Version                                      int64    `json:"version"                                      bun:"version,type:BIGINT,notnull"`
+	CreatedAt                                    int64    `json:"createdAt"                                    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                                    int64    `json:"updatedAt"                                    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector                                 string   `json:"-"                                            bun:"search_vector,type:TSVECTOR,scanonly"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`

@@ -6,11 +6,16 @@ import {
 import { NumberField } from "@/components/fields/number-field";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import {
+  CapabilityFields,
+  type FieldDescriptor,
+} from "@trenova/shared/components/capability-form-section";
+import { FormSection } from "@trenova/shared/components/ui/form";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
 import { queries } from "@/lib/queries";
+import { getProfile } from "@trenova/shared/lib/capability";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { CreditStatus } from "@trenova/shared/types/customer";
 import type { GetPreviousRatesRequest, Shipment } from "@trenova/shared/types/shipment";
@@ -256,6 +261,70 @@ export default function ShipmentBillingDetails() {
     fuelSurchargeChange,
     resolveFuelSurchargeChange,
   } = useShipmentTotalsPreview();
+  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+
+  const profile = getProfile(shipmentUIPolicy);
+
+  const descriptors: FieldDescriptor[] = [
+    {
+      name: "orderId",
+      render: () => (
+        <OrderAutocompleteField
+          control={control}
+          name="orderId"
+          label="Order"
+          placeholder="Select Order"
+          description="Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards."
+          disabled={!customerId}
+          extraSearchParams={customerId ? { customerId, attachableOnly: "true" } : undefined}
+        />
+      ),
+    },
+    {
+      name: "customerId",
+      render: () => (
+        <CustomerAutocompleteField
+          control={control}
+          name="customerId"
+          rules={{ required: true }}
+          label="Customer"
+          placeholder="Select Customer"
+          description="Choose the customer who requested this shipment."
+        />
+      ),
+    },
+    {
+      name: "formulaTemplateId",
+      cols: "full",
+      render: () => (
+        <FormulaTemplateAutocompleteField
+          control={control}
+          name="formulaTemplateId"
+          label="Rating Method"
+          placeholder="Select Rating Method"
+          description="Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate)."
+          rules={{ required: true }}
+        />
+      ),
+    },
+    {
+      name: "baseRate",
+      cols: "full",
+      render: () => (
+        <NumberField
+          decimalScale={4}
+          thousandSeparator
+          control={control}
+          rules={{ required: true }}
+          name="baseRate"
+          label="Base Rate"
+          placeholder="Enter Base Rate"
+          description="Per-unit rate used by the formula template to calculate freight charges."
+          sideText="USD"
+        />
+      ),
+    },
+  ];
 
   return (
     <Inner>
@@ -265,52 +334,7 @@ export default function ShipmentBillingDetails() {
       />
       {customerId && <CreditHoldAlert customerId={customerId} />}
       {shipmentId && <ProfitabilitySummary shipmentId={shipmentId} />}
-      <FormGroup cols={2}>
-        <FormControl>
-          <OrderAutocompleteField
-            control={control}
-            name="orderId"
-            label="Order"
-            placeholder="Select Order"
-            description="Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards."
-            disabled={!customerId}
-            extraSearchParams={customerId ? { customerId, attachableOnly: "true" } : undefined}
-          />
-        </FormControl>
-        <FormControl>
-          <CustomerAutocompleteField
-            control={control}
-            name="customerId"
-            rules={{ required: true }}
-            label="Customer"
-            placeholder="Select Customer"
-            description="Choose the customer who requested this shipment."
-          />
-        </FormControl>
-        <FormControl cols="full">
-          <FormulaTemplateAutocompleteField
-            control={control}
-            name="formulaTemplateId"
-            label="Rating Method"
-            placeholder="Select Rating Method"
-            description="Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate)."
-            rules={{ required: true }}
-          />
-        </FormControl>
-        <FormControl cols="full">
-          <NumberField
-            decimalScale={4}
-            thousandSeparator
-            control={control}
-            rules={{ required: true }}
-            name="baseRate"
-            label="Base Rate"
-            placeholder="Enter Base Rate"
-            description="Per-unit rate used by the formula template to calculate freight charges."
-            sideText="USD"
-          />
-        </FormControl>
-      </FormGroup>
+      <CapabilityFields descriptors={descriptors} profile={profile} />
 
       <ChargeSummary isCalculating={isCalculating} error={totalsError} />
       <RatingBreakdownCard />

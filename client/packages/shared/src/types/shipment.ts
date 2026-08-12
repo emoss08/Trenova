@@ -427,6 +427,9 @@ const shipmentCommodityBaseSchema = z.object({
     .int()
     .nonnegative({ error: "Weight cannot be negative" })
     .default(0),
+  lengthFeet: decimalStringSchema,
+  widthFeet: decimalStringSchema,
+  heightFeet: decimalStringSchema,
 });
 
 export const shipmentCommoditySchema = z.object({
@@ -497,6 +500,10 @@ const shipmentBaseSchema = z.object({
   totalChargeAmount: decimalStringSchema.default(0),
   pieces: nullableIntegerSchema,
   weight: nullableIntegerSchema,
+  envelopeLengthFeet: decimalStringSchema,
+  envelopeWidthFeet: decimalStringSchema,
+  envelopeHeightFeet: decimalStringSchema,
+  envelopeOverallHeightFeet: decimalStringSchema,
   temperatureMin: nullableIntegerSchema,
   temperatureMax: nullableIntegerSchema,
   actualDeliveryDate: nullableIntegerSchema,
@@ -646,11 +653,73 @@ export const shipmentDistanceResponseSchema = z.object({
 
 export type ShipmentDistanceResponse = z.infer<typeof shipmentDistanceResponseSchema>;
 
+export const enforcementLevelSchema = z.enum(["Ignore", "Warn", "RequireReview", "Block"]);
+export type EnforcementLevel = z.infer<typeof enforcementLevelSchema>;
+
+export const capabilityProvenanceSchema = z.object({
+  profileId: z.string(),
+  profileCode: z.string(),
+  profileName: z.string(),
+  isOrgDefault: z.boolean(),
+  priority: z.number().int(),
+  specificityScore: z.number().int(),
+  matchedOn: z.array(z.string()).nullish(),
+  ruleKey: z.string(),
+  capability: z.string(),
+  capabilityLabel: z.string(),
+  enforcement: enforcementLevelSchema,
+  defaultEnforcement: enforcementLevelSchema,
+  overridden: z.boolean(),
+  overrideReason: z.string().nullish(),
+  rationale: z.string(),
+});
+export type CapabilityProvenance = z.infer<typeof capabilityProvenanceSchema>;
+
+export const resolvedCapabilityRuleSchema = z.object({
+  key: z.string(),
+  capability: z.string(),
+  label: z.string(),
+  enforcement: enforcementLevelSchema,
+  enabled: z.boolean(),
+  fields: z.array(z.string()).nullish(),
+  requiredFields: z.array(z.string()).nullish(),
+  parameters: z.record(z.string(), z.unknown()).nullish(),
+  provenance: capabilityProvenanceSchema,
+});
+export type ResolvedCapabilityRule = z.infer<typeof resolvedCapabilityRuleSchema>;
+
+export const profileCandidateSchema = z.object({
+  profileId: z.string(),
+  profileCode: z.string(),
+  profileName: z.string(),
+  priority: z.number().int(),
+  specificityScore: z.number().int(),
+  matchedOn: z.array(z.string()).nullish(),
+  selected: z.boolean(),
+  rejectionReason: z.string().nullish(),
+});
+export type ProfileCandidate = z.infer<typeof profileCandidateSchema>;
+
+export const resolvedModeProfileSchema = z.object({
+  profileId: z.string(),
+  profileCode: z.string(),
+  profileName: z.string(),
+  serviceModel: z.string(),
+  equipmentClass: z.string(),
+  executionParty: z.string(),
+  capabilities: z.array(z.string()).nullish(),
+  rules: z.record(z.string(), resolvedCapabilityRuleSchema),
+  candidates: z.array(profileCandidateSchema).nullish(),
+  resolvedAt: z.number().int(),
+});
+export type ResolvedModeProfile = z.infer<typeof resolvedModeProfileSchema>;
+
 export const shipmentUIPolicySchema = z.object({
   allowMoveRemovals: z.boolean(),
   checkForDuplicateBols: z.boolean(),
   checkHazmatSegregation: z.boolean(),
   maxShipmentWeightLimit: z.number().int().nonnegative(),
+  profile: resolvedModeProfileSchema.nullish(),
 });
 export type ShipmentUIPolicy = z.infer<typeof shipmentUIPolicySchema>;
 

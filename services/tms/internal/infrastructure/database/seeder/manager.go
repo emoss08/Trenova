@@ -13,9 +13,13 @@ import (
 	"github.com/fatih/color"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
+	"github.com/uptrace/bun/schema"
 	"go.uber.org/fx"
+
+	_ "modernc.org/sqlite"
 )
 
 type Manager struct {
@@ -77,10 +81,12 @@ func NewManagerFromConfig(cfg ManagerConfig) (*Manager, error) {
 }
 
 func createDB(cfg *config.Config) (*bun.DB, error) {
-	sqldb := sql.OpenDB(
-		pgdriver.NewConnector(pgdriver.WithDSN(cfg.GetDSN(cfg.Database.Password))),
-	)
-	db := bun.NewDB(sqldb, pgdialect.New())
+	sqldb, bunDialect, err := openSQLDB(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	db := bun.NewDB(sqldb, bunDialect)
 
 	if cfg.App.Debug {
 		db.AddQueryHook(bundebug.NewQueryHook(
@@ -92,6 +98,21 @@ func createDB(cfg *config.Config) (*bun.DB, error) {
 	db.RegisterModel(domainregistry.RegisterEntities()...)
 
 	return db, nil
+}
+
+func openSQLDB(cfg *config.Config) (*sql.DB, schema.Dialect, error) {
+	dsn := cfg.GetDSN(cfg.Database.Password)
+
+	if cfg.Database.GetDialect().IsSQLite() {
+		sqldb, err := sql.Open("sqlite", dsn)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to open sqlite database: %w", err)
+		}
+
+		return sqldb, sqlitedialect.New(), nil
+	}
+
+	return sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn))), pgdialect.New(), nil
 }
 
 func createDBConfig(db *bun.DB, cfg *config.Config) *common.DatabaseConfig {

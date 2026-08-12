@@ -5,7 +5,6 @@ const config: CodegenConfig = {
   documents: "src/operations/**/*.graphql",
   hooks: {
     afterAllFileWrite: [
-      "node scripts/reorder-fragment-masking-overloads.mjs",
       "node scripts/sync-graphql-persisted-documents.mjs",
       "node scripts/generate-graphql-catalog.mjs",
       "node scripts/generate-error-enums.mjs",

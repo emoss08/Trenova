@@ -39,7 +39,7 @@ type Role struct {
 	CoreResponsibility CoreResponsibility `json:"coreResponsibility" bun:"core_responsibility,type:VARCHAR(50),nullzero"`
 	ParentRoleIDs      []pulid.ID         `json:"parentRoleIds"      bun:"parent_role_ids,type:TEXT[],array"`
 	MaxSensitivity     FieldSensitivity   `json:"maxSensitivity"     bun:"max_sensitivity,type:VARCHAR(20),notnull,default:'internal'"`
-	IsSystem           bool               `json:"isSystem"           bun:"is_system,default:false"`
+	IsSystem           bool               `json:"isSystem"           bun:"is_system"`
 	CreatedBy          pulid.ID           `json:"createdBy"          bun:"created_by,type:VARCHAR(100)"`
 	CreatedAt          int64              `json:"createdAt"          bun:"created_at,notnull"`
 	UpdatedAt          int64              `json:"updatedAt"          bun:"updated_at,notnull"`

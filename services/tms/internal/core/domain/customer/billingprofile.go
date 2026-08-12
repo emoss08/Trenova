@@ -34,16 +34,16 @@ type CustomerBillingProfile struct {
 	BillingCycleType                          BillingCycleType                          `json:"billingCycleType"                          bun:"billing_cycle_type,type:billing_cycle_type_enum,nullzero,default:'Immediate'"`
 	BillingCycleDayOfWeek                     *int8                                     `json:"billingCycleDayOfWeek"                     bun:"billing_cycle_day_of_week,type:SMALLINT,nullzero"`
 	PaymentTerm                               PaymentTerm                               `json:"paymentTerm"                               bun:"payment_term,type:payment_term_enum,nullzero,default:'Net30'"`
-	HasBillingControlOverrides                bool                                      `json:"hasBillingControlOverrides"                bun:"has_billing_control_overrides,type:BOOLEAN,notnull,default:false"`
+	HasBillingControlOverrides                bool                                      `json:"hasBillingControlOverrides"                bun:"has_billing_control_overrides,type:BOOLEAN,notnull"`
 	CreditLimit                               decimal.NullDecimal                       `json:"creditLimit"                               bun:"credit_limit,type:NUMERIC(12,2),nullzero"`
 	CreditBalance                             decimal.Decimal                           `json:"creditBalance"                             bun:"credit_balance,type:NUMERIC(12,2),notnull,default:0"`
 	CreditStatus                              CreditStatus                              `json:"creditStatus"                              bun:"credit_status,type:credit_status_enum,notnull,default:'Active'"`
-	EnforceCreditLimit                        bool                                      `json:"enforceCreditLimit"                        bun:"enforce_credit_limit,type:BOOLEAN,notnull,default:false"`
-	AutoCreditHold                            bool                                      `json:"autoCreditHold"                            bun:"auto_credit_hold,type:BOOLEAN,notnull,default:false"`
+	EnforceCreditLimit                        bool                                      `json:"enforceCreditLimit"                        bun:"enforce_credit_limit,type:BOOLEAN,notnull"`
+	AutoCreditHold                            bool                                      `json:"autoCreditHold"                            bun:"auto_credit_hold,type:BOOLEAN,notnull"`
 	CreditHoldReason                          string                                    `json:"creditHoldReason"                          bun:"credit_hold_reason,type:TEXT,nullzero"`
 	InvoiceMethod                             InvoiceMethod                             `json:"invoiceMethod"                             bun:"invoice_method,type:invoice_method_enum,notnull,default:'Individual'"`
 	AutoSendInvoiceOnGeneration               bool                                      `json:"autoSendInvoiceOnGeneration"               bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull,default:true"`
-	AllowInvoiceConsolidation                 bool                                      `json:"allowInvoiceConsolidation"                 bun:"allow_invoice_consolidation,type:BOOLEAN,notnull,default:false"`
+	AllowInvoiceConsolidation                 bool                                      `json:"allowInvoiceConsolidation"                 bun:"allow_invoice_consolidation,type:BOOLEAN,notnull"`
 	ConsolidationPeriodDays                   int8                                      `json:"consolidationPeriodDays"                   bun:"consolidation_period_days,type:INTEGER,notnull,default:7"`
 	ConsolidationGroupBy                      ConsolidationGroupBy                      `json:"consolidationGroupBy"                      bun:"consolidation_group_by,type:consolidation_group_by_enum,notnull,default:'None'"`
 	InvoiceNumberFormat                       InvoiceNumberFormat                       `json:"invoiceNumberFormat"                       bun:"invoice_number_format,type:invoice_number_format_enum,notnull,default:'Default'"`
@@ -51,22 +51,22 @@ type CustomerBillingProfile struct {
 	InvoiceCopies                             int8                                      `json:"invoiceCopies"                             bun:"invoice_copies,type:SMALLINT,notnull,default:1"`
 	RevenueAccountID                          *pulid.ID                                 `json:"revenueAccountId"                          bun:"revenue_account_id,type:VARCHAR(100),nullzero"`
 	ARAccountID                               *pulid.ID                                 `json:"arAccountId"                               bun:"ar_account_id,type:VARCHAR(100),nullzero"`
-	ApplyLateCharges                          bool                                      `json:"applyLateCharges"                          bun:"apply_late_charges,type:BOOLEAN,notnull,default:false"`
+	ApplyLateCharges                          bool                                      `json:"applyLateCharges"                          bun:"apply_late_charges,type:BOOLEAN,notnull"`
 	LateChargeRate                            decimal.NullDecimal                       `json:"lateChargeRate"                            bun:"late_charge_rate,type:NUMERIC(5,2),nullzero"`
-	GracePeriodDays                           int8                                      `json:"gracePeriodDays"                           bun:"grace_period_days,type:SMALLINT,notnull,default:0"`
-	TaxExempt                                 bool                                      `json:"taxExempt"                                 bun:"tax_exempt,type:BOOLEAN,notnull,default:false"`
+	GracePeriodDays                           int8                                      `json:"gracePeriodDays"                           bun:"grace_period_days,type:SMALLINT,notnull"`
+	TaxExempt                                 bool                                      `json:"taxExempt"                                 bun:"tax_exempt,type:BOOLEAN,notnull"`
 	TaxExemptNumber                           string                                    `json:"taxExemptNumber"                           bun:"tax_exempt_number,type:VARCHAR(50),nullzero"`
 	EnforceCustomerBillingReq                 bool                                      `json:"enforceCustomerBillingReq"                 bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:true"`
 	ValidateCustomerRates                     bool                                      `json:"validateCustomerRates"                     bun:"validate_customer_rates,type:BOOLEAN,notnull,default:true"`
 	AutoTransfer                              bool                                      `json:"autoTransfer"                              bun:"auto_transfer,type:BOOLEAN,notnull,default:true"`
 	AutoMarkReadyToBill                       bool                                      `json:"autoMarkReadyToBill"                       bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull,default:true"`
 	AutoBill                                  bool                                      `json:"autoBill"                                  bun:"auto_bill,type:BOOLEAN,notnull,default:true"`
-	CountLateOnlyOnAppointmentStops           bool                                      `json:"countLateOnlyOnAppointmentStops"           bun:"count_late_only_on_appointment_stops,type:BOOLEAN,notnull,default:false"`
+	CountLateOnlyOnAppointmentStops           bool                                      `json:"countLateOnlyOnAppointmentStops"           bun:"count_late_only_on_appointment_stops,type:BOOLEAN,notnull"`
 	AutoApplyAccessorials                     bool                                      `json:"autoApplyAccessorials"                     bun:"auto_apply_accessorials,type:BOOLEAN,notnull,default:true"`
 	BillingCurrency                           string                                    `json:"billingCurrency"                           bun:"billing_currency,type:VARCHAR(3),notnull,default:'USD'"`
-	RequirePONumber                           bool                                      `json:"requirePONumber"                           bun:"require_po_number,type:BOOLEAN,notnull,default:false"`
-	RequireBOLNumber                          bool                                      `json:"requireBOLNumber"                          bun:"require_bol_number,type:BOOLEAN,notnull,default:false"`
-	RequireDeliveryNumber                     bool                                      `json:"requireDeliveryNumber"                     bun:"require_delivery_number,type:BOOLEAN,notnull,default:false"`
+	RequirePONumber                           bool                                      `json:"requirePONumber"                           bun:"require_po_number,type:BOOLEAN,notnull"`
+	RequireBOLNumber                          bool                                      `json:"requireBOLNumber"                          bun:"require_bol_number,type:BOOLEAN,notnull"`
+	RequireDeliveryNumber                     bool                                      `json:"requireDeliveryNumber"                     bun:"require_delivery_number,type:BOOLEAN,notnull"`
 	InvoiceAdjustmentSupportingDocumentPolicy InvoiceAdjustmentSupportingDocumentPolicy `json:"invoiceAdjustmentSupportingDocumentPolicy" bun:"invoice_adjustment_supporting_document_policy,type:invoice_adjustment_supporting_document_policy_enum,notnull,default:'Inherit'"`
 	DefaultBillerID                           *pulid.ID                                 `json:"defaultBillerId"                           bun:"default_biller_id,type:VARCHAR(100),nullzero"`
 	BillingNotes                              string                                    `json:"billingNotes"                              bun:"billing_notes,type:TEXT,nullzero"`

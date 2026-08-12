@@ -50,6 +50,8 @@ type Params struct {
 	AssignmentRepo      repositories.AssignmentRepository
 	UserRepo            repositories.UserRepository
 	ControlRepo         repositories.ShipmentControlRepository
+	ModeProfileService  services.ModeProfileService
+	PermitService       services.PermitService
 	ContinuityRepo      repositories.EquipmentContinuityRepository
 	CommodityRepo       repositories.CommodityRepository
 	HazmatRuleRepo      repositories.HazmatSegregationRuleRepository
@@ -83,6 +85,8 @@ type service struct {
 	assignmentRepo      repositories.AssignmentRepository
 	userRepo            repositories.UserRepository
 	controlRepo         repositories.ShipmentControlRepository
+	modeProfileService  services.ModeProfileService
+	permitService       services.PermitService
 	continuityRepo      repositories.EquipmentContinuityRepository
 	commodityRepo       repositories.CommodityRepository
 	hazmatRuleRepo      repositories.HazmatSegregationRuleRepository
@@ -118,6 +122,8 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		assignmentRepo:      p.AssignmentRepo,
 		userRepo:            p.UserRepo,
 		controlRepo:         p.ControlRepo,
+		modeProfileService:  p.ModeProfileService,
+		permitService:       p.PermitService,
 		continuityRepo:      p.ContinuityRepo,
 		commodityRepo:       p.CommodityRepo,
 		hazmatRuleRepo:      p.HazmatRuleRepo,
@@ -217,12 +223,28 @@ func (s *service) GetUIPolicy(
 		return nil, err
 	}
 
-	return &services.ShipmentUIPolicy{
+	policy := &services.ShipmentUIPolicy{
 		AllowMoveRemovals:      control.AllowMoveRemovals,
 		CheckForDuplicateBOLs:  control.CheckForDuplicateBOLs,
 		CheckHazmatSegregation: control.CheckHazmatSegregation,
 		MaxShipmentWeightLimit: control.MaxShipmentWeightLimit,
-	}, nil
+	}
+
+	if s.modeProfileService == nil {
+		return policy, nil
+	}
+
+	resolved, err := s.modeProfileService.Resolve(ctx, &services.ResolveModeProfileRequest{
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		s.l.Warn("failed to resolve mode profile for ui policy", zap.Error(err))
+		return policy, nil
+	}
+
+	policy.Profile = resolved
+
+	return policy, nil
 }
 
 func (s *service) GetPreviousRates(
@@ -273,6 +295,8 @@ func (s *service) Create(
 		return nil, err
 	}
 
+	s.applyShipmentEnvelope(ctx, entity)
+
 	if s.distanceCalculation != nil {
 		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
 			return nil, err
@@ -287,7 +311,8 @@ func (s *service) Create(
 		return nil, err
 	}
 
-	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
+	multiErr, advisories := s.validator.ValidateCreateWithAdvisories(ctx, entity)
+	if multiErr != nil {
 		return nil, multiErr
 	}
 
@@ -301,6 +326,9 @@ func (s *service) Create(
 		log.Error("failed to create shipment", zap.Error(err))
 		return nil, err
 	}
+
+	s.recordCapabilityDeviations(ctx, createdEntity, advisories)
+	s.syncPermits(ctx, createdEntity, actor)
 
 	if err = s.logShipmentAction(
 		createdEntity,
@@ -399,6 +427,8 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
+	s.applyShipmentEnvelope(ctx, entity)
+
 	if s.distanceCalculation != nil {
 		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
 			return nil, err
@@ -409,7 +439,10 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
-	if multiErr := s.validator.ValidateUpdateWithOriginal(ctx, original, entity); multiErr != nil {
+	multiErr, advisories := s.validator.ValidateUpdateWithOriginalAndAdvisories(
+		ctx, original, entity,
+	)
+	if multiErr != nil {
 		return nil, multiErr
 	}
 	if multiErr := s.validateBillingReadinessForStatusChange(ctx, entity); multiErr != nil {
@@ -429,6 +462,10 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		s.l.Error("failed to update shipment", zap.Error(err))
 		return nil, err
 	}
+
+	s.recordCapabilityDeviations(ctx, updatedEntity, advisories)
+	s.syncPermits(ctx, updatedEntity, actor)
+
 	if err = s.advanceContinuityForCompletedMoves(ctx, original, updatedEntity); err != nil {
 		return nil, err
 	}
@@ -1219,6 +1256,8 @@ func (s *service) CalculateTotals(
 	if err = s.hydrateShipmentCommodityDetails(ctx, entity); err != nil {
 		return nil, err
 	}
+
+	s.applyShipmentEnvelope(ctx, entity)
 
 	if s.distanceCalculation != nil {
 		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {

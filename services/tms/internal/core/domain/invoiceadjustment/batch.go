@@ -16,18 +16,18 @@ type InvoiceAdjustmentBatch struct {
 	BusinessUnitID   pulid.ID       `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	IdempotencyKey   string         `json:"idempotencyKey"   bun:"idempotency_key,type:VARCHAR(200),notnull"`
 	Status           BatchStatus    `json:"status"           bun:"status,type:VARCHAR(50),notnull,default:'Pending'"`
-	TotalCount       int            `json:"totalCount"       bun:"total_count,type:INTEGER,notnull,default:0"`
-	ProcessedCount   int            `json:"processedCount"   bun:"processed_count,type:INTEGER,notnull,default:0"`
-	SucceededCount   int            `json:"succeededCount"   bun:"succeeded_count,type:INTEGER,notnull,default:0"`
-	FailedCount      int            `json:"failedCount"      bun:"failed_count,type:INTEGER,notnull,default:0"`
+	TotalCount       int            `json:"totalCount"       bun:"total_count,type:INTEGER,notnull"`
+	ProcessedCount   int            `json:"processedCount"   bun:"processed_count,type:INTEGER,notnull"`
+	SucceededCount   int            `json:"succeededCount"   bun:"succeeded_count,type:INTEGER,notnull"`
+	FailedCount      int            `json:"failedCount"      bun:"failed_count,type:INTEGER,notnull"`
 	SubmittedByID    pulid.ID       `json:"submittedById"    bun:"submitted_by_id,type:VARCHAR(100),nullzero"`
 	SubmittedAt      *int64         `json:"submittedAt"      bun:"submitted_at,type:BIGINT,nullzero"`
 	SubmittedByName  string         `json:"submittedByName"  bun:"submitted_by_name,scanonly"`
 	PendingCount     int            `json:"pendingCount"     bun:"pending_count,scanonly"`
 	LastFailure      string         `json:"lastFailure"      bun:"last_failure,scanonly"`
 	LastFailureCount int            `json:"lastFailureCount" bun:"last_failure_count,scanonly"`
-	Metadata         map[string]any `json:"metadata"         bun:"metadata,type:JSONB,notnull,default:'{}'::jsonb"`
-	Version          int64          `json:"version"          bun:"version,type:BIGINT,notnull,default:0"`
+	Metadata         map[string]any `json:"metadata"         bun:"metadata,type:JSONB,notnull,default:'{}'"`
+	Version          int64          `json:"version"          bun:"version,type:BIGINT,notnull"`
 	CreatedAt        int64          `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt        int64          `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -46,8 +46,8 @@ type InvoiceAdjustmentBatchItem struct {
 	IdempotencyKey string          `json:"idempotencyKey" bun:"idempotency_key,type:VARCHAR(200),notnull"`
 	Status         BatchItemStatus `json:"status"         bun:"status,type:VARCHAR(50),notnull,default:'Pending'"`
 	ErrorMessage   string          `json:"errorMessage"   bun:"error_message,type:TEXT,nullzero"`
-	RequestPayload map[string]any  `json:"requestPayload" bun:"request_payload,type:JSONB,notnull,default:'{}'::jsonb"`
-	ResultPayload  map[string]any  `json:"resultPayload"  bun:"result_payload,type:JSONB,notnull,default:'{}'::jsonb"`
+	RequestPayload map[string]any  `json:"requestPayload" bun:"request_payload,type:JSONB,notnull,default:'{}'"`
+	ResultPayload  map[string]any  `json:"resultPayload"  bun:"result_payload,type:JSONB,notnull,default:'{}'"`
 	CreatedAt      int64           `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

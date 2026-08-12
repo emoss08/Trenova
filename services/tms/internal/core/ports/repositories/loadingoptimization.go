@@ -10,6 +10,9 @@ type LoadingCommodityInput struct {
 	CommodityID pulid.ID `json:"commodityId"`
 	Pieces      int64    `json:"pieces"`
 	Weight      int64    `json:"weight"`
+	LengthFeet  *float64 `json:"lengthFeet,omitempty"`
+	WidthFeet   *float64 `json:"widthFeet,omitempty"`
+	HeightFeet  *float64 `json:"heightFeet,omitempty"`
 }
 
 type StopInfo struct {
@@ -22,6 +25,7 @@ type LoadingOptimizationRequest struct {
 	TenantInfo      pagination.TenantInfo   `json:"-"`
 	Commodities     []LoadingCommodityInput `json:"commodities"`
 	EquipmentTypeID *pulid.ID               `json:"equipmentTypeId,omitempty"`
+	DeckHeightFeet  float64                 `json:"deckHeightFeet,omitempty"`
 	Stops           []StopInfo              `json:"stops,omitempty"`
 }
 
@@ -51,6 +55,8 @@ type CommodityPlacement struct {
 	CommodityName       string   `json:"commodityName"`
 	PositionFeet        float64  `json:"positionFeet"`
 	LengthFeet          float64  `json:"lengthFeet"`
+	WidthFeet           float64  `json:"widthFeet,omitempty"`
+	HeightFeet          float64  `json:"heightFeet,omitempty"`
 	Weight              int64    `json:"weight"`
 	Pieces              int64    `json:"pieces"`
 	Stackable           bool     `json:"stackable"`
@@ -106,8 +112,20 @@ type StopDivider struct {
 	Label        string  `json:"label"`
 }
 
+type LoadEnvelope struct {
+	LengthFeet         float64 `json:"lengthFeet"`
+	WidthFeet          float64 `json:"widthFeet"`
+	HeightFeet         float64 `json:"heightFeet"`
+	DeckHeightFeet     float64 `json:"deckHeightFeet"`
+	OverallHeightFeet  float64 `json:"overallHeightFeet"`
+	RearOverhangFeet   float64 `json:"rearOverhangFeet"`
+	ExceedsLegalWidth  bool    `json:"exceedsLegalWidth"`
+	ExceedsLegalHeight bool    `json:"exceedsLegalHeight"`
+}
+
 type LoadingOptimizationResult struct {
 	TrailerLengthFeet float64                 `json:"trailerLengthFeet"`
+	Envelope          *LoadEnvelope           `json:"envelope,omitempty"`
 	TotalLinearFeet   float64                 `json:"totalLinearFeet"`
 	TotalWeight       int64                   `json:"totalWeight"`
 	MaxWeight         int64                   `json:"maxWeight"`

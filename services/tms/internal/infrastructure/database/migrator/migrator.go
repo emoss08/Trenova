@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/migrations"
 	"github.com/fatih/color"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/migrate"
 )
 
@@ -24,7 +24,7 @@ type Migrator struct {
 }
 
 func NewMigrator(config *common.DatabaseConfig) *Migrator {
-	migrator := migrate.NewMigrator(config.DB, migrations.Migrations)
+	migrator := migrate.NewMigrator(config.DB, migrationsFor(config.DB))
 
 	return &Migrator{
 		db:       config.DB,
@@ -414,6 +414,10 @@ func (m *Migrator) getMigrationLists(
 }
 
 func (m *Migrator) dropAllTables(ctx context.Context) error {
+	if m.db.Dialect().Name() == dialect.SQLite {
+		return m.dropAllSQLiteObjects(ctx)
+	}
+
 	query, err := getDropSchemaQuery()
 	if err != nil {
 		return fmt.Errorf("failed to get drop schema query: %w", err)
@@ -425,6 +429,43 @@ func (m *Migrator) dropAllTables(ctx context.Context) error {
 	}
 
 	return err
+}
+
+func (m *Migrator) dropAllSQLiteObjects(ctx context.Context) error {
+	if _, err := m.db.ExecContext(ctx, "PRAGMA foreign_keys = OFF"); err != nil {
+		return fmt.Errorf("failed to disable foreign key enforcement: %w", err)
+	}
+
+	defer func() {
+		_, _ = m.db.ExecContext(ctx, "PRAGMA foreign_keys = ON")
+	}()
+
+	var objects []struct {
+		Type string `bun:"type"`
+		Name string `bun:"name"`
+	}
+
+	if err := m.db.NewRaw(
+		`SELECT "type", "name" FROM sqlite_master
+		 WHERE "type" IN ('table', 'view') AND "name" NOT LIKE 'sqlite_%'`,
+	).Scan(ctx, &objects); err != nil {
+		return fmt.Errorf("failed to list sqlite objects: %w", err)
+	}
+
+	for _, obj := range objects {
+		keyword := "TABLE"
+		if obj.Type == "view" {
+			keyword = "VIEW"
+		}
+
+		if _, err := m.db.NewRaw(
+			fmt.Sprintf("DROP %s IF EXISTS ?", keyword), bun.Ident(obj.Name),
+		).Exec(ctx); err != nil {
+			return fmt.Errorf("failed to drop %s %q: %w", obj.Type, obj.Name, err)
+		}
+	}
+
+	return nil
 }
 
 func getDropSchemaQuery() (string, error) {

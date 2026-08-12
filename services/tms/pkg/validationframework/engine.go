@@ -124,7 +124,7 @@ func (v *Engine) Validate(ctx context.Context) *errortypes.MultiError {
 
 	v.validateWithContext(ctx, multiErr)
 
-	if multiErr.HasErrors() {
+	if multiErr.HasErrors() || multiErr.HasAdvisories() {
 		return multiErr
 	}
 

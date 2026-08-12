@@ -22,6 +22,8 @@ func HTTPStatus(err error) int {
 		return http.StatusTooManyRequests
 	case IsBusinessError(err):
 		return http.StatusUnprocessableEntity
+	case IsNotImplementedError(err):
+		return http.StatusNotImplemented
 	case IsDatabaseError(err):
 		return http.StatusInternalServerError
 	default:
@@ -55,6 +57,8 @@ func HTTPStatusWithCode(code ErrorCode) int {
 		return http.StatusConflict
 	case ErrSystemError:
 		return http.StatusInternalServerError
+	case ErrNotImplemented:
+		return http.StatusNotImplemented
 	default:
 		return http.StatusInternalServerError
 	}

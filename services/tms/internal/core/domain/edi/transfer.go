@@ -116,7 +116,7 @@ type EDITransfer struct {
 	InboundMessageID      pulid.ID            `json:"inboundMessageId"      bun:"inbound_message_id,type:VARCHAR(100),nullzero"`
 	Status                TransferStatus      `json:"status"                bun:"status,type:edi_load_tender_transfer_status_enum,notnull"`
 	TenderPayload         LoadTenderPayload   `json:"tenderPayload"         bun:"tender_payload,type:JSONB,notnull"`
-	MappingSnapshot       []MappingResolution `json:"mappingSnapshot"       bun:"mapping_snapshot,type:JSONB,notnull,default:'[]'::jsonb"`
+	MappingSnapshot       []MappingResolution `json:"mappingSnapshot"       bun:"mapping_snapshot,type:JSONB,notnull,default:'[]'"`
 	RejectionReason       string              `json:"rejectionReason"       bun:"rejection_reason,type:TEXT,nullzero"`
 	FailureReason         string              `json:"failureReason"         bun:"failure_reason,type:TEXT,nullzero"`
 	ApprovalWorkflowID    string              `json:"approvalWorkflowId"    bun:"approval_workflow_id,type:VARCHAR(255),nullzero"`

@@ -22,7 +22,7 @@ type AdditionalCharge struct {
 	OrganizationID         pulid.ID                 `json:"organizationId"         bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 	ShipmentID             pulid.ID                 `json:"shipmentId"             bun:"shipment_id,type:VARCHAR(100),notnull"`
 	AccessorialChargeID    pulid.ID                 `json:"accessorialChargeId"    bun:"accessorial_charge_id,type:VARCHAR(100),notnull"`
-	IsSystemGenerated      bool                     `json:"isSystemGenerated"      bun:"is_system_generated,type:BOOLEAN,notnull,default:false"`
+	IsSystemGenerated      bool                     `json:"isSystemGenerated"      bun:"is_system_generated,type:BOOLEAN,notnull"`
 	Method                 accessorialcharge.Method `json:"method"                 bun:"method,type:accessorial_method_enum,notnull"`
 	Amount                 decimal.Decimal          `json:"amount"                 bun:"amount,type:NUMERIC(19,4),notnull"`
 	Unit                   int16                    `json:"unit"                   bun:"unit,type:INTEGER,notnull"`

@@ -26,7 +26,7 @@ type WorkItem struct {
 	ResolvedAt       *int64         `json:"resolvedAt"       bun:"resolved_at,type:BIGINT,nullzero"`
 	CreatedByID      pulid.ID       `json:"createdById"      bun:"created_by_id,type:VARCHAR(100),notnull"`
 	UpdatedByID      pulid.ID       `json:"updatedById"      bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version          int64          `json:"version"          bun:"version,type:BIGINT,notnull,default:0"`
+	Version          int64          `json:"version"          bun:"version,type:BIGINT,notnull"`
 	CreatedAt        int64          `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt        int64          `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

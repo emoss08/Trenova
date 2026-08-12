@@ -34,15 +34,15 @@ type EDICommunicationProfile struct {
 	Status            domaintypes.Status                `json:"status"            bun:"status,type:status_enum,notnull,default:'Active'"`
 	Name              string                            `json:"name"              bun:"name,type:VARCHAR(200),notnull"`
 	Description       string                            `json:"description"       bun:"description,type:TEXT,nullzero"`
-	Config            map[string]any                    `json:"config"            bun:"config,type:JSONB,notnull,default:'{}'::jsonb"`
-	EncryptedSecrets  map[string]string                 `json:"-"                 bun:"encrypted_secrets,type:JSONB,notnull,default:'{}'::jsonb"`
+	Config            map[string]any                    `json:"config"            bun:"config,type:JSONB,notnull,default:'{}'"`
+	EncryptedSecrets  map[string]string                 `json:"-"                 bun:"encrypted_secrets,type:JSONB,notnull,default:'{}'"`
 	SecretState       []CommunicationProfileSecretState `json:"secretState"       bun:"-"`
 	LastPollAttemptAt *int64                            `json:"lastPollAttemptAt" bun:"last_poll_attempt_at,type:BIGINT,nullzero"`
 	LastPollSuccessAt *int64                            `json:"lastPollSuccessAt" bun:"last_poll_success_at,type:BIGINT,nullzero"`
 	LastPollError     string                            `json:"lastPollError"     bun:"last_poll_error,type:TEXT,nullzero"`
 	SearchVector      string                            `json:"-"                 bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank              string                            `json:"-"                 bun:"rank,type:VARCHAR(100),scanonly"`
-	Version           int64                             `json:"version"           bun:"version,type:BIGINT,notnull,default:0"`
+	Version           int64                             `json:"version"           bun:"version,type:BIGINT,notnull"`
 	CreatedAt         int64                             `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt         int64                             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

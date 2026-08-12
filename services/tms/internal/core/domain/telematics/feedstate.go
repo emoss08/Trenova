@@ -18,7 +18,7 @@ type FeedState struct {
 	Cursor         string   `json:"cursor"         bun:"cursor,type:TEXT,nullzero"`
 	LastPolledAt   int64    `json:"lastPolledAt"   bun:"last_polled_at,type:BIGINT,nullzero"`
 	LastSuccessAt  int64    `json:"lastSuccessAt"  bun:"last_success_at,type:BIGINT,nullzero"`
-	FailureCount   int      `json:"failureCount"   bun:"failure_count,type:INT,notnull,default:0"`
+	FailureCount   int      `json:"failureCount"   bun:"failure_count,type:INT,notnull"`
 	LastError      string   `json:"lastError"      bun:"last_error,type:TEXT,nullzero"`
 }
 

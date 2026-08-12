@@ -75,7 +75,7 @@ type FiscalPeriod struct {
 	// Oracle's gl_period_statuses table has an adjustment_period_flag column
 	// that serves exactly this purpose. D365 identifies Period 13 as a
 	// "Closing" transaction type.
-	IsAdjusting bool `json:"isAdjusting" bun:"is_adjusting,type:BOOLEAN,default:false"`
+	IsAdjusting bool `json:"isAdjusting" bun:"is_adjusting,type:BOOLEAN"`
 
 	// AllowAdjustingEntries controls whether adjusting journal entries can
 	// be posted to this specific period. During year-end close, the controller
@@ -92,7 +92,7 @@ type FiscalPeriod struct {
 	// 3. Controller enables AllowAdjustingEntries on Period 12 (and/or Period 13)
 	// 4. Auditors post their adjustments to the designated period(s)
 	// 5. Once audit is complete, periods are closed and eventually permanently closed
-	AllowAdjustingEntries bool `json:"allowAdjustingEntries" bun:"allow_adjusting_entries,type:BOOLEAN,default:false"`
+	AllowAdjustingEntries bool `json:"allowAdjustingEntries" bun:"allow_adjusting_entries,type:BOOLEAN"`
 
 	// AdjustmentDeadline is the cutoff timestamp for posting adjusting entries
 	// to this period. After this deadline, adjusting entries are rejected even

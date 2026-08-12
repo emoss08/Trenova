@@ -30,7 +30,7 @@ type CostingControl struct {
 	UseLiveFuelPrice     bool                `json:"useLiveFuelPrice"     bun:"use_live_fuel_price,type:BOOLEAN,notnull,default:true"`
 	MilesPerGallon       decimal.Decimal     `json:"milesPerGallon"       bun:"miles_per_gallon,type:NUMERIC(6,2),notnull,default:6.5"`
 	IncludeDeadheadMiles bool                `json:"includeDeadheadMiles" bun:"include_deadhead_miles,type:BOOLEAN,notnull,default:true"`
-	GLActualsEnabled     bool                `json:"glActualsEnabled"     bun:"gl_actuals_enabled,type:BOOLEAN,notnull,default:false"`
+	GLActualsEnabled     bool                `json:"glActualsEnabled"     bun:"gl_actuals_enabled,type:BOOLEAN,notnull"`
 	GLRollingMonths      int16               `json:"glRollingMonths"      bun:"gl_rolling_months,type:SMALLINT,notnull,default:3"`
 	PlannedMonthlyMiles  *int64              `json:"plannedMonthlyMiles"  bun:"planned_monthly_miles,type:BIGINT,nullzero"`
 	TargetMarginPercent  decimal.NullDecimal `json:"targetMarginPercent"  bun:"target_margin_percent,type:NUMERIC(6,3),nullzero"`

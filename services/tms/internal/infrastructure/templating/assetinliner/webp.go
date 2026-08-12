@@ -5,16 +5,15 @@ import (
 	"fmt"
 	"image/png"
 
-	"github.com/chai2010/webp"
 	"github.com/emoss08/trenova/shared/imageutils"
+	"github.com/gen2brain/webp"
 )
 
 // NewWebPTranscoder returns the WebP-to-PNG converter imageutils asks for.
 //
-// It lives here rather than in shared/imageutils because the only usable Go WebP
-// decoder requires CGO, and shared/ is imported by services that build without a C
-// toolchain. Keeping the dependency on this side of the boundary means adding WebP
-// support did not force CGO onto gtc or samsara-sim.
+// It lives here rather than in shared/imageutils to keep the decoder dependency out
+// of shared/, which is imported by gtc and samsara-sim. Neither service inlines
+// template assets, so neither needs to carry a WebP codec.
 func NewWebPTranscoder() imageutils.WebPTranscoder {
 	return func(body []byte) ([]byte, error) {
 		img, err := webp.Decode(bytes.NewReader(body))

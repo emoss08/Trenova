@@ -38,7 +38,7 @@ type AccountingControl struct {
 	RequirePeriodCloseApproval   bool                      `json:"requirePeriodCloseApproval"   bun:"require_period_close_approval,type:BOOLEAN,notnull,default:true"`
 	LockedPeriodPostingPolicy    LockedPeriodPostingPolicy `json:"lockedPeriodPostingPolicy"    bun:"locked_period_posting_policy,type:locked_period_posting_policy_enum,notnull,default:'BlockSubledgerAllowManualJe'"`
 	ClosedPeriodPostingPolicy    ClosedPeriodPostingPolicy `json:"closedPeriodPostingPolicy"    bun:"closed_period_posting_policy,type:closed_period_posting_policy_enum,notnull,default:'RequireReopen'"`
-	RequireReconciliationToClose bool                      `json:"requireReconciliationToClose" bun:"require_reconciliation_to_close,type:BOOLEAN,notnull,default:false"`
+	RequireReconciliationToClose bool                      `json:"requireReconciliationToClose" bun:"require_reconciliation_to_close,type:BOOLEAN,notnull"`
 
 	ReconciliationMode              ReconciliationModeType `json:"reconciliationMode"              bun:"reconciliation_mode,type:reconciliation_mode_enum,notnull,default:'Disabled'"`
 	ReconciliationToleranceAmount   decimal.Decimal        `json:"reconciliationToleranceAmount"   bun:"reconciliation_tolerance_amount,type:NUMERIC(19,4),notnull,default:0.0000"`
@@ -69,7 +69,7 @@ type AccountingControl struct {
 	DefaultDriverReimbursementAccountID     pulid.ID `json:"defaultDriverReimbursementAccountId"     bun:"default_driver_reimbursement_account_id,type:VARCHAR(100),nullzero"`
 	DefaultEscrowInterestExpenseAccountID   pulid.ID `json:"defaultEscrowInterestExpenseAccountId"   bun:"default_escrow_interest_expense_account_id,type:VARCHAR(100),nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

@@ -40,7 +40,7 @@ type ShipmentMove struct {
 	Status                 MoveStatus         `json:"status"               bun:"status,type:move_status_enum,notnull,default:'New'"`
 	CoverageType           MoveCoverageType   `json:"coverageType"         bun:"coverage_type,type:VARCHAR(20),notnull,default:'driver'"`
 	Loaded                 bool               `json:"loaded"               bun:"loaded,type:BOOLEAN,notnull,default:true"`
-	Sequence               int64              `json:"sequence"             bun:"sequence,type:INTEGER,notnull,default:0"`
+	Sequence               int64              `json:"sequence"             bun:"sequence,type:INTEGER,notnull"`
 	Distance               *float64           `json:"distance"             bun:"distance,type:FLOAT,nullzero"`
 	DistanceSource         string             `json:"distanceSource"       bun:"distance_source,type:VARCHAR(50),nullzero"`
 	DistanceProvider       string             `json:"distanceProvider"     bun:"distance_provider,type:VARCHAR(50),nullzero"`

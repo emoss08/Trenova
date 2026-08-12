@@ -917,6 +917,87 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceJurisdictionRuleOverride.String(),
+		DisplayName: "Carrier Override",
+		Description: "This organization's stricter posture on a jurisdiction. " +
+			"Unlike a jurisdiction rule these are yours alone, and an override can " +
+			"only tighten a state limit, never loosen one.",
+		Category:       "Operations",
+		ParentResource: ResourceJurisdictionRule.String(),
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View carrier overrides"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Hold this fleet to a stricter limit than a state requires",
+			},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify an override"},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Remove an override, returning the jurisdiction to its statutory limits",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceJurisdictionRule.String(),
+		DisplayName: "Jurisdiction Rule",
+		Description: "Shared oversize and overweight limits per state. " +
+			"This data is global: it has no organization column and every tenant " +
+			"reads the same rows, so a change here alters what the whole platform " +
+			"is told is legal. Carrier-specific posture belongs in an override.",
+		Category: "Operations",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View jurisdiction limits and their verification state",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Add a jurisdiction rule, visible to every organization",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Change limits every organization is held to",
+			},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Verify",
+				Description: "Confirm a rule against the issuing state, or mark it disputed",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:       ResourcePermit.String(),
+		DisplayName:    "Oversize Permit",
+		Description:    "Oversize and overweight permits and their derived requirements",
+		Category:       "Operations",
+		ParentResource: ResourceShipment.String(),
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View permits and permit requirements",
+			},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Record permits"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify recorded permits"},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Waive",
+				Description: "Waive a permit requirement, accepting the compliance risk",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceServiceFailure.String(),
 		DisplayName: "Service Failure",
 		Description: "Service failure investigation and approval records",

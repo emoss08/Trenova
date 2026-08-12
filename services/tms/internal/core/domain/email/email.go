@@ -39,7 +39,7 @@ type Profile struct {
 	AuthType       AuthType      `json:"-"              bun:"auth_type,type:email_auth_type_enum,notnull"`
 	EncryptionType Encryption    `json:"-"              bun:"encryption_type,type:email_encryption_type_enum,notnull"`
 	Status         ProfileStatus `json:"status"         bun:"status,type:status_enum,notnull"`
-	Version        int64         `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
+	Version        int64         `json:"version"        bun:"version,type:BIGINT,notnull"`
 	CreatedAt      int64         `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64         `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector   string        `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`

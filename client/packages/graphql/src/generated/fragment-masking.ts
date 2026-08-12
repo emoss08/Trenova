@@ -14,6 +14,11 @@ export type FragmentType<TDocumentType extends DocumentTypeDecoration<any, any>>
     : never
   : never;
 
+// return partial if `fragmentType` is partial e.g. because of conditional directives
+export function getFragmentData<TType>(
+  _documentNode: DocumentTypeDecoration<TType, any>,
+  fragmentType: FragmentType<DocumentTypeDecoration<Partial<TType>, any>>
+): Partial<TType>;
 // return non-nullable if `fragmentType` is non-nullable
 export function getFragmentData<TType>(
   _documentNode: DocumentTypeDecoration<TType, any>,
@@ -54,11 +59,6 @@ export function getFragmentData<TType>(
   _documentNode: DocumentTypeDecoration<TType, any>,
   fragmentType: ReadonlyArray<FragmentType<DocumentTypeDecoration<TType, any>>> | null | undefined
 ): ReadonlyArray<TType> | null | undefined;
-// return partial if `fragmentType` is partial e.g. because of conditional directives
-export function getFragmentData<TType>(
-  _documentNode: DocumentTypeDecoration<TType, any>,
-  fragmentType: FragmentType<DocumentTypeDecoration<Partial<TType>, any>>
-): Partial<TType>;
 export function getFragmentData<TType>(
   _documentNode: DocumentTypeDecoration<TType, any>,
   fragmentType: FragmentType<DocumentTypeDecoration<TType, any>> | Array<FragmentType<DocumentTypeDecoration<TType, any>>> | ReadonlyArray<FragmentType<DocumentTypeDecoration<TType, any>>> | null | undefined

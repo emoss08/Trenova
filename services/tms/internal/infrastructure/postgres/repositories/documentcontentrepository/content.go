@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -274,7 +275,10 @@ func (r *repository) SearchByResource(
 				Where(docCols.ResourceType.Eq(), req.ResourceType)
 		})
 
-	if query != "" {
+	switch {
+	case query == "":
+		selectQuery = selectQuery.Order(docCols.CreatedAt.OrderDesc())
+	case dbdialect.FromBun(selectQuery.DB()).Supports(dbdialect.CapFullTextSearch):
 		selectQuery = selectQuery.Where(`
 			doc.search_vector @@ websearch_to_tsquery('english', ?)
 			OR dc.search_vector @@ websearch_to_tsquery('english', ?)`,
@@ -288,8 +292,12 @@ func (r *repository) SearchByResource(
 			query,
 			query,
 		)
-	} else {
-		selectQuery = selectQuery.Order(docCols.CreatedAt.OrderDesc())
+	default:
+		pattern := "%" + query + "%"
+		selectQuery = selectQuery.Where(
+			"doc.file_name LIKE ? OR doc.original_name LIKE ? OR dc.content_text LIKE ?",
+			pattern, pattern, pattern,
+		).Order(docCols.CreatedAt.OrderDesc())
 	}
 
 	if req.Limit > 0 {

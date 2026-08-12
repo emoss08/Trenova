@@ -14,6 +14,7 @@ const AdditionalChargesSection = lazy(
 );
 const ShipmentGeneralInformation = lazy(() => import("./shipment-general-information"));
 const CommoditiesSection = lazy(() => import("./shipment-commodities"));
+const LoadEnvelopePanel = lazy(() => import("./load-envelope-panel"));
 const ShipmentMoveDetails = lazy(() => import("./move/shipment-move-details"));
 const LoadPlannerDialog = lazy(() => import("./trailer-loading/trailer-loading-drawer"));
 
@@ -47,6 +48,7 @@ export function ShipmentForm() {
             </SectionLock>
             <ShipmentGeneralInformation />
             <CommoditiesSection />
+            <LoadEnvelopePanel />
             <ShipmentMoveDetails />
           </div>
           {isFullyLocked && (

@@ -26,12 +26,12 @@ type DetentionPolicyTier struct {
 	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	DetentionPolicyID pulid.ID        `json:"detentionPolicyId" bun:"detention_policy_id,type:VARCHAR(100),notnull"`
-	FromMinute        int32           `json:"fromMinute"        bun:"from_minute,type:INTEGER,notnull,default:0"`
+	FromMinute        int32           `json:"fromMinute"        bun:"from_minute,type:INTEGER,notnull"`
 	ToMinute          *int32          `json:"toMinute"          bun:"to_minute,type:INTEGER,nullzero"`
 	Rate              decimal.Decimal `json:"rate"              bun:"rate,type:NUMERIC(19,4),notnull,default:0"`
 	RateUnit          TierRateUnit    `json:"rateUnit"          bun:"rate_unit,type:detention_tier_rate_unit_enum,notnull,default:'Hour'"`
 	Label             string          `json:"label"             bun:"label,type:VARCHAR(100),nullzero"`
-	SortOrder         int32           `json:"sortOrder"         bun:"sort_order,type:INTEGER,notnull,default:0"`
+	SortOrder         int32           `json:"sortOrder"         bun:"sort_order,type:INTEGER,notnull"`
 	CreatedAt         int64           `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt         int64           `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

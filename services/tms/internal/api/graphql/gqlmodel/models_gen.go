@@ -43,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
@@ -2358,6 +2359,28 @@ type JournalReversalEdge struct {
 	Cursor string                    `json:"cursor"`
 }
 
+type JurisdictionRuleConnection struct {
+	Edges      []*JurisdictionRuleEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount *int                    `json:"totalCount,omitempty"`
+}
+
+type JurisdictionRuleEdge struct {
+	Node   *jurisdictionrule.JurisdictionRule `json:"node"`
+	Cursor string                             `json:"cursor"`
+}
+
+type JurisdictionRuleOverrideConnection struct {
+	Edges      []*JurisdictionRuleOverrideEdge `json:"edges"`
+	PageInfo   *PageInfo                       `json:"pageInfo"`
+	TotalCount *int                            `json:"totalCount,omitempty"`
+}
+
+type JurisdictionRuleOverrideEdge struct {
+	Node   *jurisdictionrule.Override `json:"node"`
+	Cursor string                     `json:"cursor"`
+}
+
 type LocateTractorInput struct {
 	TractorID     string `json:"tractorId"`
 	NewLocationID string `json:"newLocationId"`
@@ -4370,6 +4393,15 @@ type ShipmentUIPolicy struct {
 	CheckForDuplicateBols  bool `json:"checkForDuplicateBols"`
 	CheckHazmatSegregation bool `json:"checkHazmatSegregation"`
 	MaxShipmentWeightLimit int  `json:"maxShipmentWeightLimit"`
+	// The mode profile resolved for this tenant, carrying its capabilities and the
+	// resolved state of every rule. Null when no profile matched.
+	//
+	// Sent as JSON rather than a typed selection because `rules` is keyed by rule
+	// key, and GraphQL has no map type. Modelling it would mean a list of key/value
+	// pairs plus a second schema to keep in step with the Go structs; the client
+	// validates the payload against resolvedModeProfileSchema instead, so the
+	// `json` tags on modeprofile.ResolvedPolicy are the single contract.
+	Profile map[string]any `json:"profile,omitempty"`
 }
 
 type ShipmentUnassignedAnalytics struct {

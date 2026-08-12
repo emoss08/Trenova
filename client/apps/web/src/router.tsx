@@ -1131,6 +1131,29 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "jurisdiction-rules",
+                loader: combineLoaders(
+                  protectedLoader,
+                  createPermissionLoader(Resource.JurisdictionRule),
+                ),
+                async lazy() {
+                  const { JurisdictionRulesPage } = await import("@/routes/jurisdiction-rule/page");
+                  return { Component: JurisdictionRulesPage };
+                },
+              },
+              {
+                path: "jurisdiction-rule-overrides",
+                loader: combineLoaders(
+                  protectedLoader,
+                  createPermissionLoader(Resource.JurisdictionRuleOverride),
+                ),
+                async lazy() {
+                  const { JurisdictionRuleOverridesPage } =
+                    await import("@/routes/jurisdiction-rule-override/page");
+                  return { Component: JurisdictionRuleOverridesPage };
+                },
+              },
+              {
                 path: "service-failure-reason-codes",
                 loader: combineLoaders(
                   protectedLoader,

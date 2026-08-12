@@ -55,7 +55,7 @@ type RecurringShipment struct {
 	EndDate                 *int64          `json:"endDate"                 bun:"end_date,type:BIGINT,nullzero"`
 	MaxOccurrences          *int32          `json:"maxOccurrences"          bun:"max_occurrences,type:INTEGER,nullzero"`
 	LeadTimeDays            int16           `json:"leadTimeDays"            bun:"lead_time_days,type:SMALLINT,notnull,default:1"`
-	SkipWeekends            bool            `json:"skipWeekends"            bun:"skip_weekends,type:BOOLEAN,notnull,default:false"`
+	SkipWeekends            bool            `json:"skipWeekends"            bun:"skip_weekends,type:BOOLEAN,notnull"`
 	ExceptionPolicy         ExceptionPolicy `json:"exceptionPolicy"         bun:"exception_policy,type:recurring_shipment_exception_policy_enum,notnull,default:'Skip'"`
 	BlackoutDates           []string        `json:"blackoutDates"           bun:"blackout_dates,type:TEXT[],array,nullzero"`
 	AutoGenerate            bool            `json:"autoGenerate"            bun:"auto_generate,type:BOOLEAN,notnull,default:true"`
@@ -63,8 +63,8 @@ type RecurringShipment struct {
 	NextOccurrenceSourceAt  *int64          `json:"nextOccurrenceSourceAt"  bun:"next_occurrence_source_at,type:BIGINT,nullzero"`
 	LastOccurrenceAt        *int64          `json:"lastOccurrenceAt"        bun:"last_occurrence_at,type:BIGINT,nullzero"`
 	LastRunAt               *int64          `json:"lastRunAt"               bun:"last_run_at,type:BIGINT,nullzero"`
-	GenerationCount         int64           `json:"generationCount"         bun:"generation_count,type:BIGINT,notnull,default:0"`
-	ConsecutiveFailures     int32           `json:"consecutiveFailures"     bun:"consecutive_failures,type:INTEGER,notnull,default:0"`
+	GenerationCount         int64           `json:"generationCount"         bun:"generation_count,type:BIGINT,notnull"`
+	ConsecutiveFailures     int32           `json:"consecutiveFailures"     bun:"consecutive_failures,type:INTEGER,notnull"`
 	Version                 int64           `json:"version"                 bun:"version,type:BIGINT"`
 	CreatedAt               int64           `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt               int64           `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

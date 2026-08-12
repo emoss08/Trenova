@@ -295,10 +295,15 @@ func TestProject_CanadianJurisdictionSkipsSplitAndRestart(t *testing.T) {
 		BreakMs: 8 * hourMs,
 	}
 	result := Project(Input{
-		Now:          baseTime,
-		Departure:    baseTime + hoursSec(40),
-		TripDriveMs:  hoursMs(8),
-		Clocks:       Clocks{DriveMs: hoursMs(8), ShiftMs: hoursMs(10), CycleMs: hoursMs(1), BreakMs: hoursMs(8)},
+		Now:         baseTime,
+		Departure:   baseTime + hoursSec(40),
+		TripDriveMs: hoursMs(8),
+		Clocks: Clocks{
+			DriveMs: hoursMs(8),
+			ShiftMs: hoursMs(10),
+			CycleMs: hoursMs(1),
+			BreakMs: hoursMs(8),
+		},
 		ClocksAt:     baseTime,
 		DutyStatus:   telematics.DutyStatusOffDuty,
 		Limits:       limits,

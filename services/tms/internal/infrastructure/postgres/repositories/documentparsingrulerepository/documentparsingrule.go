@@ -274,7 +274,7 @@ func (r *repository) ArchivePublishedVersions(
 		NewUpdate().
 		Model((*documentparsingrule.RuleVersion)(nil)).
 		Set(cols.Status.Set(), documentparsingrule.VersionStatusArchived).
-		Set(cols.UpdatedAt.SetExpr("extract(epoch from current_timestamp)::bigint")).
+		Set(cols.UpdatedAt.SetExpr(r.db.NowEpoch())).
 		Where(cols.RuleSetID.Eq(), ruleSetID).
 		Where(cols.OrganizationID.Eq(), orgID).
 		Where(cols.BusinessUnitID.Eq(), buID).
@@ -292,7 +292,7 @@ func (r *repository) SetPublishedVersion(
 		NewUpdate().
 		Model((*documentparsingrule.RuleSet)(nil)).
 		Set(cols.PublishedVersionID.Set(), versionID).
-		Set(cols.UpdatedAt.SetExpr("extract(epoch from current_timestamp)::bigint")).
+		Set(cols.UpdatedAt.SetExpr(r.db.NowEpoch())).
 		Where(cols.ID.Eq(), ruleSetID).
 		Where(cols.OrganizationID.Eq(), orgID).
 		Where(cols.BusinessUnitID.Eq(), buID).

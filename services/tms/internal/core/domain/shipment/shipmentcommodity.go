@@ -25,6 +25,9 @@ type ShipmentCommodity struct {
 	CommodityID    pulid.ID `json:"commodityId"    bun:"commodity_id,pk,notnull,type:VARCHAR(100)"`
 	Weight         int64    `json:"weight"         bun:"weight,type:INTEGER,notnull"`
 	Pieces         int64    `json:"pieces"         bun:"pieces,type:INTEGER,notnull"`
+	LengthFeet     *float64 `json:"lengthFeet"     bun:"length_feet,type:NUMERIC(10,2),nullzero"`
+	WidthFeet      *float64 `json:"widthFeet"      bun:"width_feet,type:NUMERIC(10,2),nullzero"`
+	HeightFeet     *float64 `json:"heightFeet"     bun:"height_feet,type:NUMERIC(10,2),nullzero"`
 	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -53,6 +53,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/journalsource"
+	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
@@ -127,6 +128,7 @@ type ResolverRoot interface {
 	Invoice() InvoiceResolver
 	InvoiceLine() InvoiceLineResolver
 	JournalEntryLine() JournalEntryLineResolver
+	JurisdictionRule() JurisdictionRuleResolver
 	LocationCategory() LocationCategoryResolver
 	Mutation() MutationResolver
 	Order() OrderResolver
@@ -3581,6 +3583,77 @@ type ComplexityRoot struct {
 		Status               func(childComplexity int) int
 	}
 
+	JurisdictionRule struct {
+		CreatedAt             func(childComplexity int) int
+		DaylightOnly          func(childComplexity int) int
+		EffectiveEndDate      func(childComplexity int) int
+		EffectiveStartDate    func(childComplexity int) int
+		HolidayRestricted     func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		MaxHeightFeet         func(childComplexity int) int
+		MaxLengthFeet         func(childComplexity int) int
+		MaxWeightPounds       func(childComplexity int) int
+		MaxWidthFeet          func(childComplexity int) int
+		PermitBaseFee         func(childComplexity int) int
+		PermitLeadTimeDays    func(childComplexity int) int
+		PermitPerMileFee      func(childComplexity int) int
+		PermitValidityDays    func(childComplexity int) int
+		RushHourRestricted    func(childComplexity int) int
+		SourceNote            func(childComplexity int) int
+		SourceURL             func(childComplexity int) int
+		State                 func(childComplexity int) int
+		StateID               func(childComplexity int) int
+		Status                func(childComplexity int) int
+		SuperloadWeightPounds func(childComplexity int) int
+		SuperloadWidthFeet    func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+		VerificationState     func(childComplexity int) int
+		VerifiedAt            func(childComplexity int) int
+		Version               func(childComplexity int) int
+		WeekendRestricted     func(childComplexity int) int
+	}
+
+	JurisdictionRuleConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	JurisdictionRuleEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	JurisdictionRuleOverride struct {
+		BusinessUnitID     func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		DaylightOnly       func(childComplexity int) int
+		HolidayRestricted  func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		MaxHeightFeet      func(childComplexity int) int
+		MaxLengthFeet      func(childComplexity int) int
+		MaxWeightPounds    func(childComplexity int) int
+		MaxWidthFeet       func(childComplexity int) int
+		OrganizationID     func(childComplexity int) int
+		PermitLeadTimeDays func(childComplexity int) int
+		Reason             func(childComplexity int) int
+		State              func(childComplexity int) int
+		StateID            func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+	}
+
+	JurisdictionRuleOverrideConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	JurisdictionRuleOverrideEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Location struct {
 		AddressLine1         func(childComplexity int) int
 		AddressLine2         func(childComplexity int) int
@@ -4462,6 +4535,9 @@ type ComplexityRoot struct {
 		JournalReversal                     func(childComplexity int, id string) int
 		JournalReversals                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		JournalSourceByObject               func(childComplexity int, sourceType string, sourceID string) int
+		JurisdictionRule                    func(childComplexity int, id string) int
+		JurisdictionRuleOverrides           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		JurisdictionRules                   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		LiveTenderByMove                    func(childComplexity int, moveID string) int
 		Location                            func(childComplexity int, id string) int
 		LocationCategories                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -6169,6 +6245,7 @@ type ComplexityRoot struct {
 		CheckForDuplicateBols  func(childComplexity int) int
 		CheckHazmatSegregation func(childComplexity int) int
 		MaxShipmentWeightLimit func(childComplexity int) int
+		Profile                func(childComplexity int) int
 	}
 
 	ShipmentUnassignedAnalytics struct {
@@ -7001,6 +7078,10 @@ type InvoiceLineResolver interface {
 type JournalEntryLineResolver interface {
 	GlAccount(ctx context.Context, obj *journalentry.Line) (*gqlmodel.JournalEntryLineAccount, error)
 }
+type JurisdictionRuleResolver interface {
+	PermitBaseFee(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (*string, error)
+	PermitPerMileFee(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (*string, error)
+}
 type LocationCategoryResolver interface {
 	FacilityType(ctx context.Context, obj *locationcategory.LocationCategory) (*locationcategory.FacilityType, error)
 }
@@ -7440,6 +7521,9 @@ type QueryResolver interface {
 	JournalSourceByObject(ctx context.Context, sourceType string, sourceID string) (*journalsource.Source, error)
 	JournalReversals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalReversalConnection, error)
 	JournalReversal(ctx context.Context, id string) (*journalreversal.Reversal, error)
+	JurisdictionRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleConnection, error)
+	JurisdictionRule(ctx context.Context, id string) (*jurisdictionrule.JurisdictionRule, error)
+	JurisdictionRuleOverrides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleOverrideConnection, error)
 	Locations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.LocationConnection, error)
 	Location(ctx context.Context, id string) (*location.Location, error)
 	LocationCategories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.LocationCategoryConnection, error)
@@ -23513,6 +23597,330 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.JournalSourceInfo.Status(childComplexity), true
 
+	case "JurisdictionRule.createdAt":
+		if e.ComplexityRoot.JurisdictionRule.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.CreatedAt(childComplexity), true
+	case "JurisdictionRule.daylightOnly":
+		if e.ComplexityRoot.JurisdictionRule.DaylightOnly == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.DaylightOnly(childComplexity), true
+	case "JurisdictionRule.effectiveEndDate":
+		if e.ComplexityRoot.JurisdictionRule.EffectiveEndDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.EffectiveEndDate(childComplexity), true
+	case "JurisdictionRule.effectiveStartDate":
+		if e.ComplexityRoot.JurisdictionRule.EffectiveStartDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.EffectiveStartDate(childComplexity), true
+	case "JurisdictionRule.holidayRestricted":
+		if e.ComplexityRoot.JurisdictionRule.HolidayRestricted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.HolidayRestricted(childComplexity), true
+	case "JurisdictionRule.id":
+		if e.ComplexityRoot.JurisdictionRule.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.ID(childComplexity), true
+	case "JurisdictionRule.maxHeightFeet":
+		if e.ComplexityRoot.JurisdictionRule.MaxHeightFeet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.MaxHeightFeet(childComplexity), true
+	case "JurisdictionRule.maxLengthFeet":
+		if e.ComplexityRoot.JurisdictionRule.MaxLengthFeet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.MaxLengthFeet(childComplexity), true
+	case "JurisdictionRule.maxWeightPounds":
+		if e.ComplexityRoot.JurisdictionRule.MaxWeightPounds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.MaxWeightPounds(childComplexity), true
+	case "JurisdictionRule.maxWidthFeet":
+		if e.ComplexityRoot.JurisdictionRule.MaxWidthFeet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.MaxWidthFeet(childComplexity), true
+	case "JurisdictionRule.permitBaseFee":
+		if e.ComplexityRoot.JurisdictionRule.PermitBaseFee == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.PermitBaseFee(childComplexity), true
+	case "JurisdictionRule.permitLeadTimeDays":
+		if e.ComplexityRoot.JurisdictionRule.PermitLeadTimeDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.PermitLeadTimeDays(childComplexity), true
+	case "JurisdictionRule.permitPerMileFee":
+		if e.ComplexityRoot.JurisdictionRule.PermitPerMileFee == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.PermitPerMileFee(childComplexity), true
+	case "JurisdictionRule.permitValidityDays":
+		if e.ComplexityRoot.JurisdictionRule.PermitValidityDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.PermitValidityDays(childComplexity), true
+	case "JurisdictionRule.rushHourRestricted":
+		if e.ComplexityRoot.JurisdictionRule.RushHourRestricted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.RushHourRestricted(childComplexity), true
+	case "JurisdictionRule.sourceNote":
+		if e.ComplexityRoot.JurisdictionRule.SourceNote == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.SourceNote(childComplexity), true
+	case "JurisdictionRule.sourceUrl":
+		if e.ComplexityRoot.JurisdictionRule.SourceURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.SourceURL(childComplexity), true
+	case "JurisdictionRule.state":
+		if e.ComplexityRoot.JurisdictionRule.State == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.State(childComplexity), true
+	case "JurisdictionRule.stateId":
+		if e.ComplexityRoot.JurisdictionRule.StateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.StateID(childComplexity), true
+	case "JurisdictionRule.status":
+		if e.ComplexityRoot.JurisdictionRule.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.Status(childComplexity), true
+	case "JurisdictionRule.superloadWeightPounds":
+		if e.ComplexityRoot.JurisdictionRule.SuperloadWeightPounds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.SuperloadWeightPounds(childComplexity), true
+	case "JurisdictionRule.superloadWidthFeet":
+		if e.ComplexityRoot.JurisdictionRule.SuperloadWidthFeet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.SuperloadWidthFeet(childComplexity), true
+	case "JurisdictionRule.updatedAt":
+		if e.ComplexityRoot.JurisdictionRule.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.UpdatedAt(childComplexity), true
+	case "JurisdictionRule.verificationState":
+		if e.ComplexityRoot.JurisdictionRule.VerificationState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.VerificationState(childComplexity), true
+	case "JurisdictionRule.verifiedAt":
+		if e.ComplexityRoot.JurisdictionRule.VerifiedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.VerifiedAt(childComplexity), true
+	case "JurisdictionRule.version":
+		if e.ComplexityRoot.JurisdictionRule.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.Version(childComplexity), true
+	case "JurisdictionRule.weekendRestricted":
+		if e.ComplexityRoot.JurisdictionRule.WeekendRestricted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRule.WeekendRestricted(childComplexity), true
+
+	case "JurisdictionRuleConnection.edges":
+		if e.ComplexityRoot.JurisdictionRuleConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleConnection.Edges(childComplexity), true
+	case "JurisdictionRuleConnection.pageInfo":
+		if e.ComplexityRoot.JurisdictionRuleConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleConnection.PageInfo(childComplexity), true
+	case "JurisdictionRuleConnection.totalCount":
+		if e.ComplexityRoot.JurisdictionRuleConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleConnection.TotalCount(childComplexity), true
+
+	case "JurisdictionRuleEdge.cursor":
+		if e.ComplexityRoot.JurisdictionRuleEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleEdge.Cursor(childComplexity), true
+	case "JurisdictionRuleEdge.node":
+		if e.ComplexityRoot.JurisdictionRuleEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleEdge.Node(childComplexity), true
+
+	case "JurisdictionRuleOverride.businessUnitId":
+		if e.ComplexityRoot.JurisdictionRuleOverride.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.BusinessUnitID(childComplexity), true
+	case "JurisdictionRuleOverride.createdAt":
+		if e.ComplexityRoot.JurisdictionRuleOverride.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.CreatedAt(childComplexity), true
+	case "JurisdictionRuleOverride.daylightOnly":
+		if e.ComplexityRoot.JurisdictionRuleOverride.DaylightOnly == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.DaylightOnly(childComplexity), true
+	case "JurisdictionRuleOverride.holidayRestricted":
+		if e.ComplexityRoot.JurisdictionRuleOverride.HolidayRestricted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.HolidayRestricted(childComplexity), true
+	case "JurisdictionRuleOverride.id":
+		if e.ComplexityRoot.JurisdictionRuleOverride.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.ID(childComplexity), true
+	case "JurisdictionRuleOverride.maxHeightFeet":
+		if e.ComplexityRoot.JurisdictionRuleOverride.MaxHeightFeet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.MaxHeightFeet(childComplexity), true
+	case "JurisdictionRuleOverride.maxLengthFeet":
+		if e.ComplexityRoot.JurisdictionRuleOverride.MaxLengthFeet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.MaxLengthFeet(childComplexity), true
+	case "JurisdictionRuleOverride.maxWeightPounds":
+		if e.ComplexityRoot.JurisdictionRuleOverride.MaxWeightPounds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.MaxWeightPounds(childComplexity), true
+	case "JurisdictionRuleOverride.maxWidthFeet":
+		if e.ComplexityRoot.JurisdictionRuleOverride.MaxWidthFeet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.MaxWidthFeet(childComplexity), true
+	case "JurisdictionRuleOverride.organizationId":
+		if e.ComplexityRoot.JurisdictionRuleOverride.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.OrganizationID(childComplexity), true
+	case "JurisdictionRuleOverride.permitLeadTimeDays":
+		if e.ComplexityRoot.JurisdictionRuleOverride.PermitLeadTimeDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.PermitLeadTimeDays(childComplexity), true
+	case "JurisdictionRuleOverride.reason":
+		if e.ComplexityRoot.JurisdictionRuleOverride.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.Reason(childComplexity), true
+	case "JurisdictionRuleOverride.state":
+		if e.ComplexityRoot.JurisdictionRuleOverride.State == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.State(childComplexity), true
+	case "JurisdictionRuleOverride.stateId":
+		if e.ComplexityRoot.JurisdictionRuleOverride.StateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.StateID(childComplexity), true
+	case "JurisdictionRuleOverride.updatedAt":
+		if e.ComplexityRoot.JurisdictionRuleOverride.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.UpdatedAt(childComplexity), true
+	case "JurisdictionRuleOverride.version":
+		if e.ComplexityRoot.JurisdictionRuleOverride.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverride.Version(childComplexity), true
+
+	case "JurisdictionRuleOverrideConnection.edges":
+		if e.ComplexityRoot.JurisdictionRuleOverrideConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverrideConnection.Edges(childComplexity), true
+	case "JurisdictionRuleOverrideConnection.pageInfo":
+		if e.ComplexityRoot.JurisdictionRuleOverrideConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverrideConnection.PageInfo(childComplexity), true
+	case "JurisdictionRuleOverrideConnection.totalCount":
+		if e.ComplexityRoot.JurisdictionRuleOverrideConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverrideConnection.TotalCount(childComplexity), true
+
+	case "JurisdictionRuleOverrideEdge.cursor":
+		if e.ComplexityRoot.JurisdictionRuleOverrideEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverrideEdge.Cursor(childComplexity), true
+	case "JurisdictionRuleOverrideEdge.node":
+		if e.ComplexityRoot.JurisdictionRuleOverrideEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.JurisdictionRuleOverrideEdge.Node(childComplexity), true
+
 	case "Location.addressLine1":
 		if e.ComplexityRoot.Location.AddressLine1 == nil {
 			break
@@ -29655,6 +30063,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.JournalSourceByObject(childComplexity, args["sourceType"].(string), args["sourceId"].(string)), true
+	case "Query.jurisdictionRule":
+		if e.ComplexityRoot.Query.JurisdictionRule == nil {
+			break
+		}
+
+		args, err := ec.field_Query_jurisdictionRule_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.JurisdictionRule(childComplexity, args["id"].(string)), true
+	case "Query.jurisdictionRuleOverrides":
+		if e.ComplexityRoot.Query.JurisdictionRuleOverrides == nil {
+			break
+		}
+
+		args, err := ec.field_Query_jurisdictionRuleOverrides_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.JurisdictionRuleOverrides(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.jurisdictionRules":
+		if e.ComplexityRoot.Query.JurisdictionRules == nil {
+			break
+		}
+
+		args, err := ec.field_Query_jurisdictionRules_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.JurisdictionRules(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.liveTenderByMove":
 		if e.ComplexityRoot.Query.LiveTenderByMove == nil {
 			break
@@ -38112,6 +38553,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentUIPolicy.MaxShipmentWeightLimit(childComplexity), true
+	case "ShipmentUIPolicy.profile":
+		if e.ComplexityRoot.ShipmentUIPolicy.Profile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentUIPolicy.Profile(childComplexity), true
 
 	case "ShipmentUnassignedAnalytics.count":
 		if e.ComplexityRoot.ShipmentUnassignedAnalytics.Count == nil {
@@ -48669,6 +49116,140 @@ extend type Query {
   journalReversal(id: ID!): JournalReversal
 }
 `, BuiltIn: false},
+	{Name: "../schema/jurisdiction_rule.graphqls", Input: `enum JurisdictionRuleStatus {
+  Active
+  Inactive
+  Draft
+}
+
+enum JurisdictionVerificationState {
+  Unverified
+  Verified
+  Disputed
+}
+
+"""
+Shared oversize and overweight limits for a jurisdiction.
+
+This data is global. It carries no organization or business unit, because the
+legal width of a load in a given state does not vary by carrier — a carrier
+expressing a stricter posture records a JurisdictionRuleOverride instead. A
+change here is visible to every organization on the platform.
+"""
+type JurisdictionRule {
+  id: ID!
+  stateId: ID!
+  status: JurisdictionRuleStatus!
+
+  maxWidthFeet: Float!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+
+  superloadWidthFeet: Float
+  superloadWeightPounds: Int
+
+  daylightOnly: Boolean!
+  rushHourRestricted: Boolean!
+  weekendRestricted: Boolean!
+  holidayRestricted: Boolean!
+
+  permitLeadTimeDays: Int!
+  permitValidityDays: Int!
+  permitBaseFee: String
+  permitPerMileFee: String
+
+  """
+  What this row was checked against. Seeded rows carry a note saying which
+  fields are a federal baseline and which are simply not populated.
+  """
+  sourceNote: String
+  sourceUrl: String
+
+  """
+  Whether anyone has confirmed this row against the issuing state. Requirements
+  derived from an unverified row carry that state through to the operator.
+  """
+  verificationState: JurisdictionVerificationState!
+  verifiedAt: Int
+
+  effectiveStartDate: Int
+  effectiveEndDate: Int
+
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+
+  state: UsState
+}
+
+type JurisdictionRuleEdge {
+  node: JurisdictionRule!
+  cursor: String!
+}
+
+type JurisdictionRuleConnection {
+  edges: [JurisdictionRuleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  jurisdictionRules(input: DataTableConnectionInput!): JurisdictionRuleConnection!
+  jurisdictionRule(id: ID!): JurisdictionRule
+}
+
+"""
+One organization's stricter posture on a jurisdiction.
+
+Unlike JurisdictionRule these rows are tenant data. Every field is optional —
+an unset field defers to the statutory rule — and the engine applies a value
+only when it is stricter than the statute, so a permissive override cannot make
+an illegal load look legal.
+"""
+type JurisdictionRuleOverride {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  stateId: ID!
+
+  maxWidthFeet: Float
+  maxHeightFeet: Float
+  maxLengthFeet: Float
+  maxWeightPounds: Int
+
+  permitLeadTimeDays: Int
+
+  daylightOnly: Boolean
+  holidayRestricted: Boolean
+
+  """Why this organization runs tighter than the statute. Required, minimum ten characters."""
+  reason: String!
+
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+
+  state: UsState
+}
+
+type JurisdictionRuleOverrideEdge {
+  node: JurisdictionRuleOverride!
+  cursor: String!
+}
+
+type JurisdictionRuleOverrideConnection {
+  edges: [JurisdictionRuleOverrideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  jurisdictionRuleOverrides(
+    input: DataTableConnectionInput!
+  ): JurisdictionRuleOverrideConnection!
+}
+`, BuiltIn: false},
 	{Name: "../schema/location.graphqls", Input: `enum LocationGeofenceType {
   auto
   circle
@@ -50620,6 +51201,17 @@ type ShipmentUIPolicy {
   checkForDuplicateBols: Boolean!
   checkHazmatSegregation: Boolean!
   maxShipmentWeightLimit: Int!
+  """
+  The mode profile resolved for this tenant, carrying its capabilities and the
+  resolved state of every rule. Null when no profile matched.
+
+  Sent as JSON rather than a typed selection because ` + "`" + `rules` + "`" + ` is keyed by rule
+  key, and GraphQL has no map type. Modelling it would mean a list of key/value
+  pairs plus a second schema to keep in step with the Go structs; the client
+  validates the payload against resolvedModeProfileSchema instead, so the
+  ` + "`" + `json` + "`" + ` tags on modeprofile.ResolvedPolicy are the single contract.
+  """
+  profile: JSON
 }
 
 type ShipmentBillingReadinessPolicy {
@@ -59518,6 +60110,148 @@ func (ec *executionContext) childFields_JournalSourceInfo(ctx context.Context, f
 	return nil, fmt.Errorf("no field named %q was found under type JournalSourceInfo", field.Name)
 }
 
+func (ec *executionContext) childFields_JurisdictionRule(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_JurisdictionRule_id(ctx, field)
+	case "stateId":
+		return ec.fieldContext_JurisdictionRule_stateId(ctx, field)
+	case "status":
+		return ec.fieldContext_JurisdictionRule_status(ctx, field)
+	case "maxWidthFeet":
+		return ec.fieldContext_JurisdictionRule_maxWidthFeet(ctx, field)
+	case "maxHeightFeet":
+		return ec.fieldContext_JurisdictionRule_maxHeightFeet(ctx, field)
+	case "maxLengthFeet":
+		return ec.fieldContext_JurisdictionRule_maxLengthFeet(ctx, field)
+	case "maxWeightPounds":
+		return ec.fieldContext_JurisdictionRule_maxWeightPounds(ctx, field)
+	case "superloadWidthFeet":
+		return ec.fieldContext_JurisdictionRule_superloadWidthFeet(ctx, field)
+	case "superloadWeightPounds":
+		return ec.fieldContext_JurisdictionRule_superloadWeightPounds(ctx, field)
+	case "daylightOnly":
+		return ec.fieldContext_JurisdictionRule_daylightOnly(ctx, field)
+	case "rushHourRestricted":
+		return ec.fieldContext_JurisdictionRule_rushHourRestricted(ctx, field)
+	case "weekendRestricted":
+		return ec.fieldContext_JurisdictionRule_weekendRestricted(ctx, field)
+	case "holidayRestricted":
+		return ec.fieldContext_JurisdictionRule_holidayRestricted(ctx, field)
+	case "permitLeadTimeDays":
+		return ec.fieldContext_JurisdictionRule_permitLeadTimeDays(ctx, field)
+	case "permitValidityDays":
+		return ec.fieldContext_JurisdictionRule_permitValidityDays(ctx, field)
+	case "permitBaseFee":
+		return ec.fieldContext_JurisdictionRule_permitBaseFee(ctx, field)
+	case "permitPerMileFee":
+		return ec.fieldContext_JurisdictionRule_permitPerMileFee(ctx, field)
+	case "sourceNote":
+		return ec.fieldContext_JurisdictionRule_sourceNote(ctx, field)
+	case "sourceUrl":
+		return ec.fieldContext_JurisdictionRule_sourceUrl(ctx, field)
+	case "verificationState":
+		return ec.fieldContext_JurisdictionRule_verificationState(ctx, field)
+	case "verifiedAt":
+		return ec.fieldContext_JurisdictionRule_verifiedAt(ctx, field)
+	case "effectiveStartDate":
+		return ec.fieldContext_JurisdictionRule_effectiveStartDate(ctx, field)
+	case "effectiveEndDate":
+		return ec.fieldContext_JurisdictionRule_effectiveEndDate(ctx, field)
+	case "version":
+		return ec.fieldContext_JurisdictionRule_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_JurisdictionRule_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_JurisdictionRule_updatedAt(ctx, field)
+	case "state":
+		return ec.fieldContext_JurisdictionRule_state(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type JurisdictionRule", field.Name)
+}
+
+func (ec *executionContext) childFields_JurisdictionRuleConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_JurisdictionRuleConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_JurisdictionRuleConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_JurisdictionRuleConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type JurisdictionRuleConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_JurisdictionRuleEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_JurisdictionRuleEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_JurisdictionRuleEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type JurisdictionRuleEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_JurisdictionRuleOverride(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_JurisdictionRuleOverride_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_JurisdictionRuleOverride_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_JurisdictionRuleOverride_organizationId(ctx, field)
+	case "stateId":
+		return ec.fieldContext_JurisdictionRuleOverride_stateId(ctx, field)
+	case "maxWidthFeet":
+		return ec.fieldContext_JurisdictionRuleOverride_maxWidthFeet(ctx, field)
+	case "maxHeightFeet":
+		return ec.fieldContext_JurisdictionRuleOverride_maxHeightFeet(ctx, field)
+	case "maxLengthFeet":
+		return ec.fieldContext_JurisdictionRuleOverride_maxLengthFeet(ctx, field)
+	case "maxWeightPounds":
+		return ec.fieldContext_JurisdictionRuleOverride_maxWeightPounds(ctx, field)
+	case "permitLeadTimeDays":
+		return ec.fieldContext_JurisdictionRuleOverride_permitLeadTimeDays(ctx, field)
+	case "daylightOnly":
+		return ec.fieldContext_JurisdictionRuleOverride_daylightOnly(ctx, field)
+	case "holidayRestricted":
+		return ec.fieldContext_JurisdictionRuleOverride_holidayRestricted(ctx, field)
+	case "reason":
+		return ec.fieldContext_JurisdictionRuleOverride_reason(ctx, field)
+	case "version":
+		return ec.fieldContext_JurisdictionRuleOverride_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_JurisdictionRuleOverride_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_JurisdictionRuleOverride_updatedAt(ctx, field)
+	case "state":
+		return ec.fieldContext_JurisdictionRuleOverride_state(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type JurisdictionRuleOverride", field.Name)
+}
+
+func (ec *executionContext) childFields_JurisdictionRuleOverrideConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_JurisdictionRuleOverrideConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_JurisdictionRuleOverrideConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_JurisdictionRuleOverrideConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type JurisdictionRuleOverrideConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_JurisdictionRuleOverrideEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_JurisdictionRuleOverrideEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_JurisdictionRuleOverrideEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type JurisdictionRuleOverrideEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_Location(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -63694,6 +64428,8 @@ func (ec *executionContext) childFields_ShipmentUIPolicy(ctx context.Context, fi
 		return ec.fieldContext_ShipmentUIPolicy_checkHazmatSegregation(ctx, field)
 	case "maxShipmentWeightLimit":
 		return ec.fieldContext_ShipmentUIPolicy_maxShipmentWeightLimit(ctx, field)
+	case "profile":
+		return ec.fieldContext_ShipmentUIPolicy_profile(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentUIPolicy", field.Name)
 }
@@ -70495,6 +71231,48 @@ func (ec *executionContext) field_Query_journalSourceByObject_args(ctx context.C
 		return nil, err
 	}
 	args["sourceId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_jurisdictionRuleOverrides_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_jurisdictionRule_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_jurisdictionRules_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -135292,6 +136070,1297 @@ func (ec *executionContext) fieldContext_JournalSourceInfo_status(_ context.Cont
 	return graphql.NewScalarFieldContext("JournalSourceInfo", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _JurisdictionRule_id(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_stateId(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_stateId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_stateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_status(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v jurisdictionrule.Status) graphql.Marshaler {
+			return ec.marshalNJurisdictionRuleStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type JurisdictionRuleStatus does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_maxWidthFeet(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_maxWidthFeet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxWidthFeet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_maxWidthFeet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_maxHeightFeet(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_maxHeightFeet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxHeightFeet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_maxHeightFeet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_maxLengthFeet(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_maxLengthFeet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxLengthFeet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_maxLengthFeet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_maxWeightPounds(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_maxWeightPounds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxWeightPounds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_maxWeightPounds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_superloadWidthFeet(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_superloadWidthFeet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SuperloadWidthFeet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_superloadWidthFeet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_superloadWeightPounds(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_superloadWeightPounds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SuperloadWeightPounds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_superloadWeightPounds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_daylightOnly(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_daylightOnly(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DaylightOnly, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_daylightOnly(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_rushHourRestricted(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_rushHourRestricted(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RushHourRestricted, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_rushHourRestricted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_weekendRestricted(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_weekendRestricted(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WeekendRestricted, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_weekendRestricted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_holidayRestricted(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_holidayRestricted(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HolidayRestricted, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_holidayRestricted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_permitLeadTimeDays(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_permitLeadTimeDays(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PermitLeadTimeDays, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_permitLeadTimeDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_permitValidityDays(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_permitValidityDays(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PermitValidityDays, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int16) graphql.Marshaler {
+			return ec.marshalNInt2int16(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_permitValidityDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_permitBaseFee(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_permitBaseFee(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.JurisdictionRule().PermitBaseFee(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_permitBaseFee(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_permitPerMileFee(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_permitPerMileFee(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.JurisdictionRule().PermitPerMileFee(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_permitPerMileFee(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_sourceNote(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_sourceNote(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceNote, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_sourceNote(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_sourceUrl(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_sourceUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_sourceUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_verificationState(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_verificationState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.VerificationState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v jurisdictionrule.VerificationState) graphql.Marshaler {
+			return ec.marshalNJurisdictionVerificationState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐVerificationState(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_verificationState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type JurisdictionVerificationState does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_verifiedAt(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_verifiedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.VerifiedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_verifiedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_effectiveStartDate(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_effectiveStartDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EffectiveStartDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_effectiveStartDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_effectiveEndDate(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_effectiveEndDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EffectiveEndDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_effectiveEndDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_version(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_createdAt(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_updatedAt(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRule_state(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.JurisdictionRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRule_state(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
+			return ec.marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRule_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JurisdictionRule",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_UsState(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JurisdictionRuleConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionRuleConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.JurisdictionRuleEdge) graphql.Marshaler {
+			return ec.marshalNJurisdictionRuleEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JurisdictionRuleConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_JurisdictionRuleEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JurisdictionRuleConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionRuleConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JurisdictionRuleConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JurisdictionRuleConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionRuleConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionRuleEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *jurisdictionrule.JurisdictionRule) graphql.Marshaler {
+			return ec.marshalNJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐJurisdictionRule(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JurisdictionRuleEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_JurisdictionRule(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JurisdictionRuleEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionRuleEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_id(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_organizationId(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_stateId(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_stateId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_stateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_maxWidthFeet(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_maxWidthFeet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxWidthFeet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_maxWidthFeet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_maxHeightFeet(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_maxHeightFeet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxHeightFeet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_maxHeightFeet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_maxLengthFeet(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_maxLengthFeet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxLengthFeet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_maxLengthFeet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_maxWeightPounds(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_maxWeightPounds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxWeightPounds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_maxWeightPounds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_permitLeadTimeDays(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_permitLeadTimeDays(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PermitLeadTimeDays, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int16) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint16(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_permitLeadTimeDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_daylightOnly(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_daylightOnly(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DaylightOnly, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *bool) graphql.Marshaler {
+			return ec.marshalOBoolean2ᚖbool(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_daylightOnly(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_holidayRestricted(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_holidayRestricted(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HolidayRestricted, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *bool) graphql.Marshaler {
+			return ec.marshalOBoolean2ᚖbool(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_holidayRestricted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_reason(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_reason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_version(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_createdAt(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_updatedAt(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverride", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverride_state(ctx context.Context, field graphql.CollectedField, obj *jurisdictionrule.Override) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverride_state(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
+			return ec.marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverride_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JurisdictionRuleOverride",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_UsState(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JurisdictionRuleOverrideConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionRuleOverrideConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverrideConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.JurisdictionRuleOverrideEdge) graphql.Marshaler {
+			return ec.marshalNJurisdictionRuleOverrideEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverrideConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JurisdictionRuleOverrideConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_JurisdictionRuleOverrideEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JurisdictionRuleOverrideConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionRuleOverrideConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverrideConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverrideConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JurisdictionRuleOverrideConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JurisdictionRuleOverrideConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionRuleOverrideConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverrideConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverrideConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverrideConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _JurisdictionRuleOverrideEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionRuleOverrideEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverrideEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *jurisdictionrule.Override) graphql.Marshaler {
+			return ec.marshalNJurisdictionRuleOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐOverride(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverrideEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JurisdictionRuleOverrideEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_JurisdictionRuleOverride(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JurisdictionRuleOverrideEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.JurisdictionRuleOverrideEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_JurisdictionRuleOverrideEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_JurisdictionRuleOverrideEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("JurisdictionRuleOverrideEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _Location_id(ctx context.Context, field graphql.CollectedField, obj *location.Location) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -161963,6 +164032,138 @@ func (ec *executionContext) fieldContext_Query_journalReversal(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_journalReversal_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_jurisdictionRules(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_jurisdictionRules(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().JurisdictionRules(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.JurisdictionRuleConnection) graphql.Marshaler {
+			return ec.marshalNJurisdictionRuleConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_jurisdictionRules(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_JurisdictionRuleConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_jurisdictionRules_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_jurisdictionRule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_jurisdictionRule(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().JurisdictionRule(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *jurisdictionrule.JurisdictionRule) graphql.Marshaler {
+			return ec.marshalOJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐJurisdictionRule(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_jurisdictionRule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_JurisdictionRule(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_jurisdictionRule_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_jurisdictionRuleOverrides(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_jurisdictionRuleOverrides(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().JurisdictionRuleOverrides(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.JurisdictionRuleOverrideConnection) graphql.Marshaler {
+			return ec.marshalNJurisdictionRuleOverrideConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_jurisdictionRuleOverrides(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_JurisdictionRuleOverrideConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_jurisdictionRuleOverrides_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -193667,6 +195868,29 @@ func (ec *executionContext) _ShipmentUIPolicy_maxShipmentWeightLimit(ctx context
 }
 func (ec *executionContext) fieldContext_ShipmentUIPolicy_maxShipmentWeightLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("ShipmentUIPolicy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentUIPolicy_profile(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentUIPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentUIPolicy_profile(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Profile, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentUIPolicy_profile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentUIPolicy", field, false, false, errors.New("field of type JSON does not have child fields"))
 }
 
 func (ec *executionContext) _ShipmentUnassignedAnalytics_count(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentUnassignedAnalytics) (ret graphql.Marshaler) {
@@ -244403,6 +246627,535 @@ func (ec *executionContext) _JournalSourceInfo(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var jurisdictionRuleImplementors = []string{"JurisdictionRule"}
+
+func (ec *executionContext) _JurisdictionRule(ctx context.Context, sel ast.SelectionSet, obj *jurisdictionrule.JurisdictionRule) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jurisdictionRuleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JurisdictionRule")
+		case "id":
+			out.Values[i] = ec._JurisdictionRule_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "stateId":
+			out.Values[i] = ec._JurisdictionRule_stateId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "status":
+			out.Values[i] = ec._JurisdictionRule_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "maxWidthFeet":
+			out.Values[i] = ec._JurisdictionRule_maxWidthFeet(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "maxHeightFeet":
+			out.Values[i] = ec._JurisdictionRule_maxHeightFeet(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "maxLengthFeet":
+			out.Values[i] = ec._JurisdictionRule_maxLengthFeet(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "maxWeightPounds":
+			out.Values[i] = ec._JurisdictionRule_maxWeightPounds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "superloadWidthFeet":
+			out.Values[i] = ec._JurisdictionRule_superloadWidthFeet(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "superloadWeightPounds":
+			out.Values[i] = ec._JurisdictionRule_superloadWeightPounds(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "daylightOnly":
+			out.Values[i] = ec._JurisdictionRule_daylightOnly(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "rushHourRestricted":
+			out.Values[i] = ec._JurisdictionRule_rushHourRestricted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "weekendRestricted":
+			out.Values[i] = ec._JurisdictionRule_weekendRestricted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "holidayRestricted":
+			out.Values[i] = ec._JurisdictionRule_holidayRestricted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permitLeadTimeDays":
+			out.Values[i] = ec._JurisdictionRule_permitLeadTimeDays(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permitValidityDays":
+			out.Values[i] = ec._JurisdictionRule_permitValidityDays(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permitBaseFee":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._JurisdictionRule_permitBaseFee(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permitPerMileFee":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._JurisdictionRule_permitPerMileFee(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "sourceNote":
+			out.Values[i] = ec._JurisdictionRule_sourceNote(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sourceUrl":
+			out.Values[i] = ec._JurisdictionRule_sourceUrl(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "verificationState":
+			out.Values[i] = ec._JurisdictionRule_verificationState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "verifiedAt":
+			out.Values[i] = ec._JurisdictionRule_verifiedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "effectiveStartDate":
+			out.Values[i] = ec._JurisdictionRule_effectiveStartDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "effectiveEndDate":
+			out.Values[i] = ec._JurisdictionRule_effectiveEndDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._JurisdictionRule_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._JurisdictionRule_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._JurisdictionRule_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "state":
+			out.Values[i] = ec._JurisdictionRule_state(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var jurisdictionRuleConnectionImplementors = []string{"JurisdictionRuleConnection"}
+
+func (ec *executionContext) _JurisdictionRuleConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.JurisdictionRuleConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jurisdictionRuleConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JurisdictionRuleConnection")
+		case "edges":
+			out.Values[i] = ec._JurisdictionRuleConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._JurisdictionRuleConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._JurisdictionRuleConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var jurisdictionRuleEdgeImplementors = []string{"JurisdictionRuleEdge"}
+
+func (ec *executionContext) _JurisdictionRuleEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.JurisdictionRuleEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jurisdictionRuleEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JurisdictionRuleEdge")
+		case "node":
+			out.Values[i] = ec._JurisdictionRuleEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._JurisdictionRuleEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var jurisdictionRuleOverrideImplementors = []string{"JurisdictionRuleOverride"}
+
+func (ec *executionContext) _JurisdictionRuleOverride(ctx context.Context, sel ast.SelectionSet, obj *jurisdictionrule.Override) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jurisdictionRuleOverrideImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JurisdictionRuleOverride")
+		case "id":
+			out.Values[i] = ec._JurisdictionRuleOverride_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._JurisdictionRuleOverride_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._JurisdictionRuleOverride_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stateId":
+			out.Values[i] = ec._JurisdictionRuleOverride_stateId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "maxWidthFeet":
+			out.Values[i] = ec._JurisdictionRuleOverride_maxWidthFeet(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "maxHeightFeet":
+			out.Values[i] = ec._JurisdictionRuleOverride_maxHeightFeet(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "maxLengthFeet":
+			out.Values[i] = ec._JurisdictionRuleOverride_maxLengthFeet(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "maxWeightPounds":
+			out.Values[i] = ec._JurisdictionRuleOverride_maxWeightPounds(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "permitLeadTimeDays":
+			out.Values[i] = ec._JurisdictionRuleOverride_permitLeadTimeDays(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "daylightOnly":
+			out.Values[i] = ec._JurisdictionRuleOverride_daylightOnly(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "holidayRestricted":
+			out.Values[i] = ec._JurisdictionRuleOverride_holidayRestricted(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "reason":
+			out.Values[i] = ec._JurisdictionRuleOverride_reason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._JurisdictionRuleOverride_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._JurisdictionRuleOverride_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._JurisdictionRuleOverride_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "state":
+			out.Values[i] = ec._JurisdictionRuleOverride_state(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var jurisdictionRuleOverrideConnectionImplementors = []string{"JurisdictionRuleOverrideConnection"}
+
+func (ec *executionContext) _JurisdictionRuleOverrideConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.JurisdictionRuleOverrideConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jurisdictionRuleOverrideConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JurisdictionRuleOverrideConnection")
+		case "edges":
+			out.Values[i] = ec._JurisdictionRuleOverrideConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._JurisdictionRuleOverrideConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._JurisdictionRuleOverrideConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var jurisdictionRuleOverrideEdgeImplementors = []string{"JurisdictionRuleOverrideEdge"}
+
+func (ec *executionContext) _JurisdictionRuleOverrideEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.JurisdictionRuleOverrideEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jurisdictionRuleOverrideEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JurisdictionRuleOverrideEdge")
+		case "node":
+			out.Values[i] = ec._JurisdictionRuleOverrideEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._JurisdictionRuleOverrideEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var locationImplementors = []string{"Location"}
 
 func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet, obj *location.Location) graphql.Marshaler {
@@ -254165,6 +256918,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_journalReversal(ctx, field)
 				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "jurisdictionRules":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_jurisdictionRules(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "jurisdictionRule":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_jurisdictionRule(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "jurisdictionRuleOverrides":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_jurisdictionRuleOverrides(ctx, field)
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res
@@ -266892,6 +269711,11 @@ func (ec *executionContext) _ShipmentUIPolicy(ctx context.Context, sel ast.Selec
 		case "maxShipmentWeightLimit":
 			out.Values[i] = ec._ShipmentUIPolicy_maxShipmentWeightLimit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "profile":
+			out.Values[i] = ec._ShipmentUIPolicy_profile(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:
@@ -280309,6 +283133,140 @@ func (ec *executionContext) marshalNJournalReversalStatus2githubᚗcomᚋemoss08
 	return res
 }
 
+func (ec *executionContext) marshalNJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐJurisdictionRule(ctx context.Context, sel ast.SelectionSet, v *jurisdictionrule.JurisdictionRule) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._JurisdictionRule(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNJurisdictionRuleConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.JurisdictionRuleConnection) graphql.Marshaler {
+	return ec._JurisdictionRuleConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNJurisdictionRuleConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.JurisdictionRuleConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._JurisdictionRuleConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNJurisdictionRuleEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.JurisdictionRuleEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNJurisdictionRuleEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNJurisdictionRuleEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.JurisdictionRuleEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._JurisdictionRuleEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNJurisdictionRuleOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐOverride(ctx context.Context, sel ast.SelectionSet, v *jurisdictionrule.Override) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._JurisdictionRuleOverride(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNJurisdictionRuleOverrideConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.JurisdictionRuleOverrideConnection) graphql.Marshaler {
+	return ec._JurisdictionRuleOverrideConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNJurisdictionRuleOverrideConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.JurisdictionRuleOverrideConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._JurisdictionRuleOverrideConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNJurisdictionRuleOverrideEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.JurisdictionRuleOverrideEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNJurisdictionRuleOverrideEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNJurisdictionRuleOverrideEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐJurisdictionRuleOverrideEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.JurisdictionRuleOverrideEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._JurisdictionRuleOverrideEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNJurisdictionRuleStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐStatus(ctx context.Context, v any) (jurisdictionrule.Status, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := jurisdictionrule.Status(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNJurisdictionRuleStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐStatus(ctx context.Context, sel ast.SelectionSet, v jurisdictionrule.Status) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNJurisdictionVerificationState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐVerificationState(ctx context.Context, v any) (jurisdictionrule.VerificationState, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := jurisdictionrule.VerificationState(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNJurisdictionVerificationState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐVerificationState(ctx context.Context, sel ast.SelectionSet, v jurisdictionrule.VerificationState) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNLocateTractorInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐLocateTractorInput(ctx context.Context, v any) (gqlmodel.LocateTractorInput, error) {
 	res, err := ec.unmarshalInputLocateTractorInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -287921,6 +290879,24 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
+func (ec *executionContext) unmarshalOInt2ᚖint16(ctx context.Context, v any) (*int16, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt16(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint16(ctx context.Context, sel ast.SelectionSet, v *int16) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalInt16(*v)
+	return res
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint32(ctx context.Context, v any) (*int32, error) {
 	if v == nil {
 		return nil, nil
@@ -288046,6 +291022,13 @@ func (ec *executionContext) marshalOJournalSourceInfo2ᚖgithubᚗcomᚋemoss08�
 		return graphql.Null
 	}
 	return ec._JournalSourceInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐJurisdictionRule(ctx context.Context, sel ast.SelectionSet, v *jurisdictionrule.JurisdictionRule) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._JurisdictionRule(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation(ctx context.Context, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
