@@ -54,6 +54,7 @@ type Params struct {
 	EventService        portservices.ShipmentEventService
 	Realtime            portservices.RealtimeService
 	DriverNotify        *drivernotificationservice.Service
+	TenderGuard         portservices.TenderGuard `optional:"true"`
 }
 
 type service struct {
@@ -77,6 +78,7 @@ type service struct {
 	eventService        portservices.ShipmentEventService
 	realtime            portservices.RealtimeService
 	driverNotify        *drivernotificationservice.Service
+	tenderGuard         portservices.TenderGuard
 }
 
 func New(p Params) portservices.AssignmentService {
@@ -101,6 +103,7 @@ func New(p Params) portservices.AssignmentService {
 		eventService:        p.EventService,
 		realtime:            p.Realtime,
 		driverNotify:        p.DriverNotify,
+		tenderGuard:         p.TenderGuard,
 	}
 }
 
@@ -294,6 +297,8 @@ func (s *service) AssignToMove(
 		return nil, err
 	}
 
+	s.withdrawLiveTender(ctx, req.TenantInfo, req.ShipmentMoveID)
+
 	if ref, ok := assignmentEventRef(result); ok {
 		s.recordAssignmentEvent(ctx, shipmenteventservice.BuildDriverAssigned(
 			shipmenteventservice.TenantRefFor(req.TenantInfo),
@@ -307,6 +312,22 @@ func (s *service) AssignToMove(
 	}
 
 	return result, nil
+}
+
+func (s *service) withdrawLiveTender(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+) {
+	if s.tenderGuard == nil {
+		return
+	}
+	if err := s.tenderGuard.CancelLiveTenderForMove(
+		ctx, tenantInfo, moveID, "Move was covered outside the tender",
+	); err != nil {
+		s.l.Error("failed to withdraw live tender for covered move",
+			zap.Error(err), zap.String("moveId", moveID.String()))
+	}
 }
 
 func (s *service) Reassign(
