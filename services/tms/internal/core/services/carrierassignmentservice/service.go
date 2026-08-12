@@ -433,7 +433,7 @@ func (s *Service) applyCoverageChange(
 	if assignment != nil {
 		targetMove.CoverageType = shipment.MoveCoverageTypeCarrier
 	} else {
-		targetMove.CoverageType = shipment.MoveCoverageTypeDriver
+		targetMove.CoverageType = shipment.MoveCoverageTypeUnassigned
 	}
 
 	control, err := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{

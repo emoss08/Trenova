@@ -471,6 +471,7 @@ func (s *service) unassignWithinTx(
 				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
 		}
 		targetMove.Assignment = nil
+		targetMove.CoverageType = shipment.MoveCoverageTypeUnassigned
 		targetMove.Status = shipment.MoveStatusNew
 
 		control, err := s.controlRepo.Get(txCtx, repositories.GetShipmentControlRequest{
@@ -722,6 +723,7 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 				WithParam("shipmentMoveId", moveID.String())
 		}
 		targetMove.Assignment = savedAssignment
+		targetMove.CoverageType = shipment.MoveCoverageTypeDriver
 
 		control, err := s.controlRepo.Get(txCtx, repositories.GetShipmentControlRequest{
 			TenantInfo: tenantInfo,
