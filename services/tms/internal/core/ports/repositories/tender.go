@@ -114,11 +114,6 @@ type MarkTokenUsedRequest struct {
 type TenderRepository interface {
 	Create(ctx context.Context, entity *tender.Tender) (*tender.Tender, error)
 	GetByID(ctx context.Context, req GetTenderByIDRequest) (*tender.Tender, error)
-	GetByWorkflowID(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		workflowID string,
-	) (*tender.Tender, error)
 	GetLiveByMoveID(
 		ctx context.Context,
 		req GetLiveTenderByMoveRequest,

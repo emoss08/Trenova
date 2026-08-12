@@ -113,30 +113,6 @@ func (r *repository) GetByID(
 	return entity, nil
 }
 
-func (r *repository) GetByWorkflowID(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	workflowID string,
-) (*tender.Tender, error) {
-	cols := buncolgen.TenderColumns
-	entity := new(tender.Tender)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		Apply(r.offersRelation).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.TenderScopeTenant(sq, tenantInfo).
-				Where(cols.WorkflowID.Eq(), workflowID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		r.l.Error("failed to get tender by workflow", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "Tender")
-	}
-
-	return entity, nil
-}
-
 func (r *repository) GetLiveByMoveID(
 	ctx context.Context,
 	req repositories.GetLiveTenderByMoveRequest,

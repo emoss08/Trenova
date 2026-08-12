@@ -58,11 +58,6 @@ export function toRoutingGuideRequestBody(payload: RoutingGuidePayload): Routing
 }
 
 export class RoutingGuideService {
-  public async get(guideId: string): Promise<RoutingGuide> {
-    const response = await api.get<RoutingGuide>(`/routing-guides/${guideId}/`);
-    return safeParse(routingGuideSchema, response, "RoutingGuide");
-  }
-
   public async create(payload: RoutingGuidePayload): Promise<RoutingGuide> {
     const response = await api.post<RoutingGuide>(
       "/routing-guides/",

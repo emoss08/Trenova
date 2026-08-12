@@ -264,6 +264,7 @@ func (rr *RouteRegistry) registerAll() {
 	rr.registerDetentionRoutes()
 	rr.registerCustomerRoutes()
 	rr.registerCarrierRoutes()
+	rr.registerCarrierSettlementRoutes()
 	rr.registerLocationRoutes()
 	rr.registerCommodityRoutes()
 	rr.registerHoldReasonRoutes()
@@ -625,6 +626,16 @@ func (rr *RouteRegistry) registerOperationsRoutes() {
 	})
 
 	_ = rr.Register(&RouteDefinition{
+		Path:      "/dispatch/console",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceShipmentMove, Operation: OpRead},
+		},
+		DisplayName: "Dispatch Console",
+		Category:    "Operations",
+	})
+
+	_ = rr.Register(&RouteDefinition{
 		Path:      "/dispatch/control",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{
@@ -782,6 +793,58 @@ func (rr *RouteRegistry) registerCarrierRoutes() {
 		},
 		DisplayName: "Routing Guides",
 		Category:    "Carriers",
+	})
+}
+
+func (rr *RouteRegistry) registerCarrierSettlementRoutes() {
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/carrier-settlements/workspace",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceCarrierSettlement, Operation: OpRead},
+		},
+		DisplayName: "Settlement Workspace",
+		Category:    "Carrier Settlements",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/carrier-settlements/settlements",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceCarrierSettlement, Operation: OpRead},
+		},
+		DisplayName: "Carrier Settlements",
+		Category:    "Carrier Settlements",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/carrier-settlements/batches",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceCarrierSettlement, Operation: OpRead},
+		},
+		DisplayName: "Settlement Batches",
+		Category:    "Carrier Settlements",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/carrier-settlements/cost-events",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceCarrierSettlement, Operation: OpRead},
+		},
+		DisplayName: "Carrier Cost Events",
+		Category:    "Carrier Settlements",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/carrier-settlements/invoice-matching",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceCarrierInvoiceMatch, Operation: OpRead},
+		},
+		DisplayName: "Invoice Matching",
+		Category:    "Carrier Settlements",
 	})
 }
 

@@ -30,12 +30,6 @@ export class RateConfirmationService {
     return safeParse(rateConfirmationSchema, response, "RateConfirmation");
   }
 
-  public async get(rateConfirmationId: string): Promise<RateConfirmation> {
-    const response = await api.get<RateConfirmation>(`/rate-confirmations/${rateConfirmationId}/`);
-
-    return safeParse(rateConfirmationSchema, response, "RateConfirmation");
-  }
-
   public async send(rateConfirmationId: string): Promise<RateConfirmation> {
     const response = await api.post<RateConfirmation>(
       `/rate-confirmations/${rateConfirmationId}/send/`,
