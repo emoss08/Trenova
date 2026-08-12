@@ -248,7 +248,7 @@ func (r *payProfileRepository) CountActiveAssignments(
 		Where("wpa.organization_id = ?", tenantInfo.OrgID).
 		Where("wpa.business_unit_id = ?", tenantInfo.BuID).
 		Where("wpa.pay_profile_id = ?", profileID).
-		Where("wpa.effective_to IS NULL OR wpa.effective_to > extract(epoch from current_timestamp)::bigint").
+		Where("wpa.effective_to IS NULL OR wpa.effective_to > " + r.db.NowEpoch()).
 		Count(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("count active pay assignments: %w", err)

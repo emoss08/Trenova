@@ -180,7 +180,7 @@ func (r *batchRepository) RecalculateAggregates(
 			exception_count = agg.exception_count,
 			total_gross_minor = agg.total_gross_minor,
 			total_net_minor = agg.total_net_minor,
-			updated_at = extract(epoch from current_timestamp)::bigint
+			updated_at = `+r.db.NowEpoch()+`
 		FROM (
 			SELECT
 				COUNT(*) FILTER (WHERE s.status != 'Voided') AS settlement_count,

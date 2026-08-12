@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -73,7 +74,13 @@ func (s *DriverPayLedgerSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return fmt.Errorf("ensure ledger accounts: %w", err)
 			}
 
-			if err = s.configureAccountingControl(ctx, tx, org.ID, org.BusinessUnitID, accounts); err != nil {
+			if err = s.configureAccountingControl(
+				ctx,
+				tx,
+				org.ID,
+				org.BusinessUnitID,
+				accounts,
+			); err != nil {
 				return fmt.Errorf("configure accounting control: %w", err)
 			}
 
@@ -81,11 +88,26 @@ func (s *DriverPayLedgerSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return fmt.Errorf("configure cost categories: %w", err)
 			}
 
-			if err = s.ensureRecurringEarnings(ctx, tx, sc, org.ID, org.BusinessUnitID, admin.ID); err != nil {
+			if err = s.ensureRecurringEarnings(
+				ctx,
+				tx,
+				sc,
+				org.ID,
+				org.BusinessUnitID,
+				admin.ID,
+			); err != nil {
 				return fmt.Errorf("ensure recurring earnings: %w", err)
 			}
 
-			if err = s.postSeededSettlementJournals(ctx, tx, sc, org.ID, org.BusinessUnitID, admin.ID, accounts); err != nil {
+			if err = s.postSeededSettlementJournals(
+				ctx,
+				tx,
+				sc,
+				org.ID,
+				org.BusinessUnitID,
+				admin.ID,
+				accounts,
+			); err != nil {
 				return fmt.Errorf("post seeded settlement journals: %w", err)
 			}
 
@@ -322,14 +344,86 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 		capMinor    int64
 		paidMinor   int64
 	}{
-		{payWorkerJohn, "PERDIEM", driverpay.EarningStatusActive, driverpay.EarningFrequencyEverySettlement, "OTR per diem — IRS substantiated M&IE", 33250, 0, 299250},
-		{payWorkerRobert, "PERDIEM", driverpay.EarningStatusActive, driverpay.EarningFrequencyEverySettlement, "OTR per diem — IRS substantiated M&IE", 33250, 0, 199500},
-		{payWorkerEmily, "PERDIEM", driverpay.EarningStatusActive, driverpay.EarningFrequencyEverySettlement, "Regional per diem — partial-day M&IE", 19950, 0, 119700},
-		{payWorkerJane, "SAFETY", driverpay.EarningStatusActive, driverpay.EarningFrequencyMonthly, "Quarterly safety bonus accrual — clean CSA record", 12500, 0, 62500},
-		{payWorkerSarah, "STIPEND", driverpay.EarningStatusActive, driverpay.EarningFrequencyMonthly, "Cell phone and ELD data stipend", 5000, 0, 25000},
-		{payWorkerMike, "PERFORM", driverpay.EarningStatusActive, driverpay.EarningFrequencyEverySettlement, "On-time delivery bonus program", 7500, 195000, 97500},
-		{payWorkerCarlos, "EQUIPRENT", driverpay.EarningStatusActive, driverpay.EarningFrequencyEverySettlement, "APU rental — company use of driver-owned unit", 6000, 0, 78000},
-		{payWorkerDavid, "LONGEVITY", driverpay.EarningStatusPaused, driverpay.EarningFrequencyMonthly, "Longevity bonus — 3+ years of service", 10000, 0, 30000},
+		{
+			payWorkerJohn,
+			"PERDIEM",
+			driverpay.EarningStatusActive,
+			driverpay.EarningFrequencyEverySettlement,
+			"OTR per diem — IRS substantiated M&IE",
+			33250,
+			0,
+			299250,
+		},
+		{
+			payWorkerRobert,
+			"PERDIEM",
+			driverpay.EarningStatusActive,
+			driverpay.EarningFrequencyEverySettlement,
+			"OTR per diem — IRS substantiated M&IE",
+			33250,
+			0,
+			199500,
+		},
+		{
+			payWorkerEmily,
+			"PERDIEM",
+			driverpay.EarningStatusActive,
+			driverpay.EarningFrequencyEverySettlement,
+			"Regional per diem — partial-day M&IE",
+			19950,
+			0,
+			119700,
+		},
+		{
+			payWorkerJane,
+			"SAFETY",
+			driverpay.EarningStatusActive,
+			driverpay.EarningFrequencyMonthly,
+			"Quarterly safety bonus accrual — clean CSA record",
+			12500,
+			0,
+			62500,
+		},
+		{
+			payWorkerSarah,
+			"STIPEND",
+			driverpay.EarningStatusActive,
+			driverpay.EarningFrequencyMonthly,
+			"Cell phone and ELD data stipend",
+			5000,
+			0,
+			25000,
+		},
+		{
+			payWorkerMike,
+			"PERFORM",
+			driverpay.EarningStatusActive,
+			driverpay.EarningFrequencyEverySettlement,
+			"On-time delivery bonus program",
+			7500,
+			195000,
+			97500,
+		},
+		{
+			payWorkerCarlos,
+			"EQUIPRENT",
+			driverpay.EarningStatusActive,
+			driverpay.EarningFrequencyEverySettlement,
+			"APU rental — company use of driver-owned unit",
+			6000,
+			0,
+			78000,
+		},
+		{
+			payWorkerDavid,
+			"LONGEVITY",
+			driverpay.EarningStatusPaused,
+			driverpay.EarningFrequencyMonthly,
+			"Longevity bonus — 3+ years of service",
+			10000,
+			0,
+			30000,
+		},
 	}
 
 	rows := make([]*driverpay.RecurringEarning, 0, len(defs))
@@ -375,7 +469,10 @@ func (s *DriverPayLedgerSeed) ensureRecurringEarnings(
 
 	seedhelpers.LogSuccess(
 		"Created recurring earning fixtures",
-		fmt.Sprintf("- Created %d recurring earnings (per diem, bonuses, stipends, equipment rental)", len(rows)),
+		fmt.Sprintf(
+			"- Created %d recurring earnings (per diem, bonuses, stipends, equipment rental)",
+			len(rows),
+		),
 	)
 	return nil
 }
@@ -698,7 +795,10 @@ func (s *DriverPayLedgerSeed) postSeededSettlementJournals(
 	if posted > 0 {
 		seedhelpers.LogSuccess(
 			"Posted seeded settlements to the general ledger",
-			fmt.Sprintf("- Created %d balanced journal batches with period balances for cost control", posted),
+			fmt.Sprintf(
+				"- Created %d balanced journal batches with period balances for cost control",
+				posted,
+			),
 		)
 	}
 	return nil
@@ -728,7 +828,7 @@ func (s *DriverPayLedgerSeed) applyBalances(
 			period_credit_minor = gb.period_credit_minor + EXCLUDED.period_credit_minor,
 			net_change_minor = gb.net_change_minor + EXCLUDED.net_change_minor,
 			last_journal_entry_id = EXCLUDED.last_journal_entry_id,
-			updated_at = extract(epoch from current_timestamp)::bigint
+			updated_at = `+dbdialect.NowEpochFromBun(tx)+`
 	`,
 		orgID, buID, line.GLAccountID, fiscalYearID, fiscalPeriodID,
 		line.DebitAmount, line.CreditAmount, line.NetAmount, entryID,
@@ -740,7 +840,7 @@ func (s *DriverPayLedgerSeed) applyBalances(
 		Set("current_balance = current_balance + ?", line.NetAmount).
 		Set("debit_balance = debit_balance + ?", line.DebitAmount).
 		Set("credit_balance = credit_balance + ?", line.CreditAmount).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Set("updated_at = "+dbdialect.NowEpochFromBun(tx)).
 		Where("id = ?", line.GLAccountID).
 		Where("organization_id = ?", orgID).
 		Where("business_unit_id = ?", buID).

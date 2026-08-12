@@ -112,9 +112,18 @@ func oltpSettings(cfg *config.Config) connectionSettings {
 		connMaxLifetime: cfg.Database.ConnMaxLifetime,
 		connMaxIdleTime: cfg.Database.ConnMaxIdleTime,
 		connParams: map[string]any{
-			"statement_timeout":                   fmt.Sprintf("%dms", max(cfg.Database.GetStatementTimeout().Milliseconds(), 1)),
-			"lock_timeout":                        fmt.Sprintf("%dms", max(cfg.Database.GetLockTimeout().Milliseconds(), 1)),
-			"idle_in_transaction_session_timeout": fmt.Sprintf("%dms", max(cfg.Database.GetIdleTxTimeout().Milliseconds(), 1)),
+			"statement_timeout": fmt.Sprintf(
+				"%dms",
+				max(cfg.Database.GetStatementTimeout().Milliseconds(), 1),
+			),
+			"lock_timeout": fmt.Sprintf(
+				"%dms",
+				max(cfg.Database.GetLockTimeout().Milliseconds(), 1),
+			),
+			"idle_in_transaction_session_timeout": fmt.Sprintf(
+				"%dms",
+				max(cfg.Database.GetIdleTxTimeout().Milliseconds(), 1),
+			),
 		},
 		registerStats: true,
 	}
@@ -130,10 +139,19 @@ func reportingSettings(cfg *config.Config) connectionSettings {
 		connMaxLifetime: cfg.Database.ConnMaxLifetime,
 		connMaxIdleTime: cfg.Database.ConnMaxIdleTime,
 		connParams: map[string]any{
-			"statement_timeout":                   fmt.Sprintf("%dms", max(reporting.GetStatementTimeout().Milliseconds(), 1)),
-			"lock_timeout":                        fmt.Sprintf("%dms", max(cfg.Database.GetLockTimeout().Milliseconds(), 1)),
-			"idle_in_transaction_session_timeout": fmt.Sprintf("%dms", max(cfg.Database.GetIdleTxTimeout().Milliseconds(), 1)),
-			"default_transaction_read_only":       "on",
+			"statement_timeout": fmt.Sprintf(
+				"%dms",
+				max(reporting.GetStatementTimeout().Milliseconds(), 1),
+			),
+			"lock_timeout": fmt.Sprintf(
+				"%dms",
+				max(cfg.Database.GetLockTimeout().Milliseconds(), 1),
+			),
+			"idle_in_transaction_session_timeout": fmt.Sprintf(
+				"%dms",
+				max(cfg.Database.GetIdleTxTimeout().Milliseconds(), 1),
+			),
+			"default_transaction_read_only": "on",
 		},
 		registerStats: false,
 	}
@@ -381,4 +399,13 @@ func (c *Connection) Close() error {
 		return c.db.Close()
 	}
 	return nil
+}
+
+// NowEpoch is the current-Unix-timestamp SQL for the connection's dialect.
+func (c *Connection) NowEpoch() string {
+	if c.cfg == nil {
+		return dbdialect.DefaultKind.NowEpoch()
+	}
+
+	return c.cfg.Database.GetDialect().NowEpoch()
 }
