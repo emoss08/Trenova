@@ -25,13 +25,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/pdfrender/fitzdoc"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/gen2brain/go-fitz"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
@@ -635,7 +635,7 @@ func (a *Activities) extractViaFitz(
 	data []byte,
 	enableOCR bool,
 ) (*ExtractionResult, error) {
-	doc, err := fitz.NewFromMemory(data)
+	doc, err := fitzdoc.NewFromMemory(data)
 	if err != nil {
 		return nil, err
 	}
