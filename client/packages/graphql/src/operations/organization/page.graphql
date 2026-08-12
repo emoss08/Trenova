@@ -23,6 +23,8 @@ fragment OrganizationSettingsFields on Organization {
   postalCode
   timezone
   taxId
+  brokerageEnabled
+  assetOperationsEnabled
   state {
     ...OrganizationSettingsStateFields
   }

@@ -1,4 +1,10 @@
+import { getOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import {
+  hasOrganizationCapability,
+  organizationCapabilityLabel,
+  type OrganizationCapabilityType,
+} from "@trenova/shared/types/organization-capability";
 import { Operation } from "@trenova/shared/types/permission";
 import { redirect, type LoaderFunction } from "react-router";
 
@@ -50,6 +56,26 @@ export function createPermissionLoader(
     }
 
     return null;
+  };
+}
+
+/**
+ * Keeps a route out of reach when its half of the product is switched off for
+ * the organization. This is the route-level twin of the navigation capability
+ * filter — decluttering, not authorization: the API behind the route stays open
+ * and `createPermissionLoader` remains the access check.
+ */
+export function createCapabilityLoader(capability: OrganizationCapabilityType): LoaderFunction {
+  return async () => {
+    if (hasOrganizationCapability(getOrgCapabilities(), capability)) {
+      return null;
+    }
+
+    const label = organizationCapabilityLabel(capability);
+    throw new Response(`${label} is not enabled for this organization`, {
+      status: 403,
+      statusText: `${label} not enabled`,
+    });
   };
 }
 

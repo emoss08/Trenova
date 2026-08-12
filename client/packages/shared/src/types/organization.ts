@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { capabilityFlagSchema } from "./helpers";
 import { userSchema } from "./user";
 
 export const userOrganizationSchema = z.object({
@@ -49,6 +50,8 @@ export const organizationSettingsSchema = z.object({
   postalCode: z.string().min(1, { error: "Postal code is required" }),
   timezone: z.string().min(1, { error: "Timezone is required" }),
   taxId: z.string().nullish(),
+  brokerageEnabled: capabilityFlagSchema,
+  assetOperationsEnabled: capabilityFlagSchema,
   state: z
     .object({
       id: z.string(),
