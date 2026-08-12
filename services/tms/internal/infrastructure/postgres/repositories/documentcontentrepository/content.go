@@ -275,7 +275,10 @@ func (r *repository) SearchByResource(
 				Where(docCols.ResourceType.Eq(), req.ResourceType)
 		})
 
-	if query != "" && dbdialect.FromBun(selectQuery.DB()).Supports(dbdialect.CapFullTextSearch) {
+	switch {
+	case query == "":
+		selectQuery = selectQuery.Order(docCols.CreatedAt.OrderDesc())
+	case dbdialect.FromBun(selectQuery.DB()).Supports(dbdialect.CapFullTextSearch):
 		selectQuery = selectQuery.Where(`
 			doc.search_vector @@ websearch_to_tsquery('english', ?)
 			OR dc.search_vector @@ websearch_to_tsquery('english', ?)`,
@@ -289,14 +292,12 @@ func (r *repository) SearchByResource(
 			query,
 			query,
 		)
-	} else if query != "" {
+	default:
 		pattern := "%" + query + "%"
 		selectQuery = selectQuery.Where(
 			"doc.file_name LIKE ? OR doc.original_name LIKE ? OR dc.content_text LIKE ?",
 			pattern, pattern, pattern,
 		).Order(docCols.CreatedAt.OrderDesc())
-	} else {
-		selectQuery = selectQuery.Order(docCols.CreatedAt.OrderDesc())
 	}
 
 	if req.Limit > 0 {

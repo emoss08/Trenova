@@ -1,6 +1,7 @@
 package dbdialect
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -14,7 +15,7 @@ const (
 
 const DefaultKind = Postgres
 
-var ErrUnknownKind = fmt.Errorf("unknown database driver")
+var ErrUnknownKind = errors.New("unknown database driver")
 
 func Parse(value string) (Kind, error) {
 	switch strings.ToLower(strings.TrimSpace(value)) {
