@@ -883,10 +883,10 @@ def run(profile_name: str, source: str, target: str, report_path: str | None) ->
             converted = converter.convert_file(name, fh.read())
         if not converted.strip():
             continue
-        with open(os.path.join(target, name), "w", encoding="utf-8") as fh:
+        with open(os.path.join(target, name), "w", encoding="utf-8", newline="\n") as fh:
             fh.write(HEADER.format(source=name) + "\n" + converted)
         down = name.replace(".up.sql", ".down.sql")
-        with open(os.path.join(target, down), "w", encoding="utf-8") as fh:
+        with open(os.path.join(target, down), "w", encoding="utf-8", newline="\n") as fh:
             fh.write(HEADER.format(source=down) + "\nSELECT 1;\n")
         written += 1
 
@@ -901,7 +901,7 @@ def run(profile_name: str, source: str, target: str, report_path: str | None) ->
         print(f"downgraded {len(converter.downgrades)} statements")
 
     if report_path:
-        with open(report_path, "w", encoding="utf-8") as fh:
+        with open(report_path, "w", encoding="utf-8", newline="\n") as fh:
             for kind, rows in (("DOWNGRADED", converter.downgrades), ("SKIPPED", converter.skipped)):
                 fh.write(f"{kind}\n")
                 for f, reason, detail in sorted(rows, key=lambda r: (r[1], r[0])):
@@ -945,7 +945,7 @@ func Setup() *migrate.Migrations {
 
 
 def _write_embed(target: str):
-    with open(os.path.join(target, "migrations.go"), "w", encoding="utf-8") as fh:
+    with open(os.path.join(target, "migrations.go"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write(EMBED_GO)
 
 

@@ -5,9 +5,9 @@ import { MoneyField } from "@/components/fields/money-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import type { JurisdictionRule } from "@/types/jurisdiction-rule";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import type { JurisdictionRule } from "@/types/jurisdiction-rule";
 import { GlobeIcon } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 
@@ -176,6 +176,7 @@ export function JurisdictionRuleForm() {
               control={control}
               name="daylightOnly"
               label="Daylight Only"
+              outlined
               description="Movement confined to daylight hours"
             />
           </FormControl>
@@ -184,6 +185,7 @@ export function JurisdictionRuleForm() {
               control={control}
               name="rushHourRestricted"
               label="Rush Hour Restricted"
+              outlined
               description="Barred through metro areas at peak times"
             />
           </FormControl>
@@ -192,6 +194,7 @@ export function JurisdictionRuleForm() {
               control={control}
               name="weekendRestricted"
               label="Weekend Restricted"
+              outlined
               description="Movement restricted at weekends"
             />
           </FormControl>
@@ -200,6 +203,7 @@ export function JurisdictionRuleForm() {
               control={control}
               name="holidayRestricted"
               label="Holiday Restricted"
+              outlined
               description="Movement restricted on public holidays"
             />
           </FormControl>
