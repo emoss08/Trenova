@@ -11,6 +11,7 @@ func (s SeedID) String() string {
 
 const (
 	SeedAdminAccount SeedID = "AdminAccount" // from 01_adminaccount.go
+	SeedCarrier SeedID = "Carrier" // from 14_carrier.go
 	SeedDetention SeedID = "Detention" // from 13_detention.go
 	SeedDocumentParsingRuleExample SeedID = "DocumentParsingRuleExample" // from 08_documentparsingruleexample.go
 	SeedDocumentTemplateStarters SeedID = "DocumentTemplateStarters" // from 10_document_template_starters.go
@@ -27,6 +28,7 @@ const (
 	SeedOrganizationRolePermissionsSync SeedID = "OrganizationRolePermissionsSync" // from 08_organization_role_permissions_sync.go
 	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
 	SeedRateTable SeedID = "RateTable" // from 09_ratetable.go
+	SeedRoutingGuide SeedID = "RoutingGuide" // from 15_routing_guide.go
 	SeedServiceFailureReasonCode SeedID = "ServiceFailureReasonCode" // from 09_service_failure_reason_code.go
 	SeedShipment SeedID = "Shipment" // from 07_shipment.go
 	SeedSystemAccount SeedID = "SystemAccount" // from 05_system_account.go
@@ -39,6 +41,7 @@ const (
 
 var AllSeedIDs = []SeedID{
 	SeedAdminAccount,
+	SeedCarrier,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
 	SeedDocumentTemplateStarters,
@@ -55,6 +58,7 @@ var AllSeedIDs = []SeedID{
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
 	SeedRateTable,
+	SeedRoutingGuide,
 	SeedServiceFailureReasonCode,
 	SeedShipment,
 	SeedSystemAccount,
@@ -80,6 +84,7 @@ var BaseSeedIDs = []SeedID{
 }
 
 var DevelopmentSeedIDs = []SeedID{
+	SeedCarrier,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
 	SeedDriverPay,
@@ -90,6 +95,7 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedLocationCategory,
 	SeedNormalAccount,
 	SeedRateTable,
+	SeedRoutingGuide,
 	SeedShipment,
 	SeedTestData,
 	SeedTestOrganizations,

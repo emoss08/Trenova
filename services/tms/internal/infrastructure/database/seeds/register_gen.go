@@ -35,4 +35,6 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewDriverPaySeed())
 	r.MustRegister(development.NewDriverPayLedgerSeed())
 	r.MustRegister(development.NewDetentionSeed())
+	r.MustRegister(development.NewCarrierSeed())
+	r.MustRegister(development.NewRoutingGuideSeed())
 }
