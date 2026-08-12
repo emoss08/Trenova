@@ -58,7 +58,6 @@ func (r *repository) scanMoveSummary(
 	summary *repositories.BoardSummary,
 ) error {
 	asnCols := buncolgen.AssignmentColumns
-	posCols := buncolgen.VehiclePositionColumns
 
 	dayStart := filter.DayStartUnix
 	if dayStart <= 0 {
@@ -88,7 +87,7 @@ func (r *repository) scanMoveSummary(
 			asnCols.ID.IsNotNull(),
 			asnCols.CreatedAt.Gte(),
 		), dayStart).
-		Apply(averageDeadheadColumn(posCols, asnCols)).
+		Apply(averageDeadheadColumn()).
 		Join(shipmentJoin).
 		Join(customerJoin).
 		Join(assignmentJoin).
@@ -140,10 +139,10 @@ func (r *repository) scanDriverSummary(
 	return nil
 }
 
-func averageDeadheadColumn(
-	posCols buncolgen.VehiclePositionColumnSet,
-	asnCols buncolgen.AssignmentColumnSet,
-) func(*bun.SelectQuery) *bun.SelectQuery {
+func averageDeadheadColumn() func(*bun.SelectQuery) *bun.SelectQuery {
+	posCols := buncolgen.VehiclePositionColumns
+	asnCols := buncolgen.AssignmentColumns
+
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		if !dbdialect.FromBun(q.DB()).Supports(dbdialect.CapPostGIS) {
 			return q.ColumnExpr("NULL AS average_deadhead")
