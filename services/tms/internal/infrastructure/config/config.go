@@ -140,7 +140,7 @@ type GCPKMSConfig struct {
 	CredentialsMode string        `mapstructure:"credentialsMode" validate:"omitempty,oneof=adc workload-identity credentials-file"`
 	CredentialsFile string        `mapstructure:"credentialsFile"`
 	Timeout         time.Duration `mapstructure:"timeout"`
-	RetryAttempts   int           `mapstructure:"retryAttempts" validate:"omitempty,min=1,max=10"`
+	RetryAttempts   int           `mapstructure:"retryAttempts"   validate:"omitempty,min=1,max=10"`
 }
 
 type SessionConfig struct {
@@ -237,15 +237,15 @@ type CSRFBrowserGuardConfig struct {
 }
 
 type DatabaseConfig struct {
-	Driver           string        `mapstructure:"driver"          validate:"omitempty,oneof=postgres sqlite"`
-	Host             string        `mapstructure:"host"            validate:"required_if=Driver postgres"`
-	Port             int           `mapstructure:"port"            validate:"required_if=Driver postgres,omitempty,min=1,max=65535"`
-	Name             string        `mapstructure:"name"            validate:"required_if=Driver postgres,omitempty,min=1,max=63"`
-	User             string        `mapstructure:"user"            validate:"required_if=Driver postgres,omitempty,min=1,max=63"`
-	Password         string        `mapstructure:"password"        validate:"required_if=Driver postgres"`
-	SSLMode          string        `mapstructure:"sslMode"         validate:"required_if=Driver postgres,omitempty,oneof=disable require verify-ca verify-full"`
-	MaxIdleConns     int           `mapstructure:"maxIdleConns"    validate:"min=1,max=1000"`
-	MaxOpenConns     int           `mapstructure:"maxOpenConns"    validate:"min=1,max=1000"`
+	Driver           string        `mapstructure:"driver"                          validate:"omitempty,oneof=postgres sqlite"`
+	Host             string        `mapstructure:"host"                            validate:"required_if=Driver postgres"`
+	Port             int           `mapstructure:"port"                            validate:"required_if=Driver postgres,omitempty,min=1,max=65535"`
+	Name             string        `mapstructure:"name"                            validate:"required_if=Driver postgres,omitempty,min=1,max=63"`
+	User             string        `mapstructure:"user"                            validate:"required_if=Driver postgres,omitempty,min=1,max=63"`
+	Password         string        `mapstructure:"password"                        validate:"required_if=Driver postgres"`
+	SSLMode          string        `mapstructure:"sslMode"                         validate:"required_if=Driver postgres,omitempty,oneof=disable require verify-ca verify-full"`
+	MaxIdleConns     int           `mapstructure:"maxIdleConns"                    validate:"min=1,max=1000"`
+	MaxOpenConns     int           `mapstructure:"maxOpenConns"                    validate:"min=1,max=1000"`
 	Verbose          bool          `mapstructure:"verbose"`
 	ConnMaxLifetime  time.Duration `mapstructure:"connMaxLifetime"`
 	ConnMaxIdleTime  time.Duration `mapstructure:"connMaxIdleTime"`
@@ -1223,7 +1223,7 @@ type PortalConfig struct {
 type PushConfig struct {
 	VAPIDPublicKey  string `mapstructure:"vapidPublicKey"`
 	VAPIDPrivateKey string `mapstructure:"vapidPrivateKey"`
-	Subject         string `mapstructure:"subject" validate:"omitempty"`
+	Subject         string `mapstructure:"subject"         validate:"omitempty"`
 }
 
 func (c *PushConfig) Enabled() bool {
