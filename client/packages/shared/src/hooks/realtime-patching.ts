@@ -1,7 +1,12 @@
 export const RESOURCE_EVENT_NAME = "resource.invalidation";
 
 export const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
-  shipments: ["shipment-list", "dispatch-board"],
+  shipments: [
+    "shipment-list",
+    "dispatch-board",
+    "dispatch-live-tender",
+    "dispatch-shipment-tenders",
+  ],
   orders: ["order-list", "order-detail"],
   users: ["user-list"],
   customers: ["customer-list"],

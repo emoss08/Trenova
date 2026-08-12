@@ -20,8 +20,9 @@ import type {
  * prefix directly, and post-mutation invalidation relies on the same prefixes.
  */
 // Tender transitions happen server-side (Temporal advances the waterfall on
-// expiry), so the live views poll the same way the board does — no push channel
-// covers these resources yet.
+// expiry), so the live views poll as a floor. Push still arrives first: the
+// tender service publishes on the "shipments" resource with custom actions, and
+// RESOURCE_QUERY_KEY_MAP fans those out to both keys below.
 const LIVE_TENDER_REFETCH_MS = 15_000;
 const SHIPMENT_TENDERS_REFETCH_MS = 30_000;
 

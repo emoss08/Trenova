@@ -15,11 +15,14 @@ import {
 import { Form } from "@trenova/shared/components/ui/form";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   cancelTenderPayloadSchema,
   recordTenderResponsePayloadSchema,
   TENDER_CHANNEL_LABEL,
   TENDER_MODE_LABEL,
+  TENDER_RESPONSE_SOURCE_LABEL,
   type RecordTenderResponsePayload,
 } from "@trenova/shared/types/tender";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -240,6 +243,11 @@ function OfferRow({
         {offer.respondedAt != null && (
           <span>· responded {formatUnixDateTime(offer.respondedAt)}</span>
         )}
+        {offer.respondedAt != null && offer.responseSource && (
+          <span title="How the carrier's response reached us">
+            · {TENDER_RESPONSE_SOURCE_LABEL[offer.responseSource]}
+          </span>
+        )}
       </div>
 
       {offer.status === "Declined" && offer.declineReason && (
@@ -291,6 +299,16 @@ export function TenderLivePanel({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [respondingTo, setRespondingTo] = useState<LiveTenderOffer | null>(null);
 
+  // OfferRow repeats per offer, so the checks are resolved once here and passed
+  // down. They mirror the API's own gates — tender:update for recording an
+  // off-channel response, tender:cancel for pulling the tender back, and
+  // shipment_move:assign for the manual-assign escape hatch — so a user who
+  // would only earn a 403 never sees the control.
+  const hasPermission = usePermissionStore((state) => state.hasPermission);
+  const canRecordResponse = hasPermission(Resource.Tender, Operation.Update);
+  const canCancelTender = hasPermission(Resource.Tender, Operation.Cancel);
+  const canAssignMove = hasPermission(Resource.ShipmentMove, Operation.Assign);
+
   const offers = [...(tender.offers ?? [])].sort((a, b) => a.rank - b.rank);
   const isLive = tender.status === "Active" || tender.status === "NeedsReview";
 
@@ -337,7 +355,7 @@ export function TenderLivePanel({
             The accepting carrier could not be assigned to the move automatically — the move may
             have gained coverage in the meantime, or the assignment was blocked. Assign the carrier
             manually with the regular carrier-assign flow, or cancel this tender.
-            {onAssignManually && (
+            {onAssignManually && canAssignMove && (
               <Button
                 size="sm"
                 variant="outline"
@@ -358,7 +376,7 @@ export function TenderLivePanel({
             offer={offer}
             isCurrent={tender.status === "Active" && offer.rank === tender.currentRank}
             nowSeconds={nowSeconds}
-            onRecordResponse={isLive ? setRespondingTo : null}
+            onRecordResponse={isLive && canRecordResponse ? setRespondingTo : null}
           />
         ))}
         {offers.length === 0 && (
@@ -368,7 +386,7 @@ export function TenderLivePanel({
         )}
       </div>
 
-      {isLive && (
+      {isLive && canCancelTender && (
         <div>
           <Button
             size="sm"

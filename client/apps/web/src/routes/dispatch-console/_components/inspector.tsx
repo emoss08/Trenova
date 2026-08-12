@@ -1,4 +1,5 @@
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
+import { PermissionGate } from "@/components/permission-gate";
 import { isTypingTarget } from "@/lib/dom";
 import type {
   DispatchBoardDriver,
@@ -15,6 +16,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatClockDurationMs, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { Building2Icon, SendIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -263,28 +265,32 @@ function MoveInspector({
         </span>
         <div className="flex items-center gap-1.5">
           {!move.isCovered && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-6 px-2 text-[10px]"
-              disabled={isAssigning}
-              onClick={() => openCarrierAssign(move)}
-            >
-              <Building2Icon className="size-3" aria-hidden />
-              Assign to carrier
-            </Button>
+            <PermissionGate resource={Resource.ShipmentMove} operation={Operation.Assign}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px]"
+                disabled={isAssigning}
+                onClick={() => openCarrierAssign(move)}
+              >
+                <Building2Icon className="size-3" aria-hidden />
+                Assign to carrier
+              </Button>
+            </PermissionGate>
           )}
           {!move.isCovered && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-6 px-2 text-[10px]"
-              disabled={isAssigning}
-              onClick={() => openTender(move)}
-            >
-              <SendIcon className="size-3" aria-hidden />
-              Tender to carriers
-            </Button>
+            <PermissionGate resource={Resource.Tender} operation={Operation.Create}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px]"
+                disabled={isAssigning}
+                onClick={() => openTender(move)}
+              >
+                <SendIcon className="size-3" aria-hidden />
+                Tender to carriers
+              </Button>
+            </PermissionGate>
           )}
           <Button
             size="sm"
