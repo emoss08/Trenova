@@ -28126,6 +28126,8 @@ swagger: "2.0"
 tags:
     - name: Auth
       x-displayName: Authentication
+    - name: Push
+      x-displayName: Push Notifications
     - name: Realtime
       x-displayName: Realtime Access
     - name: API Keys
@@ -28146,12 +28148,28 @@ tags:
       x-displayName: Assignments
     - name: Billing Queue
       x-displayName: Billing Queue
+    - name: CarrierAssignments
+      x-displayName: Carrier Assignments
+    - name: Detention
+      x-displayName: Detention
     - name: Documents
       x-displayName: Documents
+    - name: DriverPortal
+      x-displayName: Driver Portal
+    - name: Invoices
+      x-displayName: Invoices
+    - name: RateConfirmations
+      x-displayName: Rate Confirmations
+    - name: Recurring Shipments
+      x-displayName: Recurring Shipments
+    - name: Shipment Events
+      x-displayName: Shipment Events
     - name: Shipment Moves
       x-displayName: Shipment Moves
     - name: Shipments
       x-displayName: Shipments
+    - name: Tenders
+      x-displayName: Tenders
     - name: Tractors
       x-displayName: Tractors
     - name: Trailers
@@ -28164,6 +28182,8 @@ tags:
       x-displayName: Accessorial Charges
     - name: Account Types
       x-displayName: Account Types
+    - name: Carriers
+      x-displayName: Carriers
     - name: Commodities
       x-displayName: Commodities
     - name: Customers
@@ -28194,6 +28214,10 @@ tags:
       x-displayName: Location Categories
     - name: Locations
       x-displayName: Locations
+    - name: Rate Tables
+      x-displayName: Rate Tables
+    - name: Routing Guides
+      x-displayName: Routing Guides
     - name: Service Types
       x-displayName: Service Types
     - name: Shipment Types
@@ -28204,6 +28228,8 @@ tags:
       x-displayName: Accounting Controls
     - name: Billing Controls
       x-displayName: Billing Controls
+    - name: Detention Policies
+      x-displayName: Detention Policies
     - name: Dispatch Controls
       x-displayName: Dispatch Controls
     - name: Distance Overrides
@@ -28222,36 +28248,11 @@ tags:
       x-displayName: Custom Fields
     - name: Database Sessions
       x-displayName: Database Sessions
-    - name: CarrierAssignments
-      x-displayName: CarrierAssignments
-    - name: Carriers
-      x-displayName: Carriers
-    - name: Detention
-      x-displayName: Detention
-    - name: Detention Policies
-      x-displayName: Detention Policies
-    - name: DriverPortal
-      x-displayName: DriverPortal
-    - name: Invoices
-      x-displayName: Invoices
-    - name: Push
-      x-displayName: Push
-    - name: Rate Tables
-      x-displayName: Rate Tables
-    - name: RateConfirmations
-      x-displayName: RateConfirmations
-    - name: Recurring Shipments
-      x-displayName: Recurring Shipments
-    - name: Routing Guides
-      x-displayName: Routing Guides
-    - name: Shipment Events
-      x-displayName: Shipment Events
-    - name: Tenders
-      x-displayName: Tenders
 x-tagGroups:
     - name: Getting Started
       tags:
         - Auth
+        - Push
         - Realtime
     - name: Identity & Access
       tags:
@@ -28266,9 +28267,17 @@ x-tagGroups:
       tags:
         - Assignments
         - Billing Queue
+        - CarrierAssignments
+        - Detention
         - Documents
+        - DriverPortal
+        - Invoices
+        - RateConfirmations
+        - Recurring Shipments
+        - Shipment Events
         - Shipment Moves
         - Shipments
+        - Tenders
         - Tractors
         - Trailers
         - Worker PTO
@@ -28277,6 +28286,7 @@ x-tagGroups:
       tags:
         - Accessorial Charges
         - Account Types
+        - Carriers
         - Commodities
         - Customers
         - DOT Hazmat References
@@ -28292,6 +28302,8 @@ x-tagGroups:
         - Hold Reasons
         - Location Categories
         - Locations
+        - Rate Tables
+        - Routing Guides
         - Service Types
         - Shipment Types
         - US States
@@ -28299,6 +28311,7 @@ x-tagGroups:
       tags:
         - Accounting Controls
         - Billing Controls
+        - Detention Policies
         - Dispatch Controls
         - Distance Overrides
         - Formula Templates
@@ -28310,18 +28323,3 @@ x-tagGroups:
         - Analytics
         - Custom Fields
         - Database Sessions
-    - name: Other
-      tags:
-        - CarrierAssignments
-        - Carriers
-        - Detention
-        - Detention Policies
-        - DriverPortal
-        - Invoices
-        - Push
-        - Rate Tables
-        - RateConfirmations
-        - Recurring Shipments
-        - Routing Guides
-        - Shipment Events
-        - Tenders
