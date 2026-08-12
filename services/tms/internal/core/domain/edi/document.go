@@ -153,7 +153,7 @@ type EDITemplateVersion struct {
 	X12Version         string         `json:"x12Version"         bun:"x12_version,type:VARCHAR(20),notnull"`
 	FunctionalGroupID  string         `json:"functionalGroupId"  bun:"functional_group_id,type:VARCHAR(2),notnull"`
 	Status             TemplateStatus `json:"status"             bun:"status,type:edi_template_status_enum,notnull"`
-	IsActive           bool           `json:"isActive"           bun:"is_active,type:BOOLEAN,notnull,default:false"`
+	IsActive           bool           `json:"isActive"           bun:"is_active,type:BOOLEAN,notnull"`
 	Notes              string         `json:"notes"              bun:"notes,type:TEXT,nullzero"`
 	CertificationNotes string         `json:"certificationNotes" bun:"certification_notes,type:TEXT,nullzero"`
 	ActivationNotes    string         `json:"activationNotes"    bun:"activation_notes,type:TEXT,nullzero"`
@@ -170,7 +170,7 @@ type EDITemplateVersion struct {
 	ArchivedAt         *int64         `json:"archivedAt"         bun:"archived_at,type:BIGINT,nullzero"`
 	DeprecatedAt       *int64         `json:"deprecatedAt"       bun:"deprecated_at,type:BIGINT,nullzero"`
 	SupersededAt       *int64         `json:"supersededAt"       bun:"superseded_at,type:BIGINT,nullzero"`
-	Version            int64          `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
+	Version            int64          `json:"version"            bun:"version,type:BIGINT,notnull"`
 	CreatedAt          int64          `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt          int64          `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -219,7 +219,7 @@ type EDITemplateSegment struct {
 	LoopID            string            `json:"loopId"            bun:"loop_id,type:VARCHAR(50),nullzero"`
 	RepeatPath        string            `json:"repeatPath"        bun:"repeat_path,type:TEXT,nullzero"`
 	Condition         string            `json:"condition"         bun:"condition,type:TEXT,nullzero"`
-	Required          bool              `json:"required"          bun:"required,type:BOOLEAN,notnull,default:false"`
+	Required          bool              `json:"required"          bun:"required,type:BOOLEAN,notnull"`
 	MaxUse            int64             `json:"maxUse"            bun:"max_use,type:BIGINT,notnull,default:1"`
 	Elements          []TemplateElement `json:"elements"          bun:"elements,type:JSONB,notnull,default:'[]'"`
 	UsageNotes        string            `json:"usageNotes"        bun:"usage_notes,type:TEXT,nullzero"`
@@ -256,7 +256,7 @@ type EDITemplateScriptLibrary struct {
 	Language          ScriptLanguage `json:"language"          bun:"language,type:edi_script_language_enum,notnull"`
 	Script            string         `json:"script"            bun:"script,type:TEXT,notnull"`
 	Status            TemplateStatus `json:"status"            bun:"status,type:edi_template_status_enum,notnull"`
-	Version           int64          `json:"version"           bun:"version,type:BIGINT,notnull,default:0"`
+	Version           int64          `json:"version"           bun:"version,type:BIGINT,notnull"`
 	CreatedAt         int64          `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt         int64          `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

@@ -47,9 +47,9 @@ type Conversation struct {
 	ExternalConversationID string                   `json:"externalConversationId" bun:"external_conversation_id,type:VARCHAR(255),nullzero"`
 	Status                 ConversationStatus       `json:"status"                 bun:"status,type:VARCHAR(32),notnull,default:'Active'"`
 	StatusReason           ConversationStatusReason `json:"statusReason"           bun:"status_reason,type:VARCHAR(64),nullzero"`
-	TurnCount              int                      `json:"turnCount"              bun:"turn_count,type:INTEGER,notnull,default:0"`
+	TurnCount              int                      `json:"turnCount"              bun:"turn_count,type:INTEGER,notnull"`
 	LastMessageAt          *int64                   `json:"lastMessageAt"          bun:"last_message_at,type:BIGINT,nullzero"`
-	Version                int64                    `json:"version"                bun:"version,type:BIGINT,notnull,default:0"`
+	Version                int64                    `json:"version"                bun:"version,type:BIGINT,notnull"`
 	CreatedAt              int64                    `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt              int64                    `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

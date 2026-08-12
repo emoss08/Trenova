@@ -79,7 +79,7 @@ type ShipmentLink struct {
 	SyncPolicy           ShipmentSyncPolicy `json:"syncPolicy"           bun:"sync_policy,type:edi_shipment_sync_policy_enum,notnull,default:'AutoOperational'"`
 	FieldOwnership       map[string]string  `json:"fieldOwnership"       bun:"field_ownership,type:JSONB,notnull,default:'{}'"`
 	Status               ShipmentLinkStatus `json:"status"               bun:"status,type:edi_shipment_link_status_enum,notnull,default:'Active'"`
-	Version              int64              `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
+	Version              int64              `json:"version"              bun:"version,type:BIGINT,notnull"`
 	CreatedAt            int64              `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64              `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
@@ -107,7 +107,7 @@ type TransferChange struct {
 	FailureReason         string                       `json:"failureReason"         bun:"failure_reason,type:TEXT,nullzero"`
 	SearchVector          string                       `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank                  string                       `json:"-"                     bun:"rank,type:VARCHAR(100),scanonly"`
-	Version               int64                        `json:"version"               bun:"version,type:BIGINT,notnull,default:0"`
+	Version               int64                        `json:"version"               bun:"version,type:BIGINT,notnull"`
 	CreatedAt             int64                        `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt             int64                        `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

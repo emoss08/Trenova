@@ -52,7 +52,7 @@ type IdentityProvider struct {
 	SAMLSSOURL          string                   `json:"samlSsoUrl"        bun:"saml_sso_url,type:VARCHAR(500)"`
 	SAMLX509Certificate string                   `json:"-"                 bun:"saml_x509_certificate,type:TEXT"`
 	SAMLMetadataXML     string                   `json:"-"                 bun:"saml_metadata_xml,type:TEXT"`
-	Version             int64                    `json:"version"           bun:"version,type:BIGINT,notnull,default:0"`
+	Version             int64                    `json:"version"           bun:"version,type:BIGINT,notnull"`
 	CreatedAt           int64                    `json:"createdAt"         bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt           int64                    `json:"updatedAt"         bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
@@ -315,7 +315,7 @@ type AccessPolicy struct {
 	Resource       string            `json:"resource"       bun:"resource,type:VARCHAR(120),notnull"`
 	Operation      string            `json:"operation"      bun:"operation,type:VARCHAR(80),notnull"`
 	Effect         PolicyEffect      `json:"effect"         bun:"effect,type:iam_policy_effect_enum,notnull"`
-	Priority       int               `json:"priority"       bun:"priority,notnull,default:0"`
+	Priority       int               `json:"priority"       bun:"priority,notnull"`
 	Conditions     map[string]string `json:"conditions"     bun:"conditions,type:JSONB,notnull"`
 	Enabled        bool              `json:"enabled"        bun:"enabled,notnull"`
 	CreatedAt      int64             `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

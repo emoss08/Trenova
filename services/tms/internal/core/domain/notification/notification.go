@@ -42,13 +42,13 @@ type Notification struct {
 	CreatedAt       int64          `json:"createdAt"       bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt       int64          `json:"updatedAt"       bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	DeliveryStatus  DeliveryStatus `json:"deliveryStatus"  bun:"delivery_status,type:VARCHAR(20),notnull,default:'pending'"`
-	RetryCount      int            `json:"retryCount"      bun:"retry_count,type:INT,notnull,default:0"`
+	RetryCount      int            `json:"retryCount"      bun:"retry_count,type:INT,notnull"`
 	MaxRetries      int            `json:"maxRetries"      bun:"max_retries,type:INT,notnull,default:3"`
 	Source          string         `json:"source"          bun:"source,type:VARCHAR(100),notnull"`
 	JobID           *string        `json:"jobId"           bun:"job_id,type:VARCHAR(255)"`
 	CorrelationID   *string        `json:"correlationId"   bun:"correlation_id,type:VARCHAR(255)"`
 	Tags            []string       `json:"tags"            bun:"tags,type:text[],array"`
-	Version         int64          `json:"version"         bun:"version,type:BIGINT,notnull,default:0"`
+	Version         int64          `json:"version"         bun:"version,type:BIGINT,notnull"`
 }
 
 func (n *Notification) BeforeAppendModel(_ context.Context, query bun.Query) error {

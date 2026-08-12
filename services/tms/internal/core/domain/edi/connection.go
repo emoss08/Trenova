@@ -59,7 +59,7 @@ type EDIConnection struct {
 	SuspendedAt          *int64                  `json:"suspendedAt"          bun:"suspended_at,type:BIGINT,nullzero"`
 	RevokedByID          pulid.ID                `json:"revokedById"          bun:"revoked_by_id,type:VARCHAR(100),nullzero"`
 	RevokedAt            *int64                  `json:"revokedAt"            bun:"revoked_at,type:BIGINT,nullzero"`
-	Version              int64                   `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
+	Version              int64                   `json:"version"              bun:"version,type:BIGINT,notnull"`
 	CreatedAt            int64                   `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt            int64                   `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

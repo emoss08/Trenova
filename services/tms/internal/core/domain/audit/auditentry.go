@@ -48,8 +48,8 @@ type Entry struct {
 	Comment        string               `json:"comment,omitempty"       bun:"comment,type:TEXT"`
 	IPAddress      string               `json:"ipAddress,omitempty"     bun:"ip_address,type:VARCHAR(45)"` // IPv6 addresses need space
 	Category       Category             `json:"category"                bun:"category,type:audit_category_enum,notnull,default:'System'"`
-	SensitiveData  bool                 `json:"sensitiveData"           bun:"sensitive_data,notnull,default:false"`
-	Critical       bool                 `json:"critical"                bun:"critical,notnull,default:false"`
+	SensitiveData  bool                 `json:"sensitiveData"           bun:"sensitive_data,notnull"`
+	Critical       bool                 `json:"critical"                bun:"critical,notnull"`
 	User           *tenant.User         `json:"user,omitempty"          bun:"rel:belongs-to,join:user_id=id"`
 	APIKey         *apikey.Key          `json:"apiKey,omitempty"        bun:"rel:belongs-to,join:api_key_id=id"`
 	Organization   *tenant.Organization `json:"-"                       bun:"rel:belongs-to,join:organization_id=id"`

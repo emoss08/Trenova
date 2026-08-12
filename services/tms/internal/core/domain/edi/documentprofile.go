@@ -34,7 +34,7 @@ type EDIPartnerDocumentProfile struct {
 	PartnerSettings              map[string]any       `json:"partnerSettings"              bun:"partner_settings,type:JSONB,notnull,default:'{}'"`
 	PartnerSettingsSchemaID      pulid.ID             `json:"partnerSettingsSchemaId"      bun:"partner_settings_schema_id,type:VARCHAR(100),nullzero"`
 	PartnerSettingsSchemaVersion int64                `json:"partnerSettingsSchemaVersion" bun:"partner_settings_schema_version,type:BIGINT,nullzero"`
-	Version                      int64                `json:"version"                      bun:"version,type:BIGINT,notnull,default:0"`
+	Version                      int64                `json:"version"                      bun:"version,type:BIGINT,notnull"`
 	CreatedAt                    int64                `json:"createdAt"                    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                    int64                `json:"updatedAt"                    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -112,7 +112,7 @@ type EDIControlNumberSequence struct {
 	NextValue      int64             `json:"nextValue"      bun:"next_value,type:BIGINT,notnull"`
 	MinValue       int64             `json:"minValue"       bun:"min_value,type:BIGINT,notnull"`
 	MaxValue       int64             `json:"maxValue"       bun:"max_value,type:BIGINT,notnull"`
-	Version        int64             `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
+	Version        int64             `json:"version"        bun:"version,type:BIGINT,notnull"`
 	CreatedAt      int64             `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64             `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

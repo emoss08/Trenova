@@ -60,7 +60,7 @@ type DistanceProfile struct {
 	TollRoads           bool             `json:"tollRoads"           bun:"toll_roads,type:BOOLEAN,notnull"`
 	BordersOpen         bool             `json:"bordersOpen"         bun:"borders_open,type:BOOLEAN,notnull"`
 	IncludeTollData     bool             `json:"includeTollData"     bun:"include_toll_data,type:BOOLEAN,notnull"`
-	Version             int64            `json:"version"             bun:"version,type:BIGINT,notnull,default:0"`
+	Version             int64            `json:"version"             bun:"version,type:BIGINT,notnull"`
 	CreatedAt           int64            `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt           int64            `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector        string           `json:"-"                   bun:"search_vector,type:TSVECTOR,scanonly"`

@@ -31,8 +31,8 @@ type Request struct {
 	RequestedFiscalYearID   pulid.ID `json:"requestedFiscalYearId"   bun:"requested_fiscal_year_id,type:VARCHAR(100),notnull"`
 	RequestedFiscalPeriodID pulid.ID `json:"requestedFiscalPeriodId" bun:"requested_fiscal_period_id,type:VARCHAR(100),notnull"`
 	CurrencyCode            string   `json:"currencyCode"            bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	TotalDebit              int64    `json:"totalDebit"              bun:"total_debit_minor,type:BIGINT,notnull,default:0"`
-	TotalCredit             int64    `json:"totalCredit"             bun:"total_credit_minor,type:BIGINT,notnull,default:0"`
+	TotalDebit              int64    `json:"totalDebit"              bun:"total_debit_minor,type:BIGINT,notnull"`
+	TotalCredit             int64    `json:"totalCredit"             bun:"total_credit_minor,type:BIGINT,notnull"`
 	ApprovedAt              *int64   `json:"approvedAt"              bun:"approved_at,type:BIGINT,nullzero"`
 	ApprovedByID            pulid.ID `json:"approvedById"            bun:"approved_by_id,type:VARCHAR(100),nullzero"`
 	RejectedAt              *int64   `json:"rejectedAt"              bun:"rejected_at,type:BIGINT,nullzero"`
@@ -44,7 +44,7 @@ type Request struct {
 	PostedBatchID           pulid.ID `json:"postedBatchId"           bun:"posted_batch_id,type:VARCHAR(100),nullzero"`
 	CreatedByID             pulid.ID `json:"createdById"             bun:"created_by_id,type:VARCHAR(100),notnull"`
 	UpdatedByID             pulid.ID `json:"updatedById"             bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version                 int64    `json:"version"                 bun:"version,type:BIGINT,notnull,default:0"`
+	Version                 int64    `json:"version"                 bun:"version,type:BIGINT,notnull"`
 	CreatedAt               int64    `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt               int64    `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
@@ -61,8 +61,8 @@ type Line struct {
 	LineNumber             int      `json:"lineNumber"             bun:"line_number,type:INTEGER,notnull"`
 	GLAccountID            pulid.ID `json:"glAccountId"            bun:"gl_account_id,type:VARCHAR(100),notnull"`
 	Description            string   `json:"description"            bun:"description,type:TEXT,notnull"`
-	DebitAmount            int64    `json:"debitAmount"            bun:"debit_amount_minor,type:BIGINT,notnull,default:0"`
-	CreditAmount           int64    `json:"creditAmount"           bun:"credit_amount_minor,type:BIGINT,notnull,default:0"`
+	DebitAmount            int64    `json:"debitAmount"            bun:"debit_amount_minor,type:BIGINT,notnull"`
+	CreditAmount           int64    `json:"creditAmount"           bun:"credit_amount_minor,type:BIGINT,notnull"`
 	CustomerID             pulid.ID `json:"customerId"             bun:"customer_id,type:VARCHAR(100),nullzero"`
 	LocationID             pulid.ID `json:"locationId"             bun:"location_id,type:VARCHAR(100),nullzero"`
 	CreatedAt              int64    `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

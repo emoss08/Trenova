@@ -42,11 +42,11 @@ type ReportRun struct {
 	RowCount           int64          `json:"rowCount"           bun:"row_count,type:BIGINT,nullzero"`
 	ByteSize           int64          `json:"byteSize"           bun:"byte_size,type:BIGINT,nullzero"`
 	DurationMs         int64          `json:"durationMs"         bun:"duration_ms,type:BIGINT,nullzero"`
-	Truncated          bool           `json:"truncated"          bun:"truncated,type:BOOLEAN,notnull,default:false"`
+	Truncated          bool           `json:"truncated"          bun:"truncated,type:BOOLEAN,notnull"`
 	Error              *RunError      `json:"error"              bun:"error,type:JSONB,nullzero"`
 	ArtifactKey        string         `json:"artifactKey"        bun:"artifact_key,type:VARCHAR(512),nullzero"`
 	ArtifactExpiresAt  int64          `json:"artifactExpiresAt"  bun:"artifact_expires_at,type:BIGINT,nullzero"`
-	CacheHit           bool           `json:"cacheHit"           bun:"cache_hit,type:BOOLEAN,notnull,default:false"`
+	CacheHit           bool           `json:"cacheHit"           bun:"cache_hit,type:BOOLEAN,notnull"`
 	TemporalWorkflowID string         `json:"temporalWorkflowId" bun:"temporal_workflow_id,type:VARCHAR(255),nullzero"`
 	TemporalRunID      string         `json:"temporalRunId"      bun:"temporal_run_id,type:VARCHAR(255),nullzero"`
 	QueuedAt           int64          `json:"queuedAt"           bun:"queued_at,type:BIGINT,nullzero"`

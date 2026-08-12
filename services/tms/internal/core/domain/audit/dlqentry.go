@@ -27,7 +27,7 @@ type DLQEntry struct {
 	OriginalEntryID pulid.ID       `json:"originalEntryId" bun:"original_entry_id,type:VARCHAR(100),notnull"`
 	EntryData       map[string]any `json:"entryData"       bun:"entry_data,type:JSONB,notnull"`
 	FailureTime     int64          `json:"failureTime"     bun:"failure_time,notnull"`
-	RetryCount      int            `json:"retryCount"      bun:"retry_count,notnull,default:0"`
+	RetryCount      int            `json:"retryCount"      bun:"retry_count,notnull"`
 	LastError       string         `json:"lastError"       bun:"last_error,type:TEXT"`
 	NextRetryAt     int64          `json:"nextRetryAt"     bun:"next_retry_at"`
 	Status          DLQStatus      `json:"status"          bun:"status,type:VARCHAR(20),notnull,default:'pending'"`

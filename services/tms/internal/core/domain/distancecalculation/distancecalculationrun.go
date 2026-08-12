@@ -32,7 +32,7 @@ type Run struct {
 	Status          string         `json:"status"          bun:"status,type:VARCHAR(50),notnull"`
 	ErrorCode       string         `json:"errorCode"       bun:"error_code,type:VARCHAR(100),nullzero"`
 	ErrorMessage    string         `json:"errorMessage"    bun:"error_message,type:TEXT,nullzero"`
-	LatencyMillis   int64          `json:"latencyMillis"   bun:"latency_millis,type:BIGINT,notnull,default:0"`
+	LatencyMillis   int64          `json:"latencyMillis"   bun:"latency_millis,type:BIGINT,notnull"`
 	CreatedAt       int64          `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 

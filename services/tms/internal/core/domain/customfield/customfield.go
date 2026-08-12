@@ -35,9 +35,9 @@ type CustomFieldDefinition struct {
 	Label           string           `json:"label"           bun:"label,type:VARCHAR(150),notnull"`
 	Description     string           `json:"description"     bun:"description,type:TEXT,nullzero"`
 	FieldType       FieldType        `json:"fieldType"       bun:"field_type,type:custom_field_type_enum,notnull"`
-	IsRequired      bool             `json:"isRequired"      bun:"is_required,default:false"`
+	IsRequired      bool             `json:"isRequired"      bun:"is_required"`
 	IsActive        bool             `json:"isActive"        bun:"is_active,default:true"`
-	DisplayOrder    int              `json:"displayOrder"    bun:"display_order,default:0"`
+	DisplayOrder    int              `json:"displayOrder"    bun:"display_order"`
 	Color           string           `json:"color"           bun:"color,type:VARCHAR(20),nullzero"`
 	Options         []SelectOption   `json:"options"         bun:"options,type:JSONB"`
 	ValidationRules *ValidationRules `json:"validationRules" bun:"validation_rules,type:JSONB"`

@@ -44,7 +44,7 @@ type Location struct {
 	City                 string             `json:"city"                 bun:"city,type:VARCHAR(100),notnull"`
 	PostalCode           string             `json:"postalCode"           bun:"postal_code,type:us_postal_code,notnull"`
 	PlaceID              string             `json:"placeId"              bun:"place_id,type:TEXT,nullzero"`
-	IsGeocoded           bool               `json:"isGeocoded"           bun:"is_geocoded,type:BOOLEAN,default:false"`
+	IsGeocoded           bool               `json:"isGeocoded"           bun:"is_geocoded,type:BOOLEAN"`
 	Longitude            *float64           `json:"longitude"            bun:"longitude,type:FLOAT,nullzero"`
 	Latitude             *float64           `json:"latitude"             bun:"latitude,type:FLOAT,nullzero"`
 	Geom                 *postgis.Point     `json:"-"                    bun:"geom,type:geography,scanonly"`

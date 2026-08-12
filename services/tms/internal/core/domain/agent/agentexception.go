@@ -38,7 +38,7 @@ type AgentException struct {
 	SubjectID       pulid.ID          `json:"subjectId"       bun:"subject_id,type:VARCHAR(100),notnull"`
 	AttemptSummary  string            `json:"attemptSummary"  bun:"attempt_summary,type:TEXT,notnull"`
 	Evidence        []EvidenceRef     `json:"evidence"        bun:"evidence,type:JSONB,notnull,default:'[]'"`
-	BlastRadius     int               `json:"blastRadius"     bun:"blast_radius,type:INTEGER,notnull,default:0"`
+	BlastRadius     int               `json:"blastRadius"     bun:"blast_radius,type:INTEGER,notnull"`
 	ResolutionState ResolutionState   `json:"resolutionState" bun:"resolution_state,type:agent_resolution_state_enum,notnull,default:'Open'"`
 	ResolutionNotes string            `json:"resolutionNotes" bun:"resolution_notes,type:TEXT,nullzero"`
 

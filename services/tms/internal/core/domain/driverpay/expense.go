@@ -70,7 +70,7 @@ type Expense struct {
 	ReviewedByID      *pulid.ID     `json:"reviewedById"      bun:"reviewed_by_id,type:VARCHAR(100),nullzero"`
 	ReviewedAt        *int64        `json:"reviewedAt"        bun:"reviewed_at,type:BIGINT,nullzero"`
 	SettlementLineID  *pulid.ID     `json:"settlementLineId"  bun:"settlement_line_id,type:VARCHAR(100),nullzero"`
-	Version           int64         `json:"version"           bun:"version,type:BIGINT,notnull,default:0"`
+	Version           int64         `json:"version"           bun:"version,type:BIGINT,notnull"`
 	CreatedAt         int64         `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt         int64         `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

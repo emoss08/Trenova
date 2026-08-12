@@ -34,7 +34,7 @@ type TenderRecipient struct {
 	BaselineRecordedAt       int64                         `json:"baselineRecordedAt" bun:"baseline_recorded_at,type:BIGINT,notnull"`
 	BaselineStatus           TenderRecipientBaselineStatus `json:"baselineStatus" bun:"baseline_status,type:edi_tender_recipient_baseline_status_enum,notnull"`
 	Status                   TenderRecipientStatus         `json:"status" bun:"status,type:edi_tender_recipient_status_enum,notnull,default:'Active'"`
-	Version                  int64                         `json:"version" bun:"version,type:BIGINT,notnull,default:0"`
+	Version                  int64                         `json:"version" bun:"version,type:BIGINT,notnull"`
 	CreatedAt                int64                         `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                int64                         `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
@@ -69,7 +69,7 @@ type TenderChange struct {
 	FailureReason           string              `json:"failureReason" bun:"failure_reason,type:TEXT,nullzero"`
 	SearchVector            string              `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank                    string              `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
-	Version                 int64               `json:"version" bun:"version,type:BIGINT,notnull,default:0"`
+	Version                 int64               `json:"version" bun:"version,type:BIGINT,notnull"`
 	CreatedAt               int64               `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt               int64               `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

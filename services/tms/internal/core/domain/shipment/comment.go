@@ -50,12 +50,12 @@ type ShipmentComment struct {
 	PinnedByID             *pulid.ID            `json:"pinnedById"                      bun:"pinned_by_id,type:VARCHAR(100),nullzero"`
 	ResolvedAt             *int64               `json:"resolvedAt"                      bun:"resolved_at,type:BIGINT,nullzero"`
 	ResolvedByID           *pulid.ID            `json:"resolvedById"                    bun:"resolved_by_id,type:VARCHAR(100),nullzero"`
-	RequiresAcknowledgment bool                 `json:"requiresAcknowledgment"          bun:"requires_acknowledgment,type:BOOLEAN,notnull,default:false"`
+	RequiresAcknowledgment bool                 `json:"requiresAcknowledgment"          bun:"requires_acknowledgment,type:BOOLEAN,notnull"`
 	DeletedAt              *int64               `json:"deletedAt"                       bun:"deleted_at,type:BIGINT,nullzero"`
 	DeletedByID            *pulid.ID            `json:"deletedById"                     bun:"deleted_by_id,type:VARCHAR(100),nullzero"`
 	SearchVector           string               `json:"-"                               bun:"search_vector,type:TSVECTOR,scanonly"`
 	ReplyCount             int64                `json:"replyCount"                      bun:"reply_count,scanonly"`
-	Version                int64                `json:"version"                         bun:"version,type:BIGINT,notnull,default:0"`
+	Version                int64                `json:"version"                         bun:"version,type:BIGINT,notnull"`
 	CreatedAt              int64                `json:"createdAt"                       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt              int64                `json:"updatedAt"                       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	MentionedUserIDs       []pulid.ID           `json:"mentionedUserIds,omitempty"      bun:"-"`

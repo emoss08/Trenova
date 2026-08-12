@@ -17,7 +17,7 @@ type WorkerHOSViolation struct {
 	ViolationType    string   `json:"violationType"    bun:"violation_type,pk,type:VARCHAR(64),notnull"`
 	ViolationStartAt int64    `json:"violationStartAt" bun:"violation_start_at,pk,type:BIGINT,notnull"`
 	Description      string   `json:"description"      bun:"description,type:TEXT,nullzero"`
-	DurationMs       int64    `json:"durationMs"       bun:"duration_ms,type:BIGINT,notnull,default:0"`
+	DurationMs       int64    `json:"durationMs"       bun:"duration_ms,type:BIGINT,notnull"`
 	DayStartAt       *int64   `json:"dayStartAt"       bun:"day_start_at,type:BIGINT,nullzero"`
 	DayEndAt         *int64   `json:"dayEndAt"         bun:"day_end_at,type:BIGINT,nullzero"`
 	DetectedAt       int64    `json:"detectedAt"       bun:"detected_at,type:BIGINT,notnull"`

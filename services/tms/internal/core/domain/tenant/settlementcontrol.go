@@ -68,17 +68,17 @@ type SettlementControl struct {
 	PeriodEndDayOfWeek            int                `json:"periodEndDayOfWeek"            bun:"period_end_day_of_week,type:INTEGER,notnull,default:6"`
 	PayDelayDays                  int                `json:"payDelayDays"                  bun:"pay_delay_days,type:INTEGER,notnull,default:5"`
 	PayTrigger                    PayTrigger         `json:"payTrigger"                    bun:"pay_trigger,type:VARCHAR(50),notnull,default:'ShipmentDelivered'"`
-	AutoGenerateBatches           bool               `json:"autoGenerateBatches"           bun:"auto_generate_batches,type:BOOLEAN,notnull,default:false"`
-	AutoApproveClean              bool               `json:"autoApproveClean"              bun:"auto_approve_clean,type:BOOLEAN,notnull,default:false"`
+	AutoGenerateBatches           bool               `json:"autoGenerateBatches"           bun:"auto_generate_batches,type:BOOLEAN,notnull"`
+	AutoApproveClean              bool               `json:"autoApproveClean"              bun:"auto_approve_clean,type:BOOLEAN,notnull"`
 	AutoAttachAccruals            bool               `json:"autoAttachAccruals"            bun:"auto_attach_accruals,type:BOOLEAN,notnull,default:true"`
-	AutoPostOnApprove             bool               `json:"autoPostOnApprove"             bun:"auto_post_on_approve,type:BOOLEAN,notnull,default:false"`
+	AutoPostOnApprove             bool               `json:"autoPostOnApprove"             bun:"auto_post_on_approve,type:BOOLEAN,notnull"`
 	AllowNegativeNet              bool               `json:"allowNegativeNet"              bun:"allow_negative_net,type:BOOLEAN,notnull,default:true"`
 	VarianceThresholdPct          decimal.Decimal    `json:"varianceThresholdPct"          bun:"variance_threshold_pct,type:NUMERIC(7,4),notnull,default:25"`
 	VarianceLookbackWeeks         int                `json:"varianceLookbackWeeks"         bun:"variance_lookback_weeks,type:INTEGER,notnull,default:8"`
 	DefaultEscrowInterestRate     decimal.Decimal    `json:"defaultEscrowInterestRate"     bun:"default_escrow_interest_rate,type:NUMERIC(7,4),notnull,default:0"`
 	EscrowInterestFrequencyMonths int                `json:"escrowInterestFrequencyMonths" bun:"escrow_interest_frequency_months,type:INTEGER,notnull,default:3"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

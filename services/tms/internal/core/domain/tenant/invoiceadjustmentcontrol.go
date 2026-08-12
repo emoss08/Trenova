@@ -46,7 +46,7 @@ type InvoiceAdjustmentControl struct {
 	OverCreditPolicy                  OverCreditPolicy                  `json:"overCreditPolicy"                  bun:"over_credit_policy,type:over_credit_policy_enum,notnull,default:'Block'"`
 	SupersededInvoiceVisibilityPolicy SupersededInvoiceVisibilityPolicy `json:"supersededInvoiceVisibilityPolicy" bun:"superseded_invoice_visibility_policy,type:superseded_invoice_visibility_policy_enum,notnull,default:'ShowCurrentOnlyExternally'"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

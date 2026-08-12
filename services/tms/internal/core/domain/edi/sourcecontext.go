@@ -54,7 +54,7 @@ type EDISourceContextField struct {
 	Path        string                   `json:"path"        bun:"path,type:TEXT,notnull"`
 	SourceKind  SourceContextKind        `json:"sourceKind"  bun:"source_kind,type:edi_source_context_kind_enum,notnull"`
 	DataType    SourceContextDataType    `json:"dataType"    bun:"data_type,type:edi_source_context_data_type_enum,notnull"`
-	Repeated    bool                     `json:"repeated"    bun:"repeated,type:BOOLEAN,notnull,default:false"`
+	Repeated    bool                     `json:"repeated"    bun:"repeated,type:BOOLEAN,notnull"`
 	RepeatPath  string                   `json:"repeatPath"  bun:"repeat_path,type:TEXT,nullzero"`
 	ParentPath  string                   `json:"parentPath"  bun:"parent_path,type:TEXT,nullzero"`
 	DisplayName string                   `json:"displayName" bun:"display_name,type:VARCHAR(200),notnull"`

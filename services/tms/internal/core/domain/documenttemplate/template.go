@@ -61,13 +61,13 @@ type DocumentTemplate struct {
 
 	// IsOrgDefault marks the template every customer without an assignment gets.
 	// A partial unique index enforces one per kind.
-	IsOrgDefault bool `json:"isOrgDefault" bun:"is_org_default,type:BOOLEAN,notnull,default:false"`
+	IsOrgDefault bool `json:"isOrgDefault" bun:"is_org_default,type:BOOLEAN,notnull"`
 
 	// ActiveVersionID is what renders. Nil means the template has only drafts and
 	// resolution therefore falls through to the built-in.
 	ActiveVersionID *pulid.ID `json:"activeVersionId" bun:"active_version_id,type:VARCHAR(100),nullzero"`
 
-	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull,default:0"`
+	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull"`
 	CreatedAt   int64     `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt   int64     `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	CreatedByID *pulid.ID `json:"createdById" bun:"created_by_id,type:VARCHAR(100),nullzero"`

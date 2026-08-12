@@ -38,14 +38,14 @@ type Customer struct {
 	AddressLine2           string             `json:"addressLine2"           bun:"address_line_2,type:VARCHAR(150),nullzero"`
 	City                   string             `json:"city"                   bun:"city,type:VARCHAR(100),nullzero"`
 	PostalCode             string             `json:"postalCode"             bun:"postal_code,type:us_postal_code,notnull"`
-	IsGeocoded             bool               `json:"isGeocoded"             bun:"is_geocoded,type:BOOLEAN,default:false"`
+	IsGeocoded             bool               `json:"isGeocoded"             bun:"is_geocoded,type:BOOLEAN"`
 	Longitude              *float64           `json:"longitude"              bun:"longitude,type:FLOAT,nullzero"`
 	Latitude               *float64           `json:"latitude"               bun:"latitude,type:FLOAT,nullzero"`
 	PlaceID                string             `json:"placeId"                bun:"place_id,type:TEXT,nullzero"`
 	ExternalID             string             `json:"externalId"             bun:"external_id,type:TEXT,nullzero"`
 	Geom                   *postgis.Point     `json:"-"                      bun:"geom,type:geography,scanonly"`
 	AllowConsolidation     bool               `json:"allowConsolidation"     bun:"allow_consolidation,type:BOOLEAN,default:true"`
-	ExclusiveConsolidation bool               `json:"exclusiveConsolidation" bun:"exclusive_consolidation,type:BOOLEAN,default:false"`
+	ExclusiveConsolidation bool               `json:"exclusiveConsolidation" bun:"exclusive_consolidation,type:BOOLEAN"`
 	ConsolidationPriority  int                `json:"consolidationPriority"  bun:"consolidation_priority,type:INTEGER,default:1"`
 	SearchVector           string             `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank                   string             `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"`

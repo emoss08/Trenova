@@ -57,16 +57,16 @@ type EDIPartnerSettingField struct {
 	Label             string                 `json:"label"             bun:"label,type:VARCHAR(200),notnull"`
 	Description       string                 `json:"description"       bun:"description,type:TEXT,nullzero"`
 	DataType          PartnerSettingDataType `json:"dataType"          bun:"data_type,type:edi_partner_setting_data_type_enum,notnull"`
-	Required          bool                   `json:"required"          bun:"required,type:BOOLEAN,notnull,default:false"`
-	Nullable          bool                   `json:"nullable"          bun:"nullable,type:BOOLEAN,notnull,default:false"`
+	Required          bool                   `json:"required"          bun:"required,type:BOOLEAN,notnull"`
+	Nullable          bool                   `json:"nullable"          bun:"nullable,type:BOOLEAN,notnull"`
 	DefaultValue      any                    `json:"defaultValue"      bun:"default_value,type:JSONB,nullzero"`
 	AllowedValues     []string               `json:"allowedValues"     bun:"allowed_values,type:JSONB,notnull,default:'[]'"`
-	Secret            bool                   `json:"secret"            bun:"secret,type:BOOLEAN,notnull,default:false"`
+	Secret            bool                   `json:"secret"            bun:"secret,type:BOOLEAN,notnull"`
 	GroupKey          string                 `json:"groupKey"          bun:"group_key,type:VARCHAR(100),nullzero"`
-	DisplayOrder      int                    `json:"displayOrder"      bun:"display_order,type:INTEGER,notnull,default:0"`
+	DisplayOrder      int                    `json:"displayOrder"      bun:"display_order,type:INTEGER,notnull"`
 	ValidationPattern string                 `json:"validationPattern" bun:"validation_pattern,type:TEXT,nullzero"`
-	MinLength         int                    `json:"minLength"         bun:"min_length,type:INTEGER,notnull,default:0"`
-	MaxLength         int                    `json:"maxLength"         bun:"max_length,type:INTEGER,notnull,default:0"`
+	MinLength         int                    `json:"minLength"         bun:"min_length,type:INTEGER,notnull"`
+	MaxLength         int                    `json:"maxLength"         bun:"max_length,type:INTEGER,notnull"`
 	UsageNotes        string                 `json:"usageNotes"        bun:"usage_notes,type:TEXT,nullzero"`
 	Status            PartnerSettingStatus   `json:"status"            bun:"status,type:edi_partner_setting_status_enum,notnull"`
 	CreatedAt         int64                  `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
