@@ -1,6 +1,6 @@
 {
-  "operationCount": 379,
-  "fragmentCount": 114,
+  "operationCount": 381,
+  "fragmentCount": 116,
   "operations": [
     {
       "name": "AccessorialChargeTable",
@@ -3954,6 +3954,52 @@
       "sdl": "query JournalSourceByObject($sourceType: String!, $sourceId: String!) {\n  journalSourceByObject(sourceType: $sourceType, sourceId: $sourceId) {\n    id\n    sourceObjectType\n    sourceObjectId\n    sourceEventType\n    sourceDocumentNumber\n    status\n  }\n}"
     },
     {
+      "name": "JurisdictionRuleOverrideTable",
+      "kind": "query",
+      "domain": "jurisdiction-rule",
+      "sourceFile": "src/operations/jurisdiction-rule/overrides.graphql",
+      "hash": "sha256:2de143006b12e5f214983705e5f380ba12d8b8b92faf1ef074afba903e1df9db",
+      "rootFields": [
+        "jurisdictionRuleOverrides"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "JurisdictionRuleOverrideTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query JurisdictionRuleOverrideTable($input: DataTableConnectionInput!) {\n  jurisdictionRuleOverrides(input: $input) {\n    edges {\n      node {\n        ...JurisdictionRuleOverrideTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment JurisdictionRuleOverrideTableRowFields on JurisdictionRuleOverride {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  maxWidthFeet\n  maxHeightFeet\n  maxLengthFeet\n  maxWeightPounds\n  permitLeadTimeDays\n  daylightOnly\n  holidayRestricted\n  reason\n  version\n  createdAt\n  updatedAt\n  state {\n    id\n    name\n    abbreviation\n  }\n}"
+    },
+    {
+      "name": "JurisdictionRuleTable",
+      "kind": "query",
+      "domain": "jurisdiction-rule",
+      "sourceFile": "src/operations/jurisdiction-rule/table.graphql",
+      "hash": "sha256:2a608c9295be683a2c81a47bc04a06e4db7397ad8fa19cc18f337d5045a951e9",
+      "rootFields": [
+        "jurisdictionRules"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "JurisdictionRuleTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query JurisdictionRuleTable($input: DataTableConnectionInput!) {\n  jurisdictionRules(input: $input) {\n    edges {\n      node {\n        ...JurisdictionRuleTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment JurisdictionRuleTableRowFields on JurisdictionRule {\n  id\n  stateId\n  status\n  maxWidthFeet\n  maxHeightFeet\n  maxLengthFeet\n  maxWeightPounds\n  superloadWidthFeet\n  superloadWeightPounds\n  daylightOnly\n  rushHourRestricted\n  weekendRestricted\n  holidayRestricted\n  permitLeadTimeDays\n  permitValidityDays\n  permitBaseFee\n  permitPerMileFee\n  sourceNote\n  sourceUrl\n  verificationState\n  verifiedAt\n  effectiveStartDate\n  effectiveEndDate\n  version\n  createdAt\n  updatedAt\n  state {\n    id\n    name\n    abbreviation\n  }\n}"
+    },
+    {
       "name": "LocationCategoryTable",
       "kind": "query",
       "domain": "location-category",
@@ -6665,14 +6711,14 @@
       "kind": "query",
       "domain": "shipment",
       "sourceFile": "src/operations/shipment/page.graphql",
-      "hash": "sha256:fb8f36ec1209a13f87cfda6fda2017e70e17c899f6b2f5b22fc8b4fe8bdbace7",
+      "hash": "sha256:31816c9ef557fefb9f366f7c6de4a496827f84f1ce406e42f21e1444ddefb7a1",
       "rootFields": [
         "shipmentUIPolicy"
       ],
       "variables": [],
       "fragments": [],
       "usages": [],
-      "sdl": "query ShipmentUIPolicy {\n  shipmentUIPolicy {\n    allowMoveRemovals\n    checkForDuplicateBols\n    checkHazmatSegregation\n    maxShipmentWeightLimit\n  }\n}"
+      "sdl": "query ShipmentUIPolicy {\n  shipmentUIPolicy {\n    allowMoveRemovals\n    checkForDuplicateBols\n    checkHazmatSegregation\n    maxShipmentWeightLimit\n    profile\n  }\n}"
     },
     {
       "name": "SidebarCustomizationOptions",
@@ -8678,6 +8724,8 @@
         "HoldReasonTable",
         "InvoiceTable",
         "JournalReversalTable",
+        "JurisdictionRuleOverrideTable",
+        "JurisdictionRuleTable",
         "LocationCategoryTable",
         "LocationTable",
         "ManualJournalTable",
@@ -9240,6 +9288,30 @@
       ],
       "usages": [],
       "sdl": "fragment JournalReversalTableRowFields on JournalReversal {\n  id\n  businessUnitId\n  organizationId\n  originalJournalEntryId\n  reversalJournalEntryId\n  postedBatchId\n  status\n  requestedAccountingDate\n  resolvedFiscalYearId\n  resolvedFiscalPeriodId\n  reasonCode\n  reasonText\n  requestedById\n  approvedById\n  approvedAt\n  rejectedById\n  rejectedAt\n  rejectionReason\n  cancelledById\n  cancelledAt\n  cancelReason\n  postedById\n  postedAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "JurisdictionRuleOverrideTableRowFields",
+      "typeCondition": "JurisdictionRuleOverride",
+      "domain": "jurisdiction-rule",
+      "sourceFile": "src/operations/jurisdiction-rule/overrides.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "JurisdictionRuleOverrideTable"
+      ],
+      "usages": [],
+      "sdl": "fragment JurisdictionRuleOverrideTableRowFields on JurisdictionRuleOverride {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  maxWidthFeet\n  maxHeightFeet\n  maxLengthFeet\n  maxWeightPounds\n  permitLeadTimeDays\n  daylightOnly\n  holidayRestricted\n  reason\n  version\n  createdAt\n  updatedAt\n  state {\n    id\n    name\n    abbreviation\n  }\n}"
+    },
+    {
+      "name": "JurisdictionRuleTableRowFields",
+      "typeCondition": "JurisdictionRule",
+      "domain": "jurisdiction-rule",
+      "sourceFile": "src/operations/jurisdiction-rule/table.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "JurisdictionRuleTable"
+      ],
+      "usages": [],
+      "sdl": "fragment JurisdictionRuleTableRowFields on JurisdictionRule {\n  id\n  stateId\n  status\n  maxWidthFeet\n  maxHeightFeet\n  maxLengthFeet\n  maxWeightPounds\n  superloadWidthFeet\n  superloadWeightPounds\n  daylightOnly\n  rushHourRestricted\n  weekendRestricted\n  holidayRestricted\n  permitLeadTimeDays\n  permitValidityDays\n  permitBaseFee\n  permitPerMileFee\n  sourceNote\n  sourceUrl\n  verificationState\n  verifiedAt\n  effectiveStartDate\n  effectiveEndDate\n  version\n  createdAt\n  updatedAt\n  state {\n    id\n    name\n    abbreviation\n  }\n}"
     },
     {
       "name": "LocationCategoryTableRowFields",

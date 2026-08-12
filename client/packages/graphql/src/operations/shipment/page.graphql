@@ -793,6 +793,7 @@ query ShipmentUIPolicy {
     checkForDuplicateBols
     checkHazmatSegregation
     maxShipmentWeightLimit
+    profile
   }
 }
 

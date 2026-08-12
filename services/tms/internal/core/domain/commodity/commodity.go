@@ -60,6 +60,9 @@ type Commodity struct {
 	MaxTemperature         *int               `json:"maxTemperature"         bun:"max_temperature,type:INTEGER,nullzero"`
 	WeightPerUnit          *float64           `json:"weightPerUnit"          bun:"weight_per_unit,type:NUMERIC(10,2),nullzero"`
 	LinearFeetPerUnit      *float64           `json:"linearFeetPerUnit"      bun:"linear_feet_per_unit,type:NUMERIC(10,2),nullzero"`
+	LengthPerUnit          *float64           `json:"lengthPerUnit"          bun:"length_per_unit,type:NUMERIC(10,2),nullzero"`
+	WidthPerUnit           *float64           `json:"widthPerUnit"           bun:"width_per_unit,type:NUMERIC(10,2),nullzero"`
+	HeightPerUnit          *float64           `json:"heightPerUnit"          bun:"height_per_unit,type:NUMERIC(10,2),nullzero"`
 	MaxQuantityPerShipment *float64           `json:"maxQuantityPerShipment" bun:"max_quantity_per_shipment,type:NUMERIC(10,2),nullzero"`
 	FreightClass           FreightClass       `json:"freightClass"           bun:"freight_class,type:freight_class_enum,nullzero"`
 	LoadingInstructions    string             `json:"loadingInstructions"    bun:"loading_instructions,type:TEXT,nullzero"`

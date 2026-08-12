@@ -3,9 +3,16 @@ import {
   ServiceTypeAutocompleteField,
   ShipmentTypeAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { queries } from "@/lib/queries";
+import {
+  CapabilityFields,
+  type FieldDescriptor,
+} from "@trenova/shared/components/capability-form-section";
+import { FormSection } from "@trenova/shared/components/ui/form";
+import { getProfile } from "@trenova/shared/lib/capability";
 import { equipmentClassSchema } from "@/types/equipment-type";
 import type { Shipment } from "@trenova/shared/types/shipment";
+import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "react-hook-form";
 
 export default function ShipmentServiceDetails() {
@@ -29,10 +36,14 @@ function ShipmentServiceDetailsInner({ children }: { children: React.ReactNode }
 
 function ShipmentServiceDetailsForm() {
   const { control } = useFormContext<Shipment>();
+  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
 
-  return (
-    <FormGroup cols={2}>
-      <FormControl>
+  const profile = getProfile(shipmentUIPolicy);
+
+  const descriptors: FieldDescriptor[] = [
+    {
+      name: "serviceTypeId",
+      render: () => (
         <ServiceTypeAutocompleteField
           control={control}
           name="serviceTypeId"
@@ -41,8 +52,11 @@ function ShipmentServiceDetailsForm() {
           placeholder="Select Service Type"
           description="Select the service type for the shipment."
         />
-      </FormControl>
-      <FormControl>
+      ),
+    },
+    {
+      name: "shipmentTypeId",
+      render: () => (
         <ShipmentTypeAutocompleteField
           control={control}
           name="shipmentTypeId"
@@ -51,8 +65,11 @@ function ShipmentServiceDetailsForm() {
           placeholder="Select Shipment Type"
           description="Select the shipment type for the shipment."
         />
-      </FormControl>
-      <FormControl>
+      ),
+    },
+    {
+      name: "tractorTypeId",
+      render: ({ required }) => (
         <EquipmentTypeAutocompleteField
           control={control}
           name="tractorTypeId"
@@ -62,10 +79,16 @@ function ShipmentServiceDetailsForm() {
           extraSearchParams={{
             classes: [equipmentClassSchema.enum.Tractor],
           }}
+          rules={{ required }}
           clearable
         />
-      </FormControl>
-      <FormControl>
+      ),
+    },
+    {
+      // The deck-fit rule names trailerTypeId, so a dimensional-cargo profile
+      // resolves this to required without the section restating it.
+      name: "trailerTypeId",
+      render: ({ required }) => (
         <EquipmentTypeAutocompleteField
           control={control}
           name="trailerTypeId"
@@ -75,9 +98,12 @@ function ShipmentServiceDetailsForm() {
           extraSearchParams={{
             classes: [equipmentClassSchema.enum.Trailer, equipmentClassSchema.enum.Container],
           }}
+          rules={{ required }}
           clearable
         />
-      </FormControl>
-    </FormGroup>
-  );
+      ),
+    },
+  ];
+
+  return <CapabilityFields descriptors={descriptors} profile={profile} />;
 }

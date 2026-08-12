@@ -68,6 +68,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalentryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
@@ -75,6 +76,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
@@ -178,6 +180,8 @@ type RouterParams struct {
 	ShipmentControlHandler          *shipmentcontrolhandler.Handler
 	ShipmentMoveHandler             *shipmentmovehandler.Handler
 	ShipmentHandler                 *shipmenthandler.Handler
+	PermitHandler                   *permithandler.Handler
+	JurisdictionRuleHandler         *jurisdictionrulehandler.Handler
 	ShipmentEventHandler            *shipmenteventhandler.Handler
 	ShipmentTypeHandler             *shipmenttypehandler.Handler
 	HazardousMaterialHandler        *hazardousmaterialhandler.Handler
@@ -262,6 +266,8 @@ type Router struct {
 	shipmentControlHandler          *shipmentcontrolhandler.Handler
 	shipmentMoveHandler             *shipmentmovehandler.Handler
 	shipmentHandler                 *shipmenthandler.Handler
+	permitHandler                   *permithandler.Handler
+	jurisdictionRuleHandler         *jurisdictionrulehandler.Handler
 	shipmentEventHandler            *shipmenteventhandler.Handler
 	equipmentManufacturerHandler    *equipmentmanufacturerhandler.Handler
 	equipmentTypeHandler            *equipmenttypehandler.Handler
@@ -375,6 +381,8 @@ func NewRouter(p RouterParams) *Router {
 		shipmentControlHandler:          p.ShipmentControlHandler,
 		shipmentMoveHandler:             p.ShipmentMoveHandler,
 		shipmentHandler:                 p.ShipmentHandler,
+		permitHandler:                   p.PermitHandler,
+		jurisdictionRuleHandler:         p.JurisdictionRuleHandler,
 		shipmentEventHandler:            p.ShipmentEventHandler,
 		equipmentManufacturerHandler:    p.EquipmentManufacturerHandler,
 		equipmentTypeHandler:            p.EquipmentTypeHandler,
@@ -581,6 +589,8 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.shipmentControlHandler.RegisterRoutes(protected)
 	r.shipmentMoveHandler.RegisterRoutes(protected)
 	r.shipmentHandler.RegisterRoutes(protected)
+	r.permitHandler.RegisterRoutes(protected)
+	r.jurisdictionRuleHandler.RegisterRoutes(protected)
 	r.shipmentEventHandler.RegisterRoutes(protected)
 	r.shipmentTypeHandler.RegisterRoutes(protected)
 	r.hazardousMaterialHandler.RegisterRoutes(protected)

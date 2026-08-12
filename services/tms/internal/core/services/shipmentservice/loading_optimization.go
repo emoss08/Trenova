@@ -21,10 +21,14 @@ const (
 	minEstimatedFt           = 2.0
 	kingpinOffsetFt          = 2.0
 	rearAxleFromKingpinFt    = 40.0
+	legalWidthFeet           = 8.5
+	legalHeightFeet          = 13.5
 	steerAxleLimitLbs        = int64(12_000)
 	driveAxleLimitLbs        = int64(34_000)
 	trailerAxleLimitLbs      = int64(34_000)
 )
+
+const severityWarning = "warning"
 
 func (s *service) CalculateLoadingOptimization(
 	ctx context.Context,
@@ -48,6 +52,7 @@ func (s *service) CalculateLoadingOptimization(
 	}
 
 	trailerLength := defaultTrailerLengthFeet
+	deckHeightFeet := req.DeckHeightFeet
 	if req.EquipmentTypeID != nil && !req.EquipmentTypeID.IsNil() {
 		et, etErr := s.equipmentTypeRepo.GetByID(ctx, repositories.GetEquipmentTypeByIDRequest{
 			ID:         *req.EquipmentTypeID,
@@ -55,6 +60,9 @@ func (s *service) CalculateLoadingOptimization(
 		})
 		if etErr == nil && et.InteriorLength != nil && *et.InteriorLength > 0 {
 			trailerLength = *et.InteriorLength
+		}
+		if etErr == nil {
+			deckHeightFeet = et.DeckHeightFeet()
 		}
 	}
 
@@ -77,33 +85,121 @@ func (s *service) CalculateLoadingOptimization(
 	}
 
 	return buildLoadingPlan(&loadPlanParams{
-		commodityByID: commodityByID,
-		inputs:        req.Commodities,
-		stops:         req.Stops,
-		rules:         rules,
-		trailerLength: trailerLength,
-		maxWeight:     maxWeight,
-		checkHazmat:   checkHazmat,
+		commodityByID:  commodityByID,
+		inputs:         req.Commodities,
+		stops:          req.Stops,
+		rules:          rules,
+		trailerLength:  trailerLength,
+		deckHeightFeet: deckHeightFeet,
+		maxWeight:      maxWeight,
+		checkHazmat:    checkHazmat,
 	}), nil
 }
 
 type loadPlanParams struct {
-	commodityByID map[pulid.ID]*commodity.Commodity
-	inputs        []repositories.LoadingCommodityInput
-	stops         []repositories.StopInfo
-	rules         []*hazmatsegregationrule.HazmatSegregationRule
-	trailerLength float64
-	maxWeight     int64
-	checkHazmat   bool
+	commodityByID  map[pulid.ID]*commodity.Commodity
+	inputs         []repositories.LoadingCommodityInput
+	stops          []repositories.StopInfo
+	rules          []*hazmatsegregationrule.HazmatSegregationRule
+	trailerLength  float64
+	deckHeightFeet float64
+	maxWeight      int64
+	checkHazmat    bool
 }
 
 type placementCandidate struct {
 	commodity  *commodity.Commodity
 	input      repositories.LoadingCommodityInput
 	lengthFt   float64
+	widthFt    float64
+	heightFt   float64
 	isHazmat   bool
 	estimated  bool
 	stopNumber int
+}
+
+func dimensionOrDefault(override *float64, fallback *float64) float64 {
+	if override != nil && *override > 0 {
+		return *override
+	}
+	if fallback != nil && *fallback > 0 {
+		return *fallback
+	}
+	return 0
+}
+
+func computeLoadEnvelope(
+	placements []repositories.CommodityPlacement,
+	trailerLength float64,
+	deckHeightFeet float64,
+) *repositories.LoadEnvelope {
+	envelope := &repositories.LoadEnvelope{DeckHeightFeet: deckHeightFeet}
+
+	for _, placement := range placements {
+		envelope.LengthFeet = max(envelope.LengthFeet, placement.LengthFeet)
+		envelope.WidthFeet = max(envelope.WidthFeet, placement.WidthFeet)
+		envelope.HeightFeet = max(envelope.HeightFeet, placement.HeightFeet)
+	}
+
+	if envelope.WidthFeet == 0 && envelope.HeightFeet == 0 {
+		return nil
+	}
+
+	if envelope.HeightFeet > 0 {
+		envelope.OverallHeightFeet = roundTo2(envelope.HeightFeet + deckHeightFeet)
+	}
+
+	if overhang := envelope.LengthFeet - trailerLength; overhang > 0 {
+		envelope.RearOverhangFeet = roundTo2(overhang)
+	}
+
+	envelope.ExceedsLegalWidth = envelope.WidthFeet > legalWidthFeet
+	envelope.ExceedsLegalHeight = envelope.OverallHeightFeet > legalHeightFeet
+
+	envelope.LengthFeet = roundTo2(envelope.LengthFeet)
+	envelope.WidthFeet = roundTo2(envelope.WidthFeet)
+	envelope.HeightFeet = roundTo2(envelope.HeightFeet)
+
+	return envelope
+}
+
+func envelopeWarnings(envelope *repositories.LoadEnvelope) []repositories.LoadingWarning {
+	if envelope == nil {
+		return nil
+	}
+
+	warnings := make([]repositories.LoadingWarning, 0, 3)
+
+	if envelope.ExceedsLegalWidth {
+		warnings = append(warnings, repositories.LoadingWarning{
+			Type:     "oversize_width",
+			Severity: severityWarning,
+			Message: fmt.Sprintf(
+				"Load is %.2f ft wide, over the %.1f ft federal baseline; oversize permits apply",
+				envelope.WidthFeet, legalWidthFeet),
+		})
+	}
+
+	if envelope.ExceedsLegalHeight {
+		warnings = append(warnings, repositories.LoadingWarning{
+			Type:     "oversize_height",
+			Severity: severityWarning,
+			Message: fmt.Sprintf(
+				"Overall height is %.2f ft including a %.2f ft deck, over the %.1f ft baseline",
+				envelope.OverallHeightFeet, envelope.DeckHeightFeet, legalHeightFeet),
+		})
+	}
+
+	if envelope.RearOverhangFeet > 0 {
+		warnings = append(warnings, repositories.LoadingWarning{
+			Type:     "rear_overhang",
+			Severity: severityWarning,
+			Message: fmt.Sprintf(
+				"Cargo overhangs the deck by %.2f ft", envelope.RearOverhangFeet),
+		})
+	}
+
+	return warnings
 }
 
 func buildLoadingPlan(p *loadPlanParams) *repositories.LoadingOptimizationResult {
@@ -124,6 +220,9 @@ func buildLoadingPlan(p *loadPlanParams) *repositories.LoadingOptimizationResult
 		p.maxWeight,
 		hazmatZones,
 	)
+	envelope := computeLoadEnvelope(placements, p.trailerLength, p.deckHeightFeet)
+	warnings = append(warnings, envelopeWarnings(envelope)...)
+
 	axleWeights := computeAxleWeights(placements)
 	stopDividers := computeStopDividers(placements, p.stops)
 
@@ -142,6 +241,7 @@ func buildLoadingPlan(p *loadPlanParams) *repositories.LoadingOptimizationResult
 
 	return &repositories.LoadingOptimizationResult{
 		TrailerLengthFeet: p.trailerLength,
+		Envelope:          envelope,
 		TotalLinearFeet:   roundTo2(totalLinearFeet),
 		TotalWeight:       totalWeight,
 		MaxWeight:         p.maxWeight,
@@ -181,6 +281,8 @@ func buildCandidates(
 			commodity: com,
 			input:     input,
 			lengthFt:  lengthFt,
+			widthFt:   dimensionOrDefault(input.WidthFeet, com.WidthPerUnit),
+			heightFt:  dimensionOrDefault(input.HeightFeet, com.HeightPerUnit),
 			isHazmat:  isHazmat,
 			estimated: estimated,
 		})
@@ -354,6 +456,8 @@ func buildPlacement(cand placementCandidate, position float64) repositories.Comm
 		CommodityName:       cand.commodity.Name,
 		PositionFeet:        roundTo2(position),
 		LengthFeet:          roundTo2(cand.lengthFt),
+		WidthFeet:           roundTo2(cand.widthFt),
+		HeightFeet:          roundTo2(cand.heightFt),
 		Weight:              cand.input.Weight,
 		Pieces:              cand.input.Pieces,
 		Stackable:           cand.commodity.Stackable,
@@ -645,7 +749,7 @@ func checkTemperatureConflicts(
 						*b.MinTemp,
 						*b.MaxTemp,
 					),
-					Severity:     "warning",
+					Severity:     severityWarning,
 					CommodityIDs: []string{a.CommodityID.String(), b.CommodityID.String()},
 				})
 			}
@@ -677,7 +781,7 @@ func checkFragileStacking(
 							placements[j].CommodityName,
 							intutils.FormatWithCommas(placements[j].Weight),
 						),
-						Severity: "warning",
+						Severity: severityWarning,
 						CommodityIDs: []string{
 							placements[i].CommodityID.String(),
 							placements[j].CommodityID.String(),

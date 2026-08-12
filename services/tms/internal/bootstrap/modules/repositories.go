@@ -1,6 +1,8 @@
 package modules
 
 import (
+	"go.uber.org/fx"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountsreceivablerepository"
@@ -103,10 +105,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/manualjournalrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/modeprofilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/notificationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/permitrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pushsubscriptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratetablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
@@ -146,7 +150,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerptorepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerrepository"
 	"github.com/emoss08/trenova/pkg/seqgen"
-	"go.uber.org/fx"
 )
 
 var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
@@ -310,6 +313,10 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	distanceprofilerepository.New,
 	storedmileagerepository.New,
 	exchangeraterepository.New,
+	permitrepository.New,
+	permitrepository.NewJurisdictionRuleRepository,
+	modeprofilerepository.NewProfileRepository,
+	modeprofilerepository.NewDeviationRepository,
 	detentionrepository.NewPolicyRepository,
 	detentionrepository.NewOccurrenceRepository,
 	detentionrepository.NewEvidenceRepository,

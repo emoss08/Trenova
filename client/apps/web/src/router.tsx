@@ -426,9 +426,8 @@ const routes: RouteObject[] = [
               createPermissionLoader(Resource.DetentionPolicy),
             ),
             async lazy() {
-              const { DetentionIntelligencePage } = await import(
-                "@/routes/detention-intelligence/page"
-              );
+              const { DetentionIntelligencePage } =
+                await import("@/routes/detention-intelligence/page");
               return { Component: DetentionIntelligencePage };
             },
           },
@@ -846,10 +845,7 @@ const routes: RouteObject[] = [
           },
           {
             path: "/dispatch/console",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.ShipmentMove),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ShipmentMove)),
             async lazy() {
               const { DispatchConsolePage } = await import("@/routes/dispatch-console/page");
               return { Component: DispatchConsolePage };
@@ -1049,6 +1045,29 @@ const routes: RouteObject[] = [
                 async lazy() {
                   const { HoldReasonsPage } = await import("@/routes/hold-reason/page");
                   return { Component: HoldReasonsPage };
+                },
+              },
+              {
+                path: "jurisdiction-rules",
+                loader: combineLoaders(
+                  protectedLoader,
+                  createPermissionLoader(Resource.JurisdictionRule),
+                ),
+                async lazy() {
+                  const { JurisdictionRulesPage } = await import("@/routes/jurisdiction-rule/page");
+                  return { Component: JurisdictionRulesPage };
+                },
+              },
+              {
+                path: "jurisdiction-rule-overrides",
+                loader: combineLoaders(
+                  protectedLoader,
+                  createPermissionLoader(Resource.JurisdictionRuleOverride),
+                ),
+                async lazy() {
+                  const { JurisdictionRuleOverridesPage } =
+                    await import("@/routes/jurisdiction-rule-override/page");
+                  return { Component: JurisdictionRuleOverridesPage };
                 },
               },
               {
