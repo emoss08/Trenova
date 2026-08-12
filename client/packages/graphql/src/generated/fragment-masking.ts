@@ -14,11 +14,6 @@ export type FragmentType<TDocumentType extends DocumentTypeDecoration<any, any>>
     : never
   : never;
 
-// return partial if `fragmentType` is partial e.g. because of conditional directives
-export function getFragmentData<TType>(
-  _documentNode: DocumentTypeDecoration<TType, any>,
-  fragmentType: FragmentType<DocumentTypeDecoration<Partial<TType>, any>>
-): Partial<TType>;
 // return non-nullable if `fragmentType` is non-nullable
 export function getFragmentData<TType>(
   _documentNode: DocumentTypeDecoration<TType, any>,
