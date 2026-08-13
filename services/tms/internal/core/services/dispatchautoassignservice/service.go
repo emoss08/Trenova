@@ -183,15 +183,29 @@ type solveParams struct {
 }
 
 func (s *Service) solve(p *solveParams) *portservices.DispatchPlan {
-	drivers := p.Snapshot.Drivers
-	if len(drivers) == 0 {
-		plan := emptyPlan(p.AgentControl, p.Now)
-		plan.Uncovered = make([]*portservices.DispatchUncoveredMove, 0, len(p.Moves))
-		for _, move := range p.Moves {
-			plan.Uncovered = append(plan.Uncovered, uncoveredFor(move, nil, p.Control))
-		}
-		return plan
+	if len(p.Snapshot.Drivers) == 0 {
+		return uncoveredOnlyPlan(p)
 	}
+
+	if p.Control.ResolvedPlanningMode() == dispatchcontrol.PlanningModeHorizon {
+		return s.solveHorizon(p)
+	}
+
+	return s.solveImmediate(p)
+}
+
+func uncoveredOnlyPlan(p *solveParams) *portservices.DispatchPlan {
+	plan := emptyPlan(p.AgentControl, p.Now)
+	plan.PlanningMode = p.Control.ResolvedPlanningMode().String()
+	plan.Uncovered = make([]*portservices.DispatchUncoveredMove, 0, len(p.Moves))
+	for _, move := range p.Moves {
+		plan.Uncovered = append(plan.Uncovered, uncoveredFor(move, nil, p.Control))
+	}
+	return plan
+}
+
+func (s *Service) solveImmediate(p *solveParams) *portservices.DispatchPlan {
+	drivers := p.Snapshot.Drivers
 
 	cost := make([][]float64, len(p.Moves))
 	scores := make([][]*dispatchcandidateservice.CandidateScore, len(p.Moves))
@@ -244,6 +258,8 @@ func buildPlan(p *buildPlanParams) *portservices.DispatchPlan {
 	plan := &portservices.DispatchPlan{
 		Assignments:  make([]*portservices.DispatchPlannedAssignment, 0, len(p.Moves)),
 		Uncovered:    make([]*portservices.DispatchUncoveredMove, 0, len(p.Moves)),
+		Tours:        []*portservices.DispatchTour{},
+		PlanningMode: dispatchcontrol.PlanningModeImmediate.String(),
 		ShadowMode:   p.AgentControl.ShadowMode,
 		AutonomyTier: tier,
 		GeneratedAt:  p.Now,
@@ -260,24 +276,13 @@ func buildPlan(p *buildPlanParams) *portservices.DispatchPlan {
 		}
 
 		score := p.Scores[i][column]
-		confidence := confidenceFor(score)
-
-		planned := &portservices.DispatchPlannedAssignment{
-			MoveID:     move.MoveID,
-			ProNumber:  move.ProNumber,
-			WorkerID:   score.WorkerID,
-			WorkerName: score.WorkerName,
-			TractorID:  score.TractorID,
-			TrailerID:  score.TrailerID,
+		planned := plannedAssignmentFor(&plannedAssignmentParams{
+			Move:       move,
 			Score:      score,
-			Confidence: confidence,
-			Rationale:  rationaleFor(score, move),
-		}
-
-		planned.AutoExecutable = tier == agent.TierAutoExecute &&
-			!p.AgentControl.ShadowMode &&
-			!score.Blocked() &&
-			confidence.GreaterThanOrEqual(threshold)
+			Tier:       tier,
+			Threshold:  threshold,
+			ShadowMode: p.AgentControl.ShadowMode,
+		})
 
 		plan.Assignments = append(plan.Assignments, planned)
 		plan.TotalScore += score.Score

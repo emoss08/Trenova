@@ -68,6 +68,8 @@ var DispatchControlColumns = struct {
 	AutoAssignConfidenceThreshold        Column // "auto_assign_confidence_threshold" → qualified: "dc.auto_assign_confidence_threshold"
 	AutoAssignMaxDeadheadMiles           Column // "auto_assign_max_deadhead_miles" → qualified: "dc.auto_assign_max_deadhead_miles"
 	AutoAssignPlanningHorizonHours       Column // "auto_assign_planning_horizon_hours" → qualified: "dc.auto_assign_planning_horizon_hours"
+	PlanningMode                         Column // "planning_mode" → qualified: "dc.planning_mode"
+	HorizonMaxMovesPerDriver             Column // "horizon_max_moves_per_driver" → qualified: "dc.horizon_max_moves_per_driver"
 	ComplianceEnforcementLevel           Column // "compliance_enforcement_level" → qualified: "dc.compliance_enforcement_level"
 	RecordServiceFailures                Column // "record_service_failures" → qualified: "dc.record_service_failures"
 	ServiceFailureTarget                 Column // "service_failure_target" → qualified: "dc.service_failure_target"
@@ -95,6 +97,8 @@ var DispatchControlColumns = struct {
 	AutoAssignConfidenceThreshold:        NewColumn("auto_assign_confidence_threshold", "dc"),
 	AutoAssignMaxDeadheadMiles:           NewColumn("auto_assign_max_deadhead_miles", "dc"),
 	AutoAssignPlanningHorizonHours:       NewColumn("auto_assign_planning_horizon_hours", "dc"),
+	PlanningMode:                         NewColumn("planning_mode", "dc"),
+	HorizonMaxMovesPerDriver:             NewColumn("horizon_max_moves_per_driver", "dc"),
 	ComplianceEnforcementLevel:           NewColumn("compliance_enforcement_level", "dc"),
 	RecordServiceFailures:                NewColumn("record_service_failures", "dc"),
 	ServiceFailureTarget:                 NewColumn("service_failure_target", "dc"),
@@ -128,6 +132,8 @@ var DispatchControlFieldMap = map[string]string{
 	"autoAssignConfidenceThreshold":        "auto_assign_confidence_threshold",
 	"autoAssignMaxDeadheadMiles":           "auto_assign_max_deadhead_miles",
 	"autoAssignPlanningHorizonHours":       "auto_assign_planning_horizon_hours",
+	"planningMode":                         "planning_mode",
+	"horizonMaxMovesPerDriver":             "horizon_max_moves_per_driver",
 	"complianceEnforcementLevel":           "compliance_enforcement_level",
 	"recordServiceFailures":                "record_service_failures",
 	"serviceFailureTarget":                 "service_failure_target",
@@ -159,6 +165,8 @@ var DispatchControlInsertableColumns = []string{
 	"auto_assign_confidence_threshold",
 	"auto_assign_max_deadhead_miles",
 	"auto_assign_planning_horizon_hours",
+	"planning_mode",
+	"horizon_max_moves_per_driver",
 	"compliance_enforcement_level",
 	"record_service_failures",
 	"service_failure_target",
@@ -237,6 +245,8 @@ var DispatchControlFilter = struct {
 	AutoAssignConfidenceThreshold        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAssignConfidenceThreshold" → DB: "auto_assign_confidence_threshold"
 	AutoAssignMaxDeadheadMiles           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAssignMaxDeadheadMiles" → DB: "auto_assign_max_deadhead_miles"
 	AutoAssignPlanningHorizonHours       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAssignPlanningHorizonHours" → DB: "auto_assign_planning_horizon_hours"
+	PlanningMode                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "planningMode" → DB: "planning_mode"
+	HorizonMaxMovesPerDriver             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "horizonMaxMovesPerDriver" → DB: "horizon_max_moves_per_driver"
 	ComplianceEnforcementLevel           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "complianceEnforcementLevel" → DB: "compliance_enforcement_level"
 	RecordServiceFailures                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordServiceFailures" → DB: "record_service_failures"
 	ServiceFailureTarget                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceFailureTarget" → DB: "service_failure_target"
@@ -301,6 +311,12 @@ var DispatchControlFilter = struct {
 	},
 	AutoAssignPlanningHorizonHours: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autoAssignPlanningHorizonHours", op, value)
+	},
+	PlanningMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("planningMode", op, value)
+	},
+	HorizonMaxMovesPerDriver: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("horizonMaxMovesPerDriver", op, value)
 	},
 	ComplianceEnforcementLevel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("complianceEnforcementLevel", op, value)

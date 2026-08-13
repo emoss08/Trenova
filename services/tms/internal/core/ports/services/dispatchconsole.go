@@ -24,6 +24,26 @@ type DispatchPlannedAssignment struct {
 	Rationale      string                                   `json:"rationale"`
 	AutoExecutable bool                                     `json:"autoExecutable"`
 	ProposalID     pulid.ID                                 `json:"proposalId"`
+
+	// TourID groups the moves horizon planning chained onto one driver, and
+	// SequenceIndex is this move's position within that tour. Immediate planning
+	// leaves TourID nil and SequenceIndex zero.
+	TourID                pulid.ID `json:"tourId"`
+	SequenceIndex         int      `json:"sequenceIndex"`
+	ProjectedStartAt      int64    `json:"projectedStartAt"`
+	ProjectedCompleteAt   int64    `json:"projectedCompleteAt"`
+	ProjectedDriveRemains int64    `json:"projectedDriveRemainingMs"`
+}
+
+type DispatchTour struct {
+	TourID             pulid.ID   `json:"tourId"`
+	WorkerID           pulid.ID   `json:"workerId"`
+	WorkerName         string     `json:"workerName"`
+	MoveIDs            []pulid.ID `json:"moveIds"`
+	StartsAt           int64      `json:"startsAt"`
+	EndsAt             int64      `json:"endsAt"`
+	TotalScore         int        `json:"totalScore"`
+	TotalDeadheadMiles float64    `json:"totalDeadheadMiles"`
 }
 
 type DispatchUncoveredMove struct {
@@ -37,6 +57,8 @@ type DispatchPlan struct {
 	RunID        pulid.ID                     `json:"runId"`
 	Assignments  []*DispatchPlannedAssignment `json:"assignments"`
 	Uncovered    []*DispatchUncoveredMove     `json:"uncovered"`
+	Tours        []*DispatchTour              `json:"tours"`
+	PlanningMode string                       `json:"planningMode"`
 	ShadowMode   bool                         `json:"shadowMode"`
 	AutonomyTier agent.AutonomyTier           `json:"autonomyTier"`
 	TotalScore   int                          `json:"totalScore"`

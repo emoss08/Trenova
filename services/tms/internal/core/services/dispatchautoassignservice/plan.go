@@ -13,6 +13,39 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type plannedAssignmentParams struct {
+	Move       *repositories.BoardMove
+	Score      *dispatchcandidateservice.CandidateScore
+	Tier       agent.AutonomyTier
+	Threshold  decimal.Decimal
+	ShadowMode bool
+}
+
+func plannedAssignmentFor(
+	p *plannedAssignmentParams,
+) *portservices.DispatchPlannedAssignment {
+	confidence := confidenceFor(p.Score)
+
+	planned := &portservices.DispatchPlannedAssignment{
+		MoveID:     p.Move.MoveID,
+		ProNumber:  p.Move.ProNumber,
+		WorkerID:   p.Score.WorkerID,
+		WorkerName: p.Score.WorkerName,
+		TractorID:  p.Score.TractorID,
+		TrailerID:  p.Score.TrailerID,
+		Score:      p.Score,
+		Confidence: confidence,
+		Rationale:  rationaleFor(p.Score, p.Move),
+	}
+
+	planned.AutoExecutable = p.Tier == agent.TierAutoExecute &&
+		!p.ShadowMode &&
+		!p.Score.Blocked() &&
+		confidence.GreaterThanOrEqual(p.Threshold)
+
+	return planned
+}
+
 func costFor(
 	score *dispatchcandidateservice.CandidateScore,
 	control *dispatchcontrol.DispatchControl,

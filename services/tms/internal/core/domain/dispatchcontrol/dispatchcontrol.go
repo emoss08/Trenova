@@ -17,6 +17,9 @@ import (
 const (
 	DefaultAutoAssignPlanningHorizonHours = int16(48)
 	MaxAutoAssignPlanningHorizonHours     = int16(336)
+
+	DefaultHorizonMaxMovesPerDriver = int16(3)
+	MaxHorizonMovesPerDriver        = int16(20)
 )
 
 var defaultAutoAssignConfidenceThreshold = decimal.NewFromFloat(0.85)
@@ -50,6 +53,8 @@ type DispatchControl struct {
 	AutoAssignConfidenceThreshold        decimal.Decimal            `json:"autoAssignConfidenceThreshold"        bun:"auto_assign_confidence_threshold,type:NUMERIC(5,4),notnull,default:0.85"`
 	AutoAssignMaxDeadheadMiles           *int32                     `json:"autoAssignMaxDeadheadMiles"           bun:"auto_assign_max_deadhead_miles,type:INTEGER,nullzero"`
 	AutoAssignPlanningHorizonHours       int16                      `json:"autoAssignPlanningHorizonHours"       bun:"auto_assign_planning_horizon_hours,type:SMALLINT,notnull,default:48"`
+	PlanningMode                         PlanningMode               `json:"planningMode"                         bun:"planning_mode,type:dispatch_planning_mode_enum,notnull,default:'Immediate'"`
+	HorizonMaxMovesPerDriver             int16                      `json:"horizonMaxMovesPerDriver"             bun:"horizon_max_moves_per_driver,type:SMALLINT,notnull,default:3"`
 	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
 	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                bun:"record_service_failures,type:service_incident_type_enum,notnull,default:'Never'"`
 	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`
@@ -78,6 +83,27 @@ func (dc *DispatchControl) PlanningHorizonHours() int16 {
 		return MaxAutoAssignPlanningHorizonHours
 	}
 	return dc.AutoAssignPlanningHorizonHours
+}
+
+// ResolvedPlanningMode falls back to Immediate so controls written before horizon
+// planning existed keep the single-period behaviour they were configured against.
+func (dc *DispatchControl) ResolvedPlanningMode() PlanningMode {
+	if dc == nil || !dc.PlanningMode.IsValid() {
+		return PlanningModeImmediate
+	}
+	return dc.PlanningMode
+}
+
+// HorizonMovesPerDriver caps how many moves horizon planning may chain onto one
+// driver, keeping a single driver from absorbing the whole board.
+func (dc *DispatchControl) HorizonMovesPerDriver() int {
+	if dc == nil || dc.HorizonMaxMovesPerDriver <= 0 {
+		return int(DefaultHorizonMaxMovesPerDriver)
+	}
+	if dc.HorizonMaxMovesPerDriver > MaxHorizonMovesPerDriver {
+		return int(MaxHorizonMovesPerDriver)
+	}
+	return int(dc.HorizonMaxMovesPerDriver)
 }
 
 // ConfidenceThreshold is the minimum confidence an auto-assign proposal must carry
@@ -122,6 +148,12 @@ func (dc *DispatchControl) NormalizeAutoAssignmentSettings() {
 	if dc.AutoAssignPlanningHorizonHours <= 0 {
 		dc.AutoAssignPlanningHorizonHours = DefaultAutoAssignPlanningHorizonHours
 	}
+	if !dc.PlanningMode.IsValid() {
+		dc.PlanningMode = PlanningModeImmediate
+	}
+	if dc.HorizonMaxMovesPerDriver <= 0 {
+		dc.HorizonMaxMovesPerDriver = DefaultHorizonMaxMovesPerDriver
+	}
 }
 
 func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
@@ -134,6 +166,21 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Auto assignment strategy is required"),
 			domainvalidation.ValidEnum[AutoAssignmentStrategy](
 				"auto assignment strategy must be one of: Proximity, Availability, LoadBalancing, Performance",
+			),
+		),
+		validation.Field(
+			&dc.PlanningMode,
+			validation.Required.Error("Planning mode is required"),
+			domainvalidation.ValidEnum[PlanningMode](
+				"planning mode must be one of: Immediate, Horizon",
+			),
+		),
+		validation.Field(&dc.HorizonMaxMovesPerDriver,
+			validation.Min(int16(1)).Error(
+				"Horizon max moves per driver must be greater than 0",
+			),
+			validation.Max(MaxHorizonMovesPerDriver).Error(
+				"Horizon max moves per driver must be 20 or fewer",
 			),
 		),
 		validation.Field(
