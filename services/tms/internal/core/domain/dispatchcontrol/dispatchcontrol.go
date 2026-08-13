@@ -20,6 +20,9 @@ const (
 
 	DefaultHorizonMaxMovesPerDriver = int16(3)
 	MaxHorizonMovesPerDriver        = int16(20)
+
+	DefaultHorizonSearchIterations = int16(25)
+	MaxHorizonSearchIterations     = int16(500)
 )
 
 var defaultAutoAssignConfidenceThreshold = decimal.NewFromFloat(0.85)
@@ -55,6 +58,7 @@ type DispatchControl struct {
 	AutoAssignPlanningHorizonHours       int16                      `json:"autoAssignPlanningHorizonHours"       bun:"auto_assign_planning_horizon_hours,type:SMALLINT,notnull,default:48"`
 	PlanningMode                         PlanningMode               `json:"planningMode"                         bun:"planning_mode,type:dispatch_planning_mode_enum,notnull,default:'Immediate'"`
 	HorizonMaxMovesPerDriver             int16                      `json:"horizonMaxMovesPerDriver"             bun:"horizon_max_moves_per_driver,type:SMALLINT,notnull,default:3"`
+	HorizonSearchIterations              *int16                     `json:"horizonSearchIterations"              bun:"horizon_search_iterations,type:SMALLINT,nullzero"`
 	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
 	RecordServiceFailures                ServiceIncidentType        `json:"recordServiceFailures"                bun:"record_service_failures,type:service_incident_type_enum,notnull,default:'Never'"`
 	ServiceFailureTarget                 *float64                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`
@@ -104,6 +108,21 @@ func (dc *DispatchControl) HorizonMovesPerDriver() int {
 		return int(MaxHorizonMovesPerDriver)
 	}
 	return int(dc.HorizonMaxMovesPerDriver)
+}
+
+// HorizonSearchRounds is how many local-search passes refine the first horizon plan.
+// Unset means the default; an explicit zero turns the search off and leaves the
+// greedy plan as-is, which is the escape hatch when planning latency matters more
+// than plan quality.
+func (dc *DispatchControl) HorizonSearchRounds() int {
+	if dc == nil || dc.HorizonSearchIterations == nil {
+		return int(DefaultHorizonSearchIterations)
+	}
+	if *dc.HorizonSearchIterations <= 0 {
+		return 0
+	}
+
+	return min(int(*dc.HorizonSearchIterations), int(MaxHorizonSearchIterations))
 }
 
 // ConfidenceThreshold is the minimum confidence an auto-assign proposal must carry
@@ -173,6 +192,19 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Planning mode is required"),
 			domainvalidation.ValidEnum[PlanningMode](
 				"planning mode must be one of: Immediate, Horizon",
+			),
+		),
+		validation.Field(&dc.HorizonSearchIterations,
+			validation.When(dc.HorizonSearchIterations != nil,
+				validation.By(func(_ any) error {
+					if *dc.HorizonSearchIterations < 0 {
+						return errors.New("Horizon search iterations cannot be negative")
+					}
+					if *dc.HorizonSearchIterations > MaxHorizonSearchIterations {
+						return errors.New("Horizon search iterations must be 500 or fewer")
+					}
+					return nil
+				}),
 			),
 		),
 		validation.Field(&dc.HorizonMaxMovesPerDriver,

@@ -70,6 +70,7 @@ var DispatchControlColumns = struct {
 	AutoAssignPlanningHorizonHours       Column // "auto_assign_planning_horizon_hours" → qualified: "dc.auto_assign_planning_horizon_hours"
 	PlanningMode                         Column // "planning_mode" → qualified: "dc.planning_mode"
 	HorizonMaxMovesPerDriver             Column // "horizon_max_moves_per_driver" → qualified: "dc.horizon_max_moves_per_driver"
+	HorizonSearchIterations              Column // "horizon_search_iterations" → qualified: "dc.horizon_search_iterations"
 	ComplianceEnforcementLevel           Column // "compliance_enforcement_level" → qualified: "dc.compliance_enforcement_level"
 	RecordServiceFailures                Column // "record_service_failures" → qualified: "dc.record_service_failures"
 	ServiceFailureTarget                 Column // "service_failure_target" → qualified: "dc.service_failure_target"
@@ -99,6 +100,7 @@ var DispatchControlColumns = struct {
 	AutoAssignPlanningHorizonHours:       NewColumn("auto_assign_planning_horizon_hours", "dc"),
 	PlanningMode:                         NewColumn("planning_mode", "dc"),
 	HorizonMaxMovesPerDriver:             NewColumn("horizon_max_moves_per_driver", "dc"),
+	HorizonSearchIterations:              NewColumn("horizon_search_iterations", "dc"),
 	ComplianceEnforcementLevel:           NewColumn("compliance_enforcement_level", "dc"),
 	RecordServiceFailures:                NewColumn("record_service_failures", "dc"),
 	ServiceFailureTarget:                 NewColumn("service_failure_target", "dc"),
@@ -134,6 +136,7 @@ var DispatchControlFieldMap = map[string]string{
 	"autoAssignPlanningHorizonHours":       "auto_assign_planning_horizon_hours",
 	"planningMode":                         "planning_mode",
 	"horizonMaxMovesPerDriver":             "horizon_max_moves_per_driver",
+	"horizonSearchIterations":              "horizon_search_iterations",
 	"complianceEnforcementLevel":           "compliance_enforcement_level",
 	"recordServiceFailures":                "record_service_failures",
 	"serviceFailureTarget":                 "service_failure_target",
@@ -167,6 +170,7 @@ var DispatchControlInsertableColumns = []string{
 	"auto_assign_planning_horizon_hours",
 	"planning_mode",
 	"horizon_max_moves_per_driver",
+	"horizon_search_iterations",
 	"compliance_enforcement_level",
 	"record_service_failures",
 	"service_failure_target",
@@ -247,6 +251,7 @@ var DispatchControlFilter = struct {
 	AutoAssignPlanningHorizonHours       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAssignPlanningHorizonHours" → DB: "auto_assign_planning_horizon_hours"
 	PlanningMode                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "planningMode" → DB: "planning_mode"
 	HorizonMaxMovesPerDriver             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "horizonMaxMovesPerDriver" → DB: "horizon_max_moves_per_driver"
+	HorizonSearchIterations              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "horizonSearchIterations" → DB: "horizon_search_iterations"
 	ComplianceEnforcementLevel           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "complianceEnforcementLevel" → DB: "compliance_enforcement_level"
 	RecordServiceFailures                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordServiceFailures" → DB: "record_service_failures"
 	ServiceFailureTarget                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceFailureTarget" → DB: "service_failure_target"
@@ -317,6 +322,9 @@ var DispatchControlFilter = struct {
 	},
 	HorizonMaxMovesPerDriver: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("horizonMaxMovesPerDriver", op, value)
+	},
+	HorizonSearchIterations: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("horizonSearchIterations", op, value)
 	},
 	ComplianceEnforcementLevel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("complianceEnforcementLevel", op, value)

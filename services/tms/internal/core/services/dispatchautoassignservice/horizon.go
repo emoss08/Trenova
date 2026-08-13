@@ -1,6 +1,8 @@
 package dispatchautoassignservice
 
 import (
+	"slices"
+
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -10,6 +12,10 @@ import (
 	"github.com/emoss08/trenova/shared/dispatchplanner"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+// horizonSearchSeed is fixed so re-planning an unchanged board returns an unchanged
+// plan. Dispatchers lose trust in an optimizer whose answer moves when nothing did.
+const horizonSearchSeed = int64(1)
 
 // horizonOracle scores one move against one driver at the driver's current
 // projected state. Committing a pairing folds that move into the driver's
@@ -22,6 +28,10 @@ type horizonOracle struct {
 	snapshot   *dispatchcandidateservice.FleetSnapshot
 	control    *dispatchcontrol.DispatchControl
 	scores     [][]*dispatchcandidateservice.CandidateScore
+
+	// baseCommitments is the fleet's real workload before any planning, held so a
+	// search pass can rewind everything this oracle has committed.
+	baseCommitments map[pulid.ID][]*repositories.WorkerCommitment
 }
 
 func newHorizonOracle(
@@ -36,13 +46,44 @@ func newHorizonOracle(
 	}
 
 	return &horizonOracle{
-		candidates: candidates,
-		moves:      p.Moves,
-		drivers:    drivers,
-		snapshot:   p.Snapshot,
-		control:    p.Control,
-		scores:     scores,
+		candidates:      candidates,
+		moves:           p.Moves,
+		drivers:         drivers,
+		snapshot:        p.Snapshot,
+		control:         p.Control,
+		scores:          scores,
+		baseCommitments: cloneCommitments(p.Snapshot.CommitmentsByWorker),
 	}
+}
+
+// Rebuild rewinds the fleet to its real workload and replays the given assignments.
+// Costs are recomputed as it goes: a move that was third in a tour and is now second
+// departs from a different place with a different clock, so its old score no longer
+// describes it.
+func (o *horizonOracle) Rebuild(
+	assignments []dispatchplanner.Assignment,
+) []dispatchplanner.Assignment {
+	o.snapshot.CommitmentsByWorker = cloneCommitments(o.baseCommitments)
+
+	replayed := make([]dispatchplanner.Assignment, len(assignments))
+	for i, assignment := range assignments {
+		assignment.Cost = o.Cost(assignment.Task, assignment.Resource)
+		o.Commit(assignment.Task, assignment.Resource)
+		replayed[i] = assignment
+	}
+
+	return replayed
+}
+
+func cloneCommitments(
+	source map[pulid.ID][]*repositories.WorkerCommitment,
+) map[pulid.ID][]*repositories.WorkerCommitment {
+	cloned := make(map[pulid.ID][]*repositories.WorkerCommitment, len(source))
+	for workerID, commitments := range source {
+		cloned[workerID] = slices.Clone(commitments)
+	}
+
+	return cloned
 }
 
 func (o *horizonOracle) Cost(task, resource int) float64 {
@@ -73,14 +114,27 @@ func (o *horizonOracle) Commit(task, resource int) {
 func (s *Service) solveHorizon(p *solveParams) *portservices.DispatchPlan {
 	oracle := newHorizonOracle(p, s.candidates)
 
+	options := dispatchplanner.Options{
+		MaxPerResource: p.Control.HorizonMovesPerDriver(),
+	}
+
 	result := dispatchplanner.Solve(dispatchplanner.SolveParams{
 		Tasks:     len(p.Moves),
 		Resources: len(p.Snapshot.Drivers),
 		Oracle:    oracle,
-		Options: dispatchplanner.Options{
-			MaxPerResource: p.Control.HorizonMovesPerDriver(),
-		},
+		Options:   options,
 	})
+
+	if rounds := p.Control.HorizonSearchRounds(); rounds > 0 {
+		result = dispatchplanner.Improve(dispatchplanner.ImproveParams{
+			Resources:  len(p.Snapshot.Drivers),
+			Oracle:     oracle,
+			Options:    options,
+			Initial:    result,
+			Iterations: rounds,
+			Seed:       horizonSearchSeed,
+		})
+	}
 
 	return buildHorizonPlan(&buildHorizonPlanParams{
 		Moves:        p.Moves,

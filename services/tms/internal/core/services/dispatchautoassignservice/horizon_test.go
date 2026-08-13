@@ -258,3 +258,89 @@ func TestResolvedPlanningMode_DefaultsToImmediate(t *testing.T) {
 		}).ResolvedPlanningMode(),
 	)
 }
+
+// A search pass rewinds the oracle many times. If a rewind ever left a planned move
+// behind, later scoring would depart from a position the driver was never given.
+func TestHorizonOracle_RebuildRestoresTheRealWorkload(t *testing.T) {
+	t.Parallel()
+
+	worker := pulid.MustNew("wrk_")
+	existing := &repositories.WorkerCommitment{
+		WorkerID:  worker,
+		MoveID:    pulid.MustNew("mov_"),
+		WindowEnd: horizonNow + 3600,
+	}
+
+	snapshot := &dispatchcandidateservice.FleetSnapshot{
+		Now:     horizonNow,
+		Drivers: []*repositories.BoardDriver{{WorkerID: worker}},
+		CommitmentsByWorker: map[pulid.ID][]*repositories.WorkerCommitment{
+			worker: {existing},
+		},
+	}
+
+	moves := []*repositories.BoardMove{horizonMove("P1")}
+	control, _ := horizonControls()
+
+	oracle := newHorizonOracle(&solveParams{
+		Moves:    moves,
+		Snapshot: snapshot,
+		Control:  control,
+		Now:      horizonNow,
+	}, &dispatchcandidateservice.Service{})
+
+	dispatchcandidateservice.CommitPlannedMove(&dispatchcandidateservice.CommitPlannedMoveRequest{
+		Snapshot: snapshot,
+		Move:     moves[0],
+		Score: &dispatchcandidateservice.CandidateScore{
+			WorkerID:           worker,
+			ProjectedAvailable: horizonNow,
+			EstimatedDriveMs:   3600 * 1000,
+		},
+	})
+	require.Len(t, snapshot.CommitmentsByWorker[worker], 2, "the planned move was folded in")
+
+	oracle.Rebuild(nil)
+
+	require.Len(t, snapshot.CommitmentsByWorker[worker], 1)
+	assert.Equal(t, existing.MoveID, snapshot.CommitmentsByWorker[worker][0].MoveID)
+}
+
+func TestHorizonOracle_RebuildDoesNotMutateTheCapturedBaseline(t *testing.T) {
+	t.Parallel()
+
+	worker := pulid.MustNew("wrk_")
+	snapshot := &dispatchcandidateservice.FleetSnapshot{
+		Now:     horizonNow,
+		Drivers: []*repositories.BoardDriver{{WorkerID: worker}},
+		CommitmentsByWorker: map[pulid.ID][]*repositories.WorkerCommitment{
+			worker: {{WorkerID: worker, WindowEnd: horizonNow + 3600}},
+		},
+	}
+
+	moves := []*repositories.BoardMove{horizonMove("P1")}
+	control, _ := horizonControls()
+	oracle := newHorizonOracle(&solveParams{
+		Moves:    moves,
+		Snapshot: snapshot,
+		Control:  control,
+		Now:      horizonNow,
+	}, &dispatchcandidateservice.Service{})
+
+	for range 5 {
+		dispatchcandidateservice.CommitPlannedMove(
+			&dispatchcandidateservice.CommitPlannedMoveRequest{
+				Snapshot: snapshot,
+				Move:     moves[0],
+				Score: &dispatchcandidateservice.CandidateScore{
+					WorkerID:           worker,
+					ProjectedAvailable: horizonNow,
+				},
+			},
+		)
+		oracle.Rebuild(nil)
+
+		assert.Len(t, snapshot.CommitmentsByWorker[worker], 1,
+			"repeated rewinds must not accumulate")
+	}
+}
