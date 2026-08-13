@@ -13,10 +13,6 @@ import (
 
 const coverageBackfillVersion = "20260916000000"
 
-// TestSQLiteCoverageTypeBackfillSplitsOnLiveAssignment pins the assignment-aware
-// half of the coverage-type migration: a move labelled driver keeps that label
-// only when a live driver assignment actually backs it, and everything else that
-// inherited the old 'driver' column default becomes 'unassigned'.
 func TestSQLiteCoverageTypeBackfillSplitsOnLiveAssignment(t *testing.T) {
 	ctx := t.Context()
 	db := newSQLiteDB(t)
@@ -41,6 +37,9 @@ func TestSQLiteCoverageTypeBackfillSplitsOnLiveAssignment(t *testing.T) {
 		{id: "sm_no_assignment", coverageType: "driver", want: "unassigned"},
 		{id: "sm_carrier", coverageType: "carrier", want: "carrier"},
 		{id: "sm_carrier_with_driver", coverageType: "carrier", want: "carrier"},
+		{id: "sm_driver_label_live_carrier", coverageType: "driver", want: "carrier"},
+		{id: "sm_driver_label_canceled_carrier", coverageType: "driver", want: "unassigned"},
+		{id: "sm_live_driver_and_carrier", coverageType: "driver", want: "driver"},
 	}
 
 	for _, move := range moves {
@@ -66,10 +65,27 @@ func TestSQLiteCoverageTypeBackfillSplitsOnLiveAssignment(t *testing.T) {
 		require.NoError(t, execErr)
 	}
 
+	insertCarrierAssignment := func(id, moveID, status string) {
+		t.Helper()
+
+		_, execErr := db.NewRaw(
+			`INSERT INTO carrier_assignments
+                (id, organization_id, business_unit_id, shipment_move_id, carrier_id, status, version, created_at, updated_at)
+             VALUES (?, ?, ?, ?, 'car_1', ?, 0, 0, 0)`,
+			id, orgID, buID, moveID, status,
+		).Exec(ctx)
+		require.NoError(t, execErr)
+	}
+
 	archivedAt := int64(1700000000)
 	insertAssignment("asn_live", "sm_live_driver", nil)
 	insertAssignment("asn_archived", "sm_archived_driver", &archivedAt)
 	insertAssignment("asn_live_carrier", "sm_carrier_with_driver", nil)
+	insertAssignment("asn_live_both", "sm_live_driver_and_carrier", nil)
+
+	insertCarrierAssignment("ca_live", "sm_driver_label_live_carrier", "Confirmed")
+	insertCarrierAssignment("ca_canceled", "sm_driver_label_canceled_carrier", "Canceled")
+	insertCarrierAssignment("ca_live_with_driver", "sm_live_driver_and_carrier", "Pending")
 
 	runMigrationUp(ctx, t, migrator, coverageBackfillVersion)
 

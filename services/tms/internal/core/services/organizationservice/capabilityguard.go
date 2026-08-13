@@ -17,17 +17,12 @@ const (
 	assetOperationsEnabledField = "assetOperationsEnabled"
 )
 
-// capabilityBlocker is one kind of outstanding work standing between an
-// organization and switching a capability off.
 type capabilityBlocker struct {
 	count    int
 	singular string
 	plural   string
 }
 
-// capabilityDisableGuard describes one operating capability: how to read its
-// flag off an organization, how to name it in the refusal, and how to describe
-// the work that keeps it switched on.
 type capabilityDisableGuard struct {
 	field    string
 	noun     string

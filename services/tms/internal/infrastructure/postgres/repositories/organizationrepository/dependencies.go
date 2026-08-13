@@ -7,9 +7,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// dependencyCount describes one tenant-scoped count backing a capability
-// disable guard: the model to count, where to store the total, and the scope
-// that narrows it to the rows that still block the capability.
 type dependencyCount struct {
 	label  string
 	model  any

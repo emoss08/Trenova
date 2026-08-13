@@ -19,8 +19,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// brokerageOnlyService builds an assignment service for an organization that
-// has asset operations switched off, wired only as far as the capability gate.
 func brokerageOnlyService(
 	t *testing.T,
 	tenantInfo pagination.TenantInfo,
@@ -141,7 +139,12 @@ func TestUnassign_PermittedWhenAssetOperationsDisabled(t *testing.T) {
 	}
 
 	orgRepo := assetOperationsOrgRepo(t, tenantInfo, false)
-	svc := newUnassignService(t, tenantInfo, shipmentID, moveID, orgRepo)
+	svc := newUnassignService(t, unassignServiceParams{
+		TenantInfo: tenantInfo,
+		ShipmentID: shipmentID,
+		MoveID:     moveID,
+		OrgRepo:    orgRepo,
+	})
 
 	err := svc.Unassign(t.Context(), &repositories.UnassignShipmentMoveRequest{
 		TenantInfo:     tenantInfo,

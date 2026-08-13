@@ -73,9 +73,6 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-// validateOperatingCapabilities refuses a state where neither operating
-// capability is enabled: such an organization can neither broker freight to
-// carriers nor run it on its own assets, so it cannot move freight at all.
 func validateOperatingCapabilities(
 	_ context.Context,
 	entity *tenant.Organization,
