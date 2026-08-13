@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
 import type { User } from "@trenova/shared/types/user";
@@ -129,5 +130,51 @@ describe("dispatch console centre view toggle", () => {
     renderToolbar();
 
     expect(screen.queryByRole("group", { name: "Center view" })).toBeNull();
+  });
+});
+
+describe("dispatch console auto-assign", () => {
+  afterEach(() => {
+    cleanup();
+    useAuthStore.setState({ user: null, isAuthenticated: false });
+  });
+
+  it("offers auto-assign to an organization that employs drivers", () => {
+    signIn(hybrid);
+
+    renderToolbar();
+
+    expect(screen.getByRole("button", { name: /auto-assign/i })).toBeInTheDocument();
+  });
+
+  it("withholds auto-assign from a brokerage, whose proposals could never execute", () => {
+    signIn(brokerageOnly);
+
+    renderToolbar();
+
+    expect(screen.queryByRole("button", { name: /auto-assign/i })).toBeNull();
+  });
+
+  it("leaves a brokerage no control at all that reaches the plan mutation", async () => {
+    signIn(brokerageOnly);
+    const onPlan = vi.fn();
+
+    render(
+      <NuqsTestingAdapter searchParams="">
+        <ConsoleToolbar
+          canUndo
+          isAssigning={false}
+          isPlanning={false}
+          onUndo={vi.fn()}
+          onPlan={onPlan}
+        />
+      </NuqsTestingAdapter>,
+    );
+
+    for (const control of screen.getAllByRole("button")) {
+      await userEvent.click(control);
+    }
+
+    expect(onPlan).not.toHaveBeenCalled();
   });
 });

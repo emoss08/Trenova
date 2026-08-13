@@ -1,3 +1,4 @@
+import { CapabilityGate } from "@/components/capability-gate";
 import { formatRangeLabelForDays, isTodayAnchor } from "@/lib/timeline/time-scale";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
@@ -5,6 +6,7 @@ import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { cn } from "@trenova/shared/lib/utils";
+import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import {
   CalendarIcon,
   ChevronLeftIcon,
@@ -180,16 +182,21 @@ export function ConsoleToolbar({
           Undo
           <Kbd className="h-4 min-w-4 text-[9px]">u</Kbd>
         </Button>
-        <Button
-          size="sm"
-          className="h-7 gap-1 px-2 text-[11px]"
-          disabled={isPlanning}
-          isLoading={isPlanning}
-          onClick={onPlan}
-        >
-          <SparklesIcon className="size-3" aria-hidden />
-          Auto-assign
-        </Button>
+        {/* Auto-assign plans driver/tractor pairings, which the API refuses for an
+            organization without asset operations. Withholding the button is the whole
+            trigger — there is no hotkey and the plan mutation fires from nowhere else. */}
+        <CapabilityGate capability={OrganizationCapability.AssetOperations}>
+          <Button
+            size="sm"
+            className="h-7 gap-1 px-2 text-[11px]"
+            disabled={isPlanning}
+            isLoading={isPlanning}
+            onClick={onPlan}
+          >
+            <SparklesIcon className="size-3" aria-hidden />
+            Auto-assign
+          </Button>
+        </CapabilityGate>
       </div>
     </div>
   );

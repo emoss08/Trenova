@@ -9,8 +9,42 @@
 -- of "assignments", "stops" and "carrier_assignments" and PRAGMA foreign_keys
 -- cannot be toggled inside the transaction this migration runs in. The Go model
 -- stamps coverage_type on every insert, so the column default is never
--- exercised. The correlated backfill is written out by hand because the
+-- exercised. The correlated backfills are written out by hand because the
 -- converter refuses any statement containing a subquery.
+
+-- A move labelled 'driver' that no live driver assignment backs but an active
+-- carrier assignment does is carrier coverage wearing the old column default.
+-- Relabel it before the 'unassigned' sweep so that coverage is never lost.
+-- Inactive is 'Canceled' for carrier assignments (they have no archived_at) and
+-- archived_at for driver assignments.
+UPDATE
+    "shipment_moves"
+SET
+    "coverage_type" = 'carrier'
+WHERE
+    "coverage_type" = 'driver'
+    AND NOT EXISTS (
+        SELECT
+            1
+        FROM
+            "assignments" AS "a"
+        WHERE
+            "a"."shipment_move_id" = "shipment_moves"."id"
+            AND "a"."organization_id" = "shipment_moves"."organization_id"
+            AND "a"."business_unit_id" = "shipment_moves"."business_unit_id"
+            AND "a"."archived_at" IS NULL)
+    AND EXISTS (
+        SELECT
+            1
+        FROM
+            "carrier_assignments" AS "ca"
+        WHERE
+            "ca"."shipment_move_id" = "shipment_moves"."id"
+            AND "ca"."organization_id" = "shipment_moves"."organization_id"
+            AND "ca"."business_unit_id" = "shipment_moves"."business_unit_id"
+            AND "ca"."status" <> 'Canceled');
+
+--bun:split
 
 UPDATE
     "shipment_moves"
@@ -27,7 +61,17 @@ WHERE
             "a"."shipment_move_id" = "shipment_moves"."id"
             AND "a"."organization_id" = "shipment_moves"."organization_id"
             AND "a"."business_unit_id" = "shipment_moves"."business_unit_id"
-            AND "a"."archived_at" IS NULL);
+            AND "a"."archived_at" IS NULL)
+    AND NOT EXISTS (
+        SELECT
+            1
+        FROM
+            "carrier_assignments" AS "ca"
+        WHERE
+            "ca"."shipment_move_id" = "shipment_moves"."id"
+            AND "ca"."organization_id" = "shipment_moves"."organization_id"
+            AND "ca"."business_unit_id" = "shipment_moves"."business_unit_id"
+            AND "ca"."status" <> 'Canceled');
 
 --bun:split
 

@@ -531,13 +531,19 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	require.NotNil(t, entity)
 }
 
-func newUnassignService(
-	t *testing.T,
-	tenantInfo pagination.TenantInfo,
-	shipmentID, moveID pulid.ID,
-	orgRepo repositories.OrganizationRepository,
-) *service {
+type unassignServiceParams struct {
+	TenantInfo pagination.TenantInfo
+	ShipmentID pulid.ID
+	MoveID     pulid.ID
+	OrgRepo    repositories.OrganizationRepository
+}
+
+func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 	t.Helper()
+
+	tenantInfo := params.TenantInfo
+	shipmentID := params.ShipmentID
+	moveID := params.MoveID
 
 	assignmentID := pulid.MustNew("asn_")
 	original := validShipment(shipmentID, moveID, tenantInfo)
@@ -619,7 +625,7 @@ func newUnassignService(
 		l:            zap.NewNop(),
 		db:           testDBConnection{},
 		repo:         repo,
-		orgRepo:      orgRepo,
+		orgRepo:      params.OrgRepo,
 		shipmentRepo: shipmentRepo,
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
@@ -645,7 +651,11 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 		BuID:  pulid.MustNew("bu_"),
 	}
 
-	svc := newUnassignService(t, tenantInfo, shipmentID, moveID, nil)
+	svc := newUnassignService(t, unassignServiceParams{
+		TenantInfo: tenantInfo,
+		ShipmentID: shipmentID,
+		MoveID:     moveID,
+	})
 
 	err := svc.Unassign(t.Context(), &repositories.UnassignShipmentMoveRequest{
 		TenantInfo:     tenantInfo,

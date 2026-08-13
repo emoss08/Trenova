@@ -6,9 +6,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -100,4 +105,115 @@ func TestBrokerageDependencyStatusSetsMatchDomainPredicates(t *testing.T) {
 			"carrier invoice match status %s", status,
 		)
 	}
+}
+
+// TestAssetDependencyStatusSetsMatchDomainPredicates keeps the SQL-side status
+// lists in step with the domain predicates they mirror; a predicate that changes
+// meaning without the list following it would silently narrow or widen the asset
+// operations disable guard.
+func TestAssetDependencyStatusSetsMatchDomainPredicates(t *testing.T) {
+	t.Parallel()
+
+	allAssignmentStatuses := []shipment.AssignmentStatus{
+		shipment.AssignmentStatusNew,
+		shipment.AssignmentStatusInProgress,
+		shipment.AssignmentStatusCompleted,
+		shipment.AssignmentStatusCanceled,
+	}
+	blockingAssignmentStatuses := map[shipment.AssignmentStatus]bool{
+		shipment.AssignmentStatusNew:        true,
+		shipment.AssignmentStatusInProgress: true,
+	}
+	for _, status := range allAssignmentStatuses {
+		assert.Equal(t,
+			blockingAssignmentStatuses[status],
+			slices.Contains(activeAssignmentStatuses, status),
+			"assignment status %s", status,
+		)
+	}
+
+	allSettlementStatuses := []driversettlement.Status{
+		driversettlement.StatusDraft,
+		driversettlement.StatusPendingApproval,
+		driversettlement.StatusApproved,
+		driversettlement.StatusPosted,
+		driversettlement.StatusPaid,
+		driversettlement.StatusVoided,
+	}
+	for _, status := range allSettlementStatuses {
+		assert.Equal(t,
+			!status.IsTerminal(),
+			slices.Contains(unpaidDriverSettlementStatuses, status),
+			"driver settlement status %s", status,
+		)
+	}
+}
+
+func TestAssetDependencyCountsScopeEveryQueryToTheTenant(t *testing.T) {
+	t.Parallel()
+
+	db := bun.NewDB(new(sql.DB), pgdialect.New())
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+	counts := new(repositories.AssetDependencyCounts)
+
+	deps := assetDependencyCounts(tenantInfo, counts)
+	require.Len(t, deps, 3)
+
+	for _, dep := range deps {
+		query, err := db.NewSelect().
+			Model(dep.model).
+			WhereGroup(" AND ", dep.scope).
+			AppendQuery(db.QueryGen(), nil)
+		require.NoErrorf(t, err, "build %s query", dep.label)
+
+		rendered := string(query)
+		assert.Containsf(t, rendered, ".organization_id = '"+tenantInfo.OrgID.String()+"'",
+			"%s is scoped to the organization", dep.label)
+		assert.Containsf(t, rendered, ".business_unit_id = '"+tenantInfo.BuID.String()+"'",
+			"%s is scoped to the business unit", dep.label)
+	}
+}
+
+func TestAssetDependencyCountsNarrowToBlockingRows(t *testing.T) {
+	t.Parallel()
+
+	db := bun.NewDB(new(sql.DB), pgdialect.New())
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+	counts := new(repositories.AssetDependencyCounts)
+
+	rendered := make(map[string]string, 3)
+	targets := make(map[string]*int, 3)
+	for _, dep := range assetDependencyCounts(tenantInfo, counts) {
+		query, err := db.NewSelect().
+			Model(dep.model).
+			WhereGroup(" AND ", dep.scope).
+			AppendQuery(db.QueryGen(), nil)
+		require.NoErrorf(t, err, "build %s query", dep.label)
+
+		rendered[dep.label] = string(query)
+		targets[dep.label] = dep.target
+	}
+
+	assignments := rendered["active driver assignments"]
+	assert.Contains(t, assignments, "status IN ('New', 'InProgress')")
+	assert.NotContains(t, assignments, "Completed")
+	assert.NotContains(t, assignments, "Canceled")
+
+	settlements := rendered["unpaid driver settlements"]
+	assert.Contains(t, settlements, "status IN ('Draft', 'PendingApproval', 'Approved', 'Posted')")
+	assert.NotContains(t, settlements, "Paid")
+	assert.NotContains(t, settlements, "Voided")
+
+	workers := rendered["linked driver portal users"]
+	assert.Contains(t, workers, "user_id IS NOT NULL")
+
+	assert.Same(t, &counts.ActiveDriverAssignments, targets["active driver assignments"])
+	assert.Same(t, &counts.UnpaidDriverSettlements, targets["unpaid driver settlements"])
+	assert.Same(t, &counts.LinkedPortalUsers, targets["linked driver portal users"])
 }
