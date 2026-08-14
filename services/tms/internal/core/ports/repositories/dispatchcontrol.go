@@ -29,4 +29,8 @@ type DispatchControlRepository interface {
 		ctx context.Context,
 		orgID, buID pulid.ID,
 	) (*dispatchcontrol.DispatchControl, error)
+	// ListHorizonPlanningTenants returns the tenants that have both auto-assignment
+	// and horizon planning turned on, so scheduled planning only touches the
+	// organizations that asked for it.
+	ListHorizonPlanningTenants(ctx context.Context) ([]pagination.TenantInfo, error)
 }

@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -142,4 +144,38 @@ func (r *repository) GetOrCreate(
 	}
 
 	return entity, nil
+}
+
+type horizonTenantRow struct {
+	OrganizationID pulid.ID `bun:"organization_id"`
+	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+}
+
+func (r *repository) ListHorizonPlanningTenants(
+	ctx context.Context,
+) ([]pagination.TenantInfo, error) {
+	cols := buncolgen.DispatchControlColumns
+
+	rows := make([]horizonTenantRow, 0)
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*dispatchcontrol.DispatchControl)(nil)).
+		Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
+		Where(cols.EnableAutoAssignment.Eq(), true).
+		Where(cols.PlanningMode.Eq(), dispatchcontrol.PlanningModeHorizon).
+		OrderExpr("? ASC", cols.OrganizationID).
+		Scan(ctx, &rows); err != nil {
+		r.l.Error("failed to list horizon planning tenants", zap.Error(err))
+		return nil, err
+	}
+
+	tenants := make([]pagination.TenantInfo, 0, len(rows))
+	for _, row := range rows {
+		tenants = append(tenants, pagination.TenantInfo{
+			OrgID: row.OrganizationID,
+			BuID:  row.BusinessUnitID,
+		})
+	}
+
+	return tenants, nil
 }

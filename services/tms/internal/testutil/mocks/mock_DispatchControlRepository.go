@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -314,6 +315,68 @@ func (_c *MockDispatchControlRepository_Update_Call) Return(dispatchControl *dis
 }
 
 func (_c *MockDispatchControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *dispatchcontrol.DispatchControl) (*dispatchcontrol.DispatchControl, error)) *MockDispatchControlRepository_Update_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListHorizonPlanningTenants provides a mock function for the type MockDispatchControlRepository
+func (_mock *MockDispatchControlRepository) ListHorizonPlanningTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListHorizonPlanningTenants")
+	}
+
+	var r0 []pagination.TenantInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]pagination.TenantInfo, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []pagination.TenantInfo); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pagination.TenantInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDispatchControlRepository_ListHorizonPlanningTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListHorizonPlanningTenants'
+type MockDispatchControlRepository_ListHorizonPlanningTenants_Call struct {
+	*mock.Call
+}
+
+// ListHorizonPlanningTenants is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockDispatchControlRepository_Expecter) ListHorizonPlanningTenants(ctx any) *MockDispatchControlRepository_ListHorizonPlanningTenants_Call {
+	return &MockDispatchControlRepository_ListHorizonPlanningTenants_Call{Call: _e.mock.On("ListHorizonPlanningTenants", ctx)}
+}
+
+func (_c *MockDispatchControlRepository_ListHorizonPlanningTenants_Call) Run(run func(ctx context.Context)) *MockDispatchControlRepository_ListHorizonPlanningTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDispatchControlRepository_ListHorizonPlanningTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockDispatchControlRepository_ListHorizonPlanningTenants_Call {
+	_c.Call.Return(tenantInfos, err)
+	return _c
+}
+
+func (_c *MockDispatchControlRepository_ListHorizonPlanningTenants_Call) RunAndReturn(run func(ctx context.Context) ([]pagination.TenantInfo, error)) *MockDispatchControlRepository_ListHorizonPlanningTenants_Call {
 	_c.Call.Return(run)
 	return _c
 }
