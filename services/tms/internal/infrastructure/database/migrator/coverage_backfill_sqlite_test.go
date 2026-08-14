@@ -6,6 +6,7 @@ import (
 
 	sqlitemigrations "github.com/emoss08/trenova/internal/infrastructure/sqlite/migrations"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 
 	_ "modernc.org/sqlite"
@@ -17,15 +18,14 @@ func TestSQLiteCoverageTypeBackfillSplitsOnLiveAssignment(t *testing.T) {
 	ctx := t.Context()
 	db := newSQLiteDB(t)
 
-	migrator := migrate.NewMigrator(db, sqlitemigrations.Migrations)
-	require.NoError(t, migrator.Init(ctx))
-	_, err := migrator.Migrate(ctx)
-	require.NoError(t, err)
+	migrator := migrateBefore(ctx, t, db, coverageBackfillVersion)
 
 	const (
 		orgID = "org_backfill"
 		buID  = "bu_backfill"
 	)
+
+	var err error
 
 	moves := []struct {
 		id           string
@@ -126,6 +126,35 @@ func assignmentStatusFor(archivedAt *int64) string {
 	}
 
 	return "Canceled"
+}
+
+// migrateBefore brings the schema up to the state an existing deployment would
+// be in on the eve of `version`, so a backfill can be tested against rows that
+// predate it rather than against rows inserted after it has already run.
+func migrateBefore(
+	ctx context.Context,
+	t *testing.T,
+	db *bun.DB,
+	version string,
+) *migrate.Migrator {
+	t.Helper()
+
+	priors := migrate.NewMigrations()
+	for _, candidate := range sqlitemigrations.Migrations.Sorted() {
+		if candidate.Name >= version {
+			break
+		}
+
+		priors.Add(candidate)
+	}
+
+	migrator := migrate.NewMigrator(db, priors)
+	require.NoError(t, migrator.Init(ctx))
+
+	_, err := migrator.Migrate(ctx)
+	require.NoError(t, err)
+
+	return migrator
 }
 
 func runMigrationUp(
