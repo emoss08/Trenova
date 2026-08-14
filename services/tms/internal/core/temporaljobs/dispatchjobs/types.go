@@ -9,6 +9,7 @@ const HorizonPlanSweepWorkflowName = "HorizonPlanSweepWorkflow"
 type TenantHorizonPlan struct {
 	OrganizationID string `json:"organizationId"`
 	BusinessUnitID string `json:"businessUnitId"`
+	RunID          string `json:"runId,omitempty"`
 
 	MovesPlanned   int `json:"movesPlanned"`
 	MovesUncovered int `json:"movesUncovered"`
@@ -18,7 +19,11 @@ type TenantHorizonPlan struct {
 
 	TotalDeadheadMiles float64 `json:"totalDeadheadMiles"`
 	ShadowMode         bool    `json:"shadowMode"`
-	Error              string  `json:"error,omitempty"`
+
+	// ProposalsRetired is how many of this pass's proposals were moved out of the
+	// pending queue. A scheduled plan is evidence, not work for a dispatcher.
+	ProposalsRetired int    `json:"proposalsRetired"`
+	Error            string `json:"error,omitempty"`
 }
 
 type HorizonPlanSweepResult struct {

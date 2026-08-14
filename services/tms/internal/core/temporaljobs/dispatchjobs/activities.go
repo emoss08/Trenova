@@ -14,12 +14,14 @@ type ActivitiesParams struct {
 	fx.In
 
 	DispatchControlRepo repositories.DispatchControlRepository
+	ProposalRepo        repositories.AgentProposalRepository
 	AutoAssign          portservices.DispatchAutoAssignService
 	Logger              *zap.Logger
 }
 
 type Activities struct {
 	dispatchControlRepo repositories.DispatchControlRepository
+	proposalRepo        repositories.AgentProposalRepository
 	autoAssign          portservices.DispatchAutoAssignService
 	logger              *zap.Logger
 }
@@ -27,6 +29,7 @@ type Activities struct {
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		dispatchControlRepo: p.DispatchControlRepo,
+		proposalRepo:        p.ProposalRepo,
 		autoAssign:          p.AutoAssign,
 		logger:              p.Logger.Named("dispatch-activities"),
 	}
@@ -98,6 +101,9 @@ func (a *Activities) planTenant(
 	outcome.ToursBuilt = len(plan.Tours)
 	outcome.TotalScore = plan.TotalScore
 	outcome.ShadowMode = plan.ShadowMode
+	outcome.RunID = plan.RunID.String()
+
+	a.retireProposals(ctx, tenant, plan, outcome)
 
 	for _, tour := range plan.Tours {
 		outcome.TotalDeadheadMiles += tour.TotalDeadheadMiles
@@ -110,4 +116,44 @@ func (a *Activities) planTenant(
 	}
 
 	return outcome
+}
+
+// retireProposals expires the proposals this sweep just recorded.
+//
+// Planning writes a pending proposal per assignment, which is the right thing when a
+// dispatcher asked for a plan and is about to act on it. A scheduled pass is not
+// that: nobody requested it and nothing will action it, so leaving the proposals
+// pending would bury the dispatcher's real review queue under a fresh copy of the
+// board every half hour. Expiring keeps the rows — rationale, evidence, and the
+// driver each move was matched to all survive as the record of what the planner
+// would have done — while keeping them out of the queue.
+func (a *Activities) retireProposals(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	plan *portservices.DispatchPlan,
+	outcome *TenantHorizonPlan,
+) {
+	if plan.RunID.IsNil() {
+		return
+	}
+
+	expired, err := a.proposalRepo.ExpirePendingByRun(
+		ctx,
+		repositories.ExpireAgentProposalsByRunRequest{
+			RunID:      plan.RunID,
+			TenantInfo: tenant,
+		},
+	)
+	if err != nil {
+		// The plan itself is recorded and still useful, so a failure here downgrades
+		// to a warning rather than discarding the tenant's outcome.
+		a.logger.Warn("failed to retire swept dispatch proposals",
+			zap.String("orgId", tenant.OrgID.String()),
+			zap.String("runId", plan.RunID.String()),
+			zap.Error(err),
+		)
+		return
+	}
+
+	outcome.ProposalsRetired = expired
 }
