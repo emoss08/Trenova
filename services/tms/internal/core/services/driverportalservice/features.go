@@ -56,8 +56,6 @@ func (s *Service) requireFeature(
 	return control, nil
 }
 
-// requireAssetOperations refuses driver-facing setup for organizations that run
-// brokerage-only and therefore employ no drivers to grant portal access to.
 func (s *Service) requireAssetOperations(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

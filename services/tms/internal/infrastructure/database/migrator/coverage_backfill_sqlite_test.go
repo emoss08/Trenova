@@ -99,9 +99,6 @@ func TestSQLiteCoverageTypeBackfillSplitsOnLiveAssignment(t *testing.T) {
 	}
 }
 
-// TestSQLiteCoverageTypeIndexTargetsCarrierCoverage guards the partial index the
-// migration narrows: with 'unassigned' as the neutral default, an index keyed on
-// "not driver" would cover nearly every row instead of the brokered exceptions.
 func TestSQLiteCoverageTypeIndexTargetsCarrierCoverage(t *testing.T) {
 	ctx := t.Context()
 	db := newSQLiteDB(t)
@@ -128,9 +125,6 @@ func assignmentStatusFor(archivedAt *int64) string {
 	return "Canceled"
 }
 
-// migrateBefore brings the schema up to the state an existing deployment would
-// be in on the eve of `version`, so a backfill can be tested against rows that
-// predate it rather than against rows inserted after it has already run.
 func migrateBefore(
 	ctx context.Context,
 	t *testing.T,

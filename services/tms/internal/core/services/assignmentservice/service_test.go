@@ -29,9 +29,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// assetOperationsOrgRepo stands in for the organization behind a tenant, with
-// asset operations either enabled or switched off. The expectation is optional
-// so that tests refused before the capability gate still pass.
 func assetOperationsOrgRepo(
 	t *testing.T,
 	tenantInfo pagination.TenantInfo,

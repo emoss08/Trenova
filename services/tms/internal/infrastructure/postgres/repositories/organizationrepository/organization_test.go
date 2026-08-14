@@ -107,10 +107,6 @@ func TestBrokerageDependencyStatusSetsMatchDomainPredicates(t *testing.T) {
 	}
 }
 
-// TestAssetDependencyStatusSetsMatchDomainPredicates keeps the SQL-side status
-// lists in step with the domain predicates they mirror; a predicate that changes
-// meaning without the list following it would silently narrow or widen the asset
-// operations disable guard.
 func TestAssetDependencyStatusSetsMatchDomainPredicates(t *testing.T) {
 	t.Parallel()
 
