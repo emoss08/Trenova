@@ -46,9 +46,6 @@ func (c BrokerageDependencyCounts) HasOutstandingWork() bool {
 		c.ActiveCarrierAssignments > 0
 }
 
-// AssetDependencyCounts reports outstanding asset-side work for an
-// organization. It backs the guard that refuses to turn asset operations off
-// while any of these remain open.
 type AssetDependencyCounts struct {
 	ActiveDriverAssignments int `json:"activeDriverAssignments"`
 	UnpaidDriverSettlements int `json:"unpaidDriverSettlements"`

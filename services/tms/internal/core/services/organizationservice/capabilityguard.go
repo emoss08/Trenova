@@ -47,9 +47,6 @@ func (s *service) capabilityDisableGuards() [2]capabilityDisableGuard {
 	}
 }
 
-// guardCapabilityDisable refuses to turn an operating capability off while
-// dependent work is still outstanding. Enabling is always allowed: it is purely
-// additive and can strand nothing.
 func (s *service) guardCapabilityDisable(
 	ctx context.Context,
 	entity *tenant.Organization,

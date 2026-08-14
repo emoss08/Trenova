@@ -12,15 +12,11 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// activeAssignmentStatuses are the statuses for which an assignment still binds
-// a driver to a shipment move.
 var activeAssignmentStatuses = []shipment.AssignmentStatus{
 	shipment.AssignmentStatusNew,
 	shipment.AssignmentStatusInProgress,
 }
 
-// unpaidDriverSettlementStatuses mirrors the statuses for which
-// [driversettlement.Status.IsTerminal] returns false.
 var unpaidDriverSettlementStatuses = []driversettlement.Status{
 	driversettlement.StatusDraft,
 	driversettlement.StatusPendingApproval,
