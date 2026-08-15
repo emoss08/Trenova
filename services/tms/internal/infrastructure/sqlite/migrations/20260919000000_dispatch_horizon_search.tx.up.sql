@@ -1,6 +1,6 @@
 -- Code generated from the PostgreSQL migrations by
 -- scripts/dialect-convert/convert.py. Hand-edits are preserved only if you
 -- stop regenerating this file; see docs/databases.md.
--- Source: 20260917000000_dispatch_horizon_search.tx.down.sql
+-- Source: 20260919000000_dispatch_horizon_search.tx.up.sql
 
-SELECT 1;
+ALTER TABLE "dispatch_controls" ADD COLUMN "horizon_search_iterations" INTEGER;
