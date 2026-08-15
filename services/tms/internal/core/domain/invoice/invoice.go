@@ -227,7 +227,6 @@ type DocumentShareToken struct {
 	Organization *tenant.Organization `json:"-"                  bun:"rel:belongs-to,join:organization_id=id"`
 }
 
-//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		i,

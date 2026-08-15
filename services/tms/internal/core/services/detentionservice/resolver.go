@@ -189,7 +189,6 @@ func describeScope(policy *detention.DetentionPolicy) string {
 	return strings.Join(parts, " and ")
 }
 
-//nolint:gocognit // one branch per scope dimension keeps the message specific
 func rejectionReason(policy *detention.DetentionPolicy, in detention.MatchInput) string {
 	if policy.Status != detention.PolicyStatusActive {
 		return fmt.Sprintf("Policy status is %s", policy.Status)

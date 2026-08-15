@@ -632,7 +632,6 @@ func mergeAnalyses(
 		Metadata:          candidate.Metadata,
 	}
 
-	//nolint:gocritic // stable API shape
 	maps.Copy(merged.Fields, baseline.Fields)
 	for key, field := range candidate.Fields { //nolint:gocritic // stable API shape
 		if existing, ok := merged.Fields[key]; ok && strings.TrimSpace(existing.Value) != "" &&

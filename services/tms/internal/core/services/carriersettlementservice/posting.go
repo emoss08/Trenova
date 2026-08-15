@@ -469,7 +469,7 @@ func (s *Service) createJournalPosting(
 		lines = append(lines, repositories.JournalPostingLine{
 			ID:           pulid.MustNew("jel_"),
 			GLAccountID:  leg.AccountID,
-			LineNumber:   int16(idx + 1), //nolint:gosec // journal line counts stay tiny
+			LineNumber:   int16(idx + 1),
 			Description:  params.Description,
 			DebitAmount:  leg.Debit,
 			CreditAmount: leg.Credit,

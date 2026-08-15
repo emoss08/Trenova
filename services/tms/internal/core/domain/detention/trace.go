@@ -136,7 +136,7 @@ func (t *CalculationTrace) Receipt() string {
 			b.WriteString(step.Detail)
 		}
 		if step.Term != "" {
-			b.WriteString(fmt.Sprintf(" [%s]", step.Term))
+			fmt.Fprintf(&b, " [%s]", step.Term)
 		}
 		b.WriteString("\n")
 	}

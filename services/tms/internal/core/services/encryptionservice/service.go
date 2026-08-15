@@ -562,7 +562,7 @@ func (m *GCPAutokeyManager) WrapKey(ctx context.Context, dek []byte, aad AAD) (*
 		Provider:  gcpAutokeyProvider,
 		KeyID:     m.activeKey,
 		Algorithm: gcpKMSWrappingAlg,
-		Bytes:     resp.Ciphertext,
+		Bytes:     resp.GetCiphertext(),
 	}, nil
 }
 
@@ -589,10 +589,10 @@ func (m *GCPAutokeyManager) UnwrapKey(
 	if err != nil {
 		return nil, err
 	}
-	if len(resp.Plaintext) != dekSize {
+	if len(resp.GetPlaintext()) != dekSize {
 		return nil, ErrInvalidEnvelope
 	}
-	return resp.Plaintext, nil
+	return resp.GetPlaintext(), nil
 }
 
 func (m *GCPAutokeyManager) ActiveKeyID() string {

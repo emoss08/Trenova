@@ -2,6 +2,7 @@ package anthropiccompletionservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -76,7 +77,7 @@ func (s *Service) Diagnose(
 
 	text := firstTextBlock(resp)
 	if text == "" {
-		return nil, fmt.Errorf("model returned no structured content")
+		return nil, errors.New("model returned no structured content")
 	}
 
 	var payload diagnosisPayload

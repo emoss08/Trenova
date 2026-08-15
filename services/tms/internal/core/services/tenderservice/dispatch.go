@@ -309,10 +309,10 @@ func (s *Service) buildOfferEmailContext(
 		RateMethodLabel: rateMethodLabel(offer.RateMethod),
 		AcceptURL: template.URL(
 			s.offerResponseURL(token, "accept"),
-		), //nolint:gosec // built from config + a generated token
+		),
 		DeclineURL: template.URL(
 			s.offerResponseURL(token, "decline"),
-		), //nolint:gosec // built from config + a generated token
+		),
 		ExpiresAt: timeutils.WindowLabelUTC(expiresAt, nil),
 	}
 	now := timeutils.NowUnix()

@@ -728,7 +728,6 @@ func (rr *RouteRegistry) registerBillingRoutes() {
 		DisplayName: "Formula Templates",
 		Category:    "Billing",
 	})
-
 }
 
 func (rr *RouteRegistry) registerDetentionRoutes() {

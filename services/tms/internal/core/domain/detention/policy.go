@@ -265,7 +265,6 @@ func containsAny(want, have []pulid.ID) bool {
 	return false
 }
 
-//nolint:funlen // a policy is a contract; every clause needs its own message
 func (p *DetentionPolicy) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.Name,

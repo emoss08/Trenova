@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -259,7 +260,7 @@ func loadSchema(dir string) (*gqlast.Schema, error) {
 
 func generate(data discovery) ([]byte, error) {
 	if data.Schema == nil {
-		return nil, fmt.Errorf("schema is required")
+		return nil, errors.New("schema is required")
 	}
 	if data.Manifest.Aliases == nil {
 		data.Manifest.Aliases = map[string]map[string]string{}
