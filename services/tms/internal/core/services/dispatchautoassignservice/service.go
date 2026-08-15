@@ -109,7 +109,7 @@ func (s *Service) Plan(
 	}
 
 	if len(moves) == 0 {
-		return emptyPlan(agentControl, now), nil
+		return emptyPlan(control, agentControl, now), nil
 	}
 
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
@@ -142,10 +142,16 @@ func (s *Service) Plan(
 	return plan, nil
 }
 
-func emptyPlan(agentControl *tenant.AgentControl, now int64) *portservices.DispatchPlan {
+func emptyPlan(
+	control *dispatchcontrol.DispatchControl,
+	agentControl *tenant.AgentControl,
+	now int64,
+) *portservices.DispatchPlan {
 	return &portservices.DispatchPlan{
 		Assignments:  []*portservices.DispatchPlannedAssignment{},
 		Uncovered:    []*portservices.DispatchUncoveredMove{},
+		Tours:        []*portservices.DispatchTour{},
+		PlanningMode: control.ResolvedPlanningMode().String(),
 		ShadowMode:   agentControl.ShadowMode,
 		AutonomyTier: resolveTier(agentControl),
 		GeneratedAt:  now,
@@ -195,8 +201,7 @@ func (s *Service) solve(p *solveParams) *portservices.DispatchPlan {
 }
 
 func uncoveredOnlyPlan(p *solveParams) *portservices.DispatchPlan {
-	plan := emptyPlan(p.AgentControl, p.Now)
-	plan.PlanningMode = p.Control.ResolvedPlanningMode().String()
+	plan := emptyPlan(p.Control, p.AgentControl, p.Now)
 	plan.Uncovered = make([]*portservices.DispatchUncoveredMove, 0, len(p.Moves))
 	for _, move := range p.Moves {
 		plan.Uncovered = append(plan.Uncovered, uncoveredFor(move, nil, p.Control))

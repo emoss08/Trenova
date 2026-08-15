@@ -9,9 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// matrixOracle scores from a fixed matrix that includes infeasible pairings, standing
-// in for the blocks the real scorer returns: no drive time left, wrong equipment,
-// deadhead over the cap, an appointment that cannot be made.
 type matrixOracle struct {
 	cost [][]float64
 }
@@ -39,8 +36,6 @@ func randomInstance(rng *rand.Rand) (*matrixOracle, int, int, dispatchplanner.Op
 	for task := range cost {
 		cost[task] = make([]float64, resources)
 		for resource := range cost[task] {
-			// Roughly a third of pairings are outright infeasible, which is not far
-			// off a real board once eligibility and the deadhead cap are applied.
 			if rng.Float64() < 0.35 {
 				cost[task][resource] = dispatchplanner.Forbidden
 				continue
@@ -57,8 +52,6 @@ func randomInstance(rng *rand.Rand) (*matrixOracle, int, int, dispatchplanner.Op
 	return &matrixOracle{cost: cost}, tasks, resources, options
 }
 
-// assertPlanIsSound checks the guarantees a dispatcher relies on regardless of how the
-// planner arrived at its answer.
 func assertPlanIsSound(
 	t *testing.T,
 	instance int,
@@ -110,8 +103,6 @@ func assertPlanIsSound(
 	assert.InDelta(t, summed, result.TotalCost, 0.001)
 }
 
-// A blocked pairing is a hard rule, not an expensive one. If the planner ever commits
-// one, it has put a driver on a load they are not legal or equipped to take.
 func TestSolve_NeverViolatesItsConstraints(t *testing.T) {
 	t.Parallel()
 
@@ -131,8 +122,6 @@ func TestSolve_NeverViolatesItsConstraints(t *testing.T) {
 	}
 }
 
-// Search rearranges a plan many times over. The same guarantees have to survive every
-// one of those rearrangements, not just the first construction.
 func TestImprove_NeverViolatesItsConstraints(t *testing.T) {
 	t.Parallel()
 
@@ -164,8 +153,6 @@ func TestImprove_NeverViolatesItsConstraints(t *testing.T) {
 	}
 }
 
-// A task nothing can take must be reported, not dropped. A move that silently vanishes
-// from a plan is a load nobody is watching.
 func TestSolve_ReportsTasksNoResourceCanTake(t *testing.T) {
 	t.Parallel()
 

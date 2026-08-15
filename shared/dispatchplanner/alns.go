@@ -33,16 +33,9 @@ const (
 	repairOperatorCount
 )
 
-// Rebuildable is an Oracle whose state can be rewound. Local search has to undo
-// assignments to try a different arrangement, which an append-only Oracle cannot do
-// on its own.
 type Rebuildable interface {
 	Oracle
 
-	// Rebuild discards all planned state, replays assignments in order, and returns
-	// them with costs refreshed against the replayed state. Costs must be refreshed
-	// because an assignment that was third in a sequence may now be second, and it
-	// is scored from a different position.
 	Rebuild(assignments []Assignment) []Assignment
 }
 
@@ -55,12 +48,6 @@ type ImproveParams struct {
 	Seed       int64
 }
 
-// Improve runs adaptive large-neighborhood search over an existing solution: tear
-// out part of it, greedily rebuild, keep the result when it is better. Acceptance is
-// lexicographic on coverage first, so the search can never improve its score by
-// abandoning a move.
-//
-// The oracle is left holding the state of the returned solution.
 func Improve(params ImproveParams) Result {
 	best := cloneResult(params.Initial)
 
@@ -230,9 +217,6 @@ func ruinCostliest(current Result, rng *rand.Rand) map[int]struct{} {
 	return drop
 }
 
-// ruinOneResource tears out a whole sequence. Re-planning one driver's entire tour
-// is the move a dispatcher would make by hand, and it reaches arrangements that
-// removing scattered individual assignments cannot.
 func ruinOneResource(current Result, rng *rand.Rand) map[int]struct{} {
 	byResource := make(map[int][]int, len(current.Assignments))
 	order := make([]int, 0, len(current.Assignments))
@@ -257,9 +241,6 @@ func ruinOneResource(current Result, rng *rand.Rand) map[int]struct{} {
 	return drop
 }
 
-// ruinCount keeps an absolute floor as well as a proportional one. Tearing out a
-// single assignment can only ever put it back where it was, so on small boards a
-// percentage alone would leave the search unable to restructure anything.
 func ruinCount(total int, rng *rand.Rand) int {
 	if total <= minRuinCount {
 		return total
@@ -270,8 +251,6 @@ func ruinCount(total int, rng *rand.Rand) int {
 	return min(max(int(float64(total)*fraction), minRuinCount), total)
 }
 
-// compare orders solutions the way dispatch cares about: covering more moves always
-// beats a cheaper plan that leaves a load for nobody. Cost only breaks ties.
 func compare(a, b Result) int {
 	switch {
 	case len(a.Assignments) > len(b.Assignments):
@@ -287,9 +266,6 @@ func compare(a, b Result) int {
 	}
 }
 
-// operatorWeights biases selection towards whichever operators have recently been
-// paying off, while decay keeps any single early success from monopolising the
-// search.
 type operatorWeights struct {
 	weights []float64
 }

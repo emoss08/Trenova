@@ -13,14 +13,8 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// horizonSearchSeed is fixed so re-planning an unchanged board returns an unchanged
-// plan. Dispatchers lose trust in an optimizer whose answer moves when nothing did.
 const horizonSearchSeed = int64(1)
 
-// horizonOracle scores one move against one driver at the driver's current
-// projected state. Committing a pairing folds that move into the driver's
-// commitments, so the next score for that driver departs from the move's
-// destination and clock rather than from the driver's live position.
 type horizonOracle struct {
 	candidates *dispatchcandidateservice.Service
 	moves      []*repositories.BoardMove
@@ -29,8 +23,6 @@ type horizonOracle struct {
 	control    *dispatchcontrol.DispatchControl
 	scores     [][]*dispatchcandidateservice.CandidateScore
 
-	// baseCommitments is the fleet's real workload before any planning, held so a
-	// search pass can rewind everything this oracle has committed.
 	baseCommitments map[pulid.ID][]*repositories.WorkerCommitment
 }
 
@@ -56,10 +48,6 @@ func newHorizonOracle(
 	}
 }
 
-// Rebuild rewinds the fleet to its real workload and replays the given assignments.
-// Costs are recomputed as it goes: a move that was third in a tour and is now second
-// departs from a different place with a different clock, so its old score no longer
-// describes it.
 func (o *horizonOracle) Rebuild(
 	assignments []dispatchplanner.Assignment,
 ) []dispatchplanner.Assignment {

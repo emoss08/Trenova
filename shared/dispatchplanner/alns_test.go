@@ -9,10 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// routeOracle is a one-dimensional stand-in for the real thing: a resource sits at a
-// position, a task costs the distance to reach it, and taking a task moves the
-// resource there. That is the same shape as a driver whose next deadhead is measured
-// from where their last move ended.
 type routeOracle struct {
 	taskAt    []float64
 	startAt   []float64
@@ -49,10 +45,6 @@ func (o *routeOracle) Rebuild(
 	return replayed
 }
 
-// greedyTrap is built so the myopic choice is wrong: taking the globally cheapest
-// pairing first fills one resource and strands the far task on the other.
-//
-// Greedy reaches 130. Splitting the tasks by neighbourhood reaches 90.
 func greedyTrap() (*routeOracle, dispatchplanner.SolveParams) {
 	oracle := newRouteOracle(
 		[]float64{10, 40, 60, 100},
@@ -161,8 +153,6 @@ func TestImprove_ReportedCostMatchesTheAssignments(t *testing.T) {
 	assert.InDelta(t, summed, improved.TotalCost, 0.001)
 }
 
-// The oracle has to end up holding the solution that was returned, because the caller
-// reads per-assignment detail back out of it after planning.
 func TestImprove_LeavesTheOracleOnTheReturnedSolution(t *testing.T) {
 	t.Parallel()
 
@@ -289,13 +279,9 @@ func TestImprove_RespectsMaxPerResource(t *testing.T) {
 	}
 }
 
-// Coverage must outrank cost. A search that could shed an expensive move to lower its
-// total would quietly stop covering loads.
 func TestImprove_KeepsCoverageWhenDroppingWouldBeCheaper(t *testing.T) {
 	t.Parallel()
 
-	// One resource, two tasks: the second is far more expensive than the first, so
-	// abandoning it would more than halve the total.
 	oracle := newRouteOracle([]float64{1, 500}, []float64{0})
 	params := dispatchplanner.SolveParams{
 		Tasks:     2,

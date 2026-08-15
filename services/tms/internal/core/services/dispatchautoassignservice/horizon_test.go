@@ -43,8 +43,6 @@ type horizonFixture struct {
 	moves  []*repositories.BoardMove
 }
 
-// newHorizonFixture wires an oracle with pre-computed scores so plan building can be
-// exercised without standing up the scorer.
 func newHorizonFixture(
 	moves []*repositories.BoardMove,
 	scores [][]*dispatchcandidateservice.CandidateScore,
@@ -236,8 +234,6 @@ func TestSolve_RoutesOnPlanningMode(t *testing.T) {
 	})
 }
 
-// A control that predates horizon planning, or one built in memory, must keep the
-// single-period behaviour it was configured against.
 func TestResolvedPlanningMode_DefaultsToImmediate(t *testing.T) {
 	t.Parallel()
 
@@ -260,8 +256,6 @@ func TestResolvedPlanningMode_DefaultsToImmediate(t *testing.T) {
 	)
 }
 
-// A search pass rewinds the oracle many times. If a rewind ever left a planned move
-// behind, later scoring would depart from a position the driver was never given.
 func TestHorizonOracle_RebuildRestoresTheRealWorkload(t *testing.T) {
 	t.Parallel()
 
@@ -346,9 +340,6 @@ func TestHorizonOracle_RebuildDoesNotMutateTheCapturedBaseline(t *testing.T) {
 	}
 }
 
-// Horizon settings must not leak into organizations that never turned it on. A control
-// carrying horizon configuration — because it was set once and reverted, or because a
-// default filled it in — has to plan exactly as it did before horizon existed.
 func TestSolveImmediate_IgnoresHorizonConfiguration(t *testing.T) {
 	t.Parallel()
 
@@ -390,8 +381,6 @@ func TestSolveImmediate_IgnoresHorizonConfiguration(t *testing.T) {
 	assert.Empty(t, configured.Tours)
 }
 
-// The reverse guarantee: a control that asked for horizon planning gets it, and the
-// plan says so.
 func TestSolve_HorizonModeIsLabelledAsSuch(t *testing.T) {
 	t.Parallel()
 

@@ -854,9 +854,9 @@ func TestHorizonSearchRounds(t *testing.T) {
 			want:    0,
 		},
 		{
-			name:    "a negative value disables the search",
+			name:    "a negative value is malformed data and falls back to the default",
 			control: &DispatchControl{HorizonSearchIterations: rounds(-10)},
-			want:    0,
+			want:    int(DefaultHorizonSearchIterations),
 		},
 		{
 			name:    "a configured value is honoured",
@@ -902,4 +902,47 @@ func TestHorizonMovesPerDriver(t *testing.T) {
 		int(MaxHorizonMovesPerDriver),
 		(&DispatchControl{HorizonMaxMovesPerDriver: 999}).HorizonMovesPerDriver(),
 	)
+}
+
+func TestValidate_HorizonSearchIterationsBounds(t *testing.T) {
+	t.Parallel()
+
+	rounds := func(v int16) *int16 { return &v }
+
+	tests := []struct {
+		name    string
+		value   *int16
+		wantErr bool
+	}{
+		{name: "unset is allowed", value: nil},
+		{name: "zero disables the search", value: rounds(0)},
+		{name: "a normal value is allowed", value: rounds(50)},
+		{name: "the maximum is allowed", value: rounds(MaxHorizonSearchIterations)},
+		{name: "negative is rejected", value: rounds(-1), wantErr: true},
+		{name: "above the maximum is rejected", value: rounds(501), wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			dc := &DispatchControl{
+				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
+				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
+				RecordServiceFailures:      ServiceIncidentTypeNever,
+				HorizonSearchIterations:    tt.value,
+			}
+
+			multiErr := errortypes.NewMultiError()
+			dc.Validate(multiErr)
+
+			found := false
+			for _, e := range multiErr.Errors {
+				if e.Field == "horizonSearchIterations" {
+					found = true
+				}
+			}
+			assert.Equal(t, tt.wantErr, found)
+		})
+	}
 }

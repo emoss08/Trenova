@@ -15,9 +15,6 @@ const (
 	chicagoLat, chicagoLon = 41.8781, -87.6298
 )
 
-// The whole premise of horizon planning: after a driver is given a move, the next
-// move's empty miles are measured from where that move ends, not from the tractor's
-// last ping. Without this, chaining loads is guesswork.
 func TestCommitPlannedMove_DeadheadIsMeasuredFromThePriorDestination(t *testing.T) {
 	t.Parallel()
 

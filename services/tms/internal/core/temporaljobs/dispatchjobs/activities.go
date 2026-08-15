@@ -35,13 +35,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 }
 
-// HorizonPlanSweepActivity re-plans the horizon for every organization running
-// horizon planning.
-//
-// It never applies. A scheduled pass exists to build evidence — the plan is recorded
-// as an agent run with per-move proposals, so what the planner proposed can be read
-// back against what dispatchers actually did. Whether any of it executes stays with
-// the organization's autonomy tier, through the normal request path.
 func (a *Activities) HorizonPlanSweepActivity(
 	ctx context.Context,
 ) (*HorizonPlanSweepResult, error) {
@@ -107,9 +100,6 @@ func (a *Activities) planTenant(
 
 	for _, tour := range plan.Tours {
 		outcome.TotalDeadheadMiles += tour.TotalDeadheadMiles
-		// Only the moves past the first in a tour were chained; the first would have
-		// been assigned by single-period planning too. This is the number that says
-		// whether horizon planning is doing anything Immediate could not.
 		if len(tour.MoveIDs) > 1 {
 			outcome.ChainedMoves += len(tour.MoveIDs) - 1
 		}
@@ -118,15 +108,6 @@ func (a *Activities) planTenant(
 	return outcome
 }
 
-// retireProposals expires the proposals this sweep just recorded.
-//
-// Planning writes a pending proposal per assignment, which is the right thing when a
-// dispatcher asked for a plan and is about to act on it. A scheduled pass is not
-// that: nobody requested it and nothing will action it, so leaving the proposals
-// pending would bury the dispatcher's real review queue under a fresh copy of the
-// board every half hour. Expiring keeps the rows — rationale, evidence, and the
-// driver each move was matched to all survive as the record of what the planner
-// would have done — while keeping them out of the queue.
 func (a *Activities) retireProposals(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
@@ -145,8 +126,6 @@ func (a *Activities) retireProposals(
 		},
 	)
 	if err != nil {
-		// The plan itself is recorded and still useful, so a failure here downgrades
-		// to a warning rather than discarding the tenant's outcome.
 		a.logger.Warn("failed to retire swept dispatch proposals",
 			zap.String("orgId", tenant.OrgID.String()),
 			zap.String("runId", plan.RunID.String()),

@@ -9,10 +9,6 @@ var (
 	ErrInvalidPlanningMode               = errors.New("invalid planning mode")
 )
 
-// PlanningMode selects how auto-assignment allocates moves. Immediate matches each
-// move to at most one driver against the fleet's current state. Horizon sequences
-// several moves onto the same driver, advancing that driver's position, clock, and
-// trailer after each one.
 type PlanningMode string
 
 const (

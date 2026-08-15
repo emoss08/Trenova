@@ -10,8 +10,6 @@ import (
 func TestMostRegret_PrefersTheTaskWithTheMostToLose(t *testing.T) {
 	t.Parallel()
 
-	// Task 0 barely cares which resource it gets; task 1 has one good option and one
-	// terrible one. Greedy would take task 0 first because it is cheaper outright.
 	cost := [][]float64{
 		{5, 6},
 		{10, 90},
@@ -32,9 +30,6 @@ func TestMostRegret_PrefersTheTaskWithTheMostToLose(t *testing.T) {
 func TestMostRegret_PlacesSingleOptionTasksFirst(t *testing.T) {
 	t.Parallel()
 
-	// Task 1 can only go to resource 1. Even though task 0 has a wider spread of
-	// costs, the task with nowhere else to go must be placed before its one option
-	// is taken.
 	cost := [][]float64{
 		{10, 80},
 		{Forbidden, 40},

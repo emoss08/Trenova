@@ -21,9 +21,6 @@ func tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-// stubProposalRepo implements the proposal repository for the sweep's sake only. The
-// sweep touches one method; the rest exist to satisfy the interface and return zero
-// values so an unexpected call shows up as an empty result rather than a panic.
 type stubProposalRepo struct {
 	mock.Mock
 }
@@ -163,8 +160,6 @@ func TestHorizonPlanSweepActivity_SummarisesEachTenant(t *testing.T) {
 	assert.Equal(t, 2, result.MovesUncovered)
 	assert.Equal(t, 3, result.ToursBuilt)
 
-	// Only moves past the first in a tour were genuinely chained: 2 from the
-	// three-move tour, 1 from the two-move tour, 0 from the single-move tour.
 	assert.Equal(t, 3, result.ChainedMoves)
 
 	require.Len(t, result.TenantOutcomes, 2)
@@ -173,9 +168,6 @@ func TestHorizonPlanSweepActivity_SummarisesEachTenant(t *testing.T) {
 	assert.Equal(t, 5, result.TenantOutcomes[0].ProposalsRetired)
 }
 
-// Planning writes a pending proposal per assignment. Left alone, a half-hourly sweep
-// would republish the whole board into the dispatcher's review queue every pass, so
-// the sweep retires what it just wrote.
 func TestHorizonPlanSweepActivity_RetiresItsOwnProposals(t *testing.T) {
 	t.Parallel()
 
@@ -205,8 +197,6 @@ func TestHorizonPlanSweepActivity_RetiresItsOwnProposals(t *testing.T) {
 	assert.Equal(t, plan.RunID.String(), result.TenantOutcomes[0].RunID)
 }
 
-// The plan is already recorded by the time proposals are retired, so losing the
-// retirement should not throw away the tenant's outcome.
 func TestHorizonPlanSweepActivity_RetirementFailureDoesNotFailTheTenant(t *testing.T) {
 	t.Parallel()
 
@@ -233,7 +223,6 @@ func TestHorizonPlanSweepActivity_RetirementFailureDoesNotFailTheTenant(t *testi
 	assert.Zero(t, result.TenantOutcomes[0].ProposalsRetired)
 }
 
-// A plan with nothing in it never opened a run, so there is nothing to retire.
 func TestHorizonPlanSweepActivity_SkipsRetirementWithoutARun(t *testing.T) {
 	t.Parallel()
 
@@ -254,8 +243,6 @@ func TestHorizonPlanSweepActivity_SkipsRetirementWithoutARun(t *testing.T) {
 	deps.proposals.AssertNotCalled(t, "ExpirePendingByRun", mock.Anything, mock.Anything)
 }
 
-// A scheduled pass exists to gather evidence. If it ever applied, an organization
-// still evaluating the planner would find loads assigned out from under it.
 func TestHorizonPlanSweepActivity_NeverApplies(t *testing.T) {
 	t.Parallel()
 
@@ -276,8 +263,6 @@ func TestHorizonPlanSweepActivity_NeverApplies(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// One organization's bad configuration must not stop the rest of the fleet being
-// planned.
 func TestHorizonPlanSweepActivity_OneTenantFailingDoesNotStopTheSweep(t *testing.T) {
 	t.Parallel()
 

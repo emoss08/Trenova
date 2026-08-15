@@ -11,9 +11,6 @@ type ScoreCandidateRequest struct {
 	Snapshot *FleetSnapshot
 }
 
-// ScoreCandidate scores a single driver against a single move through the same
-// path RankCandidates uses. Horizon planning needs one pairing at a time because
-// a driver's position, clock, and trailer all shift after each move it commits.
 func (s *Service) ScoreCandidate(req *ScoreCandidateRequest) *CandidateScore {
 	if req == nil || req.Driver == nil || req.Move == nil || req.Snapshot == nil {
 		return nil
@@ -37,10 +34,6 @@ type CommitPlannedMoveRequest struct {
 	Score    *CandidateScore
 }
 
-// CommitPlannedMove folds a planned assignment into the driver's commitments so
-// every later score departs from this move's destination, clock, and trailer
-// rather than from the driver's live position. This is what turns a sequence of
-// independent matchings into a tour.
 func CommitPlannedMove(req *CommitPlannedMoveRequest) {
 	if req == nil || req.Snapshot == nil || req.Move == nil || req.Score == nil {
 		return
@@ -79,9 +72,6 @@ func CommitPlannedMove(req *CommitPlannedMoveRequest) {
 	)
 }
 
-// PlannedCompletion is when the driver is genuinely free again: the later of the
-// delivery appointment and the point they finish driving. Using the appointment
-// alone would free a driver early on moves with no destination window.
 func PlannedCompletion(move *repositories.BoardMove, score *CandidateScore) int64 {
 	if move == nil || score == nil {
 		return 0

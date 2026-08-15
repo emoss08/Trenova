@@ -2,10 +2,6 @@ package dispatchjobs
 
 const HorizonPlanSweepWorkflowName = "HorizonPlanSweepWorkflow"
 
-// TenantHorizonPlan is one organization's outcome from a scheduled planning pass.
-// It is deliberately a summary rather than the plan itself: the plan is already
-// persisted as an agent run with per-move proposals, and this exists so the sweep's
-// history shows whether the planner is earning its keep.
 type TenantHorizonPlan struct {
 	OrganizationID string `json:"organizationId"`
 	BusinessUnitID string `json:"businessUnitId"`
@@ -20,8 +16,6 @@ type TenantHorizonPlan struct {
 	TotalDeadheadMiles float64 `json:"totalDeadheadMiles"`
 	ShadowMode         bool    `json:"shadowMode"`
 
-	// ProposalsRetired is how many of this pass's proposals were moved out of the
-	// pending queue. A scheduled plan is evidence, not work for a dispatcher.
 	ProposalsRetired int    `json:"proposalsRetired"`
 	Error            string `json:"error,omitempty"`
 }

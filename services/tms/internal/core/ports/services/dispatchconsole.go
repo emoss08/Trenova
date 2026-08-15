@@ -25,9 +25,6 @@ type DispatchPlannedAssignment struct {
 	AutoExecutable bool                                     `json:"autoExecutable"`
 	ProposalID     pulid.ID                                 `json:"proposalId"`
 
-	// TourID groups the moves horizon planning chained onto one driver, and
-	// SequenceIndex is this move's position within that tour. Immediate planning
-	// leaves TourID nil and SequenceIndex zero.
 	TourID                pulid.ID `json:"tourId"`
 	SequenceIndex         int      `json:"sequenceIndex"`
 	ProjectedStartAt      int64    `json:"projectedStartAt"`

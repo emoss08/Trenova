@@ -68,8 +68,6 @@ type DispatchControl struct {
 	UpdatedAt                            int64                      `json:"updatedAt"                            bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
-// ResolvedScoringWeights is the weighting the candidate scorer should use for this
-// organization: the strategy preset with any stored per-factor overrides applied.
 func (dc *DispatchControl) ResolvedScoringWeights() map[ScoringFactor]float64 {
 	if dc == nil {
 		return PresetWeights(AutoAssignmentStrategyProximity)
@@ -77,8 +75,6 @@ func (dc *DispatchControl) ResolvedScoringWeights() map[ScoringFactor]float64 {
 	return dc.ScoringWeights.Resolve(dc.AutoAssignmentStrategy)
 }
 
-// PlanningHorizonHours is the forward window the console and the optimizer plan over,
-// falling back to the default when an organization has never configured one.
 func (dc *DispatchControl) PlanningHorizonHours() int16 {
 	if dc == nil || dc.AutoAssignPlanningHorizonHours <= 0 {
 		return DefaultAutoAssignPlanningHorizonHours
@@ -89,8 +85,6 @@ func (dc *DispatchControl) PlanningHorizonHours() int16 {
 	return dc.AutoAssignPlanningHorizonHours
 }
 
-// ResolvedPlanningMode falls back to Immediate so controls written before horizon
-// planning existed keep the single-period behaviour they were configured against.
 func (dc *DispatchControl) ResolvedPlanningMode() PlanningMode {
 	if dc == nil || !dc.PlanningMode.IsValid() {
 		return PlanningModeImmediate
@@ -98,8 +92,6 @@ func (dc *DispatchControl) ResolvedPlanningMode() PlanningMode {
 	return dc.PlanningMode
 }
 
-// HorizonMovesPerDriver caps how many moves horizon planning may chain onto one
-// driver, keeping a single driver from absorbing the whole board.
 func (dc *DispatchControl) HorizonMovesPerDriver() int {
 	if dc == nil || dc.HorizonMaxMovesPerDriver <= 0 {
 		return int(DefaultHorizonMaxMovesPerDriver)
@@ -110,23 +102,20 @@ func (dc *DispatchControl) HorizonMovesPerDriver() int {
 	return int(dc.HorizonMaxMovesPerDriver)
 }
 
-// HorizonSearchRounds is how many local-search passes refine the first horizon plan.
-// Unset means the default; an explicit zero turns the search off and leaves the
-// greedy plan as-is, which is the escape hatch when planning latency matters more
-// than plan quality.
 func (dc *DispatchControl) HorizonSearchRounds() int {
 	if dc == nil || dc.HorizonSearchIterations == nil {
 		return int(DefaultHorizonSearchIterations)
 	}
-	if *dc.HorizonSearchIterations <= 0 {
+	if *dc.HorizonSearchIterations == 0 {
 		return 0
+	}
+	if *dc.HorizonSearchIterations < 0 {
+		return int(DefaultHorizonSearchIterations)
 	}
 
 	return min(int(*dc.HorizonSearchIterations), int(MaxHorizonSearchIterations))
 }
 
-// ConfidenceThreshold is the minimum confidence an auto-assign proposal must carry
-// before it may execute without a dispatcher reviewing it.
 func (dc *DispatchControl) ConfidenceThreshold() decimal.Decimal {
 	if dc == nil || dc.AutoAssignConfidenceThreshold.IsZero() {
 		return defaultAutoAssignConfidenceThreshold
@@ -150,9 +139,6 @@ func (dc *DispatchControl) NormalizeServiceFailureSettings() {
 	dc.ServiceFailureGracePeriod = &defaultGracePeriod
 }
 
-// NormalizeAutoAssignmentSettings fills in the auto-assignment defaults for controls
-// that predate them or were constructed in memory, so a zero value is treated as
-// "unset" rather than as an invalid configuration.
 func (dc *DispatchControl) NormalizeAutoAssignmentSettings() {
 	if dc == nil {
 		return
@@ -195,16 +181,11 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 			),
 		),
 		validation.Field(&dc.HorizonSearchIterations,
-			validation.When(dc.HorizonSearchIterations != nil,
-				validation.By(func(_ any) error {
-					if *dc.HorizonSearchIterations < 0 {
-						return errors.New("Horizon search iterations cannot be negative")
-					}
-					if *dc.HorizonSearchIterations > MaxHorizonSearchIterations {
-						return errors.New("Horizon search iterations must be 500 or fewer")
-					}
-					return nil
-				}),
+			validation.Min(int16(0)).Error(
+				"Horizon search iterations cannot be negative",
+			),
+			validation.Max(MaxHorizonSearchIterations).Error(
+				"Horizon search iterations must be 500 or fewer",
 			),
 		),
 		validation.Field(&dc.HorizonMaxMovesPerDriver,

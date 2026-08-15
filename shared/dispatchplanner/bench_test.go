@@ -9,15 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// A full board as the service caps it: maxPlanMoves is 400, against a large fleet.
 const (
 	benchTasks     = 400
 	benchResources = 250
 )
 
-// countingOracle reports how many times the planner asks for a cost. Every one of
-// those is a scoreDriver call in the real system, so the count is what determines
-// whether a planning run fits inside a request.
 type countingOracle struct {
 	*routeOracle
 	costCalls int
@@ -98,9 +94,6 @@ func BenchmarkImprove_FullBoard(b *testing.B) {
 	}
 }
 
-// The scorer is the expensive part of real planning, so the call count is the budget
-// that matters. This pins it: a change that makes search cost materially more per
-// iteration should fail here rather than in production.
 func TestPlanningStaysWithinItsScoringBudget(t *testing.T) {
 	t.Parallel()
 

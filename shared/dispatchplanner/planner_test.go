@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// staticOracle scores from a fixed matrix and ignores state changes.
 type staticOracle struct {
 	cost    [][]float64
 	commits [][2]int
@@ -20,8 +19,6 @@ func (o *staticOracle) Commit(task, resource int) {
 	o.commits = append(o.commits, [2]int{task, resource})
 }
 
-// chainOracle models the property the planner exists for: once a resource takes a
-// task, the next task becomes cheaper for that same resource and no other.
 type chainOracle struct {
 	base     [][]float64
 	discount float64
@@ -68,8 +65,6 @@ func TestSolve_AssignsCheapestPairFirst(t *testing.T) {
 func TestSolve_ChainsMultipleTasksOntoOneResource(t *testing.T) {
 	t.Parallel()
 
-	// Resource 0 starts marginally worse everywhere, but each committed task makes
-	// it cheaper. A one-to-one matcher would spread these across both resources.
 	oracle := newChainOracle([][]float64{
 		{10, 11},
 		{10, 11},
@@ -197,8 +192,6 @@ func TestSolve_RecostsOnlyTheCommittedResource(t *testing.T) {
 	})
 
 	require.Len(t, result.Assignments, 2)
-	// Both land on resource 0: after the first commit it costs 4 against the
-	// untouched 5 on resource 1.
 	assert.Equal(t, 0, result.Assignments[0].Resource)
 	assert.Equal(t, 0, result.Assignments[1].Resource)
 	assert.InDelta(t, 9.0, result.TotalCost, 1e-9)
