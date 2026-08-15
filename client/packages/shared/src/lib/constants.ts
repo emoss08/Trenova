@@ -1,18 +1,19 @@
-function resolveApiBaseUrl(): string {
-  const configuredUrl = (import.meta.env.VITE_API_URL as string) || "/api/v1";
+const LOCAL_DEV_API_BASE_URL = "http://localhost:8080/api/v1";
 
-  if (
-    import.meta.env.DEV &&
-    typeof window !== "undefined" &&
-    configuredUrl.startsWith("http://localhost:8080/")
-  ) {
-    return "/api/v1";
+function resolveApiBaseUrl(): string {
+  const configuredUrl = import.meta.env.VITE_API_URL as string | undefined;
+  if (configuredUrl) {
+    return configuredUrl;
   }
 
-  return configuredUrl;
+  if (import.meta.env.MODE === "development") {
+    return LOCAL_DEV_API_BASE_URL;
+  }
+
+  return "/api/v1";
 }
 
-export const API_BASE_URL = "http://localhost:8080/api/v1" //resolveApiBaseUrl();
+export const API_BASE_URL = resolveApiBaseUrl();
 
 export const APP_ENV = (import.meta.env.MODE as string) || "development";
 export const TERMS_URL =
