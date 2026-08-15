@@ -45,9 +45,9 @@ type Message struct {
 	UpdatedAt         int64         `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector      string        `json:"-"                 bun:"search_vector,type:TSVECTOR,scanonly"`
 
-	Profile      *Profile             `json:"profile,omitempty" bun:"rel:belongs-to,join:profile_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"-"                 bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-"                 bun:"rel:belongs-to,join:organization_id=id"`
+	Profile      *Profile             `json:"profile,omitempty"     bun:"rel:belongs-to,join:profile_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"                     bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"-"                     bun:"rel:belongs-to,join:organization_id=id"`
 	Attachments  []*Attachment        `json:"attachments,omitempty" bun:"rel:has-many,join:id=message_id"`
 }
 

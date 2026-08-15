@@ -25,7 +25,7 @@ var (
 
 type WorkerPTO struct {
 	bun.BaseModel             `bun:"table:worker_pto,alias:wpto" json:"-"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	pagination.CursorValueSet `bun:",embed"                      json:"-"`
 
 	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
 	WorkerID       pulid.ID  `json:"workerId"       bun:"worker_id,pk,type:VARCHAR(100),notnull"`

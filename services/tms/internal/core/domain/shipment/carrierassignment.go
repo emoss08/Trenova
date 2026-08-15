@@ -282,7 +282,10 @@ func (caa *CarrierAssignmentAccessorial) GetBusinessUnitID() pulid.ID {
 	return caa.BusinessUnitID
 }
 
-func (caa *CarrierAssignmentAccessorial) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (caa *CarrierAssignmentAccessorial) BeforeAppendModel(
+	_ context.Context,
+	query bun.Query,
+) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {

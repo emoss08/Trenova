@@ -679,7 +679,12 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 		); err != nil {
 			return err
 		}
-		if err = dispatchguard.EnsureNoDispatchHold(txCtx, s.holdRepo, tenantInfo, move.ShipmentID); err != nil {
+		if err = dispatchguard.EnsureNoDispatchHold(
+			txCtx,
+			s.holdRepo,
+			tenantInfo,
+			move.ShipmentID,
+		); err != nil {
 			return err
 		}
 

@@ -104,7 +104,14 @@ func (s *service) Create(
 		return nil, err
 	}
 
-	s.logReasonCodeAction(created, actor, permission.OpCreate, nil, created, "Service failure reason code created")
+	s.logReasonCodeAction(
+		created,
+		actor,
+		permission.OpCreate,
+		nil,
+		created,
+		"Service failure reason code created",
+	)
 	return created, nil
 }
 
@@ -140,7 +147,14 @@ func (s *service) Update(
 		return nil, err
 	}
 
-	s.logReasonCodeAction(updated, actor, permission.OpUpdate, original, updated, "Service failure reason code updated")
+	s.logReasonCodeAction(
+		updated,
+		actor,
+		permission.OpUpdate,
+		original,
+		updated,
+		"Service failure reason code updated",
+	)
 	return updated, nil
 }
 
@@ -166,7 +180,14 @@ func (s *service) Archive(
 		return nil, err
 	}
 
-	s.logReasonCodeAction(archived, actor, permission.OpArchive, original, archived, "Service failure reason code archived")
+	s.logReasonCodeAction(
+		archived,
+		actor,
+		permission.OpArchive,
+		original,
+		archived,
+		"Service failure reason code archived",
+	)
 	return archived, nil
 }
 
@@ -192,7 +213,14 @@ func (s *service) Activate(
 		return nil, err
 	}
 
-	s.logReasonCodeAction(activated, actor, permission.OpUpdate, original, activated, "Service failure reason code activated")
+	s.logReasonCodeAction(
+		activated,
+		actor,
+		permission.OpUpdate,
+		original,
+		activated,
+		"Service failure reason code activated",
+	)
 	return activated, nil
 }
 

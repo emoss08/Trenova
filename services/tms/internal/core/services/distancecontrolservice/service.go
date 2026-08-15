@@ -96,19 +96,31 @@ func (s *Service) validate(
 		if id.IsNil() {
 			continue
 		}
-		profile, err := s.distanceProfileRepo.GetByID(ctx, repositories.GetDistanceProfileByIDRequest{
-			ID: id,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
+		profile, err := s.distanceProfileRepo.GetByID(
+			ctx,
+			repositories.GetDistanceProfileByIDRequest{
+				ID: id,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				},
 			},
-		})
+		)
 		if err != nil {
-			multiErr.Add(field, errortypes.ErrInvalid, "Distance profile must exist in the same tenant")
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"Distance profile must exist in the same tenant",
+			)
 			continue
 		}
-		if profile.Status != distanceprofile.StatusActive || profile.Provider != integration.TypePCMiler {
-			multiErr.Add(field, errortypes.ErrInvalid, "Distance profile must be an active PC*Miler profile")
+		if profile.Status != distanceprofile.StatusActive ||
+			profile.Provider != integration.TypePCMiler {
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"Distance profile must be an active PC*Miler profile",
+			)
 		}
 	}
 	if multiErr.HasErrors() {

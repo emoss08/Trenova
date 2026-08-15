@@ -40,7 +40,7 @@ const (
 
 type DistanceProfile struct {
 	bun.BaseModel             `bun:"table:distance_profiles,alias:dp" json:"-"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	pagination.CursorValueSet `bun:",embed"                           json:"-"`
 
 	ID                  pulid.ID         `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID      pulid.ID         `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`

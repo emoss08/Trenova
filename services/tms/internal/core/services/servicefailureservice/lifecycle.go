@@ -155,7 +155,9 @@ func (s *service) lifecycle(
 	}
 	actorUserID := params.actor.UserIDOrNil()
 	if actorUserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Service failure lifecycle actions require a user actor")
+		return nil, errortypes.NewAuthorizationError(
+			"Service failure lifecycle actions require a user actor",
+		)
 	}
 
 	original, err := s.repo.GetByShipment(ctx, &repositories.GetServiceFailureByShipmentRequest{
@@ -173,7 +175,8 @@ func (s *service) lifecycle(
 			"Terminal service failures cannot be changed",
 		)
 	}
-	if params.next == servicefailure.StatusReviewed && original.Status != servicefailure.StatusOpen {
+	if params.next == servicefailure.StatusReviewed &&
+		original.Status != servicefailure.StatusOpen {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,

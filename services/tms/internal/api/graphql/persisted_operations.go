@@ -70,7 +70,10 @@ func LoadPersistedOperationManifest(data []byte) (*PersistedOperationManifest, e
 		}
 		normalizedHash := normalizePersistedHash(hash)
 		if existingQuery, ok := queries[normalizedHash]; ok && existingQuery != query {
-			return nil, fmt.Errorf("persisted operation hash %q is duplicated after normalization", normalizedHash)
+			return nil, fmt.Errorf(
+				"persisted operation hash %q is duplicated after normalization",
+				normalizedHash,
+			)
 		}
 		queries[normalizedHash] = query
 	}
@@ -108,7 +111,10 @@ func rewritePersistedOperationRequest(
 ) error {
 	if req.Body == nil {
 		if enforceSafelist {
-			return persistedOperationError("query", "GraphQL persisted operation request body is required")
+			return persistedOperationError(
+				"query",
+				"GraphQL persisted operation request body is required",
+			)
 		}
 		return nil
 	}
@@ -121,7 +127,10 @@ func rewritePersistedOperationRequest(
 		req.Body = io.NopCloser(bytes.NewReader(body))
 		req.ContentLength = 0
 		if enforceSafelist {
-			return persistedOperationError("query", "GraphQL persisted operation request body is required")
+			return persistedOperationError(
+				"query",
+				"GraphQL persisted operation request body is required",
+			)
 		}
 		return nil
 	}
@@ -138,7 +147,10 @@ func rewritePersistedOperationRequest(
 		req.Body = io.NopCloser(bytes.NewReader(body))
 		req.ContentLength = int64(len(body))
 		if enforceSafelist {
-			return persistedOperationError("extensions.persistedQuery.sha256Hash", "GraphQL persisted operation hash is required")
+			return persistedOperationError(
+				"extensions.persistedQuery.sha256Hash",
+				"GraphQL persisted operation hash is required",
+			)
 		}
 		return nil
 	}
@@ -147,7 +159,10 @@ func rewritePersistedOperationRequest(
 	if !ok {
 		req.Body = io.NopCloser(bytes.NewReader(body))
 		req.ContentLength = int64(len(body))
-		return persistedOperationError("extensions.persistedQuery.sha256Hash", "GraphQL persisted operation is not safelisted")
+		return persistedOperationError(
+			"extensions.persistedQuery.sha256Hash",
+			"GraphQL persisted operation is not safelisted",
+		)
 	}
 
 	gqlReq.Query = query

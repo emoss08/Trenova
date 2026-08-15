@@ -130,7 +130,9 @@ func (h *Handler) verifySignature(c *gin.Context, body []byte) error {
 
 	instanceID := strings.TrimSpace(c.GetHeader(headerInstanceID))
 	if h.cfg.Platform.InstanceID != "" && instanceID != h.cfg.Platform.InstanceID {
-		return errortypes.NewAuthorizationError("Control-plane request targets a different instance")
+		return errortypes.NewAuthorizationError(
+			"Control-plane request targets a different instance",
+		)
 	}
 
 	return nil

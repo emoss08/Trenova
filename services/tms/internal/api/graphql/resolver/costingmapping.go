@@ -55,7 +55,11 @@ func costCategoryToModel(entity *costingcontrol.CostCategory) *gqlmodel.CostCate
 		IsActive:             entity.IsActive,
 		SortOrder:            int(entity.SortOrder),
 		Version:              int(entity.Version),
-		GlAccounts:           make([]*gqlmodel.CostCategoryGLAccountLink, 0, len(entity.GLAccounts)),
+		GlAccounts: make(
+			[]*gqlmodel.CostCategoryGLAccountLink,
+			0,
+			len(entity.GLAccounts),
+		),
 	}
 
 	for _, link := range entity.GLAccounts {
@@ -228,7 +232,10 @@ func costingControlFromInput(
 	}
 	entity.FuelIndexID = fuelIndexID
 
-	if entity.MilesPerGallon, err = decimalFromString(input.MilesPerGallon, "milesPerGallon"); err != nil {
+	if entity.MilesPerGallon, err = decimalFromString(
+		input.MilesPerGallon,
+		"milesPerGallon",
+	); err != nil {
 		return nil, err
 	}
 

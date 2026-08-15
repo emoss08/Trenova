@@ -11,7 +11,10 @@ import (
 )
 
 type ShipmentRepository interface {
-	GetByID(ctx context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error)
+	GetByID(
+		ctx context.Context,
+		req *repositories.GetShipmentByIDRequest,
+	) (*shipment.Shipment, error)
 	UpdateOperationalLifecycle(
 		ctx context.Context,
 		entity *shipment.Shipment,

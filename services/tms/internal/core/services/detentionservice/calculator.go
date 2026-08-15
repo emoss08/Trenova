@@ -195,19 +195,36 @@ func Compute(in ComputeInput) ComputeResult {
 	if billable == 0 {
 		result.BillableMinutes = 0
 		result.Status = openOrNotBillable(isOpen)
-		result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(in, result.RawDwellMinutes, trace)
+		result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
+			in,
+			result.RawDwellMinutes,
+			trace,
+		)
 		result.NetMargin = result.BillableAmount.Sub(result.DriverPayAmount)
 		finalizeTrace(trace, result)
 		return result
 	}
 
 	if snap.MinimumBillableMinutes > 0 && billable < snap.MinimumBillableMinutes {
-		trace.AddMinutes(detention.TraceStepMinimum, "Below minimum billable threshold",
-			fmt.Sprintf("%d min is under the %d min minimum", billable, snap.MinimumBillableMinutes),
-			fmt.Sprintf("Minimum billable: %d min", snap.MinimumBillableMinutes), billable, true)
+		trace.AddMinutes(
+			detention.TraceStepMinimum,
+			"Below minimum billable threshold",
+			fmt.Sprintf(
+				"%d min is under the %d min minimum",
+				billable,
+				snap.MinimumBillableMinutes,
+			),
+			fmt.Sprintf("Minimum billable: %d min", snap.MinimumBillableMinutes),
+			billable,
+			true,
+		)
 		result.BillableMinutes = 0
 		result.Status = openOrNotBillable(isOpen)
-		result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(in, result.RawDwellMinutes, trace)
+		result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
+			in,
+			result.RawDwellMinutes,
+			trace,
+		)
 		result.NetMargin = result.BillableAmount.Sub(result.DriverPayAmount)
 		finalizeTrace(trace, result)
 		return result
@@ -231,7 +248,11 @@ func Compute(in ComputeInput) ComputeResult {
 
 	if rounded == 0 {
 		result.Status = openOrNotBillable(isOpen)
-		result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(in, result.RawDwellMinutes, trace)
+		result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
+			in,
+			result.RawDwellMinutes,
+			trace,
+		)
 		result.NetMargin = result.BillableAmount.Sub(result.DriverPayAmount)
 		finalizeTrace(trace, result)
 		return result
@@ -259,7 +280,11 @@ func Compute(in ComputeInput) ComputeResult {
 		result.CapApplied = capKind
 	}
 
-	result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(in, result.RawDwellMinutes, trace)
+	result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
+		in,
+		result.RawDwellMinutes,
+		trace,
+	)
 
 	applyNotificationGate(&result, snap, trace)
 	applyApprovalThresholds(&result, snap, trace)
@@ -457,7 +482,10 @@ func applyTieredRate(
 ) (decimal.Decimal, decimal.Decimal) {
 	tiers := make([]detention.TierSnapshot, len(snap.Tiers))
 	copy(tiers, snap.Tiers)
-	sort.SliceStable(tiers, func(a, b int) bool { return tiers[a].FromMinute < tiers[b].FromMinute })
+	sort.SliceStable(
+		tiers,
+		func(a, b int) bool { return tiers[a].FromMinute < tiers[b].FromMinute },
+	)
 
 	totalUnits := decimal.Zero
 	totalAmount := decimal.Zero
@@ -795,17 +823,25 @@ func applyNotificationGate(
 
 	switch snap.UnnotifiedBehavior {
 	case detention.UnnotifiedBehaviorSuppress:
-		trace.AddAmount(detention.TraceStepNotification, "Charge suppressed: notice not sent in time",
+		trace.AddAmount(
+			detention.TraceStepNotification,
+			"Charge suppressed: notice not sent in time",
 			fmt.Sprintf("Contract requires notice; status is %s", result.NotificationStatus),
-			"Unnotified behavior: Suppress", decimal.Zero, true)
+			"Unnotified behavior: Suppress",
+			decimal.Zero,
+			true,
+		)
 		result.BillableAmount = decimal.Zero
 		result.SuppressedByGate = true
 	case detention.UnnotifiedBehaviorFlag:
 		trace.Add(detention.TraceStep{
-			Kind:   detention.TraceStepNotification,
-			Label:  "Held for review: notice not sent in time",
-			Detail: fmt.Sprintf("Contract requires notice; status is %s", result.NotificationStatus),
-			Term:   "Unnotified behavior: Flag",
+			Kind:  detention.TraceStepNotification,
+			Label: "Held for review: notice not sent in time",
+			Detail: fmt.Sprintf(
+				"Contract requires notice; status is %s",
+				result.NotificationStatus,
+			),
+			Term: "Unnotified behavior: Flag",
 		})
 		result.RequiresApproval = true
 	case detention.UnnotifiedBehaviorBill:

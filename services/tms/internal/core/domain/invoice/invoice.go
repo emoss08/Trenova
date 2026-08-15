@@ -40,7 +40,7 @@ var (
 
 type Invoice struct {
 	bun.BaseModel             `bun:"table:invoices,alias:inv" json:"-"`
-	pagination.CursorValueSet `json:"-"                       bun:",embed"`
+	pagination.CursorValueSet `bun:",embed"                   json:"-"`
 
 	ID                        pulid.ID              `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID            pulid.ID              `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull"`

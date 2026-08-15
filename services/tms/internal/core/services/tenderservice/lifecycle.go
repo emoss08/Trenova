@@ -697,7 +697,8 @@ func (s *Service) notifyRateConIssueFailed(
 		Title:     "Rate confirmation could not be issued",
 		Message: fmt.Sprintf(
 			"%s accepted the tender but no rate confirmation was issued automatically: %s. Generate it manually",
-			carrierNameOf(offer), reason,
+			carrierNameOf(offer),
+			reason,
 		),
 		CorrelationID: offer.TenderID.String(),
 		Link:          dispatchConsoleOfferLink(offer),

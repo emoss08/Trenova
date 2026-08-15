@@ -399,7 +399,11 @@ func (s *Service) postPaymentJournal(
 		)
 	}
 
-	legs := BuildCarrierSettlementPaymentLegs(entity, accounts.Payable, control.DefaultCashAccountID)
+	legs := BuildCarrierSettlementPaymentLegs(
+		entity,
+		accounts.Payable,
+		control.DefaultCashAccountID,
+	)
 	if len(legs) == 0 {
 		return nil, nil //nolint:nilnil // a zero-amount settlement records no payment journal
 	}

@@ -872,9 +872,11 @@ func (s *Service) PlanSend(
 	headers := resolveDeliveryHeaders(fromEmail, deliveryProfile.Email)
 
 	plan := &servicesports.InvoiceSendPlan{
-		InvoiceID:            entity.ID,
-		ProviderLimitBytes:   providerLimit(profile),
-		EstimatedBodyBytes:   int64(len(wording.Subject.Value)+len(body)) + defaultBodyOverheadBytes,
+		InvoiceID:          entity.ID,
+		ProviderLimitBytes: providerLimit(profile),
+		EstimatedBodyBytes: int64(
+			len(wording.Subject.Value)+len(body),
+		) + defaultBodyOverheadBytes,
 		Parts:                make([]*servicesports.InvoiceSendPlanPart, 0),
 		Warnings:             make([]string, 0),
 		Errors:               make([]string, 0),

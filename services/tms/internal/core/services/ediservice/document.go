@@ -526,7 +526,9 @@ func (s *Service) GenerateDocument(
 	return created, nil
 }
 
-func generatedMessageAckStatus(profile *edi.EDIPartnerDocumentProfile) edi.MessageAcknowledgmentStatus {
+func generatedMessageAckStatus(
+	profile *edi.EDIPartnerDocumentProfile,
+) edi.MessageAcknowledgmentStatus {
 	if profile == nil ||
 		profile.Direction != edi.DocumentDirectionOutbound ||
 		!profile.Acknowledgment.Expected ||
@@ -891,10 +893,13 @@ func (s *Service) resolvePayload(
 				edi.TransactionSet214,
 			)
 		}
-		result, err := s.BuildShipmentStatusPayloadForServiceFailure(ctx, &services.BuildServiceFailureEDIPayloadRequest{
-			TenantInfo:       req.TenantInfo,
-			ServiceFailureID: req.ServiceFailureID,
-		})
+		result, err := s.BuildShipmentStatusPayloadForServiceFailure(
+			ctx,
+			&services.BuildServiceFailureEDIPayloadRequest{
+				TenantInfo:       req.TenantInfo,
+				ServiceFailureID: req.ServiceFailureID,
+			},
+		)
 		if err != nil {
 			return edi.DocumentPayload{}, err
 		}

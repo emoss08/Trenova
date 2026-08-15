@@ -241,13 +241,15 @@ func (s *Service) routeTenderOfferResponse(
 			offer.ID,
 		)}}
 	default:
-		return tenderOfferRouteOutcome{handled: true, warnings: []string{fmt.Sprintf(
-			"tender response %s/%s for offer %s carries unknown reservation code %q; response not applied",
-			transaction.set,
-			transaction.controlNumber,
-			offer.ID,
-			details.reservationCode,
-		)}}
+		return tenderOfferRouteOutcome{handled: true, warnings: []string{
+			fmt.Sprintf(
+				"tender response %s/%s for offer %s carries unknown reservation code %q; response not applied",
+				transaction.set,
+				transaction.controlNumber,
+				offer.ID,
+				details.reservationCode,
+			),
+		}}
 	}
 	err = s.tenderResponses.RecordResponse(ctx, &services.TenderResponseRequest{
 		TenantInfo:    tenantInfo,

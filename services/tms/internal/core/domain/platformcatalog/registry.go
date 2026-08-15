@@ -328,7 +328,10 @@ func (r *Registry) validateRoutes() error {
 			method := strings.ToUpper(strings.TrimSpace(route.Method))
 			path := normalizeRoutePath(route.Path)
 			if method == "" {
-				return fmt.Errorf("platform catalog feature %q route method is required", feature.Key)
+				return fmt.Errorf(
+					"platform catalog feature %q route method is required",
+					feature.Key,
+				)
 			}
 			if path == "" {
 				return fmt.Errorf("platform catalog feature %q route path is required", feature.Key)

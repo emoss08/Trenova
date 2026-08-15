@@ -74,10 +74,12 @@ func (a *Activities) SendEmailActivity(
 
 func classifySendError(err error) error {
 	if errors.Is(err, services.ErrRetryableEmailSend) {
-		return temporaltype.NewRetryableError("Email provider temporarily failed", err).ToTemporalError()
+		return temporaltype.NewRetryableError("Email provider temporarily failed", err).
+			ToTemporalError()
 	}
 	if errors.Is(err, services.ErrNonRetryableEmailSend) {
-		return temporaltype.NewNonRetryableError("Email send failed permanently", err).ToTemporalError()
+		return temporaltype.NewNonRetryableError("Email send failed permanently", err).
+			ToTemporalError()
 	}
 	return temporaltype.ClassifyError(err).ToTemporalError()
 }

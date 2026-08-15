@@ -33,7 +33,7 @@ var (
 
 type Worker struct {
 	bun.BaseModel             `bun:"table:workers,alias:wrk" json:"-"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	pagination.CursorValueSet `bun:",embed"                  json:"-"`
 
 	ID                    pulid.ID           `json:"id"                          bun:"id,pk,type:VARCHAR(100)"`
 	BusinessUnitID        pulid.ID           `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`

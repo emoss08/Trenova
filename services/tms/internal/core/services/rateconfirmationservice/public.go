@@ -217,8 +217,10 @@ func (s *Service) applySignLink(
 	templateContext *documenttemplate.RateConfirmationContext,
 ) error {
 	if s.cfg == nil || s.cfg.Tendering.GetPublicBaseURL() == "" {
-		s.l.Warn("tendering public base URL is not configured; the rate confirmation email carries no sign link",
-			zap.String("rateConfirmationId", entity.ID.String()))
+		s.l.Warn(
+			"tendering public base URL is not configured; the rate confirmation email carries no sign link",
+			zap.String("rateConfirmationId", entity.ID.String()),
+		)
 		return nil
 	}
 

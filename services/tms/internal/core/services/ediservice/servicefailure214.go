@@ -197,10 +197,16 @@ func (s *Service) applyServiceFailure214ReasonMapping(
 	return nil
 }
 
-func validateServiceFailure214LifecycleRequest(req *services.ServiceFailure214LifecycleRequest) error {
+func validateServiceFailure214LifecycleRequest(
+	req *services.ServiceFailure214LifecycleRequest,
+) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
-		multiErr.Add("request", errortypes.ErrRequired, "Service failure EDI lifecycle request is required")
+		multiErr.Add(
+			"request",
+			errortypes.ErrRequired,
+			"Service failure EDI lifecycle request is required",
+		)
 		return multiErr
 	}
 	if req.TenantInfo.OrgID.IsNil() {
@@ -265,7 +271,10 @@ func (s *Service) resolveServiceFailure214Candidate(
 	source *shipment.Shipment,
 ) (*serviceFailure214Candidate, *services.ServiceFailure214LifecycleResult, error) {
 	if source == nil || source.CustomerID.IsNil() {
-		return nil, skippedServiceFailure214Result(req.Trigger, "shipment customer is not linked to an EDI partner"), nil
+		return nil, skippedServiceFailure214Result(
+			req.Trigger,
+			"shipment customer is not linked to an EDI partner",
+		), nil
 	}
 	partners, err := s.partnerRepo.List(ctx, &repositories.ListEDIPartnersRequest{
 		Filter: &pagination.QueryOptions{
@@ -278,7 +287,10 @@ func (s *Service) resolveServiceFailure214Candidate(
 		return nil, nil, err
 	}
 	if partners.Total == 0 {
-		return nil, skippedServiceFailure214Result(req.Trigger, "no outbound EDI partner for shipment customer"), nil
+		return nil, skippedServiceFailure214Result(
+			req.Trigger,
+			"no outbound EDI partner for shipment customer",
+		), nil
 	}
 
 	candidates := make([]serviceFailure214Candidate, 0, partners.Total)
@@ -366,7 +378,10 @@ func (s *Service) resolveServiceFailure214Candidate(
 	case 1:
 		return &candidates[0], nil, nil
 	default:
-		result := skippedServiceFailure214Result(req.Trigger, "ambiguous service failure 214 partner document profile")
+		result := skippedServiceFailure214Result(
+			req.Trigger,
+			"ambiguous service failure 214 partner document profile",
+		)
 		if hasMandatoryServiceFailure214Candidate(candidates, req.Trigger) {
 			result.Action = services.ServiceFailureEDIActionBlocked
 			result.Mandatory = true
@@ -383,10 +398,13 @@ func (s *Service) shipmentStatusCapabilityEnabled(
 	connection := partner.Connection
 	if connection == nil && partner.EDIConnectionID.IsNotNil() {
 		var err error
-		connection, err = s.connectionRepo.GetConnectionByID(ctx, repositories.GetEDIConnectionByIDRequest{
-			ID:         partner.EDIConnectionID,
-			TenantInfo: tenantInfo,
-		})
+		connection, err = s.connectionRepo.GetConnectionByID(
+			ctx,
+			repositories.GetEDIConnectionByIDRequest{
+				ID:         partner.EDIConnectionID,
+				TenantInfo: tenantInfo,
+			},
+		)
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return true, nil
@@ -424,19 +442,23 @@ func buildServiceFailure214LifecyclePayload(
 	return payload
 }
 
-func parseServiceFailure214Settings(settings map[string]any) (serviceFailure214Settings, []edix12.Diagnostic) {
+func parseServiceFailure214Settings(
+	settings map[string]any,
+) (serviceFailure214Settings, []edix12.Diagnostic) {
 	rawValue, ok := settings["serviceFailure214"]
 	if !ok || rawValue == nil {
 		return serviceFailure214Settings{}, nil
 	}
 	raw, ok := rawValue.(map[string]any)
 	if !ok {
-		return serviceFailure214Settings{}, []edix12.Diagnostic{serviceFailure214PartnerSettingDiagnostic(
-			partnerSettingTypeInvalidCode,
-			"serviceFailure214",
-			"serviceFailure214 must be an object",
-			"Use an object with enabled, trigger, requirement, and optional code settings.",
-		)}
+		return serviceFailure214Settings{}, []edix12.Diagnostic{
+			serviceFailure214PartnerSettingDiagnostic(
+				partnerSettingTypeInvalidCode,
+				"serviceFailure214",
+				"serviceFailure214 must be an object",
+				"Use an object with enabled, trigger, requirement, and optional code settings.",
+			),
+		}
 	}
 	diagnostics := validateServiceFailure214PartnerSettings(
 		&edi.EDIPartnerDocumentProfile{
@@ -518,7 +540,9 @@ func normalizedX12Code(value string) string {
 	return strings.ToUpper(strings.TrimSpace(value))
 }
 
-func (s serviceFailure214Settings) enabledForTrigger(trigger services.ServiceFailureEDITrigger) bool {
+func (s serviceFailure214Settings) enabledForTrigger(
+	trigger services.ServiceFailureEDITrigger,
+) bool {
 	if !s.Enabled {
 		return false
 	}
@@ -622,7 +646,8 @@ func serviceFailure214Diagnostics(
 			"Link the service failure to a shipment stop before generating the 214.",
 		))
 	}
-	if settings.RequireLocation && payload.LocationID.IsNil() && strings.TrimSpace(payload.LocationName) == "" {
+	if settings.RequireLocation && payload.LocationID.IsNil() &&
+		strings.TrimSpace(payload.LocationName) == "" {
 		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
 			"required",
 			"shipmentStatus.locationName",

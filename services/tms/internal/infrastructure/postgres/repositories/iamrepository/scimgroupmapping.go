@@ -182,7 +182,11 @@ func (r *repository) UpdateSCIMGroupRoleMapping(
 		return nil, err
 	}
 
-	if err = dberror.CheckRowsAffected(results, "SCIMGroupRoleMapping", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"SCIMGroupRoleMapping",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 

@@ -40,33 +40,33 @@ type DetentionOccurrence struct {
 	PolicySnapshot    *PolicySnapshot   `json:"policySnapshot"    bun:"policy_snapshot,type:JSONB,nullzero"`
 	CalculationTrace  *CalculationTrace `json:"calculationTrace"  bun:"calculation_trace,type:JSONB,nullzero"`
 
-	StopType           shipment.StopType         `json:"stopType"             bun:"stop_type,type:stop_type_enum,notnull"`
-	ScheduleType       shipment.StopScheduleType `json:"scheduleType"         bun:"schedule_type,type:stop_schedule_type_enum,notnull"`
-	AppointmentStart   *int64                    `json:"appointmentStart"     bun:"appointment_start,type:BIGINT,nullzero"`
-	AppointmentEnd     *int64                    `json:"appointmentEnd"       bun:"appointment_end,type:BIGINT,nullzero"`
-	ArrivedAt          *int64                    `json:"arrivedAt"            bun:"arrived_at,type:BIGINT,nullzero"`
-	DepartedAt         *int64                    `json:"departedAt"           bun:"departed_at,type:BIGINT,nullzero"`
-	ClockStartAt       int64                     `json:"clockStartAt"         bun:"clock_start_at,type:BIGINT,notnull"`
-	ClockStopAt        *int64                    `json:"clockStopAt"          bun:"clock_stop_at,type:BIGINT,nullzero"`
-	FreeTimeExpiresAt  int64                     `json:"freeTimeExpiresAt"    bun:"free_time_expires_at,type:BIGINT,notnull"`
-	NoticeDueAt        *int64                    `json:"noticeDueAt"          bun:"notice_due_at,type:BIGINT,nullzero"`
-	NoticeDeadlineAt   *int64                    `json:"noticeDeadlineAt"     bun:"notice_deadline_at,type:BIGINT,nullzero"`
-	IsOpen             bool                      `json:"isOpen"               bun:"is_open,type:BOOLEAN,notnull,default:true"`
-	ArrivedLate        bool                      `json:"arrivedLate"          bun:"arrived_late,type:BOOLEAN,notnull"`
-	LateByMinutes      int32                     `json:"lateByMinutes"        bun:"late_by_minutes,type:INTEGER,notnull"`
-	FreeMinutesGranted int32                     `json:"freeMinutesGranted"   bun:"free_minutes_granted,type:INTEGER,notnull"`
-	RawDwellMinutes    int32                     `json:"rawDwellMinutes"      bun:"raw_dwell_minutes,type:INTEGER,notnull"`
-	BillableMinutes    int32                     `json:"billableMinutes"      bun:"billable_minutes,type:INTEGER,notnull"`
-	RoundedMinutes     int32                     `json:"roundedMinutes"       bun:"rounded_minutes,type:INTEGER,notnull"`
-	BillableUnits      decimal.Decimal           `json:"billableUnits"        bun:"billable_units,type:NUMERIC(12,4),notnull,default:0"`
-	GrossAmount        decimal.Decimal           `json:"grossAmount"          bun:"gross_amount,type:NUMERIC(19,4),notnull,default:0"`
-	BillableAmount     decimal.Decimal           `json:"billableAmount"       bun:"billable_amount,type:NUMERIC(19,4),notnull,default:0"`
-	DriverPayMinutes   int32                     `json:"driverPayMinutes"     bun:"driver_pay_minutes,type:INTEGER,notnull"`
-	DriverPayAmount    decimal.Decimal           `json:"driverPayAmount"      bun:"driver_pay_amount,type:NUMERIC(19,4),notnull,default:0"`
-	NetMargin          decimal.Decimal           `json:"netMargin"            bun:"net_margin,type:NUMERIC(19,4),notnull,default:0"`
-	CapApplied         CapKind                   `json:"capApplied"           bun:"cap_applied,type:detention_cap_kind_enum,notnull,default:'None'"`
-	ConvertedToLayover bool                      `json:"convertedToLayover"   bun:"converted_to_layover,type:BOOLEAN,notnull"`
-	Currency           string                    `json:"currency"             bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
+	StopType           shipment.StopType         `json:"stopType"           bun:"stop_type,type:stop_type_enum,notnull"`
+	ScheduleType       shipment.StopScheduleType `json:"scheduleType"       bun:"schedule_type,type:stop_schedule_type_enum,notnull"`
+	AppointmentStart   *int64                    `json:"appointmentStart"   bun:"appointment_start,type:BIGINT,nullzero"`
+	AppointmentEnd     *int64                    `json:"appointmentEnd"     bun:"appointment_end,type:BIGINT,nullzero"`
+	ArrivedAt          *int64                    `json:"arrivedAt"          bun:"arrived_at,type:BIGINT,nullzero"`
+	DepartedAt         *int64                    `json:"departedAt"         bun:"departed_at,type:BIGINT,nullzero"`
+	ClockStartAt       int64                     `json:"clockStartAt"       bun:"clock_start_at,type:BIGINT,notnull"`
+	ClockStopAt        *int64                    `json:"clockStopAt"        bun:"clock_stop_at,type:BIGINT,nullzero"`
+	FreeTimeExpiresAt  int64                     `json:"freeTimeExpiresAt"  bun:"free_time_expires_at,type:BIGINT,notnull"`
+	NoticeDueAt        *int64                    `json:"noticeDueAt"        bun:"notice_due_at,type:BIGINT,nullzero"`
+	NoticeDeadlineAt   *int64                    `json:"noticeDeadlineAt"   bun:"notice_deadline_at,type:BIGINT,nullzero"`
+	IsOpen             bool                      `json:"isOpen"             bun:"is_open,type:BOOLEAN,notnull,default:true"`
+	ArrivedLate        bool                      `json:"arrivedLate"        bun:"arrived_late,type:BOOLEAN,notnull"`
+	LateByMinutes      int32                     `json:"lateByMinutes"      bun:"late_by_minutes,type:INTEGER,notnull"`
+	FreeMinutesGranted int32                     `json:"freeMinutesGranted" bun:"free_minutes_granted,type:INTEGER,notnull"`
+	RawDwellMinutes    int32                     `json:"rawDwellMinutes"    bun:"raw_dwell_minutes,type:INTEGER,notnull"`
+	BillableMinutes    int32                     `json:"billableMinutes"    bun:"billable_minutes,type:INTEGER,notnull"`
+	RoundedMinutes     int32                     `json:"roundedMinutes"     bun:"rounded_minutes,type:INTEGER,notnull"`
+	BillableUnits      decimal.Decimal           `json:"billableUnits"      bun:"billable_units,type:NUMERIC(12,4),notnull,default:0"`
+	GrossAmount        decimal.Decimal           `json:"grossAmount"        bun:"gross_amount,type:NUMERIC(19,4),notnull,default:0"`
+	BillableAmount     decimal.Decimal           `json:"billableAmount"     bun:"billable_amount,type:NUMERIC(19,4),notnull,default:0"`
+	DriverPayMinutes   int32                     `json:"driverPayMinutes"   bun:"driver_pay_minutes,type:INTEGER,notnull"`
+	DriverPayAmount    decimal.Decimal           `json:"driverPayAmount"    bun:"driver_pay_amount,type:NUMERIC(19,4),notnull,default:0"`
+	NetMargin          decimal.Decimal           `json:"netMargin"          bun:"net_margin,type:NUMERIC(19,4),notnull,default:0"`
+	CapApplied         CapKind                   `json:"capApplied"         bun:"cap_applied,type:detention_cap_kind_enum,notnull,default:'None'"`
+	ConvertedToLayover bool                      `json:"convertedToLayover" bun:"converted_to_layover,type:BOOLEAN,notnull"`
+	Currency           string                    `json:"currency"           bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
 
 	Status             OccurrenceStatus   `json:"status"             bun:"status,type:detention_occurrence_status_enum,notnull,default:'Accruing'"`
 	NotificationStatus NotificationStatus `json:"notificationStatus" bun:"notification_status,type:detention_notification_status_enum,notnull,default:'NotRequired'"`

@@ -81,7 +81,12 @@ func (s *ResendSender) Send(
 		return nil, fmt.Errorf("%w: marshal resend payload: %w", ErrNonRetryableSend, err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/emails", bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		baseURL+"/emails",
+		bytes.NewReader(body),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("%w: create resend request: %w", ErrNonRetryableSend, err)
 	}

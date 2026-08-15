@@ -89,7 +89,10 @@ func (s *Service) validate(req *services.TenantProvisioningRequest) error {
 	return nil
 }
 
-func validateCustomer(multiErr *errortypes.MultiError, customer services.TenantProvisioningCustomer) {
+func validateCustomer(
+	multiErr *errortypes.MultiError,
+	customer services.TenantProvisioningCustomer,
+) {
 	if customer.ID.IsNil() {
 		multiErr.Add("customer.id", errortypes.ErrRequired, "Customer ID is required")
 	}
@@ -101,7 +104,10 @@ func validateCustomer(multiErr *errortypes.MultiError, customer services.TenantP
 	}
 }
 
-func validateWorkspace(multiErr *errortypes.MultiError, workspace services.TenantProvisioningWorkspace) {
+func validateWorkspace(
+	multiErr *errortypes.MultiError,
+	workspace services.TenantProvisioningWorkspace,
+) {
 	if workspace.ID.IsNil() {
 		multiErr.Add("workspace.id", errortypes.ErrRequired, "Workspace ID is required")
 	}

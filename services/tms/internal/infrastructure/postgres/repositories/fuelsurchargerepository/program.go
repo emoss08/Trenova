@@ -262,7 +262,11 @@ func (r *programRepository) Update(
 			return uErr
 		}
 
-		if uErr = dberror.CheckRowsAffected(results, "FuelSurchargeProgram", entity.ID.String()); uErr != nil {
+		if uErr = dberror.CheckRowsAffected(
+			results,
+			"FuelSurchargeProgram",
+			entity.ID.String(),
+		); uErr != nil {
 			return uErr
 		}
 

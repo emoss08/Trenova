@@ -81,10 +81,12 @@ func (s *Service) routeTenderedShipmentStatus(
 	offer, err := s.resolveAcceptedTenderOffer(ctx, file, partner, offerID, references)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return []string{fmt.Sprintf(
-				"shipment status for reference %s could not be matched to an outbound tender or an accepted tender offer",
-				reference,
-			)}, nil
+			return []string{
+				fmt.Sprintf(
+					"shipment status for reference %s could not be matched to an outbound tender or an accepted tender offer",
+					reference,
+				),
+			}, nil
 		}
 		return nil, err
 	}
@@ -151,10 +153,12 @@ func (s *Service) resolveFreightInvoiceOffer(
 	offer, err := s.resolveAcceptedTenderOffer(ctx, file, partner, offerID, references)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, []string{fmt.Sprintf(
-				"freight invoice %s could not be matched to an outbound tender or an accepted tender offer",
-				payload.InvoiceNumber,
-			)}, nil
+			return nil, []string{
+				fmt.Sprintf(
+					"freight invoice %s could not be matched to an outbound tender or an accepted tender offer",
+					payload.InvoiceNumber,
+				),
+			}, nil
 		}
 		return nil, nil, err
 	}

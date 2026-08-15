@@ -59,7 +59,10 @@ func (a *Activities) RefreshExchangeRatesActivity(ctx context.Context) error {
 	a.logger.Info("Starting exchange rate refresh activity")
 	recordActivityHeartbeat(ctx, "refreshing-exchange-rates")
 
-	integrations, err := a.integrationRepo.ListEnabledByType(ctx, integration.TypeOANDAExchangeRates)
+	integrations, err := a.integrationRepo.ListEnabledByType(
+		ctx,
+		integration.TypeOANDAExchangeRates,
+	)
 	if err != nil {
 		a.logger.Error("Failed to list enabled OANDA exchange-rate integrations", zap.Error(err))
 		return err
@@ -87,7 +90,11 @@ func (a *Activities) RefreshExchangeRatesActivity(ctx context.Context) error {
 			continue
 		}
 
-		if refreshErr := a.exchangeRateSvc.RefreshRates(ctx, tenantInfo, baseCurrency); refreshErr != nil {
+		if refreshErr := a.exchangeRateSvc.RefreshRates(
+			ctx,
+			tenantInfo,
+			baseCurrency,
+		); refreshErr != nil {
 			a.logger.Error("Failed to refresh rates for tenant",
 				zap.String("orgID", integ.OrganizationID.String()),
 				zap.String("baseCurrency", baseCurrency),
@@ -109,7 +116,10 @@ func (a *Activities) ListExchangeRateTenantsActivity(
 	payload *ListExchangeRateTenantsPayload,
 ) (*ListExchangeRateTenantsResult, error) {
 	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantScanLimit)
-	integrations, err := a.integrationRepo.ListEnabledByType(ctx, integration.TypeOANDAExchangeRates)
+	integrations, err := a.integrationRepo.ListEnabledByType(
+		ctx,
+		integration.TypeOANDAExchangeRates,
+	)
 	if err != nil {
 		return nil, err
 	}

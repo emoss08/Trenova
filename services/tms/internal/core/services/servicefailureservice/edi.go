@@ -109,7 +109,9 @@ func serviceFailure214Request(
 	}
 }
 
-func serviceFailure214Trigger(status servicefailure.Status) (services.ServiceFailureEDITrigger, bool) {
+func serviceFailure214Trigger(
+	status servicefailure.Status,
+) (services.ServiceFailureEDITrigger, bool) {
 	switch status {
 	case servicefailure.StatusReviewed:
 		return services.ServiceFailureEDITriggerReviewed, true

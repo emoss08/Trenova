@@ -307,9 +307,13 @@ func (s *Service) buildOfferEmailContext(
 		CompanyName:     s.companyName(ctx, tenantInfo),
 		RateAmount:      "$" + offer.Rate.StringFixed(2),
 		RateMethodLabel: rateMethodLabel(offer.RateMethod),
-		AcceptURL:       template.URL(s.offerResponseURL(token, "accept")),  //nolint:gosec // built from config + a generated token
-		DeclineURL:      template.URL(s.offerResponseURL(token, "decline")), //nolint:gosec // built from config + a generated token
-		ExpiresAt:       timeutils.WindowLabelUTC(expiresAt, nil),
+		AcceptURL: template.URL(
+			s.offerResponseURL(token, "accept"),
+		), //nolint:gosec // built from config + a generated token
+		DeclineURL: template.URL(
+			s.offerResponseURL(token, "decline"),
+		), //nolint:gosec // built from config + a generated token
+		ExpiresAt: timeutils.WindowLabelUTC(expiresAt, nil),
 	}
 	now := timeutils.NowUnix()
 	if expiresAt > now {

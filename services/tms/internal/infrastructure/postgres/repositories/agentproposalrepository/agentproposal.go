@@ -228,7 +228,10 @@ func (r *repository) ExpirePendingByRun(
 	ctx context.Context,
 	req repositories.ExpireAgentProposalsByRunRequest,
 ) (int, error) {
-	log := r.l.With(zap.String("operation", "ExpirePendingByRun"), zap.String("runId", req.RunID.String()))
+	log := r.l.With(
+		zap.String("operation", "ExpirePendingByRun"),
+		zap.String("runId", req.RunID.String()),
+	)
 
 	cols := buncolgen.AgentProposalColumns
 	results, err := r.db.DB().

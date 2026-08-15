@@ -121,7 +121,11 @@ func (h *Handler) list(c *gin.Context) {
 							"includeEquipmentDetails",
 							false,
 						),
-						IncludeFleetDetails:      helpers.QueryBool(c, "includeFleetDetails", false),
+						IncludeFleetDetails: helpers.QueryBool(
+							c,
+							"includeFleetDetails",
+							false,
+						),
 						IncludeLastKnownLocation: true,
 						IncludeCustomFields:      true,
 					},

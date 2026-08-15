@@ -51,7 +51,11 @@ func (s *Service) Diagnose(
 		return nil, errortypes.NewBusinessError("AI billing exception agent is disabled")
 	}
 
-	runtimeCfg, err := s.integration.GetRuntimeConfig(ctx, req.TenantInfo, integration.TypeAnthropic)
+	runtimeCfg, err := s.integration.GetRuntimeConfig(
+		ctx,
+		req.TenantInfo,
+		integration.TypeAnthropic,
+	)
 	if err != nil {
 		return nil, err
 	}

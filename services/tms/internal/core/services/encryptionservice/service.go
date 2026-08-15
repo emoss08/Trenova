@@ -103,8 +103,16 @@ type envelope struct {
 }
 
 type kmsClient interface {
-	Encrypt(context.Context, *kmspb.EncryptRequest, ...gax.CallOption) (*kmspb.EncryptResponse, error)
-	Decrypt(context.Context, *kmspb.DecryptRequest, ...gax.CallOption) (*kmspb.DecryptResponse, error)
+	Encrypt(
+		context.Context,
+		*kmspb.EncryptRequest,
+		...gax.CallOption,
+	) (*kmspb.EncryptResponse, error)
+	Decrypt(
+		context.Context,
+		*kmspb.DecryptRequest,
+		...gax.CallOption,
+	) (*kmspb.DecryptResponse, error)
 	Close() error
 }
 
@@ -518,7 +526,11 @@ type GCPAutokeyManager struct {
 	timeout   time.Duration
 }
 
-func NewGCPAutokeyManager(client kmsClient, activeKey string, timeout time.Duration) *GCPAutokeyManager {
+func NewGCPAutokeyManager(
+	client kmsClient,
+	activeKey string,
+	timeout time.Duration,
+) *GCPAutokeyManager {
 	if timeout <= 0 {
 		timeout = defaultKMSOpTimeout
 	}
@@ -554,7 +566,11 @@ func (m *GCPAutokeyManager) WrapKey(ctx context.Context, dek []byte, aad AAD) (*
 	}, nil
 }
 
-func (m *GCPAutokeyManager) UnwrapKey(ctx context.Context, wrapped WrappedKey, aad AAD) ([]byte, error) {
+func (m *GCPAutokeyManager) UnwrapKey(
+	ctx context.Context,
+	wrapped WrappedKey,
+	aad AAD,
+) ([]byte, error) {
 	if m == nil || m.client == nil {
 		return nil, ErrKeyManagerDisabled
 	}

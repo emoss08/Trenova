@@ -163,10 +163,13 @@ func (s *Service) Waive(
 			"waiverReason", errortypes.ErrInvalid, "A coded waiver reason is required")
 	}
 
-	occurrence, err := s.occurrenceRepo.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
-		OccurrenceID: p.OccurrenceID,
-		TenantInfo:   p.TenantInfo,
-	})
+	occurrence, err := s.occurrenceRepo.GetByID(
+		ctx,
+		&repositories.GetDetentionOccurrenceByIDRequest{
+			OccurrenceID: p.OccurrenceID,
+			TenantInfo:   p.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -205,10 +208,13 @@ func (s *Service) Approve(
 	ctx context.Context,
 	p ApproveParams,
 ) (*detention.DetentionOccurrence, error) {
-	occurrence, err := s.occurrenceRepo.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
-		OccurrenceID: p.OccurrenceID,
-		TenantInfo:   p.TenantInfo,
-	})
+	occurrence, err := s.occurrenceRepo.GetByID(
+		ctx,
+		&repositories.GetDetentionOccurrenceByIDRequest{
+			OccurrenceID: p.OccurrenceID,
+			TenantInfo:   p.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -250,10 +256,13 @@ func (s *Service) Dispute(
 	ctx context.Context,
 	p DisputeParams,
 ) (*detention.DetentionOccurrence, error) {
-	occurrence, err := s.occurrenceRepo.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
-		OccurrenceID: p.OccurrenceID,
-		TenantInfo:   p.TenantInfo,
-	})
+	occurrence, err := s.occurrenceRepo.GetByID(
+		ctx,
+		&repositories.GetDetentionOccurrenceByIDRequest{
+			OccurrenceID: p.OccurrenceID,
+			TenantInfo:   p.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

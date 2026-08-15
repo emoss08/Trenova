@@ -246,7 +246,11 @@ func (r *repository) Update(
 	if err != nil {
 		return nil, mapReasonCodeConstraint(err)
 	}
-	if err = dberror.CheckRowsAffected(result, "Service failure reason code", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"Service failure reason code",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 
@@ -280,7 +284,11 @@ func (r *repository) Archive(
 	if err != nil {
 		return nil, fmt.Errorf("archive service failure reason code: %w", err)
 	}
-	if err = dberror.CheckRowsAffected(result, "Service failure reason code", id.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"Service failure reason code",
+		id.String(),
+	); err != nil {
 		return nil, err
 	}
 
@@ -312,7 +320,11 @@ func (r *repository) Activate(
 	if err != nil {
 		return nil, fmt.Errorf("activate service failure reason code: %w", err)
 	}
-	if err = dberror.CheckRowsAffected(result, "Service failure reason code", id.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"Service failure reason code",
+		id.String(),
+	); err != nil {
 		return nil, err
 	}
 
@@ -386,11 +398,14 @@ func (r *repository) SelectOptions(
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
 				q = q.Where("sfrc.active = TRUE")
 				if req.AppliesTo.IsValid() {
-					q = q.Where("sfrc.applies_to IN (?)", bun.In([]servicefailure.ReasonCodeAppliesTo{
-						req.AppliesTo,
-						servicefailure.ReasonCodeAppliesToBoth,
-						servicefailure.ReasonCodeAppliesToAll,
-					}))
+					q = q.Where(
+						"sfrc.applies_to IN (?)",
+						bun.In([]servicefailure.ReasonCodeAppliesTo{
+							req.AppliesTo,
+							servicefailure.ReasonCodeAppliesToBoth,
+							servicefailure.ReasonCodeAppliesToAll,
+						}),
+					)
 				}
 				return q.Order("sfrc.sort_order ASC", "sfrc.code ASC")
 			},

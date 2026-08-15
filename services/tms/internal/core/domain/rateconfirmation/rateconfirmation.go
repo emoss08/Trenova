@@ -88,9 +88,9 @@ type RateConfirmation struct {
 	ConfirmedVia        Via       `json:"confirmedVia"        bun:"confirmed_via,type:VARCHAR(50),nullzero"`
 	ConfirmedByTitle    string    `json:"confirmedByTitle"    bun:"confirmed_by_title,type:VARCHAR(255),nullzero"`
 
-	Version   int64 `json:"version"         bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Carrier           *carrier.Carrier            `json:"carrier,omitempty"           bun:"rel:belongs-to,join:carrier_id=id"`
 	CarrierAssignment *shipment.CarrierAssignment `json:"carrierAssignment,omitempty" bun:"rel:belongs-to,join:carrier_assignment_id=id"`

@@ -105,10 +105,12 @@ func (s *Service) applyTendered214StopActuals(
 	}
 	moveID := req.Offer.Tender.ShipmentMoveID
 	if moveID.IsNil() {
-		return []string{fmt.Sprintf(
-			"shipment status %s could not update stop actuals: the accepted tender offer has no shipment move",
-			req.StatusCode,
-		)}, nil
+		return []string{
+			fmt.Sprintf(
+				"shipment status %s could not update stop actuals: the accepted tender offer has no shipment move",
+				req.StatusCode,
+			),
+		}, nil
 	}
 	move, err := s.shipmentMoveRepo.GetByID(ctx, &repositories.GetMoveByIDRequest{
 		MoveID:            moveID,

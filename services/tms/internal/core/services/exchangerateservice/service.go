@@ -179,7 +179,14 @@ func (s *Service) CreateSettlementQuote(
 		fetchedAt = time.Now().UTC()
 		sourceTimestamp = fetchedAt
 	} else {
-		snapshot, fetchErr := s.fetchOANDAPair(ctx, cfg, fromCurrency, toCurrency, rateType, quoteDate)
+		snapshot, fetchErr := s.fetchOANDAPair(
+			ctx,
+			cfg,
+			fromCurrency,
+			toCurrency,
+			rateType,
+			quoteDate,
+		)
 		if fetchErr != nil {
 			return nil, fetchErr
 		}

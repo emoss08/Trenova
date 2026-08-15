@@ -149,7 +149,10 @@ func (m *shipmentStatusMarker) MarkDelayedForServiceFailure(
 		RecordID:       updated.ID,
 		Entity:         updated,
 	}); err != nil {
-		m.l.Warn("failed to publish delayed shipment invalidation for service failure", zap.Error(err))
+		m.l.Warn(
+			"failed to publish delayed shipment invalidation for service failure",
+			zap.Error(err),
+		)
 	}
 
 	return updated, nil

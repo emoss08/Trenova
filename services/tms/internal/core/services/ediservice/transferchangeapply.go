@@ -140,7 +140,10 @@ func (s *Service) applyApprovedLifecycleTransferChange(
 		return nil
 	}
 	if plan.ConflictReason != "" {
-		return fmt.Errorf("EDI transfer change lifecycle validation failed: %s", plan.ConflictReason)
+		return fmt.Errorf(
+			"EDI transfer change lifecycle validation failed: %s",
+			plan.ConflictReason,
+		)
 	}
 
 	updated, err := applier.ApplyPrepared(ctx, plan)
@@ -298,12 +301,15 @@ func buildApprovedLifecycleTransferChangeEvent(
 		ActorLabel:     "Internal EDI",
 		Summary:        "Lifecycle synced from internal EDI 214",
 		Metadata: map[string]any{
-			"proNumber":                           updated.ProNumber,
-			"previousStatus":                      string(plan.OppositeOriginal.Status),
-			"newStatus":                           string(updated.Status),
-			"matchedStopActualDiffs":              plan.Diffs,
-			edi.InternalEDIMirroredFromEventIDKey: transferChangePayloadString(change.Payload, "sourceEventId"),
-			edi.InternalEDIShipmentLinkIDKey:      plan.Link.ID.String(),
+			"proNumber":              updated.ProNumber,
+			"previousStatus":         string(plan.OppositeOriginal.Status),
+			"newStatus":              string(updated.Status),
+			"matchedStopActualDiffs": plan.Diffs,
+			edi.InternalEDIMirroredFromEventIDKey: transferChangePayloadString(
+				change.Payload,
+				"sourceEventId",
+			),
+			edi.InternalEDIShipmentLinkIDKey: plan.Link.ID.String(),
 		},
 		OccurredAt: occurredAt,
 	}

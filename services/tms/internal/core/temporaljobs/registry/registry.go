@@ -181,7 +181,10 @@ func (m *WorkerManager) StartAll(_ context.Context) error {
 				zap.String("taskQueue", taskQueue),
 				zap.Error(err),
 			)
-			startErrors = append(startErrors, fmt.Errorf("start worker for task queue %s: %w", taskQueue, err))
+			startErrors = append(
+				startErrors,
+				fmt.Errorf("start worker for task queue %s: %w", taskQueue, err),
+			)
 		} else {
 			m.logger.Info("worker started successfully", zap.String("taskQueue", taskQueue))
 		}

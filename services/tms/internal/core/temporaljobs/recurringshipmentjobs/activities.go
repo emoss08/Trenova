@@ -199,7 +199,8 @@ func (a *Activities) recordFailure(
 			"Recurring shipment paused",
 			fmt.Sprintf(
 				"%q failed %d consecutive times and has been paused. Review the series and resume it once the issue is resolved.",
-				updated.Name, updated.ConsecutiveFailures,
+				updated.Name,
+				updated.ConsecutiveFailures,
 			))
 		return
 	}
