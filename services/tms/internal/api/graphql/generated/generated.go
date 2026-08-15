@@ -1876,24 +1876,31 @@ type ComplexityRoot struct {
 		Assignments  func(childComplexity int) int
 		AutonomyTier func(childComplexity int) int
 		GeneratedAt  func(childComplexity int) int
+		PlanningMode func(childComplexity int) int
 		RunID        func(childComplexity int) int
 		ShadowMode   func(childComplexity int) int
 		TotalScore   func(childComplexity int) int
+		Tours        func(childComplexity int) int
 		Uncovered    func(childComplexity int) int
 	}
 
 	DispatchPlannedAssignment struct {
-		AutoExecutable func(childComplexity int) int
-		Confidence     func(childComplexity int) int
-		MoveID         func(childComplexity int) int
-		ProNumber      func(childComplexity int) int
-		ProposalID     func(childComplexity int) int
-		Rationale      func(childComplexity int) int
-		Score          func(childComplexity int) int
-		TractorID      func(childComplexity int) int
-		TrailerID      func(childComplexity int) int
-		WorkerID       func(childComplexity int) int
-		WorkerName     func(childComplexity int) int
+		AutoExecutable            func(childComplexity int) int
+		Confidence                func(childComplexity int) int
+		MoveID                    func(childComplexity int) int
+		ProNumber                 func(childComplexity int) int
+		ProjectedCompleteAt       func(childComplexity int) int
+		ProjectedDriveRemainingMs func(childComplexity int) int
+		ProjectedStartAt          func(childComplexity int) int
+		ProposalID                func(childComplexity int) int
+		Rationale                 func(childComplexity int) int
+		Score                     func(childComplexity int) int
+		SequenceIndex             func(childComplexity int) int
+		TourID                    func(childComplexity int) int
+		TractorID                 func(childComplexity int) int
+		TrailerID                 func(childComplexity int) int
+		WorkerID                  func(childComplexity int) int
+		WorkerName                func(childComplexity int) int
 	}
 
 	DispatchScoreFactor struct {
@@ -1909,6 +1916,17 @@ type ComplexityRoot struct {
 		EndDate   func(childComplexity int) int
 		StartDate func(childComplexity int) int
 		Type      func(childComplexity int) int
+	}
+
+	DispatchTour struct {
+		EndsAt             func(childComplexity int) int
+		MoveIds            func(childComplexity int) int
+		StartsAt           func(childComplexity int) int
+		TotalDeadheadMiles func(childComplexity int) int
+		TotalScore         func(childComplexity int) int
+		TourID             func(childComplexity int) int
+		WorkerID           func(childComplexity int) int
+		WorkerName         func(childComplexity int) int
 	}
 
 	DispatchUncoveredMove struct {
@@ -15901,6 +15919,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DispatchPlan.GeneratedAt(childComplexity), true
+	case "DispatchPlan.planningMode":
+		if e.ComplexityRoot.DispatchPlan.PlanningMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlan.PlanningMode(childComplexity), true
 	case "DispatchPlan.runId":
 		if e.ComplexityRoot.DispatchPlan.RunID == nil {
 			break
@@ -15919,6 +15943,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DispatchPlan.TotalScore(childComplexity), true
+	case "DispatchPlan.tours":
+		if e.ComplexityRoot.DispatchPlan.Tours == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlan.Tours(childComplexity), true
 	case "DispatchPlan.uncovered":
 		if e.ComplexityRoot.DispatchPlan.Uncovered == nil {
 			break
@@ -15950,6 +15980,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DispatchPlannedAssignment.ProNumber(childComplexity), true
+	case "DispatchPlannedAssignment.projectedCompleteAt":
+		if e.ComplexityRoot.DispatchPlannedAssignment.ProjectedCompleteAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.ProjectedCompleteAt(childComplexity), true
+	case "DispatchPlannedAssignment.projectedDriveRemainingMs":
+		if e.ComplexityRoot.DispatchPlannedAssignment.ProjectedDriveRemainingMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.ProjectedDriveRemainingMs(childComplexity), true
+	case "DispatchPlannedAssignment.projectedStartAt":
+		if e.ComplexityRoot.DispatchPlannedAssignment.ProjectedStartAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.ProjectedStartAt(childComplexity), true
 	case "DispatchPlannedAssignment.proposalId":
 		if e.ComplexityRoot.DispatchPlannedAssignment.ProposalID == nil {
 			break
@@ -15968,6 +16016,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DispatchPlannedAssignment.Score(childComplexity), true
+	case "DispatchPlannedAssignment.sequenceIndex":
+		if e.ComplexityRoot.DispatchPlannedAssignment.SequenceIndex == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.SequenceIndex(childComplexity), true
+	case "DispatchPlannedAssignment.tourId":
+		if e.ComplexityRoot.DispatchPlannedAssignment.TourID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchPlannedAssignment.TourID(childComplexity), true
 	case "DispatchPlannedAssignment.tractorId":
 		if e.ComplexityRoot.DispatchPlannedAssignment.TractorID == nil {
 			break
@@ -16048,6 +16108,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.DispatchTimeOff.Type(childComplexity), true
+
+	case "DispatchTour.endsAt":
+		if e.ComplexityRoot.DispatchTour.EndsAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTour.EndsAt(childComplexity), true
+	case "DispatchTour.moveIds":
+		if e.ComplexityRoot.DispatchTour.MoveIds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTour.MoveIds(childComplexity), true
+	case "DispatchTour.startsAt":
+		if e.ComplexityRoot.DispatchTour.StartsAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTour.StartsAt(childComplexity), true
+	case "DispatchTour.totalDeadheadMiles":
+		if e.ComplexityRoot.DispatchTour.TotalDeadheadMiles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTour.TotalDeadheadMiles(childComplexity), true
+	case "DispatchTour.totalScore":
+		if e.ComplexityRoot.DispatchTour.TotalScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTour.TotalScore(childComplexity), true
+	case "DispatchTour.tourId":
+		if e.ComplexityRoot.DispatchTour.TourID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTour.TourID(childComplexity), true
+	case "DispatchTour.workerId":
+		if e.ComplexityRoot.DispatchTour.WorkerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTour.WorkerID(childComplexity), true
+	case "DispatchTour.workerName":
+		if e.ComplexityRoot.DispatchTour.WorkerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DispatchTour.WorkerName(childComplexity), true
 
 	case "DispatchUncoveredMove.bestBlockedFindings":
 		if e.ComplexityRoot.DispatchUncoveredMove.BestBlockedFindings == nil {
@@ -44969,6 +45078,35 @@ type DispatchPlannedAssignment {
   autoExecutable: Boolean!
   proposalId: ID
   score: DispatchCandidate!
+  """
+  Set only under Horizon planning: the tour this move belongs to and its position
+  within that tour. Immediate planning leaves both empty.
+  """
+  tourId: ID
+  sequenceIndex: Int!
+  """
+  When the driver is projected to start and finish this move, and the drive time left
+  on their clock afterwards. These are projections from the plan, not commitments.
+  """
+  projectedStartAt: Int!
+  projectedCompleteAt: Int!
+  projectedDriveRemainingMs: Int!
+}
+
+"""
+A sequence of moves horizon planning chained onto one driver. Each move's empty miles
+are measured from where the previous move ends, which is what makes the chain worth
+more than the same moves assigned independently.
+"""
+type DispatchTour {
+  tourId: ID!
+  workerId: ID!
+  workerName: String!
+  moveIds: [ID!]!
+  startsAt: Int!
+  endsAt: Int!
+  totalScore: Int!
+  totalDeadheadMiles: Float!
 }
 
 """
@@ -44986,6 +45124,12 @@ type DispatchPlan {
   runId: ID
   assignments: [DispatchPlannedAssignment!]!
   uncovered: [DispatchUncoveredMove!]!
+  """
+  Populated under Horizon planning only; empty when the organization plans a single
+  period at a time.
+  """
+  tours: [DispatchTour!]!
+  planningMode: String!
   """
   True when the organization is watching what the agent would do without letting it act;
   nothing was written.
@@ -56715,6 +56859,10 @@ func (ec *executionContext) childFields_DispatchPlan(ctx context.Context, field 
 		return ec.fieldContext_DispatchPlan_assignments(ctx, field)
 	case "uncovered":
 		return ec.fieldContext_DispatchPlan_uncovered(ctx, field)
+	case "tours":
+		return ec.fieldContext_DispatchPlan_tours(ctx, field)
+	case "planningMode":
+		return ec.fieldContext_DispatchPlan_planningMode(ctx, field)
 	case "shadowMode":
 		return ec.fieldContext_DispatchPlan_shadowMode(ctx, field)
 	case "autonomyTier":
@@ -56751,6 +56899,16 @@ func (ec *executionContext) childFields_DispatchPlannedAssignment(ctx context.Co
 		return ec.fieldContext_DispatchPlannedAssignment_proposalId(ctx, field)
 	case "score":
 		return ec.fieldContext_DispatchPlannedAssignment_score(ctx, field)
+	case "tourId":
+		return ec.fieldContext_DispatchPlannedAssignment_tourId(ctx, field)
+	case "sequenceIndex":
+		return ec.fieldContext_DispatchPlannedAssignment_sequenceIndex(ctx, field)
+	case "projectedStartAt":
+		return ec.fieldContext_DispatchPlannedAssignment_projectedStartAt(ctx, field)
+	case "projectedCompleteAt":
+		return ec.fieldContext_DispatchPlannedAssignment_projectedCompleteAt(ctx, field)
+	case "projectedDriveRemainingMs":
+		return ec.fieldContext_DispatchPlannedAssignment_projectedDriveRemainingMs(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type DispatchPlannedAssignment", field.Name)
 }
@@ -56783,6 +56941,28 @@ func (ec *executionContext) childFields_DispatchTimeOff(ctx context.Context, fie
 		return ec.fieldContext_DispatchTimeOff_type(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type DispatchTimeOff", field.Name)
+}
+
+func (ec *executionContext) childFields_DispatchTour(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "tourId":
+		return ec.fieldContext_DispatchTour_tourId(ctx, field)
+	case "workerId":
+		return ec.fieldContext_DispatchTour_workerId(ctx, field)
+	case "workerName":
+		return ec.fieldContext_DispatchTour_workerName(ctx, field)
+	case "moveIds":
+		return ec.fieldContext_DispatchTour_moveIds(ctx, field)
+	case "startsAt":
+		return ec.fieldContext_DispatchTour_startsAt(ctx, field)
+	case "endsAt":
+		return ec.fieldContext_DispatchTour_endsAt(ctx, field)
+	case "totalScore":
+		return ec.fieldContext_DispatchTour_totalScore(ctx, field)
+	case "totalDeadheadMiles":
+		return ec.fieldContext_DispatchTour_totalDeadheadMiles(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DispatchTour", field.Name)
 }
 
 func (ec *executionContext) childFields_DispatchUncoveredMove(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -105476,6 +105656,61 @@ func (ec *executionContext) fieldContext_DispatchPlan_uncovered(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _DispatchPlan_tours(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlan) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlan_tours(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Tours, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.DispatchTour) graphql.Marshaler {
+			return ec.marshalNDispatchTour2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchTourᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlan_tours(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DispatchPlan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DispatchTour(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DispatchPlan_planningMode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlan) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlan_planningMode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PlanningMode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlan_planningMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlan", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _DispatchPlan_shadowMode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlan) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -105830,6 +106065,121 @@ func (ec *executionContext) fieldContext_DispatchPlannedAssignment_score(_ conte
 	return fc, nil
 }
 
+func (ec *executionContext) _DispatchPlannedAssignment_tourId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_tourId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TourID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_tourId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_sequenceIndex(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_sequenceIndex(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SequenceIndex, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_sequenceIndex(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_projectedStartAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_projectedStartAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProjectedStartAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_projectedStartAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_projectedCompleteAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_projectedCompleteAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProjectedCompleteAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_projectedCompleteAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchPlannedAssignment_projectedDriveRemainingMs(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchPlannedAssignment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchPlannedAssignment_projectedDriveRemainingMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProjectedDriveRemainingMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchPlannedAssignment_projectedDriveRemainingMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchPlannedAssignment", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _DispatchScoreFactor_key(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchScoreFactor) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -106035,6 +106385,190 @@ func (ec *executionContext) _DispatchTimeOff_type(ctx context.Context, field gra
 }
 func (ec *executionContext) fieldContext_DispatchTimeOff_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("DispatchTimeOff", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTour_tourId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTour) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTour_tourId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TourID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTour_tourId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTour", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTour_workerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTour) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTour_workerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTour_workerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTour", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTour_workerName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTour) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTour_workerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WorkerName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTour_workerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTour", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTour_moveIds(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTour) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTour_moveIds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MoveIds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNID2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTour_moveIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTour", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTour_startsAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTour) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTour_startsAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StartsAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTour_startsAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTour", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTour_endsAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTour) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTour_endsAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EndsAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTour_endsAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTour", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTour_totalScore(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTour) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTour_totalScore(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalScore, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTour_totalScore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTour", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _DispatchTour_totalDeadheadMiles(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchTour) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DispatchTour_totalDeadheadMiles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalDeadheadMiles, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DispatchTour_totalDeadheadMiles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DispatchTour", field, false, false, errors.New("field of type Float does not have child fields"))
 }
 
 func (ec *executionContext) _DispatchUncoveredMove_moveId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.DispatchUncoveredMove) (ret graphql.Marshaler) {
@@ -234360,6 +234894,16 @@ func (ec *executionContext) _DispatchPlan(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "tours":
+			out.Values[i] = ec._DispatchPlan_tours(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "planningMode":
+			out.Values[i] = ec._DispatchPlan_planningMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "shadowMode":
 			out.Values[i] = ec._DispatchPlan_shadowMode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -234465,6 +235009,31 @@ func (ec *executionContext) _DispatchPlannedAssignment(ctx context.Context, sel 
 			}
 		case "score":
 			out.Values[i] = ec._DispatchPlannedAssignment_score(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tourId":
+			out.Values[i] = ec._DispatchPlannedAssignment_tourId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "sequenceIndex":
+			out.Values[i] = ec._DispatchPlannedAssignment_sequenceIndex(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "projectedStartAt":
+			out.Values[i] = ec._DispatchPlannedAssignment_projectedStartAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "projectedCompleteAt":
+			out.Values[i] = ec._DispatchPlannedAssignment_projectedCompleteAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "projectedDriveRemainingMs":
+			out.Values[i] = ec._DispatchPlannedAssignment_projectedDriveRemainingMs(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -234576,6 +235145,79 @@ func (ec *executionContext) _DispatchTimeOff(ctx context.Context, sel ast.Select
 			}
 		case "type":
 			out.Values[i] = ec._DispatchTimeOff_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var dispatchTourImplementors = []string{"DispatchTour"}
+
+func (ec *executionContext) _DispatchTour(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.DispatchTour) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dispatchTourImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DispatchTour")
+		case "tourId":
+			out.Values[i] = ec._DispatchTour_tourId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workerId":
+			out.Values[i] = ec._DispatchTour_workerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workerName":
+			out.Values[i] = ec._DispatchTour_workerName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "moveIds":
+			out.Values[i] = ec._DispatchTour_moveIds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startsAt":
+			out.Values[i] = ec._DispatchTour_startsAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "endsAt":
+			out.Values[i] = ec._DispatchTour_endsAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalScore":
+			out.Values[i] = ec._DispatchTour_totalScore(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalDeadheadMiles":
+			out.Values[i] = ec._DispatchTour_totalDeadheadMiles(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -279228,6 +279870,32 @@ func (ec *executionContext) marshalNDispatchTimeOff2ᚖgithubᚗcomᚋemoss08ᚋ
 		return graphql.Null
 	}
 	return ec._DispatchTimeOff(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDispatchTour2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchTourᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchTour) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDispatchTour2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchTour(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDispatchTour2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchTour(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.DispatchTour) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DispatchTour(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDispatchUncoveredMove2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchUncoveredMoveᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.DispatchUncoveredMove) graphql.Marshaler {

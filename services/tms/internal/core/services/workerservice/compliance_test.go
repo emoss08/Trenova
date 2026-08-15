@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -63,6 +64,16 @@ func (m *mockDispatchControlRepo) GetOrCreate(
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*dispatchcontrol.DispatchControl), args.Error(1)
+}
+
+func (m *mockDispatchControlRepo) ListHorizonPlanningTenants(
+	ctx context.Context,
+) ([]pagination.TenantInfo, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]pagination.TenantInfo), args.Error(1)
 }
 
 func newComplianceWorker() *worker.Worker {
