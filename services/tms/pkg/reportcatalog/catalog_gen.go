@@ -5053,6 +5053,7 @@ var Default = Catalog{
 					Label:  "Coverage Type",
 					Type:   FieldEnum,
 					EnumValues: []EnumValue{
+						{Value: "unassigned", Label: "Unassigned"},
 						{Value: "driver", Label: "Driver"},
 						{Value: "carrier", Label: "Carrier"},
 					},

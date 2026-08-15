@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/capabilityguard"
 	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
@@ -38,6 +39,7 @@ type Params struct {
 	DB                  ports.DBConnection
 	Repo                repositories.AssignmentRepository
 	ShipmentRepo        repositories.ShipmentRepository
+	OrgRepo             repositories.OrganizationRepository
 	HoldRepo            repositories.ShipmentHoldRepository
 	ControlRepo         repositories.ShipmentControlRepository
 	DispatchControlRepo repositories.DispatchControlRepository
@@ -62,6 +64,7 @@ type service struct {
 	db                  ports.DBConnection
 	repo                repositories.AssignmentRepository
 	shipmentRepo        repositories.ShipmentRepository
+	orgRepo             repositories.OrganizationRepository
 	holdRepo            repositories.ShipmentHoldRepository
 	controlRepo         repositories.ShipmentControlRepository
 	dispatchControlRepo repositories.DispatchControlRepository
@@ -87,6 +90,7 @@ func New(p Params) portservices.AssignmentService {
 		db:                  p.DB,
 		repo:                p.Repo,
 		shipmentRepo:        p.ShipmentRepo,
+		orgRepo:             p.OrgRepo,
 		holdRepo:            p.HoldRepo,
 		controlRepo:         p.ControlRepo,
 		dispatchControlRepo: p.DispatchControlRepo,
@@ -471,6 +475,7 @@ func (s *service) unassignWithinTx(
 				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
 		}
 		targetMove.Assignment = nil
+		targetMove.CoverageType = shipment.MoveCoverageTypeUnassigned
 		targetMove.Status = shipment.MoveStatusNew
 
 		control, err := s.controlRepo.Get(txCtx, repositories.GetShipmentControlRequest{
@@ -666,6 +671,14 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 		if err = move.EnsureAssignable(); err != nil {
 			return err
 		}
+		if err = capabilityguard.EnsureDriverAssignable(
+			txCtx,
+			s.orgRepo,
+			tenantInfo,
+			moveID,
+		); err != nil {
+			return err
+		}
 		if err = dispatchguard.EnsureNoDispatchHold(txCtx, s.holdRepo, tenantInfo, move.ShipmentID); err != nil {
 			return err
 		}
@@ -722,6 +735,7 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 				WithParam("shipmentMoveId", moveID.String())
 		}
 		targetMove.Assignment = savedAssignment
+		targetMove.CoverageType = shipment.MoveCoverageTypeDriver
 
 		control, err := s.controlRepo.Get(txCtx, repositories.GetShipmentControlRequest{
 			TenantInfo: tenantInfo,

@@ -73,7 +73,8 @@ function makeShipment(id: string, status: string, moves: MoveSeed[]): Shipment {
             tractor: move.tractorCode ? { id: "trk_1", code: move.tractorCode } : null,
           }
         : null,
-      coverageType: move.coverageType ?? (move.carrierId ? "carrier" : "driver"),
+      coverageType:
+        move.coverageType ?? (move.carrierId ? "carrier" : move.workerId ? "driver" : "unassigned"),
       carrierAssignment: move.carrierId
         ? {
             id: `casn-${move.id}`,
@@ -433,15 +434,35 @@ describe("buildTimelineData", () => {
     expect(barMatchesFocus(data.unassignedRow!.bars[0], "unassigned")).toBe(true);
   });
 
-  it("keeps a lingering active carrier assignment out of coverage when the move is driver-typed", () => {
-    // The server flips coverageType back to driver when coverage is removed; a stale
+  it("keeps a lingering active carrier assignment out of coverage when the move is not carrier-typed", () => {
+    // The server returns coverageType to unassigned when coverage is removed; a stale
     // active record must not resurrect a carrier row on its own.
+    for (const coverageType of ["driver", "unassigned"]) {
+      const shipments = [
+        makeShipment("shp_1", "New", [
+          {
+            id: "mov_1",
+            carrierId: "car_1",
+            coverageType,
+            stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
+          },
+        ]),
+      ];
+
+      const data = buildTimelineData(shipments, 1, RANGE, NOW);
+
+      expect(data.rows).toHaveLength(0);
+      expect(data.unassignedRow?.bars).toHaveLength(1);
+    }
+  });
+
+  it("lands a genuinely uncovered move in the unassigned lane", () => {
     const shipments = [
       makeShipment("shp_1", "New", [
         {
           id: "mov_1",
-          carrierId: "car_1",
-          coverageType: "driver",
+          status: "New",
+          coverageType: "unassigned",
           stops: [{ start: RANGE.start + 1000, end: RANGE.start + 5000 }],
         },
       ]),
@@ -451,6 +472,9 @@ describe("buildTimelineData", () => {
 
     expect(data.rows).toHaveLength(0);
     expect(data.unassignedRow?.bars).toHaveLength(1);
+    expect(data.unassignedRow?.bars[0].assignment).toBeNull();
+    expect(data.unassignedRow?.bars[0].carrierAssignment).toBeNull();
+    expect(data.exceptions.unassigned).toBe(1);
   });
 
   it("never flags overlapping moves on a carrier row", () => {

@@ -46,6 +46,18 @@ func (c BrokerageDependencyCounts) HasOutstandingWork() bool {
 		c.ActiveCarrierAssignments > 0
 }
 
+type AssetDependencyCounts struct {
+	ActiveDriverAssignments int `json:"activeDriverAssignments"`
+	UnpaidDriverSettlements int `json:"unpaidDriverSettlements"`
+	LinkedPortalUsers       int `json:"linkedPortalUsers"`
+}
+
+func (c AssetDependencyCounts) HasOutstandingWork() bool {
+	return c.ActiveDriverAssignments > 0 ||
+		c.UnpaidDriverSettlements > 0 ||
+		c.LinkedPortalUsers > 0
+}
+
 type OrganizationRepository interface {
 	GetByID(ctx context.Context, req GetOrganizationByIDRequest) (*tenant.Organization, error)
 	GetByIDs(ctx context.Context, req GetOrganizationsByIDsRequest) ([]*tenant.Organization, error)
@@ -61,6 +73,10 @@ type OrganizationRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) (*BrokerageDependencyCounts, error)
+	CountAssetDependencies(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*AssetDependencyCounts, error)
 }
 
 type OrganizationCacheRepository interface {

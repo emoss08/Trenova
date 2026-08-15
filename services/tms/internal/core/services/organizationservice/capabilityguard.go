@@ -12,22 +12,54 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-const brokerageEnabledField = "brokerageEnabled"
+const (
+	brokerageEnabledField       = "brokerageEnabled"
+	assetOperationsEnabledField = "assetOperationsEnabled"
+)
 
-type brokerageBlocker struct {
+type capabilityBlocker struct {
 	count    int
 	singular string
 	plural   string
 }
 
-// guardBrokerageDisable refuses to turn brokerage off while dependent work is
-// still outstanding. Enabling is always allowed: it is purely additive and can
-// strand nothing.
-func (s *service) guardBrokerageDisable(
+type capabilityDisableGuard struct {
+	field    string
+	noun     string
+	enabled  func(*tenant.Organization) bool
+	describe func(context.Context, pagination.TenantInfo) (string, error)
+}
+
+func (s *service) capabilityDisableGuards() [2]capabilityDisableGuard {
+	return [...]capabilityDisableGuard{
+		{
+			field:    brokerageEnabledField,
+			noun:     "brokerage",
+			enabled:  func(o *tenant.Organization) bool { return o.BrokerageEnabled },
+			describe: s.describeBrokerageDependencies,
+		},
+		{
+			field:    assetOperationsEnabledField,
+			noun:     "asset operations",
+			enabled:  func(o *tenant.Organization) bool { return o.AssetOperationsEnabled },
+			describe: s.describeAssetDependencies,
+		},
+	}
+}
+
+func (s *service) guardCapabilityDisable(
 	ctx context.Context,
 	entity *tenant.Organization,
 ) error {
-	if entity.BrokerageEnabled {
+	guards := s.capabilityDisableGuards()
+
+	pending := make([]capabilityDisableGuard, 0, len(guards))
+	for _, guard := range guards {
+		if !guard.enabled(entity) {
+			pending = append(pending, guard)
+		}
+	}
+	if len(pending) == 0 {
 		return nil
 	}
 
@@ -43,32 +75,48 @@ func (s *service) guardBrokerageDisable(
 		return err
 	}
 
-	if !current.BrokerageEnabled {
-		return nil
-	}
-
-	counts, err := s.repo.CountBrokerageDependencies(ctx, tenantInfo)
-	if err != nil {
-		return err
-	}
-
-	if !counts.HasOutstandingWork() {
-		return nil
-	}
-
 	multiErr := errortypes.NewMultiError()
-	multiErr.Add(
-		brokerageEnabledField,
-		errortypes.ErrResourceInUse,
-		"Cannot disable brokerage: "+describeBrokerageDependencies(counts)+
-			". Resolve or close this work before turning brokerage off",
-	)
+	for _, guard := range pending {
+		if !guard.enabled(current) {
+			continue
+		}
 
-	return multiErr
+		description, dErr := guard.describe(ctx, tenantInfo)
+		if dErr != nil {
+			return dErr
+		}
+		if description == "" {
+			continue
+		}
+
+		multiErr.Add(
+			guard.field,
+			errortypes.ErrResourceInUse,
+			"Cannot disable "+guard.noun+": "+description+
+				". Resolve or close this work before turning "+guard.noun+" off",
+		)
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }
 
-func describeBrokerageDependencies(counts *repositories.BrokerageDependencyCounts) string {
-	blockers := [...]brokerageBlocker{
+func (s *service) describeBrokerageDependencies(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (string, error) {
+	counts, err := s.repo.CountBrokerageDependencies(ctx, tenantInfo)
+	if err != nil {
+		return "", err
+	}
+	if !counts.HasOutstandingWork() {
+		return "", nil
+	}
+
+	return describeBlockers([]capabilityBlocker{
 		{
 			count:    counts.ActiveTenders,
 			singular: "active tender",
@@ -94,8 +142,41 @@ func describeBrokerageDependencies(counts *repositories.BrokerageDependencyCount
 			singular: "active carrier assignment",
 			plural:   "active carrier assignments",
 		},
+	}), nil
+}
+
+func (s *service) describeAssetDependencies(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (string, error) {
+	counts, err := s.repo.CountAssetDependencies(ctx, tenantInfo)
+	if err != nil {
+		return "", err
+	}
+	if !counts.HasOutstandingWork() {
+		return "", nil
 	}
 
+	return describeBlockers([]capabilityBlocker{
+		{
+			count:    counts.ActiveDriverAssignments,
+			singular: "active driver assignment",
+			plural:   "active driver assignments",
+		},
+		{
+			count:    counts.UnpaidDriverSettlements,
+			singular: "unpaid driver settlement",
+			plural:   "unpaid driver settlements",
+		},
+		{
+			count:    counts.LinkedPortalUsers,
+			singular: "linked driver portal user",
+			plural:   "linked driver portal users",
+		},
+	}), nil
+}
+
+func describeBlockers(blockers []capabilityBlocker) string {
 	parts := make([]string, 0, len(blockers))
 	for _, blocker := range blockers {
 		if blocker.count == 0 {

@@ -81,6 +81,11 @@ export interface QuickActionCommand {
   path: string;
   resource?: string;
   requiredOperation?: OperationType;
+  /**
+   * Mirrors `NavItem.capability`: a create shortcut for a half of the product
+   * the organization does not run would only lead to a route that refuses it.
+   */
+  capability?: OrganizationCapabilityType;
   query?: Record<string, string>;
   keywords?: string[];
 }

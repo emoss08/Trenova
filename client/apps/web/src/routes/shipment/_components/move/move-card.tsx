@@ -112,6 +112,7 @@ export function MoveCard({
     mutationFn: () => apiService.assignmentService.unassign(move.id!),
     onSuccess: () => {
       setValue(`moves.${moveIndex}.assignment`, null);
+      setValue(`moves.${moveIndex}.coverageType`, "unassigned");
       setValue(`moves.${moveIndex}.status`, "New");
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       toast.success("Move unassigned", {
@@ -127,7 +128,7 @@ export function MoveCard({
     mutationFn: (reason: string) => apiService.carrierAssignmentService.cancel(move.id!, reason),
     onSuccess: () => {
       setValue(`moves.${moveIndex}.carrierAssignment`, null);
-      setValue(`moves.${moveIndex}.coverageType`, "driver");
+      setValue(`moves.${moveIndex}.coverageType`, "unassigned");
       setValue(`moves.${moveIndex}.status`, "New");
       setCancelCarrierOpen(false);
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
@@ -349,6 +350,7 @@ export function MoveCard({
             existingCarrierAssignment={carrierAssignment}
             onAssigned={(assignment) => {
               setValue(`moves.${moveIndex}.assignment`, assignment);
+              setValue(`moves.${moveIndex}.coverageType`, "driver");
               setValue(`moves.${moveIndex}.status`, "Assigned");
               void queryClient.invalidateQueries({
                 queryKey: ["assignment", assignment.id],

@@ -1,3 +1,4 @@
+import { CapabilityGate } from "@/components/capability-gate";
 import { formatRangeLabelForDays, isTodayAnchor } from "@/lib/timeline/time-scale";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
@@ -5,6 +6,7 @@ import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { cn } from "@trenova/shared/lib/utils";
+import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import {
   CalendarIcon,
   ChevronLeftIcon,
@@ -52,7 +54,7 @@ export function ConsoleToolbar({
     setZoom,
     setIncludeCovered,
   } = useDispatchWindow();
-  const { mode, setMode } = useDispatchView();
+  const { mode, setMode, timelineAvailable } = useDispatchView();
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -131,33 +133,37 @@ export function ConsoleToolbar({
         ))}
       </div>
 
-      <div
-        role="group"
-        aria-label="Center view"
-        className="inline-flex overflow-hidden rounded-md border border-border"
-      >
-        {CENTER_MODE_OPTIONS.map((option, index) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => setMode(option.id)}
-            // Reaching for the toggle is enough warning to fetch the view behind it.
-            onPointerEnter={() => preloadCenterView(option.id)}
-            onFocus={() => preloadCenterView(option.id)}
-            aria-pressed={mode === option.id}
-            className={cn(
-              "flex items-center gap-1 px-2 py-1 text-[11px] transition-colors",
-              index > 0 && "border-l border-border",
-              mode === option.id
-                ? "bg-muted text-foreground"
-                : "bg-background text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <option.Icon className="size-3" aria-hidden />
-            {option.label}
-          </button>
-        ))}
-      </div>
+      {/* With the driver timeline withheld the board is the only centre there is,
+          so the toggle goes rather than offering a choice of one. */}
+      {timelineAvailable && (
+        <div
+          role="group"
+          aria-label="Center view"
+          className="inline-flex overflow-hidden rounded-md border border-border"
+        >
+          {CENTER_MODE_OPTIONS.map((option, index) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setMode(option.id)}
+              // Reaching for the toggle is enough warning to fetch the view behind it.
+              onPointerEnter={() => preloadCenterView(option.id)}
+              onFocus={() => preloadCenterView(option.id)}
+              aria-pressed={mode === option.id}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 text-[11px] transition-colors",
+                index > 0 && "border-l border-border",
+                mode === option.id
+                  ? "bg-muted text-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <option.Icon className="size-3" aria-hidden />
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <Switch checked={includeCovered} onCheckedChange={setIncludeCovered} />
@@ -176,16 +182,21 @@ export function ConsoleToolbar({
           Undo
           <Kbd className="h-4 min-w-4 text-[9px]">u</Kbd>
         </Button>
-        <Button
-          size="sm"
-          className="h-7 gap-1 px-2 text-[11px]"
-          disabled={isPlanning}
-          isLoading={isPlanning}
-          onClick={onPlan}
-        >
-          <SparklesIcon className="size-3" aria-hidden />
-          Auto-assign
-        </Button>
+        {/* Auto-assign plans driver/tractor pairings, which the API refuses for an
+            organization without asset operations. Withholding the button is the whole
+            trigger — there is no hotkey and the plan mutation fires from nowhere else. */}
+        <CapabilityGate capability={OrganizationCapability.AssetOperations}>
+          <Button
+            size="sm"
+            className="h-7 gap-1 px-2 text-[11px]"
+            disabled={isPlanning}
+            isLoading={isPlanning}
+            onClick={onPlan}
+          >
+            <SparklesIcon className="size-3" aria-hidden />
+            Auto-assign
+          </Button>
+        </CapabilityGate>
       </div>
     </div>
   );

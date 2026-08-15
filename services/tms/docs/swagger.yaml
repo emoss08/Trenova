@@ -6221,10 +6221,12 @@ definitions:
             - HoldSourceEDI
     github_com_emoss08_trenova_internal_core_domain_shipment.MoveCoverageType:
         enum:
+            - unassigned
             - driver
             - carrier
         type: string
         x-enum-varnames:
+            - MoveCoverageTypeUnassigned
             - MoveCoverageTypeDriver
             - MoveCoverageTypeCarrier
     github_com_emoss08_trenova_internal_core_domain_shipment.MoveStatus:

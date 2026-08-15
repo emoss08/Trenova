@@ -41,11 +41,14 @@ export function DriverCell({ shipment }: { shipment: Shipment }) {
     );
   }
 
+  // A move can be covered by a driver or by an external carrier, so an empty one
+  // is short of coverage rather than short of a driver — an organization that
+  // brokers every load never wanted the driver it was being asked for.
   if (!driver) {
     return (
       <div className={cn("inline-flex items-center gap-1 text-[11px] font-medium text-warning")}>
         <TriangleAlertIcon className="size-3" />
-        <span>Needs driver</span>
+        <span>Needs coverage</span>
       </div>
     );
   }

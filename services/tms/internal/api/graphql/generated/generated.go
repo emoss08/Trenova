@@ -51154,6 +51154,7 @@ type ShipmentFormulaVariableDefinition {
 }
 
 enum MoveCoverageType {
+  unassigned
   driver
   carrier
 }

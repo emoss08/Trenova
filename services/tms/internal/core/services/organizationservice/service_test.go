@@ -116,6 +116,17 @@ func (m *mockOrganizationRepo) CountBrokerageDependencies(
 	return args.Get(0).(*repositories.BrokerageDependencyCounts), args.Error(1)
 }
 
+func (m *mockOrganizationRepo) CountAssetDependencies(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*repositories.AssetDependencyCounts, error) {
+	args := m.Called(ctx, tenantInfo)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*repositories.AssetDependencyCounts), args.Error(1)
+}
+
 type testDeps struct {
 	repo *mockOrganizationRepo
 	svc  *service

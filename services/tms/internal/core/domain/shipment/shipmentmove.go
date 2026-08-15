@@ -14,8 +14,9 @@ import (
 type MoveCoverageType string
 
 const (
-	MoveCoverageTypeDriver  = MoveCoverageType("driver")
-	MoveCoverageTypeCarrier = MoveCoverageType("carrier")
+	MoveCoverageTypeUnassigned = MoveCoverageType("unassigned")
+	MoveCoverageTypeDriver     = MoveCoverageType("driver")
+	MoveCoverageTypeCarrier    = MoveCoverageType("carrier")
 )
 
 func (c MoveCoverageType) String() string {
@@ -24,7 +25,7 @@ func (c MoveCoverageType) String() string {
 
 func (c MoveCoverageType) IsValid() bool {
 	switch c {
-	case MoveCoverageTypeDriver, MoveCoverageTypeCarrier:
+	case MoveCoverageTypeUnassigned, MoveCoverageTypeDriver, MoveCoverageTypeCarrier:
 		return true
 	}
 	return false
@@ -38,7 +39,7 @@ type ShipmentMove struct {
 	OrganizationID         pulid.ID           `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 	ShipmentID             pulid.ID           `json:"shipmentId"           bun:"shipment_id,type:VARCHAR(100),notnull"`
 	Status                 MoveStatus         `json:"status"               bun:"status,type:move_status_enum,notnull,default:'New'"`
-	CoverageType           MoveCoverageType   `json:"coverageType"         bun:"coverage_type,type:VARCHAR(20),notnull,default:'driver'"`
+	CoverageType           MoveCoverageType   `json:"coverageType"         bun:"coverage_type,type:VARCHAR(20),notnull,default:'unassigned'"`
 	Loaded                 bool               `json:"loaded"               bun:"loaded,type:BOOLEAN,notnull,default:true"`
 	Sequence               int64              `json:"sequence"             bun:"sequence,type:INTEGER,notnull"`
 	Distance               *float64           `json:"distance"             bun:"distance,type:FLOAT,nullzero"`
@@ -63,7 +64,7 @@ func (m *ShipmentMove) BeforeAppendModel(_ context.Context, query bun.Query) err
 	now := timeutils.NowUnix()
 
 	if m.CoverageType == "" {
-		m.CoverageType = MoveCoverageTypeDriver
+		m.CoverageType = MoveCoverageTypeUnassigned
 	}
 
 	switch query.(type) {

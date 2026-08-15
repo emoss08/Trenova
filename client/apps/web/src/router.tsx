@@ -35,7 +35,7 @@ const guestLoader: LoaderFunction = async () => {
   return null;
 };
 
-const routes: RouteObject[] = [
+export const routes: RouteObject[] = [
   {
     element: <RootLayout />,
     errorElement: <RouteErrorBoundary />,
@@ -254,6 +254,7 @@ const routes: RouteObject[] = [
             path: "/payroll/workspace",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DriverSettlement),
             ),
             async lazy() {
@@ -266,6 +267,7 @@ const routes: RouteObject[] = [
             path: "/payroll/settlements",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DriverSettlement),
             ),
             async lazy() {
@@ -277,6 +279,7 @@ const routes: RouteObject[] = [
             path: "/payroll/disputes",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.SettlementDispute),
             ),
             async lazy() {
@@ -286,7 +289,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/payroll/expenses",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DriverExpense)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.DriverExpense),
+            ),
             async lazy() {
               const { DriverExpensesPage } = await import("@/routes/driver-expense/page");
               return { Component: DriverExpensesPage };
@@ -296,6 +303,7 @@ const routes: RouteObject[] = [
             path: "/payroll/settlement-batches",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DriverSettlement),
             ),
             async lazy() {
@@ -307,6 +315,7 @@ const routes: RouteObject[] = [
             path: "/payroll/pay-events",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DriverSettlement),
             ),
             async lazy() {
@@ -318,6 +327,7 @@ const routes: RouteObject[] = [
             path: "/payroll/pay-profiles",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DriverPayProfile),
             ),
             async lazy() {
@@ -329,6 +339,7 @@ const routes: RouteObject[] = [
             path: "/payroll/deductions",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.RecurringDeduction),
             ),
             async lazy() {
@@ -340,6 +351,7 @@ const routes: RouteObject[] = [
             path: "/payroll/earnings",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.RecurringEarning),
             ),
             async lazy() {
@@ -349,7 +361,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/payroll/pay-codes",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.PayCode)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.PayCode),
+            ),
             async lazy() {
               const { PayCodesPage } = await import("@/routes/pay-code/page");
               return { Component: PayCodesPage };
@@ -357,7 +373,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/payroll/advances",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.PayAdvance)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.PayAdvance),
+            ),
             async lazy() {
               const { PayAdvancesPage } = await import("@/routes/pay-advance/page");
               return { Component: PayAdvancesPage };
@@ -365,7 +385,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/payroll/escrow-accounts",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EscrowAccount)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.EscrowAccount),
+            ),
             async lazy() {
               const { EscrowAccountsPage } = await import("@/routes/escrow-account/page");
               return { Component: EscrowAccountsPage };
@@ -769,7 +793,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/equipment/tractors",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Tractor)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.Tractor),
+            ),
             async lazy() {
               const { TractorsPage } = await import("@/routes/tractor/page");
               return { Component: TractorsPage };
@@ -777,7 +805,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/equipment/trailers",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Trailer)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.Trailer),
+            ),
             async lazy() {
               const { TrailersPage } = await import("@/routes/trailer/page");
               return { Component: TrailersPage };
@@ -819,6 +851,7 @@ const routes: RouteObject[] = [
             path: "/dispatch/configuration-files/fleet-codes",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.FleetCode, Operation.Read),
             ),
             async lazy() {
@@ -921,7 +954,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/dispatch/workers",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Worker)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.Worker),
+            ),
             async lazy() {
               const { WorkersPage } = await import("@/routes/worker/page");
               return { Component: WorkersPage };
@@ -1035,7 +1072,10 @@ const routes: RouteObject[] = [
               },
               {
                 path: "settlement-control",
-                loader: createPermissionLoader(Resource.SettlementControl, Operation.Read),
+                loader: combineLoaders(
+                  createCapabilityLoader(OrganizationCapability.AssetOperations),
+                  createPermissionLoader(Resource.SettlementControl, Operation.Read),
+                ),
                 async lazy() {
                   const { SettlementControlPage } =
                     await import("@/routes/settlement-control/page");
@@ -1056,7 +1096,10 @@ const routes: RouteObject[] = [
               },
               {
                 path: "dash-control",
-                loader: createPermissionLoader(Resource.DashControl, Operation.Read),
+                loader: combineLoaders(
+                  createCapabilityLoader(OrganizationCapability.AssetOperations),
+                  createPermissionLoader(Resource.DashControl, Operation.Read),
+                ),
                 async lazy() {
                   const { DashControlPage } = await import("@/routes/dash-control/page");
                   return { Component: DashControlPage };
