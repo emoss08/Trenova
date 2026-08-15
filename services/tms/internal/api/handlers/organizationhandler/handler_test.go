@@ -11,9 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -221,6 +223,7 @@ func setupOrganizationHandler(
 
 	service := organizationservice.New(organizationservice.Params{
 		Logger:       logger,
+		DB:           dbtest.NopConnection{},
 		Repo:         repo,
 		Storage:      storageClient,
 		Config:       cfg,
@@ -396,6 +399,11 @@ func TestOrganizationHandler_Update_PreservesOmittedCapabilityFlags(t *testing.T
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenant.Organization{
 			ID:                     orgID,
+			BrokerageEnabled:       false,
+			AssetOperationsEnabled: true,
+		}, nil)
+	repo.EXPECT().GetCapabilities(mock.Anything, mock.Anything).
+		Return(&repositories.OrganizationCapabilities{
 			BrokerageEnabled:       false,
 			AssetOperationsEnabled: true,
 		}, nil)

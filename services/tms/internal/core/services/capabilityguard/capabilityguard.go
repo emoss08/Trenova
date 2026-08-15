@@ -14,14 +14,7 @@ func AssetOperationsEnabled(
 	orgRepo repositories.OrganizationRepository,
 	tenantInfo pagination.TenantInfo,
 ) (bool, error) {
-	org, err := orgRepo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return false, err
-	}
-
-	return org.AssetOperationsEnabled, nil
+	return assetOperationsEnabled(ctx, orgRepo, tenantInfo, repositories.CapabilityLockNone)
 }
 
 func EnsureDriverAssignable(
@@ -30,7 +23,12 @@ func EnsureDriverAssignable(
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
 ) error {
-	enabled, err := AssetOperationsEnabled(ctx, orgRepo, tenantInfo)
+	enabled, err := assetOperationsEnabled(
+		ctx,
+		orgRepo,
+		tenantInfo,
+		repositories.CapabilityLockShare,
+	)
 	if err != nil {
 		return err
 	}
@@ -40,4 +38,24 @@ func EnsureDriverAssignable(
 	}
 
 	return nil
+}
+
+func assetOperationsEnabled(
+	ctx context.Context,
+	orgRepo repositories.OrganizationRepository,
+	tenantInfo pagination.TenantInfo,
+	lock repositories.CapabilityLock,
+) (bool, error) {
+	capabilities, err := orgRepo.GetCapabilities(
+		ctx,
+		repositories.GetOrganizationCapabilitiesRequest{
+			TenantInfo: tenantInfo,
+			Lock:       lock,
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return capabilities.AssetOperationsEnabled, nil
 }

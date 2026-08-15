@@ -76,9 +76,13 @@ func TestUpdate_DisableBrokerage_BlockedByEachDependency(t *testing.T) {
 				BuID:  entity.BusinessUnitID,
 			}
 
-			deps.repo.On("GetByID", mock.Anything, repositories.GetOrganizationByIDRequest{
+			deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 				TenantInfo: tenantInfo,
-			}).Return(stored, nil)
+				Lock:       repositories.CapabilityLockUpdate,
+			}).Return(&repositories.OrganizationCapabilities{
+				BrokerageEnabled:       stored.BrokerageEnabled,
+				AssetOperationsEnabled: stored.AssetOperationsEnabled,
+			}, nil)
 			deps.repo.On("CountBrokerageDependencies", mock.Anything, tenantInfo).
 				Return(tt.counts, nil)
 
@@ -109,9 +113,13 @@ func TestUpdate_DisableBrokerage_CombinesEveryBlocker(t *testing.T) {
 		BuID:  entity.BusinessUnitID,
 	}
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetOrganizationByIDRequest{
+	deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 		TenantInfo: tenantInfo,
-	}).Return(stored, nil)
+		Lock:       repositories.CapabilityLockUpdate,
+	}).Return(&repositories.OrganizationCapabilities{
+		BrokerageEnabled:       stored.BrokerageEnabled,
+		AssetOperationsEnabled: stored.AssetOperationsEnabled,
+	}, nil)
 	deps.repo.On("CountBrokerageDependencies", mock.Anything, tenantInfo).
 		Return(&repositories.BrokerageDependencyCounts{
 			ActiveTenders:             1,
@@ -152,9 +160,13 @@ func TestUpdate_DisableBrokerage_AllowedWhenNothingOutstanding(t *testing.T) {
 		BuID:  entity.BusinessUnitID,
 	}
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetOrganizationByIDRequest{
+	deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 		TenantInfo: tenantInfo,
-	}).Return(stored, nil)
+		Lock:       repositories.CapabilityLockUpdate,
+	}).Return(&repositories.OrganizationCapabilities{
+		BrokerageEnabled:       stored.BrokerageEnabled,
+		AssetOperationsEnabled: stored.AssetOperationsEnabled,
+	}, nil)
 	deps.repo.On("CountBrokerageDependencies", mock.Anything, tenantInfo).
 		Return(&repositories.BrokerageDependencyCounts{}, nil)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
@@ -179,7 +191,7 @@ func TestUpdate_EnableBrokerage_IsAlwaysAllowed(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.True(t, result.BrokerageEnabled)
-	deps.repo.AssertNotCalled(t, "GetByID")
+	deps.repo.AssertNotCalled(t, "GetCapabilities")
 	deps.repo.AssertNotCalled(t, "CountBrokerageDependencies")
 	deps.repo.AssertExpectations(t)
 }
@@ -196,12 +208,16 @@ func TestUpdate_BrokerageAlreadyDisabled_SkipsDependencyCount(t *testing.T) {
 	stored.BusinessUnitID = entity.BusinessUnitID
 	stored.BrokerageEnabled = false
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetOrganizationByIDRequest{
+	deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.ID,
 			BuID:  entity.BusinessUnitID,
 		},
-	}).Return(stored, nil)
+		Lock: repositories.CapabilityLockUpdate,
+	}).Return(&repositories.OrganizationCapabilities{
+		BrokerageEnabled:       stored.BrokerageEnabled,
+		AssetOperationsEnabled: stored.AssetOperationsEnabled,
+	}, nil)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
 
 	result, err := deps.svc.Update(t.Context(), entity)
@@ -230,9 +246,13 @@ func TestUpdate_DisableBrokerage_PropagatesCountError(t *testing.T) {
 
 	countErr := errors.New("count failed")
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetOrganizationByIDRequest{
+	deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 		TenantInfo: tenantInfo,
-	}).Return(stored, nil)
+		Lock:       repositories.CapabilityLockUpdate,
+	}).Return(&repositories.OrganizationCapabilities{
+		BrokerageEnabled:       stored.BrokerageEnabled,
+		AssetOperationsEnabled: stored.AssetOperationsEnabled,
+	}, nil)
 	deps.repo.On("CountBrokerageDependencies", mock.Anything, tenantInfo).
 		Return(nil, countErr)
 
@@ -286,9 +306,13 @@ func TestUpdate_DisableAssetOperations_BlockedByEachDependency(t *testing.T) {
 				BuID:  entity.BusinessUnitID,
 			}
 
-			deps.repo.On("GetByID", mock.Anything, repositories.GetOrganizationByIDRequest{
+			deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 				TenantInfo: tenantInfo,
-			}).Return(stored, nil)
+				Lock:       repositories.CapabilityLockUpdate,
+			}).Return(&repositories.OrganizationCapabilities{
+				BrokerageEnabled:       stored.BrokerageEnabled,
+				AssetOperationsEnabled: stored.AssetOperationsEnabled,
+			}, nil)
 			deps.repo.On("CountAssetDependencies", mock.Anything, tenantInfo).
 				Return(tt.counts, nil)
 
@@ -324,9 +348,13 @@ func TestUpdate_DisableAssetOperations_CombinesEveryBlocker(t *testing.T) {
 		BuID:  entity.BusinessUnitID,
 	}
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetOrganizationByIDRequest{
+	deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 		TenantInfo: tenantInfo,
-	}).Return(stored, nil)
+		Lock:       repositories.CapabilityLockUpdate,
+	}).Return(&repositories.OrganizationCapabilities{
+		BrokerageEnabled:       stored.BrokerageEnabled,
+		AssetOperationsEnabled: stored.AssetOperationsEnabled,
+	}, nil)
 	deps.repo.On("CountAssetDependencies", mock.Anything, tenantInfo).
 		Return(&repositories.AssetDependencyCounts{
 			ActiveDriverAssignments: 4,
@@ -364,9 +392,13 @@ func TestUpdate_DisableAssetOperations_AllowedWhenNothingOutstanding(t *testing.
 		BuID:  entity.BusinessUnitID,
 	}
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetOrganizationByIDRequest{
+	deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 		TenantInfo: tenantInfo,
-	}).Return(stored, nil)
+		Lock:       repositories.CapabilityLockUpdate,
+	}).Return(&repositories.OrganizationCapabilities{
+		BrokerageEnabled:       stored.BrokerageEnabled,
+		AssetOperationsEnabled: stored.AssetOperationsEnabled,
+	}, nil)
 	deps.repo.On("CountAssetDependencies", mock.Anything, tenantInfo).
 		Return(&repositories.AssetDependencyCounts{}, nil)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
@@ -391,7 +423,7 @@ func TestUpdate_EnableAssetOperations_IsAlwaysAllowed(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.True(t, result.AssetOperationsEnabled)
-	deps.repo.AssertNotCalled(t, "GetByID")
+	deps.repo.AssertNotCalled(t, "GetCapabilities")
 	deps.repo.AssertNotCalled(t, "CountAssetDependencies")
 	deps.repo.AssertExpectations(t)
 }
@@ -408,12 +440,16 @@ func TestUpdate_AssetOperationsAlreadyDisabled_SkipsDependencyCount(t *testing.T
 	stored.BusinessUnitID = entity.BusinessUnitID
 	stored.AssetOperationsEnabled = false
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetOrganizationByIDRequest{
+	deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.ID,
 			BuID:  entity.BusinessUnitID,
 		},
-	}).Return(stored, nil)
+		Lock: repositories.CapabilityLockUpdate,
+	}).Return(&repositories.OrganizationCapabilities{
+		BrokerageEnabled:       stored.BrokerageEnabled,
+		AssetOperationsEnabled: stored.AssetOperationsEnabled,
+	}, nil)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
 
 	result, err := deps.svc.Update(t.Context(), entity)
@@ -442,9 +478,13 @@ func TestUpdate_DisableAssetOperations_PropagatesCountError(t *testing.T) {
 
 	countErr := errors.New("count failed")
 
-	deps.repo.On("GetByID", mock.Anything, repositories.GetOrganizationByIDRequest{
+	deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
 		TenantInfo: tenantInfo,
-	}).Return(stored, nil)
+		Lock:       repositories.CapabilityLockUpdate,
+	}).Return(&repositories.OrganizationCapabilities{
+		BrokerageEnabled:       stored.BrokerageEnabled,
+		AssetOperationsEnabled: stored.AssetOperationsEnabled,
+	}, nil)
 	deps.repo.On("CountAssetDependencies", mock.Anything, tenantInfo).
 		Return(nil, countErr)
 
@@ -484,7 +524,7 @@ func TestUpdate_DisableBothCapabilities_IsRejected(t *testing.T) {
 	}
 	assert.ElementsMatch(t, []string{"brokerageEnabled", "assetOperationsEnabled"}, fields)
 
-	deps.repo.AssertNotCalled(t, "GetByID")
+	deps.repo.AssertNotCalled(t, "GetCapabilities")
 	deps.repo.AssertNotCalled(t, "Update")
 	deps.repo.AssertExpectations(t)
 }
@@ -502,8 +542,96 @@ func TestUpdate_AssetOperationsEnabled_IsUnaffectedByBrokerageGuard(t *testing.T
 	require.NoError(t, err)
 	assert.True(t, result.AssetOperationsEnabled)
 	assert.True(t, result.BrokerageEnabled)
-	deps.repo.AssertNotCalled(t, "GetByID")
+	deps.repo.AssertNotCalled(t, "GetCapabilities")
 	deps.repo.AssertNotCalled(t, "CountAssetDependencies")
 	deps.repo.AssertNotCalled(t, "CountBrokerageDependencies")
 	deps.repo.AssertExpectations(t)
+}
+
+func TestUpdate_ReadsCapabilitiesUnderRowLockInsideTheWriteTransaction(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	entity := newTestOrganization()
+	entity.AssetOperationsEnabled = false
+
+	stored := newTestOrganization()
+	stored.ID = entity.ID
+	stored.BusinessUnitID = entity.BusinessUnitID
+
+	var order []string
+
+	deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.ID,
+			BuID:  entity.BusinessUnitID,
+		},
+		Lock: repositories.CapabilityLockUpdate,
+	}).Run(func(mock.Arguments) {
+		order = append(order, "getCapabilities")
+	}).Return(&repositories.OrganizationCapabilities{
+		BrokerageEnabled:       stored.BrokerageEnabled,
+		AssetOperationsEnabled: stored.AssetOperationsEnabled,
+	}, nil)
+
+	deps.repo.On("CountAssetDependencies", mock.Anything, mock.Anything).
+		Run(func(mock.Arguments) {
+			order = append(order, "countAssetDependencies")
+		}).
+		Return(&repositories.AssetDependencyCounts{}, nil)
+
+	deps.repo.On("Update", mock.Anything, entity).
+		Run(func(mock.Arguments) {
+			order = append(order, "update")
+		}).
+		Return(entity, nil)
+
+	result, err := deps.svc.Update(t.Context(), entity)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(
+		t,
+		[]string{"getCapabilities", "countAssetDependencies", "update"},
+		order,
+		"the capability row must be locked before dependencies are counted and before the write",
+	)
+	deps.repo.AssertExpectations(t)
+}
+
+func TestUpdate_DoesNotWriteWhenTheGuardRefusesInsideTheTransaction(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	entity := newTestOrganization()
+	entity.AssetOperationsEnabled = false
+
+	stored := newTestOrganization()
+	stored.ID = entity.ID
+	stored.BusinessUnitID = entity.BusinessUnitID
+
+	deps.repo.On("GetCapabilities", mock.Anything, repositories.GetOrganizationCapabilitiesRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.ID,
+			BuID:  entity.BusinessUnitID,
+		},
+		Lock: repositories.CapabilityLockUpdate,
+	}).Return(&repositories.OrganizationCapabilities{
+		BrokerageEnabled:       stored.BrokerageEnabled,
+		AssetOperationsEnabled: stored.AssetOperationsEnabled,
+	}, nil)
+
+	deps.repo.On("CountAssetDependencies", mock.Anything, mock.Anything).
+		Return(&repositories.AssetDependencyCounts{ActiveDriverAssignments: 1}, nil)
+
+	result, err := deps.svc.Update(t.Context(), entity)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(
+		t,
+		capabilityErrorMessage(t, err, "assetOperationsEnabled"),
+		"1 active driver assignment",
+	)
+	deps.repo.AssertNotCalled(t, "Update")
 }

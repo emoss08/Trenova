@@ -24,24 +24,31 @@ type capabilityBlocker struct {
 }
 
 type capabilityDisableGuard struct {
-	field    string
-	noun     string
-	enabled  func(*tenant.Organization) bool
-	describe func(context.Context, pagination.TenantInfo) (string, error)
+	field     string
+	noun      string
+	requested func(*tenant.Organization) bool
+	current   func(*repositories.OrganizationCapabilities) bool
+	describe  func(context.Context, pagination.TenantInfo) (string, error)
 }
 
 func (s *service) capabilityDisableGuards() [2]capabilityDisableGuard {
 	return [...]capabilityDisableGuard{
 		{
-			field:    brokerageEnabledField,
-			noun:     "brokerage",
-			enabled:  func(o *tenant.Organization) bool { return o.BrokerageEnabled },
+			field:     brokerageEnabledField,
+			noun:      "brokerage",
+			requested: func(o *tenant.Organization) bool { return o.BrokerageEnabled },
+			current: func(c *repositories.OrganizationCapabilities) bool {
+				return c.BrokerageEnabled
+			},
 			describe: s.describeBrokerageDependencies,
 		},
 		{
-			field:    assetOperationsEnabledField,
-			noun:     "asset operations",
-			enabled:  func(o *tenant.Organization) bool { return o.AssetOperationsEnabled },
+			field:     assetOperationsEnabledField,
+			noun:      "asset operations",
+			requested: func(o *tenant.Organization) bool { return o.AssetOperationsEnabled },
+			current: func(c *repositories.OrganizationCapabilities) bool {
+				return c.AssetOperationsEnabled
+			},
 			describe: s.describeAssetDependencies,
 		},
 	}
@@ -55,7 +62,7 @@ func (s *service) guardCapabilityDisable(
 
 	pending := make([]capabilityDisableGuard, 0, len(guards))
 	for _, guard := range guards {
-		if !guard.enabled(entity) {
+		if !guard.requested(entity) {
 			pending = append(pending, guard)
 		}
 	}
@@ -68,8 +75,9 @@ func (s *service) guardCapabilityDisable(
 		BuID:  entity.BusinessUnitID,
 	}
 
-	current, err := s.repo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+	current, err := s.repo.GetCapabilities(ctx, repositories.GetOrganizationCapabilitiesRequest{
 		TenantInfo: tenantInfo,
+		Lock:       repositories.CapabilityLockUpdate,
 	})
 	if err != nil {
 		return err
@@ -77,7 +85,7 @@ func (s *service) guardCapabilityDisable(
 
 	multiErr := errortypes.NewMultiError()
 	for _, guard := range pending {
-		if !guard.enabled(current) {
+		if !guard.current(current) {
 			continue
 		}
 

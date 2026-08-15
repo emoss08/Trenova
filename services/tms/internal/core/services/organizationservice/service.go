@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
@@ -21,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -29,6 +31,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
+	DB           ports.DBConnection
 	Repo         repositories.OrganizationRepository
 	SSORepo      repositories.SSOConfigRepository
 	AuditService services.AuditService
@@ -40,6 +43,7 @@ type Params struct {
 
 type service struct {
 	l            *zap.Logger
+	db           ports.DBConnection
 	repo         repositories.OrganizationRepository
 	ssoRepo      repositories.SSOConfigRepository
 	auditService services.AuditService
@@ -52,6 +56,7 @@ type service struct {
 func New(p Params) services.OrganizationService {
 	return &service{
 		l:            p.Logger.Named("service.organization"),
+		db:           p.DB,
 		repo:         p.Repo,
 		ssoRepo:      p.SSORepo,
 		storage:      p.Storage,
@@ -98,14 +103,23 @@ func (s *service) Update(
 		return nil, err
 	}
 
-	if err := s.guardCapabilityDisable(ctx, entity); err != nil {
-		return nil, err
-	}
+	var updatedEntity *tenant.Organization
+	if err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if err := s.guardCapabilityDisable(txCtx, entity); err != nil {
+			return err
+		}
 
-	updatedEntity, err := s.repo.Update(ctx, entity)
-	if err != nil {
-		log.Error("failed to update organization", zap.Error(err))
-		return nil, mapOrganizationUniqueConstraint(err)
+		updated, err := s.repo.Update(txCtx, entity)
+		if err != nil {
+			log.Error("failed to update organization", zap.Error(err))
+			return mapOrganizationUniqueConstraint(err)
+		}
+
+		updatedEntity = updated
+
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return updatedEntity, nil

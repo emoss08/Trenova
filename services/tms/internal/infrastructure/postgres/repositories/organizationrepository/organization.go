@@ -214,7 +214,7 @@ func (r *repository) Update(
 	ov := org.Version
 	org.Version++
 
-	results, rErr := r.db.DB().
+	results, rErr := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(org).
 		WherePK().
