@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -312,13 +313,13 @@ func fuelSurchargeProgramFromInput(
 		entity.RateRounding = *input.RateRounding
 	}
 	if input.RatePrecision != nil {
-		entity.RatePrecision = int16(*input.RatePrecision)
+		entity.RatePrecision = intutils.SafeToInt16(*input.RatePrecision)
 	}
 	if input.DateBasis != nil {
 		entity.DateBasis = *input.DateBasis
 	}
 	if input.PriceEffectiveDay != nil {
-		entity.PriceEffectiveDay = int16(*input.PriceEffectiveDay)
+		entity.PriceEffectiveDay = intutils.SafeToInt16(*input.PriceEffectiveDay)
 	}
 	if input.MissingPriceFallback != nil {
 		entity.MissingPriceFallback = *input.MissingPriceFallback
@@ -395,7 +396,7 @@ func fuelSurchargeProgramFromInput(
 				SortOrder:      int32(idx),
 			}
 			if rowInput.SortOrder != nil {
-				row.SortOrder = int32(*rowInput.SortOrder)
+				row.SortOrder = intutils.SafeToInt32(*rowInput.SortOrder)
 			}
 			if row.PriceMin, err = nullDecimalFromStringPtr(
 				rowInput.PriceMin,

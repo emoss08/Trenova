@@ -49,15 +49,16 @@ const (
 )
 
 const (
-	WidgetAttention           = "attention"
-	WidgetUnassigned          = "unassigned"
-	WidgetExceptions          = "exceptions"
-	WidgetDetentionWatch      = "detention-watch"
-	WidgetTomorrowsPickups    = "tomorrows-pickups"
-	WidgetMyApprovals         = "my-approvals"
-	WidgetBillingQueue        = "billing-queue"
-	WidgetServiceFailures     = "service-failures"
-	WidgetEDIAttention        = "edi-attention"
+	WidgetAttention        = "attention"
+	WidgetUnassigned       = "unassigned"
+	WidgetExceptions       = "exceptions"
+	WidgetDetentionWatch   = "detention-watch"
+	WidgetTomorrowsPickups = "tomorrows-pickups"
+	WidgetMyApprovals      = "my-approvals"
+	WidgetBillingQueue     = "billing-queue"
+	WidgetServiceFailures  = "service-failures"
+	WidgetEDIAttention     = "edi-attention"
+	//nolint:gosec // G101: a dashboard widget identifier, not a credential
 	WidgetExpiringCredentials = "expiring-credentials"
 
 	WidgetKPI          = "kpi"

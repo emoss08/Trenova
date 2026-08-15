@@ -2,6 +2,7 @@ package detentionservice
 
 import (
 	"fmt"
+	"github.com/emoss08/trenova/shared/intutils"
 	"sort"
 	"time"
 
@@ -360,7 +361,7 @@ func detectLateness(in ComputeInput, arrival int64) latenessResult {
 
 	return latenessResult{
 		isLate:    true,
-		byMinutes: int32((arrival - *deadline) / secondsPerMinute),
+		byMinutes: intutils.SafeToInt32((arrival - *deadline) / secondsPerMinute),
 	}
 }
 

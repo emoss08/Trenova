@@ -3,6 +3,7 @@ package detention
 import (
 	"context"
 	"errors"
+	"github.com/emoss08/trenova/shared/intutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -135,7 +136,7 @@ func (o *DetentionOccurrence) MinutesUntilNoticeDue(now int64) *int32 {
 	if o.NoticeDueAt == nil {
 		return nil
 	}
-	remaining := int32((*o.NoticeDueAt - now) / 60)
+	remaining := intutils.SafeToInt32((*o.NoticeDueAt - now) / 60)
 	return &remaining
 }
 

@@ -14,12 +14,13 @@ const (
 )
 
 const (
-	CodeDriverUnderage           = "driver.underage"
-	CodeLicenseExpired           = "driver.license_expired"
-	CodeMedicalCardExpired       = "driver.medical_card_expired"
-	CodePhysicalOverdue          = "driver.physical_overdue"
-	CodePreEmploymentDrugTest    = "driver.pre_employment_drug_test"
-	CodeMVROverdue               = "driver.mvr_overdue"
+	CodeDriverUnderage        = "driver.underage"
+	CodeLicenseExpired        = "driver.license_expired"
+	CodeMedicalCardExpired    = "driver.medical_card_expired"
+	CodePhysicalOverdue       = "driver.physical_overdue"
+	CodePreEmploymentDrugTest = "driver.pre_employment_drug_test"
+	CodeMVROverdue            = "driver.mvr_overdue"
+	//nolint:gosec // G101: an eligibility finding code; "passed" is not a password
 	CodeMVRDueDatePassed         = "driver.mvr_due_date_passed"
 	CodeHazmatEndorsementMissing = "driver.hazmat_endorsement_missing"
 	CodeHazmatExpiryMissing      = "driver.hazmat_expiry_missing"

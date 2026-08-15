@@ -132,3 +132,25 @@ func IntPtrValue(v any) *int {
 		return nil
 	}
 }
+
+func SafeToInt32[T ~int | ~int64](value T) int32 {
+	if value > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	if value < math.MinInt32 {
+		return math.MinInt32
+	}
+
+	return int32(value)
+}
+
+func SafeToInt16[T ~int | ~int64](value T) int16 {
+	if value > math.MaxInt16 {
+		return math.MaxInt16
+	}
+	if value < math.MinInt16 {
+		return math.MinInt16
+	}
+
+	return int16(value)
+}

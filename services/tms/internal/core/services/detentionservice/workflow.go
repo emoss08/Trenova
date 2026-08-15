@@ -3,6 +3,7 @@ package detentionservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/shared/intutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -101,7 +102,7 @@ func (s *Service) ListDesk(
 
 		entry := &DeskEntry{
 			Occurrence:            occurrence,
-			MinutesUntilFreeEnds:  int32((occurrence.FreeTimeExpiresAt - now) / 60),
+			MinutesUntilFreeEnds:  intutils.SafeToInt32((occurrence.FreeTimeExpiresAt - now) / 60),
 			MinutesUntilNoticeDue: occurrence.MinutesUntilNoticeDue(now),
 			NoticeWindowOpen:      occurrence.NoticeWindowOpen(now),
 			AmountAtRisk:          occurrence.BillableAmount,

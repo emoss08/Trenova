@@ -123,6 +123,7 @@ func run(opts generatorOptions) error {
 		return err
 	}
 
+	//nolint:gosec // G306: generated Go source is meant to be world-readable
 	return os.WriteFile(resolved.OutputPath, output, 0o644)
 }
 
