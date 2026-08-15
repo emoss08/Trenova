@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/shared/dispatchplanner"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -343,4 +344,73 @@ func TestHorizonOracle_RebuildDoesNotMutateTheCapturedBaseline(t *testing.T) {
 		assert.Len(t, snapshot.CommitmentsByWorker[worker], 1,
 			"repeated rewinds must not accumulate")
 	}
+}
+
+// Horizon settings must not leak into organizations that never turned it on. A control
+// carrying horizon configuration — because it was set once and reverted, or because a
+// default filled it in — has to plan exactly as it did before horizon existed.
+func TestSolveImmediate_IgnoresHorizonConfiguration(t *testing.T) {
+	t.Parallel()
+
+	svc := &Service{candidates: &dispatchcandidateservice.Service{}}
+	_, agentControl := horizonControls()
+
+	build := func(control *dispatchcontrol.DispatchControl) *portservices.DispatchPlan {
+		return svc.solve(&solveParams{
+			Moves: []*repositories.BoardMove{horizonMove("P1"), horizonMove("P2")},
+			Snapshot: &dispatchcandidateservice.FleetSnapshot{
+				Now:     horizonNow,
+				Control: control,
+				Drivers: []*repositories.BoardDriver{{WorkerID: pulid.MustNew("wrk_")}},
+			},
+			Control:      control,
+			AgentControl: agentControl,
+			Now:          horizonNow,
+		})
+	}
+
+	bare := build(&dispatchcontrol.DispatchControl{
+		PlanningMode: dispatchcontrol.PlanningModeImmediate,
+	})
+
+	searchRounds := int16(100)
+	configured := build(&dispatchcontrol.DispatchControl{
+		PlanningMode:             dispatchcontrol.PlanningModeImmediate,
+		HorizonMaxMovesPerDriver: 8,
+		HorizonSearchIterations:  &searchRounds,
+	})
+
+	assert.Equal(t, dispatchcontrol.PlanningModeImmediate.String(), bare.PlanningMode)
+	assert.Empty(t, bare.Tours, "Immediate planning never builds tours")
+
+	assert.Equal(t, bare.PlanningMode, configured.PlanningMode)
+	assert.Equal(t, len(bare.Assignments), len(configured.Assignments))
+	assert.Equal(t, len(bare.Uncovered), len(configured.Uncovered))
+	assert.Equal(t, bare.TotalScore, configured.TotalScore)
+	assert.Empty(t, configured.Tours)
+}
+
+// The reverse guarantee: a control that asked for horizon planning gets it, and the
+// plan says so.
+func TestSolve_HorizonModeIsLabelledAsSuch(t *testing.T) {
+	t.Parallel()
+
+	svc := &Service{candidates: &dispatchcandidateservice.Service{}}
+	control, agentControl := horizonControls()
+	disabled := int16(0)
+	control.HorizonSearchIterations = &disabled
+
+	plan := svc.solve(&solveParams{
+		Moves: []*repositories.BoardMove{horizonMove("P1")},
+		Snapshot: &dispatchcandidateservice.FleetSnapshot{
+			Now:     horizonNow,
+			Control: control,
+			Drivers: []*repositories.BoardDriver{{WorkerID: pulid.MustNew("wrk_")}},
+		},
+		Control:      control,
+		AgentControl: agentControl,
+		Now:          horizonNow,
+	})
+
+	assert.Equal(t, dispatchcontrol.PlanningModeHorizon.String(), plan.PlanningMode)
 }
