@@ -213,6 +213,17 @@ jobs:
             exit 1
           fi
 
+      - name: Report catalog
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go generate ./internal/infrastructure/database/reportcatalog/...
+          if ! git diff --quiet -- pkg/reportcatalog/catalog_gen.go; then
+            echo "::error::Report catalog is stale - run 'go generate ./internal/infrastructure/database/reportcatalog/...' and commit"
+            git diff --stat -- pkg/reportcatalog/catalog_gen.go
+            exit 1
+          fi
+
       - name: OpenAPI spec
         working-directory: ./services/tms
         run: |
