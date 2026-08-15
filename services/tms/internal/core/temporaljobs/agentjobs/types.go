@@ -11,8 +11,6 @@ import (
 const (
 	BillingExceptionAgentWorkflowName = "BillingExceptionAgentWorkflow"
 	AgentDecisionSignalName           = "agent_decision"
-
-	billingExceptionPromptVersionFallback = "billing-exception-v1"
 )
 
 type AgentRunPayload struct {

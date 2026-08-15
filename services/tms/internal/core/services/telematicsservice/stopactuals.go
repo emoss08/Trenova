@@ -2,7 +2,6 @@ package telematicsservice
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
@@ -161,8 +160,6 @@ func nextOpenStop(stops []*shipment.Stop) *shipment.Stop {
 	}
 	return best
 }
-
-var errNoActiveShipment = errors.New("no active shipment for telematics subject")
 
 func stopExternalLocationID(externalIDs map[string]string) (pulid.ID, bool) {
 	if locationID, ok := externalIDs["trenovaLocationId"]; ok {

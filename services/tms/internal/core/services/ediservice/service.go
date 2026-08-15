@@ -1881,11 +1881,6 @@ func (s *Service) createSystemShipmentComment(
 	return err
 }
 
-//go:fix inline
-func tenderStatusPtr(status shipment.TenderStatus) *shipment.TenderStatus {
-	return new(status)
-}
-
 func validateSubmitLoadTender(req *SubmitLoadTenderRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {

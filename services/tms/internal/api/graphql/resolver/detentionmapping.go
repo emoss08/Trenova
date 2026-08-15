@@ -560,8 +560,8 @@ func detentionCollectabilityToModel(
 		factors = append(factors, &gqlmodel.DetentionScoreFactor{
 			Key:      factor.Key,
 			Label:    factor.Label,
-			Earned:   int(factor.Earned),
-			Possible: int(factor.Possible),
+			Earned:   factor.Earned,
+			Possible: factor.Possible,
 			Detail:   factor.Detail,
 			Remedy:   factor.Remedy,
 		})

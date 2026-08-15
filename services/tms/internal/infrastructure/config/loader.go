@@ -499,19 +499,6 @@ func isProductionLike(env string) bool {
 	return env == EnvProduction || env == EnvStaging
 }
 
-func isInsecureDefault(value string) bool {
-	normalized := strings.ToLower(strings.TrimSpace(value))
-	if normalized == "" {
-		return true
-	}
-	for _, marker := range InsecureDefaultValues {
-		if strings.Contains(normalized, marker) {
-			return true
-		}
-	}
-	return false
-}
-
 func (l *Loader) registerValidators() {
 	_ = l.validator.RegisterValidation("semver", func(fl validator.FieldLevel) bool {
 		version := fl.Field().String()

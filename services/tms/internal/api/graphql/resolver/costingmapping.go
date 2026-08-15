@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -302,29 +301,4 @@ func findCostCategory(
 		}
 	}
 	return nil
-}
-
-func shipmentProfitabilityAnalyticsToModel(
-	summary *costingservice.FleetCostSummary,
-) *gqlmodel.ShipmentProfitabilityAnalytics {
-	if summary == nil {
-		return nil
-	}
-
-	model := &gqlmodel.ShipmentProfitabilityAnalytics{
-		UnprofitableCount: summary.UnprofitableCount,
-		ShipmentCount:     summary.ShipmentCount,
-		TotalMiles:        summary.TotalMiles,
-	}
-	model.AvgCpm, _ = summary.AvgCPM.Float64()
-	if summary.AvgMarginPercent.Valid {
-		model.HasMargin = true
-		model.AvgMarginPct, _ = summary.AvgMarginPercent.Decimal.Float64()
-	}
-
-	return model
-}
-
-func costingTenantInfo(orgID, buID pulid.ID) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: orgID, BuID: buID}
 }
