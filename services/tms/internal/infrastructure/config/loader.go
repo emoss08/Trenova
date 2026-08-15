@@ -503,10 +503,7 @@ func (l *Loader) registerValidators() {
 	_ = l.validator.RegisterValidation("semver", func(fl validator.FieldLevel) bool {
 		version := fl.Field().String()
 		parts := strings.Split(version, ".")
-		if len(parts) != 3 {
-			return false
-		}
-		return true
+		return len(parts) == 3
 	})
 
 	_ = l.validator.RegisterValidation("hostname_port", func(fl validator.FieldLevel) bool {

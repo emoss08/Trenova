@@ -619,6 +619,9 @@ func newGCPAutokeyManager(cfg config.GCPKMSConfig) KeyManager {
 	ctx := context.Background()
 	opts := make([]option.ClientOption, 0, 1)
 	if cfg.CredentialsFile != "" {
+		//nolint:staticcheck // SA1019: the replacement pins the credential type at the
+		// call site, which would break deployments using authorized_user, impersonated
+		// or workload-identity credentials. Needs a config field first.
 		opts = append(opts, option.WithCredentialsFile(cfg.CredentialsFile))
 	}
 

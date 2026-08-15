@@ -3,6 +3,7 @@ package detention
 import (
 	"context"
 	"errors"
+
 	"github.com/emoss08/trenova/shared/intutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"

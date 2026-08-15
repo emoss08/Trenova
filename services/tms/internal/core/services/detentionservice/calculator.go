@@ -2,9 +2,10 @@ package detentionservice
 
 import (
 	"fmt"
-	"github.com/emoss08/trenova/shared/intutils"
 	"sort"
 	"time"
+
+	"github.com/emoss08/trenova/shared/intutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/detention"

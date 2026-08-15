@@ -186,7 +186,7 @@ func (r *repository) FindDefault(
 		Where("sfrc.organization_id = ?", tenantInfo.OrgID).
 		Where("sfrc.business_unit_id = ?", tenantInfo.BuID).
 		Where("sfrc.active = TRUE").
-		Where("sfrc.applies_to IN (?)", bun.In([]servicefailure.ReasonCodeAppliesTo{
+		Where("sfrc.applies_to IN (?)", bun.List([]servicefailure.ReasonCodeAppliesTo{
 			appliesTo,
 			servicefailure.ReasonCodeAppliesToBoth,
 			servicefailure.ReasonCodeAppliesToAll,
@@ -365,7 +365,7 @@ func (r *repository) Reorder(
 		Model(&entities).
 		Where("sfrc.organization_id = ?", req.TenantInfo.OrgID).
 		Where("sfrc.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("sfrc.id IN (?)", bun.In(req.ReasonIDs)).
+		Where("sfrc.id IN (?)", bun.List(req.ReasonIDs)).
 		Order("sfrc.sort_order ASC").
 		Scan(ctx)
 	if err != nil {
@@ -400,7 +400,7 @@ func (r *repository) SelectOptions(
 				if req.AppliesTo.IsValid() {
 					q = q.Where(
 						"sfrc.applies_to IN (?)",
-						bun.In([]servicefailure.ReasonCodeAppliesTo{
+						bun.List([]servicefailure.ReasonCodeAppliesTo{
 							req.AppliesTo,
 							servicefailure.ReasonCodeAppliesToBoth,
 							servicefailure.ReasonCodeAppliesToAll,

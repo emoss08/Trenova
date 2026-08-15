@@ -307,7 +307,9 @@ func detentionPolicyFromInput(
 		entity.NotificationLeadMinutes = intutils.SafeToInt16(*input.NotificationLeadMinutes)
 	}
 	if input.NotificationDeadlineMinutes != nil {
-		entity.NotificationDeadlineMinutes = intutils.SafeToInt16(*input.NotificationDeadlineMinutes)
+		entity.NotificationDeadlineMinutes = intutils.SafeToInt16(
+			*input.NotificationDeadlineMinutes,
+		)
 	}
 	if input.UnnotifiedBehavior != nil {
 		entity.UnnotifiedBehavior = *input.UnnotifiedBehavior

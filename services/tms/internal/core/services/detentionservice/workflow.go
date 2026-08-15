@@ -3,6 +3,7 @@ package detentionservice
 import (
 	"context"
 	"fmt"
+
 	"github.com/emoss08/trenova/shared/intutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"

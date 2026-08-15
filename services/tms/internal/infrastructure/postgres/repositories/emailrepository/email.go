@@ -314,7 +314,7 @@ func (r *repository) UpsertAssignments(
 			Model((*email.ProfileAssignment)(nil)).
 			Where("organization_id = ?", tenantInfo.OrgID).
 			Where("business_unit_id = ?", tenantInfo.BuID).
-			Where("purpose IN (?)", bun.In(missing)).
+			Where("purpose IN (?)", bun.List(missing)).
 			Exec(ctx)
 		if err != nil {
 			return err

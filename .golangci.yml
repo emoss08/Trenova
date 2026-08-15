@@ -160,6 +160,14 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      # Domain validation errors are surfaced verbatim as field-level messages in
+      # the client's forms, so they are user-facing copy rather than Go error
+      # strings destined to be wrapped. Sentence case is correct for them.
+      - path: internal/core/domain/
+        text: 'ST1005: error strings should not be capitalized'
+        linters:
+          - staticcheck
     paths:
       - internal/infrastructure/database/*
       - cmd/*

@@ -73,7 +73,7 @@ func (r *repository) listBusinessUnits(
 		OrderExpr("bu.id ASC")
 
 	if len(ids) > 0 {
-		query = query.Where("bu.id IN (?)", bun.In(ids))
+		query = query.Where("bu.id IN (?)", bun.List(ids))
 	}
 
 	if err := query.Scan(ctx, &rows); err != nil {
@@ -108,7 +108,7 @@ func (r *repository) listOrganizations(
 		OrderExpr("org.id ASC")
 
 	if len(ids) > 0 {
-		query = query.Where("org.id IN (?)", bun.In(ids))
+		query = query.Where("org.id IN (?)", bun.List(ids))
 	}
 
 	if err := query.Scan(ctx, &rows); err != nil {
