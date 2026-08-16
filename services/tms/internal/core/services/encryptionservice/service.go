@@ -566,6 +566,9 @@ func (m *GCPAutokeyManager) WrapKey(ctx context.Context, dek []byte, aad AAD) (*
 	}, nil
 }
 
+// which three implementations and both call sites share
+//
+//nolint:gocritic // hugeParam: WrappedKey is fixed by the KeyManager interface,
 func (m *GCPAutokeyManager) UnwrapKey(
 	ctx context.Context,
 	wrapped WrappedKey,

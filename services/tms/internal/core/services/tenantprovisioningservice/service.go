@@ -72,7 +72,7 @@ func (s *Service) validate(req *services.TenantProvisioningRequest) error {
 		multiErr.Add("instanceId", errortypes.ErrRequired, "Instance ID is required")
 	}
 	validateCustomer(multiErr, req.Customer)
-	validateWorkspace(multiErr, req.Workspace)
+	validateWorkspace(multiErr, &req.Workspace)
 	if req.Customer.ID.IsNotNil() &&
 		req.Workspace.BusinessUnitID.IsNotNil() &&
 		req.Customer.ID != req.Workspace.BusinessUnitID {
@@ -106,7 +106,7 @@ func validateCustomer(
 
 func validateWorkspace(
 	multiErr *errortypes.MultiError,
-	workspace services.TenantProvisioningWorkspace,
+	workspace *services.TenantProvisioningWorkspace,
 ) {
 	if workspace.ID.IsNil() {
 		multiErr.Add("workspace.id", errortypes.ErrRequired, "Workspace ID is required")

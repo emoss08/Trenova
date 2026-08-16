@@ -688,8 +688,8 @@ func storedMileageRouteSignature(
 		options.RoutingType,
 		optionsGranularity(options),
 		profile.ID.String(),
+		storedmileage.HazmatSignature(hazmatTypes),
 	)
-	parts = append(parts, storedmileage.HazmatSignature(hazmatTypes))
 	for _, key := range keys {
 		parts = append(parts, key.Key)
 	}
