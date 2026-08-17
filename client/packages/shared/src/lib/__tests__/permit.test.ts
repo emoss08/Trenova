@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   describeCommodityDimensions,
+  describeExceedance,
   describeRequirement,
+  dimensionMeter,
   dimensionRows,
   escortSummary,
   formatFeetInches,
@@ -12,8 +14,10 @@ import {
   pickupIsTooSoon,
   restrictionSummary,
   unverifiedJurisdictions,
+  type DimensionRow,
 } from "@trenova/shared/lib/permit";
 import {
+  permitAssessmentSchema,
   permitCreateSchema,
   waiveRequirementSchema,
   type AssessedJurisdiction,
@@ -133,6 +137,67 @@ describe("waiveRequirementSchema", () => {
   it("holds the reason to the server's minimum length", () => {
     expect(waiveRequirementSchema.safeParse({ reason: "too short" }).success).toBe(false);
     expect(waiveRequirementSchema.safeParse({ reason: "a".repeat(10) }).success).toBe(true);
+  });
+});
+
+describe("permitAssessmentSchema", () => {
+  // Assess (permitservice) returns requirements straight from permit.Derive
+  // without persisting them, and a nil pulid.ID marshals as JSON null
+  // (shared/pulid MarshalJSON), so the assessment endpoint sends
+  // "id": null and "shipmentId": null until Sync writes the rows.
+  it("accepts derived requirements whose id and shipmentId are still null", () => {
+    const derivedRequirement = {
+      id: null,
+      businessUnitId: null,
+      organizationId: null,
+      shipmentId: null,
+      stateId: "us_GA",
+      status: "Open",
+      routeSequence: 0,
+      exceedances: [{ trigger: "Width", limit: 8.5, actual: 12.5, overBy: 4, superload: false }],
+      escorts: null,
+      restrictions: null,
+      leadTimeDays: 3,
+      validityDays: 30,
+      estimatedFee: "125.0000",
+      isSuperload: false,
+      satisfiedByPermitId: null,
+      waivedById: null,
+      provenance: {
+        ruleId: "jrl_GA",
+        stateCode: "GA",
+        stateName: "Georgia",
+        verificationState: "Unverified",
+        maxWidthFeet: 8.5,
+        maxHeightFeet: 13.5,
+        maxLengthFeet: 53,
+        maxWeightPounds: 80000,
+      },
+      derivedAt: 1723900000,
+      version: 0,
+      createdAt: 0,
+      updatedAt: 0,
+    };
+
+    const payload = {
+      measurements: { widthFeet: 12.5, heightFeet: 13, lengthFeet: 48, weightPounds: 74000 },
+      jurisdictions: null,
+      requirements: [derivedRequirement],
+      open: [derivedRequirement],
+      expiringBeforeDelivery: null,
+      totalEscorts: 0,
+      totalEstimatedFee: "125.0000",
+      maxLeadTimeDays: 3,
+      earliestPickup: 1724159200,
+      routeResolved: true,
+      feeIsBaseOnly: true,
+    };
+
+    const parsed = permitAssessmentSchema.parse(payload);
+
+    expect(parsed.requirements?.[0]?.id).toBeNull();
+    expect(parsed.requirements?.[0]?.shipmentId).toBeNull();
+    expect(parsed.open?.[0]?.id).toBeNull();
   });
 });
 
@@ -462,6 +527,74 @@ describe("pickupIsTooSoon", () => {
     expect(pickupIsTooSoon(assessment({ maxLeadTimeDays: 5, earliestPickup: 9_999_999 }), 0)).toBe(
       false,
     );
+  });
+});
+
+describe("dimensionMeter", () => {
+  const row = (overrides: Partial<DimensionRow>): DimensionRow => ({
+    key: "width",
+    label: "Width",
+    unit: "ft",
+    actual: 8,
+    limit: 8.5,
+    headroom: 0.5,
+    governingStateCode: "GA",
+    exceeded: false,
+    ...overrides,
+  });
+
+  it("returns no meter when no jurisdiction set a limit", () => {
+    expect(
+      dimensionMeter(row({ limit: null, headroom: null, governingStateCode: null })),
+    ).toBeNull();
+  });
+
+  it("returns no meter for a zero limit rather than dividing by it", () => {
+    expect(dimensionMeter(row({ limit: 0 }))).toBeNull();
+  });
+
+  it("reports a comfortable load with its share of the limit", () => {
+    expect(dimensionMeter(row({ actual: 4.25, limit: 8.5 }))).toEqual({
+      percentOfLimit: 50,
+      tone: "ok",
+    });
+  });
+
+  it("warns from ninety percent of the limit while still legal", () => {
+    expect(dimensionMeter(row({ actual: 9, limit: 10, headroom: 1 }))?.tone).toBe("near");
+    expect(dimensionMeter(row({ actual: 8.9, limit: 10, headroom: 1.1 }))?.tone).toBe("ok");
+  });
+
+  it("clamps an exceeded dimension to a full bar", () => {
+    expect(
+      dimensionMeter(row({ actual: 100, limit: 8.5, headroom: -91.5, exceeded: true })),
+    ).toEqual({ percentOfLimit: 100, tone: "over" });
+  });
+});
+
+describe("describeExceedance", () => {
+  it("renders a dimensional exceedance in feet and inches", () => {
+    expect(
+      describeExceedance({
+        trigger: "Width",
+        limit: 8.5,
+        actual: 12.5,
+        overBy: 4,
+        superload: false,
+      }),
+    ).toBe("width 4' over");
+  });
+
+  it("renders an overweight exceedance in pounds", () => {
+    expect(
+      describeExceedance({
+        trigger: "Weight",
+        limit: 80000,
+        actual: 92000,
+        overBy: 12000,
+        superload: false,
+      }),
+    ).toBe("weight 12,000 lbs over");
   });
 });
 

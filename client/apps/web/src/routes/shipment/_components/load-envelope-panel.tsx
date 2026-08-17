@@ -1,5 +1,5 @@
 import { queries } from "@/lib/queries";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -11,27 +11,37 @@ import {
 } from "@trenova/shared/lib/capability";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import {
-  describeRequirement,
+  describeExceedance,
+  dimensionMeter,
   dimensionRows,
   escortSummary,
   formatMeasurement,
   hasOpenRequirements,
   isOversize,
   pickupIsTooSoon,
+  requirementStateCode,
   restrictionSummary,
   unverifiedJurisdictions,
+  type DimensionMeterTone,
   type DimensionRow,
 } from "@trenova/shared/lib/permit";
 import { cn } from "@trenova/shared/lib/utils";
-import type { Permit, PermitAssessment, PermitRequirement } from "@trenova/shared/types/permit";
+import type {
+  Permit,
+  PermitAssessment,
+  PermitRequirement,
+  PermitStatus,
+  RequirementStatus,
+} from "@trenova/shared/types/permit";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CircleAlertIcon,
+  CalendarClockIcon,
+  CircleDollarSignIcon,
   ClockIcon,
+  InfoIcon,
   RulerIcon,
   ShieldQuestionIcon,
-  TriangleAlertIcon,
   TruckIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -121,6 +131,7 @@ function EnvelopeBody({
   const restrictions = restrictionSummary(assessment.jurisdictions);
   const unverified = unverifiedJurisdictions(assessment);
   const pickupTooSoon = pickupIsTooSoon(assessment, scheduledPickupAt);
+  const openCount = requirements.filter((requirement) => requirement.status === "Open").length;
 
   const [recording, setRecording] = useState<PermitRequirement | null>(null);
   const [waiving, setWaiving] = useState<PermitRequirement | null>(null);
@@ -137,19 +148,7 @@ function EnvelopeBody({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="rounded-lg border">
-        <div className="grid grid-cols-12 gap-2 border-b border-border px-4 py-2 text-2xs text-muted-foreground uppercase">
-          <span className="col-span-3">Dimension</span>
-          <span className="col-span-3">Actual</span>
-          <span className="col-span-3">Tightest limit</span>
-          <span className="col-span-3">Headroom</span>
-        </div>
-        <div className="divide-y">
-          {rows.map((row) => (
-            <DimensionRowView key={row.key} row={row} />
-          ))}
-        </div>
-      </div>
+      <DimensionGrid rows={rows} />
 
       {!assessment.routeResolved && (
         <EmptyNotice>
@@ -161,9 +160,18 @@ function EnvelopeBody({
 
       {requirements.length > 0 && (
         <div className="rounded-lg border">
-          <div className="border-b border-border px-4 py-2 text-2xs text-muted-foreground uppercase">
-            Permits required ({requirements.length})
-          </div>
+          <CardHeader
+            title={`Permits required (${requirements.length})`}
+            meta={
+              openCount > 0 ? (
+                <span className="text-2xs font-medium text-destructive tabular-nums">
+                  {openCount} open
+                </span>
+              ) : (
+                <span className="text-2xs text-muted-foreground">All resolved</span>
+              )
+            }
+          />
           <ul className="divide-y">
             {requirements.map((requirement) => (
               <RequirementRow
@@ -171,7 +179,6 @@ function EnvelopeBody({
                 // place on the route are what actually identify a row.
                 key={`${requirement.stateId}-${requirement.routeSequence}`}
                 requirement={requirement}
-                shipmentId={shipmentId}
                 onRecord={() => setRecording(requirement)}
                 onWaive={() => setWaiving(requirement)}
               />
@@ -182,42 +189,10 @@ function EnvelopeBody({
 
       {!!permits?.length && (
         <div className="rounded-lg border">
-          <div className="border-b border-border px-4 py-2 text-2xs text-muted-foreground uppercase">
-            Permits on file ({permits.length})
-          </div>
+          <CardHeader title={`Permits on file (${permits.length})`} />
           <ul className="divide-y">
             {permits.map((entry) => (
-              <li key={entry.id} className="flex items-start justify-between gap-3 px-4 py-2">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-medium">
-                    {entry.state?.abbreviation ?? ""} {entry.permitNumber}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {entry.expiresAt
-                      ? `Expires ${formatToUserTimezone(entry.expiresAt, {
-                          showTimeZone: false,
-                          showTime: false,
-                        })}`
-                      : "No expiry recorded"}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  {/* A permit number keyed wrong, or an expiry that turns out to
-                      fall short of the last stop, is corrected here rather than
-                      by recording a second permit beside the first. */}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="xxs"
-                    onClick={() => setEditing(entry)}
-                  >
-                    Edit
-                  </Button>
-                  <Badge variant={entry.status === "Active" ? "active" : "outline"}>
-                    {entry.status}
-                  </Badge>
-                </div>
-              </li>
+              <PermitRow key={entry.id} permit={entry} onEdit={() => setEditing(entry)} />
             ))}
           </ul>
         </div>
@@ -227,18 +202,15 @@ function EnvelopeBody({
         {escorts.length > 0 && (
           <SummaryCard
             icon={<TruckIcon className="size-3.5" />}
-            title={`${assessment.totalEscorts} escort ${
-              assessment.totalEscorts === 1 ? "vehicle" : "vehicles"
-            } for the trip`}
+            label="Escort vehicles"
+            value={`${assessment.totalEscorts} for the trip`}
             hint="Counted once per role across the route, not once per state."
           >
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {escorts.map((escort) => (
                 <li key={escort.role} className="text-xs text-muted-foreground">
-                  {escort.label}
-                  {escort.stateCodes.length > 0 && (
-                    <span> — required by {escort.stateCodes.join(", ")}</span>
-                  )}
+                  <span className="text-foreground">{escort.label}</span>
+                  {escort.stateCodes.length > 0 && ` — required by ${escort.stateCodes.join(", ")}`}
                 </li>
               ))}
             </ul>
@@ -248,13 +220,14 @@ function EnvelopeBody({
         {restrictions.length > 0 && (
           <SummaryCard
             icon={<ClockIcon className="size-3.5" />}
-            title="Movement restrictions"
+            label="Movement restrictions"
             hint="Restrictions published by the permitting jurisdictions on this route. Trenova does not yet evaluate them against your appointment times."
           >
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {restrictions.map((restriction) => (
                 <li key={restriction.kind} className="text-xs text-muted-foreground">
-                  {restriction.label} — {restriction.stateCodes.join(", ")}
+                  <span className="text-foreground">{restriction.label}</span> —{" "}
+                  {restriction.stateCodes.join(", ")}
                 </li>
               ))}
             </ul>
@@ -263,11 +236,12 @@ function EnvelopeBody({
 
         {assessment.maxLeadTimeDays > 0 && (
           <SummaryCard
-            icon={<ClockIcon className="size-3.5" />}
-            title={`Earliest feasible pickup — ${formatToUserTimezone(assessment.earliestPickup, {
+            icon={<CalendarClockIcon className="size-3.5" />}
+            label="Earliest feasible pickup"
+            value={formatToUserTimezone(assessment.earliestPickup, {
               showTimeZone: false,
               showSeconds: false,
-            })}`}
+            })}
             hint="Derived from the slowest jurisdiction's permit lead time."
             tone={pickupTooSoon ? "warning" : undefined}
           >
@@ -276,7 +250,7 @@ function EnvelopeBody({
               {assessment.maxLeadTimeDays === 1 ? "" : "s"} of permit lead time on this route.
             </p>
             {pickupTooSoon && (
-              <p className="mt-1 text-xs font-medium text-warning">
+              <p className="mt-1 text-xs font-medium text-yellow-700 dark:text-yellow-400">
                 The booked pickup falls inside that window and cannot be permitted in time.
               </p>
             )}
@@ -285,13 +259,13 @@ function EnvelopeBody({
 
         {(assessment.totalEstimatedFee ?? 0) > 0 && (
           <SummaryCard
-            icon={<CircleAlertIcon className="size-3.5" />}
-            title={`Estimated permit fees — $${(assessment.totalEstimatedFee ?? 0).toLocaleString()}`}
-            hint="Base fees only."
+            icon={<CircleDollarSignIcon className="size-3.5" />}
+            label="Estimated permit fees"
+            value={`$${(assessment.totalEstimatedFee ?? 0).toLocaleString()}`}
           >
             {assessment.feeIsBaseOnly && (
               <p className="text-xs text-muted-foreground">
-                Base fees only. Per-mile permit fees are excluded because per-state mileage is not
+                Base fees only — per-mile charges are excluded because per-state mileage is not
                 available for this route, so the real cost will be higher where a jurisdiction
                 charges by distance.
               </p>
@@ -301,10 +275,10 @@ function EnvelopeBody({
       </div>
 
       {unverified.length > 0 && (
-        <div className="flex items-start gap-2 rounded-lg border border-yellow-600/30 bg-yellow-600/10 px-4 py-3">
+        <div className="flex items-start gap-2.5 rounded-lg border border-yellow-600/30 bg-yellow-600/10 px-3 py-2.5">
           <ShieldQuestionIcon className="mt-0.5 size-3.5 shrink-0 text-yellow-700 dark:text-yellow-400" />
-          <div className="space-y-1">
-            <p className="text-xs font-medium">
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
               Unconfirmed limits for {unverified.map((j) => j.stateCode).join(", ")}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -339,45 +313,102 @@ function EnvelopeBody({
   );
 }
 
-function DimensionRowView({ row }: { row: DimensionRow }) {
+const METER_FILL: Record<DimensionMeterTone, string> = {
+  ok: "bg-success",
+  near: "bg-warning",
+  over: "bg-destructive",
+};
+
+function DimensionGrid({ rows }: { rows: DimensionRow[] }) {
+  const overCount = rows.filter((row) => row.exceeded).length;
+  const hasLimits = rows.some((row) => row.limit !== null);
+
   return (
-    <div
-      className={cn(
-        "grid grid-cols-12 items-center gap-2 px-4 py-2",
-        row.exceeded && "bg-destructive/10",
-      )}
-    >
-      <span className="col-span-3 text-xs font-medium">{row.label}</span>
-      <span className="col-span-3 text-xs text-muted-foreground">
-        {formatMeasurement(row.actual, row.unit)}
-      </span>
-      <span className="col-span-3 text-xs text-muted-foreground">
-        {row.limit === null ? (
-          "—"
-        ) : (
-          <>
-            {formatMeasurement(row.limit, row.unit)}
-            {row.governingStateCode && (
-              <span className="ml-1 text-2xs uppercase">{row.governingStateCode}</span>
+    <div className="rounded-lg border p-3">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
+          Dimensions vs tightest limit
+        </span>
+        {hasLimits && (
+          <span
+            className={cn(
+              "text-2xs font-medium tabular-nums",
+              overCount > 0 ? "text-destructive" : "text-muted-foreground",
             )}
-          </>
+          >
+            {overCount > 0 ? `${overCount} of ${rows.length} over` : "All within limits"}
+          </span>
         )}
-      </span>
-      <span
-        className={cn(
-          "col-span-3 text-xs",
-          row.exceeded ? "font-medium text-destructive" : "text-muted-foreground",
-        )}
-      >
-        {row.headroom === null
-          ? "—"
-          : row.exceeded
-            ? `${formatMeasurement(Math.abs(row.headroom), row.unit)} over`
-            : `${formatMeasurement(row.headroom, row.unit)} left`}
-      </span>
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {rows.map((row) => (
+          <DimensionTile key={row.key} row={row} />
+        ))}
+      </div>
     </div>
   );
 }
+
+function DimensionTile({ row }: { row: DimensionRow }) {
+  const meter = dimensionMeter(row);
+
+  return (
+    <div
+      className={cn(
+        "rounded-md border px-2.5 py-2",
+        row.exceeded && "border-destructive/40 bg-destructive/5",
+      )}
+    >
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="text-2xs font-medium text-muted-foreground">{row.label}</span>
+        {row.headroom !== null &&
+          (row.exceeded ? (
+            <span className="rounded-full bg-destructive/15 px-1.5 py-px text-2xs font-semibold text-destructive tabular-nums">
+              {formatMeasurement(Math.abs(row.headroom), row.unit)} over
+            </span>
+          ) : (
+            <span className="text-2xs text-muted-foreground tabular-nums">
+              {formatMeasurement(row.headroom, row.unit)} left
+            </span>
+          ))}
+      </div>
+      {meter && (
+        <div className="mb-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn("h-full rounded-full transition-all", METER_FILL[meter.tone])}
+            style={{ width: `${meter.percentOfLimit}%` }}
+          />
+        </div>
+      )}
+      <div className="flex items-baseline justify-between gap-2">
+        <span
+          className={cn("text-xs font-semibold tabular-nums", row.exceeded && "text-destructive")}
+        >
+          {formatMeasurement(row.actual, row.unit)}
+        </span>
+        <span className="text-2xs text-muted-foreground tabular-nums">
+          {row.limit === null ? (
+            "no limit matched"
+          ) : (
+            <>
+              / {formatMeasurement(row.limit, row.unit)}
+              {row.governingStateCode && (
+                <span className="ml-1 uppercase">{row.governingStateCode}</span>
+              )}
+            </>
+          )}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const REQUIREMENT_STATUS_VARIANT: Record<RequirementStatus, BadgeVariant> = {
+  Open: "inactive",
+  Satisfied: "active",
+  Waived: "outline",
+  Superseded: "outline",
+};
 
 function RequirementRow({
   requirement,
@@ -385,30 +416,51 @@ function RequirementRow({
   onWaive,
 }: {
   requirement: PermitRequirement;
-  shipmentId: string;
   onRecord: () => void;
   onWaive: () => void;
 }) {
-  const satisfied = requirement.status === "Satisfied";
-  const waived = requirement.status === "Waived";
+  const code = requirementStateCode(requirement);
+  const stateName = requirement.provenance?.stateName;
+  const exceedances = requirement.exceedances ?? [];
   // Actions need a persisted row to act on. A derived requirement has no ID yet
   // because the shipment has not been saved since the engine ran, and offering
   // a button that cannot resolve a target would be worse than offering none.
   const actionable = requirement.status === "Open" && !!requirement.id;
 
   return (
-    <li className="flex items-start justify-between gap-3 px-4 py-2">
-      <div className="space-y-0.5">
-        <p className="text-xs font-medium">{describeRequirement(requirement)}</p>
-        <p className="text-xs text-muted-foreground">
-          {requirement.leadTimeDays} day
-          {requirement.leadTimeDays === 1 ? "" : "s"} lead time
-          {requirement.validityDays > 0 && `, valid ${requirement.validityDays} days`}
-          {requirement.isSuperload && " · superload"}
-        </p>
-        {waived && requirement.waiverReason && (
-          <p className="text-xs text-muted-foreground">Waived: {requirement.waiverReason}</p>
-        )}
+    <li className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-3 py-2.5">
+      <div className="flex min-w-0 flex-1 items-start gap-2.5">
+        <StateChip code={code} />
+        <div className="min-w-0 space-y-1">
+          <p className="text-xs font-medium">
+            {stateName ? `${stateName} permit` : code ? `${code} permit` : "Permit required"}
+          </p>
+          {exceedances.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {requirement.isSuperload && (
+                <span className="rounded-sm bg-orange-600/15 px-1.5 py-px text-2xs font-medium text-orange-700 dark:text-orange-400">
+                  superload
+                </span>
+              )}
+              {exceedances.map((exceedance) => (
+                <span
+                  key={exceedance.trigger}
+                  className="rounded-sm bg-muted px-1.5 py-px text-2xs text-muted-foreground tabular-nums"
+                >
+                  {describeExceedance(exceedance)}
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="text-2xs text-muted-foreground">
+            {requirement.leadTimeDays} day
+            {requirement.leadTimeDays === 1 ? "" : "s"} lead time
+            {requirement.validityDays > 0 && ` · valid ${requirement.validityDays} days`}
+          </p>
+          {requirement.status === "Waived" && requirement.waiverReason && (
+            <p className="text-2xs text-muted-foreground">Waived: {requirement.waiverReason}</p>
+          )}
+        </div>
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
         {actionable && (
@@ -421,23 +473,79 @@ function RequirementRow({
             </Button>
           </>
         )}
-        <Badge variant={satisfied ? "active" : waived ? "outline" : "inactive"}>
-          {requirement.status}
-        </Badge>
+        <Badge variant={REQUIREMENT_STATUS_VARIANT[requirement.status]}>{requirement.status}</Badge>
       </div>
     </li>
   );
 }
 
+const PERMIT_STATUS_VARIANT: Record<PermitStatus, BadgeVariant> = {
+  Active: "active",
+  Pending: "warning",
+  Expired: "inactive",
+  Void: "outline",
+};
+
+function PermitRow({ permit, onEdit }: { permit: Permit; onEdit: () => void }) {
+  return (
+    <li className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-3 py-2.5">
+      <div className="flex min-w-0 flex-1 items-start gap-2.5">
+        <StateChip code={permit.state?.abbreviation ?? ""} />
+        <div className="min-w-0 space-y-0.5">
+          <p className="text-xs font-medium tabular-nums">{permit.permitNumber}</p>
+          <p className="text-2xs text-muted-foreground">
+            {permit.expiresAt
+              ? `Expires ${formatToUserTimezone(permit.expiresAt, {
+                  showTimeZone: false,
+                  showTime: false,
+                })}`
+              : "No expiry recorded"}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">
+        {/* A permit number keyed wrong, or an expiry that turns out to fall
+            short of the last stop, is corrected here rather than by recording
+            a second permit beside the first. */}
+        <Button type="button" variant="outline" size="xxs" onClick={onEdit}>
+          Edit
+        </Button>
+        <Badge variant={PERMIT_STATUS_VARIANT[permit.status]}>{permit.status}</Badge>
+      </div>
+    </li>
+  );
+}
+
+function StateChip({ code }: { code: string }) {
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-muted/60 text-2xs font-semibold uppercase">
+      {code || "—"}
+    </span>
+  );
+}
+
+function CardHeader({ title, meta }: { title: string; meta?: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+      <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
+        {title}
+      </span>
+      {meta}
+    </div>
+  );
+}
+
 function SummaryCard({
   icon,
-  title,
+  label,
+  value,
   hint,
   tone,
   children,
 }: {
   icon: React.ReactNode;
-  title: string;
+  label: string;
+  value?: string;
   hint?: string;
   tone?: "warning";
   children?: React.ReactNode;
@@ -445,19 +553,28 @@ function SummaryCard({
   return (
     <div
       className={cn(
-        "rounded-lg border px-4 py-3",
+        "rounded-lg border bg-muted/40 px-3 py-2.5",
         tone === "warning" && "border-yellow-600/30 bg-yellow-600/10",
       )}
     >
       <div className="flex items-center gap-1.5">
-        <span className="text-muted-foreground">{icon}</span>
-        <p className="text-xs font-medium">{title}</p>
+        <span
+          className={cn(
+            "text-muted-foreground",
+            tone === "warning" && "text-yellow-700 dark:text-yellow-400",
+          )}
+        >
+          {icon}
+        </span>
+        <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
+          {label}
+        </span>
         {hint && (
           <Tooltip>
             <TooltipTrigger
               render={
                 <span className="cursor-help text-muted-foreground">
-                  <TriangleAlertIcon className="size-3" />
+                  <InfoIcon className="size-3" />
                 </span>
               }
             />
@@ -467,14 +584,15 @@ function SummaryCard({
           </Tooltip>
         )}
       </div>
-      <div className="mt-1.5">{children}</div>
+      {value && <p className="mt-1.5 text-sm font-medium tabular-nums">{value}</p>}
+      {children && <div className={value ? "mt-1" : "mt-1.5"}>{children}</div>}
     </div>
   );
 }
 
 function EmptyNotice({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-dashed px-4 py-3">
+    <div className="flex items-start gap-2.5 rounded-lg border border-dashed px-3 py-2.5">
       <RulerIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
       <p className="text-xs text-muted-foreground">{children}</p>
     </div>

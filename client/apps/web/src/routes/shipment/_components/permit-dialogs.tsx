@@ -1,12 +1,14 @@
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
+import { DocumentUploadSection } from "@/components/document-upload-section";
 import { DateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
-import { MoneyField } from "@/components/fields/money-field";
+import { NumberField } from "@/components/fields/number-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { DocumentUploadSection } from "@/components/document-upload-section";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { permitViewQueryKeys } from "@/lib/queries/shipment";
 import { apiService } from "@/services/api";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -26,8 +28,6 @@ import {
   type PermitRequirement,
   type WaiveRequirementInput,
 } from "@trenova/shared/types/permit";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
 import { TriangleAlertIcon } from "lucide-react";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -154,7 +154,8 @@ export function PermitRecordDialog({
                 control={control}
                 name="permitNumber"
                 label="Permit Number"
-                placeholder="Enter the number issued by the state"
+                description="Exactly as printed on the permit — this is the number enforcement matches at an inspection."
+                placeholder="e.g. 2026-084311"
                 rules={{ required: true }}
                 maxLength={100}
               />
@@ -164,6 +165,7 @@ export function PermitRecordDialog({
                 control={control}
                 name="stateId"
                 label="Issuing State"
+                description="The state that issued this permit. A permit covers one jurisdiction — record one per state on the route."
                 placeholder="Select issuing state"
                 rules={{ required: true }}
               />
@@ -173,6 +175,7 @@ export function PermitRecordDialog({
                 control={control}
                 name="issuedAt"
                 label="Issued"
+                description="The issue date on the permit, not the day it was keyed in."
                 placeholder="Select issue date"
                 clearable
               />
@@ -189,14 +192,21 @@ export function PermitRecordDialog({
               />
             </FormControl>
             <FormControl cols="full">
-              <MoneyField control={control} name="cost" label="Cost" placeholder="0.00" />
+              <NumberField
+                control={control}
+                name="cost"
+                label="Cost"
+                description="What the state actually charged, so the estimated fees on this load can be reconciled against actuals."
+                placeholder="125.00"
+              />
             </FormControl>
             <FormControl cols="full">
               <TextareaField
                 control={control}
                 name="notes"
                 label="Notes"
-                placeholder="Routing conditions, escort details, anything the driver needs"
+                description="Conditions printed on the permit the driver must honor — approved routing, travel hours, flags, signs, or escort details."
+                placeholder="e.g. I-35 only, daylight travel, flags on all corners"
               />
             </FormControl>
           </FormGroup>

@@ -2,6 +2,7 @@ package modeprofile
 
 import (
 	"errors"
+	"slices"
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
@@ -346,6 +347,7 @@ func RuleKeysForCapability(capability Capability) []RuleKey {
 			keys = append(keys, key)
 		}
 	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+	slices.Sort(keys)
 	return keys
 }

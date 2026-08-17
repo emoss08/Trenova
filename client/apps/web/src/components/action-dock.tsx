@@ -30,7 +30,7 @@ export function ActionDock({ position = "center", width, className, indicator, c
       className={cn("fixed bottom-6 z-50", POSITION_CLASSES[position], className)}
       style={{ width }}
     >
-      <div className="flex w-fit min-w-[450px] items-center gap-x-10 rounded-lg bg-foreground p-2 shadow-lg">
+      <div className="flex w-fit min-w-112.5 items-center gap-x-10 rounded-lg bg-foreground p-2 shadow-lg">
         {indicator}
         <div className="ml-auto flex items-center space-x-2">{children}</div>
       </div>

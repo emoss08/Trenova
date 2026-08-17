@@ -51,7 +51,8 @@ type Organization struct {
 }
 
 func (o *Organization) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(o,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		o,
 		validation.Field(&o.Name,
 			validation.Required.Error("Name is required. Please try again"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters")),

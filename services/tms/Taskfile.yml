@@ -5,7 +5,7 @@ version: "3"
 vars:
   ROOT_DIR: "{{.TASKFILE_DIR}}/../.."
   BUILD_DIR: ./build
-  CLI_BINARY: trenova-cli
+  CLI_BINARY: "trenova-cli{{exeExt}}"
   CLI_PATH: "{{.BUILD_DIR}}/{{.CLI_BINARY}}"
   DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/docker-compose-local.yml"
   CLIENT_DIR: "{{.ROOT_DIR}}/client"

@@ -65,9 +65,12 @@ export const ruleProvenanceSchema = z.object({
 });
 export type RuleProvenance = z.infer<typeof ruleProvenanceSchema>;
 
+// A requirement in an assessment is freshly derived by the server and not yet
+// persisted, so id and shipmentId arrive as null (a nil pulid.ID marshals as
+// JSON null); only rows returned by the permit-requirements list carry them.
 export const permitRequirementSchema = z.object({
-  id: z.string(),
-  shipmentId: z.string(),
+  id: nullableStringSchema,
+  shipmentId: nullableStringSchema,
   stateId: z.string(),
   status: requirementStatusSchema,
   routeSequence: z.number().int(),

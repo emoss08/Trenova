@@ -72,7 +72,7 @@ export function MoneyField<T extends FieldValues>({
             aria-label={props["aria-label"] || label}
             aria-describedby={cn(description && descriptionId, fieldState.error && errorId)}
             className={cn(
-              "flex h-7 w-full min-w-0 rounded-md border border-input bg-muted px-2 py-0.5 text-right tabular-nums outline-none md:text-xs",
+              "flex h-7 w-full min-w-0 rounded-md border border-input bg-muted px-2 py-0.5 text-left tabular-nums outline-none md:text-xs",
               "placeholder:text-muted-foreground",
               "disabled:cursor-not-allowed disabled:opacity-50",
               "read-only:cursor-default read-only:text-muted-foreground",

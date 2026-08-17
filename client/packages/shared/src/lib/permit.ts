@@ -1,6 +1,7 @@
 import type {
   AssessedJurisdiction,
   EscortRole,
+  Exceedance,
   PermitAssessment,
   PermitRequirement,
   RestrictionKind,
@@ -163,8 +164,51 @@ export function formatMeasurement(value: number, unit: "ft" | "lbs"): string {
   return unit === "lbs" ? formatPounds(value) : formatFeetInches(value);
 }
 
+/** Share of the tightest limit at which a still-legal dimension starts to warn. */
+export const NEAR_LIMIT_RATIO = 0.9;
+
+export type DimensionMeterTone = "ok" | "near" | "over";
+
+export type DimensionMeter = {
+  /** Share of the tightest limit consumed, clamped to [0, 100] for bar width. */
+  percentOfLimit: number;
+  tone: DimensionMeterTone;
+};
+
+/**
+ * How full a dimension runs against the tightest limit on the route, for
+ * rendering as a capacity bar. A load at 94% of the width limit is legal but
+ * one re-measure away from not being, and a table of raw numbers hides that;
+ * the near band exists so the bar says it before the permit engine has to.
+ * Returns null when no jurisdiction resolved a limit — an absent limit is not
+ * an empty bar, it is no bar.
+ */
+export function dimensionMeter(row: DimensionRow): DimensionMeter | null {
+  if (row.limit === null || row.limit <= 0) return null;
+
+  const ratio = row.actual / row.limit;
+
+  return {
+    percentOfLimit: Math.min(Math.max(ratio * 100, 0), 100),
+    tone: row.exceeded ? "over" : ratio >= NEAR_LIMIT_RATIO ? "near" : "ok",
+  };
+}
+
 export function requirementStateCode(requirement: PermitRequirement): string {
   return requirement.provenance?.stateCode ?? "";
+}
+
+/**
+ * One exceedance as an operator reads it: the dimension and the amount over,
+ * in the unit that dimension is measured in.
+ */
+export function describeExceedance(exceedance: Exceedance): string {
+  const over =
+    exceedance.trigger === "Weight"
+      ? formatPounds(exceedance.overBy)
+      : formatFeetInches(exceedance.overBy);
+
+  return `${exceedance.trigger.toLowerCase()} ${over} over`;
 }
 
 /**
@@ -180,15 +224,7 @@ export function describeRequirement(requirement: PermitRequirement): string {
     return `${code} permit required`;
   }
 
-  const reasons = exceedances.map((exceedance) => {
-    const over =
-      exceedance.trigger === "Weight"
-        ? formatPounds(exceedance.overBy)
-        : formatFeetInches(exceedance.overBy);
-    return `${exceedance.trigger.toLowerCase()} ${over} over`;
-  });
-
-  return `${code} permit required (${reasons.join(", ")})`;
+  return `${code} permit required (${exceedances.map(describeExceedance).join(", ")})`;
 }
 
 export type EscortSummaryEntry = {
