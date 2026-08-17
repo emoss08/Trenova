@@ -3775,6 +3775,9 @@ type ShipmentCommodity struct {
 	CommodityID    string                   `json:"commodityId"`
 	Pieces         int                      `json:"pieces"`
 	Weight         int                      `json:"weight"`
+	LengthFeet     *float64                 `json:"lengthFeet,omitempty"`
+	WidthFeet      *float64                 `json:"widthFeet,omitempty"`
+	HeightFeet     *float64                 `json:"heightFeet,omitempty"`
 	Version        int                      `json:"version"`
 	CreatedAt      int                      `json:"createdAt"`
 	UpdatedAt      int                      `json:"updatedAt"`
@@ -3804,12 +3807,15 @@ type ShipmentCommodityDetail struct {
 }
 
 type ShipmentCommodityInput struct {
-	ID          *string `json:"id,omitempty"`
-	ShipmentID  *string `json:"shipmentId,omitempty"`
-	CommodityID string  `json:"commodityId"`
-	Pieces      *int    `json:"pieces,omitempty"`
-	Weight      *int    `json:"weight,omitempty"`
-	Version     *int    `json:"version,omitempty"`
+	ID          *string  `json:"id,omitempty"`
+	ShipmentID  *string  `json:"shipmentId,omitempty"`
+	CommodityID string   `json:"commodityId"`
+	Pieces      *int     `json:"pieces,omitempty"`
+	Weight      *int     `json:"weight,omitempty"`
+	LengthFeet  *float64 `json:"lengthFeet,omitempty"`
+	WidthFeet   *float64 `json:"widthFeet,omitempty"`
+	HeightFeet  *float64 `json:"heightFeet,omitempty"`
+	Version     *int     `json:"version,omitempty"`
 }
 
 type ShipmentConnection struct {

@@ -430,6 +430,9 @@ type ShipmentCommodity {
   commodityId: ID!
   pieces: Int!
   weight: Int!
+  lengthFeet: Float
+  widthFeet: Float
+  heightFeet: Float
   version: Int!
   createdAt: Int!
   updatedAt: Int!
@@ -1162,6 +1165,9 @@ input ShipmentCommodityInput {
   commodityId: ID!
   pieces: Int = 1
   weight: Int = 0
+  lengthFeet: Float
+  widthFeet: Float
+  heightFeet: Float
   version: Int
 }
 

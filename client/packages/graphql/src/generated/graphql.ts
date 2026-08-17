@@ -2280,11 +2280,14 @@ export type ShipmentCommentsFilterInput = {
 
 export type ShipmentCommodityInput = {
   commodityId: string | number;
+  heightFeet?: number | null | undefined;
   id?: string | number | null | undefined;
+  lengthFeet?: number | null | undefined;
   pieces?: number | null | undefined;
   shipmentId?: string | number | null | undefined;
   version?: number | null | undefined;
   weight?: number | null | undefined;
+  widthFeet?: number | null | undefined;
 };
 
 export type ShipmentDuplicateBolInput = {
@@ -5476,7 +5479,7 @@ export type ShipmentCarrierAssignmentFieldsFragment = { id: string, businessUnit
 
 export type ShipmentAdditionalChargeFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, accessorialChargeId: string, isSystemGenerated: boolean, method: string, amount: string, unit: number, fuelSurchargeProgramId: string | null, fuelSurchargeDetail: unknown, detentionOccurrenceId: string | null, version: number, createdAt: number, updatedAt: number, accessorialCharge: { id: string, businessUnitId: string, organizationId: string, code: string, description: string, status: EntityStatus, method: string, rateUnit: string, amount: string, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentAdditionalChargeFieldsFragment' };
 
-export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, commodityId: string, pieces: number, weight: number, version: number, createdAt: number, updatedAt: number, commodity: { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: string, loadingInstructions: string, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentCommodityFieldsFragment' };
+export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, commodityId: string, pieces: number, weight: number, lengthFeet: number | null, widthFeet: number | null, heightFeet: number | null, version: number, createdAt: number, updatedAt: number, commodity: { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: string, loadingInstructions: string, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentCommodityFieldsFragment' };
 
 export type ShipmentRatingDetailFieldsFragment = { formulaTemplateId: string, formulaTemplateName: string, expression: string, resolvedVariables: unknown, result: number, ratedAt: number } & { ' $fragmentName'?: 'ShipmentRatingDetailFieldsFragment' };
 
@@ -8872,6 +8875,9 @@ export const ShipmentCommodityFieldsFragmentDoc = new TypedDocumentString(`
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -9237,6 +9243,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -19317,6 +19326,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -19476,7 +19488,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:33e02d91cebe914620f6fec78dc65d777e669d36e54248d849e75b9dc723e2a4"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
+}`, {"hash":"sha256:d2d105a57bef05ef3bcfe063068b14bc0e3d79e7347907928f51a23268a9cf83"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
 export const ShipmentDetailDocument = new TypedDocumentString(`
     query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
   shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {
@@ -19686,6 +19698,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -19841,7 +19856,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:aef56c3a2bd39ddb8507ede91362dd62efd87f2ff13a6107721e2f9d50b645fc"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
+}`, {"hash":"sha256:22f39813006afcc90c0a34b36c3b4bdbc916fd3c1484ffc1879dfd9943b729a0"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentSavedViewCountsDocument = new TypedDocumentString(`
     query ShipmentSavedViewCounts($timezone: String!) {
   shipmentAnalytics(input: { include: "savedViewCounts", timezone: $timezone }) {
@@ -20218,6 +20233,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -20377,7 +20395,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:4df9a18b3224f94ceb7073da45727e22f8ac00fd9eac9faeeaf4c5fb8df87707"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+}`, {"hash":"sha256:347c3a46ed922fa9f3406d4bed70b37e12e8b1cdfc0fdc2469df890fbee31a6a"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
 export const ExceptionShipmentsDocument = new TypedDocumentString(`
     query ExceptionShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -20595,6 +20613,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -20754,7 +20775,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:4f8627c3840c9f21d1db1967cfb0f3a94b8c68b53ecc0cd95d678da841b1e814"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+}`, {"hash":"sha256:7b96f1f20244101ca5f20375321476def7cb7f86238c6414471c0024198f72b0"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
 export const MapShipmentsDocument = new TypedDocumentString(`
     query MapShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -20972,6 +20993,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -21131,7 +21155,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:9eca07f3ee6775f6f70246cfffdae0fd5f4e3b0dcc935373b948792aed7d8165"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+}`, {"hash":"sha256:977bf9ffb37983bab34fe2d1562bae6db31bcc6543c044970b342c3f811d024b"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
 export const ShipmentCommentsDocument = new TypedDocumentString(`
     query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String, $filter: ShipmentCommentsFilterInput) {
   shipmentComments(
@@ -21714,6 +21738,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -21869,7 +21896,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:ea378293e8a0e9eb085ce427773b3e1a73cac46f78e82ed5a3f25e62bf9c7cfa"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+}`, {"hash":"sha256:4a09b993b0d741903bae4955150d452e3fba52609f27ed19a5e54b034a697dbf"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
 export const UpdateShipmentDocument = new TypedDocumentString(`
     mutation UpdateShipment($id: ID!, $input: ShipmentInput!) {
   updateShipment(id: $id, input: $input) {
@@ -22079,6 +22106,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -22234,7 +22264,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:83b5b59feb3c6b61abff6b5e2d998e28fb44404f3f0c811270612ffc2bbf1627"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+}`, {"hash":"sha256:c76c4019d797643d8dc1495fe47e48418bfa13be7daa8ad363f8676f7445630c"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
 export const CancelShipmentDocument = new TypedDocumentString(`
     mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
   cancelShipment(id: $id, input: $input) {
@@ -22444,6 +22474,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -22599,7 +22632,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:06c317b0dc5bdd7ce2a27e274b6c2636a0c0cea5db8f5e371ad5ae4f29df8c4b"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+}`, {"hash":"sha256:8a5ba5e280dc223731d0ac9c2bb1780f7f91ddb4e1f9e6196db80ceb178df7db"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
 export const UncancelShipmentDocument = new TypedDocumentString(`
     mutation UncancelShipment($id: ID!) {
   uncancelShipment(id: $id) {
@@ -22809,6 +22842,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -22964,7 +23000,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:972cba990730471d05141ce87329262927c5faad3f5d2024a2a4395a3544c376"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+}`, {"hash":"sha256:5f0abe459f5ecba1d27dc4cde7ce2d05994d4e8dca03ce8cd71bea55e3249cf9"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = new TypedDocumentString(`
     mutation DuplicateShipment($input: ShipmentDuplicateInput!) {
   duplicateShipment(input: $input) {
@@ -23185,6 +23221,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -23340,7 +23379,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:6c4762198238d3843a32bc13a4c58aabe6a417220f965216282c499ca2aa4532"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+}`, {"hash":"sha256:066c13cd8031ee67dea8d2f1e5dfb8ea4c0a0e0d477d5dbc1940607e432fa4ab"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingDocument = new TypedDocumentString(`
     mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
   transferShipmentToBilling(input: $input) {

@@ -470,3 +470,66 @@ func testIntPtr(value int) *int {
 func testStringPtr(value string) *string {
 	return new(value)
 }
+
+func TestShipmentCommodityMapping_CarriesDimensionsBothWays(t *testing.T) {
+	t.Parallel()
+
+	authCtx := &authctx.AuthContext{
+		BusinessUnitID: pulid.MustNew("bu_"),
+		OrganizationID: pulid.MustNew("org_"),
+	}
+	commodityID := pulid.MustNew("com_")
+	length, width, height := 48.5, 8.5, 13.25
+
+	entities, err := shipmentCommoditiesFromInput([]*gqlmodel.ShipmentCommodityInput{
+		{
+			CommodityID: commodityID.String(),
+			Pieces:      ptrTo(4),
+			Weight:      ptrTo(1200),
+			LengthFeet:  &length,
+			WidthFeet:   &width,
+			HeightFeet:  &height,
+		},
+	}, authCtx)
+
+	require.NoError(t, err)
+	require.Len(t, entities, 1)
+	require.NotNil(t, entities[0].LengthFeet)
+	require.NotNil(t, entities[0].WidthFeet)
+	require.NotNil(t, entities[0].HeightFeet)
+	assert.InDelta(t, length, *entities[0].LengthFeet, 0.001)
+	assert.InDelta(t, width, *entities[0].WidthFeet, 0.001)
+	assert.InDelta(t, height, *entities[0].HeightFeet, 0.001)
+
+	models, err := shipmentCommoditiesToModel(entities)
+
+	require.NoError(t, err)
+	require.Len(t, models, 1)
+	require.NotNil(t, models[0].LengthFeet)
+	require.NotNil(t, models[0].WidthFeet)
+	require.NotNil(t, models[0].HeightFeet)
+	assert.InDelta(t, length, *models[0].LengthFeet, 0.001)
+	assert.InDelta(t, width, *models[0].WidthFeet, 0.001)
+	assert.InDelta(t, height, *models[0].HeightFeet, 0.001)
+}
+
+func TestShipmentCommodityMapping_LeavesDimensionsNilWhenAbsent(t *testing.T) {
+	t.Parallel()
+
+	authCtx := &authctx.AuthContext{
+		BusinessUnitID: pulid.MustNew("bu_"),
+		OrganizationID: pulid.MustNew("org_"),
+	}
+
+	entities, err := shipmentCommoditiesFromInput([]*gqlmodel.ShipmentCommodityInput{
+		{CommodityID: pulid.MustNew("com_").String(), Pieces: ptrTo(1), Weight: ptrTo(10)},
+	}, authCtx)
+
+	require.NoError(t, err)
+	require.Len(t, entities, 1)
+	assert.Nil(t, entities[0].LengthFeet)
+	assert.Nil(t, entities[0].WidthFeet)
+	assert.Nil(t, entities[0].HeightFeet)
+}
+
+func ptrTo[T any](v T) *T { return &v }
