@@ -307,9 +307,16 @@ func (s *Service) buildOfferEmailContext(
 		CompanyName:     s.companyName(ctx, tenantInfo),
 		RateAmount:      "$" + offer.Rate.StringFixed(2),
 		RateMethodLabel: rateMethodLabel(offer.RateMethod),
-		AcceptURL:       template.URL(s.offerResponseURL(token, "accept")),  //nolint:gosec // built from config + a generated token
-		DeclineURL:      template.URL(s.offerResponseURL(token, "decline")), //nolint:gosec // built from config + a generated token
-		ExpiresAt:       timeutils.WindowLabelUTC(expiresAt, nil),
+		//nolint:gosec // G203: both components are trusted — an operator-configured
+		// base URL and a server-minted, path-escaped token; nothing here is caller-supplied
+		AcceptURL: template.URL(
+			s.offerResponseURL(token, "accept"),
+		),
+		//nolint:gosec // G203: see AcceptURL
+		DeclineURL: template.URL(
+			s.offerResponseURL(token, "decline"),
+		),
+		ExpiresAt: timeutils.WindowLabelUTC(expiresAt, nil),
 	}
 	now := timeutils.NowUnix()
 	if expiresAt > now {

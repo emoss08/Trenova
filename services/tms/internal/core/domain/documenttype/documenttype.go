@@ -24,7 +24,7 @@ var (
 
 type DocumentType struct {
 	bun.BaseModel             `bun:"table:document_types,alias:dt" json:"-"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	pagination.CursorValueSet `bun:",embed"                        json:"-"`
 
 	ID                     pulid.ID               `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID         pulid.ID               `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`

@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -55,7 +54,11 @@ func costCategoryToModel(entity *costingcontrol.CostCategory) *gqlmodel.CostCate
 		IsActive:             entity.IsActive,
 		SortOrder:            int(entity.SortOrder),
 		Version:              int(entity.Version),
-		GlAccounts:           make([]*gqlmodel.CostCategoryGLAccountLink, 0, len(entity.GLAccounts)),
+		GlAccounts: make(
+			[]*gqlmodel.CostCategoryGLAccountLink,
+			0,
+			len(entity.GLAccounts),
+		),
 	}
 
 	for _, link := range entity.GLAccounts {
@@ -228,7 +231,10 @@ func costingControlFromInput(
 	}
 	entity.FuelIndexID = fuelIndexID
 
-	if entity.MilesPerGallon, err = decimalFromString(input.MilesPerGallon, "milesPerGallon"); err != nil {
+	if entity.MilesPerGallon, err = decimalFromString(
+		input.MilesPerGallon,
+		"milesPerGallon",
+	); err != nil {
 		return nil, err
 	}
 
@@ -295,29 +301,4 @@ func findCostCategory(
 		}
 	}
 	return nil
-}
-
-func shipmentProfitabilityAnalyticsToModel(
-	summary *costingservice.FleetCostSummary,
-) *gqlmodel.ShipmentProfitabilityAnalytics {
-	if summary == nil {
-		return nil
-	}
-
-	model := &gqlmodel.ShipmentProfitabilityAnalytics{
-		UnprofitableCount: summary.UnprofitableCount,
-		ShipmentCount:     summary.ShipmentCount,
-		TotalMiles:        summary.TotalMiles,
-	}
-	model.AvgCpm, _ = summary.AvgCPM.Float64()
-	if summary.AvgMarginPercent.Valid {
-		model.HasMargin = true
-		model.AvgMarginPct, _ = summary.AvgMarginPercent.Decimal.Float64()
-	}
-
-	return model
-}
-
-func costingTenantInfo(orgID, buID pulid.ID) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: orgID, BuID: buID}
 }

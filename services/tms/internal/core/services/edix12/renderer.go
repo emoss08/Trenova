@@ -457,15 +457,17 @@ func validateRenderedSegment(segment *edi.EDITemplateSegment, elements []string)
 		return nil
 	}
 
-	return []Diagnostic{{
-		Severity:        edi.ValidationSeverityError,
-		Code:            "shipment_status_reason_required",
-		SegmentID:       x12SegmentAT7,
-		ElementPosition: 2,
-		Path:            "shipmentStatus.statusReasonCode",
-		Message:         "Shipment status reason code is required when AT7 shipment status code is SD",
-		SuggestedFix:    "Set shipmentStatus.statusReasonCode for service failure shipment status payloads.",
-	}}
+	return []Diagnostic{
+		{
+			Severity:        edi.ValidationSeverityError,
+			Code:            "shipment_status_reason_required",
+			SegmentID:       x12SegmentAT7,
+			ElementPosition: 2,
+			Path:            "shipmentStatus.statusReasonCode",
+			Message:         "Shipment status reason code is required when AT7 shipment status code is SD",
+			SuggestedFix:    "Set shipmentStatus.statusReasonCode for service failure shipment status payloads.",
+		},
+	}
 }
 
 func segmentElementValue(elements []string, position int) string {

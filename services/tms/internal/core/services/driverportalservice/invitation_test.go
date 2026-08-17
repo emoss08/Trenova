@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,18 +24,12 @@ func assetOperationsOrgRepo(
 ) *mocks.MockOrganizationRepository {
 	t.Helper()
 
-	orgRepo := mocks.NewMockOrganizationRepository(t)
-	orgRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetOrganizationByIDRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.Organization{
-			ID:                     tenantInfo.OrgID,
-			BusinessUnitID:         tenantInfo.BuID,
-			BrokerageEnabled:       true,
-			AssetOperationsEnabled: enabled,
-		}, nil).
-		Once()
-
-	return orgRepo
+	return capabilitytest.OrgRepo(t, capabilitytest.OrgRepoParams{
+		TenantInfo:             tenantInfo,
+		Lock:                   repositories.CapabilityLockNone,
+		BrokerageEnabled:       true,
+		AssetOperationsEnabled: enabled,
+	})
 }
 
 func TestInviteWorker_RefusedWhenAssetOperationsDisabled(t *testing.T) {

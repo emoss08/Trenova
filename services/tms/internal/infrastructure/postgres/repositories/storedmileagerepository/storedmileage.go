@@ -192,7 +192,10 @@ func (r *repository) Lookup(
 	return entity, nil
 }
 
-func (r *repository) BulkUpsert(ctx context.Context, entities []*storedmileage.StoredMileage) error {
+func (r *repository) BulkUpsert(
+	ctx context.Context,
+	entities []*storedmileage.StoredMileage,
+) error {
 	if len(entities) == 0 {
 		return nil
 	}

@@ -127,7 +127,14 @@ func (s *Service) ResolveForShipment(
 			continue
 		}
 
-		runtime := s.runtimeForPurpose(ctx, entity, control, movePurpose(move), hazmatTypes, pcRuntimeByPurpose)
+		runtime := s.runtimeForPurpose(
+			ctx,
+			entity,
+			control,
+			movePurpose(move),
+			hazmatTypes,
+			pcRuntimeByPurpose,
+		)
 		if runtime.ready {
 			storedDistance, storedOK, storedErr := s.storedMileage(
 				ctx,
@@ -367,10 +374,13 @@ func (s *Service) pcmilerRuntime(
 	var err error
 	if control != nil {
 		profileID := control.ProfileIDForPurpose(purpose)
-		profile, err = s.distanceProfileRepo.GetByID(ctx, repositories.GetDistanceProfileByIDRequest{
-			ID:         profileID,
-			TenantInfo: tenantInfo,
-		})
+		profile, err = s.distanceProfileRepo.GetByID(
+			ctx,
+			repositories.GetDistanceProfileByIDRequest{
+				ID:         profileID,
+				TenantInfo: tenantInfo,
+			},
+		)
 	} else {
 		profile, err = s.distanceProfileRepo.EnsureDefault(ctx, tenantInfo)
 	}
@@ -658,7 +668,9 @@ func storedMileageStopKey(
 		if key.City == "" || key.State == "" || strings.TrimSpace(loc.AddressLine1) == "" {
 			return storedmileage.StopKey{}, false
 		}
-		key.Key = method + "|" + normalizeKeyPart(loc.AddressLine1) + "|" + key.City + "|" + key.State + "|" + key.PostalCode
+		key.Key = method + "|" + normalizeKeyPart(
+			loc.AddressLine1,
+		) + "|" + key.City + "|" + key.State + "|" + key.PostalCode
 	}
 	return key, true
 }
@@ -670,8 +682,14 @@ func storedMileageRouteSignature(
 	hazmatTypes []string,
 ) string {
 	parts := make([]string, 0, len(keys)+6)
-	parts = append(parts, options.DistanceUnits, options.RoutingType, optionsGranularity(options), profile.ID.String())
-	parts = append(parts, storedmileage.HazmatSignature(hazmatTypes))
+	parts = append(
+		parts,
+		options.DistanceUnits,
+		options.RoutingType,
+		optionsGranularity(options),
+		profile.ID.String(),
+		storedmileage.HazmatSignature(hazmatTypes),
+	)
 	for _, key := range keys {
 		parts = append(parts, key.Key)
 	}
@@ -769,7 +787,11 @@ func applyMoveDistance(params moveDistanceParams) {
 	params.move.DistanceMetadata = params.metadata
 }
 
-func applyManualDistance(move *shipment.ShipmentMove, signature string, calculatedAt int64) float64 {
+func applyManualDistance(
+	move *shipment.ShipmentMove,
+	signature string,
+	calculatedAt int64,
+) float64 {
 	distance := roundDistance(manualDistance(move))
 	applyMoveDistance(moveDistanceParams{
 		move:         move,
@@ -782,7 +804,11 @@ func applyManualDistance(move *shipment.ShipmentMove, signature string, calculat
 	return distance
 }
 
-func moveResult(move *shipment.ShipmentMove, idx int, warnings []string) services.DistanceMoveResult {
+func moveResult(
+	move *shipment.ShipmentMove,
+	idx int,
+	warnings []string,
+) services.DistanceMoveResult {
 	distance := roundDistance(manualDistance(move))
 	if move.Distance != nil {
 		distance = roundDistance(*move.Distance)

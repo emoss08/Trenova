@@ -36,17 +36,37 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/stored-mileages")
-	api.GET("/", h.pm.RequirePermission(permission.ResourceStoredMileage.String(), permission.OpRead), h.list)
-	api.GET("/:storedMileageID/", h.pm.RequirePermission(permission.ResourceStoredMileage.String(), permission.OpRead), h.get)
-	api.DELETE("/:storedMileageID/", h.pm.RequirePermission(permission.ResourceStoredMileage.String(), permission.OpDelete), h.delete)
+	api.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceStoredMileage.String(), permission.OpRead),
+		h.list,
+	)
+	api.GET(
+		"/:storedMileageID/",
+		h.pm.RequirePermission(permission.ResourceStoredMileage.String(), permission.OpRead),
+		h.get,
+	)
+	api.DELETE(
+		"/:storedMileageID/",
+		h.pm.RequirePermission(permission.ResourceStoredMileage.String(), permission.OpDelete),
+		h.delete,
+	)
 }
 
 func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*storedmileage.StoredMileage], error) {
-		return h.service.List(c.Request.Context(), &repositories.ListStoredMileageRequest{Filter: req})
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*storedmileage.StoredMileage], error) {
+			return h.service.List(
+				c.Request.Context(),
+				&repositories.ListStoredMileageRequest{Filter: req},
+			)
+		},
+	)
 }
 
 func (h *Handler) get(c *gin.Context) {

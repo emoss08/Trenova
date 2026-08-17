@@ -43,47 +43,74 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/service-failure-reason-codes")
 	api.GET(
 		"/",
-		h.pm.RequirePermission(permission.ResourceServiceFailureReasonCode.String(), permission.OpRead),
+		h.pm.RequirePermission(
+			permission.ResourceServiceFailureReasonCode.String(),
+			permission.OpRead,
+		),
 		h.list,
 	)
 	api.POST(
 		"/",
-		h.pm.RequirePermission(permission.ResourceServiceFailureReasonCode.String(), permission.OpCreate),
+		h.pm.RequirePermission(
+			permission.ResourceServiceFailureReasonCode.String(),
+			permission.OpCreate,
+		),
 		h.create,
 	)
 	api.GET(
 		"/select-options/",
-		h.pm.RequirePermission(permission.ResourceServiceFailureReasonCode.String(), permission.OpRead),
+		h.pm.RequirePermission(
+			permission.ResourceServiceFailureReasonCode.String(),
+			permission.OpRead,
+		),
 		h.selectOptions,
 	)
 	api.POST(
 		"/reorder/",
-		h.pm.RequirePermission(permission.ResourceServiceFailureReasonCode.String(), permission.OpUpdate),
+		h.pm.RequirePermission(
+			permission.ResourceServiceFailureReasonCode.String(),
+			permission.OpUpdate,
+		),
 		h.reorder,
 	)
 	api.GET(
 		"/:reasonCodeID/",
-		h.pm.RequirePermission(permission.ResourceServiceFailureReasonCode.String(), permission.OpRead),
+		h.pm.RequirePermission(
+			permission.ResourceServiceFailureReasonCode.String(),
+			permission.OpRead,
+		),
 		h.get,
 	)
 	api.PUT(
 		"/:reasonCodeID/",
-		h.pm.RequirePermission(permission.ResourceServiceFailureReasonCode.String(), permission.OpUpdate),
+		h.pm.RequirePermission(
+			permission.ResourceServiceFailureReasonCode.String(),
+			permission.OpUpdate,
+		),
 		h.update,
 	)
 	api.PATCH(
 		"/:reasonCodeID/",
-		h.pm.RequirePermission(permission.ResourceServiceFailureReasonCode.String(), permission.OpUpdate),
+		h.pm.RequirePermission(
+			permission.ResourceServiceFailureReasonCode.String(),
+			permission.OpUpdate,
+		),
 		h.patch,
 	)
 	api.POST(
 		"/:reasonCodeID/archive/",
-		h.pm.RequirePermission(permission.ResourceServiceFailureReasonCode.String(), permission.OpArchive),
+		h.pm.RequirePermission(
+			permission.ResourceServiceFailureReasonCode.String(),
+			permission.OpArchive,
+		),
 		h.archive,
 	)
 	api.POST(
 		"/:reasonCodeID/activate/",
-		h.pm.RequirePermission(permission.ResourceServiceFailureReasonCode.String(), permission.OpArchive),
+		h.pm.RequirePermission(
+			permission.ResourceServiceFailureReasonCode.String(),
+			permission.OpArchive,
+		),
 		h.activate,
 	)
 }
@@ -92,11 +119,19 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-		return h.service.List(c.Request.Context(), &repositories.ListServiceFailureReasonCodesRequest{
-			Filter: req,
-		})
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*servicefailure.ReasonCode], error) {
+			return h.service.List(
+				c.Request.Context(),
+				&repositories.ListServiceFailureReasonCodesRequest{
+					Filter: req,
+				},
+			)
+		},
+	)
 }
 
 func (h *Handler) get(c *gin.Context) {
@@ -107,13 +142,16 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetServiceFailureReasonCodeByIDRequest{
-		ID: id,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		repositories.GetServiceFailureReasonCodeByIDRequest{
+			ID: id,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -129,7 +167,11 @@ func (h *Handler) create(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	created, err := h.service.Create(c.Request.Context(), entity, actorutil.FromAuthContext(authCtx))
+	created, err := h.service.Create(
+		c.Request.Context(),
+		entity,
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -151,7 +193,11 @@ func (h *Handler) update(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	updated, err := h.service.Update(c.Request.Context(), entity, actorutil.FromAuthContext(authCtx))
+	updated, err := h.service.Update(
+		c.Request.Context(),
+		entity,
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -166,13 +212,16 @@ func (h *Handler) patch(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetServiceFailureReasonCodeByIDRequest{
-		ID: id,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		repositories.GetServiceFailureReasonCodeByIDRequest{
+			ID: id,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -181,7 +230,11 @@ func (h *Handler) patch(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	updated, err := h.service.Update(c.Request.Context(), entity, actorutil.FromAuthContext(authCtx))
+	updated, err := h.service.Update(
+		c.Request.Context(),
+		entity,
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -206,7 +259,12 @@ func (h *Handler) toggleActive(c *gin.Context, active bool) {
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: authCtx.OrganizationID, BuID: authCtx.BusinessUnitID}
 	if active {
-		entity, activateErr := h.service.Activate(c.Request.Context(), id, tenantInfo, actorutil.FromAuthContext(authCtx))
+		entity, activateErr := h.service.Activate(
+			c.Request.Context(),
+			id,
+			tenantInfo,
+			actorutil.FromAuthContext(authCtx),
+		)
 		if activateErr != nil {
 			h.eh.HandleError(c, activateErr)
 			return
@@ -214,7 +272,12 @@ func (h *Handler) toggleActive(c *gin.Context, active bool) {
 		c.JSON(http.StatusOK, entity)
 		return
 	}
-	entity, archiveErr := h.service.Archive(c.Request.Context(), id, tenantInfo, actorutil.FromAuthContext(authCtx))
+	entity, archiveErr := h.service.Archive(
+		c.Request.Context(),
+		id,
+		tenantInfo,
+		actorutil.FromAuthContext(authCtx),
+	)
 	if archiveErr != nil {
 		h.eh.HandleError(c, archiveErr)
 		return
@@ -225,7 +288,10 @@ func (h *Handler) toggleActive(c *gin.Context, active bool) {
 func (h *Handler) reorder(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(repositories.ReorderServiceFailureReasonCodesRequest)
-	req.TenantInfo = pagination.TenantInfo{OrgID: authCtx.OrganizationID, BuID: authCtx.BusinessUnitID}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -243,13 +309,18 @@ func (h *Handler) selectOptions(c *gin.Context) {
 	req := pagination.NewSelectQueryRequest(c, authCtx)
 	appliesTo := servicefailure.ReasonCodeAppliesTo(c.Query("appliesTo"))
 
-	pagination.SelectOptions(c, req, h.eh, func() (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-		return h.service.SelectOptions(
-			c.Request.Context(),
-			&repositories.ServiceFailureReasonCodeSelectOptionsRequest{
-				SelectQueryRequest: req,
-				AppliesTo:          appliesTo,
-			},
-		)
-	})
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*servicefailure.ReasonCode], error) {
+			return h.service.SelectOptions(
+				c.Request.Context(),
+				&repositories.ServiceFailureReasonCodeSelectOptionsRequest{
+					SelectQueryRequest: req,
+					AppliesTo:          appliesTo,
+				},
+			)
+		},
+	)
 }

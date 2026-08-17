@@ -40,42 +40,42 @@ type Carrier struct {
 	StateID        *pulid.ID `json:"stateId"        bun:"state_id,type:VARCHAR(100),nullzero"`
 	RemitStateID   *pulid.ID `json:"remitStateId"   bun:"remit_state_id,type:VARCHAR(100),nullzero"`
 
-	Status             Status           `json:"status"              bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
-	Code               string           `json:"code"                bun:"code,type:VARCHAR(10),notnull"`
-	Name               string           `json:"name"                bun:"name,type:VARCHAR(255),notnull"`
-	DBAName            string           `json:"dbaName"             bun:"dba_name,type:VARCHAR(255),nullzero"`
-	CarrierType        Type             `json:"carrierType"         bun:"carrier_type,type:VARCHAR(50),notnull,default:'Common'"`
-	DOTNumber          string           `json:"dotNumber"           bun:"dot_number,type:VARCHAR(12),nullzero"`
-	MCNumber           string           `json:"mcNumber"            bun:"mc_number,type:VARCHAR(12),nullzero"`
-	SCAC               string           `json:"scac"                bun:"scac,type:VARCHAR(4),nullzero"`
-	ComplianceStatus   ComplianceStatus `json:"complianceStatus"    bun:"compliance_status,type:VARCHAR(50),notnull,default:'Pending'"`
-	SafetyRating       SafetyRating     `json:"safetyRating"        bun:"safety_rating,type:VARCHAR(50),notnull,default:'NotRated'"`
-	QualifiedAt        *int64           `json:"qualifiedAt"         bun:"qualified_at,type:BIGINT,nullzero"`
-	DisqualifiedReason string           `json:"disqualifiedReason"  bun:"disqualified_reason,type:TEXT,nullzero"`
-	TaxID              string           `json:"taxId"               bun:"tax_id,type:VARCHAR(20),nullzero"`
-	TaxIDType          *TaxIDType       `json:"taxIdType"           bun:"tax_id_type,type:VARCHAR(10),nullzero"`
-	W9OnFile           bool             `json:"w9OnFile"            bun:"w9_on_file,type:BOOLEAN,notnull,default:false"`
-	Is1099Eligible     bool             `json:"is1099Eligible"      bun:"is_1099_eligible,type:BOOLEAN,notnull,default:false"`
-	PaymentMethod      PaymentMethod    `json:"paymentMethod"       bun:"payment_method,type:VARCHAR(50),notnull,default:'Check'"`
-	PaymentTermDays    int              `json:"paymentTermDays"     bun:"payment_term_days,type:INTEGER,notnull,default:30"`
-	RemitToName        string           `json:"remitToName"         bun:"remit_to_name,type:VARCHAR(255),nullzero"`
-	RemitAddressLine1  string           `json:"remitAddressLine1"   bun:"remit_address_line_1,type:VARCHAR(150),nullzero"`
-	RemitAddressLine2  string           `json:"remitAddressLine2"   bun:"remit_address_line_2,type:VARCHAR(150),nullzero"`
-	RemitCity          string           `json:"remitCity"           bun:"remit_city,type:VARCHAR(100),nullzero"`
-	RemitPostalCode    string           `json:"remitPostalCode"     bun:"remit_postal_code,type:VARCHAR(10),nullzero"`
-	AddressLine1       string           `json:"addressLine1"        bun:"address_line_1,type:VARCHAR(150),nullzero"`
-	AddressLine2       string           `json:"addressLine2"        bun:"address_line_2,type:VARCHAR(150),nullzero"`
-	City               string           `json:"city"                bun:"city,type:VARCHAR(100),nullzero"`
-	PostalCode         string           `json:"postalCode"          bun:"postal_code,type:VARCHAR(10),nullzero"`
-	Phone              string           `json:"phone"               bun:"phone,type:VARCHAR(20),nullzero"`
-	Email              string           `json:"email"               bun:"email,type:VARCHAR(255),nullzero"`
-	ExternalID         string           `json:"externalId"          bun:"external_id,type:TEXT,nullzero"`
-	Notes              string           `json:"notes"               bun:"notes,type:TEXT,nullzero"`
-	SearchVector       string           `json:"-"                   bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank               string           `json:"-"                   bun:"rank,type:VARCHAR(100),scanonly"`
-	Version            int64            `json:"version"             bun:"version,type:BIGINT"`
-	CreatedAt          int64            `json:"createdAt"           bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64            `json:"updatedAt"           bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Status             Status           `json:"status"             bun:"status,type:VARCHAR(50),notnull,default:'Active'"`
+	Code               string           `json:"code"               bun:"code,type:VARCHAR(10),notnull"`
+	Name               string           `json:"name"               bun:"name,type:VARCHAR(255),notnull"`
+	DBAName            string           `json:"dbaName"            bun:"dba_name,type:VARCHAR(255),nullzero"`
+	CarrierType        Type             `json:"carrierType"        bun:"carrier_type,type:VARCHAR(50),notnull,default:'Common'"`
+	DOTNumber          string           `json:"dotNumber"          bun:"dot_number,type:VARCHAR(12),nullzero"`
+	MCNumber           string           `json:"mcNumber"           bun:"mc_number,type:VARCHAR(12),nullzero"`
+	SCAC               string           `json:"scac"               bun:"scac,type:VARCHAR(4),nullzero"`
+	ComplianceStatus   ComplianceStatus `json:"complianceStatus"   bun:"compliance_status,type:VARCHAR(50),notnull,default:'Pending'"`
+	SafetyRating       SafetyRating     `json:"safetyRating"       bun:"safety_rating,type:VARCHAR(50),notnull,default:'NotRated'"`
+	QualifiedAt        *int64           `json:"qualifiedAt"        bun:"qualified_at,type:BIGINT,nullzero"`
+	DisqualifiedReason string           `json:"disqualifiedReason" bun:"disqualified_reason,type:TEXT,nullzero"`
+	TaxID              string           `json:"taxId"              bun:"tax_id,type:VARCHAR(20),nullzero"`
+	TaxIDType          *TaxIDType       `json:"taxIdType"          bun:"tax_id_type,type:VARCHAR(10),nullzero"`
+	W9OnFile           bool             `json:"w9OnFile"           bun:"w9_on_file,type:BOOLEAN,notnull,default:false"`
+	Is1099Eligible     bool             `json:"is1099Eligible"     bun:"is_1099_eligible,type:BOOLEAN,notnull,default:false"`
+	PaymentMethod      PaymentMethod    `json:"paymentMethod"      bun:"payment_method,type:VARCHAR(50),notnull,default:'Check'"`
+	PaymentTermDays    int              `json:"paymentTermDays"    bun:"payment_term_days,type:INTEGER,notnull,default:30"`
+	RemitToName        string           `json:"remitToName"        bun:"remit_to_name,type:VARCHAR(255),nullzero"`
+	RemitAddressLine1  string           `json:"remitAddressLine1"  bun:"remit_address_line_1,type:VARCHAR(150),nullzero"`
+	RemitAddressLine2  string           `json:"remitAddressLine2"  bun:"remit_address_line_2,type:VARCHAR(150),nullzero"`
+	RemitCity          string           `json:"remitCity"          bun:"remit_city,type:VARCHAR(100),nullzero"`
+	RemitPostalCode    string           `json:"remitPostalCode"    bun:"remit_postal_code,type:VARCHAR(10),nullzero"`
+	AddressLine1       string           `json:"addressLine1"       bun:"address_line_1,type:VARCHAR(150),nullzero"`
+	AddressLine2       string           `json:"addressLine2"       bun:"address_line_2,type:VARCHAR(150),nullzero"`
+	City               string           `json:"city"               bun:"city,type:VARCHAR(100),nullzero"`
+	PostalCode         string           `json:"postalCode"         bun:"postal_code,type:VARCHAR(10),nullzero"`
+	Phone              string           `json:"phone"              bun:"phone,type:VARCHAR(20),nullzero"`
+	Email              string           `json:"email"              bun:"email,type:VARCHAR(255),nullzero"`
+	ExternalID         string           `json:"externalId"         bun:"external_id,type:TEXT,nullzero"`
+	Notes              string           `json:"notes"              bun:"notes,type:TEXT,nullzero"`
+	SearchVector       string           `json:"-"                  bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank               string           `json:"-"                  bun:"rank,type:VARCHAR(100),scanonly"`
+	Version            int64            `json:"version"            bun:"version,type:BIGINT"`
+	CreatedAt          int64            `json:"createdAt"          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt          int64            `json:"updatedAt"          bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnit      *tenant.BusinessUnit      `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization      *tenant.Organization      `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`

@@ -211,6 +211,58 @@ func databaseExists(ctx context.Context, adminDB *bun.DB, name string) (bool, er
 	return exists, nil
 }
 
+// acquireTemplateLock waits for the template lock by polling rather than by
+// blocking inside Postgres. pg_advisory_lock parks the connection until the
+// lock frees, which outlives pgdriver's read timeout whenever the process
+// holding it is still running migrations, and surfaces as an i/o timeout rather
+// than as contention. pg_try_advisory_lock answers immediately, so every read
+// completes well inside that timeout no matter how long the build takes.
+func acquireTemplateLock(ctx context.Context, conn bun.Conn) error {
+	return pollUntilAcquired(ctx, templateBuildTimeout, func() (bool, error) {
+		var acquired bool
+		if err := conn.QueryRowContext(
+			ctx,
+			"SELECT pg_try_advisory_lock(?)",
+			templateLockKey,
+		).Scan(&acquired); err != nil {
+			return false, fmt.Errorf("failed to acquire template advisory lock: %w", err)
+		}
+
+		return acquired, nil
+	})
+}
+
+func pollUntilAcquired(
+	ctx context.Context,
+	within time.Duration,
+	attempt func() (bool, error),
+) error {
+	deadline := time.Now().Add(within)
+
+	for i := 0; ; i++ {
+		acquired, err := attempt()
+		if err != nil {
+			return err
+		}
+		if acquired {
+			return nil
+		}
+		if !time.Now().Before(deadline) {
+			return fmt.Errorf(
+				"timed out after %s waiting for the template advisory lock",
+				within,
+			)
+		}
+
+		backoff := min(time.Duration(i+1)*25*time.Millisecond, 500*time.Millisecond)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(backoff):
+		}
+	}
+}
+
 // ensureTemplateDatabase builds the migrated template exactly once per server,
 // even when many test binaries race to create it. Migrations run into a staging
 // database that is renamed into place only on success, so the presence of the
@@ -227,8 +279,8 @@ func ensureTemplateDatabase(
 	}
 	defer conn.Close()
 
-	if _, err = conn.ExecContext(ctx, "SELECT pg_advisory_lock(?)", templateLockKey); err != nil {
-		return fmt.Errorf("failed to acquire template advisory lock: %w", err)
+	if err = acquireTemplateLock(ctx, conn); err != nil {
+		return err
 	}
 	defer func() {
 		_, _ = conn.ExecContext(context.Background(), "SELECT pg_advisory_unlock(?)", templateLockKey)

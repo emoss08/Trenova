@@ -130,6 +130,59 @@ func TestSyncForShipment_RejectsUnknownCommodityID(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestSyncForShipment_UpdatesExistingCommodityDimensions(t *testing.T) {
+	t.Parallel()
+
+	repo, db, mock := newTestRepository(t)
+	entity := newShipmentEntity()
+	existingID := pulid.MustNew("sc_")
+
+	entity.Commodities[0].ID = existingID
+	entity.Commodities[0].Version = 1
+	entity.Commodities[0].LengthFeet = ptr(48.5)
+	entity.Commodities[0].WidthFeet = ptr(8.5)
+	entity.Commodities[0].HeightFeet = ptr(13.25)
+
+	mock.ExpectQuery(`SELECT .*FROM "shipment_commodities" AS "sc".*shipment_id = .*organization_id = .*business_unit_id = .*`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "organization_id", "business_unit_id", "shipment_id", "commodity_id", "weight", "pieces", "version",
+		}).
+			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, entity.Commodities[0].CommodityID, entity.Commodities[0].Weight, entity.Commodities[0].Pieces, 1))
+	mock.ExpectExec(`UPDATE "shipment_commodities" AS "sc" SET .*length_feet = .*width_feet = .*height_feet = .*`).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err := repo.SyncForShipment(t.Context(), db, entity)
+
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSyncForShipment_ClearsExistingCommodityDimensions(t *testing.T) {
+	t.Parallel()
+
+	repo, db, mock := newTestRepository(t)
+	entity := newShipmentEntity()
+	existingID := pulid.MustNew("sc_")
+
+	entity.Commodities[0].ID = existingID
+	entity.Commodities[0].Version = 1
+
+	mock.ExpectQuery(`SELECT .*FROM "shipment_commodities" AS "sc".*shipment_id = .*organization_id = .*business_unit_id = .*`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "organization_id", "business_unit_id", "shipment_id", "commodity_id", "weight", "pieces", "version",
+		}).
+			AddRow(existingID, entity.OrganizationID, entity.BusinessUnitID, entity.ID, entity.Commodities[0].CommodityID, entity.Commodities[0].Weight, entity.Commodities[0].Pieces, 1))
+	mock.ExpectExec(`UPDATE "shipment_commodities" AS "sc" SET .*length_feet = NULL.*width_feet = NULL.*height_feet = NULL.*`).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	err := repo.SyncForShipment(t.Context(), db, entity)
+
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func ptr[T any](v T) *T { return &v }
+
 func newShipmentEntity() *shipment.Shipment {
 	return &shipment.Shipment{
 		ID:             pulid.MustNew("shp_"),

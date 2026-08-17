@@ -213,6 +213,8 @@ func loadStructsFromFile(path string) (parsedPackage, error) {
 
 func loadStructsFromDir(path string) (parsedPackage, error) {
 	fset := token.NewFileSet()
+	//nolint:staticcheck // SA1019: this generator reads one build-tag-free source
+	// directory, which is the only case ParseDir gets wrong
 	pkgs, err := parser.ParseDir(
 		fset,
 		path,

@@ -73,7 +73,12 @@ func (r *repository) EnsureDefault(
 		return nil, err
 	}
 	shortestID := r.shortestProfileID(ctx, tenantInfo)
-	entity := distancecontrol.NewDefault(tenantInfo.OrgID, tenantInfo.BuID, practical.ID, shortestID)
+	entity := distancecontrol.NewDefault(
+		tenantInfo.OrgID,
+		tenantInfo.BuID,
+		practical.ID,
+		shortestID,
+	)
 	if _, err = r.db.DBForContext(ctx).NewInsert().
 		Model(entity).
 		On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
@@ -102,7 +107,10 @@ func (r *repository) Update(
 		return dberror.CheckRowsAffected(result, "DistanceControl", entity.ID.String())
 	})
 	if err != nil {
-		return nil, dberror.MapRetryableTransactionError(err, "Distance control is busy. Retry the request.")
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"Distance control is busy. Retry the request.",
+		)
 	}
 	return entity, nil
 }

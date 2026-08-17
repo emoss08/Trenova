@@ -50,25 +50,85 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	profiles := rg.Group("/email-profiles")
-	profiles.GET("/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead), h.listProfiles)
-	profiles.POST("/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpCreate), h.createProfile)
-	profiles.GET("/select-options/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead), h.selectProfileOptions)
-	profiles.GET("/select-options/:profileID", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead), h.getProfileOption)
-	profiles.GET("/:profileID/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead), h.getProfile)
-	profiles.PUT("/:profileID/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpUpdate), h.updateProfile)
-	profiles.DELETE("/:profileID/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpDelete), h.deleteProfile)
-	profiles.POST("/:profileID/test-send/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpUpdate), h.testSend)
-	profiles.GET("/assignments/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead), h.listAssignments)
-	profiles.PUT("/assignments/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpUpdate), h.updateAssignments)
+	profiles.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead),
+		h.listProfiles,
+	)
+	profiles.POST(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpCreate),
+		h.createProfile,
+	)
+	profiles.GET(
+		"/select-options/",
+		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead),
+		h.selectProfileOptions,
+	)
+	profiles.GET(
+		"/select-options/:profileID",
+		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead),
+		h.getProfileOption,
+	)
+	profiles.GET(
+		"/:profileID/",
+		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead),
+		h.getProfile,
+	)
+	profiles.PUT(
+		"/:profileID/",
+		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpUpdate),
+		h.updateProfile,
+	)
+	profiles.DELETE(
+		"/:profileID/",
+		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpDelete),
+		h.deleteProfile,
+	)
+	profiles.POST(
+		"/:profileID/test-send/",
+		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpUpdate),
+		h.testSend,
+	)
+	profiles.GET(
+		"/assignments/",
+		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead),
+		h.listAssignments,
+	)
+	profiles.PUT(
+		"/assignments/",
+		h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpUpdate),
+		h.updateAssignments,
+	)
 
 	logs := rg.Group("/email-logs")
-	logs.GET("/", h.pm.RequirePermission(permission.ResourceEmailLog.String(), permission.OpRead), h.listLogs)
-	logs.GET("/:messageID/", h.pm.RequirePermission(permission.ResourceEmailLog.String(), permission.OpRead), h.getLog)
+	logs.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEmailLog.String(), permission.OpRead),
+		h.listLogs,
+	)
+	logs.GET(
+		"/:messageID/",
+		h.pm.RequirePermission(permission.ResourceEmailLog.String(), permission.OpRead),
+		h.getLog,
+	)
 
 	suppressions := rg.Group("/email-suppressions")
-	suppressions.GET("/", h.pm.RequirePermission(permission.ResourceEmailSuppression.String(), permission.OpRead), h.listSuppressions)
-	suppressions.POST("/", h.pm.RequirePermission(permission.ResourceEmailSuppression.String(), permission.OpCreate), h.createSuppression)
-	suppressions.DELETE("/:suppressionID/", h.pm.RequirePermission(permission.ResourceEmailSuppression.String(), permission.OpDelete), h.deleteSuppression)
+	suppressions.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEmailSuppression.String(), permission.OpRead),
+		h.listSuppressions,
+	)
+	suppressions.POST(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEmailSuppression.String(), permission.OpCreate),
+		h.createSuppression,
+	)
+	suppressions.DELETE(
+		"/:suppressionID/",
+		h.pm.RequirePermission(permission.ResourceEmailSuppression.String(), permission.OpDelete),
+		h.deleteSuppression,
+	)
 }
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
@@ -283,9 +343,12 @@ func (h *Handler) listSuppressions(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*email.Suppression], error) {
-		return h.service.ListSuppressions(c.Request.Context(), &repositories.ListEmailSuppressionsRequest{
-			Filter: req,
-		})
+		return h.service.ListSuppressions(
+			c.Request.Context(),
+			&repositories.ListEmailSuppressionsRequest{
+				Filter: req,
+			},
+		)
 	})
 }
 
@@ -354,7 +417,10 @@ func (h *Handler) handleResendWebhook(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	tenantInfo, signingSecret, err := h.service.ResolveTenantByWebhookToken(c.Request.Context(), token)
+	tenantInfo, signingSecret, err := h.service.ResolveTenantByWebhookToken(
+		c.Request.Context(),
+		token,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

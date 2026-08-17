@@ -2,6 +2,7 @@ package anthropiccompletionservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -51,7 +52,11 @@ func (s *Service) Diagnose(
 		return nil, errortypes.NewBusinessError("AI billing exception agent is disabled")
 	}
 
-	runtimeCfg, err := s.integration.GetRuntimeConfig(ctx, req.TenantInfo, integration.TypeAnthropic)
+	runtimeCfg, err := s.integration.GetRuntimeConfig(
+		ctx,
+		req.TenantInfo,
+		integration.TypeAnthropic,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +77,7 @@ func (s *Service) Diagnose(
 
 	text := firstTextBlock(resp)
 	if text == "" {
-		return nil, fmt.Errorf("model returned no structured content")
+		return nil, errors.New("model returned no structured content")
 	}
 
 	var payload diagnosisPayload

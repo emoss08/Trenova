@@ -21,7 +21,7 @@ var (
 
 type SCIMGroupRoleMapping struct {
 	bun.BaseModel             `bun:"table:scim_group_role_mappings,alias:sgrm" json:"-"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	pagination.CursorValueSet `bun:",embed"                                    json:"-"`
 
 	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100)"`
 	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),notnull,pk"`

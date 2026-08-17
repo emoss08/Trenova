@@ -297,7 +297,10 @@ func (a *Activities) CompleteRunActivity(ctx context.Context, input *CompleteRun
 	})
 }
 
-func (a *Activities) ExpireProposalsActivity(ctx context.Context, input *ExpireProposalsInput) error {
+func (a *Activities) ExpireProposalsActivity(
+	ctx context.Context,
+	input *ExpireProposalsInput,
+) error {
 	if _, err := a.proposalRepo.ExpirePendingByRun(
 		ctx,
 		repositories.ExpireAgentProposalsByRunRequest{

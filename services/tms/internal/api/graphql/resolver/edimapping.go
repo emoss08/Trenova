@@ -153,9 +153,11 @@ func ediSummaryToModel(summary *ediservice.EDISummary) *gqlmodel.EdiSummary {
 	)
 	for _, message := range summary.RecentDeadLettered {
 		item := &gqlmodel.EdiSummaryAttentionItem{
-			Kind:       gqlmodel.EdiSummaryAttentionKindMessage,
-			ID:         message.ID.String(),
-			Reference:  strPtr(string(message.TransactionSet) + " " + message.TransactionControlNumber),
+			Kind: gqlmodel.EdiSummaryAttentionKindMessage,
+			ID:   message.ID.String(),
+			Reference: strPtr(
+				string(message.TransactionSet) + " " + message.TransactionControlNumber,
+			),
 			Error:      strPtr(message.DeliveryLastError),
 			OccurredAt: int(message.UpdatedAt),
 		}

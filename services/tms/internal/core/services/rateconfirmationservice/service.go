@@ -316,7 +316,13 @@ func (s *Service) Send(
 	// carrier can confirm without a login. An already-Confirmed copy is the
 	// record copy and gets no link.
 	if entity.Status != rateconfirmation.StatusConfirmed {
-		if err = s.applySignLink(ctx, tenantInfo, entity, recipients[0], templateContext); err != nil {
+		if err = s.applySignLink(
+			ctx,
+			tenantInfo,
+			entity,
+			recipients[0],
+			templateContext,
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -375,9 +381,11 @@ func (s *Service) Send(
 			return txErr
 		}
 		if !fresh.CanSend() {
-			s.l.Warn("rate confirmation changed status while the email was in flight; keeping the newer status",
+			s.l.Warn(
+				"rate confirmation changed status while the email was in flight; keeping the newer status",
 				zap.String("rateConfirmationId", rateConfirmationID.String()),
-				zap.String("status", fresh.Status.String()))
+				zap.String("status", fresh.Status.String()),
+			)
 			updated = fresh
 			return nil
 		}

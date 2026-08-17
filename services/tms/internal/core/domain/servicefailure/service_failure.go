@@ -25,7 +25,7 @@ var (
 
 type ServiceFailure struct {
 	bun.BaseModel             `bun:"table:service_failures,alias:sf" json:"-"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	pagination.CursorValueSet `bun:",embed"                          json:"-"`
 
 	ID                    pulid.ID          `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID        pulid.ID          `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -62,16 +62,16 @@ type ServiceFailure struct {
 	UpdatedAt             int64             `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector          string            `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`
 
-	ReasonCode   *ReasonCode            `json:"reasonCode,omitempty" bun:"rel:belongs-to,join:reason_code_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Shipment     *shipment.Shipment     `json:"shipment,omitempty"   bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	ReasonCode   *ReasonCode            `json:"reasonCode,omitempty"   bun:"rel:belongs-to,join:reason_code_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Shipment     *shipment.Shipment     `json:"shipment,omitempty"     bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	ShipmentMove *shipment.ShipmentMove `json:"shipmentMove,omitempty" bun:"rel:belongs-to,join:shipment_move_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Stop         *shipment.Stop         `json:"stop,omitempty"       bun:"rel:belongs-to,join:stop_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	CreatedBy    *tenant.User           `json:"createdBy,omitempty"  bun:"rel:belongs-to,join:created_by_id=id"`
-	ReviewedBy   *tenant.User           `json:"reviewedBy,omitempty" bun:"rel:belongs-to,join:reviewed_by_id=id"`
-	ResolvedBy   *tenant.User           `json:"resolvedBy,omitempty" bun:"rel:belongs-to,join:resolved_by_id=id"`
-	VoidedBy     *tenant.User           `json:"voidedBy,omitempty"   bun:"rel:belongs-to,join:voided_by_id=id"`
-	BusinessUnit *tenant.BusinessUnit   `json:"-"                    bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization   `json:"-"                    bun:"rel:belongs-to,join:organization_id=id"`
+	Stop         *shipment.Stop         `json:"stop,omitempty"         bun:"rel:belongs-to,join:stop_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	CreatedBy    *tenant.User           `json:"createdBy,omitempty"    bun:"rel:belongs-to,join:created_by_id=id"`
+	ReviewedBy   *tenant.User           `json:"reviewedBy,omitempty"   bun:"rel:belongs-to,join:reviewed_by_id=id"`
+	ResolvedBy   *tenant.User           `json:"resolvedBy,omitempty"   bun:"rel:belongs-to,join:resolved_by_id=id"`
+	VoidedBy     *tenant.User           `json:"voidedBy,omitempty"     bun:"rel:belongs-to,join:voided_by_id=id"`
+	BusinessUnit *tenant.BusinessUnit   `json:"-"                      bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization   `json:"-"                      bun:"rel:belongs-to,join:organization_id=id"`
 }
 
 func (sf *ServiceFailure) Normalize() {

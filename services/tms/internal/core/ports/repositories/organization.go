@@ -58,8 +58,30 @@ func (c AssetDependencyCounts) HasOutstandingWork() bool {
 		c.LinkedPortalUsers > 0
 }
 
+type CapabilityLock string
+
+const (
+	CapabilityLockNone   = CapabilityLock("")
+	CapabilityLockShare  = CapabilityLock("SHARE")
+	CapabilityLockUpdate = CapabilityLock("UPDATE")
+)
+
+type GetOrganizationCapabilitiesRequest struct {
+	TenantInfo pagination.TenantInfo
+	Lock       CapabilityLock
+}
+
+type OrganizationCapabilities struct {
+	BrokerageEnabled       bool `json:"brokerageEnabled"`
+	AssetOperationsEnabled bool `json:"assetOperationsEnabled"`
+}
+
 type OrganizationRepository interface {
 	GetByID(ctx context.Context, req GetOrganizationByIDRequest) (*tenant.Organization, error)
+	GetCapabilities(
+		ctx context.Context,
+		req GetOrganizationCapabilitiesRequest,
+	) (*OrganizationCapabilities, error)
 	GetByIDs(ctx context.Context, req GetOrganizationsByIDsRequest) ([]*tenant.Organization, error)
 	SelectOptions(
 		ctx context.Context,

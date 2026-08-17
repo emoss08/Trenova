@@ -186,7 +186,10 @@ func (r *repository) deleteMissingAccessorials(
 				BuID:  entity.BusinessUnitID,
 			}).Where(buncolgen.CarrierAssignmentAccessorialColumns.CarrierAssignmentID.Eq(), entity.ID)
 			if len(kept) > 0 {
-				dq = dq.Where(buncolgen.CarrierAssignmentAccessorialColumns.ID.NotIn(), bun.List(kept))
+				dq = dq.Where(
+					buncolgen.CarrierAssignmentAccessorialColumns.ID.NotIn(),
+					bun.List(kept),
+				)
 			}
 			return dq
 		}).
@@ -269,7 +272,11 @@ func (r *repository) Update(
 		return nil, err
 	}
 
-	if err = dberror.CheckRowsAffected(results, "Carrier assignment", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"Carrier assignment",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 

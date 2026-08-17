@@ -11,11 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
+	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
@@ -25,7 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -36,18 +36,13 @@ func assetOperationsOrgRepo(
 ) *mocks.MockOrganizationRepository {
 	t.Helper()
 
-	orgRepo := mocks.NewMockOrganizationRepository(t)
-	orgRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetOrganizationByIDRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.Organization{
-			ID:                     tenantInfo.OrgID,
-			BusinessUnitID:         tenantInfo.BuID,
-			BrokerageEnabled:       true,
-			AssetOperationsEnabled: enabled,
-		}, nil).
-		Maybe()
-
-	return orgRepo
+	return capabilitytest.OrgRepo(t, capabilitytest.OrgRepoParams{
+		TenantInfo:             tenantInfo,
+		Lock:                   repositories.CapabilityLockShare,
+		BrokerageEnabled:       true,
+		AssetOperationsEnabled: enabled,
+		Optional:               true,
+	})
 }
 
 func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testing.T) {
@@ -149,7 +144,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 	svc := &service{
 		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: shipmentRepo,
 		holdRepo:     holdRepo,
@@ -187,7 +182,7 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 	svc := &service{
 		orgRepo: assetOperationsOrgRepo(t, tenantInfo, true),
 		l:       zap.NewNop(),
-		db:      testDBConnection{},
+		db:      dbtest.NopConnection{},
 		repo: func() *mocks.MockAssignmentRepository {
 			repo := mocks.NewMockAssignmentRepository(t)
 			repo.EXPECT().
@@ -251,7 +246,7 @@ func TestAssignToMove_RejectsDispatchBlockingHold(t *testing.T) {
 	svc := &service{
 		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: mocks.NewMockShipmentRepository(t),
 		holdRepo:     holdRepo,
@@ -369,7 +364,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 	svc := &service{
 		orgRepo:             assetOperationsOrgRepo(t, tenantInfo, true),
 		l:                   zap.NewNop(),
-		db:                  testDBConnection{},
+		db:                  dbtest.NopConnection{},
 		repo:                repo,
 		shipmentRepo:        shipmentRepo,
 		holdRepo:            holdRepo,
@@ -500,7 +495,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	svc := &service{
 		orgRepo:             assetOperationsOrgRepo(t, tenantInfo, true),
 		l:                   zap.NewNop(),
-		db:                  testDBConnection{},
+		db:                  dbtest.NopConnection{},
 		repo:                repo,
 		shipmentRepo:        shipmentRepo,
 		holdRepo:            holdRepo,
@@ -620,7 +615,7 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		orgRepo:      params.OrgRepo,
 		shipmentRepo: shipmentRepo,
@@ -693,7 +688,7 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: shipmentRepo,
 		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
@@ -736,7 +731,7 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: mocks.NewMockShipmentRepository(t),
 		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
@@ -757,21 +752,6 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 	require.Error(t, err)
 	var businessErr *errortypes.BusinessError
 	require.ErrorAs(t, err, &businessErr)
-}
-
-type testDBConnection struct{}
-
-func (testDBConnection) DB() *bun.DB                          { return nil }
-func (testDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (testDBConnection) HealthCheck(context.Context) error    { return nil }
-func (testDBConnection) IsHealthy(context.Context) bool       { return true }
-func (testDBConnection) Close() error                         { return nil }
-func (testDBConnection) WithTx(
-	ctx context.Context,
-	_ ports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
 }
 
 func validShipment(
@@ -975,7 +955,7 @@ func newAssignToMoveService(
 	return &service{
 		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: shipmentRepo,
 		holdRepo:     holdRepo,

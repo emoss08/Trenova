@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -122,6 +123,7 @@ func run(opts generatorOptions) error {
 		return err
 	}
 
+	//nolint:gosec // G306: generated Go source is meant to be world-readable
 	return os.WriteFile(resolved.OutputPath, output, 0o644)
 }
 
@@ -259,7 +261,7 @@ func loadSchema(dir string) (*gqlast.Schema, error) {
 
 func generate(data discovery) ([]byte, error) {
 	if data.Schema == nil {
-		return nil, fmt.Errorf("schema is required")
+		return nil, errors.New("schema is required")
 	}
 	if data.Manifest.Aliases == nil {
 		data.Manifest.Aliases = map[string]map[string]string{}
@@ -483,7 +485,11 @@ func selectionForModelOverride(
 		// tags so the type still gets a projection spec instead of being dropped.
 		synthesized, synthOK := synthesizeFieldMap(st)
 		if !synthOK {
-			return typeSelection{}, fmt.Errorf("model %q has no buncolgen %sFieldMap", model, st.Name)
+			return typeSelection{}, fmt.Errorf(
+				"model %q has no buncolgen %sFieldMap",
+				model,
+				st.Name,
+			)
 		}
 		fieldMap = synthesized
 	}
@@ -669,7 +675,11 @@ func validateOverrideTypes(data discovery) error {
 	validateTypeMap := func(groupName string, values map[string]map[string]string) error {
 		for typeName := range values {
 			if _, ok := data.Selections[typeName]; !ok {
-				return fmt.Errorf("%s override references non-projection type %q", groupName, typeName)
+				return fmt.Errorf(
+					"%s override references non-projection type %q",
+					groupName,
+					typeName,
+				)
 			}
 		}
 		return nil
@@ -677,7 +687,11 @@ func validateOverrideTypes(data discovery) error {
 	validateTypeList := func(groupName string, values map[string][]string) error {
 		for typeName := range values {
 			if _, ok := data.Selections[typeName]; !ok {
-				return fmt.Errorf("%s override references non-projection type %q", groupName, typeName)
+				return fmt.Errorf(
+					"%s override references non-projection type %q",
+					groupName,
+					typeName,
+				)
 			}
 		}
 		return nil
@@ -762,10 +776,19 @@ func validateSpecialFields(data discovery) error {
 			seenForKey := make(map[string]struct{}, len(fields))
 			for _, field := range fields {
 				if field == "" {
-					return fmt.Errorf("specials.%s.%s contains an empty field", typeName, specialKey)
+					return fmt.Errorf(
+						"specials.%s.%s contains an empty field",
+						typeName,
+						specialKey,
+					)
 				}
 				if _, ok := seenForKey[field]; ok {
-					return fmt.Errorf("specials.%s.%s lists field %q more than once", typeName, specialKey, field)
+					return fmt.Errorf(
+						"specials.%s.%s lists field %q more than once",
+						typeName,
+						specialKey,
+						field,
+					)
 				}
 				seenForKey[field] = struct{}{}
 				if _, ok := virtuals[field]; ok {

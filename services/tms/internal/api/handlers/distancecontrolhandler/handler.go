@@ -34,9 +34,21 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/distance-controls")
-	api.GET("/", h.pm.RequirePermission(permission.ResourceDistanceControl.String(), permission.OpRead), h.get)
-	api.PUT("/", h.pm.RequirePermission(permission.ResourceDistanceControl.String(), permission.OpUpdate), h.update)
-	api.PATCH("/", h.pm.RequirePermission(permission.ResourceDistanceControl.String(), permission.OpUpdate), h.patch)
+	api.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceDistanceControl.String(), permission.OpRead),
+		h.get,
+	)
+	api.PUT(
+		"/",
+		h.pm.RequirePermission(permission.ResourceDistanceControl.String(), permission.OpUpdate),
+		h.update,
+	)
+	api.PATCH(
+		"/",
+		h.pm.RequirePermission(permission.ResourceDistanceControl.String(), permission.OpUpdate),
+		h.patch,
+	)
 }
 
 func (h *Handler) get(c *gin.Context) {

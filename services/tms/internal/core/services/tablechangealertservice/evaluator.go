@@ -1,4 +1,3 @@
-//nolint:gocyclo // existing legacy workflow/API shape is intentionally kept stable
 package tablechangealertservice
 
 import (

@@ -50,9 +50,18 @@ type Observer struct {
 }
 
 type shipmentRepository interface {
-	GetByID(ctx context.Context, req *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error)
-	UpdateOperationalLifecycle(ctx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error)
-	UpdateStatus(ctx context.Context, req *repositories.UpdateShipmentStatusRequest) (*shipment.Shipment, error)
+	GetByID(
+		ctx context.Context,
+		req *repositories.GetShipmentByIDRequest,
+	) (*shipment.Shipment, error)
+	UpdateOperationalLifecycle(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*shipment.Shipment, error)
+	UpdateStatus(
+		ctx context.Context,
+		req *repositories.UpdateShipmentStatusRequest,
+	) (*shipment.Shipment, error)
 	Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) (*shipment.Shipment, error)
 }
 
@@ -396,7 +405,8 @@ func resolveDirection(
 	event *shipmentevent.Event,
 	link *edi.ShipmentLink,
 ) (syncContext, bool) {
-	if event.OrganizationID == link.SourceOrganizationID && event.ShipmentID == link.SourceShipmentID {
+	if event.OrganizationID == link.SourceOrganizationID &&
+		event.ShipmentID == link.SourceShipmentID {
 		return syncContext{
 			direction: edi.TransferChangeDirectionSourceToTarget,
 			oppositeSide: side{
@@ -405,7 +415,8 @@ func resolveDirection(
 			},
 		}, true
 	}
-	if event.OrganizationID == link.TargetOrganizationID && event.ShipmentID == link.TargetShipmentID {
+	if event.OrganizationID == link.TargetOrganizationID &&
+		event.ShipmentID == link.TargetShipmentID {
 		return syncContext{
 			direction: edi.TransferChangeDirectionTargetToSource,
 			oppositeSide: side{

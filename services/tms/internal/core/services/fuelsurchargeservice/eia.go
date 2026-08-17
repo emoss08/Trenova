@@ -2,6 +2,7 @@ package fuelsurchargeservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -145,7 +146,7 @@ func (s *Service) RefreshEIAPrices(
 		return nil, err
 	}
 	if cfg.APIKey == "" {
-		return nil, fmt.Errorf("EIA fuel prices integration is not configured")
+		return nil, errors.New("EIA fuel prices integration is not configured")
 	}
 
 	indexBySeries := make(map[string]*fuelsurcharge.FuelIndex, len(indices))
@@ -238,7 +239,7 @@ func (s *Service) fetchEIAPrices(
 	query.Set("length", strconv.Itoa(len(indices)*eiaTrailingWeeks))
 	endpoint.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create EIA request: %w", err)
 	}

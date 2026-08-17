@@ -174,7 +174,8 @@ func (r *repository) GetSCIMDirectory(
 	if err := r.db.DB().NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.SCIMDirectoryScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
+			return buncolgen.SCIMDirectoryScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
 		}).
 		Scan(ctx); err != nil {
 		return nil, dberror.HandleNotFoundError(err, "SCIM directory")

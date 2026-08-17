@@ -77,7 +77,6 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	}
 }
 
-//nolint:funlen // The polling workflow sequences discovery, per-profile polling, and per-file processing.
 func PollInboundMailboxesWorkflow(
 	ctx workflow.Context,
 ) (*PollInboundMailboxesResult, error) {

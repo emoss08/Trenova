@@ -41,8 +41,8 @@ type AgentDecision struct {
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	DecidedBy    *tenant.User         `bun:"rel:belongs-to,join:decided_by_user_id=id" json:"-"`
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"    json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"     json:"-"`
+	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"   json:"-"`
+	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"    json:"-"`
 }
 
 func (d *AgentDecision) Validate(multiErr *errortypes.MultiError) {

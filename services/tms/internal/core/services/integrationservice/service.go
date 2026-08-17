@@ -85,7 +85,10 @@ func (s *Service) ListCatalog(
 
 		if installedRecord != nil {
 			item.Enabled = installedRecord.Enabled
-			item.Configured = integration.HasRequiredConfiguration(installedRecord.Configuration, spec)
+			item.Configured = integration.HasRequiredConfiguration(
+				installedRecord.Configuration,
+				spec,
+			)
 		}
 
 		item.Status = buildCatalogStatus(item.Enabled, item.Configured)
@@ -230,7 +233,8 @@ func (s *Service) UpdateConfig(
 		integration.ReadConfigString(finalConfig, "webhookToken") == "" {
 		finalConfig["webhookToken"], err = newWebhookToken(prefix)
 		if err != nil {
-			return nil, errortypes.NewBusinessError("failed to generate webhook token").WithInternal(err)
+			return nil, errortypes.NewBusinessError("failed to generate webhook token").
+				WithInternal(err)
 		}
 	}
 

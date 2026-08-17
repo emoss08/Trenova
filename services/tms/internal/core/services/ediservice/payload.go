@@ -23,7 +23,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-//nolint:funlen // Tender payload construction intentionally mirrors the outbound document shape.
 func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 	payload := edi.LoadTenderPayload{
 		PurposeCode:              edi.LoadTenderPurposeOriginal,
@@ -302,7 +301,10 @@ func buildShipmentEventStatusPayload(
 		payload.StatusReasonCode = reason
 		payload.ReasonCode = reason
 	}
-	if reasonDescription := metadataString(event.Metadata, "reasonDescription"); reasonDescription != "" {
+	if reasonDescription := metadataString(
+		event.Metadata,
+		"reasonDescription",
+	); reasonDescription != "" {
 		payload.ReasonDescription = reasonDescription
 	}
 	if exceptionCode := metadataString(event.Metadata, "exceptionCode"); exceptionCode != "" {
@@ -387,7 +389,10 @@ func buildServiceFailureShipmentStatusPayload(
 	if failure.ReasonCode != nil {
 		status.ServiceFailureReasonCode = failure.ReasonCode.Code
 		if status.ReasonDescription == "" {
-			status.ReasonDescription = stringutils.FirstNonEmpty(failure.ReasonCode.Label, failure.ReasonCode.Description)
+			status.ReasonDescription = stringutils.FirstNonEmpty(
+				failure.ReasonCode.Label,
+				failure.ReasonCode.Description,
+			)
 		}
 	}
 	if strings.TrimSpace(failure.Notes) != "" {
@@ -595,7 +600,10 @@ func applyShipmentStatusStop(payload *edi.ShipmentStatusPayload, stop *shipment.
 
 	payload.LocationName = stop.Location.Name
 	payload.LocationCode = stop.Location.Code
-	payload.AddressLine = stringutils.FirstNonEmpty(payload.AddressLine, locationAddress(stop.Location))
+	payload.AddressLine = stringutils.FirstNonEmpty(
+		payload.AddressLine,
+		locationAddress(stop.Location),
+	)
 	payload.City = stop.Location.City
 	payload.PostalCode = stop.Location.PostalCode
 	if stop.Location.State != nil {

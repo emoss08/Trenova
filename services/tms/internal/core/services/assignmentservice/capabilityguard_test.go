@@ -5,10 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
+	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,20 +40,16 @@ func brokerageOnlyService(
 		}, nil).
 		Once()
 
-	orgRepo := mocks.NewMockOrganizationRepository(t)
-	orgRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetOrganizationByIDRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.Organization{
-			ID:                     tenantInfo.OrgID,
-			BusinessUnitID:         tenantInfo.BuID,
-			BrokerageEnabled:       true,
-			AssetOperationsEnabled: false,
-		}, nil).
-		Once()
+	orgRepo := capabilitytest.OrgRepo(t, capabilitytest.OrgRepoParams{
+		TenantInfo:             tenantInfo,
+		Lock:                   repositories.CapabilityLockShare,
+		BrokerageEnabled:       true,
+		AssetOperationsEnabled: false,
+	})
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		orgRepo:      orgRepo,
 		shipmentRepo: mocks.NewMockShipmentRepository(t),

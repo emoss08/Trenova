@@ -84,7 +84,13 @@ func (r *repository) CreatePreset(
 
 	err := r.db.DB().RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		if entity.IsOrgDefault {
-			if err := clearOrgDefault(c, tx, entity.OrganizationID, entity.BusinessUnitID, pulid.Nil); err != nil {
+			if err := clearOrgDefault(
+				c,
+				tx,
+				entity.OrganizationID,
+				entity.BusinessUnitID,
+				pulid.Nil,
+			); err != nil {
 				log.Error("failed to clear home layout org default", zap.Error(err))
 				return err
 			}
@@ -126,7 +132,13 @@ func (r *repository) UpdatePreset(
 
 	err := r.db.DB().RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		if entity.IsOrgDefault {
-			if err := clearOrgDefault(c, tx, entity.OrganizationID, entity.BusinessUnitID, entity.ID); err != nil {
+			if err := clearOrgDefault(
+				c,
+				tx,
+				entity.OrganizationID,
+				entity.BusinessUnitID,
+				entity.ID,
+			); err != nil {
 				log.Error("failed to clear home layout org default", zap.Error(err))
 				return err
 			}

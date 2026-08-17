@@ -211,7 +211,6 @@ type computeStopParams struct {
 	now             int64
 }
 
-//nolint:funlen // one linear pass from stop facts to a persisted occurrence
 func (s *Service) computeStop(
 	ctx context.Context,
 	p computeStopParams,

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -312,13 +313,13 @@ func fuelSurchargeProgramFromInput(
 		entity.RateRounding = *input.RateRounding
 	}
 	if input.RatePrecision != nil {
-		entity.RatePrecision = int16(*input.RatePrecision)
+		entity.RatePrecision = intutils.SafeToInt16(*input.RatePrecision)
 	}
 	if input.DateBasis != nil {
 		entity.DateBasis = *input.DateBasis
 	}
 	if input.PriceEffectiveDay != nil {
-		entity.PriceEffectiveDay = int16(*input.PriceEffectiveDay)
+		entity.PriceEffectiveDay = intutils.SafeToInt16(*input.PriceEffectiveDay)
 	}
 	if input.MissingPriceFallback != nil {
 		entity.MissingPriceFallback = *input.MissingPriceFallback
@@ -338,10 +339,16 @@ func fuelSurchargeProgramFromInput(
 	if entity.Increment, err = nullDecimalFromStringPtr(input.Increment, "increment"); err != nil {
 		return nil, err
 	}
-	if entity.IncrementRate, err = nullDecimalFromStringPtr(input.IncrementRate, "incrementRate"); err != nil {
+	if entity.IncrementRate, err = nullDecimalFromStringPtr(
+		input.IncrementRate,
+		"incrementRate",
+	); err != nil {
 		return nil, err
 	}
-	if entity.MilesPerGallon, err = nullDecimalFromStringPtr(input.MilesPerGallon, "milesPerGallon"); err != nil {
+	if entity.MilesPerGallon, err = nullDecimalFromStringPtr(
+		input.MilesPerGallon,
+		"milesPerGallon",
+	); err != nil {
 		return nil, err
 	}
 	if entity.MinAmount, err = nullDecimalFromStringPtr(input.MinAmount, "minAmount"); err != nil {
@@ -351,16 +358,28 @@ func fuelSurchargeProgramFromInput(
 		return nil, err
 	}
 
-	if entity.ShipmentTypeIDs, err = pulidsFromStrings(input.ShipmentTypeIds, "shipmentTypeIds"); err != nil {
+	if entity.ShipmentTypeIDs, err = pulidsFromStrings(
+		input.ShipmentTypeIds,
+		"shipmentTypeIds",
+	); err != nil {
 		return nil, err
 	}
-	if entity.ServiceTypeIDs, err = pulidsFromStrings(input.ServiceTypeIds, "serviceTypeIds"); err != nil {
+	if entity.ServiceTypeIDs, err = pulidsFromStrings(
+		input.ServiceTypeIds,
+		"serviceTypeIds",
+	); err != nil {
 		return nil, err
 	}
-	if entity.TractorTypeIDs, err = pulidsFromStrings(input.TractorTypeIds, "tractorTypeIds"); err != nil {
+	if entity.TractorTypeIDs, err = pulidsFromStrings(
+		input.TractorTypeIds,
+		"tractorTypeIds",
+	); err != nil {
 		return nil, err
 	}
-	if entity.TrailerTypeIDs, err = pulidsFromStrings(input.TrailerTypeIds, "trailerTypeIds"); err != nil {
+	if entity.TrailerTypeIDs, err = pulidsFromStrings(
+		input.TrailerTypeIds,
+		"trailerTypeIds",
+	); err != nil {
 		return nil, err
 	}
 
@@ -377,12 +396,18 @@ func fuelSurchargeProgramFromInput(
 				SortOrder:      int32(idx),
 			}
 			if rowInput.SortOrder != nil {
-				row.SortOrder = int32(*rowInput.SortOrder)
+				row.SortOrder = intutils.SafeToInt32(*rowInput.SortOrder)
 			}
-			if row.PriceMin, err = nullDecimalFromStringPtr(rowInput.PriceMin, "tableRows.priceMin"); err != nil {
+			if row.PriceMin, err = nullDecimalFromStringPtr(
+				rowInput.PriceMin,
+				"tableRows.priceMin",
+			); err != nil {
 				return nil, err
 			}
-			if row.PriceMax, err = nullDecimalFromStringPtr(rowInput.PriceMax, "tableRows.priceMax"); err != nil {
+			if row.PriceMax, err = nullDecimalFromStringPtr(
+				rowInput.PriceMax,
+				"tableRows.priceMax",
+			); err != nil {
 				return nil, err
 			}
 			if row.Value, err = decimalFromString(rowInput.Value, "tableRows.value"); err != nil {

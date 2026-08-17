@@ -54,6 +54,7 @@ type SensitiveFieldConfig struct {
 
 var sensitivePatternsMu sync.RWMutex
 
+//nolint:gosec // G101: these are the redaction patterns themselves, not secrets
 var sensitivePatterns = map[string]string{
 	"ssn":            `\b\d{3}-\d{2}-\d{4}\b|\b\d{9}\b`,
 	"creditCard":     `\b(?:\d[ -]*?){13,19}\b`,

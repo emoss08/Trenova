@@ -195,7 +195,11 @@ func (s *service) evaluateShipment(
 					gracePeriodMinutes: gracePeriod,
 					reason:             reason,
 				})
-				s.l.Debug("service failure stop skipped", zap.String("stopID", stop.ID.String()), zap.String("reason", reason))
+				s.l.Debug(
+					"service failure stop skipped",
+					zap.String("stopID", stop.ID.String()),
+					zap.String("reason", reason),
+				)
 				continue
 			}
 			failure, err := s.createOrUpdateDetected(ctx, action, params.actor)
@@ -204,7 +208,10 @@ func (s *service) evaluateShipment(
 			}
 			if action.existing {
 				result.UpdatedIDs = append(result.UpdatedIDs, failure.ID)
-				result.UpdatedStops = append(result.UpdatedStops, serviceFailureStopSummary(failure))
+				result.UpdatedStops = append(
+					result.UpdatedStops,
+					serviceFailureStopSummary(failure),
+				)
 				continue
 			}
 			result.CreatedIDs = append(result.CreatedIDs, failure.ID)

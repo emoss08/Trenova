@@ -64,15 +64,15 @@ type FormMapping struct {
 type FormMappingItem struct {
 	bun.BaseModel `bun:"table:telematics_form_mapping_items,alias:tfmi" json:"-"`
 
-	ID                   pulid.ID              `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID              `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID              `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	MappingID            pulid.ID              `json:"mappingId"             bun:"mapping_id,type:VARCHAR(100),notnull"`
-	SourceFieldLabel     string                `json:"sourceFieldLabel"      bun:"source_field_label,type:TEXT,notnull"`
-	TargetKind           FormMappingTargetKind `json:"targetKind"            bun:"target_kind,type:VARCHAR(32),notnull"`
-	TargetField          string                `json:"targetField"           bun:"target_field,type:VARCHAR(64),nullzero"`
-	TargetCustomFieldKey string                `json:"targetCustomFieldKey"  bun:"target_custom_field_key,type:VARCHAR(100),nullzero"`
-	CreatedAt            int64                 `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID              `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID       pulid.ID              `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID       pulid.ID              `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	MappingID            pulid.ID              `json:"mappingId"            bun:"mapping_id,type:VARCHAR(100),notnull"`
+	SourceFieldLabel     string                `json:"sourceFieldLabel"     bun:"source_field_label,type:TEXT,notnull"`
+	TargetKind           FormMappingTargetKind `json:"targetKind"           bun:"target_kind,type:VARCHAR(32),notnull"`
+	TargetField          string                `json:"targetField"          bun:"target_field,type:VARCHAR(64),nullzero"`
+	TargetCustomFieldKey string                `json:"targetCustomFieldKey" bun:"target_custom_field_key,type:VARCHAR(100),nullzero"`
+	CreatedAt            int64                 `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func NewFormMappingID() pulid.ID {

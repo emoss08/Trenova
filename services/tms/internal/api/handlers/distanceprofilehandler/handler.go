@@ -36,23 +36,67 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/distance-profiles")
-	api.GET("/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead), h.list)
-	api.GET("/select-options/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead), h.selectOptions)
-	api.GET("/select-options/:distanceProfileID", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead), h.getOption)
-	api.POST("/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpCreate), h.create)
-	api.GET("/:distanceProfileID/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead), h.get)
-	api.PUT("/:distanceProfileID/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpUpdate), h.update)
-	api.PATCH("/:distanceProfileID/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpUpdate), h.patch)
-	api.DELETE("/:distanceProfileID/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpDelete), h.delete)
-	api.POST("/:distanceProfileID/set-default/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpUpdate), h.setDefault)
+	api.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead),
+		h.list,
+	)
+	api.GET(
+		"/select-options/",
+		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead),
+		h.selectOptions,
+	)
+	api.GET(
+		"/select-options/:distanceProfileID",
+		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead),
+		h.getOption,
+	)
+	api.POST(
+		"/",
+		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpCreate),
+		h.create,
+	)
+	api.GET(
+		"/:distanceProfileID/",
+		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead),
+		h.get,
+	)
+	api.PUT(
+		"/:distanceProfileID/",
+		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpUpdate),
+		h.update,
+	)
+	api.PATCH(
+		"/:distanceProfileID/",
+		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpUpdate),
+		h.patch,
+	)
+	api.DELETE(
+		"/:distanceProfileID/",
+		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpDelete),
+		h.delete,
+	)
+	api.POST(
+		"/:distanceProfileID/set-default/",
+		h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpUpdate),
+		h.setDefault,
+	)
 }
 
 func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
-		return h.service.List(c.Request.Context(), &repositories.ListDistanceProfileRequest{Filter: req})
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
+			return h.service.List(
+				c.Request.Context(),
+				&repositories.ListDistanceProfileRequest{Filter: req},
+			)
+		},
+	)
 }
 
 func (h *Handler) selectOptions(c *gin.Context) {
@@ -194,14 +238,18 @@ func (h *Handler) setDefault(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	updated, err := h.service.SetDefault(c.Request.Context(), repositories.GetDistanceProfileByIDRequest{
-		ID: id,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
+	updated, err := h.service.SetDefault(
+		c.Request.Context(),
+		repositories.GetDistanceProfileByIDRequest{
+			ID: id,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
 		},
-	}, authCtx.UserID)
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

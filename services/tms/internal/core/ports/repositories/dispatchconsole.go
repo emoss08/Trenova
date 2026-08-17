@@ -214,7 +214,10 @@ type DispatchConsoleRepository interface {
 		ctx context.Context,
 		req *ListLaneExperienceRequest,
 	) ([]*WorkerLaneExperience, error)
-	ListWorkerOnTimeStats(ctx context.Context, req *ListWorkloadRequest) ([]*WorkerOnTimeStats, error)
+	ListWorkerOnTimeStats(
+		ctx context.Context,
+		req *ListWorkloadRequest,
+	) ([]*WorkerOnTimeStats, error)
 	ListWorkerAcceptanceStats(
 		ctx context.Context,
 		req *ListWorkloadRequest,

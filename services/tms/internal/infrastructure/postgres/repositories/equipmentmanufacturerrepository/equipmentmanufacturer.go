@@ -154,7 +154,10 @@ func (r *repository) ListConnection(
 					NewSelect().
 					Model(entities).
 					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyEquipmentManufacturerColumns(sq, req.EquipmentManufacturerColumns)
+						return applyEquipmentManufacturerColumns(
+							sq,
+							req.EquipmentManufacturerColumns,
+						)
 					})
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {

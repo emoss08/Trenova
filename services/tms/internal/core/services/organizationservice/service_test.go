@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,6 +37,17 @@ func (m *mockOrganizationRepo) GetByID(
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*tenant.Organization), args.Error(1)
+}
+
+func (m *mockOrganizationRepo) GetCapabilities(
+	ctx context.Context,
+	req repositories.GetOrganizationCapabilitiesRequest,
+) (*repositories.OrganizationCapabilities, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*repositories.OrganizationCapabilities), args.Error(1)
 }
 
 func (m *mockOrganizationRepo) GetByIDs(
@@ -221,6 +233,7 @@ func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	repo := new(mockOrganizationRepo)
 	svc := &service{
+		db:         dbtest.NopConnection{},
 		l:          zap.NewNop(),
 		repo:       repo,
 		storage:    &noopStorageClient{},
@@ -551,6 +564,7 @@ func TestNew(t *testing.T) {
 	repo := new(mockOrganizationRepo)
 
 	svc := New(Params{
+		DB:        dbtest.NopConnection{},
 		Logger:    zap.NewNop(),
 		Repo:      repo,
 		Storage:   &noopStorageClient{},

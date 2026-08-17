@@ -186,7 +186,7 @@ func (r *repository) FindDefault(
 		Where("sfrc.organization_id = ?", tenantInfo.OrgID).
 		Where("sfrc.business_unit_id = ?", tenantInfo.BuID).
 		Where("sfrc.active = TRUE").
-		Where("sfrc.applies_to IN (?)", bun.In([]servicefailure.ReasonCodeAppliesTo{
+		Where("sfrc.applies_to IN (?)", bun.List([]servicefailure.ReasonCodeAppliesTo{
 			appliesTo,
 			servicefailure.ReasonCodeAppliesToBoth,
 			servicefailure.ReasonCodeAppliesToAll,
@@ -246,7 +246,11 @@ func (r *repository) Update(
 	if err != nil {
 		return nil, mapReasonCodeConstraint(err)
 	}
-	if err = dberror.CheckRowsAffected(result, "Service failure reason code", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"Service failure reason code",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 
@@ -280,7 +284,11 @@ func (r *repository) Archive(
 	if err != nil {
 		return nil, fmt.Errorf("archive service failure reason code: %w", err)
 	}
-	if err = dberror.CheckRowsAffected(result, "Service failure reason code", id.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"Service failure reason code",
+		id.String(),
+	); err != nil {
 		return nil, err
 	}
 
@@ -312,7 +320,11 @@ func (r *repository) Activate(
 	if err != nil {
 		return nil, fmt.Errorf("activate service failure reason code: %w", err)
 	}
-	if err = dberror.CheckRowsAffected(result, "Service failure reason code", id.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"Service failure reason code",
+		id.String(),
+	); err != nil {
 		return nil, err
 	}
 
@@ -353,7 +365,7 @@ func (r *repository) Reorder(
 		Model(&entities).
 		Where("sfrc.organization_id = ?", req.TenantInfo.OrgID).
 		Where("sfrc.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("sfrc.id IN (?)", bun.In(req.ReasonIDs)).
+		Where("sfrc.id IN (?)", bun.List(req.ReasonIDs)).
 		Order("sfrc.sort_order ASC").
 		Scan(ctx)
 	if err != nil {
@@ -386,11 +398,14 @@ func (r *repository) SelectOptions(
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
 				q = q.Where("sfrc.active = TRUE")
 				if req.AppliesTo.IsValid() {
-					q = q.Where("sfrc.applies_to IN (?)", bun.In([]servicefailure.ReasonCodeAppliesTo{
-						req.AppliesTo,
-						servicefailure.ReasonCodeAppliesToBoth,
-						servicefailure.ReasonCodeAppliesToAll,
-					}))
+					q = q.Where(
+						"sfrc.applies_to IN (?)",
+						bun.List([]servicefailure.ReasonCodeAppliesTo{
+							req.AppliesTo,
+							servicefailure.ReasonCodeAppliesToBoth,
+							servicefailure.ReasonCodeAppliesToAll,
+						}),
+					)
 				}
 				return q.Order("sfrc.sort_order ASC", "sfrc.code ASC")
 			},

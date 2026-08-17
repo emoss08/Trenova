@@ -386,7 +386,10 @@ func (r *repository) UpsertAttachments(
 			})
 		}
 
-		if _, insertErr := r.db.DBForContext(txCtx).NewInsert().Model(&entities).Exec(txCtx); insertErr != nil {
+		if _, insertErr := r.db.DBForContext(txCtx).
+			NewInsert().
+			Model(&entities).
+			Exec(txCtx); insertErr != nil {
 			return fmt.Errorf("insert invoice attachments: %w", insertErr)
 		}
 		return nil
@@ -427,7 +430,10 @@ func (r *repository) CreateEmailAttempt(
 	attachments []*invoice.EmailAttemptAttachment,
 ) (*invoice.EmailAttempt, error) {
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if _, insertErr := r.db.DBForContext(txCtx).NewInsert().Model(attempt).Exec(txCtx); insertErr != nil {
+		if _, insertErr := r.db.DBForContext(txCtx).
+			NewInsert().
+			Model(attempt).
+			Exec(txCtx); insertErr != nil {
 			return fmt.Errorf("insert invoice email attempt: %w", insertErr)
 		}
 		if len(attachments) == 0 {
@@ -714,7 +720,11 @@ func (r *repository) UpdateDocumentShareToken(
 	if err != nil {
 		return nil, fmt.Errorf("update invoice document share token: %w", err)
 	}
-	if err = dberror.CheckRowsAffected(result, "Document share token", token.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"Document share token",
+		token.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 	return r.GetDocumentShareToken(ctx, repositories.GetInvoiceDocumentShareTokenRequest{

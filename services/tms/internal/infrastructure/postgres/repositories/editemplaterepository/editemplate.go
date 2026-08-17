@@ -832,7 +832,6 @@ func (r *repository) updateTemplateScriptLibraryStatus(
 	return err
 }
 
-//nolint:funlen // Base template seeding is a declarative create-or-update repository operation.
 func (r *repository) EnsureBase204Template(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

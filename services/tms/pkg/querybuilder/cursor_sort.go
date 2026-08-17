@@ -364,7 +364,8 @@ func normalizeCursorPredicateValue(term CursorSortTerm, value any) any {
 
 	switch typed := value.(type) {
 	case float64:
-		if math.Trunc(typed) == typed && typed >= minExactJSONInteger && typed <= maxExactJSONInteger {
+		if math.Trunc(typed) == typed && typed >= minExactJSONInteger &&
+			typed <= maxExactJSONInteger {
 			return int64(typed)
 		}
 	case float32:

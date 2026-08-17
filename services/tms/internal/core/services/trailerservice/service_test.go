@@ -12,12 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,7 +29,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -313,7 +312,7 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 		Return(nil, nil).
 		Once()
 
-	deps.svc.db = testDBConnection{}
+	deps.svc.db = dbtest.NopConnection{}
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = continuityRepo
 	deps.svc.shipmentRepo = mocks.NewMockShipmentRepository(t)
@@ -515,7 +514,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		Return(&shipment.ShipmentComment{ID: pulid.MustNew("shc_")}, nil).
 		Once()
 
-	deps.svc.db = testDBConnection{}
+	deps.svc.db = dbtest.NopConnection{}
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = continuityRepo
 	deps.svc.shipmentRepo = shipmentRepo
@@ -566,7 +565,7 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 		}, nil).
 		Once()
 
-	deps.svc.db = testDBConnection{}
+	deps.svc.db = dbtest.NopConnection{}
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = mocks.NewMockEquipmentContinuityRepository(t)
 	deps.svc.shipmentRepo = mocks.NewMockShipmentRepository(t)
@@ -590,21 +589,6 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Equal(t, "Trailer is currently in progress on another move", err.Error())
-}
-
-type testDBConnection struct{}
-
-func (testDBConnection) DB() *bun.DB                          { return nil }
-func (testDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (testDBConnection) HealthCheck(context.Context) error    { return nil }
-func (testDBConnection) IsHealthy(context.Context) bool       { return true }
-func (testDBConnection) Close() error                         { return nil }
-func (testDBConnection) WithTx(
-	ctx context.Context,
-	_ ports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
 }
 
 //go:fix inline

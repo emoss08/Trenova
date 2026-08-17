@@ -143,7 +143,13 @@ func (r *repository) FindInProgressByPrimaryWorkerID(
 	workerID pulid.ID,
 	excludeMoveID pulid.ID,
 ) (*shipment.Assignment, error) {
-	return r.findInProgressAssignment(ctx, tenantInfo, "a.primary_worker_id", workerID, excludeMoveID)
+	return r.findInProgressAssignment(
+		ctx,
+		tenantInfo,
+		"a.primary_worker_id",
+		workerID,
+		excludeMoveID,
+	)
 }
 
 func (r *repository) FindActiveByTractorID(

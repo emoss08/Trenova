@@ -688,7 +688,7 @@ func (s *Service) buildSpotOffers(
 			OrganizationID:  req.TenantInfo.OrgID,
 			BusinessUnitID:  req.TenantInfo.BuID,
 			CarrierID:       line.CarrierID,
-			Rank:            int16(idx + 1), //nolint:gosec // bounded by request size
+			Rank:            int16(idx + 1),
 			RateMethod:      rateMethod,
 			Rate:            line.Rate,
 			OfferTTLSeconds: ttl,

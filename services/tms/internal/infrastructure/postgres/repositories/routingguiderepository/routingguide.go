@@ -356,7 +356,11 @@ func (r *repository) Update(
 			return uErr
 		}
 
-		if uErr = dberror.CheckRowsAffected(results, "Routing guide", entity.ID.String()); uErr != nil {
+		if uErr = dberror.CheckRowsAffected(
+			results,
+			"Routing guide",
+			entity.ID.String(),
+		); uErr != nil {
 			return uErr
 		}
 

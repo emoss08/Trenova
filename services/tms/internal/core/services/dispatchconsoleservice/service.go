@@ -182,8 +182,10 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 
 	decoratedMoves := decorateMoves(moves, now)
 	if err = s.attachLiveTenders(ctx, req.TenantInfo, decoratedMoves); err != nil {
-		s.l.Warn("failed to attach live tenders to the dispatch board; rendering without tender chips",
-			zap.Error(err))
+		s.l.Warn(
+			"failed to attach live tenders to the dispatch board; rendering without tender chips",
+			zap.Error(err),
+		)
 	}
 
 	return &Board{
