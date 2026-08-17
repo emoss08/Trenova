@@ -1317,6 +1317,10 @@ type DispatchPlan struct {
 	RunID       *string                      `json:"runId,omitempty"`
 	Assignments []*DispatchPlannedAssignment `json:"assignments"`
 	Uncovered   []*DispatchUncoveredMove     `json:"uncovered"`
+	// Populated under Horizon planning only; empty when the organization plans a single
+	// period at a time.
+	Tours        []*DispatchTour `json:"tours"`
+	PlanningMode string          `json:"planningMode"`
 	// True when the organization is watching what the agent would do without letting it act;
 	// nothing was written.
 	ShadowMode   bool   `json:"shadowMode"`
@@ -1351,6 +1355,15 @@ type DispatchPlannedAssignment struct {
 	AutoExecutable bool               `json:"autoExecutable"`
 	ProposalID     *string            `json:"proposalId,omitempty"`
 	Score          *DispatchCandidate `json:"score"`
+	// Set only under Horizon planning: the tour this move belongs to and its position
+	// within that tour. Immediate planning leaves both empty.
+	TourID        *string `json:"tourId,omitempty"`
+	SequenceIndex int     `json:"sequenceIndex"`
+	// When the driver is projected to start and finish this move, and the drive time left
+	// on their clock afterwards. These are projections from the plan, not commitments.
+	ProjectedStartAt          int `json:"projectedStartAt"`
+	ProjectedCompleteAt       int `json:"projectedCompleteAt"`
+	ProjectedDriveRemainingMs int `json:"projectedDriveRemainingMs"`
 }
 
 // One weighted dimension of a candidate's score, carrying both its numeric contribution and
@@ -1368,6 +1381,20 @@ type DispatchTimeOff struct {
 	StartDate int    `json:"startDate"`
 	EndDate   int    `json:"endDate"`
 	Type      string `json:"type"`
+}
+
+// A sequence of moves horizon planning chained onto one driver. Each move's empty miles
+// are measured from where the previous move ends, which is what makes the chain worth
+// more than the same moves assigned independently.
+type DispatchTour struct {
+	TourID             string   `json:"tourId"`
+	WorkerID           string   `json:"workerId"`
+	WorkerName         string   `json:"workerName"`
+	MoveIds            []string `json:"moveIds"`
+	StartsAt           int      `json:"startsAt"`
+	EndsAt             int      `json:"endsAt"`
+	TotalScore         int      `json:"totalScore"`
+	TotalDeadheadMiles float64  `json:"totalDeadheadMiles"`
 }
 
 // A move the optimizer could not cover. Reporting these matters more than the successes: a
