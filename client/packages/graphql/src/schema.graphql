@@ -2833,6 +2833,7 @@ type DispatchPlan {
   assignments: [DispatchPlannedAssignment!]!
   autonomyTier: String!
   generatedAt: Int!
+  planningMode: String!
   runId: ID
   """
   True when the organization is watching what the agent would do without letting it act;
@@ -2840,6 +2841,11 @@ type DispatchPlan {
   """
   shadowMode: Boolean!
   totalScore: Int!
+  """
+  Populated under Horizon planning only; empty when the organization plans a single
+  period at a time.
+  """
+  tours: [DispatchTour!]!
   uncovered: [DispatchUncoveredMove!]!
 }
 
@@ -2868,9 +2874,22 @@ type DispatchPlannedAssignment {
   confidence: Float!
   moveId: ID!
   proNumber: String!
+  projectedCompleteAt: Int!
+  projectedDriveRemainingMs: Int!
+  """
+  When the driver is projected to start and finish this move, and the drive time left
+  on their clock afterwards. These are projections from the plan, not commitments.
+  """
+  projectedStartAt: Int!
   proposalId: ID
   rationale: String!
   score: DispatchCandidate!
+  sequenceIndex: Int!
+  """
+  Set only under Horizon planning: the tour this move belongs to and its position
+  within that tour. Immediate planning leaves both empty.
+  """
+  tourId: ID
   tractorId: ID
   trailerId: ID
   workerId: ID!
@@ -2894,6 +2913,22 @@ type DispatchTimeOff {
   endDate: Int!
   startDate: Int!
   type: String!
+}
+
+"""
+A sequence of moves horizon planning chained onto one driver. Each move's empty miles
+are measured from where the previous move ends, which is what makes the chain worth
+more than the same moves assigned independently.
+"""
+type DispatchTour {
+  endsAt: Int!
+  moveIds: [ID!]!
+  startsAt: Int!
+  totalDeadheadMiles: Float!
+  totalScore: Int!
+  tourId: ID!
+  workerId: ID!
+  workerName: String!
 }
 
 """

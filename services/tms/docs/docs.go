@@ -31251,11 +31251,20 @@ const docTemplate = `{
                 "enforceWorkerTractorFleetContinuity": {
                     "type": "boolean"
                 },
+                "horizonMaxMovesPerDriver": {
+                    "type": "integer"
+                },
+                "horizonSearchIterations": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "string"
                 },
                 "organizationId": {
                     "type": "string"
+                },
+                "planningMode": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_dispatchcontrol.PlanningMode"
                 },
                 "recordServiceFailures": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_dispatchcontrol.ServiceIncidentType"
@@ -31276,6 +31285,17 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_dispatchcontrol.PlanningMode": {
+            "type": "string",
+            "enum": [
+                "Immediate",
+                "Horizon"
+            ],
+            "x-enum-varnames": [
+                "PlanningModeImmediate",
+                "PlanningModeHorizon"
+            ]
         },
         "github_com_emoss08_trenova_internal_core_domain_dispatchcontrol.ScoringWeights": {
             "type": "object",

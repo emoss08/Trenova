@@ -2790,11 +2790,20 @@
                     "enforceWorkerTractorFleetContinuity": {
                         "type": "boolean"
                     },
+                    "horizonMaxMovesPerDriver": {
+                        "type": "integer"
+                    },
+                    "horizonSearchIterations": {
+                        "type": "integer"
+                    },
                     "id": {
                         "type": "string"
                     },
                     "organizationId": {
                         "type": "string"
+                    },
+                    "planningMode": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_dispatchcontrol.PlanningMode"
                     },
                     "recordServiceFailures": {
                         "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_dispatchcontrol.ServiceIncidentType"
@@ -2816,6 +2825,17 @@
                     }
                 },
                 "type": "object"
+            },
+            "github_com_emoss08_trenova_internal_core_domain_dispatchcontrol.PlanningMode": {
+                "enum": [
+                    "Immediate",
+                    "Horizon"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "PlanningModeImmediate",
+                    "PlanningModeHorizon"
+                ]
             },
             "github_com_emoss08_trenova_internal_core_domain_dispatchcontrol.ScoringWeights": {
                 "additionalProperties": {

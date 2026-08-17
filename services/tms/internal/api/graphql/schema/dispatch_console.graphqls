@@ -395,6 +395,35 @@ type DispatchPlannedAssignment {
   autoExecutable: Boolean!
   proposalId: ID
   score: DispatchCandidate!
+  """
+  Set only under Horizon planning: the tour this move belongs to and its position
+  within that tour. Immediate planning leaves both empty.
+  """
+  tourId: ID
+  sequenceIndex: Int!
+  """
+  When the driver is projected to start and finish this move, and the drive time left
+  on their clock afterwards. These are projections from the plan, not commitments.
+  """
+  projectedStartAt: Int!
+  projectedCompleteAt: Int!
+  projectedDriveRemainingMs: Int!
+}
+
+"""
+A sequence of moves horizon planning chained onto one driver. Each move's empty miles
+are measured from where the previous move ends, which is what makes the chain worth
+more than the same moves assigned independently.
+"""
+type DispatchTour {
+  tourId: ID!
+  workerId: ID!
+  workerName: String!
+  moveIds: [ID!]!
+  startsAt: Int!
+  endsAt: Int!
+  totalScore: Int!
+  totalDeadheadMiles: Float!
 }
 
 """
@@ -412,6 +441,12 @@ type DispatchPlan {
   runId: ID
   assignments: [DispatchPlannedAssignment!]!
   uncovered: [DispatchUncoveredMove!]!
+  """
+  Populated under Horizon planning only; empty when the organization plans a single
+  period at a time.
+  """
+  tours: [DispatchTour!]!
+  planningMode: String!
   """
   True when the organization is watching what the agent would do without letting it act;
   nothing was written.
