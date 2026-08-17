@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -159,18 +160,22 @@ func (r *repository) updateCommodity(
 	shipmentCommodity.Version = ov + 1
 	shipmentCommodity.UpdatedAt = timeutils.NowUnix()
 
+	cols := buncolgen.ShipmentCommodityColumns
 	results, err := tx.NewUpdate().
 		Model((*shipment.ShipmentCommodity)(nil)).
-		Set("commodity_id = ?", shipmentCommodity.CommodityID).
-		Set("weight = ?", shipmentCommodity.Weight).
-		Set("pieces = ?", shipmentCommodity.Pieces).
-		Set("version = ?", shipmentCommodity.Version).
-		Set("updated_at = ?", shipmentCommodity.UpdatedAt).
-		Where("id = ?", shipmentCommodity.ID).
-		Where("shipment_id = ?", shipmentCommodity.ShipmentID).
-		Where("organization_id = ?", shipmentCommodity.OrganizationID).
-		Where("business_unit_id = ?", shipmentCommodity.BusinessUnitID).
-		Where("version = ?", ov).
+		Set(cols.CommodityID.Set(), shipmentCommodity.CommodityID).
+		Set(cols.Weight.Set(), shipmentCommodity.Weight).
+		Set(cols.Pieces.Set(), shipmentCommodity.Pieces).
+		Set(cols.LengthFeet.Set(), shipmentCommodity.LengthFeet).
+		Set(cols.WidthFeet.Set(), shipmentCommodity.WidthFeet).
+		Set(cols.HeightFeet.Set(), shipmentCommodity.HeightFeet).
+		Set(cols.Version.Set(), shipmentCommodity.Version).
+		Set(cols.UpdatedAt.Set(), shipmentCommodity.UpdatedAt).
+		Where(cols.ID.Eq(), shipmentCommodity.ID).
+		Where(cols.ShipmentID.Eq(), shipmentCommodity.ShipmentID).
+		Where(cols.OrganizationID.Eq(), shipmentCommodity.OrganizationID).
+		Where(cols.BusinessUnitID.Eq(), shipmentCommodity.BusinessUnitID).
+		Where(cols.Version.Eq(), ov).
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("update shipment commodity %s: %w", shipmentCommodity.ID, err)
