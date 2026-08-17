@@ -211,6 +211,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt

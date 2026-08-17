@@ -5745,13 +5745,16 @@ type ComplexityRoot struct {
 		Commodity      func(childComplexity int) int
 		CommodityID    func(childComplexity int) int
 		CreatedAt      func(childComplexity int) int
+		HeightFeet     func(childComplexity int) int
 		ID             func(childComplexity int) int
+		LengthFeet     func(childComplexity int) int
 		OrganizationID func(childComplexity int) int
 		Pieces         func(childComplexity int) int
 		ShipmentID     func(childComplexity int) int
 		UpdatedAt      func(childComplexity int) int
 		Version        func(childComplexity int) int
 		Weight         func(childComplexity int) int
+		WidthFeet      func(childComplexity int) int
 	}
 
 	ShipmentCommodityDetail struct {
@@ -36320,12 +36323,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentCommodity.CreatedAt(childComplexity), true
+	case "ShipmentCommodity.heightFeet":
+		if e.ComplexityRoot.ShipmentCommodity.HeightFeet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommodity.HeightFeet(childComplexity), true
 	case "ShipmentCommodity.id":
 		if e.ComplexityRoot.ShipmentCommodity.ID == nil {
 			break
 		}
 
 		return e.ComplexityRoot.ShipmentCommodity.ID(childComplexity), true
+	case "ShipmentCommodity.lengthFeet":
+		if e.ComplexityRoot.ShipmentCommodity.LengthFeet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommodity.LengthFeet(childComplexity), true
 	case "ShipmentCommodity.organizationId":
 		if e.ComplexityRoot.ShipmentCommodity.OrganizationID == nil {
 			break
@@ -36362,6 +36377,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentCommodity.Weight(childComplexity), true
+	case "ShipmentCommodity.widthFeet":
+		if e.ComplexityRoot.ShipmentCommodity.WidthFeet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCommodity.WidthFeet(childComplexity), true
 
 	case "ShipmentCommodityDetail.businessUnitId":
 		if e.ComplexityRoot.ShipmentCommodityDetail.BusinessUnitID == nil {
@@ -51183,6 +51204,9 @@ type ShipmentCommodity {
   commodityId: ID!
   pieces: Int!
   weight: Int!
+  lengthFeet: Float
+  widthFeet: Float
+  heightFeet: Float
   version: Int!
   createdAt: Int!
   updatedAt: Int!
@@ -51915,6 +51939,9 @@ input ShipmentCommodityInput {
   commodityId: ID!
   pieces: Int = 1
   weight: Int = 0
+  lengthFeet: Float
+  widthFeet: Float
+  heightFeet: Float
   version: Int
 }
 
@@ -63453,6 +63480,12 @@ func (ec *executionContext) childFields_ShipmentCommodity(ctx context.Context, f
 		return ec.fieldContext_ShipmentCommodity_pieces(ctx, field)
 	case "weight":
 		return ec.fieldContext_ShipmentCommodity_weight(ctx, field)
+	case "lengthFeet":
+		return ec.fieldContext_ShipmentCommodity_lengthFeet(ctx, field)
+	case "widthFeet":
+		return ec.fieldContext_ShipmentCommodity_widthFeet(ctx, field)
+	case "heightFeet":
+		return ec.fieldContext_ShipmentCommodity_heightFeet(ctx, field)
 	case "version":
 		return ec.fieldContext_ShipmentCommodity_version(ctx, field)
 	case "createdAt":
@@ -187279,6 +187312,75 @@ func (ec *executionContext) fieldContext_ShipmentCommodity_weight(_ context.Cont
 	return graphql.NewScalarFieldContext("ShipmentCommodity", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _ShipmentCommodity_lengthFeet(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommodity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommodity_lengthFeet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LengthFeet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommodity_lengthFeet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommodity", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommodity_widthFeet(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommodity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommodity_widthFeet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WidthFeet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommodity_widthFeet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommodity", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentCommodity_heightFeet(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommodity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCommodity_heightFeet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HeightFeet, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCommodity_heightFeet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentCommodity", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
 func (ec *executionContext) _ShipmentCommodity_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCommodity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -218579,7 +218681,7 @@ func (ec *executionContext) unmarshalInputShipmentCommodityInput(ctx context.Con
 		asMap["weight"] = 0
 	}
 
-	fieldsInOrder := [...]string{"id", "shipmentId", "commodityId", "pieces", "weight", "version"}
+	fieldsInOrder := [...]string{"id", "shipmentId", "commodityId", "pieces", "weight", "lengthFeet", "widthFeet", "heightFeet", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -218621,6 +218723,27 @@ func (ec *executionContext) unmarshalInputShipmentCommodityInput(ctx context.Con
 				return it, err
 			}
 			it.Weight = data
+		case "lengthFeet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lengthFeet"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LengthFeet = data
+		case "widthFeet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("widthFeet"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WidthFeet = data
+		case "heightFeet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("heightFeet"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HeightFeet = data
 		case "version":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
@@ -266499,6 +266622,21 @@ func (ec *executionContext) _ShipmentCommodity(ctx context.Context, sel ast.Sele
 		case "weight":
 			out.Values[i] = ec._ShipmentCommodity_weight(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lengthFeet":
+			out.Values[i] = ec._ShipmentCommodity_lengthFeet(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "widthFeet":
+			out.Values[i] = ec._ShipmentCommodity_widthFeet(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "heightFeet":
+			out.Values[i] = ec._ShipmentCommodity_heightFeet(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		case "version":

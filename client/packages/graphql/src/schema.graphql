@@ -8795,13 +8795,16 @@ type ShipmentCommodity {
   commodity: ShipmentCommodityDetail
   commodityId: ID!
   createdAt: Int!
+  heightFeet: Float
   id: ID
+  lengthFeet: Float
   organizationId: ID!
   pieces: Int!
   shipmentId: ID!
   updatedAt: Int!
   version: Int!
   weight: Int!
+  widthFeet: Float
 }
 
 type ShipmentCommodityDetail {
@@ -8828,11 +8831,14 @@ type ShipmentCommodityDetail {
 
 input ShipmentCommodityInput {
   commodityId: ID!
+  heightFeet: Float
   id: ID
+  lengthFeet: Float
   pieces: Int = 1
   shipmentId: ID
   version: Int
   weight: Int = 0
+  widthFeet: Float
 }
 
 type ShipmentConnection {

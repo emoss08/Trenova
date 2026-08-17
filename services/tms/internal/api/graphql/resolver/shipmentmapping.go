@@ -407,6 +407,9 @@ func shipmentCommoditiesFromInput(
 			CommodityID:    commodityID,
 			Pieces:         int64Value(input.Pieces),
 			Weight:         int64Value(input.Weight),
+			LengthFeet:     input.LengthFeet,
+			WidthFeet:      input.WidthFeet,
+			HeightFeet:     input.HeightFeet,
 		}
 		if commodity.Pieces == 0 {
 			commodity.Pieces = 1
@@ -653,6 +656,9 @@ func shipmentCommoditiesToModel(
 			CommodityID:    entity.CommodityID.String(),
 			Pieces:         int(entity.Pieces),
 			Weight:         int(entity.Weight),
+			LengthFeet:     entity.LengthFeet,
+			WidthFeet:      entity.WidthFeet,
+			HeightFeet:     entity.HeightFeet,
 			Version:        int(entity.Version),
 			CreatedAt:      int(entity.CreatedAt),
 			UpdatedAt:      int(entity.UpdatedAt),

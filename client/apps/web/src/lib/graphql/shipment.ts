@@ -748,6 +748,9 @@ function toCommodityInput(commodity: Shipment["commodities"][number]): ShipmentC
     commodityId: commodity.commodityId,
     pieces: commodity.pieces,
     weight: commodity.weight,
+    lengthFeet: commodity.lengthFeet,
+    widthFeet: commodity.widthFeet,
+    heightFeet: commodity.heightFeet,
     version: commodity.version,
   };
 }
