@@ -2,6 +2,7 @@ package commodity
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -43,6 +44,40 @@ const (
 	FreightClass400  FreightClass = "Class400"
 	FreightClass500  FreightClass = "Class500"
 )
+
+// FreightClasses is the eighteen NMFC classes in ascending order.
+//
+// The order is the classification scale itself, densest to least dense, which
+// is what density based classification walks and what a class rated tariff
+// indexes its columns by.
+var FreightClasses = []FreightClass{
+	FreightClass50,
+	FreightClass55,
+	FreightClass60,
+	FreightClass65,
+	FreightClass70,
+	FreightClass77_5,
+	FreightClass85,
+	FreightClass92_5,
+	FreightClass100,
+	FreightClass110,
+	FreightClass125,
+	FreightClass150,
+	FreightClass175,
+	FreightClass200,
+	FreightClass250,
+	FreightClass300,
+	FreightClass400,
+	FreightClass500,
+}
+
+func (fc FreightClass) String() string {
+	return string(fc)
+}
+
+func (fc FreightClass) IsValid() bool {
+	return slices.Contains(FreightClasses, fc)
+}
 
 type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`

@@ -3,7 +3,6 @@ package ratetable
 import (
 	"context"
 	"errors"
-	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -37,8 +36,6 @@ func LookupTypeFromString(s string) (LookupType, error) {
 		return "", errors.New("invalid lookup type")
 	}
 }
-
-var keyPattern = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*$`)
 
 var (
 	_ bun.BeforeAppendModelHook          = (*RateTable)(nil)
@@ -75,7 +72,7 @@ func (rt *RateTable) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&rt.Key,
 			validation.Required,
 			validation.Length(1, 64),
-			validation.Match(keyPattern).
+			validation.Match(domaintypes.IdentifierPattern).
 				Error("Key must start with a letter and contain only letters, digits, and underscores"),
 		),
 		validation.Field(&rt.LookupType, validation.Required, validation.In(

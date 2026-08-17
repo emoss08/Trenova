@@ -12,6 +12,11 @@ var (
 	)
 	VinRegex          = regexp.MustCompile(`^[A-HJ-NPR-Z0-9]{17}$`)
 	UsPostalCodeRegex = regexp.MustCompile(`^\d{5}(-\d{4})?$`)
+
+	// IdentifierPattern matches the codes that get referenced by name from
+	// inside a stored expression — rate table keys, rate matrix codes. They end
+	// up as bare identifiers in a formula, so they have to look like one.
+	IdentifierPattern = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_]*$`)
 )
 
 func ValidateVin(value any) error {
