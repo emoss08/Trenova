@@ -171,6 +171,10 @@ type ListRequirementsRequest struct {
 	TenantInfo pagination.TenantInfo
 	ShipmentID pulid.ID
 	Status     string
+	// ExcludeSuperseded drops rows from prior derivations. The current
+	// requirement set is what the panel and the dispatch check consume;
+	// superseded rows are history and belong to the audit trail.
+	ExcludeSuperseded bool
 }
 
 type ReplaceRequirementsRequest struct {

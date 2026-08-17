@@ -304,8 +304,14 @@ export const emptyCarrierAssignmentPayload: CarrierAssignmentPayload = {
 };
 
 export const carrierEligibilitySchema = z.object({
-  blockers: z.array(z.string()).default([]),
-  warnings: z.array(z.string()).default([]),
+  blockers: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  warnings: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
 });
 export type CarrierEligibility = z.infer<typeof carrierEligibilitySchema>;
 

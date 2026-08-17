@@ -153,6 +153,9 @@ func (r *repository) ListRequirements(
 	if req.Status != "" {
 		q = q.Where(cols.Status.Eq(), req.Status)
 	}
+	if req.ExcludeSuperseded {
+		q = q.Where(cols.Status.NotEq(), permit.RequirementSuperseded)
+	}
 
 	if err := q.Order(cols.RouteSequence.OrderAsc()).Scan(ctx); err != nil {
 		r.l.Error("failed to list permit requirements", zap.Error(err))

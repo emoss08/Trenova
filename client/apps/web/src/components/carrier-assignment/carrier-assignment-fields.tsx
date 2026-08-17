@@ -137,6 +137,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             label="Carrier"
             placeholder="Select carrier"
             rules={{ required: true }}
+            description="External carrier that will run this move."
           />
         </FormControl>
         <FormControl>
@@ -144,9 +145,10 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             control={control}
             name="rateMethod"
             label="Rate Method"
-            placeholder="Rate Method"
+            placeholder="Select rate method"
             rules={{ required: true }}
             options={carrierRateMethodChoices}
+            description="How the carrier's pay is calculated for this move."
           />
         </FormControl>
         <FormControl>
@@ -171,6 +173,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             sideText="$"
             decimalScale={4}
             thousandSeparator
+            description="Fuel surcharge paid to the carrier on top of the base rate."
           />
         </FormControl>
         <FormControl>
@@ -178,8 +181,9 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             control={control}
             name="proNumber"
             label="Carrier Pro Number"
-            placeholder="Carrier's own reference"
+            placeholder="e.g., PRO-482910"
             maxLength={50}
+            description="The carrier's own tracking reference for this move."
           />
         </FormControl>
         <FormControl>
@@ -187,8 +191,9 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             control={control}
             name="externalDriverName"
             label="Driver Name"
-            placeholder="Carrier driver"
+            placeholder="e.g., John Smith"
             maxLength={255}
+            description="Name of the carrier's driver running this move."
           />
         </FormControl>
         <FormControl>
@@ -196,7 +201,8 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             control={control}
             name="externalDriverPhone"
             label="Driver Phone"
-            placeholder="Phone"
+            placeholder="(555) 555-5555"
+            description="Contact number for the carrier's driver while in transit."
           />
         </FormControl>
         <FormControl>
@@ -204,8 +210,9 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             control={control}
             name="externalTractorNumber"
             label="Tractor Number"
-            placeholder="Carrier tractor"
+            placeholder="e.g., T-4521"
             maxLength={50}
+            description="Unit number of the carrier's tractor on this move."
           />
         </FormControl>
         <FormControl>
@@ -213,8 +220,9 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
             control={control}
             name="externalTrailerNumber"
             label="Trailer Number"
-            placeholder="Carrier trailer"
+            placeholder="e.g., TR-8834"
             maxLength={50}
+            description="Unit number of the carrier's trailer on this move."
           />
         </FormControl>
       </FormGroup>
@@ -262,6 +270,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                   label="Accessorial Charge"
                   placeholder="Link a configured charge (optional)"
                   clearable
+                  description="Optionally link a configured charge to prefill the description."
                   onOptionChange={(option) => handleAccessorialChargeChange(index, option)}
                 />
               </FormControl>
@@ -273,6 +282,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                   placeholder="e.g., Lumper fee"
                   rules={{ required: true }}
                   maxLength={255}
+                  description="What the carrier is billing this charge for."
                 />
               </FormControl>
               <FormControl>
@@ -285,6 +295,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
                   rules={{ required: true }}
                   decimalScale={4}
                   thousandSeparator
+                  description="Amount the carrier bills for this charge."
                 />
               </FormControl>
             </FormGroup>

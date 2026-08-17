@@ -2,6 +2,7 @@ import { queries } from "@/lib/queries";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import {
@@ -172,29 +173,33 @@ function EnvelopeBody({
               )
             }
           />
-          <ul className="divide-y">
-            {requirements.map((requirement) => (
-              <RequirementRow
-                // Derived requirements have no ID, so the jurisdiction and its
-                // place on the route are what actually identify a row.
-                key={`${requirement.stateId}-${requirement.routeSequence}`}
-                requirement={requirement}
-                onRecord={() => setRecording(requirement)}
-                onWaive={() => setWaiving(requirement)}
-              />
-            ))}
-          </ul>
+          <ScrollArea className="rounded-b-lg" viewportClassName="max-h-64" maskHeight={16}>
+            <ul className="divide-y">
+              {requirements.map((requirement) => (
+                <RequirementRow
+                  // Derived requirements have no ID, so the jurisdiction and its
+                  // place on the route are what actually identify a row.
+                  key={`${requirement.stateId}-${requirement.routeSequence}`}
+                  requirement={requirement}
+                  onRecord={() => setRecording(requirement)}
+                  onWaive={() => setWaiving(requirement)}
+                />
+              ))}
+            </ul>
+          </ScrollArea>
         </div>
       )}
 
       {!!permits?.length && (
         <div className="rounded-lg border">
           <CardHeader title={`Permits on file (${permits.length})`} />
-          <ul className="divide-y">
-            {permits.map((entry) => (
-              <PermitRow key={entry.id} permit={entry} onEdit={() => setEditing(entry)} />
-            ))}
-          </ul>
+          <ScrollArea className="rounded-b-lg" viewportClassName="max-h-64" maskHeight={16}>
+            <ul className="divide-y">
+              {permits.map((entry) => (
+                <PermitRow key={entry.id} permit={entry} onEdit={() => setEditing(entry)} />
+              ))}
+            </ul>
+          </ScrollArea>
         </div>
       )}
 

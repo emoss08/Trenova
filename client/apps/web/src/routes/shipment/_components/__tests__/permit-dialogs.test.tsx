@@ -89,7 +89,7 @@ describe("PermitRecordDialog", () => {
 
     expect(screen.getByRole("heading", { name: /record permit/i })).toBeInTheDocument();
 
-    await user.type(screen.getByPlaceholderText(/number issued by the state/i), "TN-99");
+    await user.type(screen.getByPlaceholderText(/2026-084311/), "TN-99");
     await user.click(screen.getByRole("button", { name: /record permit/i }));
 
     // Validation holds the submit, so neither path is reached. The update path

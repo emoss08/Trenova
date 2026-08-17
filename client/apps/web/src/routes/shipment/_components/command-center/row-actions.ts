@@ -54,7 +54,12 @@ export function buildShipmentRowActions(
         const tenderStatus = shipment.tenderStatus;
         const isEligible = isEligibleTenderStatus(tenderStatus);
 
-        return !handlers.canSendEDI || shipment.status !== "New" || !isEligible;
+        return (
+          !handlers.canSendEDI ||
+          shipment.status !== "New" ||
+          !isEligible ||
+          !shipment.customer?.ediPartner
+        );
       },
     },
     {

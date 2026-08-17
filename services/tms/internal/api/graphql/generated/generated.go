@@ -146,6 +146,7 @@ type ResolverRoot interface {
 	SettlementControl() SettlementControlResolver
 	SettlementException() SettlementExceptionResolver
 	Shipment() ShipmentResolver
+	ShipmentCustomer() ShipmentCustomerResolver
 	TCASubscription() TCASubscriptionResolver
 	TableConfiguration() TableConfigurationResolver
 	Tender() TenderResolver
@@ -5812,6 +5813,7 @@ type ComplexityRoot struct {
 		Code                   func(childComplexity int) int
 		ConsolidationPriority  func(childComplexity int) int
 		CreatedAt              func(childComplexity int) int
+		EdiPartner             func(childComplexity int) int
 		ExclusiveConsolidation func(childComplexity int) int
 		ExternalID             func(childComplexity int) int
 		ID                     func(childComplexity int) int
@@ -7664,6 +7666,9 @@ type ShipmentResolver interface {
 	OrderNumber(ctx context.Context, obj *gqlmodel.Shipment) (*string, error)
 	OrderStatus(ctx context.Context, obj *gqlmodel.Shipment) (*order.Status, error)
 	ProfitabilityEstimate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentProfitabilityEstimate, error)
+}
+type ShipmentCustomerResolver interface {
+	EdiPartner(ctx context.Context, obj *gqlmodel.ShipmentCustomer) (*edi.EDIPartner, error)
 }
 type TCASubscriptionResolver interface {
 	Conditions(ctx context.Context, obj *tablechangealert.TCASubscription) ([]map[string]any, error)
@@ -36675,6 +36680,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentCustomer.CreatedAt(childComplexity), true
+	case "ShipmentCustomer.ediPartner":
+		if e.ComplexityRoot.ShipmentCustomer.EdiPartner == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentCustomer.EdiPartner(childComplexity), true
 	case "ShipmentCustomer.exclusiveConsolidation":
 		if e.ComplexityRoot.ShipmentCustomer.ExclusiveConsolidation == nil {
 			break
@@ -51141,6 +51152,11 @@ type ShipmentCustomer {
   version: Int!
   createdAt: Int!
   updatedAt: Int!
+  """
+  Active internal EDI partner linked to this customer that is enabled for
+  outbound load tenders, if any.
+  """
+  ediPartner: EdiPartner
 }
 
 type ShipmentFormulaTemplate {
@@ -63780,6 +63796,8 @@ func (ec *executionContext) childFields_ShipmentCustomer(ctx context.Context, fi
 		return ec.fieldContext_ShipmentCustomer_createdAt(ctx, field)
 	case "updatedAt":
 		return ec.fieldContext_ShipmentCustomer_updatedAt(ctx, field)
+	case "ediPartner":
+		return ec.fieldContext_ShipmentCustomer_ediPartner(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentCustomer", field.Name)
 }
@@ -189046,6 +189064,38 @@ func (ec *executionContext) fieldContext_ShipmentCustomer_updatedAt(_ context.Co
 	return graphql.NewScalarFieldContext("ShipmentCustomer", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _ShipmentCustomer_ediPartner(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCustomer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentCustomer_ediPartner(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.ShipmentCustomer().EdiPartner(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+			return ec.marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentCustomer_ediPartner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentCustomer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartner(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ShipmentCustomerMix_windowDays(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentCustomerMix) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -267513,113 +267563,151 @@ func (ec *executionContext) _ShipmentCustomer(ctx context.Context, sel ast.Selec
 		case "id":
 			out.Values[i] = ec._ShipmentCustomer_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "businessUnitId":
 			out.Values[i] = ec._ShipmentCustomer_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "organizationId":
 			out.Values[i] = ec._ShipmentCustomer_organizationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "stateId":
 			out.Values[i] = ec._ShipmentCustomer_stateId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._ShipmentCustomer_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "code":
 			out.Values[i] = ec._ShipmentCustomer_code(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._ShipmentCustomer_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "addressLine1":
 			out.Values[i] = ec._ShipmentCustomer_addressLine1(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "addressLine2":
 			out.Values[i] = ec._ShipmentCustomer_addressLine2(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "city":
 			out.Values[i] = ec._ShipmentCustomer_city(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "postalCode":
 			out.Values[i] = ec._ShipmentCustomer_postalCode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "isGeocoded":
 			out.Values[i] = ec._ShipmentCustomer_isGeocoded(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "longitude":
 			out.Values[i] = ec._ShipmentCustomer_longitude(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "latitude":
 			out.Values[i] = ec._ShipmentCustomer_latitude(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "placeId":
 			out.Values[i] = ec._ShipmentCustomer_placeId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "externalId":
 			out.Values[i] = ec._ShipmentCustomer_externalId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "allowConsolidation":
 			out.Values[i] = ec._ShipmentCustomer_allowConsolidation(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "exclusiveConsolidation":
 			out.Values[i] = ec._ShipmentCustomer_exclusiveConsolidation(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "consolidationPriority":
 			out.Values[i] = ec._ShipmentCustomer_consolidationPriority(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "version":
 			out.Values[i] = ec._ShipmentCustomer_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._ShipmentCustomer_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._ShipmentCustomer_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "ediPartner":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ShipmentCustomer_ediPartner(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

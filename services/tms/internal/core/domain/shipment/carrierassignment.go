@@ -14,58 +14,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type CarrierAssignmentStatus string
-
-const (
-	CarrierAssignmentStatusPending   = CarrierAssignmentStatus("Pending")
-	CarrierAssignmentStatusConfirmed = CarrierAssignmentStatus("Confirmed")
-	CarrierAssignmentStatusCanceled  = CarrierAssignmentStatus("Canceled")
-)
-
-func (s CarrierAssignmentStatus) String() string {
-	return string(s)
-}
-
-func (s CarrierAssignmentStatus) IsValid() bool {
-	switch s {
-	case CarrierAssignmentStatusPending,
-		CarrierAssignmentStatusConfirmed,
-		CarrierAssignmentStatusCanceled:
-		return true
-	}
-	return false
-}
-
-type CarrierRateMethod string
-
-const (
-	CarrierRateMethodFlat    = CarrierRateMethod("Flat")
-	CarrierRateMethodPerMile = CarrierRateMethod("PerMile")
-)
-
-func (m CarrierRateMethod) String() string {
-	return string(m)
-}
-
-func (m CarrierRateMethod) Label() string {
-	switch m {
-	case CarrierRateMethodPerMile:
-		return "Per Mile"
-	case CarrierRateMethodFlat:
-		return "Flat"
-	default:
-		return string(m)
-	}
-}
-
-func (m CarrierRateMethod) IsValid() bool {
-	switch m {
-	case CarrierRateMethodFlat, CarrierRateMethodPerMile:
-		return true
-	}
-	return false
-}
-
 // CarrierBaseAmount extends a buy rate into the base amount: per-mile rates
 // multiply by the move distance, flat rates pass through. Every surface that
 // prices a carrier offer or assignment must share this math so documents and
@@ -134,45 +82,27 @@ func (ca *CarrierAssignment) applyDefaults() {
 	}
 }
 
-// SyncTotals derives the extended base amount and total cost from the rate
-// inputs. distance is the move distance in miles and is only consulted for
-// per-mile rates.
-func (ca *CarrierAssignment) SyncTotals(distance *float64) {
-	ca.applyDefaults()
-
-	ca.BaseAmount = CarrierBaseAmount(ca.RateMethod, ca.BaseRate, distance)
-
-	total := decimal.Zero
-	for _, acc := range ca.Accessorials {
-		if acc == nil {
-			continue
-		}
-		total = total.Add(acc.Amount)
-	}
-	ca.AccessorialTotal = total
-	ca.TotalCost = ca.BaseAmount.Add(ca.FuelSurcharge).Add(ca.AccessorialTotal)
-}
-
-func (ca *CarrierAssignment) IsActive() bool {
-	return ca != nil && ca.Status != CarrierAssignmentStatusCanceled
-}
-
 func (ca *CarrierAssignment) Validate(multiErr *errortypes.MultiError) {
 	ca.applyDefaults()
 
-	multiErr.AddOzzoError(validation.ValidateStruct(ca,
-		validation.Field(&ca.CarrierID,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		ca,
+		validation.Field(
+			&ca.CarrierID,
 			validation.Required.Error("Carrier is required"),
 		),
-		validation.Field(&ca.Status,
+		validation.Field(
+			&ca.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[CarrierAssignmentStatus]("Status is invalid"),
 		),
-		validation.Field(&ca.RateMethod,
+		validation.Field(
+			&ca.RateMethod,
 			validation.Required.Error("Rate method is required"),
 			domainvalidation.ValidEnum[CarrierRateMethod]("Rate method is invalid"),
 		),
-		validation.Field(&ca.CancellationReason,
+		validation.Field(
+			&ca.CancellationReason,
 			validation.When(
 				ca.Status == CarrierAssignmentStatusCanceled,
 				validation.Required.Error(
@@ -195,6 +125,29 @@ func (ca *CarrierAssignment) Validate(multiErr *errortypes.MultiError) {
 		}
 		acc.Validate(multiErr.WithIndex("accessorials", idx))
 	}
+}
+
+// SyncTotals derives the extended base amount and total cost from the rate
+// inputs. distance is the move distance in miles and is only consulted for
+// per-mile rates.
+func (ca *CarrierAssignment) SyncTotals(distance *float64) {
+	ca.applyDefaults()
+
+	ca.BaseAmount = CarrierBaseAmount(ca.RateMethod, ca.BaseRate, distance)
+
+	total := decimal.Zero
+	for _, acc := range ca.Accessorials {
+		if acc == nil {
+			continue
+		}
+		total = total.Add(acc.Amount)
+	}
+	ca.AccessorialTotal = total
+	ca.TotalCost = ca.BaseAmount.Add(ca.FuelSurcharge).Add(ca.AccessorialTotal)
+}
+
+func (ca *CarrierAssignment) IsActive() bool {
+	return ca != nil && ca.Status != CarrierAssignmentStatusCanceled
 }
 
 func (ca *CarrierAssignment) GetID() pulid.ID {
@@ -254,8 +207,10 @@ type CarrierAssignmentAccessorial struct {
 }
 
 func (caa *CarrierAssignmentAccessorial) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(caa,
-		validation.Field(&caa.Description,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		caa,
+		validation.Field(
+			&caa.Description,
 			validation.Required.Error("Description is required"),
 			validation.Length(1, 255).Error("Description must be between 1 and 255 characters"),
 		),

@@ -478,6 +478,13 @@ func selectionForModelOverride(
 	}
 
 	fieldMap, ok := data.FieldMaps[st.Name]
+	if ok && !fieldMapCoversStruct(fieldMap, st) {
+		// FieldMaps are keyed by unqualified struct name, so a same-named entity
+		// from another domain package (e.g. modeprofile.Profile vs email.Profile)
+		// can shadow the bound model's map. Treat a map that does not cover this
+		// struct's own columns as absent and synthesize instead.
+		ok = false
+	}
 	if !ok {
 		// Some domain packages are intentionally excluded from buncolgen (e.g.
 		// email, whose unqualified model names would collide). When a bound bun
@@ -499,6 +506,20 @@ func selectionForModelOverride(
 		Struct:   st,
 		FieldMap: fieldMap,
 	}, nil
+}
+
+func fieldMapCoversStruct(fieldMap fieldMapRegistration, st goStruct) bool {
+	for _, field := range st.Fields {
+		if !field.IsColumn {
+			continue
+		}
+		if column, exists := fieldMap.Values[field.JSONName]; !exists ||
+			column != field.ColumnName {
+			return false
+		}
+	}
+
+	return true
 }
 
 func synthesizeFieldMap(st goStruct) (fieldMapRegistration, bool) {

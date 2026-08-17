@@ -39,40 +39,6 @@ type AdditionalCharge struct {
 	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" bun:"rel:belongs-to,join:accessorial_charge_id=id"`
 }
 
-// RestoreSystemOwnedCharges re-seats the fields of an inbound charge set that
-// the rating engines own rather than the caller: whether a charge was machine
-// generated, and the detention occurrence it settles.
-//
-// No caller may claim either one. A payload that drops the occurrence link —
-// an older client, an integration, any editor that rebuilds the list from the
-// fields it cares about — would otherwise turn a detention charge into a manual
-// one and leave the next recalculation free to bill the same dwell twice.
-func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
-	originals := make(map[pulid.ID]*AdditionalCharge, len(original))
-	for _, charge := range original {
-		if charge == nil || charge.ID.IsNil() {
-			continue
-		}
-		originals[charge.ID] = charge
-	}
-
-	for _, charge := range updated {
-		if charge == nil {
-			continue
-		}
-
-		source := originals[charge.ID]
-		if charge.ID.IsNil() || source == nil {
-			charge.IsSystemGenerated = false
-			charge.DetentionOccurrenceID = nil
-			continue
-		}
-
-		charge.IsSystemGenerated = source.IsSystemGenerated
-		charge.DetentionOccurrenceID = source.DetentionOccurrenceID
-	}
-}
-
 func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		a,
@@ -106,10 +72,10 @@ func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	now := timeutils.NowUnix()
 
-	switch query.(type) {
+	switch q.(type) {
 	case *bun.InsertQuery:
 		if a.ID.IsNil() {
 			a.ID = pulid.MustNew("ac_")
@@ -120,4 +86,38 @@ func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, query bun.Query)
 	}
 
 	return nil
+}
+
+// RestoreSystemOwnedCharges re-seats the fields of an inbound charge set that
+// the rating engines own rather than the caller: whether a charge was machine
+// generated, and the detention occurrence it settles.
+//
+// No caller may claim either one. A payload that drops the occurrence link —
+// an older client, an integration, any editor that rebuilds the list from the
+// fields it cares about — would otherwise turn a detention charge into a manual
+// one and leave the next recalculation free to bill the same dwell twice.
+func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
+	originals := make(map[pulid.ID]*AdditionalCharge, len(original))
+	for _, charge := range original {
+		if charge == nil || charge.ID.IsNil() {
+			continue
+		}
+		originals[charge.ID] = charge
+	}
+
+	for _, charge := range updated {
+		if charge == nil {
+			continue
+		}
+
+		source := originals[charge.ID]
+		if charge.ID.IsNil() || source == nil {
+			charge.IsSystemGenerated = false
+			charge.DetentionOccurrenceID = nil
+			continue
+		}
+
+		charge.IsSystemGenerated = source.IsSystemGenerated
+		charge.DetentionOccurrenceID = source.DetentionOccurrenceID
+	}
 }

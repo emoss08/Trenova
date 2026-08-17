@@ -223,6 +223,11 @@ type ShipmentCustomer {
   version: Int!
   createdAt: Int!
   updatedAt: Int!
+  """
+  Active internal EDI partner linked to this customer that is enabled for
+  outbound load tenders, if any.
+  """
+  ediPartner: EdiPartner
 }
 
 type ShipmentFormulaTemplate {

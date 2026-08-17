@@ -8891,6 +8891,11 @@ type ShipmentCustomer {
   code: String!
   consolidationPriority: Int!
   createdAt: Int!
+  """
+  Active internal EDI partner linked to this customer that is enabled for
+  outbound load tenders, if any.
+  """
+  ediPartner: EdiPartner
   exclusiveConsolidation: Boolean!
   externalId: String!
   id: ID!

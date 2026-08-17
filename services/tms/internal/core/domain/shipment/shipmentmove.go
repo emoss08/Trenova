@@ -11,25 +11,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type MoveCoverageType string
-
-const (
-	MoveCoverageTypeUnassigned = MoveCoverageType("unassigned")
-	MoveCoverageTypeDriver     = MoveCoverageType("driver")
-	MoveCoverageTypeCarrier    = MoveCoverageType("carrier")
-)
-
-func (c MoveCoverageType) String() string {
-	return string(c)
-}
-
-func (c MoveCoverageType) IsValid() bool {
-	switch c {
-	case MoveCoverageTypeUnassigned, MoveCoverageTypeDriver, MoveCoverageTypeCarrier:
-		return true
-	}
-	return false
-}
+const maxDistanceFieldLength = 50
 
 type ShipmentMove struct {
 	bun.BaseModel `json:"-" bun:"table:shipment_moves,alias:sm"`
@@ -58,6 +40,62 @@ type ShipmentMove struct {
 	Assignment             *Assignment        `json:"assignment,omitempty"        bun:"rel:has-one,join:id=shipment_move_id"`
 	CarrierAssignment      *CarrierAssignment `json:"carrierAssignment,omitempty" bun:"rel:has-one,join:id=shipment_move_id"`
 	Shipment               *Shipment          `json:"shipment,omitempty"          bun:"rel:belongs-to,join:shipment_id=id"`
+}
+
+func (sm *ShipmentMove) Validate(multiErr *errortypes.MultiError) {
+	// Tenancy and the owning shipment are stamped by the repository when the
+	// move is written, so they are not the caller's to supply and are not
+	// checked here — a create would otherwise fail on fields it never sends.
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		sm,
+		validation.Field(
+			&sm.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[MoveStatus]("Status is invalid"),
+		),
+		validation.Field(
+			&sm.CoverageType,
+			validation.When(
+				sm.CoverageType != "",
+				domainvalidation.ValidEnum[MoveCoverageType]("Coverage type is invalid"),
+			),
+		),
+		validation.Field(
+			&sm.Sequence,
+			validation.Min(int64(0)).Error("Sequence cannot be negative"),
+		),
+		// Distance is what the move is paid and billed on, so a negative one
+		// would credit mileage rather than charge it.
+		validation.Field(
+			&sm.Distance,
+			validation.Min(0.0).Error("Distance cannot be negative"),
+		),
+		validation.Field(
+			&sm.DistanceSource,
+			validation.Length(0, maxDistanceFieldLength).
+				Error("Distance source cannot be longer than 50 characters"),
+		),
+		validation.Field(
+			&sm.DistanceProvider,
+			validation.Length(0, maxDistanceFieldLength).
+				Error("Distance provider cannot be longer than 50 characters"),
+		),
+		validation.Field(
+			&sm.DistanceDataVersion,
+			validation.Length(0, maxDistanceFieldLength).
+				Error("Distance data version cannot be longer than 50 characters"),
+		),
+		validation.Field(
+			&sm.DistanceRoutingType,
+			validation.Length(0, maxDistanceFieldLength).
+				Error("Distance routing type cannot be longer than 50 characters"),
+		),
+		validation.Field(
+			&sm.DistanceUnits,
+			validation.Length(0, maxDistanceFieldLength).
+				Error("Distance units cannot be longer than 50 characters"),
+		),
+	))
 }
 
 func (m *ShipmentMove) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -117,58 +155,3 @@ func (m *ShipmentMove) IsNew() bool {
 func (m *ShipmentMove) IsCanceled() bool {
 	return m.Status == MoveStatusCanceled
 }
-
-func (sm *ShipmentMove) Validate(multiErr *errortypes.MultiError) {
-	// Tenancy and the owning shipment are stamped by the repository when the
-	// move is written, so they are not the caller's to supply and are not
-	// checked here — a create would otherwise fail on fields it never sends.
-	multiErr.AddOzzoError(validation.ValidateStruct(sm,
-		validation.Field(&sm.Status,
-			validation.Required.Error("Status is required"),
-			domainvalidation.ValidEnum[MoveStatus]("Status is invalid"),
-		),
-		validation.Field(&sm.CoverageType,
-			validation.When(
-				sm.CoverageType != "",
-				domainvalidation.ValidEnum[MoveCoverageType]("Coverage type is invalid"),
-			),
-		),
-		validation.Field(&sm.Sequence,
-			validation.Min(int64(0)).Error("Sequence cannot be negative"),
-		),
-		// Distance is what the move is paid and billed on, so a negative one
-		// would credit mileage rather than charge it.
-		validation.Field(&sm.Distance,
-			validation.Min(0.0).Error("Distance cannot be negative"),
-		),
-		validation.Field(&sm.DistanceSource,
-			validation.Length(0, maxDistanceFieldLength).
-				Error("Distance source cannot be longer than 50 characters"),
-		),
-		validation.Field(&sm.DistanceProvider,
-			validation.Length(0, maxDistanceFieldLength).
-				Error("Distance provider cannot be longer than 50 characters"),
-		),
-		validation.Field(&sm.DistanceDataVersion,
-			validation.Length(0, maxDistanceFieldLength).
-				Error("Distance data version cannot be longer than 50 characters"),
-		),
-		validation.Field(&sm.DistanceRoutingType,
-			validation.Length(0, maxDistanceFieldLength).
-				Error("Distance routing type cannot be longer than 50 characters"),
-		),
-		validation.Field(&sm.DistanceUnits,
-			validation.Length(0, maxDistanceFieldLength).
-				Error("Distance units cannot be longer than 50 characters"),
-		),
-	))
-
-	for i, stop := range sm.Stops {
-		if stop == nil {
-			continue
-		}
-		stop.Validate(multiErr.WithIndex("stops", i))
-	}
-}
-
-const maxDistanceFieldLength = 50

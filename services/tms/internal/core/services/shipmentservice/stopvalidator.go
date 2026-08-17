@@ -50,6 +50,10 @@ func createStopValidationRule() validationframework.TenantedRule[*shipment.Shipm
 						continue
 					}
 
+					stop.Validate(
+						multiErr.WithIndex("moves", moveIndex).WithIndex("stops", stopIndex),
+					)
+
 					ruleCtx := stopRuleContext{
 						moveIndex:         moveIndex,
 						stopIndex:         stopIndex,
@@ -137,46 +141,6 @@ func validateStopSequence(ctx stopRuleContext) {
 }
 
 func validateStopChronology(ctx stopRuleContext) {
-	if ctx.stop.ScheduleType != shipment.StopScheduleTypeOpen &&
-		ctx.stop.ScheduleType != shipment.StopScheduleTypeAppointment {
-		addStopValidationError(
-			ctx,
-			"scheduleType",
-			errortypes.ErrInvalid,
-			"Schedule type must be Open or Appointment",
-		)
-	}
-
-	if ctx.stop.ScheduledWindowStart <= 0 {
-		addStopValidationError(
-			ctx,
-			"scheduledWindowStart",
-			errortypes.ErrRequired,
-			"Scheduled window start is required",
-		)
-	}
-
-	if ctx.stop.ScheduledWindowEnd != nil &&
-		*ctx.stop.ScheduledWindowEnd < ctx.stop.ScheduledWindowStart {
-		addStopValidationError(
-			ctx,
-			"scheduledWindowEnd",
-			errortypes.ErrInvalid,
-			"Scheduled window end must be greater than or equal to the scheduled window start",
-		)
-	}
-
-	if ctx.stop.ActualArrival != nil &&
-		ctx.stop.ActualDeparture != nil &&
-		*ctx.stop.ActualDeparture < *ctx.stop.ActualArrival {
-		addStopValidationError(
-			ctx,
-			"actualDeparture",
-			errortypes.ErrInvalid,
-			"Actual departure must be greater than or equal to actual arrival",
-		)
-	}
-
 	if ctx.stop.ActualArrival != nil && *ctx.stop.ActualArrival > ctx.now {
 		addStopValidationError(
 			ctx,

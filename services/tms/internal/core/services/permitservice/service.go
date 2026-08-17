@@ -331,6 +331,26 @@ func (s *service) Assess(
 	coversAt := deliveryAt(entity)
 	permit.MatchPermits(requirements, permits, coversAt)
 
+	// The assessment is what the panel badge and the dispatch advisory are
+	// built from, so it has to honor a waiver already on record. Without this,
+	// a waived requirement re-derives as Open on every read and the waiver
+	// "keeps coming back" no matter what the persisted rows say. An unsaved
+	// shipment has no rows to consult, so the lookup is skipped.
+	if entity.ID.IsNotNil() {
+		existing, lErr := s.permitRepo.ListRequirements(
+			ctx,
+			&repositories.ListRequirementsRequest{
+				TenantInfo:        tenantOf(entity),
+				ShipmentID:        entity.ID,
+				ExcludeSuperseded: true,
+			},
+		)
+		if lErr != nil {
+			return nil, lErr
+		}
+		carryWaiversForward(requirements, existing)
+	}
+
 	assessment.Requirements = requirements
 	assessment.Open = permit.UnsatisfiedRequirements(requirements)
 	assessment.ExpiringBeforeDelivery = permit.ExpiringBefore(requirements, permits, coversAt)
@@ -387,29 +407,16 @@ func (s *service) Sync(
 	entity *shipment.Shipment,
 	actor *services.RequestActor,
 ) (*services.PermitAssessment, error) {
-	tenantInfo := tenantOf(entity)
-
-	existing, err := s.permitRepo.ListRequirements(ctx, &repositories.ListRequirementsRequest{
-		TenantInfo: tenantInfo,
-		ShipmentID: entity.ID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
+	// Assess carries live waivers onto the re-derived requirements, so the set
+	// written here already reflects them and the open set the hold is built
+	// from does too.
 	assessment, err := s.Assess(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
 
-	carryWaiversForward(assessment.Requirements, existing)
-
-	// Recompute after the carry-forward: a waived requirement no longer blocks
-	// dispatch, so the open set the hold is built from has to reflect it.
-	assessment.Open = permit.UnsatisfiedRequirements(assessment.Requirements)
-
 	if err = s.permitRepo.ReplaceForShipment(ctx, &repositories.ReplaceRequirementsRequest{
-		TenantInfo:   tenantInfo,
+		TenantInfo:   tenantOf(entity),
 		ShipmentID:   entity.ID,
 		Requirements: assessment.Requirements,
 	}); err != nil {
@@ -440,6 +447,10 @@ func (s *service) ListRequirements(
 	return s.permitRepo.ListRequirements(ctx, &repositories.ListRequirementsRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: shipmentID,
+		// Rows from prior derivations stay in the table as the audit trail, but
+		// the panel offering per-row actions must only see the current set —
+		// serving superseded rows shows the same jurisdiction once per save.
+		ExcludeSuperseded: true,
 	})
 }
 

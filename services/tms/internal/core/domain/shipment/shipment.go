@@ -164,30 +164,6 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Formula template is required"),
 		),
 	))
-
-	// The pieces a shipment is made of are validated with it: they arrive in
-	// the same payload, and a caller that sent a malformed stop should hear
-	// about it here rather than from a constraint at insert.
-	for i, move := range s.Moves {
-		if move == nil {
-			continue
-		}
-		move.Validate(multiErr.WithIndex("moves", i))
-	}
-
-	for i, commodity := range s.Commodities {
-		if commodity == nil {
-			continue
-		}
-		commodity.Validate(multiErr.WithIndex("commodities", i))
-	}
-
-	for i, charge := range s.AdditionalCharges {
-		if charge == nil {
-			continue
-		}
-		charge.Validate(multiErr.WithIndex("additionalCharges", i))
-	}
 }
 
 func (s *Shipment) ApplyEntryMethodDefault(original *Shipment) {

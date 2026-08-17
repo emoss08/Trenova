@@ -334,6 +334,34 @@ func (r *repository) GetReciprocalInternalPartner(
 	return entity, nil
 }
 
+func (r *repository) ListInternalOutboundPartnersByCustomerIDs(
+	ctx context.Context,
+	req repositories.ListEDIPartnersByCustomerIDsRequest,
+) ([]*edi.EDIPartner, error) {
+	if len(req.CustomerIDs) == 0 {
+		return []*edi.EDIPartner{}, nil
+	}
+
+	cols := buncolgen.EDIPartnerColumns
+	entities := make([]*edi.EDIPartner, 0, len(req.CustomerIDs))
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Where(cols.CustomerID.In(), bun.List(req.CustomerIDs)).
+		Where(cols.Kind.Eq(), edi.PartnerKindInternal).
+		Where(cols.Status.Eq(), domaintypes.StatusActive).
+		Where(cols.EnabledForOutbound.IsTrue()).
+		Apply(buncolgen.EDIPartnerApplyTenant(req.TenantInfo)).
+		Order(cols.CreatedAt.OrderAsc()).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) ListCursor(
 	ctx context.Context,
 	req *repositories.ListEDIPartnersRequest,
