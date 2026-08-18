@@ -679,3 +679,110 @@ export const shopResultSchema = z.object({
   warnings: z.array(z.string()).default([]),
 });
 export type ShopResult = z.infer<typeof shopResultSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*                                 Simulation                                  */
+/* -------------------------------------------------------------------------- */
+
+export const rateSimulationStatusSchema = z.enum([
+  "Pending",
+  "Running",
+  "Completed",
+  "Failed",
+  "Canceled",
+]);
+export type RateSimulationStatus = z.infer<typeof rateSimulationStatusSchema>;
+
+/**
+ * What happened to one of the simulated agreement's rules across a whole run.
+ *
+ * The two failure states are the point. A rule that never matched anything was
+ * written for freight the organization does not move; a rule that matched every
+ * time and never won is shadowed by something narrower. Both are invisible in
+ * the revenue total.
+ */
+export const ruleOutcomeSchema = z.enum(["Won", "Lost", "NeverFired"]);
+export type RuleOutcome = z.infer<typeof ruleOutcomeSchema>;
+
+export const ruleCoverageSchema = z.object({
+  ruleId: z.string(),
+  label: z.string().default(""),
+  laneKey: z.string().default(""),
+  outcome: ruleOutcomeSchema,
+  wonCount: z.number().int().default(0),
+  lostCount: z.number().int().default(0),
+  lostTo: z.string().nullish(),
+  lostToLabel: z.string().default(""),
+});
+export type RuleCoverage = z.infer<typeof ruleCoverageSchema>;
+
+/** What a whole simulation came to. */
+export const rateSimulationSummarySchema = z.object({
+  shipmentCount: z.number().int().default(0),
+  evaluatedCount: z.number().int().default(0),
+  changedCount: z.number().int().default(0),
+  increasedCount: z.number().int().default(0),
+  decreasedCount: z.number().int().default(0),
+  errorCount: z.number().int().default(0),
+
+  beforeTotal: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  afterTotal: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  totalDelta: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  totalDeltaPct: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  maxIncrease: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  maxDecrease: decimalStringSchema.nullish().transform((value) => value ?? 0),
+});
+export type RateSimulationSummary = z.infer<typeof rateSimulationSummarySchema>;
+
+export const rateSimulationSchema = z.object({
+  ...tenantInfoSchema.shape,
+
+  rateAgreementId: z.string({ error: "An agreement to simulate is required" }).min(1),
+  name: z
+    .string({ error: "Name is required" })
+    .min(1, { error: "Name is required" })
+    .max(150, { error: "Name must be less than 150 characters" }),
+  description: z.string().max(500).default(""),
+  status: rateSimulationStatusSchema.default("Pending"),
+  partyType: ratePartyTypeSchema.default("Customer"),
+
+  sampleFrom: z.number({ error: "A start date is required" }).int(),
+  sampleTo: z.number({ error: "An end date is required" }).int(),
+  sampleLimit: z.number().int().min(0).default(0),
+
+  summary: rateSimulationSummarySchema.nullish(),
+  ruleCoverage: z.array(ruleCoverageSchema).nullish(),
+
+  error: z.string().default(""),
+  startedAt: z.number().nullish(),
+  completedAt: z.number().nullish(),
+  requestedBy: z.string().nullish(),
+  workflowId: z.string().default(""),
+});
+export type RateSimulation = z.infer<typeof rateSimulationSchema>;
+
+/** One shipment, priced two ways. */
+export const rateSimulationResultSchema = z.object({
+  id: optionalStringSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
+  rateSimulationId: optionalStringSchema,
+
+  shipmentId: z.string(),
+  proNumber: z.string().default(""),
+  customerId: z.string().nullish(),
+  laneKey: z.string().default(""),
+  equipmentTypeId: z.string().nullish(),
+
+  beforeAmount: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  afterAmount: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  delta: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  deltaPercent: decimalStringSchema.nullish().transform((value) => value ?? 0),
+
+  outcome: rateQuoteOutcomeSchema,
+  beforeRuleId: z.string().nullish(),
+  afterRuleId: z.string().nullish(),
+  error: z.string().default(""),
+  createdAt: z.number().nullish(),
+});
+export type RateSimulationResult = z.infer<typeof rateSimulationResultSchema>;

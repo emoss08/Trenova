@@ -21,6 +21,7 @@ import { DetentionAnalyticsService, DetentionPolicyService, DetentionService } f
 import {
   RateAgreementService,
   RateMatrixService,
+  RateSimulationService,
   RateQuoteService,
   RateZoneService,
 } from "./rate";
@@ -137,6 +138,7 @@ class APIService {
   public rateAgreementService: RateAgreementService;
   public rateZoneService: RateZoneService;
   public rateMatrixService: RateMatrixService;
+  public rateSimulationService: RateSimulationService;
   public rateQuoteService: RateQuoteService;
   public detentionAnalyticsService: DetentionAnalyticsService;
   public dispatchControlService: DispatchControlService;
@@ -223,6 +225,7 @@ class APIService {
     this.rateAgreementService = new RateAgreementService();
     this.rateZoneService = new RateZoneService();
     this.rateMatrixService = new RateMatrixService();
+    this.rateSimulationService = new RateSimulationService();
     this.rateQuoteService = new RateQuoteService();
     this.detentionAnalyticsService = new DetentionAnalyticsService();
     this.dispatchControlService = new DispatchControlService();

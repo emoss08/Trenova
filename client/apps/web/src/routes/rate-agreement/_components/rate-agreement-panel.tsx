@@ -4,13 +4,14 @@ import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { rateAgreementSchema, type RateAgreement } from "@trenova/shared/types/rate";
-import { FileTextIcon, FuelIcon, MapIcon, ReceiptTextIcon } from "lucide-react";
+import { FileTextIcon, FlaskConicalIcon, FuelIcon, MapIcon, ReceiptTextIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { AccessorialScheduleEditor } from "./accessorial-schedule-editor";
 import { FuelBindingForm } from "./fuel-binding-form";
 import { LaneEditor } from "./lane-editor";
 import { RateAgreementForm } from "./rate-agreement-form";
+import { SimulationPanel } from "./simulation-panel";
 
 const DEFAULT_AGREEMENT: Partial<RateAgreement> = {
   partyType: "Customer",
@@ -83,8 +84,14 @@ export function RateAgreementPanel({
         icon: FuelIcon,
         content: <FuelBindingForm />,
       },
+      {
+        value: "simulation",
+        label: "Simulation",
+        icon: FlaskConicalIcon,
+        content: <SimulationPanel rateAgreementId={row?.id} />,
+      },
     ],
-    [],
+    [row?.id],
   );
 
   if (mode === "edit") {

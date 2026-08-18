@@ -6,6 +6,7 @@ import {
   rateMatrixSchema,
   rateQuoteSchema,
   ratedShipmentSchema,
+  rateSimulationSchema,
   shopResultSchema,
   rateZoneSchema,
   type RateAgreement,
@@ -14,6 +15,8 @@ import {
   type RateQuote,
   type RatedShipment,
   type RateZone,
+  type RateSimulation,
+  type RateSimulationResult,
   type ShopResult,
   type ShopStrategy,
 } from "@trenova/shared/types/rate";
@@ -196,5 +199,68 @@ export class RateQuoteService {
     });
 
     return safeParse(shopResultSchema, response, "Shop Result");
+  }
+}
+
+export class RateSimulationService {
+  public async getById(id: string): Promise<RateSimulation> {
+    const response = await api.get<RateSimulation>(`/rate-simulations/${id}/`);
+
+    return safeParse(rateSimulationSchema, response, "Rate Simulation");
+  }
+
+  /** The simulations run against one agreement, newest first. */
+  public async listForAgreement(rateAgreementId: string): Promise<RateSimulation[]> {
+    const response = await api.get<{ results?: RateSimulation[] }>(
+      `/rate-simulations/?rateAgreementId=${encodeURIComponent(rateAgreementId)}&limit=20`,
+    );
+
+    return response?.results ?? [];
+  }
+
+  /**
+   * Records a simulation to be replayed.
+   *
+   * The run happens in the background: a year of shipments takes minutes, and a
+   * request that waited for it would time out long before the answer exists.
+   * Poll the returned simulation for its status.
+   */
+  public async create(payload: {
+    rateAgreementId: string;
+    name: string;
+    description?: string;
+    partyType?: RateSimulation["partyType"];
+    sampleFrom: number;
+    sampleTo: number;
+    sampleLimit?: number;
+  }): Promise<RateSimulation> {
+    const response = await api.post<RateSimulation>("/rate-simulations/", {
+      ...payload,
+      description: payload.description ?? "",
+      partyType: payload.partyType ?? "Customer",
+      sampleLimit: payload.sampleLimit ?? 0,
+    });
+
+    return safeParse(rateSimulationSchema, response, "Rate Simulation");
+  }
+
+  /**
+   * The per-shipment rows, largest increases first — the shipment that will
+   * produce the phone call is what somebody opened this for.
+   */
+  public async listResults(
+    id: string,
+    options: { changedOnly?: boolean; limit?: number } = {},
+  ): Promise<RateSimulationResult[]> {
+    const query = new URLSearchParams({
+      changedOnly: String(options.changedOnly ?? false),
+      limit: String(options.limit ?? 50),
+    });
+
+    const response = await api.get<{ results?: RateSimulationResult[] }>(
+      `/rate-simulations/${id}/results/?${query.toString()}`,
+    );
+
+    return response?.results ?? [];
   }
 }
