@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -32,7 +33,7 @@ func NewLookupMatrixSeed() *LookupMatrixSeed {
 		},
 	)
 
-	seed.SetDependencies(seedhelpers.SeedTestOrganizations)
+	seed.SetDependencies(seedhelpers.SeedTestOrganizations, seedhelpers.SeedFormulaTemplate)
 
 	return seed
 }
@@ -75,6 +76,25 @@ func (s *LookupMatrixSeed) Run(ctx context.Context, tx bun.Tx) error {
 				}
 			}
 
+			// A matrix names the template that says what its cells mean. These
+			// matrices exist for lookup() alone, whose reads bypass the
+			// template, so they carry the standard Flat Rate template — the
+			// same answer the merge migration's backfill gives a matrix with
+			// no better signal.
+			var flatRate formulatemplate.FormulaTemplate
+			if err = tx.NewSelect().
+				Model(&flatRate).
+				Column("id").
+				Where("organization_id = ?", org.ID).
+				Where("business_unit_id = ?", org.BusinessUnitID).
+				Where("status = ?", formulatemplate.StatusActive).
+				Where("name = ?", "Flat Rate").
+				Order("created_at ASC").
+				Limit(1).
+				Scan(ctx); err != nil {
+				return fmt.Errorf("resolve Flat Rate formula template: %w", err)
+			}
+
 			defs := []lookupMatrixDef{
 				{
 					name:        "Fuel Surcharge",
@@ -115,10 +135,11 @@ func (s *LookupMatrixSeed) Run(ctx context.Context, tx bun.Tx) error {
 				}
 
 				if err = s.createMatrix(ctx, tx, createLookupMatrixParams{
-					sc:    sc,
-					orgID: org.ID,
-					buID:  org.BusinessUnitID,
-					def:   def,
+					sc:         sc,
+					orgID:      org.ID,
+					buID:       org.BusinessUnitID,
+					templateID: flatRate.ID,
+					def:        def,
 				}); err != nil {
 					return err
 				}
@@ -130,10 +151,11 @@ func (s *LookupMatrixSeed) Run(ctx context.Context, tx bun.Tx) error {
 }
 
 type createLookupMatrixParams struct {
-	sc    *seedhelpers.SeedContext
-	orgID pulid.ID
-	buID  pulid.ID
-	def   lookupMatrixDef
+	sc         *seedhelpers.SeedContext
+	orgID      pulid.ID
+	buID       pulid.ID
+	templateID pulid.ID
+	def        lookupMatrixDef
 }
 
 func (s *LookupMatrixSeed) createMatrix(
@@ -144,14 +166,15 @@ func (s *LookupMatrixSeed) createMatrix(
 	sc, orgID, buID, def := params.sc, params.orgID, params.buID, params.def
 
 	matrix := &ratematrix.RateMatrix{
-		ID:             pulid.MustNew("rmx_"),
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		Code:           def.code,
-		Name:           def.name,
-		Description:    def.description,
-		Status:         domaintypes.StatusActive,
-		Currency:       "USD",
+		ID:                pulid.MustNew("rmx_"),
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		Code:              def.code,
+		Name:              def.name,
+		Description:       def.description,
+		Status:            domaintypes.StatusActive,
+		Currency:          "USD",
+		FormulaTemplateID: params.templateID,
 	}
 
 	if _, err := tx.NewInsert().Model(matrix).Exec(ctx); err != nil {

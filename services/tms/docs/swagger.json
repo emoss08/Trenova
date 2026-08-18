@@ -8097,7 +8097,7 @@
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_commodity.FreightClass"
                 },
                 "formulaTemplateId": {
-                    "description": "A rule prices through exactly one of these two: a formula template, with\nthe rule's own rate bound in as the template's base rate, or a rate\nmatrix, whose cells carry the rates and whose own template says what they\nmean.",
+                    "description": "A rule prices through exactly one of these two: a formula template, with\nthe rule's own rate bound as the template's base rate, or a rate\nmatrix, whose cells carry the rates and whose own template says what they\nmean.",
                     "type": "string"
                 },
                 "freightClassSource": {

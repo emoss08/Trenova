@@ -103,7 +103,7 @@ type RateAgreementRule struct {
 	TempControlOnly bool  `json:"tempControlOnly" bun:"temp_control_only,type:BOOLEAN,notnull,default:false"`
 
 	// A rule prices through exactly one of these two: a formula template, with
-	// the rule's own rate bound in as the template's base rate, or a rate
+	// the rule's own rate bound as the template's base rate, or a rate
 	// matrix, whose cells carry the rates and whose own template says what they
 	// mean.
 	FormulaTemplateID *pulid.ID           `json:"formulaTemplateId" bun:"formula_template_id,type:VARCHAR(100),nullzero"`
