@@ -109,9 +109,7 @@ type ShipmentCommentMention struct {
 }
 
 func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
-	if c.Source == "" {
-		c.Source = CommentSourceUser
-	}
+	c.applyDefaults()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		c,
@@ -170,6 +168,12 @@ func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
 			}),
 		),
 	))
+}
+
+func (c *ShipmentComment) applyDefaults() {
+	if c.Source == "" {
+		c.Source = CommentSourceUser
+	}
 }
 
 func (c *ShipmentComment) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -264,11 +268,14 @@ func (c *ShipmentComment) GetBusinessUnitID() pulid.ID {
 }
 
 func (a *ShipmentCommentAcknowledgment) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(a,
-		validation.Field(&a.OrganizationID,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		a,
+		validation.Field(
+			&a.OrganizationID,
 			validation.Required.Error("Organization is required"),
 		),
-		validation.Field(&a.BusinessUnitID,
+		validation.Field(
+			&a.BusinessUnitID,
 			validation.Required.Error("Business unit is required"),
 		),
 		validation.Field(&a.CommentID, validation.Required.Error("Comment is required")),
@@ -276,7 +283,8 @@ func (a *ShipmentCommentAcknowledgment) Validate(multiErr *errortypes.MultiError
 		validation.Field(&a.UserID, validation.Required.Error("User is required")),
 		// The acknowledgment is the record that someone read a comment that
 		// required reading, so an unstamped one proves nothing.
-		validation.Field(&a.AcknowledgedAt,
+		validation.Field(
+			&a.AcknowledgedAt,
 			validation.Required.Error("Acknowledged at is required"),
 			validation.Min(int64(1)).Error("Acknowledged at must be a valid timestamp"),
 		),
@@ -284,16 +292,20 @@ func (a *ShipmentCommentAcknowledgment) Validate(multiErr *errortypes.MultiError
 }
 
 func (m *ShipmentCommentMention) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(m,
-		validation.Field(&m.OrganizationID,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		m,
+		validation.Field(
+			&m.OrganizationID,
 			validation.Required.Error("Organization is required"),
 		),
-		validation.Field(&m.BusinessUnitID,
+		validation.Field(
+			&m.BusinessUnitID,
 			validation.Required.Error("Business unit is required"),
 		),
 		validation.Field(&m.CommentID, validation.Required.Error("Comment is required")),
 		validation.Field(&m.ShipmentID, validation.Required.Error("Shipment is required")),
-		validation.Field(&m.MentionedUserID,
+		validation.Field(
+			&m.MentionedUserID,
 			validation.Required.Error("Mentioned user is required"),
 		),
 	))

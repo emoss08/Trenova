@@ -29,20 +29,10 @@ export const customerPaymentTermSchema = z.enum([
 ]);
 export type CustomerPaymentTerm = z.infer<typeof customerPaymentTermSchema>;
 
-export const creditStatusSchema = z.enum([
-  "Active",
-  "Warning",
-  "Hold",
-  "Suspended",
-  "Review",
-]);
+export const creditStatusSchema = z.enum(["Active", "Warning", "Hold", "Suspended", "Review"]);
 export type CreditStatus = z.infer<typeof creditStatusSchema>;
 
-export const invoiceMethodSchema = z.enum([
-  "Individual",
-  "Summary",
-  "SummaryWithDetail",
-]);
+export const invoiceMethodSchema = z.enum(["Individual", "Summary", "SummaryWithDetail"]);
 export type InvoiceMethod = z.infer<typeof invoiceMethodSchema>;
 
 export const consolidationGroupBySchema = z.enum([
@@ -54,11 +44,7 @@ export const consolidationGroupBySchema = z.enum([
 ]);
 export type ConsolidationGroupBy = z.infer<typeof consolidationGroupBySchema>;
 
-export const invoiceNumberFormatSchema = z.enum([
-  "Default",
-  "CustomPrefix",
-  "POBased",
-]);
+export const invoiceNumberFormatSchema = z.enum(["Default", "CustomPrefix", "POBased"]);
 export type InvoiceNumberFormat = z.infer<typeof invoiceNumberFormatSchema>;
 
 export const invoiceAdjustmentSupportingDocumentPolicySchema = z.enum([
@@ -73,70 +59,70 @@ export type InvoiceAdjustmentSupportingDocumentPolicy = z.infer<
 export const customerFuelSurchargeModeSchema = z.enum(["None", "Program", "FuelIncluded"]);
 export type CustomerFuelSurchargeMode = z.infer<typeof customerFuelSurchargeModeSchema>;
 
-export const customerBillingProfileSchema = z.object({
-  id: z.string().optional(),
-  version: z.number().int().min(0).optional(),
-  createdAt: z.number().int().positive().optional(),
-  updatedAt: z.number().int().positive().optional(),
-  organizationId: z.string().optional(),
-  businessUnitId: z.string().optional(),
-  customerId: z.string().optional(),
-  billingCycleType: billingCycleTypeSchema.default("Immediate"),
-  billingCycleDayOfWeek: nullableIntegerSchema,
-  paymentTerm: customerPaymentTermSchema.default("Net30"),
-  hasBillingControlOverrides: z.boolean().default(false),
-  creditLimit: decimalStringSchema,
-  creditBalance: decimalStringSchema,
-  creditStatus: creditStatusSchema.default("Active"),
-  enforceCreditLimit: z.boolean().default(false),
-  autoCreditHold: z.boolean().default(false),
-  creditHoldReason: z.string().default(""),
-  invoiceMethod: invoiceMethodSchema.default("Individual"),
-  autoSendInvoiceOnGeneration: z.boolean().default(true),
-  allowInvoiceConsolidation: z.boolean().default(false),
-  consolidationPeriodDays: z.number().int().default(7),
-  consolidationGroupBy: consolidationGroupBySchema.default("None"),
-  invoiceNumberFormat: invoiceNumberFormatSchema.default("Default"),
-  customerInvoicePrefix: z.string().default(""),
-  invoiceCopies: z.number().int().default(1),
-  revenueAccountId: nullableStringSchema,
-  arAccountId: nullableStringSchema,
-  applyLateCharges: z.boolean().default(false),
-  lateChargeRate: decimalStringSchema,
-  gracePeriodDays: z.number().int().default(0),
-  taxExempt: z.boolean().default(false),
-  taxExemptNumber: z.string().default(""),
-  enforceCustomerBillingReq: z.boolean().default(true),
-  validateCustomerRates: z.boolean().default(true),
-  autoTransfer: z.boolean().default(true),
-  autoMarkReadyToBill: z.boolean().default(true),
-  autoBill: z.boolean().default(true),
-  countLateOnlyOnAppointmentStops: z.boolean().default(false),
-  autoApplyAccessorials: z.boolean().default(true),
-  fuelSurchargeMode: customerFuelSurchargeModeSchema.default("None"),
-  fuelSurchargeProgramId: z.string().nullish(),
-  billingCurrency: z.string().max(3).default("USD"),
-  requirePONumber: z.boolean().default(false),
-  requireBOLNumber: z.boolean().default(false),
-  requireDeliveryNumber: z.boolean().default(false),
-  invoiceAdjustmentSupportingDocumentPolicy:
-    invoiceAdjustmentSupportingDocumentPolicySchema.default("Inherit"),
-  defaultBillerId: nullableStringSchema,
-  billingNotes: z.string().default(""),
-  documentTypes: z.array(z.any()).nullish(),
-}).superRefine((data, ctx) => {
-  if (data.fuelSurchargeMode === "Program" && !data.fuelSurchargeProgramId) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["fuelSurchargeProgramId"],
-      message: "Select the fuel surcharge program to apply for this customer",
-    });
-  }
-});
+export const customerBillingProfileSchema = z
+  .object({
+    id: z.string().optional(),
+    version: z.number().int().min(0).optional(),
+    createdAt: z.number().int().positive().optional(),
+    updatedAt: z.number().int().positive().optional(),
+    organizationId: z.string().optional(),
+    businessUnitId: z.string().optional(),
+    customerId: z.string().optional(),
+    billingCycleType: billingCycleTypeSchema.default("Immediate"),
+    billingCycleDayOfWeek: nullableIntegerSchema,
+    paymentTerm: customerPaymentTermSchema.default("Net30"),
+    hasBillingControlOverrides: z.boolean().default(false),
+    creditLimit: decimalStringSchema,
+    creditBalance: decimalStringSchema,
+    creditStatus: creditStatusSchema.default("Active"),
+    enforceCreditLimit: z.boolean().default(false),
+    autoCreditHold: z.boolean().default(false),
+    creditHoldReason: z.string().default(""),
+    invoiceMethod: invoiceMethodSchema.default("Individual"),
+    autoSendInvoiceOnGeneration: z.boolean().default(true),
+    allowInvoiceConsolidation: z.boolean().default(false),
+    consolidationPeriodDays: z.number().int().default(7),
+    consolidationGroupBy: consolidationGroupBySchema.default("None"),
+    invoiceNumberFormat: invoiceNumberFormatSchema.default("Default"),
+    customerInvoicePrefix: z.string().default(""),
+    invoiceCopies: z.number().int().default(1),
+    revenueAccountId: nullableStringSchema,
+    arAccountId: nullableStringSchema,
+    applyLateCharges: z.boolean().default(false),
+    lateChargeRate: decimalStringSchema,
+    gracePeriodDays: z.number().int().default(0),
+    taxExempt: z.boolean().default(false),
+    taxExemptNumber: z.string().default(""),
+    enforceCustomerBillingReq: z.boolean().default(true),
+    validateCustomerRates: z.boolean().default(true),
+    autoTransfer: z.boolean().default(true),
+    autoMarkReadyToBill: z.boolean().default(true),
+    autoBill: z.boolean().default(true),
+    countLateOnlyOnAppointmentStops: z.boolean().default(false),
+    autoApplyAccessorials: z.boolean().default(true),
+    fuelSurchargeMode: customerFuelSurchargeModeSchema.default("None"),
+    fuelSurchargeProgramId: z.string().nullish(),
+    billingCurrency: z.string().max(3).default("USD"),
+    requirePONumber: z.boolean().default(false),
+    requireBOLNumber: z.boolean().default(false),
+    requireDeliveryNumber: z.boolean().default(false),
+    invoiceAdjustmentSupportingDocumentPolicy:
+      invoiceAdjustmentSupportingDocumentPolicySchema.default("Inherit"),
+    defaultBillerId: nullableStringSchema,
+    billingNotes: z.string().default(""),
+    documentTypes: z.array(z.any()).nullish(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.fuelSurchargeMode === "Program" && !data.fuelSurchargeProgramId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["fuelSurchargeProgramId"],
+        message: "Select the fuel surcharge program to apply for this customer",
+      });
+    }
+  });
 
-export type CustomerBillingProfile = z.infer<
-  typeof customerBillingProfileSchema
->;
+export type CustomerBillingProfile = z.infer<typeof customerBillingProfileSchema>;
 
 export const customerEmailProfileSchema = z.object({
   id: z.string().optional(),
@@ -158,6 +144,14 @@ export const customerEmailProfileSchema = z.object({
 });
 
 export type CustomerEmailProfile = z.infer<typeof customerEmailProfileSchema>;
+
+export const customerEdiPartnerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  code: z.string(),
+});
+
+export type CustomerEdiPartner = z.infer<typeof customerEdiPartnerSchema>;
 
 export const customerSchema = z
   .object({
@@ -192,6 +186,7 @@ export const customerSchema = z
     consolidationPriority: z.number().int().min(1).default(1),
     billingProfile: customerBillingProfileSchema.optional(),
     emailProfile: customerEmailProfileSchema.optional(),
+    ediPartner: customerEdiPartnerSchema.nullish(),
   })
   .refine(
     (data) => {
@@ -202,8 +197,7 @@ export const customerSchema = z
     },
     {
       path: ["allowConsolidation"],
-      message:
-        "Allow consolidation is required when exclusive consolidation is true",
+      message: "Allow consolidation is required when exclusive consolidation is true",
     },
   );
 
@@ -214,9 +208,7 @@ export const bulkUpdateCustomerStatusRequestSchema = z.object({
   status: statusSchema,
 });
 
-export type BulkUpdateCustomerStatusRequest = z.infer<
-  typeof bulkUpdateCustomerStatusRequestSchema
->;
+export type BulkUpdateCustomerStatusRequest = z.infer<typeof bulkUpdateCustomerStatusRequestSchema>;
 
 export const bulkUpdateCustomerStatusResponseSchema = z.array(customerSchema);
 

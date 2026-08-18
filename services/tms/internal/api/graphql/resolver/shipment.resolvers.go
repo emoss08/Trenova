@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -1009,6 +1010,28 @@ func (r *shipmentResolver) ProfitabilityEstimate(ctx context.Context, obj *gqlmo
 	return shipmentProfitabilityEstimateToModel(estimate), nil
 }
 
+// EdiPartner is the resolver for the ediPartner field.
+func (r *shipmentCustomerResolver) EdiPartner(ctx context.Context, obj *gqlmodel.ShipmentCustomer) (*edi.EDIPartner, error) {
+	if obj == nil || obj.ID == "" {
+		return nil, nil
+	}
+
+	loadersForRequest, ok := loaders.FromContext(ctx)
+	if !ok || loadersForRequest == nil {
+		return nil, errortypes.NewDatabaseError("EDI partner loader is not configured")
+	}
+
+	partner, err := loadersForRequest.EDIPartnerByCustomerID.Load(ctx, obj.ID)()
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return partner, nil
+}
+
 // CarrierAssignment returns generated.CarrierAssignmentResolver implementation.
 func (r *Resolver) CarrierAssignment() generated.CarrierAssignmentResolver {
 	return &carrierAssignmentResolver{r}
@@ -1022,8 +1045,14 @@ func (r *Resolver) CarrierAssignmentAccessorial() generated.CarrierAssignmentAcc
 // Shipment returns generated.ShipmentResolver implementation.
 func (r *Resolver) Shipment() generated.ShipmentResolver { return &shipmentResolver{r} }
 
+// ShipmentCustomer returns generated.ShipmentCustomerResolver implementation.
+func (r *Resolver) ShipmentCustomer() generated.ShipmentCustomerResolver {
+	return &shipmentCustomerResolver{r}
+}
+
 type (
 	carrierAssignmentResolver            struct{ *Resolver }
 	carrierAssignmentAccessorialResolver struct{ *Resolver }
 	shipmentResolver                     struct{ *Resolver }
+	shipmentCustomerResolver             struct{ *Resolver }
 )

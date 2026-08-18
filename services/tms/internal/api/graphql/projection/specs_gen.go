@@ -178,6 +178,10 @@ var JournalEntryLineAccountSpec TypeSpec
 
 var JournalReversalSpec TypeSpec
 
+var JurisdictionRuleSpec TypeSpec
+
+var JurisdictionRuleOverrideSpec TypeSpec
+
 var LocationSpec TypeSpec
 
 var LocationCategorySpec TypeSpec
@@ -7911,6 +7915,206 @@ func init() {
 		},
 	}
 
+	JurisdictionRuleSpec = TypeSpec{
+		TypeName: "JurisdictionRule",
+		FieldMap: buncolgen.JurisdictionRuleFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "stateId",
+				FieldMapKey: "stateId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "maxWidthFeet",
+				FieldMapKey: "maxWidthFeet",
+			},
+			{
+				Name:        "maxHeightFeet",
+				FieldMapKey: "maxHeightFeet",
+			},
+			{
+				Name:        "maxLengthFeet",
+				FieldMapKey: "maxLengthFeet",
+			},
+			{
+				Name:        "maxWeightPounds",
+				FieldMapKey: "maxWeightPounds",
+			},
+			{
+				Name:        "superloadWidthFeet",
+				FieldMapKey: "superloadWidthFeet",
+			},
+			{
+				Name:        "superloadWeightPounds",
+				FieldMapKey: "superloadWeightPounds",
+			},
+			{
+				Name:        "daylightOnly",
+				FieldMapKey: "daylightOnly",
+			},
+			{
+				Name:        "rushHourRestricted",
+				FieldMapKey: "rushHourRestricted",
+			},
+			{
+				Name:        "weekendRestricted",
+				FieldMapKey: "weekendRestricted",
+			},
+			{
+				Name:        "holidayRestricted",
+				FieldMapKey: "holidayRestricted",
+			},
+			{
+				Name:        "permitLeadTimeDays",
+				FieldMapKey: "permitLeadTimeDays",
+			},
+			{
+				Name:        "permitValidityDays",
+				FieldMapKey: "permitValidityDays",
+			},
+			{
+				Name:        "permitBaseFee",
+				FieldMapKey: "permitBaseFee",
+			},
+			{
+				Name:        "permitPerMileFee",
+				FieldMapKey: "permitPerMileFee",
+			},
+			{
+				Name:        "sourceNote",
+				FieldMapKey: "sourceNote",
+			},
+			{
+				Name:        "sourceUrl",
+				FieldMapKey: "sourceUrl",
+			},
+			{
+				Name:        "verificationState",
+				FieldMapKey: "verificationState",
+			},
+			{
+				Name:        "verifiedAt",
+				FieldMapKey: "verifiedAt",
+			},
+			{
+				Name:        "effectiveStartDate",
+				FieldMapKey: "effectiveStartDate",
+			},
+			{
+				Name:        "effectiveEndDate",
+				FieldMapKey: "effectiveEndDate",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "state",
+				FieldMapKey: "stateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+		},
+	}
+
+	JurisdictionRuleOverrideSpec = TypeSpec{
+		TypeName: "JurisdictionRuleOverride",
+		FieldMap: buncolgen.OverrideFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "stateId",
+				FieldMapKey: "stateId",
+			},
+			{
+				Name:        "maxWidthFeet",
+				FieldMapKey: "maxWidthFeet",
+			},
+			{
+				Name:        "maxHeightFeet",
+				FieldMapKey: "maxHeightFeet",
+			},
+			{
+				Name:        "maxLengthFeet",
+				FieldMapKey: "maxLengthFeet",
+			},
+			{
+				Name:        "maxWeightPounds",
+				FieldMapKey: "maxWeightPounds",
+			},
+			{
+				Name:        "permitLeadTimeDays",
+				FieldMapKey: "permitLeadTimeDays",
+			},
+			{
+				Name:        "daylightOnly",
+				FieldMapKey: "daylightOnly",
+			},
+			{
+				Name:        "holidayRestricted",
+				FieldMapKey: "holidayRestricted",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "state",
+				FieldMapKey: "stateId",
+				Relation: &RelationSpec{
+					Target: &UsStateSpec,
+				},
+			},
+		},
+	}
+
 	LocationSpec = TypeSpec{
 		TypeName: "Location",
 		FieldMap: buncolgen.LocationFieldMap,
@@ -8604,6 +8808,14 @@ func init() {
 			{
 				Name:        "taxId",
 				FieldMapKey: "taxId",
+			},
+			{
+				Name:        "brokerageEnabled",
+				FieldMapKey: "brokerageEnabled",
+			},
+			{
+				Name:        "assetOperationsEnabled",
+				FieldMapKey: "assetOperationsEnabled",
 			},
 			{
 				Name:        "version",
@@ -11557,6 +11769,18 @@ func init() {
 				FieldMapKey: "weight",
 			},
 			{
+				Name:        "lengthFeet",
+				FieldMapKey: "lengthFeet",
+			},
+			{
+				Name:        "widthFeet",
+				FieldMapKey: "widthFeet",
+			},
+			{
+				Name:        "heightFeet",
+				FieldMapKey: "heightFeet",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -11757,6 +11981,10 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "ediPartner",
+				Special: "ediPartner",
 			},
 		},
 	}

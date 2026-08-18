@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   carrierAssignmentPayloadSchema,
+  carrierEligibilitySchema,
   emptyCarrierAssignmentPayload,
   moveCoverageTypeSchema,
 } from "./shipment";
@@ -69,6 +70,29 @@ describe("carrierAssignmentPayloadSchema", () => {
     expect(() =>
       carrierAssignmentPayloadSchema.parse(makePayload({ baseRate: "abc" })),
     ).toThrowError(/Base rate is required/);
+  });
+});
+
+describe("carrierEligibilitySchema", () => {
+  it("normalizes null blockers and warnings to empty arrays (Go nil slices serialize as null)", () => {
+    const parsed = carrierEligibilitySchema.parse({ blockers: null, warnings: null });
+    expect(parsed.blockers).toEqual([]);
+    expect(parsed.warnings).toEqual([]);
+  });
+
+  it("normalizes absent blockers and warnings to empty arrays", () => {
+    const parsed = carrierEligibilitySchema.parse({});
+    expect(parsed.blockers).toEqual([]);
+    expect(parsed.warnings).toEqual([]);
+  });
+
+  it("passes populated arrays through unchanged", () => {
+    const parsed = carrierEligibilitySchema.parse({
+      blockers: ["Carrier is inactive"],
+      warnings: ["Cargo insurance below load value"],
+    });
+    expect(parsed.blockers).toEqual(["Carrier is inactive"]);
+    expect(parsed.warnings).toEqual(["Cargo insurance below load value"]);
   });
 });
 

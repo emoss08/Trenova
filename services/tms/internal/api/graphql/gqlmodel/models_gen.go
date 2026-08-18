@@ -3994,6 +3994,9 @@ type ShipmentCustomer struct {
 	Version                int                `json:"version"`
 	CreatedAt              int                `json:"createdAt"`
 	UpdatedAt              int                `json:"updatedAt"`
+	// Active internal EDI partner linked to this customer that is enabled for
+	// outbound load tenders, if any.
+	EdiPartner *edi.EDIPartner `json:"ediPartner,omitempty"`
 }
 
 type ShipmentCustomerMix struct {

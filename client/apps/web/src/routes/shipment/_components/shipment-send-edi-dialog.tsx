@@ -1,83 +1,66 @@
-import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
-import { Button } from "@trenova/shared/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@trenova/shared/components/ui/alert-dialog";
 import { apiService } from "@/services/api";
-import type { EDIPartner } from "@trenova/shared/types/edi";
+import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { toast } from "sonner";
 
 type ShipmentSendEDIDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  shipmentId: string;
+  shipment: Shipment;
 };
 
 export function ShipmentSendEDIDialog({
   open,
   onOpenChange,
-  shipmentId,
+  shipment,
 }: ShipmentSendEDIDialogProps) {
   const queryClient = useQueryClient();
-  const [partnerId, setPartnerId] = useState("");
+  const ediPartner = shipment.customer?.ediPartner;
   const mutation = useMutation({
     mutationFn: () =>
-      apiService.ediService.submitLoadTender({
-        sourceShipmentId: shipmentId,
-        ediPartnerId: partnerId,
-      }),
+      apiService.ediService.submitLoadTender({ sourceShipmentId: shipment.id ?? "" }),
     onSuccess: async () => {
       toast.success("EDI load tender submitted");
-      await queryClient.invalidateQueries({ queryKey: ["edi-outbound-transfer-list"] });
-      onOpenChange(false);
-      setPartnerId("");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["edi-outbound-transfer-list"] }),
+        queryClient.invalidateQueries({ queryKey: ["shipment-list"] }),
+      ]);
     },
     onError: () => toast.error("Failed to submit EDI load tender"),
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Send EDI Load Tender</DialogTitle>
-          <DialogDescription>Select an active internal outbound partner.</DialogDescription>
-        </DialogHeader>
-        <Autocomplete<EDIPartner, Record<string, string>>
-          link="/edi/partners/select-options/"
-          selectedValueLink="/edi/partners/"
-          label="EDI partner"
-          placeholder="Search EDI partners..."
-          value={partnerId}
-          onChange={(value) => setPartnerId(value ?? "")}
-          getOptionValue={(partner) => partner.id}
-          getDisplayValue={(partner) => `${partner.name} (${partner.code})`}
-          renderOption={(partner) => (
-            <div className="flex min-w-0 flex-col items-start">
-              <span className="truncate text-sm font-medium">{partner.name}</span>
-              <span className="truncate text-xs text-muted-foreground">{partner.code}</span>
-            </div>
-          )}
-          noResultsMessage="No active internal outbound partners found."
-          extraSearchParams={{ kind: "Internal", enabledForOutbound: "true" }}
-          initialLimit={20}
-          clearable
-        />
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button disabled={!partnerId} isLoading={mutation.isPending} onClick={() => mutation.mutate()}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Send EDI Load Tender</AlertDialogTitle>
+          <AlertDialogDescription>
+            {shipment.proNumber ?? "This shipment"} will be tendered to{" "}
+            <span className="text-foreground font-medium">
+              {ediPartner
+                ? `${ediPartner.name} (${ediPartner.code})`
+                : "the customer's EDI partner"}
+            </span>{" "}
+            for approval by the receiving organization.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction disabled={mutation.isPending} onClick={() => mutation.mutate()}>
             Send Tender
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

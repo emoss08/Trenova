@@ -341,6 +341,11 @@ fragment ShipmentFields on Shipment {
     version
     createdAt
     updatedAt
+    ediPartner {
+      id
+      name
+      code
+    }
   }
   owner {
     ...ShipmentUserFields

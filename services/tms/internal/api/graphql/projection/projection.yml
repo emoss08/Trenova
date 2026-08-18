@@ -70,6 +70,8 @@ virtuals:
     - orderNumber
     - orderStatus
     - profitabilityEstimate
+  ShipmentCustomer:
+    - ediPartner
   ShipmentAdditionalCharge:
     - accessorialCharge
   ShipmentCommodity:

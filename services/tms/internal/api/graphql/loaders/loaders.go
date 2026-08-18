@@ -3,6 +3,7 @@ package loaders
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -23,6 +24,7 @@ type FactoryParams struct {
 	LocationByID              *LocationByIDLoaderFactory
 	OrderByID                 *OrderByIDLoaderFactory
 	ShipmentProfitabilityByID *ShipmentProfitabilityLoaderFactory
+	EDIPartnerByCustomerID    *EDIPartnerByCustomerIDLoaderFactory
 }
 
 type Factory struct {
@@ -31,6 +33,7 @@ type Factory struct {
 	locationByID              *LocationByIDLoaderFactory
 	orderByID                 *OrderByIDLoaderFactory
 	shipmentProfitabilityByID *ShipmentProfitabilityLoaderFactory
+	ediPartnerByCustomerID    *EDIPartnerByCustomerIDLoaderFactory
 }
 
 type Loaders struct {
@@ -39,6 +42,7 @@ type Loaders struct {
 	LocationByID              *dataloader.Loader[string, *location.Location]
 	OrderByID                 *dataloader.Loader[string, *order.Order]
 	ShipmentProfitabilityByID *dataloader.Loader[string, *costingservice.ShipmentProfitabilityEstimate]
+	EDIPartnerByCustomerID    *dataloader.Loader[string, *edi.EDIPartner]
 }
 
 func NewFactory(p FactoryParams) *Factory {
@@ -48,6 +52,7 @@ func NewFactory(p FactoryParams) *Factory {
 		locationByID:              p.LocationByID,
 		orderByID:                 p.OrderByID,
 		shipmentProfitabilityByID: p.ShipmentProfitabilityByID,
+		ediPartnerByCustomerID:    p.EDIPartnerByCustomerID,
 	}
 }
 
@@ -58,6 +63,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		LocationByID:              f.locationByID.NewForTenant(tenantInfo),
 		OrderByID:                 f.orderByID.NewForTenant(tenantInfo),
 		ShipmentProfitabilityByID: f.shipmentProfitabilityByID.NewForTenant(tenantInfo),
+		EDIPartnerByCustomerID:    f.ediPartnerByCustomerID.NewForTenant(tenantInfo),
 	}
 }
 

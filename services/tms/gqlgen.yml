@@ -36,6 +36,10 @@ models:
         resolver: true
       profitabilityEstimate:
         resolver: true
+  ShipmentCustomer:
+    fields:
+      ediPartner:
+        resolver: true
   JSON:
     model:
       - github.com/99designs/gqlgen/graphql.Map

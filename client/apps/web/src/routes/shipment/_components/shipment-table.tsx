@@ -38,7 +38,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
   const [transferOwnershipShipmentId, setTransferOwnershipShipmentId] = useState<string | null>(
     null,
   );
-  const [ediShipmentId, setEDIShipmentId] = useState<string | null>(null);
+  const [ediShipment, setEDIShipment] = useState<Shipment | null>(null);
   const canSendEDI = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Create),
   );
@@ -218,10 +218,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
     (row: Row<Shipment>) => setTransferOwnershipShipmentId(row.original.id || ""),
     [],
   );
-  const handleSendEDI = useCallback(
-    (row: Row<Shipment>) => setEDIShipmentId(row.original.id || ""),
-    [],
-  );
+  const handleSendEDI = useCallback((row: Row<Shipment>) => setEDIShipment(row.original), []);
 
   const rowActions = useMemo(
     () =>
@@ -266,7 +263,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
     if (!open) setTransferOwnershipShipmentId(null);
   }, []);
   const handleEDIOpenChange = useCallback((open: boolean) => {
-    if (!open) setEDIShipmentId(null);
+    if (!open) setEDIShipment(null);
   }, []);
 
   return (
@@ -322,11 +319,11 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
           shipmentId={transferOwnershipShipmentId}
         />
       )}
-      {ediShipmentId && (
+      {ediShipment && (
         <ShipmentSendEDIDialog
-          open={!!ediShipmentId}
+          open={!!ediShipment}
           onOpenChange={handleEDIOpenChange}
-          shipmentId={ediShipmentId}
+          shipment={ediShipment}
         />
       )}
     </>

@@ -9,6 +9,12 @@ import {
   carrierEligibilityBlocksSubmit,
 } from "@/components/carrier-assignment/carrier-assignment-fields";
 import { CarrierShoppingPanel } from "@/components/carrier-assignment/carrier-shopping-panel";
+import { handleMutationError } from "@/hooks/use-api-mutation";
+import type { SelectOption } from "@/lib/graphql/select-options";
+import { LocateTrailerDialog } from "@/routes/trailer/_components/locate-trailer-dialog";
+import { apiService } from "@/services/api";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ShopOption } from "@trenova/shared/types/rate";
 import {
   Alert,
@@ -27,17 +33,13 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
-import { handleMutationError } from "@/hooks/use-api-mutation";
+import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import {
   hasOrganizationCapability,
   OrganizationCapability,
 } from "@trenova/shared/types/organization-capability";
-import type { SelectOption } from "@/lib/graphql/select-options";
-import { LocateTrailerDialog } from "@/routes/trailer/_components/locate-trailer-dialog";
-import { apiService } from "@/services/api";
 import type {
   Assignment,
   AssignmentPayload,
@@ -51,8 +53,6 @@ import {
   emptyCarrierAssignmentPayload,
   isActiveCarrierAssignment,
 } from "@trenova/shared/types/shipment";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2Icon, TriangleAlertIcon, UserIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -60,11 +60,6 @@ import { toast } from "sonner";
 import { AssignmentHosFeasibility } from "./assignment-hos-feasibility";
 
 type CoverageMode = "driver" | "carrier";
-
-const COVERAGE_MODE_ITEMS = [
-  { value: "driver" as const, label: "Driver", icon: UserIcon },
-  { value: "carrier" as const, label: "Carrier", icon: Building2Icon },
-];
 
 type AssignmentDialogProps = {
   open: boolean;
@@ -240,7 +235,7 @@ export function AssignmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-150">
         <DialogHeader>
           <DialogTitle>
             {driverAssignmentBlocked
@@ -264,13 +259,22 @@ export function AssignmentDialog({
           </DialogDescription>
         </DialogHeader>
         {canAssignDrivers && (
-          <SegmentedControl
-            items={COVERAGE_MODE_ITEMS}
-            value={mode}
-            onValueChange={setMode}
-            fullWidth
-            aria-label="Coverage type"
-          />
+          <Tabs value={mode} onValueChange={(value) => setMode(value as CoverageMode)}>
+            <TabsList
+              variant="underline"
+              className="w-full border-b border-border"
+              aria-label="Coverage type"
+            >
+              <TabsTab value="driver">
+                <UserIcon className="size-4" />
+                Driver
+              </TabsTab>
+              <TabsTab value="carrier">
+                <Building2Icon className="size-4" />
+                Carrier
+              </TabsTab>
+            </TabsList>
+          </Tabs>
         )}
         {driverAssignmentBlocked ? (
           <>

@@ -1,13 +1,19 @@
 package permitservice
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/permit"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func resolvedRule(code string, maxWidth float64) *jurisdictionrule.Resolved {
@@ -179,6 +185,174 @@ func TestCarryWaiversForward_ToleratesNilEntries(t *testing.T) {
 	})
 
 	assert.Equal(t, permit.RequirementWaived, derived[1].Status)
+}
+
+type assessPermitRepoStub struct {
+	repositories.PermitRepository
+
+	resolveRouteStates func(*repositories.ResolveRouteStatesRequest) (map[pulid.ID]pulid.ID, error)
+	listByShipment     func(*repositories.ListPermitsRequest) ([]*permit.Permit, error)
+	listRequirements   func(*repositories.ListRequirementsRequest) ([]*permit.Requirement, error)
+}
+
+func (s *assessPermitRepoStub) ResolveRouteStates(
+	_ context.Context, req *repositories.ResolveRouteStatesRequest,
+) (map[pulid.ID]pulid.ID, error) {
+	return s.resolveRouteStates(req)
+}
+
+func (s *assessPermitRepoStub) ListByShipment(
+	_ context.Context, req *repositories.ListPermitsRequest,
+) ([]*permit.Permit, error) {
+	return s.listByShipment(req)
+}
+
+func (s *assessPermitRepoStub) ListRequirements(
+	_ context.Context, req *repositories.ListRequirementsRequest,
+) ([]*permit.Requirement, error) {
+	return s.listRequirements(req)
+}
+
+type jurisdictionRepoStub struct {
+	repositories.JurisdictionRuleRepository
+
+	rules []*jurisdictionrule.JurisdictionRule
+}
+
+func (s *jurisdictionRepoStub) GetActiveByStateIDs(
+	context.Context, *repositories.GetJurisdictionRulesRequest,
+) ([]*jurisdictionrule.JurisdictionRule, error) {
+	return s.rules, nil
+}
+
+func (s *jurisdictionRepoStub) GetOverrides(
+	context.Context, pagination.TenantInfo,
+) ([]*jurisdictionrule.Override, error) {
+	return nil, nil
+}
+
+func activeRule(stateID pulid.ID) *jurisdictionrule.JurisdictionRule {
+	return &jurisdictionrule.JurisdictionRule{
+		ID:                pulid.MustNew("jur_"),
+		StateID:           stateID,
+		Status:            jurisdictionrule.StatusActive,
+		VerificationState: jurisdictionrule.VerificationUnverified,
+		MaxWidthFeet:      8.5,
+		MaxHeightFeet:     13.5,
+		MaxLengthFeet:     53,
+		MaxWeightPounds:   80000,
+		State:             &usstate.UsState{Abbreviation: "GA", Name: "Georgia"},
+	}
+}
+
+func oversizeShipment(id, locationID pulid.ID) *shipment.Shipment {
+	width := 12.5
+	return &shipment.Shipment{
+		ID:                id,
+		OrganizationID:    pulid.MustNew("org_"),
+		BusinessUnitID:    pulid.MustNew("bu_"),
+		EnvelopeWidthFeet: &width,
+		Moves: []*shipment.ShipmentMove{{
+			Stops: []*shipment.Stop{{LocationID: locationID}},
+		}},
+	}
+}
+
+// The assessment is what the panel badge, the open count, and the dispatch
+// advisory are built from. If it re-derives the requirement as Open after an
+// operator waived it, the waiver "keeps coming back" everywhere the assessment
+// feeds, no matter what the persisted rows say.
+func TestAssess_ReflectsAPersistedWaiver(t *testing.T) {
+	georgia := pulid.MustNew("us_")
+	locationID := pulid.MustNew("loc_")
+	shipmentID := pulid.MustNew("shp_")
+	waiver := pulid.MustNew("usr_")
+	reason := "Escort booked and route surveyed with the state"
+
+	svc := &service{
+		permitRepo: &assessPermitRepoStub{
+			resolveRouteStates: func(*repositories.ResolveRouteStatesRequest) (map[pulid.ID]pulid.ID, error) {
+				return map[pulid.ID]pulid.ID{locationID: georgia}, nil
+			},
+			listByShipment: func(*repositories.ListPermitsRequest) ([]*permit.Permit, error) {
+				return nil, nil
+			},
+			listRequirements: func(*repositories.ListRequirementsRequest) ([]*permit.Requirement, error) {
+				return []*permit.Requirement{
+					waivedRequirement(georgia, waiver, reason),
+				}, nil
+			},
+		},
+		jurisdictionRepo: &jurisdictionRepoStub{rules: []*jurisdictionrule.JurisdictionRule{
+			activeRule(georgia),
+		}},
+		l: zap.NewNop(),
+	}
+
+	assessment, err := svc.Assess(t.Context(), oversizeShipment(shipmentID, locationID))
+	require.NoError(t, err)
+
+	require.Len(t, assessment.Requirements, 1)
+	assert.Equal(t, permit.RequirementWaived, assessment.Requirements[0].Status)
+	assert.Equal(t, reason, assessment.Requirements[0].WaiverReason)
+	require.NotNil(t, assessment.Requirements[0].WaivedByID)
+	assert.Equal(t, waiver, *assessment.Requirements[0].WaivedByID)
+	assert.Empty(t, assessment.Open, "a waived requirement must not read as open")
+	assert.False(t, assessment.HasOpen())
+}
+
+// An unsaved shipment has no persisted rows to consult, and asking for them
+// with a nil ID would be a scan of the whole tenant's requirements.
+func TestAssess_SkipsPersistedLookupForUnsavedShipments(t *testing.T) {
+	georgia := pulid.MustNew("us_")
+	locationID := pulid.MustNew("loc_")
+
+	svc := &service{
+		permitRepo: &assessPermitRepoStub{
+			resolveRouteStates: func(*repositories.ResolveRouteStatesRequest) (map[pulid.ID]pulid.ID, error) {
+				return map[pulid.ID]pulid.ID{locationID: georgia}, nil
+			},
+			listByShipment: func(*repositories.ListPermitsRequest) ([]*permit.Permit, error) {
+				return nil, nil
+			},
+			listRequirements: func(*repositories.ListRequirementsRequest) ([]*permit.Requirement, error) {
+				panic("unexpected ListRequirements call for an unsaved shipment")
+			},
+		},
+		jurisdictionRepo: &jurisdictionRepoStub{rules: []*jurisdictionrule.JurisdictionRule{
+			activeRule(georgia),
+		}},
+		l: zap.NewNop(),
+	}
+
+	assessment, err := svc.Assess(t.Context(), oversizeShipment(pulid.Nil, locationID))
+	require.NoError(t, err)
+
+	require.Len(t, assessment.Requirements, 1)
+	assert.Equal(t, permit.RequirementOpen, assessment.Requirements[0].Status)
+}
+
+// Superseded rows are the audit trail of prior derivations, not the current
+// requirement set. Serving them to the panel shows the same jurisdiction once
+// per save, which reads as the requirement coming back.
+func TestListRequirements_ExcludesSupersededRows(t *testing.T) {
+	var captured *repositories.ListRequirementsRequest
+
+	svc := &service{
+		permitRepo: &assessPermitRepoStub{
+			listRequirements: func(req *repositories.ListRequirementsRequest) ([]*permit.Requirement, error) {
+				captured = req
+				return nil, nil
+			},
+		},
+		l: zap.NewNop(),
+	}
+
+	_, err := svc.ListRequirements(t.Context(), pulid.MustNew("shp_"), pagination.TenantInfo{})
+	require.NoError(t, err)
+
+	require.NotNil(t, captured)
+	assert.True(t, captured.ExcludeSuperseded)
 }
 
 // A state with no rule row must be omitted rather than reported with zero
