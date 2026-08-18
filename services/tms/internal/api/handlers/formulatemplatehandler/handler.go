@@ -1007,8 +1007,8 @@ func (h *Handler) handleApprovalAction(
 			BuID:   authCtx.BusinessUnitID,
 			UserID: authCtx.UserID,
 		},
-		TemplateID: templateID,
-		Comment:    req.Comment,
+		EntityID: templateID,
+		Comment:  req.Comment,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)

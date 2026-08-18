@@ -130,7 +130,24 @@ func (rm *RateMatrix) Validate(multiErr *errortypes.MultiError) {
 	rm.validateDimensions(multiErr)
 }
 
+// StampDimensions re-seats on every axis the values it inherits from its
+// matrix: tenancy and its parent. A payload describes the axes, never their
+// ownership.
+func (rm *RateMatrix) StampDimensions() {
+	for _, dimension := range rm.Dimensions {
+		if dimension == nil {
+			continue
+		}
+
+		dimension.RateMatrixID = rm.ID
+		dimension.OrganizationID = rm.OrganizationID
+		dimension.BusinessUnitID = rm.BusinessUnitID
+	}
+}
+
 func (rm *RateMatrix) validateDimensions(multiErr *errortypes.MultiError) {
+	rm.StampDimensions()
+
 	if len(rm.Dimensions) == 0 {
 		multiErr.Add(
 			"dimensions",

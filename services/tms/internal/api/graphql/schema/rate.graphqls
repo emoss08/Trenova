@@ -1,0 +1,195 @@
+enum RateAgreementPartyType {
+  Customer
+  Carrier
+}
+
+enum RateAgreementType {
+  Contract
+  Tariff
+  Spot
+  Project
+  Dedicated
+}
+
+enum RateAgreementStatus {
+  Draft
+  InReview
+  Active
+  Suspended
+  Expired
+  Archived
+}
+
+enum RateQuoteOutcome {
+  Rated
+  FormulaFallback
+  ManualOverride
+  NoRateFound
+  Error
+}
+
+enum RateQuotePurpose {
+  Rating
+  Quote
+  Shopping
+  Simulation
+  WhatIf
+}
+
+"""
+A negotiated agreement with a customer or a carrier. The lane rules it carries
+are what decide the price of a shipment; the agreement itself carries the terms
+they are all written under.
+"""
+type RateAgreement {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  partyType: RateAgreementPartyType!
+  customerId: ID
+  carrierId: ID
+  code: String!
+  name: String!
+  description: String!
+  agreementType: RateAgreementType!
+  status: RateAgreementStatus!
+  contractRef: String!
+  priority: Int!
+  effectiveFrom: Int!
+  effectiveTo: Int
+  autoRenew: Boolean!
+  renewalNoticeDays: Int!
+  currency: String!
+  defaultMinCharge: String
+  defaultMaxCharge: String
+  marginFloorPercent: String
+  maxPayPercentOfSell: String
+  submittedById: ID
+  submittedAt: Int
+  approvedById: ID
+  approvedAt: Int
+  reviewComment: String!
+  currentVersionNumber: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type RateAgreementEdge {
+  node: RateAgreement!
+  cursor: String!
+}
+
+type RateAgreementConnection {
+  edges: [RateAgreementEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+A named grouping of geography that lane rules and rate matrices are written
+against, so a tariff can say "Southeast" rather than listing two hundred postal
+prefixes.
+"""
+type RateZone {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  name: String!
+  description: String!
+  status: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type RateZoneEdge {
+  node: RateZone!
+  cursor: String!
+}
+
+type RateZoneConnection {
+  edges: [RateZoneEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+A multi-dimensional rate table — origin zone by destination zone by weight break
+by class, and any subset of that.
+"""
+type RateMatrix {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  name: String!
+  description: String!
+  status: String!
+  currency: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type RateMatrixEdge {
+  node: RateMatrix!
+  cursor: String!
+}
+
+type RateMatrixConnection {
+  edges: [RateMatrixEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+The record of how one shipment was priced: which agreement and rule won, what
+each term contributed, and what it came to. Quotes are never edited — correcting
+one means re-rating, which writes a new quote and supersedes the old.
+"""
+type RateQuote {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID
+  partyType: RateAgreementPartyType!
+  partyId: ID!
+  purpose: RateQuotePurpose!
+  outcome: RateQuoteOutcome!
+  rateAgreementId: ID
+  rateAgreementRuleId: ID
+  formulaTemplateId: ID
+  specificityScore: Int!
+  currency: String!
+  billingCurrency: String!
+  linehaulAmount: String!
+  totalAmount: String!
+  billingAmount: String!
+  foregoneAmount: String
+  overrideReason: String!
+  asOf: Int!
+  ratedAt: Int!
+  ratedById: ID
+  engineVersion: String!
+  createdAt: Int!
+}
+
+type RateQuoteEdge {
+  node: RateQuote!
+  cursor: String!
+}
+
+type RateQuoteConnection {
+  edges: [RateQuoteEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
+  rateZones(input: DataTableConnectionInput!): RateZoneConnection!
+  rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
+  rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
+}

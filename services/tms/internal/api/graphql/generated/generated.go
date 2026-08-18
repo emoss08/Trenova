@@ -4604,8 +4604,12 @@ type ComplexityRoot struct {
 		PendingDriverExpenseCount           func(childComplexity int) int
 		PreviewDriverSettlement             func(childComplexity int, workerID string, periodStart *int, periodEnd *int) int
 		PreviewReport                       func(childComplexity int, definition gqlmodel.ReportIRInput, params map[string]any, supersede *bool) int
+		RateAgreements                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		RateMatrices                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		RateQuotes                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		RateTable                           func(childComplexity int, id string) int
 		RateTables                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		RateZones                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		RecurringDeduction                  func(childComplexity int, id string) int
 		RecurringDeductions                 func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		RecurringEarning                    func(childComplexity int, id string) int
@@ -4701,6 +4705,114 @@ type ComplexityRoot struct {
 		Workers                             func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 	}
 
+	RateAgreement struct {
+		AgreementType        func(childComplexity int) int
+		ApprovedAt           func(childComplexity int) int
+		ApprovedByID         func(childComplexity int) int
+		AutoRenew            func(childComplexity int) int
+		BusinessUnitID       func(childComplexity int) int
+		CarrierID            func(childComplexity int) int
+		Code                 func(childComplexity int) int
+		ContractRef          func(childComplexity int) int
+		CreatedAt            func(childComplexity int) int
+		Currency             func(childComplexity int) int
+		CurrentVersionNumber func(childComplexity int) int
+		CustomerID           func(childComplexity int) int
+		DefaultMaxCharge     func(childComplexity int) int
+		DefaultMinCharge     func(childComplexity int) int
+		Description          func(childComplexity int) int
+		EffectiveFrom        func(childComplexity int) int
+		EffectiveTo          func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		MarginFloorPercent   func(childComplexity int) int
+		MaxPayPercentOfSell  func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		OrganizationID       func(childComplexity int) int
+		PartyType            func(childComplexity int) int
+		Priority             func(childComplexity int) int
+		RenewalNoticeDays    func(childComplexity int) int
+		ReviewComment        func(childComplexity int) int
+		Status               func(childComplexity int) int
+		SubmittedAt          func(childComplexity int) int
+		SubmittedByID        func(childComplexity int) int
+		UpdatedAt            func(childComplexity int) int
+		Version              func(childComplexity int) int
+	}
+
+	RateAgreementConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	RateAgreementEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	RateMatrix struct {
+		BusinessUnitID func(childComplexity int) int
+		Code           func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Currency       func(childComplexity int) int
+		Description    func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Name           func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		Status         func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		Version        func(childComplexity int) int
+	}
+
+	RateMatrixConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	RateMatrixEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	RateQuote struct {
+		AsOf                func(childComplexity int) int
+		BillingAmount       func(childComplexity int) int
+		BillingCurrency     func(childComplexity int) int
+		BusinessUnitID      func(childComplexity int) int
+		CreatedAt           func(childComplexity int) int
+		Currency            func(childComplexity int) int
+		EngineVersion       func(childComplexity int) int
+		ForegoneAmount      func(childComplexity int) int
+		FormulaTemplateID   func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		LinehaulAmount      func(childComplexity int) int
+		OrganizationID      func(childComplexity int) int
+		Outcome             func(childComplexity int) int
+		OverrideReason      func(childComplexity int) int
+		PartyID             func(childComplexity int) int
+		PartyType           func(childComplexity int) int
+		Purpose             func(childComplexity int) int
+		RateAgreementID     func(childComplexity int) int
+		RateAgreementRuleID func(childComplexity int) int
+		RatedAt             func(childComplexity int) int
+		RatedByID           func(childComplexity int) int
+		ShipmentID          func(childComplexity int) int
+		SpecificityScore    func(childComplexity int) int
+		TotalAmount         func(childComplexity int) int
+	}
+
+	RateQuoteConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	RateQuoteEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	RateTable struct {
 		Active         func(childComplexity int) int
 		BusinessUnit   func(childComplexity int) int
@@ -4724,6 +4836,30 @@ type ComplexityRoot struct {
 	}
 
 	RateTableEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	RateZone struct {
+		BusinessUnitID func(childComplexity int) int
+		Code           func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Description    func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Name           func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		Status         func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		Version        func(childComplexity int) int
+	}
+
+	RateZoneConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	RateZoneEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
@@ -7557,6 +7693,10 @@ type QueryResolver interface {
 	NotificationUnreadCount(ctx context.Context) (int, error)
 	Orders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.OrderConnection, error)
 	Order(ctx context.Context, id string) (*order.Order, error)
+	RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error)
+	RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error)
+	RateMatrices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateMatrixConnection, error)
+	RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error)
 	RateTables(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateTableConnection, error)
 	RateTable(ctx context.Context, id string) (*ratetable.RateTable, error)
 	RecurringShipments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringShipmentConnection, error)
@@ -30658,6 +30798,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.PreviewReport(childComplexity, args["definition"].(gqlmodel.ReportIRInput), args["params"].(map[string]any), args["supersede"].(*bool)), true
+	case "Query.rateAgreements":
+		if e.ComplexityRoot.Query.RateAgreements == nil {
+			break
+		}
+
+		args, err := ec.field_Query_rateAgreements_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RateAgreements(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.rateMatrices":
+		if e.ComplexityRoot.Query.RateMatrices == nil {
+			break
+		}
+
+		args, err := ec.field_Query_rateMatrices_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RateMatrices(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.rateQuotes":
+		if e.ComplexityRoot.Query.RateQuotes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_rateQuotes_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RateQuotes(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.rateTable":
 		if e.ComplexityRoot.Query.RateTable == nil {
 			break
@@ -30680,6 +30853,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.RateTables(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.rateZones":
+		if e.ComplexityRoot.Query.RateZones == nil {
+			break
+		}
+
+		args, err := ec.field_Query_rateZones_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.RateZones(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.recurringDeduction":
 		if e.ComplexityRoot.Query.RecurringDeduction == nil {
 			break
@@ -31664,6 +31848,501 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Query.Workers(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 
+	case "RateAgreement.agreementType":
+		if e.ComplexityRoot.RateAgreement.AgreementType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.AgreementType(childComplexity), true
+	case "RateAgreement.approvedAt":
+		if e.ComplexityRoot.RateAgreement.ApprovedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.ApprovedAt(childComplexity), true
+	case "RateAgreement.approvedById":
+		if e.ComplexityRoot.RateAgreement.ApprovedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.ApprovedByID(childComplexity), true
+	case "RateAgreement.autoRenew":
+		if e.ComplexityRoot.RateAgreement.AutoRenew == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.AutoRenew(childComplexity), true
+	case "RateAgreement.businessUnitId":
+		if e.ComplexityRoot.RateAgreement.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.BusinessUnitID(childComplexity), true
+	case "RateAgreement.carrierId":
+		if e.ComplexityRoot.RateAgreement.CarrierID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.CarrierID(childComplexity), true
+	case "RateAgreement.code":
+		if e.ComplexityRoot.RateAgreement.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.Code(childComplexity), true
+	case "RateAgreement.contractRef":
+		if e.ComplexityRoot.RateAgreement.ContractRef == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.ContractRef(childComplexity), true
+	case "RateAgreement.createdAt":
+		if e.ComplexityRoot.RateAgreement.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.CreatedAt(childComplexity), true
+	case "RateAgreement.currency":
+		if e.ComplexityRoot.RateAgreement.Currency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.Currency(childComplexity), true
+	case "RateAgreement.currentVersionNumber":
+		if e.ComplexityRoot.RateAgreement.CurrentVersionNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.CurrentVersionNumber(childComplexity), true
+	case "RateAgreement.customerId":
+		if e.ComplexityRoot.RateAgreement.CustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.CustomerID(childComplexity), true
+	case "RateAgreement.defaultMaxCharge":
+		if e.ComplexityRoot.RateAgreement.DefaultMaxCharge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.DefaultMaxCharge(childComplexity), true
+	case "RateAgreement.defaultMinCharge":
+		if e.ComplexityRoot.RateAgreement.DefaultMinCharge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.DefaultMinCharge(childComplexity), true
+	case "RateAgreement.description":
+		if e.ComplexityRoot.RateAgreement.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.Description(childComplexity), true
+	case "RateAgreement.effectiveFrom":
+		if e.ComplexityRoot.RateAgreement.EffectiveFrom == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.EffectiveFrom(childComplexity), true
+	case "RateAgreement.effectiveTo":
+		if e.ComplexityRoot.RateAgreement.EffectiveTo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.EffectiveTo(childComplexity), true
+	case "RateAgreement.id":
+		if e.ComplexityRoot.RateAgreement.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.ID(childComplexity), true
+	case "RateAgreement.marginFloorPercent":
+		if e.ComplexityRoot.RateAgreement.MarginFloorPercent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.MarginFloorPercent(childComplexity), true
+	case "RateAgreement.maxPayPercentOfSell":
+		if e.ComplexityRoot.RateAgreement.MaxPayPercentOfSell == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.MaxPayPercentOfSell(childComplexity), true
+	case "RateAgreement.name":
+		if e.ComplexityRoot.RateAgreement.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.Name(childComplexity), true
+	case "RateAgreement.organizationId":
+		if e.ComplexityRoot.RateAgreement.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.OrganizationID(childComplexity), true
+	case "RateAgreement.partyType":
+		if e.ComplexityRoot.RateAgreement.PartyType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.PartyType(childComplexity), true
+	case "RateAgreement.priority":
+		if e.ComplexityRoot.RateAgreement.Priority == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.Priority(childComplexity), true
+	case "RateAgreement.renewalNoticeDays":
+		if e.ComplexityRoot.RateAgreement.RenewalNoticeDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.RenewalNoticeDays(childComplexity), true
+	case "RateAgreement.reviewComment":
+		if e.ComplexityRoot.RateAgreement.ReviewComment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.ReviewComment(childComplexity), true
+	case "RateAgreement.status":
+		if e.ComplexityRoot.RateAgreement.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.Status(childComplexity), true
+	case "RateAgreement.submittedAt":
+		if e.ComplexityRoot.RateAgreement.SubmittedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.SubmittedAt(childComplexity), true
+	case "RateAgreement.submittedById":
+		if e.ComplexityRoot.RateAgreement.SubmittedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.SubmittedByID(childComplexity), true
+	case "RateAgreement.updatedAt":
+		if e.ComplexityRoot.RateAgreement.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.UpdatedAt(childComplexity), true
+	case "RateAgreement.version":
+		if e.ComplexityRoot.RateAgreement.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreement.Version(childComplexity), true
+
+	case "RateAgreementConnection.edges":
+		if e.ComplexityRoot.RateAgreementConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreementConnection.Edges(childComplexity), true
+	case "RateAgreementConnection.pageInfo":
+		if e.ComplexityRoot.RateAgreementConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreementConnection.PageInfo(childComplexity), true
+	case "RateAgreementConnection.totalCount":
+		if e.ComplexityRoot.RateAgreementConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreementConnection.TotalCount(childComplexity), true
+
+	case "RateAgreementEdge.cursor":
+		if e.ComplexityRoot.RateAgreementEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreementEdge.Cursor(childComplexity), true
+	case "RateAgreementEdge.node":
+		if e.ComplexityRoot.RateAgreementEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateAgreementEdge.Node(childComplexity), true
+
+	case "RateMatrix.businessUnitId":
+		if e.ComplexityRoot.RateMatrix.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.BusinessUnitID(childComplexity), true
+	case "RateMatrix.code":
+		if e.ComplexityRoot.RateMatrix.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.Code(childComplexity), true
+	case "RateMatrix.createdAt":
+		if e.ComplexityRoot.RateMatrix.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.CreatedAt(childComplexity), true
+	case "RateMatrix.currency":
+		if e.ComplexityRoot.RateMatrix.Currency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.Currency(childComplexity), true
+	case "RateMatrix.description":
+		if e.ComplexityRoot.RateMatrix.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.Description(childComplexity), true
+	case "RateMatrix.id":
+		if e.ComplexityRoot.RateMatrix.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.ID(childComplexity), true
+	case "RateMatrix.name":
+		if e.ComplexityRoot.RateMatrix.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.Name(childComplexity), true
+	case "RateMatrix.organizationId":
+		if e.ComplexityRoot.RateMatrix.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.OrganizationID(childComplexity), true
+	case "RateMatrix.status":
+		if e.ComplexityRoot.RateMatrix.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.Status(childComplexity), true
+	case "RateMatrix.updatedAt":
+		if e.ComplexityRoot.RateMatrix.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.UpdatedAt(childComplexity), true
+	case "RateMatrix.version":
+		if e.ComplexityRoot.RateMatrix.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.Version(childComplexity), true
+
+	case "RateMatrixConnection.edges":
+		if e.ComplexityRoot.RateMatrixConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrixConnection.Edges(childComplexity), true
+	case "RateMatrixConnection.pageInfo":
+		if e.ComplexityRoot.RateMatrixConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrixConnection.PageInfo(childComplexity), true
+	case "RateMatrixConnection.totalCount":
+		if e.ComplexityRoot.RateMatrixConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrixConnection.TotalCount(childComplexity), true
+
+	case "RateMatrixEdge.cursor":
+		if e.ComplexityRoot.RateMatrixEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrixEdge.Cursor(childComplexity), true
+	case "RateMatrixEdge.node":
+		if e.ComplexityRoot.RateMatrixEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrixEdge.Node(childComplexity), true
+
+	case "RateQuote.asOf":
+		if e.ComplexityRoot.RateQuote.AsOf == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.AsOf(childComplexity), true
+	case "RateQuote.billingAmount":
+		if e.ComplexityRoot.RateQuote.BillingAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.BillingAmount(childComplexity), true
+	case "RateQuote.billingCurrency":
+		if e.ComplexityRoot.RateQuote.BillingCurrency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.BillingCurrency(childComplexity), true
+	case "RateQuote.businessUnitId":
+		if e.ComplexityRoot.RateQuote.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.BusinessUnitID(childComplexity), true
+	case "RateQuote.createdAt":
+		if e.ComplexityRoot.RateQuote.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.CreatedAt(childComplexity), true
+	case "RateQuote.currency":
+		if e.ComplexityRoot.RateQuote.Currency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.Currency(childComplexity), true
+	case "RateQuote.engineVersion":
+		if e.ComplexityRoot.RateQuote.EngineVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.EngineVersion(childComplexity), true
+	case "RateQuote.foregoneAmount":
+		if e.ComplexityRoot.RateQuote.ForegoneAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.ForegoneAmount(childComplexity), true
+	case "RateQuote.formulaTemplateId":
+		if e.ComplexityRoot.RateQuote.FormulaTemplateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.FormulaTemplateID(childComplexity), true
+	case "RateQuote.id":
+		if e.ComplexityRoot.RateQuote.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.ID(childComplexity), true
+	case "RateQuote.linehaulAmount":
+		if e.ComplexityRoot.RateQuote.LinehaulAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.LinehaulAmount(childComplexity), true
+	case "RateQuote.organizationId":
+		if e.ComplexityRoot.RateQuote.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.OrganizationID(childComplexity), true
+	case "RateQuote.outcome":
+		if e.ComplexityRoot.RateQuote.Outcome == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.Outcome(childComplexity), true
+	case "RateQuote.overrideReason":
+		if e.ComplexityRoot.RateQuote.OverrideReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.OverrideReason(childComplexity), true
+	case "RateQuote.partyId":
+		if e.ComplexityRoot.RateQuote.PartyID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.PartyID(childComplexity), true
+	case "RateQuote.partyType":
+		if e.ComplexityRoot.RateQuote.PartyType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.PartyType(childComplexity), true
+	case "RateQuote.purpose":
+		if e.ComplexityRoot.RateQuote.Purpose == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.Purpose(childComplexity), true
+	case "RateQuote.rateAgreementId":
+		if e.ComplexityRoot.RateQuote.RateAgreementID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.RateAgreementID(childComplexity), true
+	case "RateQuote.rateAgreementRuleId":
+		if e.ComplexityRoot.RateQuote.RateAgreementRuleID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.RateAgreementRuleID(childComplexity), true
+	case "RateQuote.ratedAt":
+		if e.ComplexityRoot.RateQuote.RatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.RatedAt(childComplexity), true
+	case "RateQuote.ratedById":
+		if e.ComplexityRoot.RateQuote.RatedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.RatedByID(childComplexity), true
+	case "RateQuote.shipmentId":
+		if e.ComplexityRoot.RateQuote.ShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.ShipmentID(childComplexity), true
+	case "RateQuote.specificityScore":
+		if e.ComplexityRoot.RateQuote.SpecificityScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.SpecificityScore(childComplexity), true
+	case "RateQuote.totalAmount":
+		if e.ComplexityRoot.RateQuote.TotalAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuote.TotalAmount(childComplexity), true
+
+	case "RateQuoteConnection.edges":
+		if e.ComplexityRoot.RateQuoteConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuoteConnection.Edges(childComplexity), true
+	case "RateQuoteConnection.pageInfo":
+		if e.ComplexityRoot.RateQuoteConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuoteConnection.PageInfo(childComplexity), true
+	case "RateQuoteConnection.totalCount":
+		if e.ComplexityRoot.RateQuoteConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuoteConnection.TotalCount(childComplexity), true
+
+	case "RateQuoteEdge.cursor":
+		if e.ComplexityRoot.RateQuoteEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuoteEdge.Cursor(childComplexity), true
+	case "RateQuoteEdge.node":
+		if e.ComplexityRoot.RateQuoteEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateQuoteEdge.Node(childComplexity), true
+
 	case "RateTable.active":
 		if e.ComplexityRoot.RateTable.Active == nil {
 			break
@@ -31774,6 +32453,99 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.RateTableEdge.Node(childComplexity), true
+
+	case "RateZone.businessUnitId":
+		if e.ComplexityRoot.RateZone.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZone.BusinessUnitID(childComplexity), true
+	case "RateZone.code":
+		if e.ComplexityRoot.RateZone.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZone.Code(childComplexity), true
+	case "RateZone.createdAt":
+		if e.ComplexityRoot.RateZone.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZone.CreatedAt(childComplexity), true
+	case "RateZone.description":
+		if e.ComplexityRoot.RateZone.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZone.Description(childComplexity), true
+	case "RateZone.id":
+		if e.ComplexityRoot.RateZone.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZone.ID(childComplexity), true
+	case "RateZone.name":
+		if e.ComplexityRoot.RateZone.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZone.Name(childComplexity), true
+	case "RateZone.organizationId":
+		if e.ComplexityRoot.RateZone.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZone.OrganizationID(childComplexity), true
+	case "RateZone.status":
+		if e.ComplexityRoot.RateZone.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZone.Status(childComplexity), true
+	case "RateZone.updatedAt":
+		if e.ComplexityRoot.RateZone.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZone.UpdatedAt(childComplexity), true
+	case "RateZone.version":
+		if e.ComplexityRoot.RateZone.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZone.Version(childComplexity), true
+
+	case "RateZoneConnection.edges":
+		if e.ComplexityRoot.RateZoneConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZoneConnection.Edges(childComplexity), true
+	case "RateZoneConnection.pageInfo":
+		if e.ComplexityRoot.RateZoneConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZoneConnection.PageInfo(childComplexity), true
+	case "RateZoneConnection.totalCount":
+		if e.ComplexityRoot.RateZoneConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZoneConnection.TotalCount(childComplexity), true
+
+	case "RateZoneEdge.cursor":
+		if e.ComplexityRoot.RateZoneEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZoneEdge.Cursor(childComplexity), true
+	case "RateZoneEdge.node":
+		if e.ComplexityRoot.RateZoneEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateZoneEdge.Node(childComplexity), true
 
 	case "RecurringDeduction.amountMinor":
 		if e.ComplexityRoot.RecurringDeduction.AmountMinor == nil {
@@ -49793,6 +50565,202 @@ extend type Mutation {
   cancelOrder(id: ID!, cancelReason: String!): Order!
 }
 `, BuiltIn: false},
+	{Name: "../schema/rate.graphqls", Input: `enum RateAgreementPartyType {
+  Customer
+  Carrier
+}
+
+enum RateAgreementType {
+  Contract
+  Tariff
+  Spot
+  Project
+  Dedicated
+}
+
+enum RateAgreementStatus {
+  Draft
+  InReview
+  Active
+  Suspended
+  Expired
+  Archived
+}
+
+enum RateQuoteOutcome {
+  Rated
+  FormulaFallback
+  ManualOverride
+  NoRateFound
+  Error
+}
+
+enum RateQuotePurpose {
+  Rating
+  Quote
+  Shopping
+  Simulation
+  WhatIf
+}
+
+"""
+A negotiated agreement with a customer or a carrier. The lane rules it carries
+are what decide the price of a shipment; the agreement itself carries the terms
+they are all written under.
+"""
+type RateAgreement {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  partyType: RateAgreementPartyType!
+  customerId: ID
+  carrierId: ID
+  code: String!
+  name: String!
+  description: String!
+  agreementType: RateAgreementType!
+  status: RateAgreementStatus!
+  contractRef: String!
+  priority: Int!
+  effectiveFrom: Int!
+  effectiveTo: Int
+  autoRenew: Boolean!
+  renewalNoticeDays: Int!
+  currency: String!
+  defaultMinCharge: String
+  defaultMaxCharge: String
+  marginFloorPercent: String
+  maxPayPercentOfSell: String
+  submittedById: ID
+  submittedAt: Int
+  approvedById: ID
+  approvedAt: Int
+  reviewComment: String!
+  currentVersionNumber: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type RateAgreementEdge {
+  node: RateAgreement!
+  cursor: String!
+}
+
+type RateAgreementConnection {
+  edges: [RateAgreementEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+A named grouping of geography that lane rules and rate matrices are written
+against, so a tariff can say "Southeast" rather than listing two hundred postal
+prefixes.
+"""
+type RateZone {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  name: String!
+  description: String!
+  status: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type RateZoneEdge {
+  node: RateZone!
+  cursor: String!
+}
+
+type RateZoneConnection {
+  edges: [RateZoneEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+A multi-dimensional rate table — origin zone by destination zone by weight break
+by class, and any subset of that.
+"""
+type RateMatrix {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  name: String!
+  description: String!
+  status: String!
+  currency: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type RateMatrixEdge {
+  node: RateMatrix!
+  cursor: String!
+}
+
+type RateMatrixConnection {
+  edges: [RateMatrixEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+The record of how one shipment was priced: which agreement and rule won, what
+each term contributed, and what it came to. Quotes are never edited — correcting
+one means re-rating, which writes a new quote and supersedes the old.
+"""
+type RateQuote {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID
+  partyType: RateAgreementPartyType!
+  partyId: ID!
+  purpose: RateQuotePurpose!
+  outcome: RateQuoteOutcome!
+  rateAgreementId: ID
+  rateAgreementRuleId: ID
+  formulaTemplateId: ID
+  specificityScore: Int!
+  currency: String!
+  billingCurrency: String!
+  linehaulAmount: String!
+  totalAmount: String!
+  billingAmount: String!
+  foregoneAmount: String
+  overrideReason: String!
+  asOf: Int!
+  ratedAt: Int!
+  ratedById: ID
+  engineVersion: String!
+  createdAt: Int!
+}
+
+type RateQuoteEdge {
+  node: RateQuote!
+  cursor: String!
+}
+
+type RateQuoteConnection {
+  edges: [RateQuoteEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
+  rateZones(input: DataTableConnectionInput!): RateZoneConnection!
+  rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
+  rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
+}
+`, BuiltIn: false},
 	{Name: "../schema/rate_table.graphqls", Input: `enum RateTableLookupType {
   Exact
   Range
@@ -61530,6 +62498,222 @@ func (ec *executionContext) childFields_PortalStop(ctx context.Context, field gr
 	return nil, fmt.Errorf("no field named %q was found under type PortalStop", field.Name)
 }
 
+func (ec *executionContext) childFields_RateAgreement(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_RateAgreement_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_RateAgreement_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_RateAgreement_organizationId(ctx, field)
+	case "partyType":
+		return ec.fieldContext_RateAgreement_partyType(ctx, field)
+	case "customerId":
+		return ec.fieldContext_RateAgreement_customerId(ctx, field)
+	case "carrierId":
+		return ec.fieldContext_RateAgreement_carrierId(ctx, field)
+	case "code":
+		return ec.fieldContext_RateAgreement_code(ctx, field)
+	case "name":
+		return ec.fieldContext_RateAgreement_name(ctx, field)
+	case "description":
+		return ec.fieldContext_RateAgreement_description(ctx, field)
+	case "agreementType":
+		return ec.fieldContext_RateAgreement_agreementType(ctx, field)
+	case "status":
+		return ec.fieldContext_RateAgreement_status(ctx, field)
+	case "contractRef":
+		return ec.fieldContext_RateAgreement_contractRef(ctx, field)
+	case "priority":
+		return ec.fieldContext_RateAgreement_priority(ctx, field)
+	case "effectiveFrom":
+		return ec.fieldContext_RateAgreement_effectiveFrom(ctx, field)
+	case "effectiveTo":
+		return ec.fieldContext_RateAgreement_effectiveTo(ctx, field)
+	case "autoRenew":
+		return ec.fieldContext_RateAgreement_autoRenew(ctx, field)
+	case "renewalNoticeDays":
+		return ec.fieldContext_RateAgreement_renewalNoticeDays(ctx, field)
+	case "currency":
+		return ec.fieldContext_RateAgreement_currency(ctx, field)
+	case "defaultMinCharge":
+		return ec.fieldContext_RateAgreement_defaultMinCharge(ctx, field)
+	case "defaultMaxCharge":
+		return ec.fieldContext_RateAgreement_defaultMaxCharge(ctx, field)
+	case "marginFloorPercent":
+		return ec.fieldContext_RateAgreement_marginFloorPercent(ctx, field)
+	case "maxPayPercentOfSell":
+		return ec.fieldContext_RateAgreement_maxPayPercentOfSell(ctx, field)
+	case "submittedById":
+		return ec.fieldContext_RateAgreement_submittedById(ctx, field)
+	case "submittedAt":
+		return ec.fieldContext_RateAgreement_submittedAt(ctx, field)
+	case "approvedById":
+		return ec.fieldContext_RateAgreement_approvedById(ctx, field)
+	case "approvedAt":
+		return ec.fieldContext_RateAgreement_approvedAt(ctx, field)
+	case "reviewComment":
+		return ec.fieldContext_RateAgreement_reviewComment(ctx, field)
+	case "currentVersionNumber":
+		return ec.fieldContext_RateAgreement_currentVersionNumber(ctx, field)
+	case "version":
+		return ec.fieldContext_RateAgreement_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_RateAgreement_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_RateAgreement_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateAgreement", field.Name)
+}
+
+func (ec *executionContext) childFields_RateAgreementConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_RateAgreementConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_RateAgreementConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_RateAgreementConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateAgreementConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_RateAgreementEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_RateAgreementEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_RateAgreementEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateAgreementEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_RateMatrix(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_RateMatrix_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_RateMatrix_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_RateMatrix_organizationId(ctx, field)
+	case "code":
+		return ec.fieldContext_RateMatrix_code(ctx, field)
+	case "name":
+		return ec.fieldContext_RateMatrix_name(ctx, field)
+	case "description":
+		return ec.fieldContext_RateMatrix_description(ctx, field)
+	case "status":
+		return ec.fieldContext_RateMatrix_status(ctx, field)
+	case "currency":
+		return ec.fieldContext_RateMatrix_currency(ctx, field)
+	case "version":
+		return ec.fieldContext_RateMatrix_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_RateMatrix_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_RateMatrix_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateMatrix", field.Name)
+}
+
+func (ec *executionContext) childFields_RateMatrixConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_RateMatrixConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_RateMatrixConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_RateMatrixConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateMatrixConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_RateMatrixEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_RateMatrixEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_RateMatrixEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateMatrixEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_RateQuote(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_RateQuote_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_RateQuote_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_RateQuote_organizationId(ctx, field)
+	case "shipmentId":
+		return ec.fieldContext_RateQuote_shipmentId(ctx, field)
+	case "partyType":
+		return ec.fieldContext_RateQuote_partyType(ctx, field)
+	case "partyId":
+		return ec.fieldContext_RateQuote_partyId(ctx, field)
+	case "purpose":
+		return ec.fieldContext_RateQuote_purpose(ctx, field)
+	case "outcome":
+		return ec.fieldContext_RateQuote_outcome(ctx, field)
+	case "rateAgreementId":
+		return ec.fieldContext_RateQuote_rateAgreementId(ctx, field)
+	case "rateAgreementRuleId":
+		return ec.fieldContext_RateQuote_rateAgreementRuleId(ctx, field)
+	case "formulaTemplateId":
+		return ec.fieldContext_RateQuote_formulaTemplateId(ctx, field)
+	case "specificityScore":
+		return ec.fieldContext_RateQuote_specificityScore(ctx, field)
+	case "currency":
+		return ec.fieldContext_RateQuote_currency(ctx, field)
+	case "billingCurrency":
+		return ec.fieldContext_RateQuote_billingCurrency(ctx, field)
+	case "linehaulAmount":
+		return ec.fieldContext_RateQuote_linehaulAmount(ctx, field)
+	case "totalAmount":
+		return ec.fieldContext_RateQuote_totalAmount(ctx, field)
+	case "billingAmount":
+		return ec.fieldContext_RateQuote_billingAmount(ctx, field)
+	case "foregoneAmount":
+		return ec.fieldContext_RateQuote_foregoneAmount(ctx, field)
+	case "overrideReason":
+		return ec.fieldContext_RateQuote_overrideReason(ctx, field)
+	case "asOf":
+		return ec.fieldContext_RateQuote_asOf(ctx, field)
+	case "ratedAt":
+		return ec.fieldContext_RateQuote_ratedAt(ctx, field)
+	case "ratedById":
+		return ec.fieldContext_RateQuote_ratedById(ctx, field)
+	case "engineVersion":
+		return ec.fieldContext_RateQuote_engineVersion(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_RateQuote_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateQuote", field.Name)
+}
+
+func (ec *executionContext) childFields_RateQuoteConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_RateQuoteConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_RateQuoteConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_RateQuoteConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateQuoteConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_RateQuoteEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_RateQuoteEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_RateQuoteEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateQuoteEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_RateTable(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -61582,6 +62766,54 @@ func (ec *executionContext) childFields_RateTableEdge(ctx context.Context, field
 		return ec.fieldContext_RateTableEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type RateTableEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_RateZone(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_RateZone_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_RateZone_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_RateZone_organizationId(ctx, field)
+	case "code":
+		return ec.fieldContext_RateZone_code(ctx, field)
+	case "name":
+		return ec.fieldContext_RateZone_name(ctx, field)
+	case "description":
+		return ec.fieldContext_RateZone_description(ctx, field)
+	case "status":
+		return ec.fieldContext_RateZone_status(ctx, field)
+	case "version":
+		return ec.fieldContext_RateZone_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_RateZone_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_RateZone_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateZone", field.Name)
+}
+
+func (ec *executionContext) childFields_RateZoneConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_RateZoneConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_RateZoneConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_RateZoneConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateZoneConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_RateZoneEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_RateZoneEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_RateZoneEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type RateZoneEdge", field.Name)
 }
 
 func (ec *executionContext) childFields_RecurringDeduction(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -72056,6 +73288,48 @@ func (ec *executionContext) field_Query_previewReport_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_rateAgreements_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_rateMatrices_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_rateQuotes_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_rateTable_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -72071,6 +73345,20 @@ func (ec *executionContext) field_Query_rateTable_args(ctx context.Context, rawA
 }
 
 func (ec *executionContext) field_Query_rateTables_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_rateZones_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
@@ -165225,6 +166513,182 @@ func (ec *executionContext) fieldContext_Query_order(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_rateAgreements(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_rateAgreements(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RateAgreements(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.RateAgreementConnection) graphql.Marshaler {
+			return ec.marshalNRateAgreementConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_rateAgreements(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateAgreementConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_rateAgreements_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_rateZones(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_rateZones(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RateZones(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.RateZoneConnection) graphql.Marshaler {
+			return ec.marshalNRateZoneConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZoneConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_rateZones(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateZoneConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_rateZones_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_rateMatrices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_rateMatrices(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RateMatrices(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.RateMatrixConnection) graphql.Marshaler {
+			return ec.marshalNRateMatrixConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_rateMatrices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateMatrixConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_rateMatrices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_rateQuotes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_rateQuotes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().RateQuotes(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.RateQuoteConnection) graphql.Marshaler {
+			return ec.marshalNRateQuoteConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_rateQuotes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateQuoteConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_rateQuotes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_rateTables(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -168681,6 +170145,1950 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _RateAgreement_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_organizationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_partyType(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_partyType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartyType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.RateAgreementPartyType) graphql.Marshaler {
+			return ec.marshalNRateAgreementPartyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementPartyType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_partyType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type RateAgreementPartyType does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_customerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_customerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_customerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_carrierId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_carrierId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CarrierID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_carrierId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_code(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_code(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_name(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_agreementType(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_agreementType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AgreementType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.RateAgreementType) graphql.Marshaler {
+			return ec.marshalNRateAgreementType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_agreementType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type RateAgreementType does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_status(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.RateAgreementStatus) graphql.Marshaler {
+			return ec.marshalNRateAgreementStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type RateAgreementStatus does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_contractRef(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_contractRef(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ContractRef, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_contractRef(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_priority(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_priority(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Priority, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_priority(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_effectiveFrom(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_effectiveFrom(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EffectiveFrom, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_effectiveFrom(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_effectiveTo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_effectiveTo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EffectiveTo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_effectiveTo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_autoRenew(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_autoRenew(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AutoRenew, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_autoRenew(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_renewalNoticeDays(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_renewalNoticeDays(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RenewalNoticeDays, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_renewalNoticeDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_currency(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_currency(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Currency, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_currency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_defaultMinCharge(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_defaultMinCharge(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultMinCharge, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_defaultMinCharge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_defaultMaxCharge(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_defaultMaxCharge(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultMaxCharge, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_defaultMaxCharge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_marginFloorPercent(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_marginFloorPercent(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MarginFloorPercent, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_marginFloorPercent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_maxPayPercentOfSell(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_maxPayPercentOfSell(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxPayPercentOfSell, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_maxPayPercentOfSell(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_submittedById(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_submittedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubmittedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_submittedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_submittedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_submittedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubmittedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_submittedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_approvedById(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_approvedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ApprovedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_approvedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_approvedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_approvedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ApprovedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_approvedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_reviewComment(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_reviewComment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReviewComment, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_reviewComment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_currentVersionNumber(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_currentVersionNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentVersionNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_currentVersionNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_createdAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreement_updatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreement_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreement_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreement", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreementConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreementConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreementConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.RateAgreementEdge) graphql.Marshaler {
+			return ec.marshalNRateAgreementEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreementConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateAgreementConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateAgreementEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateAgreementConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreementConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreementConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreementConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateAgreementConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateAgreementConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreementConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreementConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreementConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreementConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateAgreementEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreementEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreementEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.RateAgreement) graphql.Marshaler {
+			return ec.marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreementEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateAgreementEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateAgreement(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateAgreementEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateAgreementEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateAgreementEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateAgreementEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateAgreementEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_organizationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_code(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_code(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_name(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_status(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_currency(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_currency(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Currency, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_currency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_createdAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_updatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrixConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrixConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrixConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.RateMatrixEdge) graphql.Marshaler {
+			return ec.marshalNRateMatrixEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrixConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateMatrixConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateMatrixEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateMatrixConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrixConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrixConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrixConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateMatrixConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateMatrixConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrixConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrixConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrixConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrixConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrixEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrixEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrixEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.RateMatrix) graphql.Marshaler {
+			return ec.marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrixEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateMatrixEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateMatrix(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateMatrixEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrixEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrixEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrixEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrixEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_organizationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_shipmentId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_shipmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_shipmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_partyType(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_partyType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartyType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.RateAgreementPartyType) graphql.Marshaler {
+			return ec.marshalNRateAgreementPartyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementPartyType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_partyType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type RateAgreementPartyType does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_partyId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_partyId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartyID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_partyId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_purpose(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_purpose(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Purpose, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.RateQuotePurpose) graphql.Marshaler {
+			return ec.marshalNRateQuotePurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuotePurpose(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_purpose(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type RateQuotePurpose does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_outcome(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_outcome(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Outcome, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.RateQuoteOutcome) graphql.Marshaler {
+			return ec.marshalNRateQuoteOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteOutcome(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_outcome(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type RateQuoteOutcome does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_rateAgreementId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_rateAgreementId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RateAgreementID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_rateAgreementId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_rateAgreementRuleId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_rateAgreementRuleId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RateAgreementRuleID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_rateAgreementRuleId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_formulaTemplateId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_formulaTemplateId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FormulaTemplateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_formulaTemplateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_specificityScore(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_specificityScore(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SpecificityScore, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_specificityScore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_currency(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_currency(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Currency, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_currency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_billingCurrency(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_billingCurrency(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillingCurrency, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_billingCurrency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_linehaulAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_linehaulAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LinehaulAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_linehaulAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_totalAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_totalAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_totalAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_billingAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_billingAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BillingAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_billingAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_foregoneAmount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_foregoneAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ForegoneAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_foregoneAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_overrideReason(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_overrideReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OverrideReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_overrideReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_asOf(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_asOf(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AsOf, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_asOf(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_ratedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_ratedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_ratedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_ratedById(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_ratedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RatedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_ratedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_engineVersion(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_engineVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EngineVersion, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_engineVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuote_createdAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuote) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuote_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuote_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuote", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuoteConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuoteConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuoteConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.RateQuoteEdge) graphql.Marshaler {
+			return ec.marshalNRateQuoteEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuoteConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateQuoteConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateQuoteEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateQuoteConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuoteConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuoteConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuoteConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateQuoteConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateQuoteConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuoteConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuoteConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuoteConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuoteConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateQuoteEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuoteEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuoteEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.RateQuote) graphql.Marshaler {
+			return ec.marshalNRateQuote2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuote(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuoteEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateQuoteEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateQuote(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateQuoteEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateQuoteEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateQuoteEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateQuoteEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateQuoteEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _RateTable_id(ctx context.Context, field graphql.CollectedField, obj *ratetable.RateTable) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -169138,6 +172546,378 @@ func (ec *executionContext) _RateTableEdge_cursor(ctx context.Context, field gra
 }
 func (ec *executionContext) fieldContext_RateTableEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("RateTableEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateZone_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZone_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZone_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZone", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateZone_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZone_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZone_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZone", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateZone_organizationId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZone_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZone_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZone", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateZone_code(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZone_code(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZone_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZone", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateZone_name(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZone_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZone_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZone", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateZone_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZone_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZone_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZone", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateZone_status(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZone_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZone_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZone", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _RateZone_version(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZone_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZone_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZone", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateZone_createdAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZone_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZone_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZone", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateZone_updatedAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZone_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZone_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZone", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateZoneConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZoneConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZoneConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.RateZoneEdge) graphql.Marshaler {
+			return ec.marshalNRateZoneEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZoneEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZoneConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateZoneConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateZoneEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateZoneConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZoneConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZoneConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZoneConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateZoneConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateZoneConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZoneConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZoneConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RateZoneConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZoneConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _RateZoneEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZoneEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZoneEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.RateZone) graphql.Marshaler {
+			return ec.marshalNRateZone2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZone(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZoneEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RateZoneEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_RateZone(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RateZoneEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateZoneEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateZoneEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateZoneEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateZoneEdge", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _RecurringDeduction_id(ctx context.Context, field graphql.CollectedField, obj *driverpay.RecurringDeduction) (ret graphql.Marshaler) {
@@ -258073,6 +261853,94 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "rateAgreements":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_rateAgreements(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "rateZones":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_rateZones(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "rateMatrices":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_rateMatrices(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "rateQuotes":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_rateQuotes(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "rateTables":
 			field := field
 
@@ -259846,6 +263714,708 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var rateAgreementImplementors = []string{"RateAgreement"}
+
+func (ec *executionContext) _RateAgreement(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateAgreement) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateAgreementImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateAgreement")
+		case "id":
+			out.Values[i] = ec._RateAgreement_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._RateAgreement_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._RateAgreement_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "partyType":
+			out.Values[i] = ec._RateAgreement_partyType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "customerId":
+			out.Values[i] = ec._RateAgreement_customerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "carrierId":
+			out.Values[i] = ec._RateAgreement_carrierId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "code":
+			out.Values[i] = ec._RateAgreement_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._RateAgreement_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._RateAgreement_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "agreementType":
+			out.Values[i] = ec._RateAgreement_agreementType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._RateAgreement_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "contractRef":
+			out.Values[i] = ec._RateAgreement_contractRef(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "priority":
+			out.Values[i] = ec._RateAgreement_priority(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "effectiveFrom":
+			out.Values[i] = ec._RateAgreement_effectiveFrom(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "effectiveTo":
+			out.Values[i] = ec._RateAgreement_effectiveTo(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "autoRenew":
+			out.Values[i] = ec._RateAgreement_autoRenew(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "renewalNoticeDays":
+			out.Values[i] = ec._RateAgreement_renewalNoticeDays(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currency":
+			out.Values[i] = ec._RateAgreement_currency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "defaultMinCharge":
+			out.Values[i] = ec._RateAgreement_defaultMinCharge(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "defaultMaxCharge":
+			out.Values[i] = ec._RateAgreement_defaultMaxCharge(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "marginFloorPercent":
+			out.Values[i] = ec._RateAgreement_marginFloorPercent(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "maxPayPercentOfSell":
+			out.Values[i] = ec._RateAgreement_maxPayPercentOfSell(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "submittedById":
+			out.Values[i] = ec._RateAgreement_submittedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "submittedAt":
+			out.Values[i] = ec._RateAgreement_submittedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "approvedById":
+			out.Values[i] = ec._RateAgreement_approvedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "approvedAt":
+			out.Values[i] = ec._RateAgreement_approvedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "reviewComment":
+			out.Values[i] = ec._RateAgreement_reviewComment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currentVersionNumber":
+			out.Values[i] = ec._RateAgreement_currentVersionNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._RateAgreement_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._RateAgreement_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._RateAgreement_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateAgreementConnectionImplementors = []string{"RateAgreementConnection"}
+
+func (ec *executionContext) _RateAgreementConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateAgreementConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateAgreementConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateAgreementConnection")
+		case "edges":
+			out.Values[i] = ec._RateAgreementConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._RateAgreementConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._RateAgreementConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateAgreementEdgeImplementors = []string{"RateAgreementEdge"}
+
+func (ec *executionContext) _RateAgreementEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateAgreementEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateAgreementEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateAgreementEdge")
+		case "node":
+			out.Values[i] = ec._RateAgreementEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._RateAgreementEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateMatrixImplementors = []string{"RateMatrix"}
+
+func (ec *executionContext) _RateMatrix(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateMatrix) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateMatrixImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateMatrix")
+		case "id":
+			out.Values[i] = ec._RateMatrix_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._RateMatrix_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._RateMatrix_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "code":
+			out.Values[i] = ec._RateMatrix_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._RateMatrix_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._RateMatrix_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._RateMatrix_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currency":
+			out.Values[i] = ec._RateMatrix_currency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._RateMatrix_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._RateMatrix_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._RateMatrix_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateMatrixConnectionImplementors = []string{"RateMatrixConnection"}
+
+func (ec *executionContext) _RateMatrixConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateMatrixConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateMatrixConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateMatrixConnection")
+		case "edges":
+			out.Values[i] = ec._RateMatrixConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._RateMatrixConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._RateMatrixConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateMatrixEdgeImplementors = []string{"RateMatrixEdge"}
+
+func (ec *executionContext) _RateMatrixEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateMatrixEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateMatrixEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateMatrixEdge")
+		case "node":
+			out.Values[i] = ec._RateMatrixEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._RateMatrixEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateQuoteImplementors = []string{"RateQuote"}
+
+func (ec *executionContext) _RateQuote(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateQuote) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateQuoteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateQuote")
+		case "id":
+			out.Values[i] = ec._RateQuote_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._RateQuote_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._RateQuote_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shipmentId":
+			out.Values[i] = ec._RateQuote_shipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "partyType":
+			out.Values[i] = ec._RateQuote_partyType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "partyId":
+			out.Values[i] = ec._RateQuote_partyId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "purpose":
+			out.Values[i] = ec._RateQuote_purpose(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "outcome":
+			out.Values[i] = ec._RateQuote_outcome(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rateAgreementId":
+			out.Values[i] = ec._RateQuote_rateAgreementId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "rateAgreementRuleId":
+			out.Values[i] = ec._RateQuote_rateAgreementRuleId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "formulaTemplateId":
+			out.Values[i] = ec._RateQuote_formulaTemplateId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "specificityScore":
+			out.Values[i] = ec._RateQuote_specificityScore(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currency":
+			out.Values[i] = ec._RateQuote_currency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billingCurrency":
+			out.Values[i] = ec._RateQuote_billingCurrency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "linehaulAmount":
+			out.Values[i] = ec._RateQuote_linehaulAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalAmount":
+			out.Values[i] = ec._RateQuote_totalAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "billingAmount":
+			out.Values[i] = ec._RateQuote_billingAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "foregoneAmount":
+			out.Values[i] = ec._RateQuote_foregoneAmount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "overrideReason":
+			out.Values[i] = ec._RateQuote_overrideReason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "asOf":
+			out.Values[i] = ec._RateQuote_asOf(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ratedAt":
+			out.Values[i] = ec._RateQuote_ratedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ratedById":
+			out.Values[i] = ec._RateQuote_ratedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "engineVersion":
+			out.Values[i] = ec._RateQuote_engineVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._RateQuote_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateQuoteConnectionImplementors = []string{"RateQuoteConnection"}
+
+func (ec *executionContext) _RateQuoteConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateQuoteConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateQuoteConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateQuoteConnection")
+		case "edges":
+			out.Values[i] = ec._RateQuoteConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._RateQuoteConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._RateQuoteConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateQuoteEdgeImplementors = []string{"RateQuoteEdge"}
+
+func (ec *executionContext) _RateQuoteEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateQuoteEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateQuoteEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateQuoteEdge")
+		case "node":
+			out.Values[i] = ec._RateQuoteEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._RateQuoteEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var rateTableImplementors = []string{"RateTable"}
 
 func (ec *executionContext) _RateTable(ctx context.Context, sel ast.SelectionSet, obj *ratetable.RateTable) graphql.Marshaler {
@@ -260011,6 +264581,180 @@ func (ec *executionContext) _RateTableEdge(ctx context.Context, sel ast.Selectio
 			}
 		case "cursor":
 			out.Values[i] = ec._RateTableEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateZoneImplementors = []string{"RateZone"}
+
+func (ec *executionContext) _RateZone(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateZone) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateZoneImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateZone")
+		case "id":
+			out.Values[i] = ec._RateZone_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._RateZone_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._RateZone_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "code":
+			out.Values[i] = ec._RateZone_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._RateZone_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._RateZone_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._RateZone_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._RateZone_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._RateZone_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._RateZone_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateZoneConnectionImplementors = []string{"RateZoneConnection"}
+
+func (ec *executionContext) _RateZoneConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateZoneConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateZoneConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateZoneConnection")
+		case "edges":
+			out.Values[i] = ec._RateZoneConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._RateZoneConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._RateZoneConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var rateZoneEdgeImplementors = []string{"RateZoneEdge"}
+
+func (ec *executionContext) _RateZoneEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.RateZoneEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rateZoneEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RateZoneEdge")
+		case "node":
+			out.Values[i] = ec._RateZoneEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._RateZoneEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -285467,6 +290211,206 @@ func (ec *executionContext) unmarshalNPostCustomerPaymentInput2githubᚗcomᚋem
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNRateAgreement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreement(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateAgreement) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateAgreement(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRateAgreementConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RateAgreementConnection) graphql.Marshaler {
+	return ec._RateAgreementConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRateAgreementConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateAgreementConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateAgreementConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRateAgreementEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.RateAgreementEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRateAgreementEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRateAgreementEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateAgreementEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateAgreementEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRateAgreementPartyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementPartyType(ctx context.Context, v any) (gqlmodel.RateAgreementPartyType, error) {
+	var res gqlmodel.RateAgreementPartyType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRateAgreementPartyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementPartyType(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RateAgreementPartyType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNRateAgreementStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementStatus(ctx context.Context, v any) (gqlmodel.RateAgreementStatus, error) {
+	var res gqlmodel.RateAgreementStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRateAgreementStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementStatus(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RateAgreementStatus) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNRateAgreementType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementType(ctx context.Context, v any) (gqlmodel.RateAgreementType, error) {
+	var res gqlmodel.RateAgreementType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRateAgreementType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateAgreementType(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RateAgreementType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNRateMatrix2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrix(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateMatrix) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateMatrix(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRateMatrixConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RateMatrixConnection) graphql.Marshaler {
+	return ec._RateMatrixConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRateMatrixConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateMatrixConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateMatrixConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRateMatrixEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.RateMatrixEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRateMatrixEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRateMatrixEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateMatrixEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateMatrixEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateMatrixEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRateQuote2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuote(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateQuote) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateQuote(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRateQuoteConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RateQuoteConnection) graphql.Marshaler {
+	return ec._RateQuoteConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRateQuoteConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateQuoteConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateQuoteConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRateQuoteEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.RateQuoteEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRateQuoteEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRateQuoteEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateQuoteEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateQuoteEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRateQuoteOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteOutcome(ctx context.Context, v any) (gqlmodel.RateQuoteOutcome, error) {
+	var res gqlmodel.RateQuoteOutcome
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRateQuoteOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuoteOutcome(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RateQuoteOutcome) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNRateQuotePurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuotePurpose(ctx context.Context, v any) (gqlmodel.RateQuotePurpose, error) {
+	var res gqlmodel.RateQuotePurpose
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRateQuotePurpose2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateQuotePurpose(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RateQuotePurpose) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNRateTable2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋratetableᚐRateTable(ctx context.Context, sel ast.SelectionSet, v *ratetable.RateTable) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -285532,6 +290476,56 @@ func (ec *executionContext) marshalNRateTableLookupType2githubᚗcomᚋemoss08�
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNRateZone2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZone(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateZone) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateZone(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRateZoneConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZoneConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.RateZoneConnection) graphql.Marshaler {
+	return ec._RateZoneConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRateZoneConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZoneConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateZoneConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateZoneConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRateZoneEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZoneEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.RateZoneEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNRateZoneEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZoneEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRateZoneEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRateZoneEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.RateZoneEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RateZoneEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNRecordMyStopActionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRecordMyStopActionInput(ctx context.Context, v any) (gqlmodel.RecordMyStopActionInput, error) {

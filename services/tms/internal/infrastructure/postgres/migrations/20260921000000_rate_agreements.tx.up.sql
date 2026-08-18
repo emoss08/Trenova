@@ -66,6 +66,7 @@ CREATE TYPE "rate_freight_class_source_enum" AS ENUM(
 --bun:split
 CREATE TYPE "rate_quote_purpose_enum" AS ENUM(
     'Rating',
+    'Quote',
     'Shopping',
     'Simulation',
     'WhatIf'

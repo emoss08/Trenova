@@ -77,6 +77,10 @@ const (
 	ResourceRateTable            Resource = "rate_table"
 	ResourceFuelSurchargeProgram Resource = "fuel_surcharge_program"
 	ResourceDetentionPolicy      Resource = "detention_policy"
+	ResourceRateAgreement        Resource = "rate_agreement"
+	ResourceRateZone             Resource = "rate_zone"
+	ResourceRateMatrix           Resource = "rate_matrix"
+	ResourceRateQuote            Resource = "rate_quote"
 
 	// Agent
 	ResourceAgentRun       Resource = "agent_run"

@@ -5484,6 +5484,555 @@ components:
                 - StatusActive
                 - StatusExpired
                 - StatusVoid
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.AgreementType:
+            enum:
+                - Contract
+                - Tariff
+                - Spot
+                - Project
+                - Dedicated
+            type: string
+            x-enum-varnames:
+                - AgreementTypeContract
+                - AgreementTypeTariff
+                - AgreementTypeSpot
+                - AgreementTypeProject
+                - AgreementTypeDedicated
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.Direction:
+            enum:
+                - Directional
+                - Bidirectional
+            type: string
+            x-enum-varnames:
+                - DirectionDirectional
+                - DirectionBidirectional
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.FreightClassSource:
+            enum:
+                - Commodity
+                - Density
+                - Fixed
+            type: string
+            x-enum-varnames:
+                - FreightClassSourceCommodity
+                - FreightClassSourceDensity
+                - FreightClassSourceFixed
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType:
+            enum:
+                - Customer
+                - Carrier
+            type: string
+            x-enum-varnames:
+                - PartyTypeCustomer
+                - PartyTypeCarrier
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.PercentBasis:
+            enum:
+                - Linehaul
+                - LinehaulPlusAccessorials
+                - SellRate
+            type: string
+            x-enum-varnames:
+                - PercentBasisLinehaul
+                - PercentBasisLinehaulPlusAccessorials
+                - PercentBasisSellRate
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement:
+            properties:
+                accessorials:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementAccessorial'
+                    type: array
+                agreementType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.AgreementType'
+                approvedAt:
+                    type: integer
+                approvedById:
+                    type: string
+                autoRenew:
+                    type: boolean
+                billToCustomerId:
+                    description: |-
+                        BillToCustomerID redirects invoicing on a customer agreement. It is only
+                        meaningful on the sell side and a check constraint keeps it there.
+                    type: string
+                businessUnitId:
+                    type: string
+                carrier:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_carrier.Carrier'
+                carrierId:
+                    type: string
+                code:
+                    type: string
+                contractRef:
+                    type: string
+                createdAt:
+                    type: integer
+                currency:
+                    type: string
+                currentVersionNumber:
+                    type: integer
+                customer:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_customer.Customer'
+                customerId:
+                    type: string
+                defaultMaxCharge:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                defaultMinCharge:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                description:
+                    type: string
+                documentId:
+                    type: string
+                effectiveFrom:
+                    type: integer
+                effectiveTo:
+                    type: integer
+                fuelBinding:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementFuelBinding'
+                id:
+                    type: string
+                marginFloorPercent:
+                    allOf:
+                        - $ref: '#/components/schemas/decimal.NullDecimal'
+                    description: |-
+                        MarginFloorPercent and MaxPayPercentOfSell are the buy side guardrails a
+                        brokerage sets against a carrier, and are likewise constrained to it.
+                maxPayPercentOfSell:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                name:
+                    type: string
+                organizationId:
+                    type: string
+                partyType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType'
+                priority:
+                    type: integer
+                renewalNoticeDays:
+                    type: integer
+                reviewComment:
+                    type: string
+                roundingMode:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+                roundingPrecision:
+                    type: integer
+                rules:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementRule'
+                    type: array
+                status:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.Status'
+                submittedAt:
+                    type: integer
+                submittedById:
+                    type: string
+                updatedAt:
+                    type: integer
+                version:
+                    type: integer
+                versions:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementVersion'
+                    type: array
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementAccessorial:
+            properties:
+                accessorialCharge:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.AccessorialCharge'
+                accessorialChargeId:
+                    type: string
+                amount:
+                    type: number
+                applyCondition:
+                    description: |-
+                        ApplyCondition is an expression evaluated against the shipment, in the
+                        same language and against the same schema the formula editor already
+                        exposes — "totalStops > 2", say. Blank means always.
+                    type: string
+                autoApply:
+                    description: |-
+                        AutoApply adds the charge to every shipment the agreement prices, subject
+                        to ApplyCondition. Left off, the accessorial is merely priced, and a user
+                        still has to add it.
+                    type: boolean
+                businessUnitId:
+                    type: string
+                createdAt:
+                    type: integer
+                effectiveFrom:
+                    type: integer
+                effectiveTo:
+                    type: integer
+                formulaTemplateId:
+                    type: string
+                freeUnits:
+                    description: |-
+                        FreeUnits are granted before the charge starts counting, which is how
+                        detention and storage allowances are written.
+                    type: integer
+                id:
+                    type: string
+                maxAmount:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                method:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.Method'
+                organizationId:
+                    type: string
+                rateAgreementId:
+                    type: string
+                rateUnit:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.RateUnit'
+                serviceTypeIds:
+                    items:
+                        type: string
+                    type: array
+                shipmentTypeIds:
+                    items:
+                        type: string
+                    type: array
+                updatedAt:
+                    type: integer
+                version:
+                    type: integer
+                waived:
+                    description: |-
+                        Waived prices the accessorial at nothing for this contract. It is a
+                        distinct state from an amount of zero, because a waiver has to survive a
+                        later change to the organization's default price.
+                    type: boolean
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementFuelBinding:
+            properties:
+                businessUnitId:
+                    type: string
+                capAmount:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                createdAt:
+                    type: integer
+                fuelSurchargeProgramId:
+                    type: string
+                id:
+                    type: string
+                incrementRateOverride:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                organizationId:
+                    type: string
+                pegPriceOverride:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                program:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_fuelsurcharge.FuelSurchargeProgram'
+                rateAgreementId:
+                    type: string
+                updatedAt:
+                    type: integer
+                version:
+                    type: integer
+                waived:
+                    description: |-
+                        Waived suppresses fuel entirely for this contract. All-in rates are
+                        common enough that this needs to be a stated term rather than an omission
+                        somebody has to notice.
+                    type: boolean
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementRule:
+            properties:
+                absoluteMinCharge:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                allowDeficitRating:
+                    type: boolean
+                breaks:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementRuleBreak'
+                    type: array
+                businessUnitId:
+                    type: string
+                commodityIds:
+                    items:
+                        type: string
+                    type: array
+                createdAt:
+                    type: integer
+                currency:
+                    type: string
+                daysOfWeek:
+                    description: DaysOfWeek is a bitmask with Sunday at bit zero. Zero means every day.
+                    type: integer
+                densityScaleId:
+                    type: string
+                destinationCity:
+                    type: string
+                destinationLatitude:
+                    type: number
+                destinationLongitude:
+                    type: number
+                destinationRadiusMeters:
+                    type: number
+                destinationScopeType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rategeo.ScopeType'
+                destinationScopeValue:
+                    type: string
+                direction:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.Direction'
+                discountPercent:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                effectiveFrom:
+                    type: integer
+                effectiveTo:
+                    type: integer
+                equipmentClasses:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_modeprofile.EquipmentClass'
+                    type: array
+                fixedFreightClass:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_commodity.FreightClass'
+                formulaTemplateId:
+                    type: string
+                freightClassSource:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.FreightClassSource'
+                freightClasses:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_commodity.FreightClass'
+                    type: array
+                hazmatOnly:
+                    type: boolean
+                id:
+                    type: string
+                label:
+                    type: string
+                laneKey:
+                    description: |-
+                        LaneKey is the origin and destination keys joined. A rule stores one; a
+                        shipment produces the handful it could have stored. That turns lane
+                        matching into a set membership test the database answers from an index.
+                    type: string
+                maxCharge:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                maxDistance:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                maxStops:
+                    type: integer
+                maxWeight:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                minBillableDistance:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                minCharge:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                minDistance:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                minStops:
+                    type: integer
+                minWeight:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                organizationId:
+                    type: string
+                originCity:
+                    type: string
+                originLatitude:
+                    type: number
+                originLongitude:
+                    type: number
+                originRadiusMeters:
+                    type: number
+                originScopeType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rategeo.ScopeType'
+                originScopeValue:
+                    type: string
+                partyId:
+                    type: string
+                partyType:
+                    allOf:
+                        - $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType'
+                    description: |-
+                        PartyType and PartyID duplicate the agreement's own values so the
+                        resolution index can narrow to one customer or carrier before it even
+                        looks at the lane. Without them a lane key probe would return every
+                        organization's rules for that lane and leave the join to discard the ones
+                        belonging to other parties, which is the difference between reading a
+                        handful of rows and reading thousands. Both are stamped from the parent
+                        and are never the caller's to supply.
+                percentBasis:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.PercentBasis'
+                priority:
+                    type: integer
+                rate:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                rateAgreementId:
+                    type: string
+                rateMatrix:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix'
+                rateMatrixId:
+                    type: string
+                ratingBasis:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RatingBasis'
+                roundingMode:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+                serviceModels:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_modeprofile.ServiceModel'
+                    type: array
+                serviceTypeIds:
+                    description: |-
+                        An empty applicability set means the rule does not care about that
+                        dimension. This is the same convention detention policies and fuel
+                        surcharge programs already use, so a rule that names nothing matches
+                        everything rather than nothing.
+                    items:
+                        type: string
+                    type: array
+                shipmentTypeIds:
+                    items:
+                        type: string
+                    type: array
+                sourceImportRowId:
+                    type: string
+                specificityScore:
+                    type: integer
+                status:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RuleStatus'
+                supersedesRuleId:
+                    type: string
+                tempControlOnly:
+                    type: boolean
+                tractorTypeIds:
+                    items:
+                        type: string
+                    type: array
+                trailerTypeIds:
+                    items:
+                        type: string
+                    type: array
+                updatedAt:
+                    type: integer
+                version:
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementRuleBreak:
+            properties:
+                businessUnitId:
+                    type: string
+                createdAt:
+                    type: integer
+                fromWeight:
+                    type: number
+                id:
+                    type: string
+                label:
+                    type: string
+                minCharge:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                organizationId:
+                    type: string
+                rate:
+                    type: number
+                rateAgreementRuleId:
+                    type: string
+                sortOrder:
+                    type: integer
+                toWeight:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                updatedAt:
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementVersion:
+            properties:
+                agreementType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.AgreementType'
+                businessUnitId:
+                    type: string
+                changeMessage:
+                    type: string
+                changeSummary:
+                    additionalProperties:
+                        $ref: '#/components/schemas/jsonutils.FieldChange'
+                    type: object
+                contractRef:
+                    type: string
+                createdAt:
+                    type: integer
+                createdBy:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+                createdById:
+                    type: string
+                currency:
+                    type: string
+                defaultMaxCharge:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                defaultMinCharge:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                description:
+                    type: string
+                effectiveFrom:
+                    type: integer
+                effectiveTo:
+                    type: integer
+                id:
+                    type: string
+                marginFloorPercent:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                maxPayPercentOfSell:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                name:
+                    type: string
+                organizationId:
+                    type: string
+                rateAgreementId:
+                    type: string
+                roundingMode:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+                roundingPrecision:
+                    type: integer
+                status:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.Status'
+                versionNumber:
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.RatingBasis:
+            enum:
+                - Flat
+                - PerMile
+                - PerCwt
+                - PerPiece
+                - PerStop
+                - PerPallet
+                - PerLinearFoot
+                - PerHour
+                - Percent
+                - Matrix
+                - Formula
+            type: string
+            x-enum-varnames:
+                - RatingBasisFlat
+                - RatingBasisPerMile
+                - RatingBasisPerCwt
+                - RatingBasisPerPiece
+                - RatingBasisPerStop
+                - RatingBasisPerPallet
+                - RatingBasisPerLinearFoot
+                - RatingBasisPerHour
+                - RatingBasisPercent
+                - RatingBasisMatrix
+                - RatingBasisFormula
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.RuleStatus:
+            enum:
+                - Active
+                - Inactive
+            type: string
+            x-enum-varnames:
+                - RuleStatusActive
+                - RuleStatusInactive
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.Status:
+            enum:
+                - Draft
+                - InReview
+                - Active
+                - Suspended
+                - Expired
+                - Archived
+            type: string
+            x-enum-varnames:
+                - StatusDraft
+                - StatusInReview
+                - StatusActive
+                - StatusSuspended
+                - StatusExpired
+                - StatusArchived
         github_com_emoss08_trenova_internal_core_domain_rateconfirmation.RateConfirmation:
             properties:
                 businessUnitId:
@@ -5566,6 +6115,378 @@ components:
                 - ViaDispatcher
                 - ViaTenderAcceptance
                 - ViaPublicSignature
+        github_com_emoss08_trenova_internal_core_domain_rategeo.ScopeType:
+            enum:
+                - Any
+                - Country
+                - State
+                - Zone
+                - Radius
+                - CityState
+                - Zip3
+                - Zip5
+                - Location
+            type: string
+            x-enum-varnames:
+                - ScopeTypeAny
+                - ScopeTypeCountry
+                - ScopeTypeState
+                - ScopeTypeZone
+                - ScopeTypeRadius
+                - ScopeTypeCityState
+                - ScopeTypeZip3
+                - ScopeTypeZip5
+                - ScopeTypeLocation
+        github_com_emoss08_trenova_internal_core_domain_ratematrix.DensityScale:
+            properties:
+                businessUnitId:
+                    type: string
+                code:
+                    type: string
+                createdAt:
+                    type: integer
+                description:
+                    type: string
+                effectiveFrom:
+                    type: integer
+                id:
+                    type: string
+                isOrgDefault:
+                    type: boolean
+                name:
+                    type: string
+                organizationId:
+                    type: string
+                status:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_domaintypes.Status'
+                tiers:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.DensityScaleTier'
+                    type: array
+                updatedAt:
+                    type: integer
+                version:
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_ratematrix.DensityScaleTier:
+            properties:
+                businessUnitId:
+                    type: string
+                createdAt:
+                    type: integer
+                freightClass:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_commodity.FreightClass'
+                fromPcf:
+                    type: number
+                id:
+                    type: string
+                organizationId:
+                    type: string
+                rateDensityScaleId:
+                    type: string
+                sortOrder:
+                    type: integer
+                toPcf:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                updatedAt:
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_ratematrix.DimensionKind:
+            enum:
+                - Zone
+                - Zip3
+                - Zip5
+                - State
+                - Country
+                - WeightBreak
+                - Distance
+                - PieceCount
+                - LinearFeet
+                - FreightClass
+                - EquipmentType
+                - ServiceType
+                - Custom
+            type: string
+            x-enum-varnames:
+                - DimensionKindZone
+                - DimensionKindZip3
+                - DimensionKindZip5
+                - DimensionKindState
+                - DimensionKindCountry
+                - DimensionKindWeightBreak
+                - DimensionKindDistance
+                - DimensionKindPieceCount
+                - DimensionKindLinearFeet
+                - DimensionKindFreightClass
+                - DimensionKindEquipmentType
+                - DimensionKindServiceType
+                - DimensionKindCustom
+        github_com_emoss08_trenova_internal_core_domain_ratematrix.MatchMode:
+            enum:
+                - Exact
+                - Range
+            type: string
+            x-enum-varnames:
+                - MatchModeExact
+                - MatchModeRange
+        github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix:
+            properties:
+                businessUnitId:
+                    type: string
+                code:
+                    type: string
+                createdAt:
+                    type: integer
+                currency:
+                    type: string
+                description:
+                    type: string
+                dimensions:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrixDimension'
+                    type: array
+                id:
+                    type: string
+                name:
+                    type: string
+                organizationId:
+                    type: string
+                roundingMode:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
+                roundingPrecision:
+                    type: integer
+                status:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_domaintypes.Status'
+                updatedAt:
+                    type: integer
+                valueKind:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.ValueKind'
+                version:
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrixCell:
+            properties:
+                businessUnitId:
+                    type: string
+                createdAt:
+                    type: integer
+                d0Key:
+                    type: string
+                d0Max:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                d0Min:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                d1Key:
+                    type: string
+                d1Max:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                d1Min:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                d2Key:
+                    type: string
+                d2Max:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                d2Min:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                d3Key:
+                    type: string
+                d3Max:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                d3Min:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                deficitEligible:
+                    type: boolean
+                id:
+                    type: string
+                minCharge:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                organizationId:
+                    type: string
+                rateMatrixId:
+                    type: string
+                updatedAt:
+                    type: integer
+                value:
+                    type: number
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrixDimension:
+            properties:
+                businessUnitId:
+                    type: string
+                createdAt:
+                    type: integer
+                id:
+                    type: string
+                kind:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.DimensionKind'
+                label:
+                    type: string
+                matchMode:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.MatchMode'
+                organizationId:
+                    type: string
+                position:
+                    type: integer
+                rateMatrixId:
+                    type: string
+                updatedAt:
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_ratematrix.ValueKind:
+            enum:
+                - FlatRate
+                - PerMile
+                - PerCwt
+                - PerPiece
+                - PerStop
+                - Percent
+                - Discount
+                - MinimumOnly
+            type: string
+            x-enum-varnames:
+                - ValueKindFlatRate
+                - ValueKindPerMile
+                - ValueKindPerCwt
+                - ValueKindPerPiece
+                - ValueKindPerStop
+                - ValueKindPercent
+                - ValueKindDiscount
+                - ValueKindMinimumOnly
+        github_com_emoss08_trenova_internal_core_domain_ratequote.Outcome:
+            enum:
+                - Rated
+                - FormulaFallback
+                - ManualOverride
+                - NoRateFound
+                - Error
+            type: string
+            x-enum-varnames:
+                - OutcomeRated
+                - OutcomeFormulaFallback
+                - OutcomeManualOverride
+                - OutcomeNoRateFound
+                - OutcomeError
+        github_com_emoss08_trenova_internal_core_domain_ratequote.Purpose:
+            enum:
+                - Rating
+                - Quote
+                - Shopping
+                - Simulation
+                - WhatIf
+            type: string
+            x-enum-varnames:
+                - PurposeRating
+                - PurposeQuote
+                - PurposeShopping
+                - PurposeSimulation
+                - PurposeWhatIf
+        github_com_emoss08_trenova_internal_core_domain_ratequote.RateQuote:
+            properties:
+                accessorialAmount:
+                    type: number
+                agreement:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+                agreementVersionNumber:
+                    type: integer
+                asOf:
+                    description: |-
+                        AsOf is the date the rating was performed against, which is not the same
+                        as when it ran: a shipment picked up last week rates on last week's
+                        contract terms however long the invoice takes to produce.
+                    type: integer
+                billingAmount:
+                    type: number
+                billingCurrency:
+                    description: |-
+                        The billing amounts are the same money in the organization's own
+                        currency. Both are stored, along with the rate used, so the quote stays
+                        reproducible after the market has moved.
+                    type: string
+                businessUnitId:
+                    type: string
+                contextHash:
+                    description: |-
+                        ContextHash fingerprints the inputs. Two ratings with the same hash and
+                        the same engine version must agree, which makes it both a cheap dedupe
+                        and the signal that separates "the shipment changed" from "we changed how
+                        we price".
+                    type: string
+                costAmount:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                createdAt:
+                    type: integer
+                currency:
+                    type: string
+                engineVersion:
+                    type: string
+                exchangeRateId:
+                    type: string
+                foregoneAmount:
+                    allOf:
+                        - $ref: '#/components/schemas/decimal.NullDecimal'
+                    description: |-
+                        ForegoneAmount is what the contract would have charged on a quote the
+                        user overrode. It is the rate leakage report, kept on the row that caused
+                        it rather than recomputed later against terms that may have changed.
+                formulaTemplateId:
+                    type: string
+                fuelAmount:
+                    type: number
+                fxRate:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                id:
+                    type: string
+                linehaulAmount:
+                    type: number
+                marginAmount:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                marginPercent:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                organizationId:
+                    type: string
+                outcome:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.Outcome'
+                overrideReason:
+                    type: string
+                partyId:
+                    type: string
+                partyType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType'
+                purpose:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.Purpose'
+                rateAgreementId:
+                    type: string
+                rateAgreementRuleId:
+                    type: string
+                ratedAt:
+                    type: integer
+                ratedBy:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+                ratedById:
+                    type: string
+                shipmentId:
+                    type: string
+                shipmentMoveId:
+                    type: string
+                specificityScore:
+                    type: integer
+                status:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.Status'
+                totalAmount:
+                    type: number
+                trace:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.Trace'
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_ratequote.Status:
+            enum:
+                - Applied
+                - Superseded
+                - Quoted
+            type: string
+            x-enum-varnames:
+                - StatusApplied
+                - StatusSuperseded
+                - StatusQuoted
         github_com_emoss08_trenova_internal_core_domain_ratetable.LookupType:
             enum:
                 - Exact
@@ -5628,6 +6549,72 @@ components:
                 value:
                     type: number
             type: object
+        github_com_emoss08_trenova_internal_core_domain_ratezone.RateZone:
+            properties:
+                businessUnitId:
+                    type: string
+                code:
+                    type: string
+                createdAt:
+                    type: integer
+                description:
+                    type: string
+                id:
+                    type: string
+                kind:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratezone.ZoneKind'
+                members:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratezone.RateZoneMember'
+                    type: array
+                name:
+                    type: string
+                organizationId:
+                    type: string
+                status:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_domaintypes.Status'
+                updatedAt:
+                    type: integer
+                version:
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_ratezone.RateZoneMember:
+            properties:
+                businessUnitId:
+                    type: string
+                city:
+                    type: string
+                createdAt:
+                    type: integer
+                id:
+                    type: string
+                matchKey:
+                    type: string
+                organizationId:
+                    type: string
+                rateZoneId:
+                    type: string
+                scopeType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rategeo.ScopeType'
+                scopeValue:
+                    type: string
+                updatedAt:
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_internal_core_domain_ratezone.ZoneKind:
+            enum:
+                - Custom
+                - KMA
+                - Regional
+                - Metro
+                - Country
+            type: string
+            x-enum-varnames:
+                - ZoneKindCustom
+                - ZoneKindKMA
+                - ZoneKindRegional
+                - ZoneKindMetro
+                - ZoneKindCountry
         github_com_emoss08_trenova_internal_core_domain_recurringshipment.ExceptionPolicy:
             enum:
                 - Skip
@@ -5842,6 +6829,13 @@ components:
                 organization:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.Organization'
                 organizationId:
+                    type: string
+                rateAgreementAccessorialId:
+                    description: |-
+                        RateAgreementAccessorialID marks a charge the contract's own accessorial
+                        schedule produced, and is what its reconciliation pass matches on.
+                    type: string
+                rateQuoteId:
                     type: string
                 shipment:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment'
@@ -6144,6 +7138,13 @@ components:
             properties:
                 accessorialBase:
                     type: number
+                agreementId:
+                    description: |-
+                        AgreementID names the contract whose fuel binding selected this program,
+                        and TermsOverridden says whether that contract also changed the program's
+                        peg, increment or cap. Together they answer the question a fuel dispute
+                        always opens with: whose numbers are these?
+                    type: string
                 amount:
                     type: number
                 bandMax:
@@ -6216,6 +7217,8 @@ components:
                     type: boolean
                 stepRounding:
                     type: string
+                termsOverridden:
+                    type: boolean
                 usedFallback:
                     type: boolean
             type: object
@@ -6270,10 +7273,16 @@ components:
             type: object
         github_com_emoss08_trenova_internal_core_domain_shipment.RatingDetail:
             properties:
+                agreementId:
+                    type: string
+                agreementName:
+                    type: string
                 breakdown:
                     items:
                         $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_shipment.RatingBreakdownItem'
                     type: array
+                explanation:
+                    type: string
                 expression:
                     type: string
                 formulaTemplateId:
@@ -6282,6 +7291,13 @@ components:
                     type: string
                 guardrail:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_shipment.RatingGuardrail'
+                rateQuoteId:
+                    description: |-
+                        The fields below name the contract that priced the shipment, when one
+                        did. They point at the quote rather than duplicating it: the quote is
+                        where the full explanation lives, and copying any of it here would let
+                        the two drift.
+                    type: string
                 ratedAt:
                     type: integer
                 resolvedVariables:
@@ -6289,6 +7305,12 @@ components:
                     type: object
                 result:
                     type: number
+                ruleId:
+                    type: string
+                ruleLabel:
+                    type: string
+                source:
+                    type: string
                 versionNumber:
                     type: integer
             type: object
@@ -6396,6 +7418,25 @@ components:
                 pieces:
                     type: integer
                 proNumber:
+                    type: string
+                rateAgreementId:
+                    type: string
+                rateAgreementRuleId:
+                    type: string
+                rateLocked:
+                    description: |-
+                        RateLocked suppresses re-rating outright, for a shipment already invoiced
+                        whose numbers the customer has seen.
+                    type: boolean
+                rateOverrideAmount:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                rateOverrideAt:
+                    type: integer
+                rateOverrideById:
+                    type: string
+                rateOverrideReason:
+                    type: string
+                rateQuoteId:
                     type: string
                 ratingDetail:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_shipment.RatingDetail'
@@ -7117,6 +8158,10 @@ components:
                     type: string
                 defaultPaymentTerm:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.PaymentTerm'
+                enforceMarginFloor:
+                    type: boolean
+                fallbackFormulaTemplateId:
+                    type: string
                 id:
                     type: string
                 invoiceDraftCreationMode:
@@ -7139,12 +8184,23 @@ components:
                     type: number
                 readyToBillAssignmentMode:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.ReadyToBillAssignmentMode'
+                requireRateOverrideReason:
+                    type: boolean
                 shipmentBillingRequirementEnforcement:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.EnforcementLevel'
                 showBalanceDueOnInvoice:
                     type: boolean
                 showDueDateOnInvoice:
                     type: boolean
+                unratedShipmentDisposition:
+                    allOf:
+                        - $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_tenant.UnratedShipmentDisposition'
+                    description: |-
+                        UnratedShipmentDisposition decides what happens when no rate agreement
+                        covers a shipment's lane. It defaults to falling back to the formula
+                        template on the shipment, which is exactly how rating worked before
+                        agreements existed, so an organization that has not written a contract
+                        yet sees no change at all.
                 updatedAt:
                     type: integer
                 version:
@@ -7648,6 +8704,16 @@ components:
                 - TransferScheduleHourly
                 - TransferScheduleDaily
                 - TransferScheduleWeekly
+        github_com_emoss08_trenova_internal_core_domain_tenant.UnratedShipmentDisposition:
+            enum:
+                - FallbackFormulaTemplate
+                - ZeroAndFlag
+                - Block
+            type: string
+            x-enum-varnames:
+                - UnratedShipmentDispositionFallbackFormulaTemplate
+                - UnratedShipmentDispositionZeroAndFlag
+                - UnratedShipmentDispositionBlock
         github_com_emoss08_trenova_internal_core_domain_tenant.User:
             properties:
                 assignments:
@@ -10498,6 +11564,84 @@ components:
                         $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_permission.UserRoleAssignment'
                     type: array
             type: object
+        ? github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateagreement_RateAgreement
+        :   properties:
+                count:
+                    type: integer
+                next:
+                    type: string
+                previous:
+                    type: string
+                results:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+                    type: array
+            type: object
+        ? github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateagreement_RateAgreementVersion
+        :   properties:
+                count:
+                    type: integer
+                next:
+                    type: string
+                previous:
+                    type: string
+                results:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementVersion'
+                    type: array
+            type: object
+        github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratematrix_DensityScale:
+            properties:
+                count:
+                    type: integer
+                next:
+                    type: string
+                previous:
+                    type: string
+                results:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.DensityScale'
+                    type: array
+            type: object
+        github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratematrix_RateMatrix:
+            properties:
+                count:
+                    type: integer
+                next:
+                    type: string
+                previous:
+                    type: string
+                results:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix'
+                    type: array
+            type: object
+        ? github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratematrix_RateMatrixCell
+        :   properties:
+                count:
+                    type: integer
+                next:
+                    type: string
+                previous:
+                    type: string
+                results:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrixCell'
+                    type: array
+            type: object
+        github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratequote_RateQuote:
+            properties:
+                count:
+                    type: integer
+                next:
+                    type: string
+                previous:
+                    type: string
+                results:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.RateQuote'
+                    type: array
+            type: object
         github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratetable_RateTable:
             properties:
                 count:
@@ -10509,6 +11653,19 @@ components:
                 results:
                     items:
                         $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratetable.RateTable'
+                    type: array
+            type: object
+        github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratezone_RateZone:
+            properties:
+                count:
+                    type: integer
+                next:
+                    type: string
+                previous:
+                    type: string
+                results:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratezone.RateZone'
                     type: array
             type: object
         ? github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_recurringshipment_RecurringShipment
@@ -10678,6 +11835,385 @@ components:
                 results:
                     items:
                         $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.APIKeyResponse'
+                    type: array
+            type: object
+        github_com_emoss08_trenova_pkg_ratetypes.Candidate:
+            properties:
+                agreementCode:
+                    type: string
+                agreementId:
+                    type: string
+                agreementName:
+                    type: string
+                agreementPriority:
+                    type: integer
+                amount:
+                    allOf:
+                        - $ref: '#/components/schemas/decimal.NullDecimal'
+                    description: |-
+                        Amount is filled in only where pricing the loser was worth the cost —
+                        rate shopping, and the "what would this have charged" view.
+                effectiveFrom:
+                    type: integer
+                effectiveTo:
+                    type: integer
+                laneKey:
+                    type: string
+                matchedOn:
+                    description: |-
+                        MatchedOn lists what the rule matched the shipment on, in the same
+                        vocabulary mode profile provenance uses, so the two read alike.
+                    items:
+                        type: string
+                    type: array
+                rank:
+                    type: integer
+                rejectDetail:
+                    type: string
+                rejectReason:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RejectReason'
+                ruleId:
+                    type: string
+                ruleLabel:
+                    type: string
+                rulePriority:
+                    type: integer
+                specificityScore:
+                    type: integer
+                won:
+                    type: boolean
+            type: object
+        github_com_emoss08_trenova_pkg_ratetypes.Component:
+            properties:
+                amount:
+                    type: number
+                basis:
+                    description: |-
+                        Basis is the calculation in words — "1,240.0 mi @ $2.15/mi". It is what
+                        goes on a dispute letter, so it is stored rather than reconstructed.
+                    type: string
+                code:
+                    type: string
+                detail:
+                    additionalProperties: {}
+                    description: |-
+                        Detail carries whatever the step needs to be reproduced — the matrix cell
+                        keys read, a weight break's bounds, a formula's resolved variables.
+                    type: object
+                kind:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.ComponentKind'
+                label:
+                    type: string
+                quantity:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                rate:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                runningTotal:
+                    type: number
+                sequence:
+                    type: integer
+                source:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.ComponentSource'
+                sourceId:
+                    type: string
+                sourceName:
+                    type: string
+            type: object
+        github_com_emoss08_trenova_pkg_ratetypes.ComponentKind:
+            enum:
+                - Linehaul
+                - WeightBreak
+                - DeficitBump
+                - Discount
+                - AbsoluteMinCharge
+                - MinimumCharge
+                - MaximumCharge
+                - DeficitDistance
+                - Accessorial
+                - FuelSurcharge
+                - Detention
+                - CurrencyConversion
+                - Rounding
+                - ManualOverride
+            type: string
+            x-enum-varnames:
+                - ComponentKindLinehaul
+                - ComponentKindWeightBreak
+                - ComponentKindDeficitBump
+                - ComponentKindDiscount
+                - ComponentKindAbsoluteMinCharge
+                - ComponentKindMinimumCharge
+                - ComponentKindMaximumCharge
+                - ComponentKindDeficitDistance
+                - ComponentKindAccessorial
+                - ComponentKindFuelSurcharge
+                - ComponentKindDetention
+                - ComponentKindCurrencyConversion
+                - ComponentKindRounding
+                - ComponentKindManualOverride
+        github_com_emoss08_trenova_pkg_ratetypes.ComponentSource:
+            enum:
+                - AgreementRule
+                - RateMatrix
+                - FormulaTemplate
+                - FuelProgram
+                - DetentionPolicy
+                - AccessorialSchedule
+                - ExchangeRate
+                - Manual
+            type: string
+            x-enum-varnames:
+                - ComponentSourceAgreementRule
+                - ComponentSourceRateMatrix
+                - ComponentSourceFormulaTemplate
+                - ComponentSourceFuelProgram
+                - ComponentSourceDetentionPolicy
+                - ComponentSourceAccessorialSchedule
+                - ComponentSourceExchangeRate
+                - ComponentSourceManual
+        github_com_emoss08_trenova_pkg_ratetypes.FXConversion:
+            properties:
+                exchangeRateId:
+                    type: string
+                fromCurrency:
+                    type: string
+                rate:
+                    type: number
+                rateDate:
+                    type: string
+                toCurrency:
+                    type: string
+            type: object
+        github_com_emoss08_trenova_pkg_ratetypes.Guardrail:
+            properties:
+                applied:
+                    type: boolean
+                bound:
+                    type: number
+                kind:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.ComponentKind'
+                raw:
+                    type: number
+                result:
+                    type: number
+            type: object
+        github_com_emoss08_trenova_pkg_ratetypes.Inputs:
+            properties:
+                commodityIds:
+                    items:
+                        type: string
+                    type: array
+                cubicFeet:
+                    type: number
+                densityPcf:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                destinationCity:
+                    type: string
+                destinationLocationId:
+                    type: string
+                destinationPostalCode:
+                    type: string
+                destinationStateId:
+                    type: string
+                destinationZoneIds:
+                    items:
+                        type: string
+                    type: array
+                distance:
+                    type: number
+                distanceSource:
+                    type: string
+                equipmentClass:
+                    type: string
+                freightClassSource:
+                    type: string
+                freightClassUsed:
+                    description: |-
+                        FreightClassUsed and its provenance are recorded separately because a
+                        class dispute is the most common LTL billing adjustment, and "we measured
+                        8.2 pcf, which classifies as 92.5" is the entire argument.
+                    type: string
+                freightClasses:
+                    items:
+                        type: string
+                    type: array
+                hasHazmat:
+                    type: boolean
+                linearFeet:
+                    type: number
+                originCity:
+                    type: string
+                originLocationId:
+                    type: string
+                originPostalCode:
+                    type: string
+                originStateId:
+                    type: string
+                originZoneIds:
+                    items:
+                        type: string
+                    type: array
+                partyId:
+                    type: string
+                partyName:
+                    type: string
+                partyType:
+                    type: string
+                pieces:
+                    type: integer
+                ratingDate:
+                    type: integer
+                requiresTempControl:
+                    type: boolean
+                serviceModel:
+                    type: string
+                serviceTypeId:
+                    type: string
+                shipmentTypeId:
+                    type: string
+                stops:
+                    type: integer
+                tractorTypeId:
+                    type: string
+                trailerTypeId:
+                    type: string
+                weekday:
+                    type: integer
+                weight:
+                    type: number
+            type: object
+        github_com_emoss08_trenova_pkg_ratetypes.RejectReason:
+            enum:
+                - ""
+                - LaneMismatch
+                - NotEffective
+                - AgreementNotEffective
+                - AgreementInactive
+                - RuleInactive
+                - ServiceTypeMismatch
+                - ShipmentTypeMismatch
+                - EquipmentMismatch
+                - ServiceModelMismatch
+                - CommodityMismatch
+                - FreightClassMismatch
+                - WeightOutOfRange
+                - DistanceOutOfRange
+                - StopsOutOfRange
+                - DayOfWeekExcluded
+                - HazmatRequired
+                - TempControlRequired
+                - OutsideRadius
+                - LostOnPriority
+                - LostOnSpecificity
+                - LostOnEffectiveDate
+                - LostOnTiebreak
+                - PricingError
+            type: string
+            x-enum-varnames:
+                - RejectReasonNone
+                - RejectReasonLaneMismatch
+                - RejectReasonNotEffective
+                - RejectReasonAgreementNotEffective
+                - RejectReasonAgreementInactive
+                - RejectReasonRuleInactive
+                - RejectReasonServiceTypeMismatch
+                - RejectReasonShipmentTypeMismatch
+                - RejectReasonEquipmentMismatch
+                - RejectReasonServiceModelMismatch
+                - RejectReasonCommodityMismatch
+                - RejectReasonFreightClassMismatch
+                - RejectReasonWeightOutOfRange
+                - RejectReasonDistanceOutOfRange
+                - RejectReasonStopsOutOfRange
+                - RejectReasonDayOfWeekExcluded
+                - RejectReasonHazmatRequired
+                - RejectReasonTempControlRequired
+                - RejectReasonOutsideRadius
+                - RejectReasonLostOnPriority
+                - RejectReasonLostOnSpecificity
+                - RejectReasonLostOnEffectiveDate
+                - RejectReasonLostOnTiebreak
+                - RejectReasonPricingError
+        github_com_emoss08_trenova_pkg_ratetypes.RoundingMode:
+            enum:
+                - HalfUp
+                - HalfEven
+                - Up
+                - Down
+                - None
+            type: string
+            x-enum-varnames:
+                - RoundingModeHalfUp
+                - RoundingModeHalfEven
+                - RoundingModeUp
+                - RoundingModeDown
+                - RoundingModeNone
+        github_com_emoss08_trenova_pkg_ratetypes.Totals:
+            properties:
+                accessorial:
+                    type: number
+                cost:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                fuel:
+                    type: number
+                linehaul:
+                    type: number
+                margin:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                marginPercent:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                total:
+                    type: number
+            type: object
+        github_com_emoss08_trenova_pkg_ratetypes.Trace:
+            properties:
+                candidateCount:
+                    description: |-
+                        CandidateCount is how many rules the database returned, which can exceed
+                        the recorded candidates when the fetch was capped.
+                    type: integer
+                candidates:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.Candidate'
+                    type: array
+                components:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.Component'
+                    type: array
+                engineVersion:
+                    description: |-
+                        EngineVersion is bumped whenever the scoring or pricing arithmetic
+                        changes, which is what separates "the inputs moved" from "we changed how
+                        we compute this" when two runs disagree.
+                    type: string
+                error:
+                    type: string
+                fx:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.FXConversion'
+                guardrails:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.Guardrail'
+                    type: array
+                inputs:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.Inputs'
+                laneKeysTried:
+                    description: |-
+                        LaneKeysTried is what the shipment was looked up under. When nothing
+                        matched, this is the answer to "why not" — the contract simply has no
+                        rule keyed to any of these.
+                    items:
+                        type: string
+                    type: array
+                tieBreak:
+                    description: |-
+                        TieBreak names the ordering step that actually separated the winner from
+                        the runner up.
+                    type: string
+                totals:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.Totals'
+                warnings:
+                    items:
+                        type: string
                     type: array
             type: object
         internal_api_handlers_assignmenthandler.upsertAssignmentRequest:
@@ -10927,6 +12463,19 @@ components:
                 - endpoint
                 - p256dh
             type: object
+        internal_api_handlers_rateagreementhandler.amendRulesRequest:
+            properties:
+                effectiveFrom:
+                    type: integer
+                rules:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementRule'
+                    type: array
+                supersededIds:
+                    items:
+                        type: string
+                    type: array
+            type: object
         internal_api_handlers_rateconfirmationhandler.confirmRequest:
             properties:
                 confirmedByName:
@@ -10935,6 +12484,69 @@ components:
         internal_api_handlers_rateconfirmationhandler.voidRequest:
             properties:
                 reason:
+                    type: string
+            type: object
+        internal_api_handlers_ratematrixhandler.replaceCellsRequest:
+            properties:
+                cells:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrixCell'
+                    type: array
+            type: object
+        internal_api_handlers_ratequotehandler.explainRequest:
+            properties:
+                asOf:
+                    description: |-
+                        AsOf re-resolves against the terms effective on that date. Omit it to
+                        reproduce the shipment's current rate.
+                    type: integer
+                partyId:
+                    type: string
+                partyType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType'
+            type: object
+        internal_api_handlers_ratequotehandler.quoteRequest:
+            properties:
+                asOf:
+                    type: integer
+                partyId:
+                    type: string
+                partyType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType'
+                persist:
+                    description: |-
+                        Persist keeps the quote so it can be cited when the load is booked. A
+                        screen re-pricing on every keystroke leaves it off.
+                    type: boolean
+                shipment:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment'
+            required:
+                - shipment
+            type: object
+        internal_api_handlers_ratequotehandler.ratedShipment:
+            properties:
+                agreementID:
+                    description: |-
+                        Agreement and Rule are set when a contract priced the shipment, so the
+                        caller can stamp them on it without re-reading the quote.
+                    type: string
+                amount:
+                    description: |-
+                        Amount is the linehaul, in the organization's billing currency. Fuel and
+                        accessorials are added by the caller that owns them.
+                    type: number
+                currency:
+                    type: string
+                formulaTemplateID:
+                    description: |-
+                        FormulaTemplateID is set when the rule delegated to a formula, or when
+                        the rating fell back to one because no agreement covered the lane.
+                    type: string
+                outcome:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.Outcome'
+                quote:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.RateQuote'
+                ruleID:
                     type: string
             type: object
         internal_api_handlers_recurringshipmenthandler.generateRequest:
@@ -24610,6 +26222,475 @@ paths:
             summary: Register a web push subscription for the authenticated user
             tags:
                 - Push
+    /rate-agreements/:
+        get:
+            operationId: listRateAgreements
+            parameters:
+                - description: Search query
+                  in: query
+                  name: query
+                  schema:
+                    type: string
+                - description: Page size
+                  in: query
+                  name: limit
+                  schema:
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                - description: Page offset
+                  in: query
+                  name: offset
+                  schema:
+                    minimum: 0
+                    type: integer
+                - description: Filter by party type
+                  in: query
+                  name: partyType
+                  schema:
+                    enum:
+                        - Customer
+                        - Carrier
+                    type: string
+                - description: Filter by status
+                  in: query
+                  name: status
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateagreement_RateAgreement'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List rate agreements
+            tags:
+                - Rate Agreements
+        post:
+            operationId: createRateAgreement
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+                description: Rate agreement payload
+                required: true
+                x-originalParamName: request
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+                    description: Created
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Create a rate agreement
+            tags:
+                - Rate Agreements
+    /rate-agreements/{rateAgreementID}:
+        get:
+            operationId: getRateAgreement
+            parameters:
+                - description: Rate agreement ID
+                  in: path
+                  name: rateAgreementID
+                  required: true
+                  schema:
+                    type: string
+                - description: Include rules, accessorials and the fuel binding
+                  in: query
+                  name: includeChildren
+                  schema:
+                    type: boolean
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Get a rate agreement
+            tags:
+                - Rate Agreements
+        put:
+            operationId: updateRateAgreement
+            parameters:
+                - description: Rate agreement ID
+                  in: path
+                  name: rateAgreementID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+                description: Rate agreement payload
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Update a rate agreement
+            tags:
+                - Rate Agreements
+    /rate-agreements/{rateAgreementID}/rules:
+        get:
+            operationId: listRateAgreementRules
+            parameters:
+                - description: Rate agreement ID
+                  in: path
+                  name: rateAgreementID
+                  required: true
+                  schema:
+                    type: string
+                - description: Only rules effective at this epoch second
+                  in: query
+                  name: asOf
+                  schema:
+                    type: integer
+                - description: Include rules that are not active
+                  in: query
+                  name: includeInactive
+                  schema:
+                    type: boolean
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementRule'
+                                type: array
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List a rate agreement's rules
+            tags:
+                - Rate Agreements
+    /rate-agreements/{rateAgreementID}/rules/amend:
+        post:
+            description: Closes out the rules a change replaces and inserts their successors, in one transaction. Nothing is edited in place, so the superseded rates keep their history.
+            operationId: amendRateAgreementRules
+            parameters:
+                - description: Rate agreement ID
+                  in: path
+                  name: rateAgreementID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/internal_api_handlers_rateagreementhandler.amendRulesRequest'
+                description: Amendment payload
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Amend a rate agreement's rules
+            tags:
+                - Rate Agreements
+    /rate-agreements/{rateAgreementID}/versions:
+        get:
+            operationId: listRateAgreementVersions
+            parameters:
+                - description: Rate agreement ID
+                  in: path
+                  name: rateAgreementID
+                  required: true
+                  schema:
+                    type: string
+                - description: Page size
+                  in: query
+                  name: limit
+                  schema:
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                - description: Page offset
+                  in: query
+                  name: offset
+                  schema:
+                    minimum: 0
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateagreement_RateAgreementVersion'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List a rate agreement's versions
+            tags:
+                - Rate Agreements
+    /rate-agreements/select-options/:
+        get:
+            operationId: listRateAgreementOptions
+            parameters:
+                - description: Search query
+                  in: query
+                  name: query
+                  schema:
+                    type: string
+                - description: Page size
+                  in: query
+                  name: limit
+                  schema:
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                - description: Page offset
+                  in: query
+                  name: offset
+                  schema:
+                    minimum: 0
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateagreement_RateAgreement'
+                    description: OK
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List rate agreement options
+            tags:
+                - Rate Agreements
     /rate-confirmations/{rateConfirmationID}/:
         get:
             operationId: getRateConfirmation
@@ -24834,6 +26915,828 @@ paths:
             summary: Void a rate confirmation
             tags:
                 - RateConfirmations
+    /rate-matrices/:
+        get:
+            operationId: listRateMatrices
+            parameters:
+                - description: Search query
+                  in: query
+                  name: query
+                  schema:
+                    type: string
+                - description: Page size
+                  in: query
+                  name: limit
+                  schema:
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                - description: Page offset
+                  in: query
+                  name: offset
+                  schema:
+                    minimum: 0
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratematrix_RateMatrix'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List rate matrices
+            tags:
+                - Rate Matrices
+        post:
+            operationId: createRateMatrix
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix'
+                description: Rate matrix payload
+                required: true
+                x-originalParamName: request
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix'
+                    description: Created
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Create a rate matrix
+            tags:
+                - Rate Matrices
+    /rate-matrices/{rateMatrixID}:
+        delete:
+            operationId: deleteRateMatrix
+            parameters:
+                - description: Rate matrix ID
+                  in: path
+                  name: rateMatrixID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "204":
+                    description: No Content
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Conflict
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Delete a rate matrix
+            tags:
+                - Rate Matrices
+        get:
+            operationId: getRateMatrix
+            parameters:
+                - description: Rate matrix ID
+                  in: path
+                  name: rateMatrixID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Get a rate matrix
+            tags:
+                - Rate Matrices
+        put:
+            operationId: updateRateMatrix
+            parameters:
+                - description: Rate matrix ID
+                  in: path
+                  name: rateMatrixID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix'
+                description: Rate matrix payload
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Update a rate matrix
+            tags:
+                - Rate Matrices
+    /rate-matrices/{rateMatrixID}/cells:
+        get:
+            operationId: listRateMatrixCells
+            parameters:
+                - description: Rate matrix ID
+                  in: path
+                  name: rateMatrixID
+                  required: true
+                  schema:
+                    type: string
+                - description: Page size
+                  in: query
+                  name: limit
+                  schema:
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                - description: Page offset
+                  in: query
+                  name: offset
+                  schema:
+                    minimum: 0
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratematrix_RateMatrixCell'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List a rate matrix's cells
+            tags:
+                - Rate Matrices
+        put:
+            description: Swaps the entire grid for the one supplied. A tariff arrives as a whole sheet, and merging would leave behind whatever the new sheet dropped.
+            operationId: replaceRateMatrixCells
+            parameters:
+                - description: Rate matrix ID
+                  in: path
+                  name: rateMatrixID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/internal_api_handlers_ratematrixhandler.replaceCellsRequest'
+                description: Cells payload
+                required: true
+                x-originalParamName: request
+            responses:
+                "204":
+                    description: No Content
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Replace a rate matrix's cells
+            tags:
+                - Rate Matrices
+    /rate-matrices/density-scales/:
+        get:
+            operationId: listDensityScales
+            parameters:
+                - description: Page size
+                  in: query
+                  name: limit
+                  schema:
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                - description: Page offset
+                  in: query
+                  name: offset
+                  schema:
+                    minimum: 0
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratematrix_DensityScale'
+                    description: OK
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List density classification scales
+            tags:
+                - Rate Matrices
+    /rate-matrices/select-options/:
+        get:
+            operationId: listRateMatrixOptions
+            parameters:
+                - description: Search query
+                  in: query
+                  name: query
+                  schema:
+                    type: string
+                - description: Page size
+                  in: query
+                  name: limit
+                  schema:
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                - description: Page offset
+                  in: query
+                  name: offset
+                  schema:
+                    minimum: 0
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratematrix_RateMatrix'
+                    description: OK
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List rate matrix options
+            tags:
+                - Rate Matrices
+    /rate-quotes/:
+        get:
+            operationId: listRateQuotes
+            parameters:
+                - description: Search query
+                  in: query
+                  name: query
+                  schema:
+                    type: string
+                - description: Page size
+                  in: query
+                  name: limit
+                  schema:
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                - description: Page offset
+                  in: query
+                  name: offset
+                  schema:
+                    minimum: 0
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratequote_RateQuote'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List rate quotes
+            tags:
+                - Rate Quotes
+    /rate-quotes/{rateQuoteID}:
+        get:
+            operationId: getRateQuote
+            parameters:
+                - description: Rate quote ID
+                  in: path
+                  name: rateQuoteID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.RateQuote'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Get a rate quote
+            tags:
+                - Rate Quotes
+    /rate-quotes/quote/:
+        post:
+            description: Rates a hypothetical shipment against the contracts covering its lane, which is what a pre-booking quote is.
+            operationId: quoteShipment
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/internal_api_handlers_ratequotehandler.quoteRequest'
+                description: Quote payload
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/internal_api_handlers_ratequotehandler.ratedShipment'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Price a shipment that has not been created
+            tags:
+                - Rate Quotes
+    /rate-quotes/shipment/{shipmentID}:
+        get:
+            operationId: listShipmentRateQuotes
+            parameters:
+                - description: Shipment ID
+                  in: path
+                  name: shipmentID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.RateQuote'
+                                type: array
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List a shipment's rating history
+            tags:
+                - Rate Quotes
+    /rate-quotes/shipment/{shipmentID}/applied:
+        get:
+            description: Returns the quote the shipment is currently billed from, including the full trace of every rate considered and why each one lost.
+            operationId: getAppliedShipmentRateQuote
+            parameters:
+                - description: Shipment ID
+                  in: path
+                  name: shipmentID
+                  required: true
+                  schema:
+                    type: string
+                - description: Which side to read
+                  in: query
+                  name: partyType
+                  schema:
+                    enum:
+                        - Customer
+                        - Carrier
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.RateQuote'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Get the quote governing a shipment
+            tags:
+                - Rate Quotes
+    /rate-quotes/shipment/{shipmentID}/explain:
+        post:
+            description: Re-resolves a saved shipment against the contracts effective on a date and returns the full trace, without changing what the shipment is billed at.
+            operationId: explainShipmentRate
+            parameters:
+                - description: Shipment ID
+                  in: path
+                  name: shipmentID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/internal_api_handlers_ratequotehandler.explainRequest'
+                description: Explanation options
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/internal_api_handlers_ratequotehandler.ratedShipment'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Explain or re-price a shipment
+            tags:
+                - Rate Quotes
     /rate-tables/:
         get:
             operationId: listRateTables
@@ -25204,6 +28107,332 @@ paths:
             summary: Get a rate table option
             tags:
                 - Rate Tables
+    /rate-zones/:
+        get:
+            operationId: listRateZones
+            parameters:
+                - description: Search query
+                  in: query
+                  name: query
+                  schema:
+                    type: string
+                - description: Page size
+                  in: query
+                  name: limit
+                  schema:
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                - description: Page offset
+                  in: query
+                  name: offset
+                  schema:
+                    minimum: 0
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratezone_RateZone'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List rate zones
+            tags:
+                - Rate Zones
+        post:
+            operationId: createRateZone
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratezone.RateZone'
+                description: Rate zone payload
+                required: true
+                x-originalParamName: request
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratezone.RateZone'
+                    description: Created
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Create a rate zone
+            tags:
+                - Rate Zones
+    /rate-zones/{rateZoneID}:
+        delete:
+            operationId: deleteRateZone
+            parameters:
+                - description: Rate zone ID
+                  in: path
+                  name: rateZoneID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "204":
+                    description: No Content
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Conflict
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Delete a rate zone
+            tags:
+                - Rate Zones
+        get:
+            operationId: getRateZone
+            parameters:
+                - description: Rate zone ID
+                  in: path
+                  name: rateZoneID
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratezone.RateZone'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Get a rate zone
+            tags:
+                - Rate Zones
+        put:
+            operationId: updateRateZone
+            parameters:
+                - description: Rate zone ID
+                  in: path
+                  name: rateZoneID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratezone.RateZone'
+                description: Rate zone payload
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratezone.RateZone'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Update a rate zone
+            tags:
+                - Rate Zones
+    /rate-zones/select-options/:
+        get:
+            operationId: listRateZoneOptions
+            parameters:
+                - description: Search query
+                  in: query
+                  name: query
+                  schema:
+                    type: string
+                - description: Page size
+                  in: query
+                  name: limit
+                  schema:
+                    maximum: 100
+                    minimum: 1
+                    type: integer
+                - description: Page offset
+                  in: query
+                  name: offset
+                  schema:
+                    minimum: 0
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratezone_RateZone'
+                    description: OK
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: List rate zone options
+            tags:
+                - Rate Zones
     /realtime/token-request/:
         get:
             description: Returns a signed realtime access token for the authenticated actor.
@@ -33478,6 +36707,14 @@ tags:
       x-displayName: Jurisdiction Rules
     - name: Permits
       x-displayName: Permits
+    - name: Rate Agreements
+      x-displayName: Rate Agreements
+    - name: Rate Matrices
+      x-displayName: Rate Matrices
+    - name: Rate Quotes
+      x-displayName: Rate Quotes
+    - name: Rate Zones
+      x-displayName: Rate Zones
 x-tagGroups:
     - name: Getting Started
       tags:
@@ -33557,3 +36794,7 @@ x-tagGroups:
       tags:
         - Jurisdiction Rules
         - Permits
+        - Rate Agreements
+        - Rate Matrices
+        - Rate Quotes
+        - Rate Zones

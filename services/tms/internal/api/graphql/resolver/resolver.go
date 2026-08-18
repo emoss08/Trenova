@@ -51,7 +51,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
+	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
+	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
+	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
+	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
@@ -132,6 +136,10 @@ type Params struct {
 	CostingService               *costingservice.Service
 	DetentionService             *detentionservice.Service
 	DetentionPolicyService       *detentionpolicyservice.Service
+	RateAgreementService         *rateagreementservice.Service
+	RateZoneService              *ratezoneservice.Service
+	RateMatrixService            *ratematrixservice.Service
+	RateQuoteService             *ratequoteservice.Service
 	FuelIndexRepo                repositories.FuelIndexRepository
 	FuelIndexPriceRepo           repositories.FuelIndexPriceRepository
 	FuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
@@ -243,6 +251,10 @@ type Resolver struct {
 	costingService               *costingservice.Service
 	detentionService             *detentionservice.Service
 	detentionPolicyService       *detentionpolicyservice.Service
+	rateAgreementService         *rateagreementservice.Service
+	rateZoneService              *ratezoneservice.Service
+	rateMatrixService            *ratematrixservice.Service
+	rateQuoteService             *ratequoteservice.Service
 	fuelIndexRepo                repositories.FuelIndexRepository
 	fuelIndexPriceRepo           repositories.FuelIndexPriceRepository
 	fuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
@@ -355,6 +367,10 @@ func New(p Params) *Resolver {
 		costingService:               p.CostingService,
 		detentionService:             p.DetentionService,
 		detentionPolicyService:       p.DetentionPolicyService,
+		rateAgreementService:         p.RateAgreementService,
+		rateZoneService:              p.RateZoneService,
+		rateMatrixService:            p.RateMatrixService,
+		rateQuoteService:             p.RateQuoteService,
 		fuelIndexRepo:                p.FuelIndexRepo,
 		fuelIndexPriceRepo:           p.FuelIndexPriceRepo,
 		fuelSurchargeProgramRepo:     p.FuelSurchargeProgramRepo,

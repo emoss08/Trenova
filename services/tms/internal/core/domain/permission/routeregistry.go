@@ -728,6 +728,51 @@ func (rr *RouteRegistry) registerBillingRoutes() {
 		DisplayName: "Formula Templates",
 		Category:    "Billing",
 	})
+
+	rr.registerRateRoutes()
+}
+
+func (rr *RouteRegistry) registerRateRoutes() {
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/rate-agreements",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceRateAgreement, Operation: OpRead},
+		},
+		DisplayName: "Rate Agreements",
+		Category:    "Billing",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/rate-agreements/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceRateAgreement, Operation: OpRead},
+		},
+		DisplayName: "Rate Agreement Details",
+		Category:    "Billing",
+		ParentRoute: "/billing/rate-agreements",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/configuration-files/rate-zones",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceRateZone, Operation: OpRead},
+		},
+		DisplayName: "Rate Zones",
+		Category:    "Billing",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/configuration-files/rate-matrices",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceRateMatrix, Operation: OpRead},
+		},
+		DisplayName: "Rate Matrices",
+		Category:    "Billing",
+	})
 }
 
 func (rr *RouteRegistry) registerDetentionRoutes() {

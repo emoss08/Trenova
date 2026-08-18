@@ -7,6 +7,9 @@ type Purpose string
 const (
 	// PurposeRating is a quote that priced a real shipment.
 	PurposeRating = Purpose("Rating")
+	// PurposeQuote priced a load that has not been booked, which is what goes
+	// to the customer before there is a shipment to attach it to.
+	PurposeQuote = Purpose("Quote")
 	// PurposeShopping compares carriers before one is chosen.
 	PurposeShopping = Purpose("Shopping")
 	// PurposeSimulation is produced by replaying a proposed change against
@@ -22,7 +25,7 @@ func (p Purpose) String() string {
 
 func (p Purpose) IsValid() bool {
 	switch p {
-	case PurposeRating, PurposeShopping, PurposeSimulation, PurposeWhatIf:
+	case PurposeRating, PurposeQuote, PurposeShopping, PurposeSimulation, PurposeWhatIf:
 		return true
 	default:
 		return false

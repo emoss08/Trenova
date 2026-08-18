@@ -106,11 +106,32 @@ func (rz *RateZone) Validate(multiErr *errortypes.MultiError) {
 	rz.validateMembers(multiErr)
 }
 
+// StampMembers re-seats on every member the values it inherits from its zone:
+// tenancy, its parent, and the key it is matched by.
+//
+// A caller sends members as the places they describe, not as rows — nothing in
+// a payload should be trusted to say which zone or which organization a member
+// belongs to, and the key is derived, never sent.
+func (rz *RateZone) StampMembers() {
+	for _, member := range rz.Members {
+		if member == nil {
+			continue
+		}
+
+		member.RateZoneID = rz.ID
+		member.OrganizationID = rz.OrganizationID
+		member.BusinessUnitID = rz.BusinessUnitID
+		member.ApplyMatchKey()
+	}
+}
+
 // validateMembers checks each member on its own, then rejects duplicates across
 // the set. A zone that lists the same place twice contributes it twice to every
 // candidate lookup, which shows up later as the same rate rule appearing more
 // than once in a rating trace.
 func (rz *RateZone) validateMembers(multiErr *errortypes.MultiError) {
+	rz.StampMembers()
+
 	seen := make(map[string]struct{}, len(rz.Members))
 
 	for i, member := range rz.Members {
