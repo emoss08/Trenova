@@ -6487,6 +6487,185 @@ definitions:
             - StatusApplied
             - StatusSuperseded
             - StatusQuoted
+    github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulation:
+        properties:
+            agreement:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+            businessUnitId:
+                type: string
+            completedAt:
+                type: integer
+            createdAt:
+                type: integer
+            description:
+                type: string
+            error:
+                type: string
+            id:
+                type: string
+            name:
+                type: string
+            organizationId:
+                type: string
+            partyType:
+                allOf:
+                    - $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType'
+                description: |-
+                    PartyType says which side is being simulated. A carrier contract replay
+                    answers "what would this cost us", which is the same machinery pointed
+                    the other way.
+            rateAgreementId:
+                description: |-
+                    RateAgreementID is the contract being replayed. It is usually a draft:
+                    the point is to see what it would do before anybody signs it.
+                type: string
+            requestedBy:
+                type: string
+            results:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulationResult'
+                type: array
+            ruleCoverage:
+                description: |-
+                    RuleCoverage says what happened to each of the agreement's rules. It is
+                    the half of the answer the revenue total cannot give: which lanes never
+                    fired, and which fired but always lost.
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RuleCoverage'
+                type: array
+            sampleFrom:
+                description: |-
+                    SampleFrom and SampleTo bound the shipments replayed, by their own ship
+                    dates. Half open, matching every other window in the rating system: a
+                    shipment on SampleTo belongs to the next period.
+                type: integer
+            sampleLimit:
+                description: |-
+                    SampleLimit caps how many shipments are replayed. Zero means every
+                    shipment in the window.
+                type: integer
+            sampleTo:
+                type: integer
+            startedAt:
+                type: integer
+            status:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.Status'
+            summary:
+                allOf:
+                    - $ref: '#/definitions/github_com_emoss08_trenova_pkg_ratesimulation.Summary'
+                description: Summary is what the run came to, written once at the end.
+            updatedAt:
+                type: integer
+            version:
+                type: integer
+            workflowId:
+                description: |-
+                    WorkflowID is the Temporal run driving this simulation, so a stuck run can
+                    be found and cancelled.
+                type: string
+        type: object
+    github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulationResult:
+        properties:
+            afterAmount:
+                type: number
+            afterRuleId:
+                type: string
+            beforeAmount:
+                description: |-
+                    BeforeAmount is what the shipment was actually billed. AfterAmount is
+                    what the simulated agreement would have charged.
+                type: number
+            beforeRuleId:
+                description: |-
+                    BeforeRuleID and AfterRuleID name the rules that priced each side, which
+                    is what turns "this went up" into "this went up because this lane now
+                    wins".
+                type: string
+            businessUnitId:
+                type: string
+            createdAt:
+                type: integer
+            customerId:
+                description: |-
+                    CustomerID and LaneKey are copied onto the row so the result grid can be
+                    grouped without joining back to shipments that may since have been
+                    edited. A simulation is a record of a moment.
+                type: string
+            delta:
+                type: number
+            deltaPercent:
+                type: number
+            equipmentTypeId:
+                description: |-
+                    EquipmentTypeID is what the load ran on, which is the third dimension
+                    pricing changes are usually judged by.
+                type: string
+            error:
+                type: string
+            id:
+                type: string
+            laneKey:
+                type: string
+            organizationId:
+                type: string
+            outcome:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratequote.Outcome'
+            proNumber:
+                type: string
+            rateSimulationId:
+                type: string
+            shipmentId:
+                type: string
+        type: object
+    github_com_emoss08_trenova_internal_core_domain_ratesimulation.RuleCoverage:
+        properties:
+            label:
+                type: string
+            laneKey:
+                type: string
+            lostCount:
+                type: integer
+            lostTo:
+                description: |-
+                    LostTo names the rule that most often beat this one, which is the single
+                    most useful thing to know about a lane that never wins.
+                type: string
+            lostToLabel:
+                type: string
+            outcome:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RuleOutcome'
+            ruleId:
+                type: string
+            wonCount:
+                description: |-
+                    WonCount and LostCount are how many shipments this rule priced and how
+                    many it matched but was outranked on.
+                type: integer
+        type: object
+    github_com_emoss08_trenova_internal_core_domain_ratesimulation.RuleOutcome:
+        enum:
+            - Won
+            - Lost
+            - NeverFired
+        type: string
+        x-enum-varnames:
+            - RuleOutcomeWon
+            - RuleOutcomeLost
+            - RuleOutcomeNeverFired
+    github_com_emoss08_trenova_internal_core_domain_ratesimulation.Status:
+        enum:
+            - Pending
+            - Running
+            - Completed
+            - Failed
+            - Canceled
+        type: string
+        x-enum-varnames:
+            - StatusPending
+            - StatusRunning
+            - StatusCompleted
+            - StatusFailed
+            - StatusCanceled
     github_com_emoss08_trenova_internal_core_domain_ratetable.LookupType:
         enum:
             - Exact
@@ -11717,6 +11896,32 @@ definitions:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratequote.RateQuote'
                 type: array
         type: object
+    ? github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratesimulation_RateSimulation
+    :   properties:
+            count:
+                type: integer
+            next:
+                type: string
+            previous:
+                type: string
+            results:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulation'
+                type: array
+        type: object
+    ? github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratesimulation_RateSimulationResult
+    :   properties:
+            count:
+                type: integer
+            next:
+                type: string
+            previous:
+                type: string
+            results:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulationResult'
+                type: array
+        type: object
     github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratetable_RateTable:
         properties:
             count:
@@ -11911,6 +12116,37 @@ definitions:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.APIKeyResponse'
                 type: array
+        type: object
+    github_com_emoss08_trenova_pkg_ratesimulation.Summary:
+        properties:
+            afterTotal:
+                type: number
+            beforeTotal:
+                type: number
+            changedCount:
+                type: integer
+            decreasedCount:
+                type: integer
+            errorCount:
+                type: integer
+            evaluatedCount:
+                type: integer
+            increasedCount:
+                type: integer
+            maxDecrease:
+                type: number
+            maxIncrease:
+                description: |-
+                    MaxIncrease and MaxDecrease are the largest single moves in each
+                    direction. They are what somebody scans for: the shipment that will
+                    produce the phone call.
+                type: number
+            shipmentCount:
+                type: integer
+            totalDelta:
+                type: number
+            totalDeltaPct:
+                type: number
         type: object
     github_com_emoss08_trenova_pkg_ratetypes.Candidate:
         properties:
@@ -12702,6 +12938,28 @@ definitions:
                 items:
                     type: string
                 type: array
+        type: object
+    internal_api_handlers_ratesimulationhandler.createRequest:
+        properties:
+            description:
+                type: string
+            name:
+                type: string
+            partyType:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType'
+            rateAgreementId:
+                type: string
+            sampleFrom:
+                type: integer
+            sampleLimit:
+                type: integer
+            sampleTo:
+                type: integer
+        required:
+            - name
+            - rateAgreementId
+            - sampleFrom
+            - sampleTo
         type: object
     internal_api_handlers_recurringshipmenthandler.generateRequest:
         properties:
@@ -25316,6 +25574,191 @@ paths:
             summary: Shop a shipment against several carriers
             tags:
                 - Rate Quotes
+    /rate-simulations/:
+        get:
+            operationId: listRateSimulations
+            parameters:
+                - description: Narrow to one agreement's simulations
+                  in: query
+                  name: rateAgreementId
+                  type: string
+                - description: Page size
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+                - description: Page offset
+                  in: query
+                  minimum: 0
+                  name: offset
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratesimulation_RateSimulation'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List rate simulations
+            tags:
+                - Rate Simulations
+        post:
+            consumes:
+                - application/json
+            description: Records a simulation to be replayed against historical shipments. The run happens in the background; poll the simulation for its status.
+            operationId: createRateSimulation
+            parameters:
+                - description: Simulation payload
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/internal_api_handlers_ratesimulationhandler.createRequest'
+            produces:
+                - application/json
+            responses:
+                "201":
+                    description: Created
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulation'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Run a rate simulation
+            tags:
+                - Rate Simulations
+    /rate-simulations/{rateSimulationID}:
+        get:
+            operationId: getRateSimulation
+            parameters:
+                - description: Rate simulation ID
+                  in: path
+                  name: rateSimulationID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulation'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Get a rate simulation
+            tags:
+                - Rate Simulations
+    /rate-simulations/{rateSimulationID}/results:
+        get:
+            description: Returns what each replayed shipment was billed and what the simulated contract would have charged, largest increases first.
+            operationId: listRateSimulationResults
+            parameters:
+                - description: Rate simulation ID
+                  in: path
+                  name: rateSimulationID
+                  required: true
+                  type: string
+                - description: Hide the shipments the change did not move
+                  in: query
+                  name: changedOnly
+                  type: boolean
+                - description: Page size
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+                - description: Page offset
+                  in: query
+                  minimum: 0
+                  name: offset
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratesimulation_RateSimulationResult'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List a simulation's per-shipment results
+            tags:
+                - Rate Simulations
     /rate-tables/:
         get:
             consumes:
@@ -32729,6 +33172,8 @@ tags:
       x-displayName: Rate Matrices
     - name: Rate Quotes
       x-displayName: Rate Quotes
+    - name: Rate Simulations
+      x-displayName: Rate Simulations
     - name: Rate Zones
       x-displayName: Rate Zones
 x-tagGroups:
@@ -32813,4 +33258,5 @@ x-tagGroups:
         - Rate Agreements
         - Rate Matrices
         - Rate Quotes
+        - Rate Simulations
         - Rate Zones

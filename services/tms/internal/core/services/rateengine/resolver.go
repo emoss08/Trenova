@@ -67,6 +67,7 @@ func (s *Service) resolve(
 		OriginLongitude:      rateCtx.OriginLongitude,
 		DestinationLatitude:  rateCtx.DestinationLatitude,
 		DestinationLongitude: rateCtx.DestinationLongitude,
+		SimulateAgreementID:  rateCtx.SimulateAgreementID,
 	})
 	if err != nil {
 		log.Error("failed to fetch rate rule candidates", zap.Error(err))

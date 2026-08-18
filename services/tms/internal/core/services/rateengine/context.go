@@ -101,6 +101,10 @@ type RateContext struct {
 	// Entity is the shipment itself, needed only by rules that delegate to a
 	// formula template — the formula engine resolves its own variables from it.
 	Entity any
+
+	// SimulateAgreementID lets one agreement price this shipment whatever its
+	// status, which is what a simulation of a draft contract needs.
+	SimulateAgreementID *pulid.ID
 }
 
 // Weekday is the day of week the rating date falls on, Sunday-zero, matching

@@ -37,6 +37,12 @@ type RateShipmentRequest struct {
 	// a record that competes with the shipment's real rate.
 	Persist bool
 	UserID  pulid.ID
+
+	// SimulateAgreementID lets one agreement price this shipment whatever its
+	// status. It is what a simulation of a draft contract needs, and it must
+	// never be set on a rating that governs a shipment: an unsigned contract
+	// would be invoicing.
+	SimulateAgreementID *pulid.ID
 }
 
 // RatedShipment is what the engine produced.

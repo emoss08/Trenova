@@ -122,6 +122,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rateconfirmationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratematrixrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratequoterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratesimulationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratetablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratezonerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
@@ -349,6 +350,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	rateagreementrepository.New,
 	ratezonerepository.New,
 	ratematrixrepository.New,
+	ratesimulationrepository.New,
 	ratematrixrepository.NewDensityScaleRepository,
 	ratequoterepository.New,
 	fuelsurchargerepository.NewIndexRepository,

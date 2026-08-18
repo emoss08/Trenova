@@ -109,6 +109,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
+	"github.com/emoss08/trenova/internal/core/services/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
@@ -365,6 +366,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	ratezoneservice.New,
 	ratematrixservice.New,
 	ratequoteservice.New,
+	ratesimulationservice.New,
+	func(s *ratesimulationservice.Service) services.RateSimulationRunner { return s },
 	modeprofileservice.NewService,
 	permitservice.NewService,
 	jurisdictionruleservice.NewService,

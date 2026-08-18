@@ -86,6 +86,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratematrixhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratequotehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratesimulationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratezonehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
@@ -229,6 +230,7 @@ type RouterParams struct {
 	RateAgreementHandler            *rateagreementhandler.Handler
 	RateZoneHandler                 *ratezonehandler.Handler
 	RateMatrixHandler               *ratematrixhandler.Handler
+	RateSimulationHandler           *ratesimulationhandler.Handler
 	RateQuoteHandler                *ratequotehandler.Handler
 	DetentionPolicyHandler          *detentionpolicyhandler.Handler
 	DetentionHandler                *detentionhandler.Handler
@@ -353,6 +355,7 @@ type Router struct {
 	rateAgreementHandler            *rateagreementhandler.Handler
 	rateZoneHandler                 *ratezonehandler.Handler
 	rateMatrixHandler               *ratematrixhandler.Handler
+	rateSimulationHandler           *ratesimulationhandler.Handler
 	rateQuoteHandler                *ratequotehandler.Handler
 	detentionPolicyHandler          *detentionpolicyhandler.Handler
 	detentionHandler                *detentionhandler.Handler
@@ -479,6 +482,7 @@ func NewRouter(p RouterParams) *Router {
 		rateAgreementHandler:            p.RateAgreementHandler,
 		rateZoneHandler:                 p.RateZoneHandler,
 		rateMatrixHandler:               p.RateMatrixHandler,
+		rateSimulationHandler:           p.RateSimulationHandler,
 		rateQuoteHandler:                p.RateQuoteHandler,
 		detentionPolicyHandler:          p.DetentionPolicyHandler,
 		detentionHandler:                p.DetentionHandler,
@@ -672,6 +676,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.rateAgreementHandler.RegisterRoutes(protected)
 	r.rateZoneHandler.RegisterRoutes(protected)
 	r.rateMatrixHandler.RegisterRoutes(protected)
+	r.rateSimulationHandler.RegisterRoutes(protected)
 	r.rateQuoteHandler.RegisterRoutes(protected)
 	r.detentionPolicyHandler.RegisterRoutes(protected)
 	r.detentionHandler.RegisterRoutes(protected)

@@ -19292,6 +19292,290 @@ const docTemplate = `{
                 }
             }
         },
+        "/rate-simulations/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Simulations"
+                ],
+                "summary": "List rate simulations",
+                "operationId": "listRateSimulations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Narrow to one agreement's simulations",
+                        "name": "rateAgreementId",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratesimulation_RateSimulation"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Records a simulation to be replayed against historical shipments. The run happens in the background; poll the simulation for its status.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Simulations"
+                ],
+                "summary": "Run a rate simulation",
+                "operationId": "createRateSimulation",
+                "parameters": [
+                    {
+                        "description": "Simulation payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_ratesimulationhandler.createRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulation"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/rate-simulations/{rateSimulationID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Simulations"
+                ],
+                "summary": "Get a rate simulation",
+                "operationId": "getRateSimulation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rate simulation ID",
+                        "name": "rateSimulationID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulation"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/rate-simulations/{rateSimulationID}/results": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns what each replayed shipment was billed and what the simulated contract would have charged, largest increases first.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Simulations"
+                ],
+                "summary": "List a simulation's per-shipment results",
+                "operationId": "listRateSimulationResults",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rate simulation ID",
+                        "name": "rateSimulationID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Hide the shipments the change did not move",
+                        "name": "changedOnly",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratesimulation_RateSimulationResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/rate-tables/": {
             "get": {
                 "security": [
@@ -39651,6 +39935,225 @@ const docTemplate = `{
                 "StatusQuoted"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulation": {
+            "type": "object",
+            "properties": {
+                "agreement": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "completedAt": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "partyType": {
+                    "description": "PartyType says which side is being simulated. A carrier contract replay\nanswers \"what would this cost us\", which is the same machinery pointed\nthe other way.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType"
+                        }
+                    ]
+                },
+                "rateAgreementId": {
+                    "description": "RateAgreementID is the contract being replayed. It is usually a draft:\nthe point is to see what it would do before anybody signs it.",
+                    "type": "string"
+                },
+                "requestedBy": {
+                    "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulationResult"
+                    }
+                },
+                "ruleCoverage": {
+                    "description": "RuleCoverage says what happened to each of the agreement's rules. It is\nthe half of the answer the revenue total cannot give: which lanes never\nfired, and which fired but always lost.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RuleCoverage"
+                    }
+                },
+                "sampleFrom": {
+                    "description": "SampleFrom and SampleTo bound the shipments replayed, by their own ship\ndates. Half open, matching every other window in the rating system: a\nshipment on SampleTo belongs to the next period.",
+                    "type": "integer"
+                },
+                "sampleLimit": {
+                    "description": "SampleLimit caps how many shipments are replayed. Zero means every\nshipment in the window.",
+                    "type": "integer"
+                },
+                "sampleTo": {
+                    "type": "integer"
+                },
+                "startedAt": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.Status"
+                },
+                "summary": {
+                    "description": "Summary is what the run came to, written once at the end.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_ratesimulation.Summary"
+                        }
+                    ]
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                },
+                "workflowId": {
+                    "description": "WorkflowID is the Temporal run driving this simulation, so a stuck run can\nbe found and cancelled.",
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulationResult": {
+            "type": "object",
+            "properties": {
+                "afterAmount": {
+                    "type": "number"
+                },
+                "afterRuleId": {
+                    "type": "string"
+                },
+                "beforeAmount": {
+                    "description": "BeforeAmount is what the shipment was actually billed. AfterAmount is\nwhat the simulated agreement would have charged.",
+                    "type": "number"
+                },
+                "beforeRuleId": {
+                    "description": "BeforeRuleID and AfterRuleID name the rules that priced each side, which\nis what turns \"this went up\" into \"this went up because this lane now\nwins\".",
+                    "type": "string"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "customerId": {
+                    "description": "CustomerID and LaneKey are copied onto the row so the result grid can be\ngrouped without joining back to shipments that may since have been\nedited. A simulation is a record of a moment.",
+                    "type": "string"
+                },
+                "delta": {
+                    "type": "number"
+                },
+                "deltaPercent": {
+                    "type": "number"
+                },
+                "equipmentTypeId": {
+                    "description": "EquipmentTypeID is what the load ran on, which is the third dimension\npricing changes are usually judged by.",
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "laneKey": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "outcome": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratequote.Outcome"
+                },
+                "proNumber": {
+                    "type": "string"
+                },
+                "rateSimulationId": {
+                    "type": "string"
+                },
+                "shipmentId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_ratesimulation.RuleCoverage": {
+            "type": "object",
+            "properties": {
+                "label": {
+                    "type": "string"
+                },
+                "laneKey": {
+                    "type": "string"
+                },
+                "lostCount": {
+                    "type": "integer"
+                },
+                "lostTo": {
+                    "description": "LostTo names the rule that most often beat this one, which is the single\nmost useful thing to know about a lane that never wins.",
+                    "type": "string"
+                },
+                "lostToLabel": {
+                    "type": "string"
+                },
+                "outcome": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RuleOutcome"
+                },
+                "ruleId": {
+                    "type": "string"
+                },
+                "wonCount": {
+                    "description": "WonCount and LostCount are how many shipments this rule priced and how\nmany it matched but was outranked on.",
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_ratesimulation.RuleOutcome": {
+            "type": "string",
+            "enum": [
+                "Won",
+                "Lost",
+                "NeverFired"
+            ],
+            "x-enum-varnames": [
+                "RuleOutcomeWon",
+                "RuleOutcomeLost",
+                "RuleOutcomeNeverFired"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_ratesimulation.Status": {
+            "type": "string",
+            "enum": [
+                "Pending",
+                "Running",
+                "Completed",
+                "Failed",
+                "Canceled"
+            ],
+            "x-enum-varnames": [
+                "StatusPending",
+                "StatusRunning",
+                "StatusCompleted",
+                "StatusFailed",
+                "StatusCanceled"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_ratetable.LookupType": {
             "type": "string",
             "enum": [
@@ -47270,6 +47773,46 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratesimulation_RateSimulation": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "next": {
+                    "type": "string"
+                },
+                "previous": {
+                    "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulation"
+                    }
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratesimulation_RateSimulationResult": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "next": {
+                    "type": "string"
+                },
+                "previous": {
+                    "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratesimulation.RateSimulationResult"
+                    }
+                }
+            }
+        },
         "github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratetable_RateTable": {
             "type": "object",
             "properties": {
@@ -47567,6 +48110,48 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.APIKeyResponse"
                     }
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_ratesimulation.Summary": {
+            "type": "object",
+            "properties": {
+                "afterTotal": {
+                    "type": "number"
+                },
+                "beforeTotal": {
+                    "type": "number"
+                },
+                "changedCount": {
+                    "type": "integer"
+                },
+                "decreasedCount": {
+                    "type": "integer"
+                },
+                "errorCount": {
+                    "type": "integer"
+                },
+                "evaluatedCount": {
+                    "type": "integer"
+                },
+                "increasedCount": {
+                    "type": "integer"
+                },
+                "maxDecrease": {
+                    "type": "number"
+                },
+                "maxIncrease": {
+                    "description": "MaxIncrease and MaxDecrease are the largest single moves in each\ndirection. They are what somebody scans for: the shipment that will\nproduce the phone call.",
+                    "type": "number"
+                },
+                "shipmentCount": {
+                    "type": "integer"
+                },
+                "totalDelta": {
+                    "type": "number"
+                },
+                "totalDeltaPct": {
+                    "type": "number"
                 }
             }
         },
@@ -48648,6 +49233,38 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "internal_api_handlers_ratesimulationhandler.createRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "rateAgreementId",
+                "sampleFrom",
+                "sampleTo"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "partyType": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType"
+                },
+                "rateAgreementId": {
+                    "type": "string"
+                },
+                "sampleFrom": {
+                    "type": "integer"
+                },
+                "sampleLimit": {
+                    "type": "integer"
+                },
+                "sampleTo": {
+                    "type": "integer"
                 }
             }
         },

@@ -141,7 +141,6 @@ func (r *repository) baseCandidateQuery(
 		Join(agreementJoin()).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = buncolgen.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
-				Where(cols.Status.Eq(), rateagreement.RuleStatusActive).
 				Where(cols.PartyType.Eq(), req.PartyType).
 				Where(cols.EffectiveFrom.Lte(), req.AsOf).
 				WhereGroup(" AND ", func(wq *bun.SelectQuery) *bun.SelectQuery {
@@ -158,13 +157,31 @@ func (r *repository) baseCandidateQuery(
 			// expiring an agreement has to stop it pricing even where its rules
 			// are still individually within their own windows, which is how a
 			// contract is taken out of service without editing every lane.
+			//
+			// One agreement can be exempted, for a simulation: a draft contract
+			// is by definition not Active, and the whole point is to see what it
+			// would do. Relaxing the real query rather than writing a second one
+			// is what makes a simulated rate the same rate the contract will
+			// produce once it is signed.
 			return sq.
-				Where(agreementCols.Status.Eq(), rateagreement.StatusActive).
-				Where(agreementCols.EffectiveFrom.Lte(), req.AsOf).
 				WhereGroup(" AND ", func(wq *bun.SelectQuery) *bun.SelectQuery {
-					return wq.
-						Where(agreementCols.EffectiveTo.IsNull()).
-						WhereOr(agreementCols.EffectiveTo.Gt(), req.AsOf)
+					wq = wq.WhereGroup(" AND ", func(aq *bun.SelectQuery) *bun.SelectQuery {
+						return aq.
+							Where(cols.Status.Eq(), rateagreement.RuleStatusActive).
+							Where(agreementCols.Status.Eq(), rateagreement.StatusActive).
+							Where(agreementCols.EffectiveFrom.Lte(), req.AsOf).
+							WhereGroup(" AND ", func(eq *bun.SelectQuery) *bun.SelectQuery {
+								return eq.
+									Where(agreementCols.EffectiveTo.IsNull()).
+									WhereOr(agreementCols.EffectiveTo.Gt(), req.AsOf)
+							})
+					})
+
+					if req.SimulateAgreementID != nil && !req.SimulateAgreementID.IsNil() {
+						wq = wq.WhereOr(cols.RateAgreementID.Eq(), *req.SimulateAgreementID)
+					}
+
+					return wq
 				})
 		})
 }

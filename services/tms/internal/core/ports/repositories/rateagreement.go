@@ -56,6 +56,15 @@ type ResolveRateRulesRequest struct {
 	// Limit bounds the candidate set. Exceeding it is a data quality problem
 	// the quote should surface rather than something to scan through.
 	Limit int `json:"limit"`
+
+	// SimulateAgreementID lets one agreement take part whatever its status.
+	//
+	// A simulation exists to answer what a draft contract would do, and a draft
+	// is by definition not Active. Rather than a second resolution path that
+	// could disagree with the real one, the real query relaxes its status check
+	// for exactly this agreement — so a simulated rate is produced by the same
+	// code that would produce it once the contract is signed.
+	SimulateAgreementID *pulid.ID `json:"simulateAgreementId"`
 }
 
 // ResolveRateRulesResult carries the candidates and whether the fetch was

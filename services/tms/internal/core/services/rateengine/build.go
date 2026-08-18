@@ -68,6 +68,8 @@ func (s *Service) buildContext(
 		BillingCurrency: billingCurrency(entity),
 		SellTotal:       req.SellTotal,
 		Entity:          entity,
+
+		SimulateAgreementID: req.SimulateAgreementID,
 	}
 
 	rateCtx.RequiresTempControl = requiresTempControl(entity)

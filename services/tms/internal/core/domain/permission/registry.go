@@ -1468,6 +1468,33 @@ func (r *Registry) registerRateResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceRateSimulation.String(),
+		DisplayName: "Rate Simulation",
+		Description: "Replays of a proposed contract against freight that already moved, and what it would have charged",
+		Category:    "Billing",
+		// A simulation is run and read; its results are produced by the engine
+		// and never edited, so there is nothing to update.
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View simulations and their results",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Run a simulation against historical shipments",
+			},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Remove a simulation and its results",
+			},
+		},
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceRateQuote.String(),
 		DisplayName: "Rate Quote",
 		Description: "The record of how each shipment was priced, including every rate considered and why it lost",

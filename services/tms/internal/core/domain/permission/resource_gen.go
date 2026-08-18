@@ -81,6 +81,7 @@ const (
 	ResourceRateZone             Resource = "rate_zone"
 	ResourceRateMatrix           Resource = "rate_matrix"
 	ResourceRateQuote            Resource = "rate_quote"
+	ResourceRateSimulation       Resource = "rate_simulation"
 
 	// Agent
 	ResourceAgentRun       Resource = "agent_run"

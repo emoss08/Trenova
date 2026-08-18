@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratesimulation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -19,8 +20,6 @@ const (
 	backtestDefaultLimit = 50
 	backtestMaxLimit     = 500
 )
-
-var decimalHundred = decimal.NewFromInt(100)
 
 type BacktestRequest struct {
 	TenantInfo    pagination.TenantInfo
@@ -42,6 +41,11 @@ type BacktestResult struct {
 	GuardrailApplied bool            `json:"guardrailApplied"`
 }
 
+// BacktestSummary is what a whole backtest came to.
+//
+// The shape is ratesimulation.Summary with two fields renamed, because a
+// backtest calls them current and candidate while a rate simulation calls them
+// before and after. The arithmetic is shared; only the words differ.
 type BacktestSummary struct {
 	ShipmentCount  int             `json:"shipmentCount"`
 	EvaluatedCount int             `json:"evaluatedCount"`
@@ -225,13 +229,13 @@ func (s *Service) backtestShipment(
 	}
 
 	if result.CurrentError == "" && result.CandidateError == "" {
-		result.Delta = result.CandidateAmount.Sub(result.CurrentAmount)
-		if !result.CurrentAmount.IsZero() {
-			result.DeltaPct = result.Delta.
-				Div(result.CurrentAmount).
-				Mul(decimalHundred).
-				Round(4)
+		delta := ratesimulation.Delta{
+			Before: result.CurrentAmount,
+			After:  result.CandidateAmount,
 		}
+
+		result.Delta = delta.Amount()
+		result.DeltaPct = delta.Percent()
 	}
 
 	return result
@@ -268,41 +272,30 @@ func (s *Service) resolveEffectiveForShipment(
 }
 
 func buildBacktestSummary(results []*BacktestResult) BacktestSummary {
-	summary := BacktestSummary{ShipmentCount: len(results)}
+	var acc ratesimulation.Accumulator
 
 	for _, result := range results {
-		if result.CurrentError != "" || result.CandidateError != "" {
-			summary.ErrorCount++
-			continue
-		}
-
-		summary.EvaluatedCount++
-		summary.CurrentTotal = summary.CurrentTotal.Add(result.CurrentAmount)
-		summary.CandidateTotal = summary.CandidateTotal.Add(result.CandidateAmount)
-
-		switch result.Delta.Sign() {
-		case 1:
-			summary.ChangedCount++
-			summary.IncreasedCount++
-			if result.Delta.GreaterThan(summary.MaxIncrease) {
-				summary.MaxIncrease = result.Delta
-			}
-		case -1:
-			summary.ChangedCount++
-			summary.DecreasedCount++
-			if result.Delta.LessThan(summary.MaxDecrease) {
-				summary.MaxDecrease = result.Delta
-			}
-		}
+		acc.Add(ratesimulation.Delta{
+			Before: result.CurrentAmount,
+			After:  result.CandidateAmount,
+			Failed: result.CurrentError != "" || result.CandidateError != "",
+		})
 	}
 
-	summary.TotalDelta = summary.CandidateTotal.Sub(summary.CurrentTotal)
-	if !summary.CurrentTotal.IsZero() {
-		summary.TotalDeltaPct = summary.TotalDelta.
-			Div(summary.CurrentTotal).
-			Mul(decimalHundred).
-			Round(4)
-	}
+	shared := acc.Summary()
 
-	return summary
+	return BacktestSummary{
+		ShipmentCount:  shared.ShipmentCount,
+		EvaluatedCount: shared.EvaluatedCount,
+		ChangedCount:   shared.ChangedCount,
+		IncreasedCount: shared.IncreasedCount,
+		DecreasedCount: shared.DecreasedCount,
+		ErrorCount:     shared.ErrorCount,
+		CurrentTotal:   shared.BeforeTotal,
+		CandidateTotal: shared.AfterTotal,
+		TotalDelta:     shared.TotalDelta,
+		TotalDeltaPct:  shared.TotalDeltaPct,
+		MaxIncrease:    shared.MaxIncrease,
+		MaxDecrease:    shared.MaxDecrease,
+	}
 }
