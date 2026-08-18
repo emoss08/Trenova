@@ -103,6 +103,33 @@ function ExpandedRowLoadingFallback() {
   );
 }
 
+const SKELETON_CELL_WIDTHS = ["w-3/4", "w-1/2", "w-2/3", "w-3/5"] as const;
+
+function TableBodySkeleton({ columnCount, rowCount }: { columnCount: number; rowCount: number }) {
+  return (
+    <>
+      {Array.from({ length: rowCount }).map((_, rowIndex) => (
+        <tr
+          key={rowIndex}
+          data-testid="command-center-skeleton-row"
+          className="h-9 border-b border-border/70"
+        >
+          {Array.from({ length: columnCount }).map((_, columnIndex) => (
+            <td key={columnIndex} className="px-2.5 py-1.5 align-middle">
+              <Skeleton
+                className={cn(
+                  "h-3.5",
+                  SKELETON_CELL_WIDTHS[(rowIndex + columnIndex) % SKELETON_CELL_WIDTHS.length],
+                )}
+              />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
 const QUERY_KEY = "shipment-list";
 const RESOURCE_NAME = "Shipment";
 
@@ -235,6 +262,7 @@ export function CommandCenterTable({
   const totalCount = dataQuery.data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const rows = (dataQuery.data?.results ?? []) as Shipment[];
+  const isInitialLoading = dataQuery.isPending;
   const backgroundQueriesEnabled = dataQuery.isSuccess && !dataQuery.isFetching;
 
   const [timelineSummary, setTimelineSummary] = useState<CommandCenterTableSummary | null>(null);
@@ -372,7 +400,12 @@ export function CommandCenterTable({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.length === 0 && !dataQuery.isLoading ? (
+            {isInitialLoading ? (
+              <TableBodySkeleton
+                columnCount={table.getVisibleFlatColumns().length}
+                rowCount={Math.min(pageSize, 10)}
+              />
+            ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={table.getVisibleFlatColumns().length}>
                   No shipments match the current view.
@@ -400,7 +433,7 @@ export function CommandCenterTable({
             )}
           </TableBody>
         </Table>
-        {dataQuery.isFetching && (
+        {dataQuery.isFetching && !isInitialLoading && (
           <div className="pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1 rounded bg-background/70 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm">
             <Spinner className="size-3" />
             Refreshing
@@ -414,6 +447,7 @@ export function CommandCenterTable({
         totalPages={totalPages}
         rowCount={rows.length}
         pageSize={pageSize as CommandCenterPageSize}
+        isLoading={isInitialLoading}
         onPageSizeChange={setPageSize}
         onPrev={() => setPageIndex(Math.max(0, pageIndex - 1))}
         onNext={() => setPageIndex(Math.min(totalPages - 1, pageIndex + 1))}
@@ -439,9 +473,13 @@ export function CommandCenterTable({
         <FilterChipRow />
         {viewMode === "table" && (
           <>
-            <p className="ml-auto shrink-0 font-table text-[10.5px] text-muted-foreground tabular-nums">
-              {rows.length} of {totalCount} results
-            </p>
+            {isInitialLoading ? (
+              <Skeleton className="ml-auto h-3.5 w-24 shrink-0" />
+            ) : (
+              <p className="ml-auto shrink-0 font-table text-[10.5px] text-muted-foreground tabular-nums">
+                {rows.length} of {totalCount} results
+              </p>
+            )}
             <Suspense fallback={<ToolbarButtonSkeleton />}>
               <DataTableViewOptions table={table as unknown as TanstackTable<RowData>} />
             </Suspense>
@@ -582,6 +620,7 @@ function CommandCenterFooter({
   totalPages,
   rowCount,
   pageSize,
+  isLoading,
   onPageSizeChange,
   onPrev,
   onNext,
@@ -591,15 +630,20 @@ function CommandCenterFooter({
   totalPages: number;
   rowCount: number;
   pageSize: CommandCenterPageSize;
+  isLoading: boolean;
   onPageSizeChange: (size: CommandCenterPageSize) => void;
   onPrev: () => void;
   onNext: () => void;
 }) {
   return (
     <div className="flex items-center justify-between border-t border-border px-3 py-1.5 text-[11px] text-muted-foreground">
-      <p className="font-table tabular-nums">
-        {rowCount} rows · page {pageIndex + 1} of {totalPages} · {totalCount} total
-      </p>
+      {isLoading ? (
+        <Skeleton className="h-3.5 w-44" />
+      ) : (
+        <p className="font-table tabular-nums">
+          {rowCount} rows · page {pageIndex + 1} of {totalPages} · {totalCount} total
+        </p>
+      )}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
           <span>Rows</span>
