@@ -285,6 +285,19 @@ export const carrierAssignmentPayloadSchema = z.object({
     .string()
     .max(50, { error: "Trailer number must be at most 50 characters" }),
   overrideInsuranceWarning: z.boolean(),
+
+  /**
+   * Asks the carrier's contract to price this assignment instead of taking the
+   * rate typed alongside it. A typed rate wins: that is a negotiated number,
+   * and overruling it is what makes people switch auto-rating off.
+   */
+  autoRate: z.boolean().default(false),
+
+  /**
+   * Lets somebody assign a carrier the contract's margin terms would otherwise
+   * refuse, the same escape the insurance warning has.
+   */
+  overrideMarginFloor: z.boolean().default(false),
 });
 export type CarrierAssignmentPayload = z.infer<typeof carrierAssignmentPayloadSchema>;
 export type CarrierAssignmentPayloadInput = z.input<typeof carrierAssignmentPayloadSchema>;
@@ -301,6 +314,8 @@ export const emptyCarrierAssignmentPayload: CarrierAssignmentPayload = {
   externalTractorNumber: "",
   externalTrailerNumber: "",
   overrideInsuranceWarning: false,
+  autoRate: false,
+  overrideMarginFloor: false,
 };
 
 export const carrierEligibilitySchema = z.object({

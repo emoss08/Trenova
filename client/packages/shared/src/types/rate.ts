@@ -609,3 +609,73 @@ export const ratedShipmentSchema = z.object({
   formulaTemplateId: z.string().nullish(),
 });
 export type RatedShipment = z.infer<typeof ratedShipmentSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*                                  Shopping                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What "best" means for one shopping run.
+ *
+ * It is a per-run choice rather than a setting, because the answer changes with
+ * the load: a cheap carrier is the right pick on a lane with room in it and the
+ * wrong pick on one the customer will cancel over.
+ */
+export const shopStrategySchema = z.enum(["LeastCost", "BestMargin", "GuideRank", "FastestAccept"]);
+export type ShopStrategy = z.infer<typeof shopStrategySchema>;
+
+/**
+ * What a shipment's two sides came to, and whether that is allowed.
+ *
+ * The three numbers are never absent: the server carries them as plain decimals
+ * rather than nullable ones, and a margin of zero is a real answer that a null
+ * would blur into "not measured".
+ */
+export const marginVerdictSchema = z.object({
+  amount: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  percent: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  /** The buy price as a share of the sell price. */
+  payPercent: decimalStringSchema.nullish().transform((value) => value ?? 0),
+
+  floorApplies: z.boolean().default(false),
+  belowFloor: z.boolean().default(false),
+  ceilingApplies: z.boolean().default(false),
+  abovePayCeiling: z.boolean().default(false),
+
+  explanation: z.string().default(""),
+});
+export type MarginVerdict = z.infer<typeof marginVerdictSchema>;
+
+/** One carrier's answer to "what would you charge to haul this". */
+export const shopOptionSchema = z.object({
+  carrierId: z.string(),
+  carrierName: z.string().default(""),
+
+  rank: z.number().int().default(0),
+  /** The routing guide's own rank, zero when the carrier came from no guide. */
+  guideRank: z.number().int().default(0),
+  offerTtlSeconds: z.number().int().default(0),
+
+  outcome: rateQuoteOutcomeSchema,
+  cost: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  currency: z.string().default("USD"),
+
+  margin: marginVerdictSchema,
+
+  quote: rateQuoteSchema.nullish(),
+  agreementId: z.string().nullish(),
+  ruleId: z.string().nullish(),
+
+  /** Why this option ranked where it did, or why it could not be priced. */
+  note: z.string().default(""),
+});
+export type ShopOption = z.infer<typeof shopOptionSchema>;
+
+export const shopResultSchema = z.object({
+  strategy: shopStrategySchema,
+  options: z.array(shopOptionSchema).default([]),
+  routingGuideId: z.string().nullish(),
+  sellTotal: decimalStringSchema.nullish(),
+  warnings: z.array(z.string()).default([]),
+});
+export type ShopResult = z.infer<typeof shopResultSchema>;

@@ -6,6 +6,7 @@ import {
   rateMatrixSchema,
   rateQuoteSchema,
   ratedShipmentSchema,
+  shopResultSchema,
   rateZoneSchema,
   type RateAgreement,
   type RateMatrix,
@@ -13,6 +14,8 @@ import {
   type RateQuote,
   type RatedShipment,
   type RateZone,
+  type ShopResult,
+  type ShopStrategy,
 } from "@trenova/shared/types/rate";
 
 /** One of the review steps an agreement moves through. */
@@ -164,5 +167,34 @@ export class RateQuoteService {
     });
 
     return safeParse(ratedShipmentSchema, response, "Rated Shipment");
+  }
+
+  /**
+   * Prices this shipment against the carriers that could haul it and ranks
+   * them.
+   *
+   * Persisting is off by default: a screen browsing options should not leave a
+   * quote behind for every carrier somebody glanced at. The caller turns it on
+   * when the shopping is the record of a decision.
+   */
+  public async shop(
+    shipmentId: string,
+    options: {
+      strategy?: ShopStrategy;
+      carrierIds?: string[];
+      asOf?: number;
+      limit?: number;
+      persist?: boolean;
+    } = {},
+  ): Promise<ShopResult> {
+    const response = await api.post<ShopResult>(`/rate-quotes/shipment/${shipmentId}/shop/`, {
+      strategy: options.strategy ?? "LeastCost",
+      carrierIds: options.carrierIds ?? [],
+      asOf: options.asOf ?? 0,
+      limit: options.limit ?? 0,
+      persist: options.persist ?? false,
+    });
+
+    return safeParse(shopResultSchema, response, "Shop Result");
   }
 }
