@@ -478,7 +478,7 @@ func selectionForModelOverride(
 	}
 
 	fieldMap, ok := data.FieldMaps[st.Name]
-	if ok && !fieldMapCoversStruct(fieldMap, st) {
+	if ok && !fieldMapCoversStruct(&fieldMap, &st) {
 		// FieldMaps are keyed by unqualified struct name, so a same-named entity
 		// from another domain package (e.g. modeprofile.Profile vs email.Profile)
 		// can shadow the bound model's map. Treat a map that does not cover this
@@ -508,7 +508,7 @@ func selectionForModelOverride(
 	}, nil
 }
 
-func fieldMapCoversStruct(fieldMap fieldMapRegistration, st goStruct) bool {
+func fieldMapCoversStruct(fieldMap *fieldMapRegistration, st *goStruct) bool {
 	for _, field := range st.Fields {
 		if !field.IsColumn {
 			continue
