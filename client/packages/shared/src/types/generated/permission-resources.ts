@@ -84,6 +84,7 @@ export const Resource = {
   RateZone: "rate_zone",
   RateMatrix: "rate_matrix",
   RateQuote: "rate_quote",
+  RateSimulation: "rate_simulation",
 
   // Agent
   AgentRun: "agent_run",
