@@ -232,6 +232,21 @@ func (ds *DensityScale) GetTableName() string {
 	return "rate_density_scales"
 }
 
+// GetPostgresSearchConfig declares no search vector. There are only ever a
+// handful of scales per organization, so the list is browsed rather than
+// searched; the fields here are what it filters on.
+func (ds *DensityScale) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "rds",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "code", Type: domaintypes.FieldTypeText},
+			{Name: "name", Type: domaintypes.FieldTypeText},
+			{Name: "status", Type: domaintypes.FieldTypeEnum},
+		},
+	}
+}
+
 // StandardDensityScaleCode names the scale published with the 2025 NMFC
 // restructure. Organizations may edit their copy or add carrier variants, so
 // this is the code of the seeded default rather than a special case in code.

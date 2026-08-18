@@ -14,6 +14,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -255,4 +256,20 @@ func (rq *RateQuote) GetBusinessUnitID() pulid.ID {
 
 func (rq *RateQuote) GetTableName() string {
 	return "rate_quotes"
+}
+
+// GetPostgresSearchConfig declares no search vector: a quote is reached through
+// the shipment, the party, the agreement or the rule that produced it, never by
+// free text. The listed fields are what a quote list filters on.
+func (rq *RateQuote) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "rqt",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "purpose", Type: domaintypes.FieldTypeEnum},
+			{Name: "outcome", Type: domaintypes.FieldTypeEnum},
+			{Name: "status", Type: domaintypes.FieldTypeEnum},
+			{Name: "party_type", Type: domaintypes.FieldTypeEnum},
+		},
+	}
 }

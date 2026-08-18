@@ -935,6 +935,7 @@ var RateAgreementRuleColumns = struct {
 	OrganizationID          Column // "organization_id" → qualified: "ragr.organization_id"
 	RateAgreementID         Column // "rate_agreement_id" → qualified: "ragr.rate_agreement_id"
 	PartyType               Column // "party_type" → qualified: "ragr.party_type"
+	PartyID                 Column // "party_id" → qualified: "ragr.party_id"
 	Label                   Column // "label" → qualified: "ragr.label"
 	Status                  Column // "status" → qualified: "ragr.status"
 	OriginScopeType         Column // "origin_scope_type" → qualified: "ragr.origin_scope_type"
@@ -1001,6 +1002,7 @@ var RateAgreementRuleColumns = struct {
 	OrganizationID:          NewColumn("organization_id", "ragr"),
 	RateAgreementID:         NewColumn("rate_agreement_id", "ragr"),
 	PartyType:               NewColumn("party_type", "ragr"),
+	PartyID:                 NewColumn("party_id", "ragr"),
 	Label:                   NewColumn("label", "ragr"),
 	Status:                  NewColumn("status", "ragr"),
 	OriginScopeType:         NewColumn("origin_scope_type", "ragr"),
@@ -1073,6 +1075,7 @@ var RateAgreementRuleFieldMap = map[string]string{
 	"organizationId":          "organization_id",
 	"rateAgreementId":         "rate_agreement_id",
 	"partyType":               "party_type",
+	"partyId":                 "party_id",
 	"label":                   "label",
 	"status":                  "status",
 	"originScopeType":         "origin_scope_type",
@@ -1141,6 +1144,7 @@ var RateAgreementRuleInsertableColumns = []string{
 	"organization_id",
 	"rate_agreement_id",
 	"party_type",
+	"party_id",
 	"label",
 	"status",
 	"origin_scope_type",
@@ -1271,6 +1275,7 @@ var RateAgreementRuleFilter = struct {
 	OrganizationID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	RateAgreementID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementId" → DB: "rate_agreement_id"
 	PartyType               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyType" → DB: "party_type"
+	PartyID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyId" → DB: "party_id"
 	Label                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "label" → DB: "label"
 	Status                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	OriginScopeType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "originScopeType" → DB: "origin_scope_type"
@@ -1344,6 +1349,9 @@ var RateAgreementRuleFilter = struct {
 	},
 	PartyType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("partyType", op, value)
+	},
+	PartyID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partyId", op, value)
 	},
 	Label: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("label", op, value)

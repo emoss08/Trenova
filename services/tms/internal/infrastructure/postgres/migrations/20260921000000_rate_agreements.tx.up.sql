@@ -225,6 +225,7 @@ CREATE TABLE IF NOT EXISTS "rate_agreement_rules"(
     "organization_id" varchar(100) NOT NULL,
     "rate_agreement_id" varchar(100) NOT NULL,
     "party_type" rate_agreement_party_type_enum NOT NULL,
+    "party_id" varchar(100) NOT NULL,
     "label" varchar(150),
     "status" rate_agreement_rule_status_enum NOT NULL DEFAULT 'Active',
     "origin_scope_type" rate_geo_scope_type_enum NOT NULL,
@@ -330,12 +331,15 @@ ALTER TABLE "rate_agreement_rules"
     END) STORED;
 
 --bun:split
--- The resolution index. A shipment produces at most a few dozen candidate lane
--- keys and the planner runs a bitmap OR of that many selective probes, so the
--- cost tracks the number of matching rules rather than the size of the table.
--- The included columns let the ordering and the effective window filter be
--- answered without visiting the heap.
-CREATE INDEX IF NOT EXISTS "idx_rate_agreement_rules_resolve" ON "rate_agreement_rules"("organization_id", "business_unit_id", "party_type", "lane_key", "effective_from" DESC) INCLUDE ("effective_to", "rate_agreement_id", "specificity_score", "priority")
+-- The resolution index. Leading with the party narrows to one customer or
+-- carrier before the lane is even considered, which is the difference between
+-- reading a handful of rows and reading every rule in the organization that
+-- happens to share the lane. A shipment then produces at most a few dozen
+-- candidate lane keys and the planner runs a bitmap OR of that many selective
+-- probes, so the cost tracks matching rules rather than table size. The
+-- included columns let the ordering and the effective window filter be answered
+-- without visiting the heap.
+CREATE INDEX IF NOT EXISTS "idx_rate_agreement_rules_resolve" ON "rate_agreement_rules"("organization_id", "business_unit_id", "party_type", "party_id", "lane_key", "effective_from" DESC) INCLUDE ("effective_to", "rate_agreement_id", "specificity_score", "priority")
 WHERE
     "status" = 'Active';
 

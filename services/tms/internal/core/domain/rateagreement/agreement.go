@@ -339,7 +339,29 @@ func validatePercent(
 	}
 }
 
+// StampRules re-seats on every rule the values it inherits from its agreement:
+// the tenancy, the parent, and the party the resolution index narrows by. None
+// of them are the caller's to supply, and a rule carrying a stale party would
+// be looked up under a customer the contract is not with.
+func (ra *RateAgreement) StampRules() {
+	partyID := ra.PartyID()
+
+	for _, rule := range ra.Rules {
+		if rule == nil {
+			continue
+		}
+
+		rule.RateAgreementID = ra.ID
+		rule.OrganizationID = ra.OrganizationID
+		rule.BusinessUnitID = ra.BusinessUnitID
+		rule.PartyType = ra.PartyType
+		rule.PartyID = partyID
+	}
+}
+
 func (ra *RateAgreement) validateChildren(multiErr *errortypes.MultiError) {
+	ra.StampRules()
+
 	for i, rule := range ra.Rules {
 		if rule == nil {
 			continue

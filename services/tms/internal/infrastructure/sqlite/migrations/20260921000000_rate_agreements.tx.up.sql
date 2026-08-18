@@ -122,6 +122,7 @@ CREATE TABLE IF NOT EXISTS "rate_agreement_rules"(
     "organization_id" TEXT NOT NULL,
     "rate_agreement_id" TEXT NOT NULL,
     "party_type" TEXT NOT NULL,
+    "party_id" TEXT NOT NULL,
     "label" TEXT,
     "status" TEXT NOT NULL DEFAULT 'Active',
     "origin_scope_type" TEXT NOT NULL,

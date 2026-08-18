@@ -42,10 +42,15 @@ type RateAgreementRule struct {
 	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	RateAgreementID pulid.ID `json:"rateAgreementId" bun:"rate_agreement_id,type:VARCHAR(100),notnull"`
 
-	// PartyType duplicates the agreement's own value so the resolution index
-	// can lead with it without joining. It is stamped from the parent, never
-	// supplied.
+	// PartyType and PartyID duplicate the agreement's own values so the
+	// resolution index can narrow to one customer or carrier before it even
+	// looks at the lane. Without them a lane key probe would return every
+	// organization's rules for that lane and leave the join to discard the ones
+	// belonging to other parties, which is the difference between reading a
+	// handful of rows and reading thousands. Both are stamped from the parent
+	// and are never the caller's to supply.
 	PartyType PartyType  `json:"partyType" bun:"party_type,type:rate_agreement_party_type_enum,notnull"`
+	PartyID   pulid.ID   `json:"partyId"   bun:"party_id,type:VARCHAR(100),notnull"`
 	Label     string     `json:"label"     bun:"label,type:VARCHAR(150),nullzero"`
 	Status    RuleStatus `json:"status"    bun:"status,type:rate_agreement_rule_status_enum,notnull,default:'Active'"`
 
