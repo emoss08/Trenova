@@ -74,7 +74,6 @@ const (
 	ResourceChargeType           Resource = "charge_type"
 	ResourceRevenueCode          Resource = "revenue_code"
 	ResourceFormulaTemplate      Resource = "formula_template"
-	ResourceRateTable            Resource = "rate_table"
 	ResourceFuelSurchargeProgram Resource = "fuel_surcharge_program"
 	ResourceDetentionPolicy      Resource = "detention_policy"
 	ResourceRateAgreement        Resource = "rate_agreement"

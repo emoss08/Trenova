@@ -54,7 +54,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
 	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
 	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
-	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
@@ -131,7 +130,6 @@ type Params struct {
 	WorkerPTOService             *workerptoservice.Service
 	FiscalYearService            *fiscalyearservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
-	RateTableService             *ratetableservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
 	DetentionService             *detentionservice.Service
@@ -246,7 +244,6 @@ type Resolver struct {
 	workerPTOService             *workerptoservice.Service
 	fiscalYearService            *fiscalyearservice.Service
 	formulaTemplateService       *formulatemplateservice.Service
-	rateTableService             *ratetableservice.Service
 	fuelSurchargeService         *fuelsurchargeservice.Service
 	costingService               *costingservice.Service
 	detentionService             *detentionservice.Service
@@ -362,7 +359,6 @@ func New(p Params) *Resolver {
 		workerPTOService:             p.WorkerPTOService,
 		fiscalYearService:            p.FiscalYearService,
 		formulaTemplateService:       p.FormulaTemplateService,
-		rateTableService:             p.RateTableService,
 		fuelSurchargeService:         p.FuelSurchargeService,
 		costingService:               p.CostingService,
 		detentionService:             p.DetentionService,

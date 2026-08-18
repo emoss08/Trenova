@@ -62,6 +62,11 @@ const (
 	DimensionKindEquipmentType = DimensionKind("EquipmentType")
 	DimensionKindServiceType   = DimensionKind("ServiceType")
 	DimensionKindCustom        = DimensionKind("Custom")
+	// DimensionKindQuantity is a bare number with no shipment fact behind it.
+	// It exists for matrices addressed from a formula's lookup() call, where
+	// the expression supplies the quantity itself; a lane cannot price against
+	// it because there is nothing on the shipment to read.
+	DimensionKindQuantity = DimensionKind("Quantity")
 )
 
 func (dk DimensionKind) String() string {
@@ -82,7 +87,8 @@ func (dk DimensionKind) IsValid() bool {
 		DimensionKindFreightClass,
 		DimensionKindEquipmentType,
 		DimensionKindServiceType,
-		DimensionKindCustom:
+		DimensionKindCustom,
+		DimensionKindQuantity:
 		return true
 	default:
 		return false
@@ -96,7 +102,8 @@ func (dk DimensionKind) IsNumeric() bool {
 	case DimensionKindWeightBreak,
 		DimensionKindDistance,
 		DimensionKindPieceCount,
-		DimensionKindLinearFeet:
+		DimensionKindLinearFeet,
+		DimensionKindQuantity:
 		return true
 	default:
 		return false

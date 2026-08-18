@@ -140,7 +140,9 @@ func (s *Service) axisValue(
 		return ratematrix.DimensionValue{Keys: equipmentKeys(rateCtx)}
 	case ratematrix.DimensionKindServiceType:
 		return ratematrix.DimensionValue{Keys: []string{rateCtx.ServiceTypeID.String()}}
-	case ratematrix.DimensionKindCustom:
+	case ratematrix.DimensionKindCustom, ratematrix.DimensionKindQuantity:
+		// Neither names a fact a shipment carries, so a lane pointed at such a
+		// matrix fails the lookup honestly rather than matching on nothing.
 		return ratematrix.DimensionValue{}
 	default:
 		return ratematrix.DimensionValue{}

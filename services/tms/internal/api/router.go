@@ -88,7 +88,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/ratematrixhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratequotehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratesimulationhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratezonehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
@@ -227,7 +226,6 @@ type RouterParams struct {
 	DocumentTypeHandler             *documenttypehandler.Handler
 	HoldReasonHandler               *holdreasonhandler.Handler
 	RecurringShipmentHandler        *recurringshipmenthandler.Handler
-	RateTableHandler                *ratetablehandler.Handler
 	RateAgreementHandler            *rateagreementhandler.Handler
 	RateZoneHandler                 *ratezonehandler.Handler
 	RateMatrixHandler               *ratematrixhandler.Handler
@@ -353,7 +351,6 @@ type Router struct {
 	documentTypeHandler             *documenttypehandler.Handler
 	holdReasonHandler               *holdreasonhandler.Handler
 	recurringShipmentHandler        *recurringshipmenthandler.Handler
-	rateTableHandler                *ratetablehandler.Handler
 	rateAgreementHandler            *rateagreementhandler.Handler
 	rateZoneHandler                 *ratezonehandler.Handler
 	rateMatrixHandler               *ratematrixhandler.Handler
@@ -481,7 +478,6 @@ func NewRouter(p RouterParams) *Router {
 		documentTypeHandler:             p.DocumentTypeHandler,
 		holdReasonHandler:               p.HoldReasonHandler,
 		recurringShipmentHandler:        p.RecurringShipmentHandler,
-		rateTableHandler:                p.RateTableHandler,
 		rateAgreementHandler:            p.RateAgreementHandler,
 		rateZoneHandler:                 p.RateZoneHandler,
 		rateMatrixHandler:               p.RateMatrixHandler,
@@ -676,7 +672,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.documentTypeHandler.RegisterRoutes(protected)
 	r.holdReasonHandler.RegisterRoutes(protected)
 	r.recurringShipmentHandler.RegisterRoutes(protected)
-	r.rateTableHandler.RegisterRoutes(protected)
 	r.rateAgreementHandler.RegisterRoutes(protected)
 	r.rateZoneHandler.RegisterRoutes(protected)
 	r.rateMatrixHandler.RegisterRoutes(protected)

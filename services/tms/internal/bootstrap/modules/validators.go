@@ -48,7 +48,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
 	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
 	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
-	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
 	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
@@ -156,7 +155,6 @@ var ValidatorModule = fx.Module("validators",
 		emailservice.NewValidator,
 		holdreasonservice.NewValidator,
 		recurringshipmentservice.NewValidator,
-		ratetableservice.NewValidator,
 		detentionpolicyservice.NewValidator,
 		rateagreementservice.NewValidator,
 		ratezoneservice.NewValidator,

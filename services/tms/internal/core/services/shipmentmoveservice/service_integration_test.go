@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -379,7 +378,7 @@ func newIntegrationService(
 		Resolver:      res,
 		Repo:          formulaRepo,
 		VersionRepo:   moveIntgStubVersionRepo{},
-		RateTableRepo: moveIntgStubRateTableRepo{},
+		RateMatrixRepo: moveIntgStubMatrixRepo{},
 	})
 	commercial := shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
@@ -430,13 +429,13 @@ func (moveIntgStubVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-type moveIntgStubRateTableRepo struct {
-	repositories.RateTableRepository
+type moveIntgStubMatrixRepo struct {
+	repositories.RateMatrixRepository
 }
 
-func (moveIntgStubRateTableRepo) GetLookupData(
+func (moveIntgStubMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateTableLookupDataRequest,
-) ([]*ratetable.RateTable, error) {
+	_ *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
 	return nil, nil
 }

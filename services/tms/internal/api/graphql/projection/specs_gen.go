@@ -218,8 +218,6 @@ var RateMatrixSpec TypeSpec
 
 var RateQuoteSpec TypeSpec
 
-var RateTableSpec TypeSpec
-
 var RateZoneSpec TypeSpec
 
 var RecurringDeductionSpec TypeSpec
@@ -9599,75 +9597,6 @@ func init() {
 			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
-			},
-		},
-	}
-
-	RateTableSpec = TypeSpec{
-		TypeName: "RateTable",
-		FieldMap: buncolgen.RateTableFieldMap,
-		AlwaysColumns: []string{
-			"id",
-			"created_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:        "id",
-				FieldMapKey: "id",
-			},
-			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
-			},
-			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
-			},
-			{
-				Name:        "name",
-				FieldMapKey: "name",
-			},
-			{
-				Name:        "key",
-				FieldMapKey: "key",
-			},
-			{
-				Name:        "description",
-				FieldMapKey: "description",
-			},
-			{
-				Name:        "lookupType",
-				FieldMapKey: "lookupType",
-			},
-			{
-				Name:        "active",
-				FieldMapKey: "active",
-			},
-			{
-				Name:        "version",
-				FieldMapKey: "version",
-			},
-			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
-			},
-			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
-			},
-			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
-				Relation: &RelationSpec{
-					Target: &BusinessUnitSpec,
-				},
-			},
-			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
-				Relation: &RelationSpec{
-					Target: &OrganizationSpec,
-				},
 			},
 		},
 	}

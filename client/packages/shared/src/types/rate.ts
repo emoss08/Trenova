@@ -81,6 +81,7 @@ export const rateMatrixDimensionKindSchema = z.enum([
   "EquipmentType",
   "ServiceType",
   "Custom",
+  "Quantity",
 ]);
 export type RateMatrixDimensionKind = z.infer<typeof rateMatrixDimensionKindSchema>;
 

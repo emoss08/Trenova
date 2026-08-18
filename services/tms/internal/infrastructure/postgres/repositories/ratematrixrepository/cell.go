@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -229,4 +230,83 @@ func (r *repository) insertCellBatches(
 	}
 
 	return nil
+}
+
+// GetLookupData reads every matrix a formula's lookup() call could address.
+//
+// The one-axis restriction is applied in the database, not after the load: a
+// class tariff with four axes and a hundred thousand cells must never ride
+// along just to be discarded. What survives the filter is rate-table sized —
+// dozens of cells — which is why loading it whole is affordable here and
+// nowhere else.
+func (r *repository) GetLookupData(
+	ctx context.Context,
+	req *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
+	log := r.l.With(zap.String("operation", "GetLookupData"))
+
+	matrixCols := buncolgen.RateMatrixColumns
+	dimCols := buncolgen.RateMatrixDimensionColumns
+
+	matrices := make([]*ratematrix.RateMatrix, 0, 8)
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&matrices).
+		Relation(buncolgen.Rel(buncolgen.RateMatrixRelations.Dimensions), orderDimensions).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.RateMatrixScopeTenant(sq, req.TenantInfo).
+				Where(matrixCols.Status.Eq(), domaintypes.StatusActive).
+				Where(
+					"(SELECT count(*) FROM rate_matrix_dimensions AS rmd WHERE " +
+						dimCols.RateMatrixID.Qualified() + " = " + matrixCols.ID.Qualified() +
+						" AND " + dimCols.OrganizationID.Qualified() + " = " + matrixCols.OrganizationID.Qualified() +
+						") = 1",
+				)
+		}).
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to load lookup matrices", zap.Error(err))
+		return nil, err
+	}
+
+	if len(matrices) == 0 {
+		return nil, nil
+	}
+
+	matrixIDs := make([]pulid.ID, 0, len(matrices))
+	for _, matrix := range matrices {
+		matrixIDs = append(matrixIDs, matrix.ID)
+	}
+
+	cellCols := buncolgen.RateMatrixCellColumns
+	cells := make([]*ratematrix.RateMatrixCell, 0, len(matrices)*16)
+
+	err = r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&cells).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.RateMatrixCellScopeTenant(sq, req.TenantInfo).
+				Where(cellCols.RateMatrixID.In(), bun.List(matrixIDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to load lookup matrix cells", zap.Error(err))
+		return nil, err
+	}
+
+	cellsByMatrix := make(map[pulid.ID][]*ratematrix.RateMatrixCell, len(matrices))
+	for _, cell := range cells {
+		cellsByMatrix[cell.RateMatrixID] = append(cellsByMatrix[cell.RateMatrixID], cell)
+	}
+
+	data := make([]*repositories.RateMatrixLookupData, 0, len(matrices))
+	for _, matrix := range matrices {
+		data = append(data, &repositories.RateMatrixLookupData{
+			Matrix: matrix,
+			Cells:  cellsByMatrix[matrix.ID],
+		})
+	}
+
+	return data, nil
 }

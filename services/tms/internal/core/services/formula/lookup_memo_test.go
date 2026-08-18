@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
@@ -19,18 +18,18 @@ import (
 	"go.uber.org/zap"
 )
 
-// countingRateTableRepo records how often the expensive read happened.
-type countingRateTableRepo struct {
-	repositories.RateTableRepository
+// countingMatrixRepo records how often the expensive read happened.
+type countingMatrixRepo struct {
+	repositories.RateMatrixRepository
 
 	mu    sync.Mutex
 	calls int
 }
 
-func (c *countingRateTableRepo) GetLookupData(
+func (c *countingMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateTableLookupDataRequest,
-) ([]*ratetable.RateTable, error) {
+	_ *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -39,14 +38,14 @@ func (c *countingRateTableRepo) GetLookupData(
 	return nil, nil
 }
 
-func (c *countingRateTableRepo) count() int {
+func (c *countingMatrixRepo) count() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	return c.calls
 }
 
-func setupCountingService(t *testing.T, repo repositories.RateTableRepository) *formula.Service {
+func setupCountingService(t *testing.T, repo repositories.RateMatrixRepository) *formula.Service {
 	t.Helper()
 
 	registry := newTestRegistry(t)
@@ -70,8 +69,8 @@ func setupCountingService(t *testing.T, repo repositories.RateTableRepository) *
 		Registry:      registry,
 		Engine:        eng,
 		Resolver:      res,
-		VersionRepo:   &stubVersionRepo{},
-		RateTableRepo: repo,
+		VersionRepo:    &stubVersionRepo{},
+		RateMatrixRepo: repo,
 	})
 }
 
@@ -89,14 +88,14 @@ func memoTemplate(orgID, buID pulid.ID) *formulatemplate.FormulaTemplate {
 
 // A fuel price refresh re-rates every affected shipment in one activity, and an
 // invoice adjustment re-rates every leg of a multi-leg order. Each of those used
-// to re-read every active rate table with every one of its entries, for the same
+// to re-read every lookup matrix with every one of its cells, for the same
 // tenant, from scratch — the batch paid the cost once per shipment.
 //
 // The memo makes the batch pay it once. This is the test that says so.
 func TestRate_BuildsTheTenantsLookupOncePerBatch(t *testing.T) {
 	t.Parallel()
 
-	repo := &countingRateTableRepo{}
+	repo := &countingMatrixRepo{}
 	svc := setupCountingService(t, repo)
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
@@ -122,7 +121,7 @@ func TestRate_BuildsTheTenantsLookupOncePerBatch(t *testing.T) {
 func TestRate_MemoDoesNotShareLookupsAcrossTenants(t *testing.T) {
 	t.Parallel()
 
-	repo := &countingRateTableRepo{}
+	repo := &countingMatrixRepo{}
 	svc := setupCountingService(t, repo)
 
 	buID := pulid.MustNew("bu_")
@@ -149,7 +148,7 @@ func TestRate_MemoDoesNotShareLookupsAcrossTenants(t *testing.T) {
 func TestRate_WithoutAMemoEachEvaluationStillBuildsItsOwnLookup(t *testing.T) {
 	t.Parallel()
 
-	repo := &countingRateTableRepo{}
+	repo := &countingMatrixRepo{}
 	svc := setupCountingService(t, repo)
 
 	template := memoTemplate(pulid.MustNew("org_"), pulid.MustNew("bu_"))
@@ -171,7 +170,7 @@ func TestRate_WithoutAMemoEachEvaluationStillBuildsItsOwnLookup(t *testing.T) {
 func TestRateTableCache_NestedInstallKeepsTheOuterMemo(t *testing.T) {
 	t.Parallel()
 
-	repo := &countingRateTableRepo{}
+	repo := &countingMatrixRepo{}
 	svc := setupCountingService(t, repo)
 
 	template := memoTemplate(pulid.MustNew("org_"), pulid.MustNew("bu_"))

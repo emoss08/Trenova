@@ -1,18 +1,19 @@
-// Package ratetablecache memoizes a tenant's rate tables for the life of one
+// Package ratetablecache memoizes a tenant's lookup tables for the life of one
 // request or one batch.
 //
-// Building the lookup reads every active rate table and every one of its
-// entries. That was affordable when a formula was evaluated because somebody
-// asked for a rate; it stopped being affordable when rate agreements made
-// rating happen on every shipment write, and made re-rating happen in loops —
-// a fuel price refresh walks every affected shipment, and each one would
-// otherwise re-read the same tables from scratch.
+// A lookup table — what a formula's lookup() call names — is stored as a
+// single-axis rate matrix. Building the provider reads every one of them with
+// every cell. That was affordable when a formula was evaluated because
+// somebody asked for a rate; it stopped being affordable when rate agreements
+// made rating happen on every shipment write, and made re-rating happen in
+// loops — a fuel price refresh walks every affected shipment, and each one
+// would otherwise re-read the same matrices from scratch.
 //
 // The memo is deliberately scoped to a context rather than held globally. A
-// process-wide cache would have to be invalidated when somebody edits a rate
-// table, and a rate that silently kept using yesterday's table is a far worse
-// failure than a slow one. Within a single request nothing can edit the tables
-// underneath the rating, so the memo cannot go stale.
+// process-wide cache would have to be invalidated when somebody edits a
+// matrix, and a rate that silently kept using yesterday's numbers is a far
+// worse failure than a slow one. Within a single request nothing can edit the
+// matrices underneath the rating, so the memo cannot go stale.
 package ratetablecache
 
 import (

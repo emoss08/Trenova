@@ -94,7 +94,6 @@ export type BaseEndpoint =
   | "/jurisdiction-rules/"
   | "/jurisdiction-rule-overrides/"
   | "/recurring-shipments/"
-  | "/rate-tables/"
   | "/service-failures/"
   | "/service-failure-reason-codes/"
   | "/hazmat-segregation-rules/"

@@ -2,7 +2,7 @@
 Copyright 2023-2025 Eric Moss
 Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
 Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md-->
-# Rating Guide — Formula Templates & Rate Tables
+# Rating Guide — Formula Templates & Lookup Tables
 
 A practical, user-facing guide to how Trenova turns the facts of a shipment into a charge —
 the formulas you write, the lookup tables they draw from, and the controls that keep a bad
@@ -11,7 +11,7 @@ formula from ever reaching an invoice.
 - [01 · How rating works](#01--how-rating-works)
 - [02 · Shipment variables](#02--shipment-variables)
 - [03 · Writing expressions](#03--writing-expressions)
-- [04 · Rate tables](#04--rate-tables)
+- [04 · Lookup tables](#04--lookup-tables)
 - [05 · Rate breakdown](#05--rate-breakdown)
 - [06 · Guardrails](#06--guardrails)
 - [07 · Approval workflow](#07--approval-workflow)
@@ -38,7 +38,7 @@ falls into place.
 ### What happens when a shipment is rated
 
 1. You assign a formula template to the shipment.
-2. The engine gathers the shipment's variables (distance, weight, hazmat status, and so on) and any rate tables your formula references.
+2. The engine gathers the shipment's variables (distance, weight, hazmat status, and so on) and any lookup tables your formula references.
 3. It picks the correct version of the template for that shipment's ship date (see [Scheduled versions](#08--scheduled-versions)).
 4. It evaluates the expression, produces the freight charge, and clamps it to your [guardrails](#06--guardrails) if you set any.
 5. The number — plus a full [breakdown](#05--rate-breakdown) of how it was reached — is saved on the shipment.
@@ -122,7 +122,7 @@ totalDistance * 2.15 * (hasHazmat ? 1.25 : 1.0)
 | `sum(...)` · `avg(...)` | Total / average of any number of values. |
 | `pow(base, exp)` · `sqrt(x)` | Power and square root. `sqrt` rejects negatives. |
 | `coalesce(a, b, ...)` | The first value that isn't empty. `coalesce(discountRate, 0)` falls back to 0. |
-| `lookup(table, key)` / `lookupOr(table, key, default)` | Read a value from a [rate table](#04--rate-tables). Covered next. |
+| `lookup(table, key)` / `lookupOr(table, key, default)` | Read a value from a [lookup table](#04--lookup-tables). Covered next. |
 
 ```js
 // Weight-based with a floor and a ceiling:
@@ -137,17 +137,18 @@ clamp(totalWeight * 0.14, 95, 4000)
 
 ---
 
-## 04 · Rate tables
+## 04 · Lookup tables
 
 Some pricing is really a *table*, not a formula: fuel surcharge bands, per-lane flat rates,
 weight breaks. Cramming those into an expression means a tower of nested `? :` conditions that
 only the author can read and no one dares edit.
 
-A **rate table** moves that data out of the formula and into a table an ops person can maintain.
-Your formula just asks it a question with `lookup`. Manage them under
-**Billing → Configuration Files → Rate Tables**.
+A **lookup table** moves that data out of the formula and into a grid an ops person can
+maintain. It is a rate matrix with a single axis; your formula asks it a question with
+`lookup`, naming the matrix by its code. Manage them under
+**Billing → Configuration Files → Rate Matrices**.
 
-### Two kinds of table
+### Two kinds of axis
 
 - **Exact** — matches a **text key** to a value. Best for lane rates, customer tiers, accessorial
   codes — anything with named buckets.
@@ -349,7 +350,7 @@ totalDistance * ratePerMile
 
 ### 2 · Line haul + fuel surcharge + hazmat, itemized
 
-Combines a rate table, a custom `fuelPrice` variable, and breakdown components so the invoice
+Combines a lookup table, a custom `fuelPrice` variable, and breakdown components so the invoice
 explains itself.
 
 ```js
@@ -390,8 +391,8 @@ max(
 | `sum(...)` · `avg(...)` | Total · average of the arguments. |
 | `pow(base, exp)` · `sqrt(x)` | Power · square root. |
 | `coalesce(...)` | First non-empty value. |
-| `lookup(table, key)` | Value from a rate table (errors if missing). |
-| `lookupOr(table, key, default)` | Value from a rate table, or the default. |
+| `lookup(table, key)` | Value from a lookup table (errors if missing). |
+| `lookupOr(table, key, default)` | Value from a lookup table, or the default. |
 
 ### Most-used variables
 
@@ -407,7 +408,7 @@ max(
 ### Rules of thumb
 
 - A formula must produce a **number**. Branch with `condition ? a : b`.
-- Move tiered pricing into a **rate table** instead of stacking `? :`.
+- Move tiered pricing into a **lookup table** instead of stacking `? :`.
 - Set a **minimum charge** as a floor; keep the maximum as a safety catch.
 - Only **Active** templates rate shipments; material edits reset approval.
 - **Backtest** before you activate a change; **test on a real shipment** while you write it.

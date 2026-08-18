@@ -573,6 +573,74 @@ func (_c *MockRateMatrixRepository_LookupCells_Call) RunAndReturn(run func(ctx c
 	return _c
 }
 
+// GetLookupData provides a mock function for the type MockRateMatrixRepository
+func (_mock *MockRateMatrixRepository) GetLookupData(ctx context.Context, req *repositories.GetRateMatrixLookupDataRequest) ([]*repositories.RateMatrixLookupData, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLookupData")
+	}
+
+	var r0 []*repositories.RateMatrixLookupData
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetRateMatrixLookupDataRequest) ([]*repositories.RateMatrixLookupData, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetRateMatrixLookupDataRequest) []*repositories.RateMatrixLookupData); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.RateMatrixLookupData)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetRateMatrixLookupDataRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRateMatrixRepository_GetLookupData_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLookupData'
+type MockRateMatrixRepository_GetLookupData_Call struct {
+	*mock.Call
+}
+
+// GetLookupData is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetRateMatrixLookupDataRequest
+func (_e *MockRateMatrixRepository_Expecter) GetLookupData(ctx interface{}, req interface{}) *MockRateMatrixRepository_GetLookupData_Call {
+	return &MockRateMatrixRepository_GetLookupData_Call{Call: _e.mock.On("GetLookupData", ctx, req)}
+}
+
+func (_c *MockRateMatrixRepository_GetLookupData_Call) Run(run func(ctx context.Context, req *repositories.GetRateMatrixLookupDataRequest)) *MockRateMatrixRepository_GetLookupData_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetRateMatrixLookupDataRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetRateMatrixLookupDataRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRateMatrixRepository_GetLookupData_Call) Return(rateMatrixLookupDatas []*repositories.RateMatrixLookupData, err error) *MockRateMatrixRepository_GetLookupData_Call {
+	_c.Call.Return(rateMatrixLookupDatas, err)
+	return _c
+}
+
+func (_c *MockRateMatrixRepository_GetLookupData_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetRateMatrixLookupDataRequest) ([]*repositories.RateMatrixLookupData, error)) *MockRateMatrixRepository_GetLookupData_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ReplaceCells provides a mock function for the type MockRateMatrixRepository
 func (_mock *MockRateMatrixRepository) ReplaceCells(ctx context.Context, req *repositories.ReplaceRateMatrixCellsRequest) error {
 	ret := _mock.Called(ctx, req)

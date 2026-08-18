@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -293,8 +292,8 @@ func newTestFormulaService(t *testing.T) *formula.Service {
 		Registry:      registry,
 		Engine:        eng,
 		Resolver:      res,
-		VersionRepo:   &stubFormulaVersionRepo{},
-		RateTableRepo: &stubRateTableRepo{},
+		VersionRepo:    &stubFormulaVersionRepo{},
+		RateMatrixRepo: &stubRateMatrixRepo{},
 	})
 }
 
@@ -309,21 +308,14 @@ func (s *stubFormulaVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-type stubRateTableRepo struct {
-	repositories.RateTableRepository
+type stubRateMatrixRepo struct {
+	repositories.RateMatrixRepository
 }
 
-func (s *stubRateTableRepo) GetLookupData(
+func (s *stubRateMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateTableLookupDataRequest,
-) ([]*ratetable.RateTable, error) {
-	return nil, nil
-}
-
-func (s *stubRateTableRepo) GetByKeys(
-	_ context.Context,
-	_ *repositories.GetRateTablesByKeysRequest,
-) ([]*ratetable.RateTable, error) {
+	_ *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
 	return nil, nil
 }
 

@@ -7004,8 +7004,6 @@ type Query {
   rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
-  rateTable(id: ID!): RateTable
-  rateTables(input: DataTableConnectionInput!): RateTableConnection!
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   recurringDeduction(id: ID!): RecurringDeduction
   recurringDeductions(input: DataTableConnectionInput!): RecurringDeductionConnection!
@@ -7287,38 +7285,6 @@ enum RateQuotePurpose {
   Shopping
   Simulation
   WhatIf
-}
-
-type RateTable {
-  active: Boolean!
-  businessUnit: BusinessUnit
-  businessUnitId: ID!
-  createdAt: Int!
-  description: String!
-  id: ID!
-  key: String!
-  lookupType: RateTableLookupType!
-  name: String!
-  organization: Organization
-  organizationId: ID!
-  updatedAt: Int!
-  version: Int!
-}
-
-type RateTableConnection {
-  edges: [RateTableEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-}
-
-type RateTableEdge {
-  cursor: String!
-  node: RateTable!
-}
-
-enum RateTableLookupType {
-  Exact
-  Range
 }
 
 enum RateUnit {

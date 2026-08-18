@@ -27,9 +27,9 @@ type ServiceParams struct {
 	Registry      *schema.Registry
 	Engine        *engine.Engine
 	Resolver      *resolver.Resolver
-	Repo          repositories.FormulaTemplateRepository
-	VersionRepo   repositories.FormulaTemplateVersionRepository
-	RateTableRepo repositories.RateTableRepository
+	Repo           repositories.FormulaTemplateRepository
+	VersionRepo    repositories.FormulaTemplateVersionRepository
+	RateMatrixRepo repositories.RateMatrixRepository
 }
 
 type Service struct {
@@ -37,9 +37,9 @@ type Service struct {
 	registry      *schema.Registry
 	engine        *engine.Engine
 	resolver      *resolver.Resolver
-	repo          repositories.FormulaTemplateRepository
-	versionRepo   repositories.FormulaTemplateVersionRepository
-	rateTableRepo repositories.RateTableRepository
+	repo           repositories.FormulaTemplateRepository
+	versionRepo    repositories.FormulaTemplateVersionRepository
+	rateMatrixRepo repositories.RateMatrixRepository
 }
 
 //nolint:gocritic // fx param structs are passed by value
@@ -51,9 +51,9 @@ func NewService(p ServiceParams) *Service {
 		registry:      p.Registry,
 		engine:        p.Engine,
 		resolver:      p.Resolver,
-		repo:          p.Repo,
-		versionRepo:   p.VersionRepo,
-		rateTableRepo: p.RateTableRepo,
+		repo:           p.Repo,
+		versionRepo:    p.VersionRepo,
+		rateMatrixRepo: p.RateMatrixRepo,
 	}
 }
 
@@ -182,12 +182,15 @@ func (s *Service) Rate(
 	}, nil
 }
 
-// buildLookup reads the tenant's rate tables, once per unit of work.
+// buildLookup reads the tenant's lookup tables, once per unit of work.
 //
-// Reading them is expensive — every active table with every entry — and rating
-// now happens on every shipment write and in batches. The memo is only present
-// when a caller installed one; without it this behaves exactly as it always
-// did, which is what keeps a formula evaluated outside a request working.
+// A lookup table is a single-axis rate matrix: the expression language calls
+// them tables and the storage calls them matrices, and this is where the two
+// vocabularies meet. Reading them is expensive — every one-axis matrix with
+// every cell — and rating now happens on every shipment write and in batches.
+// The memo is only present when a caller installed one; without it this
+// behaves exactly as it always did, which is what keeps a formula evaluated
+// outside a request working.
 func (s *Service) buildLookup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -196,15 +199,15 @@ func (s *Service) buildLookup(
 		ctx,
 		tenantInfo.OrgID,
 		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
-			tables, err := s.rateTableRepo.GetLookupData(
+			data, err := s.rateMatrixRepo.GetLookupData(
 				ctx,
-				&repositories.GetRateTableLookupDataRequest{TenantInfo: tenantInfo},
+				&repositories.GetRateMatrixLookupDataRequest{TenantInfo: tenantInfo},
 			)
 			if err != nil {
 				return nil, err
 			}
 
-			return NewRateTableLookup(tables), nil
+			return NewMatrixLookup(data), nil
 		},
 	)
 }
@@ -366,26 +369,19 @@ func (s *Service) ValidateLookupTables(
 		return nil //nolint:nilerr // unparseable expressions are rejected by compile validation
 	}
 
-	existing, err := s.rateTableRepo.GetByKeys(ctx, &repositories.GetRateTablesByKeysRequest{
-		TenantInfo: tenantInfo,
-		Keys:       tables,
-	})
+	lookup, err := s.buildLookup(ctx, tenantInfo)
 	if err != nil {
 		return err
 	}
 
-	known := make(map[string]struct{}, len(existing))
-	for _, table := range existing {
-		known[table.Key] = struct{}{}
-	}
-
 	multiErr := errortypes.NewMultiError()
 	for _, table := range tables {
-		if _, ok := known[table]; !ok {
+		if !lookup.Has(table) {
 			multiErr.Add(
 				"expression",
 				errortypes.ErrInvalid,
-				"Unknown rate table: "+table,
+				"Unknown rate table: "+table+
+					" — a lookup table is an active rate matrix with a single axis",
 			)
 		}
 	}
