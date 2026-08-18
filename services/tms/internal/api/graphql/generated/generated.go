@@ -4761,6 +4761,7 @@ type ComplexityRoot struct {
 		OrganizationID func(childComplexity int) int
 		Status         func(childComplexity int) int
 		UpdatedAt      func(childComplexity int) int
+		ValueKind      func(childComplexity int) int
 		Version        func(childComplexity int) int
 	}
 
@@ -32127,6 +32128,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.RateMatrix.UpdatedAt(childComplexity), true
+	case "RateMatrix.valueKind":
+		if e.ComplexityRoot.RateMatrix.ValueKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.ValueKind(childComplexity), true
 	case "RateMatrix.version":
 		if e.ComplexityRoot.RateMatrix.Version == nil {
 			break
@@ -50694,6 +50701,12 @@ type RateMatrix {
   name: String!
   description: String!
   status: String!
+  """
+  What a cell's number means. The same grid is a per-mile tariff, a
+  hundredweight tariff or a discount table depending on this, so the list has to
+  show it — the numbers alone do not say.
+  """
+  valueKind: String!
   currency: String!
   version: Int!
   createdAt: Int!
@@ -62604,6 +62617,8 @@ func (ec *executionContext) childFields_RateMatrix(ctx context.Context, field gr
 		return ec.fieldContext_RateMatrix_description(ctx, field)
 	case "status":
 		return ec.fieldContext_RateMatrix_status(ctx, field)
+	case "valueKind":
+		return ec.fieldContext_RateMatrix_valueKind(ctx, field)
 	case "currency":
 		return ec.fieldContext_RateMatrix_currency(ctx, field)
 	case "version":
@@ -171161,6 +171176,29 @@ func (ec *executionContext) fieldContext_RateMatrix_status(_ context.Context, fi
 	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _RateMatrix_valueKind(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_valueKind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ValueKind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_valueKind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _RateMatrix_currency(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -264037,6 +264075,11 @@ func (ec *executionContext) _RateMatrix(ctx context.Context, sel ast.SelectionSe
 			}
 		case "status":
 			out.Values[i] = ec._RateMatrix_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "valueKind":
+			out.Values[i] = ec._RateMatrix_valueKind(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

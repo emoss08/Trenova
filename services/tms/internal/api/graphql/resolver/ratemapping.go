@@ -126,6 +126,7 @@ func rateMatrixToModel(entity *ratematrix.RateMatrix) *gqlmodel.RateMatrix {
 		Name:           entity.Name,
 		Description:    entity.Description,
 		Status:         string(entity.Status),
+		ValueKind:      string(entity.ValueKind),
 		Currency:       entity.Currency,
 		Version:        int(entity.Version),
 		CreatedAt:      int(entity.CreatedAt),

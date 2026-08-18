@@ -2723,10 +2723,14 @@ type RateMatrix struct {
 	Name           string `json:"name"`
 	Description    string `json:"description"`
 	Status         string `json:"status"`
-	Currency       string `json:"currency"`
-	Version        int    `json:"version"`
-	CreatedAt      int    `json:"createdAt"`
-	UpdatedAt      int    `json:"updatedAt"`
+	// What a cell's number means. The same grid is a per-mile tariff, a
+	// hundredweight tariff or a discount table depending on this, so the list has to
+	// show it — the numbers alone do not say.
+	ValueKind string `json:"valueKind"`
+	Currency  string `json:"currency"`
+	Version   int    `json:"version"`
+	CreatedAt int    `json:"createdAt"`
+	UpdatedAt int    `json:"updatedAt"`
 }
 
 type RateMatrixConnection struct {

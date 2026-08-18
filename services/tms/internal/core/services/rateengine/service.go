@@ -29,6 +29,7 @@ type Params struct {
 	QuoteRepo     repositories.RateQuoteRepository
 	Formula       services.FormulaCalculator
 	Exchange      services.ExchangeRateService
+	ModeProfile   services.ModeProfileService
 }
 
 type Service struct {
@@ -40,6 +41,7 @@ type Service struct {
 	quoteRepo     repositories.RateQuoteRepository
 	formula       services.FormulaCalculator
 	exchange      services.ExchangeRateService
+	modeProfile   services.ModeProfileService
 	now           func() int64
 }
 
@@ -54,6 +56,7 @@ func New(p Params) *Service {
 		quoteRepo:     p.QuoteRepo,
 		formula:       p.Formula,
 		exchange:      p.Exchange,
+		modeProfile:   p.ModeProfile,
 		now:           timeutils.NowUnix,
 	}
 }
@@ -68,7 +71,7 @@ func (s *Service) RateShipment(
 	ctx context.Context,
 	req *services.RateShipmentRequest,
 ) (*services.RatedShipment, error) {
-	rateCtx, err := s.buildContext(req)
+	rateCtx, err := s.buildContext(ctx, req)
 	if err != nil {
 		return nil, err
 	}

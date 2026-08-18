@@ -87,6 +87,27 @@ export type RateMatrixDimensionKind = z.infer<typeof rateMatrixDimensionKindSche
 export const rateMatrixMatchModeSchema = z.enum(["Exact", "Range"]);
 export type RateMatrixMatchMode = z.infer<typeof rateMatrixMatchModeSchema>;
 
+/**
+ * What a cell's number means, which is what tells the engine how to spend it.
+ *
+ * The same grid of numbers is a per-mile tariff, a hundredweight tariff or a
+ * discount table depending on this one field, so it is stated on the matrix
+ * rather than inferred from the lane that reads it.
+ */
+export const rateMatrixValueKindSchema = z.enum([
+  "FlatRate",
+  "PerMile",
+  "PerCwt",
+  "PerPiece",
+  "PerStop",
+  "Percent",
+  "Discount",
+  "MinimumOnly",
+]);
+export type RateMatrixValueKind = z.infer<typeof rateMatrixValueKindSchema>;
+
+export const rateMatrixRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
+
 export const rateMatrixDimensionSchema = z.object({
   id: optionalStringSchema,
   organizationId: optionalStringSchema,
@@ -109,10 +130,52 @@ export const rateMatrixSchema = z.object({
   name: z.string({ error: "Name is required" }).min(1, { error: "Name is required" }).max(100),
   description: z.string().max(500).default(""),
   status: statusSchema.default("Active"),
+  valueKind: rateMatrixValueKindSchema.default("FlatRate"),
   currency: z.string().length(3).default("USD"),
+  roundingMode: rateMatrixRoundingModeSchema.default("HalfUp"),
+  roundingPrecision: z.number().int().min(0).max(6).default(2),
   dimensions: z.array(rateMatrixDimensionSchema).default([]),
 });
 export type RateMatrix = z.infer<typeof rateMatrixSchema>;
+
+/**
+ * One priced coordinate in the grid.
+ *
+ * Every axis carries both a key and a band because a matrix mixes match modes:
+ * origin zone is looked up by key, weight break by band, and a cell has to say
+ * where it sits on each. The axis the matrix declares as Exact reads the key
+ * and ignores the band, and the reverse for Range.
+ *
+ * Bands are half open — `[min, max)` — mirroring
+ * `ratematrix.RateMatrixCell.ContainsQuantity`. A tariff written "1000 to 2000"
+ * rates two thousand pounds at the next tier up, and closed intervals would let
+ * two adjacent bands both claim the boundary.
+ */
+export const rateMatrixCellSchema = z.object({
+  id: optionalStringSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
+  rateMatrixId: optionalStringSchema,
+
+  d0Key: z.string().max(120).default(""),
+  d1Key: z.string().max(120).default(""),
+  d2Key: z.string().max(120).default(""),
+  d3Key: z.string().max(120).default(""),
+
+  d0Min: decimalStringSchema.nullish(),
+  d0Max: decimalStringSchema.nullish(),
+  d1Min: decimalStringSchema.nullish(),
+  d1Max: decimalStringSchema.nullish(),
+  d2Min: decimalStringSchema.nullish(),
+  d2Max: decimalStringSchema.nullish(),
+  d3Min: decimalStringSchema.nullish(),
+  d3Max: decimalStringSchema.nullish(),
+
+  value: decimalStringSchema,
+  minCharge: decimalStringSchema.nullish(),
+  deficitEligible: z.boolean().default(true),
+});
+export type RateMatrixCell = z.infer<typeof rateMatrixCellSchema>;
 
 /* -------------------------------------------------------------------------- */
 /*                                 Agreements                                  */

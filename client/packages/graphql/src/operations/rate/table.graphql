@@ -53,6 +53,7 @@ fragment RateMatrixRowFields on RateMatrix {
   name
   description
   status
+  valueKind
   currency
   version
   createdAt

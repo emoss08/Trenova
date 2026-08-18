@@ -7210,6 +7210,12 @@ type RateMatrix {
   organizationId: ID!
   status: String!
   updatedAt: Int!
+  """
+  What a cell's number means. The same grid is a per-mile tariff, a
+  hundredweight tariff or a discount table depending on this, so the list has to
+  show it — the numbers alone do not say.
+  """
+  valueKind: String!
   version: Int!
 }
 

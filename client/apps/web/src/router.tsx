@@ -502,10 +502,7 @@ export const routes: RouteObject[] = [
           },
           {
             path: "/billing/rate-agreements",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.RateAgreement),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateAgreement)),
             async lazy() {
               const { RateAgreementPage } = await import("@/routes/rate-agreement/page");
               return { Component: RateAgreementPage };
@@ -517,6 +514,14 @@ export const routes: RouteObject[] = [
             async lazy() {
               const { RateZonePage } = await import("@/routes/rate-zone/page");
               return { Component: RateZonePage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/rate-matrices",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateMatrix)),
+            async lazy() {
+              const { RateMatrixPage } = await import("@/routes/rate-matrix/page");
+              return { Component: RateMatrixPage };
             },
           },
           {

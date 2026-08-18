@@ -2,12 +2,14 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   rateAgreementSchema,
+  rateMatrixCellSchema,
   rateMatrixSchema,
   rateQuoteSchema,
   ratedShipmentSchema,
   rateZoneSchema,
   type RateAgreement,
   type RateMatrix,
+  type RateMatrixCell,
   type RateQuote,
   type RatedShipment,
   type RateZone,
@@ -97,6 +99,45 @@ export class RateMatrixService {
     const response = await api.put<RateMatrix>(`/rate-matrices/${id}/`, data);
 
     return safeParse(rateMatrixSchema, response, "Rate Matrix");
+  }
+
+  /**
+   * The whole grid.
+   *
+   * A sheet has to be read as a sheet — a hole in it is only visible against
+   * the rows and columns around it — so the editor holds every cell rather
+   * than a page of them. The API caps a page at 100 and a twenty-by-twenty
+   * zone tariff is four hundred cells, so this walks the pages.
+   */
+  public async listCells(id: string): Promise<RateMatrixCell[]> {
+    const pageSize = 100;
+    const cells: RateMatrixCell[] = [];
+
+    for (let offset = 0; ; offset += pageSize) {
+      const page = await api.get<{ results?: RateMatrixCell[]; count?: number }>(
+        `/rate-matrices/${id}/cells/?limit=${pageSize}&offset=${offset}`,
+      );
+
+      const results = page?.results ?? [];
+      for (const cell of results) {
+        cells.push(await safeParse(rateMatrixCellSchema, cell, "Rate Matrix Cell"));
+      }
+
+      if (results.length < pageSize) break;
+    }
+
+    return cells;
+  }
+
+  /**
+   * Swap the whole grid for this one.
+   *
+   * Merging would leave behind whatever the new sheet dropped, and a rate
+   * nobody meant to keep is how a matrix ends up pricing a lane its author
+   * believed they had removed.
+   */
+  public async replaceCells(id: string, cells: RateMatrixCell[]): Promise<void> {
+    await api.put(`/rate-matrices/${id}/cells/`, { cells });
   }
 }
 

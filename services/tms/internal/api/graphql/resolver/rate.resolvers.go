@@ -14,10 +14,7 @@ import (
 )
 
 // RateAgreements is the resolver for the rateAgreements field.
-func (r *queryResolver) RateAgreements(
-	ctx context.Context,
-	input gqlmodel.DataTableConnectionInput,
-) (*gqlmodel.RateAgreementConnection, error) {
+func (r *queryResolver) RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceRateAgreement, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -43,10 +40,7 @@ func (r *queryResolver) RateAgreements(
 }
 
 // RateZones is the resolver for the rateZones field.
-func (r *queryResolver) RateZones(
-	ctx context.Context,
-	input gqlmodel.DataTableConnectionInput,
-) (*gqlmodel.RateZoneConnection, error) {
+func (r *queryResolver) RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceRateZone, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -72,10 +66,7 @@ func (r *queryResolver) RateZones(
 }
 
 // RateMatrices is the resolver for the rateMatrices field.
-func (r *queryResolver) RateMatrices(
-	ctx context.Context,
-	input gqlmodel.DataTableConnectionInput,
-) (*gqlmodel.RateMatrixConnection, error) {
+func (r *queryResolver) RateMatrices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateMatrixConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -101,10 +92,7 @@ func (r *queryResolver) RateMatrices(
 }
 
 // RateQuotes is the resolver for the rateQuotes field.
-func (r *queryResolver) RateQuotes(
-	ctx context.Context,
-	input gqlmodel.DataTableConnectionInput,
-) (*gqlmodel.RateQuoteConnection, error) {
+func (r *queryResolver) RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceRateQuote, permission.OpRead)
 	if err != nil {
 		return nil, err

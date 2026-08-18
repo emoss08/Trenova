@@ -1,6 +1,7 @@
 package rateengine
 
 import (
+	"context"
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
+	"go.uber.org/zap"
 )
 
 // ErrNoParty is returned when a rating has nobody to price against — a shipment
@@ -25,6 +27,7 @@ var ErrNoParty = errors.New("rating has no party to price against")
 // replaying it later gives the same answer even though the stops have been
 // edited, the mileage engine upgraded and the commodity reclassified since.
 func (s *Service) buildContext(
+	ctx context.Context,
 	req *services.RateShipmentRequest,
 ) (*RateContext, error) {
 	entity := req.Shipment
@@ -71,8 +74,59 @@ func (s *Service) buildContext(
 	rateCtx.PartyName = partyName(entity, req.PartyType)
 
 	applyCoordinates(rateCtx, entity)
+	s.applyMode(ctx, rateCtx, entity)
 
 	return rateCtx, nil
+}
+
+// applyMode reads the shipment's service model and equipment class from the
+// mode profile that already governs it.
+//
+// A carrier running drayage and truckload publishes two tariffs on the same
+// lane, and the mode is the only thing separating them. Rather than adding a
+// second mode concept to rating, this reuses the one the rest of the product
+// already resolves — the same profile that decides which capabilities apply.
+//
+// Every failure here leaves the mode blank, which is a real answer rather than
+// a fallback: rules that name a mode stop matching, and rules that do not still
+// price the shipment. Enforcement is opt-in, so an organization with no
+// profiles configured must keep rating exactly as it did, and a capability
+// service that is briefly unavailable must not stop shipments being saved.
+func (s *Service) applyMode(
+	ctx context.Context,
+	rateCtx *RateContext,
+	entity *shipment.Shipment,
+) {
+	if s.modeProfile == nil {
+		return
+	}
+
+	policy, err := s.modeProfile.Resolve(ctx, &services.ResolveModeProfileRequest{
+		TenantInfo:     rateCtx.TenantInfo,
+		CustomerID:     entity.CustomerID,
+		ServiceTypeID:  entity.ServiceTypeID,
+		ShipmentTypeID: entity.ShipmentTypeID,
+		TractorTypeID:  entity.TractorTypeID,
+		TrailerTypeID:  entity.TrailerTypeID,
+		At:             rateCtx.AsOf,
+	})
+	if err != nil {
+		if !errors.Is(err, services.ErrNoModeProfileConfigured) {
+			s.l.Warn("failed to resolve mode profile for rating",
+				zap.String("shipmentId", entity.ID.String()),
+				zap.Error(err),
+			)
+		}
+
+		return
+	}
+
+	if policy == nil {
+		return
+	}
+
+	rateCtx.ServiceModel = policy.ServiceModel
+	rateCtx.EquipmentClass = policy.EquipmentClass
 }
 
 func partyFor(req *services.RateShipmentRequest) (pulid.ID, error) {

@@ -2250,3 +2250,19 @@ export const rateMatrixDimensionKindChoices = [
   { label: "Service type", value: "ServiceType" },
   { label: "Custom", value: "Custom" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateMatrixMatchModeChoices = [
+  { label: "Exact key", value: "Exact" },
+  { label: "Band", value: "Range" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateMatrixValueKindChoices = [
+  { label: "Flat rate", value: "FlatRate" },
+  { label: "Per mile", value: "PerMile" },
+  { label: "Per hundredweight", value: "PerCwt" },
+  { label: "Per piece", value: "PerPiece" },
+  { label: "Per stop", value: "PerStop" },
+  { label: "Percent of linehaul", value: "Percent" },
+  { label: "Discount off tariff", value: "Discount" },
+  { label: "Minimum charge only", value: "MinimumOnly" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;

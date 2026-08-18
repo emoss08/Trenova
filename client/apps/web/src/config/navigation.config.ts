@@ -298,6 +298,13 @@ const billingModule: NavModule = {
           includeBetaTag: true,
         },
         {
+          id: "rate-matrices",
+          label: "Rate Matrices",
+          path: "/billing/configuration-files/rate-matrices",
+          resource: Resource.RateMatrix,
+          includeBetaTag: true,
+        },
+        {
           id: "rate-tables",
           label: "Rate Tables",
           path: "/billing/configuration-files/rate-tables",
@@ -847,6 +854,16 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["rate", "zone", "region", "market", "geography"],
+    },
+    {
+      id: "create-rate-matrix",
+      label: "Create Rate Matrix",
+      description: "Enter a published tariff as the grid it was published as",
+      path: "/billing/configuration-files/rate-matrices",
+      resource: Resource.RateMatrix,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["rate", "matrix", "tariff", "grid", "weight break", "class", "ltl"],
     },
     {
       id: "create-rate-table",

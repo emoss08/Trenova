@@ -381,10 +381,10 @@ func TestContextHashIsStableAndSensitive(t *testing.T) {
 
 	d := setup(t)
 
-	base, err := d.svc.buildContext(rateRequest(testShipment()))
+	base, err := d.svc.buildContext(t.Context(), rateRequest(testShipment()))
 	require.NoError(t, err)
 
-	same, err := d.svc.buildContext(rateRequest(testShipment()))
+	same, err := d.svc.buildContext(t.Context(), rateRequest(testShipment()))
 	require.NoError(t, err)
 	same.Origin = base.Origin
 	same.Destination = base.Destination
