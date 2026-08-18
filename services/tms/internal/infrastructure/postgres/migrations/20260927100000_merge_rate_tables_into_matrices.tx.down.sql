@@ -1,9 +1,12 @@
 -- Restores the rate table schema so the code at this revision can run again.
 --
--- The data stays where the up migration put it: the migrated matrices are not
--- unwound, because nothing distinguishes a migrated single-axis matrix from
--- one somebody built by hand after the merge, and guessing would move rows a
--- person created. The rates are all still present and readable as matrices.
+-- Records are NOT restored — for data, treat the up migration as
+-- irreversible. Nothing distinguishes a migrated single-axis matrix from one
+-- somebody built by hand after the merge, so unwinding would move rows a
+-- person created. The rates all remain present and readable as matrices;
+-- recovering them into these tables requires a database backup taken before
+-- the up migration ran. A rolled-back application revision runs, but its
+-- lookup() calls resolve against empty tables until that restore happens.
 CREATE TYPE "rate_table_lookup_type_enum" AS ENUM('Exact', 'Range');
 
 --bun:split

@@ -114,7 +114,12 @@ func (s *LookupMatrixSeed) Run(ctx context.Context, tx bun.Tx) error {
 					continue
 				}
 
-				if err = s.createMatrix(ctx, tx, sc, org.ID, org.BusinessUnitID, def); err != nil {
+				if err = s.createMatrix(ctx, tx, createLookupMatrixParams{
+					sc:    sc,
+					orgID: org.ID,
+					buID:  org.BusinessUnitID,
+					def:   def,
+				}); err != nil {
 					return err
 				}
 			}
@@ -124,13 +129,20 @@ func (s *LookupMatrixSeed) Run(ctx context.Context, tx bun.Tx) error {
 	)
 }
 
+type createLookupMatrixParams struct {
+	sc    *seedhelpers.SeedContext
+	orgID pulid.ID
+	buID  pulid.ID
+	def   lookupMatrixDef
+}
+
 func (s *LookupMatrixSeed) createMatrix(
 	ctx context.Context,
 	tx bun.Tx,
-	sc *seedhelpers.SeedContext,
-	orgID, buID pulid.ID,
-	def lookupMatrixDef,
+	params createLookupMatrixParams,
 ) error {
+	sc, orgID, buID, def := params.sc, params.orgID, params.buID, params.def
+
 	matrix := &ratematrix.RateMatrix{
 		ID:             pulid.MustNew("rmx_"),
 		OrganizationID: orgID,

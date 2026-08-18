@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
@@ -409,7 +408,10 @@ describe("DataTablePagination", () => {
 // ── ControlsProvider memoization ───────────────────────────────────────
 
 describe("ControlsProvider memoization", () => {
-  it("context value is referentially stable when open does not change", async () => {
+  // Explicit timeout: the suite's parallel import phase runs to two minutes
+  // on a loaded CI runner, and this file's worker can start this test with
+  // most of the default five seconds already spent.
+  it("context value is referentially stable when open does not change", { timeout: 15_000 }, () => {
     const capturedValues: unknown[] = [];
 
     function Capture() {
@@ -437,9 +439,8 @@ describe("ControlsProvider memoization", () => {
     expect(capturedValues.length).toBeGreaterThanOrEqual(1);
     const first = capturedValues[0];
 
-    const user = userEvent.setup();
-    await user.click(screen.getByTestId("tick-ctrl"));
-    await user.click(screen.getByTestId("tick-ctrl"));
+    fireEvent.click(screen.getByTestId("tick-ctrl"));
+    fireEvent.click(screen.getByTestId("tick-ctrl"));
 
     expect(capturedValues.length).toBeGreaterThanOrEqual(2);
     for (let i = 1; i < capturedValues.length; i++) {

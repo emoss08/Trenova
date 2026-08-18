@@ -141,6 +141,34 @@ func TestRate_MemoDoesNotShareLookupsAcrossTenants(t *testing.T) {
 	assert.Equal(t, 2, repo.count(), "each organization reads its own tables exactly once")
 }
 
+// The memo keys on the business unit as well as the organization. A valid
+// tenant pairing never varies the business unit under one organization, but a
+// malformed caller could — and it must get its own entry rather than silently
+// inheriting whatever the first pairing loaded.
+func TestRate_MemoDoesNotShareLookupsAcrossBusinessUnits(t *testing.T) {
+	t.Parallel()
+
+	repo := &countingMatrixRepo{}
+	svc := setupCountingService(t, repo)
+
+	orgID := pulid.MustNew("org_")
+	first := memoTemplate(orgID, pulid.MustNew("bu_"))
+	second := memoTemplate(orgID, pulid.MustNew("bu_"))
+
+	ctx := ratetablecache.With(t.Context())
+
+	for _, template := range []*formulatemplate.FormulaTemplate{first, second, first, second} {
+		_, err := svc.Rate(ctx, &formula.RateRequest{
+			Template: template,
+			Entity:   memoShipment(),
+		})
+		require.NoError(t, err)
+	}
+
+	assert.Equal(t, 2, repo.count(),
+		"the same organization under two business units must build twice")
+}
+
 // A formula evaluated outside any unit of work — a CLI run, a test, an
 // evaluation reached by a path that predates the memo — has to keep working.
 // Without a memo on the context the service simply builds, exactly as it did

@@ -198,6 +198,7 @@ func (s *Service) buildLookup(
 	return ratetablecache.Get(
 		ctx,
 		tenantInfo.OrgID,
+		tenantInfo.BuID,
 		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
 			data, err := s.rateMatrixRepo.GetLookupData(
 				ctx,

@@ -33,7 +33,7 @@ falls into place.
 | **Formula template** | A saved, reusable pricing rule. A shipment goes in, a dollar amount comes out. |
 | **Expression** | The math inside a template — the actual formula, written in a small, safe language. |
 | **Variables** | Facts about the shipment your expression can use: distance, weight, stop count, and more. |
-| **Rate table** | A tenant-owned lookup table of numbers — fuel surcharges, lane rates, weight breaks — that formulas pull from. |
+| **Lookup table** | A single-axis rate matrix of numbers — fuel surcharges, lane rates, weight breaks — that formulas pull from. |
 
 ### What happens when a shipment is rated
 
@@ -155,11 +155,11 @@ maintain. It is a rate matrix with a single axis; your formula asks it a questio
 - **Range** — matches a **number** to the band it falls in. Best for fuel scales and weight breaks.
   Each band's low end is **included**, its high end is **excluded**; the last band can be open-ended.
 
-### A Range table: fuel surcharge
+### A Range axis: fuel surcharge
 
 Keyed by the national average diesel price. A price of exactly `3.50` lands in the third band.
 
-**Rate table · key `fuel_surcharge` · type Range**
+**Lookup table · code `fuel_surcharge` · axis Range**
 
 | From (incl.) | To (excl.) | Surcharge |
 |---:|---:|---:|
@@ -168,16 +168,16 @@ Keyed by the national average diesel price. A price of exactly `3.50` lands in t
 | 3.50 | 4.00 | 0.18 |
 | 4.00 | — | 0.25 |
 
-### An Exact table: lane rates
+### An Exact axis: lane rates
 
-**Rate table · key `lane_rate` · type Exact**
+**Lookup table · code `lane_rate` · axis Exact**
 
 | Match key | Rate |
 |---|---:|
 | `ATL-MIA` | 1,450.00 |
 | `ATL-JAX` | 980.00 |
 
-### Reading a table from a formula
+### Reading a lookup table from a formula
 
 Call `lookup("table_key", value)`. For a Range table the value is a number; for an Exact table
 it's the text key. If a lane might be missing from the table, use `lookupOr` to supply a fallback

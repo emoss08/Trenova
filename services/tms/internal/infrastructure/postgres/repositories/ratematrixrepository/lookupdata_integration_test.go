@@ -33,26 +33,29 @@ func TestGetLookupDataReturnsOnlyActiveSingleAxisMatrices(t *testing.T) {
 		BuID:  data.BusinessUnit.ID,
 	}
 
-	oneAxis := insertLookupFixture(t, ctx, db, tenantInfo, lookupFixture{
-		code:   "fuel_tiers",
-		status: domaintypes.StatusActive,
-		axes:   1,
+	oneAxis := insertLookupFixture(t, ctx, db, lookupFixture{
+		tenantInfo: tenantInfo,
+		code:       "fuel_tiers",
+		status:     domaintypes.StatusActive,
+		axes:       1,
 		cells: []cellFixture{
 			{min: "0", max: "3", value: "0"},
 			{min: "3", value: "0.25"},
 		},
 	})
-	insertLookupFixture(t, ctx, db, tenantInfo, lookupFixture{
-		code:   "retired_tiers",
-		status: domaintypes.StatusInactive,
-		axes:   1,
-		cells:  []cellFixture{{min: "0", value: "1"}},
+	insertLookupFixture(t, ctx, db, lookupFixture{
+		tenantInfo: tenantInfo,
+		code:       "retired_tiers",
+		status:     domaintypes.StatusInactive,
+		axes:       1,
+		cells:      []cellFixture{{min: "0", value: "1"}},
 	})
-	insertLookupFixture(t, ctx, db, tenantInfo, lookupFixture{
-		code:   "class_grid",
-		status: domaintypes.StatusActive,
-		axes:   2,
-		cells:  []cellFixture{{key: "SE", value: "100"}},
+	insertLookupFixture(t, ctx, db, lookupFixture{
+		tenantInfo: tenantInfo,
+		code:       "class_grid",
+		status:     domaintypes.StatusActive,
+		axes:       2,
+		cells:      []cellFixture{{key: "SE", value: "100"}},
 	})
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
@@ -77,20 +80,22 @@ type cellFixture struct {
 }
 
 type lookupFixture struct {
-	code   string
-	status domaintypes.Status
-	axes   int
-	cells  []cellFixture
+	tenantInfo pagination.TenantInfo
+	code       string
+	status     domaintypes.Status
+	axes       int
+	cells      []cellFixture
 }
 
 func insertLookupFixture(
 	t *testing.T,
 	ctx context.Context,
 	db *bun.DB,
-	tenantInfo pagination.TenantInfo,
 	fixture lookupFixture,
 ) pulid.ID {
 	t.Helper()
+
+	tenantInfo := fixture.tenantInfo
 
 	matrix := &ratematrix.RateMatrix{
 		ID:             pulid.MustNew("rmx_"),
