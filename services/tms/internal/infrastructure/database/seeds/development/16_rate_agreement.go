@@ -408,6 +408,7 @@ func (s *RateAgreementSeed) createMatrix(
 		Description:    "Per-mile linehaul by origin region and destination region",
 		Status:         domaintypes.StatusActive,
 		Currency:       "USD",
+		ValueKind:      ratematrix.ValueKindPerMile,
 		CreatedAt:      refs.now,
 		UpdatedAt:      refs.now,
 	}
