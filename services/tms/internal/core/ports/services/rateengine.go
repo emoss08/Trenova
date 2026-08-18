@@ -39,21 +39,24 @@ type RateShipmentRequest struct {
 }
 
 // RatedShipment is what the engine produced.
+//
+// It is serialized straight to the client by the quote and explain endpoints,
+// which is why it carries json tags: everything else on the wire is camel case.
 type RatedShipment struct {
 	// Amount is the linehaul, in the organization's billing currency. Fuel and
 	// accessorials are added by the caller that owns them.
-	Amount   decimal.Decimal
-	Currency string
-	Outcome  ratequote.Outcome
-	Quote    *ratequote.RateQuote
+	Amount   decimal.Decimal      `json:"amount"`
+	Currency string               `json:"currency"`
+	Outcome  ratequote.Outcome    `json:"outcome"`
+	Quote    *ratequote.RateQuote `json:"quote,omitempty"`
 
 	// Agreement and Rule are set when a contract priced the shipment, so the
 	// caller can stamp them on it without re-reading the quote.
-	AgreementID *pulid.ID
-	RuleID      *pulid.ID
+	AgreementID *pulid.ID `json:"agreementId,omitempty"`
+	RuleID      *pulid.ID `json:"ruleId,omitempty"`
 	// FormulaTemplateID is set when the rule delegated to a formula, or when
 	// the rating fell back to one because no agreement covered the lane.
-	FormulaTemplateID *pulid.ID
+	FormulaTemplateID *pulid.ID `json:"formulaTemplateId,omitempty"`
 }
 
 // RateEngine prices a shipment against the contracts that cover it.

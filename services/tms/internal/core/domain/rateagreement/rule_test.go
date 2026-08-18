@@ -500,3 +500,38 @@ func TestWeightBreaksOnAPerMileRuleAreRejected(t *testing.T) {
 
 	assert.True(t, multiErr.HasErrors())
 }
+
+// The lane editor scores lanes as they are typed, before anything is saved, so
+// it carries its own copy of these weights in
+// client/packages/shared/src/lib/rate.ts. A drift between the two shows up as
+// the editor predicting one winner and the engine picking another, which is
+// worse than showing no prediction at all.
+//
+// Pinning the exact values here means changing one without the other fails
+// loudly, at the point of the change, rather than quietly on somebody's invoice.
+func TestSpecificityWeightsAreMirroredByTheLaneEditor(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, int32(1024), rateagreement.GeographyScale)
+
+	assert.Equal(t, int32(512), rateagreement.ConditionWeightCommodity)
+	assert.Equal(t, int32(256), rateagreement.ConditionWeightFreightClass)
+	assert.Equal(t, int32(128), rateagreement.ConditionWeightEquipmentType)
+	assert.Equal(t, int32(64), rateagreement.ConditionWeightServiceType)
+	assert.Equal(t, int32(32), rateagreement.ConditionWeightShipmentType)
+	assert.Equal(t, int32(16), rateagreement.ConditionWeightWeightRange)
+	assert.Equal(t, int32(8), rateagreement.ConditionWeightDistanceRange)
+	assert.Equal(t, int32(4), rateagreement.ConditionWeightServiceModel)
+	assert.Equal(t, int32(2), rateagreement.ConditionWeightHazmat)
+	assert.Equal(t, int32(1), rateagreement.ConditionWeightTempControl)
+
+	assert.Equal(t, int32(0), rategeo.ScopeTypeAny.Weight())
+	assert.Equal(t, int32(300), rategeo.ScopeTypeCountry.Weight())
+	assert.Equal(t, int32(500), rategeo.ScopeTypeState.Weight())
+	assert.Equal(t, int32(600), rategeo.ScopeTypeZone.Weight())
+	assert.Equal(t, int32(650), rategeo.ScopeTypeRadius.Weight())
+	assert.Equal(t, int32(700), rategeo.ScopeTypeCityState.Weight())
+	assert.Equal(t, int32(800), rategeo.ScopeTypeZip3.Weight())
+	assert.Equal(t, int32(900), rategeo.ScopeTypeZip5.Weight())
+	assert.Equal(t, int32(1000), rategeo.ScopeTypeLocation.Weight())
+}

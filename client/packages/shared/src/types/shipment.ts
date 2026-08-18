@@ -470,6 +470,17 @@ export const ratingDetailSchema = z.object({
   versionNumber: z.number().nullish(),
   breakdown: z.array(ratingBreakdownItemSchema).nullish(),
   guardrail: ratingGuardrailSchema.nullish(),
+
+  // The contract that priced the shipment, when one did. These point at the
+  // quote rather than duplicating it: the quote holds the full explanation, and
+  // copying any of it here would let the two drift.
+  rateQuoteId: z.string().nullish(),
+  agreementId: z.string().nullish(),
+  agreementName: z.string().nullish(),
+  ruleId: z.string().nullish(),
+  ruleLabel: z.string().nullish(),
+  source: z.string().nullish(),
+  explanation: z.string().nullish(),
 });
 export type RatingDetail = z.infer<typeof ratingDetailSchema>;
 
@@ -486,8 +497,21 @@ const shipmentBaseSchema = z.object({
   ownerId: nullableStringSchema,
   enteredById: nullableStringSchema,
   canceledById: nullableStringSchema,
-  formulaTemplateId: z.string().min(1, { error: "Formula Template is required" }),
+  formulaTemplateId: nullableStringSchema,
   consolidationGroupId: nullableStringSchema,
+
+  // Set by the rating engine, never by a caller. A payload that omitted them
+  // would otherwise clear an override or unlock an invoiced shipment as a side
+  // effect of saving something else, which is why the server restores them.
+  rateQuoteId: nullableStringSchema,
+  rateAgreementId: nullableStringSchema,
+  rateAgreementRuleId: nullableStringSchema,
+  rateOverrideAmount: decimalStringSchema,
+  rateOverrideReason: z.string().nullish(),
+  rateOverrideById: nullableStringSchema,
+  rateOverrideAt: z.number().nullish(),
+  rateLocked: z.boolean().nullish(),
+
   status: shipmentStatusSchema.default("New"),
   tenderStatus: shipmentTenderStatusSchema.nullable().optional(),
   entryMethod: shipmentEntryMethodSchema.optional(),

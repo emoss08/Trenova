@@ -7001,8 +7001,12 @@ type Query {
   pendingDriverExpenseCount: Int!
   previewDriverSettlement(periodEnd: Int, periodStart: Int, workerId: ID!): DriverSettlement!
   previewReport(definition: ReportIRInput!, params: JSON, supersede: Boolean): ReportPreview!
+  rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
+  rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
+  rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
   rateTable(id: ID!): RateTable
   rateTables(input: DataTableConnectionInput!): RateTableConnection!
+  rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   recurringDeduction(id: ID!): RecurringDeduction
   recurringDeductions(input: DataTableConnectionInput!): RecurringDeductionConnection!
   recurringEarning(id: ID!): RecurringEarning
@@ -7119,6 +7123,166 @@ type Query {
   workers(input: DataTableConnectionInput!): WorkerConnection!
 }
 
+"""
+A negotiated agreement with a customer or a carrier. The lane rules it carries
+are what decide the price of a shipment; the agreement itself carries the terms
+they are all written under.
+"""
+type RateAgreement {
+  agreementType: RateAgreementType!
+  approvedAt: Int
+  approvedById: ID
+  autoRenew: Boolean!
+  businessUnitId: ID!
+  carrierId: ID
+  code: String!
+  contractRef: String!
+  createdAt: Int!
+  currency: String!
+  currentVersionNumber: Int!
+  customerId: ID
+  defaultMaxCharge: String
+  defaultMinCharge: String
+  description: String!
+  effectiveFrom: Int!
+  effectiveTo: Int
+  id: ID!
+  marginFloorPercent: String
+  maxPayPercentOfSell: String
+  name: String!
+  organizationId: ID!
+  partyType: RateAgreementPartyType!
+  priority: Int!
+  renewalNoticeDays: Int!
+  reviewComment: String!
+  status: RateAgreementStatus!
+  submittedAt: Int
+  submittedById: ID
+  updatedAt: Int!
+  version: Int!
+}
+
+type RateAgreementConnection {
+  edges: [RateAgreementEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RateAgreementEdge {
+  cursor: String!
+  node: RateAgreement!
+}
+
+enum RateAgreementPartyType {
+  Carrier
+  Customer
+}
+
+enum RateAgreementStatus {
+  Active
+  Archived
+  Draft
+  Expired
+  InReview
+  Suspended
+}
+
+enum RateAgreementType {
+  Contract
+  Dedicated
+  Project
+  Spot
+  Tariff
+}
+
+"""
+A multi-dimensional rate table — origin zone by destination zone by weight break
+by class, and any subset of that.
+"""
+type RateMatrix {
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  currency: String!
+  description: String!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  status: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type RateMatrixConnection {
+  edges: [RateMatrixEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RateMatrixEdge {
+  cursor: String!
+  node: RateMatrix!
+}
+
+"""
+The record of how one shipment was priced: which agreement and rule won, what
+each term contributed, and what it came to. Quotes are never edited — correcting
+one means re-rating, which writes a new quote and supersedes the old.
+"""
+type RateQuote {
+  asOf: Int!
+  billingAmount: String!
+  billingCurrency: String!
+  businessUnitId: ID!
+  createdAt: Int!
+  currency: String!
+  engineVersion: String!
+  foregoneAmount: String
+  formulaTemplateId: ID
+  id: ID!
+  linehaulAmount: String!
+  organizationId: ID!
+  outcome: RateQuoteOutcome!
+  overrideReason: String!
+  partyId: ID!
+  partyType: RateAgreementPartyType!
+  purpose: RateQuotePurpose!
+  rateAgreementId: ID
+  rateAgreementRuleId: ID
+  ratedAt: Int!
+  ratedById: ID
+  shipmentId: ID
+  specificityScore: Int!
+  totalAmount: String!
+}
+
+type RateQuoteConnection {
+  edges: [RateQuoteEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RateQuoteEdge {
+  cursor: String!
+  node: RateQuote!
+}
+
+enum RateQuoteOutcome {
+  Error
+  FormulaFallback
+  ManualOverride
+  NoRateFound
+  Rated
+}
+
+enum RateQuotePurpose {
+  Quote
+  Rating
+  Shopping
+  Simulation
+  WhatIf
+}
+
 type RateTable {
   active: Boolean!
   businessUnit: BusinessUnit
@@ -7156,6 +7320,35 @@ enum RateUnit {
   Hour
   Mile
   Stop
+}
+
+"""
+A named grouping of geography that lane rules and rate matrices are written
+against, so a tariff can say "Southeast" rather than listing two hundred postal
+prefixes.
+"""
+type RateZone {
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  status: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type RateZoneConnection {
+  edges: [RateZoneEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RateZoneEdge {
+  cursor: String!
+  node: RateZone!
 }
 
 input RecordMyStopActionInput {

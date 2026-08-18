@@ -9,6 +9,7 @@ import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge
 import type { AccountType } from "@/types/account-type";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Commodity } from "@trenova/shared/types/commodity";
+import type { RateAgreement, RateMatrix, RateZone } from "@trenova/shared/types/rate";
 import type { DetentionPolicy } from "@trenova/shared/types/detention";
 import type { DistanceProfile } from "@/types/distance-profile";
 import type { Document } from "@trenova/shared/types/document";
@@ -1710,6 +1711,74 @@ export function AccessorialChargeAutocompleteField<T extends FieldValues>({
               {option.description}
             </span>
           )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function RateZoneAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<RateZone, T>) {
+  return (
+    <AutocompleteField<RateZone, T>
+      link="/rate-zones/select-options/"
+      popoutLink="/billing/configuration-files/rate-zones"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          {option?.code && (
+            <span className="w-full truncate text-2xs text-muted-foreground">{option.code}</span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function RateMatrixAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<RateMatrix, T>) {
+  return (
+    <AutocompleteField<RateMatrix, T>
+      link="/rate-matrices/select-options/"
+      popoutLink="/billing/configuration-files/rate-matrices"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          {option?.description && (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {option.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function RateAgreementAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<RateAgreement, T>) {
+  return (
+    <AutocompleteField<RateAgreement, T>
+      link="/rate-agreements/select-options/"
+      popoutLink="/billing/rate-agreements"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          <span className="w-full truncate text-2xs text-muted-foreground">
+            {option.code}
+          </span>
         </div>
       )}
       {...props}

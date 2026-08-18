@@ -2129,3 +2129,124 @@ export const weekdayChoices = [
   { label: "Friday", value: 5 },
   { label: "Saturday", value: 6 },
 ] satisfies ReadonlyArray<GenericSelectOption<number>>;
+
+/* -------------------------------------------------------------------------- */
+/*                              Rate agreements                                */
+/* -------------------------------------------------------------------------- */
+
+export const rateAgreementStatusChoices = [
+  { label: "Active", value: "Active", color: "#15803d" },
+  { label: "In review", value: "InReview", color: "#b45309" },
+  { label: "Draft", value: "Draft", color: "#7e22ce" },
+  { label: "Suspended", value: "Suspended", color: "#c2410c" },
+  { label: "Expired", value: "Expired", color: "#57534e" },
+  { label: "Archived", value: "Archived", color: "#b91c1c" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const ratePartyTypeChoices = [
+  { label: "Customer", value: "Customer", color: "#1d4ed8" },
+  { label: "Carrier", value: "Carrier", color: "#0f766e" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateAgreementTypeChoices = [
+  { label: "Contract", value: "Contract" },
+  { label: "Tariff", value: "Tariff" },
+  { label: "Spot", value: "Spot" },
+  { label: "Project", value: "Project" },
+  { label: "Dedicated", value: "Dedicated" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const ratingBasisChoices = [
+  { label: "Per mile", value: "PerMile" },
+  { label: "Flat", value: "Flat" },
+  { label: "Per hundredweight", value: "PerCwt" },
+  { label: "Per piece", value: "PerPiece" },
+  { label: "Per stop", value: "PerStop" },
+  { label: "Per pallet", value: "PerPallet" },
+  { label: "Per linear foot", value: "PerLinearFoot" },
+  { label: "Per hour", value: "PerHour" },
+  { label: "Percent of another amount", value: "Percent" },
+  { label: "Rate matrix", value: "Matrix" },
+  { label: "Formula template", value: "Formula" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const ratePercentBasisChoices = [
+  { label: "Linehaul", value: "Linehaul" },
+  { label: "Linehaul plus accessorials", value: "LinehaulPlusAccessorials" },
+  { label: "What the customer pays", value: "SellTotal" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+/**
+ * Ordered widest to narrowest, which is the order the resolver ranks lanes in.
+ * A rule written at a narrower scope beats a wider one covering the same load.
+ */
+export const rateScopeTypeChoices = [
+  { label: "Anywhere", value: "Any" },
+  { label: "Country", value: "Country" },
+  { label: "State", value: "State" },
+  { label: "Zone", value: "Zone" },
+  { label: "Radius", value: "Radius" },
+  { label: "City", value: "CityState" },
+  { label: "Postal prefix", value: "Zip3" },
+  { label: "Postal code", value: "Zip5" },
+  { label: "Location", value: "Location" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateDirectionChoices = [
+  { label: "One way", value: "Directional" },
+  { label: "Both ways", value: "Bidirectional" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateRoundingModeChoices = [
+  { label: "Half up", value: "HalfUp" },
+  { label: "Half even", value: "HalfEven" },
+  { label: "Up", value: "Up" },
+  { label: "Down", value: "Down" },
+  { label: "None", value: "None" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateZoneKindChoices = [
+  { label: "Custom", value: "Custom" },
+  { label: "Market area (KMA)", value: "KMA" },
+  { label: "Region", value: "Regional" },
+  { label: "Metro", value: "Metro" },
+  { label: "Country", value: "Country" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const freightClassSourceChoices = [
+  { label: "From the commodity", value: "Commodity" },
+  { label: "Fixed on the lane", value: "Fixed" },
+  { label: "Derived from density", value: "Density" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateQuoteOutcomeChoices = [
+  { label: "Rated", value: "Rated", color: "#15803d" },
+  { label: "Formula fallback", value: "FormulaFallback", color: "#0f766e" },
+  { label: "Manual override", value: "ManualOverride", color: "#b45309" },
+  { label: "No rate found", value: "NoRateFound", color: "#c2410c" },
+  { label: "Error", value: "Error", color: "#b91c1c" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateQuotePurposeChoices = [
+  { label: "Rating", value: "Rating" },
+  { label: "Quote", value: "Quote" },
+  { label: "Shopping", value: "Shopping" },
+  { label: "Simulation", value: "Simulation" },
+  { label: "What if", value: "WhatIf" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateMatrixDimensionKindChoices = [
+  { label: "Zone", value: "Zone" },
+  { label: "Postal prefix", value: "Zip3" },
+  { label: "Postal code", value: "Zip5" },
+  { label: "State", value: "State" },
+  { label: "Country", value: "Country" },
+  { label: "Weight break", value: "WeightBreak" },
+  { label: "Distance", value: "Distance" },
+  { label: "Piece count", value: "PieceCount" },
+  { label: "Linear feet", value: "LinearFeet" },
+  { label: "Freight class", value: "FreightClass" },
+  { label: "Equipment type", value: "EquipmentType" },
+  { label: "Service type", value: "ServiceType" },
+  { label: "Custom", value: "Custom" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;

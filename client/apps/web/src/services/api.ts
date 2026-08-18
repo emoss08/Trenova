@@ -18,6 +18,12 @@ import { CustomerService } from "./customer";
 import { DataEntryControlService } from "./data-entry-control";
 import { DatabaseSessionService } from "./database-session";
 import { DetentionAnalyticsService, DetentionPolicyService, DetentionService } from "./detention";
+import {
+  RateAgreementService,
+  RateMatrixService,
+  RateQuoteService,
+  RateZoneService,
+} from "./rate";
 import { DispatchControlService } from "./dispatch-control";
 import { DistanceOverrideService } from "./distance-override";
 import { DistanceControlService } from "./distance-control";
@@ -128,6 +134,10 @@ class APIService {
   public dataEntryControlService: DataEntryControlService;
   public detentionService: DetentionService;
   public detentionPolicyService: DetentionPolicyService;
+  public rateAgreementService: RateAgreementService;
+  public rateZoneService: RateZoneService;
+  public rateMatrixService: RateMatrixService;
+  public rateQuoteService: RateQuoteService;
   public detentionAnalyticsService: DetentionAnalyticsService;
   public dispatchControlService: DispatchControlService;
   public distanceOverrideService: DistanceOverrideService;
@@ -210,6 +220,10 @@ class APIService {
     this.dataEntryControlService = new DataEntryControlService();
     this.detentionService = new DetentionService();
     this.detentionPolicyService = new DetentionPolicyService();
+    this.rateAgreementService = new RateAgreementService();
+    this.rateZoneService = new RateZoneService();
+    this.rateMatrixService = new RateMatrixService();
+    this.rateQuoteService = new RateQuoteService();
     this.detentionAnalyticsService = new DetentionAnalyticsService();
     this.dispatchControlService = new DispatchControlService();
     this.distanceOverrideService = new DistanceOverrideService();

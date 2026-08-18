@@ -485,7 +485,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           open={rerateDialogOpen}
           onOpenChange={setRerateDialogOpen}
           itemId={item.id}
-          currentTemplateId={shipment.formulaTemplateId}
+          currentTemplateId={shipment.formulaTemplateId ?? undefined}
         />
       )}
     </div>

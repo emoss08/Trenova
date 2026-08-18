@@ -36,6 +36,7 @@ import { platformBilling } from "./platform-billing";
 import { sequenceConfig } from "./sequence-config";
 import { serviceFailure } from "./service-failure";
 import { serviceFailureReasonCode } from "./service-failure-reason-code";
+import { rateQuote } from "./rate-quote";
 import { recurringShipment } from "./recurring-shipment";
 import { shipment } from "./shipment";
 import { shipmentControl } from "./shipment-control";
@@ -88,6 +89,7 @@ const operationsQueries = mergeQueryKeys(
   documentParsingRule,
   location,
   shipment,
+  rateQuote,
   recurringShipment,
   googleMaps,
   serviceFailure,
