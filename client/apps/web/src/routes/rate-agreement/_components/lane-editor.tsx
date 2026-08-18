@@ -5,7 +5,7 @@ import {
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
-import { rateDirectionChoices, ratePercentBasisChoices, ratingBasisChoices } from "@/lib/choices";
+import { rateDirectionChoices } from "@/lib/choices";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -33,7 +33,6 @@ const NEW_LANE: RateAgreementRule = {
   destinationScopeValue: "",
   destinationCity: "",
   direction: "Directional",
-  ratingBasis: "PerMile",
   freightClassSource: "Commodity",
   allowDeficitRating: true,
   daysOfWeek: 0,
@@ -131,7 +130,10 @@ type LaneRowProps = {
 };
 
 function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
-  const basis = rule?.ratingBasis;
+  // A lane prices through exactly one of the two, so whichever is chosen hides
+  // the other — clearing the selection brings the alternative back.
+  const usesMatrix = Boolean(rule?.rateMatrixId);
+  const usesFormula = Boolean(rule?.formulaTemplateId);
   const laneKey = rule ? laneKeyPreview(rule) : null;
 
   return (
@@ -199,68 +201,43 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
       </div>
 
       <FormGroup cols={3} className="mt-3">
-        <FormControl>
-          <SelectField
-            control={control}
-            rules={{ required: true }}
-            name={`rules.${index}.ratingBasis` as never}
-            label="Rating Basis"
-            placeholder="Basis"
-            description="How this lane arrives at a linehaul"
-            options={ratingBasisChoices}
-          />
-        </FormControl>
-
-        {basis === "Matrix" ? (
-          <FormControl cols={2}>
+        {!usesMatrix && (
+          <FormControl>
+            <FormulaTemplateAutocompleteField
+              control={control}
+              rules={{ required: !usesMatrix }}
+              name={`rules.${index}.formulaTemplateId` as never}
+              label="Rating Method"
+              placeholder="Select rating method"
+              description="The formula template this lane prices through — the lane's rate binds in as the template's base rate"
+            />
+          </FormControl>
+        )}
+        {!usesMatrix && (
+          <FormControl>
+            <NumberField
+              control={control}
+              name={`rules.${index}.rate` as never}
+              label="Rate"
+              placeholder="2.55"
+              sideText="$"
+              decimalScale={4}
+              thousandSeparator
+              description="Feeds the rating method as its base rate — leave empty when the lane is banded by weight"
+            />
+          </FormControl>
+        )}
+        {!usesFormula && (
+          <FormControl cols={usesMatrix ? 3 : undefined}>
             <RateMatrixAutocompleteField
               control={control}
-              rules={{ required: true }}
+              rules={{ required: !usesFormula }}
               name={`rules.${index}.rateMatrixId` as never}
               label="Rate Matrix"
               placeholder="Matrix"
-              description="The grid this lane reads its price from"
+              description="Reads the price from a grid instead of a rating method — the matrix's own rating method says what its cells mean"
             />
           </FormControl>
-        ) : basis === "Formula" ? (
-          <FormControl cols={2}>
-            <FormulaTemplateAutocompleteField
-              control={control}
-              rules={{ required: true }}
-              name={`rules.${index}.formulaTemplateId` as never}
-              label="Formula Template"
-              placeholder="Template"
-              description="The expression this lane evaluates, for rates no structured method covers"
-            />
-          </FormControl>
-        ) : (
-          <>
-            <FormControl>
-              <NumberField
-                control={control}
-                name={`rules.${index}.rate` as never}
-                label="Rate"
-                placeholder="2.55"
-                sideText="$"
-                decimalScale={4}
-                thousandSeparator
-                description="Leave empty when the lane is banded by weight"
-              />
-            </FormControl>
-            {basis === "Percent" && (
-              <FormControl>
-                <SelectField
-                  control={control}
-                  rules={{ required: true }}
-                  name={`rules.${index}.percentBasis` as never}
-                  label="Percent Basis"
-                  placeholder="Basis"
-                  description="What the percentage is taken from"
-                  options={ratePercentBasisChoices}
-                />
-              </FormControl>
-            )}
-          </>
         )}
       </FormGroup>
 

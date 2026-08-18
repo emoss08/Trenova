@@ -185,3 +185,14 @@ func (u ID) Prefix() string {
 func Map(u []ID, f func(ID) string) []string {
 	return lo.Map(u, func(id ID, _ int) string { return f(id) })
 }
+
+func Keep[T interface{ GetID() ID }](children []T) []ID {
+	ids := make([]ID, 0, len(children))
+	for _, ch := range children {
+		if id := ch.GetID(); id.IsNotNil() {
+			ids = append(ids, id)
+		}
+	}
+
+	return ids
+}

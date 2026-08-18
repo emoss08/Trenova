@@ -16,7 +16,7 @@ const DEFAULT_MATRIX: Partial<RateMatrix> = {
   name: "",
   description: "",
   status: "Active",
-  valueKind: "FlatRate",
+  formulaTemplateId: "",
   currency: "USD",
   roundingMode: "HalfUp",
   roundingPrecision: 2,

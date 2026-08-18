@@ -2156,26 +2156,6 @@ export const rateAgreementTypeChoices = [
   { label: "Dedicated", value: "Dedicated" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
-export const ratingBasisChoices = [
-  { label: "Per mile", value: "PerMile" },
-  { label: "Flat", value: "Flat" },
-  { label: "Per hundredweight", value: "PerCwt" },
-  { label: "Per piece", value: "PerPiece" },
-  { label: "Per stop", value: "PerStop" },
-  { label: "Per pallet", value: "PerPallet" },
-  { label: "Per linear foot", value: "PerLinearFoot" },
-  { label: "Per hour", value: "PerHour" },
-  { label: "Percent of another amount", value: "Percent" },
-  { label: "Rate matrix", value: "Matrix" },
-  { label: "Formula template", value: "Formula" },
-] satisfies ReadonlyArray<GenericSelectOption<string>>;
-
-export const ratePercentBasisChoices = [
-  { label: "Linehaul", value: "Linehaul" },
-  { label: "Linehaul plus accessorials", value: "LinehaulPlusAccessorials" },
-  { label: "What the customer pays", value: "SellTotal" },
-] satisfies ReadonlyArray<GenericSelectOption<string>>;
-
 /**
  * Ordered widest to narrowest, which is the order the resolver ranks lanes in.
  * A rule written at a narrower scope beats a wider one covering the same load.
@@ -2254,15 +2234,4 @@ export const rateMatrixDimensionKindChoices = [
 export const rateMatrixMatchModeChoices = [
   { label: "Exact key", value: "Exact" },
   { label: "Band", value: "Range" },
-] satisfies ReadonlyArray<GenericSelectOption<string>>;
-
-export const rateMatrixValueKindChoices = [
-  { label: "Flat rate", value: "FlatRate" },
-  { label: "Per mile", value: "PerMile" },
-  { label: "Per hundredweight", value: "PerCwt" },
-  { label: "Per piece", value: "PerPiece" },
-  { label: "Per stop", value: "PerStop" },
-  { label: "Percent of linehaul", value: "Percent" },
-  { label: "Discount off tariff", value: "Discount" },
-  { label: "Minimum charge only", value: "MinimumOnly" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;

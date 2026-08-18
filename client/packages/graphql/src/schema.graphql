@@ -7205,17 +7205,18 @@ type RateMatrix {
   createdAt: Int!
   currency: String!
   description: String!
+  """
+  The formula template that says what a cell's number means. The same grid is a
+  per-mile tariff or a flat table depending on which template prices it, so the
+  list has to show it — the numbers alone do not say.
+  """
+  formulaTemplateId: ID!
+  formulaTemplateName: String!
   id: ID!
   name: String!
   organizationId: ID!
   status: String!
   updatedAt: Int!
-  """
-  What a cell's number means. The same grid is a per-mile tariff, a
-  hundredweight tariff or a discount table depending on this, so the list has to
-  show it — the numbers alone do not say.
-  """
-  valueKind: String!
   version: Int!
 }
 

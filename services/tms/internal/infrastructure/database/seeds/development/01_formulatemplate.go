@@ -20,7 +20,7 @@ func NewFormulaTemplateSeed() *FormulaTemplateSeed {
 	seed := &FormulaTemplateSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"FormulaTemplate",
-		"1.0.0",
+		"1.1.0",
 		"Creates standard rating method formula templates",
 		[]common.Environment{
 			common.EnvDevelopment,
@@ -73,7 +73,29 @@ func (s *FormulaTemplateSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return fmt.Errorf("load formula templates: %w", err)
 			}
 
+			// A version bump re-runs the whole seed, so templates already
+			// present are skipped by name: the bump only adds what the yaml
+			// gained, and never duplicates the standard set an organization's
+			// contracts already point at.
+			var existing []formulatemplate.FormulaTemplate
+			if err := tx.NewSelect().
+				Model(&existing).
+				Column("name").
+				Where("organization_id = ?", org.ID).
+				Where("business_unit_id = ?", org.BusinessUnitID).
+				Scan(ctx); err != nil {
+				return fmt.Errorf("load existing formula templates: %w", err)
+			}
+
+			existingNames := make(map[string]struct{}, len(existing))
+			for _, template := range existing {
+				existingNames[template.Name] = struct{}{}
+			}
+
 			for _, tmplData := range data.Templates {
+				if _, ok := existingNames[tmplData.Name]; ok {
+					continue
+				}
 				variableDefs := make([]*formulatypes.VariableDefinition, len(tmplData.Variables))
 				for i, v := range tmplData.Variables {
 					variableDefs[i] = &formulatypes.VariableDefinition{

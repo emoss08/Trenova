@@ -3,6 +3,7 @@ package development
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -119,10 +120,10 @@ func TestRateAgreementSeed_EveryLaneResolvesItsGeography(t *testing.T) {
 	}
 }
 
-// A matrix-rated lane with no matrix attached prices at nothing, and the domain
-// validation that would normally catch it does not run on a seed's direct
-// insert.
-func TestRateAgreementSeed_MatrixLanesCarryTheMatrix(t *testing.T) {
+// A lane prices through exactly one of a formula template or the zone matrix,
+// and the domain validation that would normally catch a lane carrying neither
+// or both does not run on a seed's direct insert.
+func TestRateAgreementSeed_EveryLaneCarriesExactlyOneWayToPrice(t *testing.T) {
 	t.Parallel()
 
 	seed := &RateAgreementSeed{}
@@ -135,9 +136,13 @@ func TestRateAgreementSeed_MatrixLanesCarryTheMatrix(t *testing.T) {
 		rule, ok := seed.buildRule(refs, agreement, lane)
 		require.True(t, ok)
 
-		if rule.RatingBasis != rateagreement.RatingBasisMatrix {
+		if !lane.def.useMatrix {
 			assert.Nilf(t, rule.RateMatrixID,
 				"lane %q is not matrix rated but carries a matrix", lane.def.label)
+			require.NotNilf(t, rule.FormulaTemplateID,
+				"lane %q prices through a template but carries none", lane.def.label)
+			assert.Equalf(t, refs.templates[lane.def.template], *rule.FormulaTemplateID,
+				"lane %q carries a template other than the one it names", lane.def.label)
 			continue
 		}
 
@@ -146,6 +151,9 @@ func TestRateAgreementSeed_MatrixLanesCarryTheMatrix(t *testing.T) {
 		require.NotNilf(t, rule.RateMatrixID, "lane %q is matrix rated but carries none",
 			lane.def.label)
 		assert.Equal(t, refs.matrixID, *rule.RateMatrixID)
+		assert.Nilf(t, rule.FormulaTemplateID,
+			"lane %q reads its price from the matrix, so a template would compete with it",
+			lane.def.label)
 		assert.Falsef(t, rule.Rate.Valid,
 			"lane %q reads its price from the matrix, so a rate would be ignored",
 			lane.def.label)
@@ -190,8 +198,21 @@ func seedRefsForTest() *rateSeedRefs {
 		now:       rateSeedEffectiveFrom,
 		zones:     make(map[string]pulid.ID),
 		states:    make(map[string]pulid.ID),
+		templates: make(map[string]pulid.ID),
 		matrixID:  pulid.MustNew("rmx_"),
 		densityID: pulid.MustNew("rds_"),
+	}
+
+	refs.templates[formulatemplate.StandardPerMile] = pulid.MustNew("ft_")
+
+	for _, lane := range seededLanes() {
+		if lane.def.template == "" {
+			continue
+		}
+
+		if _, ok := refs.templates[lane.def.template]; !ok {
+			refs.templates[lane.def.template] = pulid.MustNew("ft_")
+		}
 	}
 
 	for _, def := range rateZoneDefs() {

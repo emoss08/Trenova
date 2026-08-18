@@ -79,14 +79,17 @@
       "sequence": 0,
       "kind": "Linehaul",
       "label": "Linehaul",
-      "basis": "720 mi @ 2.55",
-      "quantity": "720",
+      "basis": "Per Mile @ 2.55",
+      "quantity": null,
       "rate": "2.55",
       "amount": "1836",
       "runningTotal": "1836",
-      "source": "AgreementRule",
-      "sourceId": "ragr_city-pair",
-      "sourceName": "city-pair"
+      "source": "FormulaTemplate",
+      "sourceId": "ft_per_mile_stub",
+      "sourceName": "Per Mile",
+      "detail": {
+        "expression": "baseRate * totalDistance"
+      }
     },
     {
       "sequence": 1,

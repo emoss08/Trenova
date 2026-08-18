@@ -133,6 +133,7 @@ func (r *densityScaleRepository) GetOrgDefault(
 			return nil, nil //nolint:nilnil // an organization may not rate by density at all
 		}
 		log.Error("failed to get default density scale", zap.Error(err))
+
 		return nil, err
 	}
 

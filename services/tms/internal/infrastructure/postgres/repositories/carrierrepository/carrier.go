@@ -135,14 +135,6 @@ func (r *repository) applyTotalCountFilters(
 	)
 }
 
-func applyCarrierColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.CarrierTable.All())
-	}
-
-	return q.Column(columns...)
-}
-
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListCarrierConnectionRequest,
@@ -185,7 +177,8 @@ func (r *repository) ListConnection(
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return r.applyCursorPageFilters(sq, req)
 			},
-		})
+		},
+	)
 	if err != nil {
 		log.Error("failed to scan carriers", zap.Error(err))
 		return nil, err
@@ -380,16 +373,6 @@ func (r *repository) insertChildren(ctx context.Context, entity *carrier.Carrier
 	return nil
 }
 
-func keepIDs[T interface{ GetID() pulid.ID }](children []T) []pulid.ID {
-	ids := make([]pulid.ID, 0, len(children))
-	for _, child := range children {
-		if id := child.GetID(); !id.IsNil() {
-			ids = append(ids, id)
-		}
-	}
-	return ids
-}
-
 // deleteMissingChildren removes only the child rows the payload no longer
 // carries; rows whose IDs are still present keep their identity and history.
 func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.Carrier) error {
@@ -404,7 +387,7 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
 			dq = buncolgen.CarrierContactScopeTenantDelete(dq, tenantInfo).
 				Where(buncolgen.CarrierContactColumns.CarrierID.Eq(), entity.ID)
-			if kept := keepIDs(entity.Contacts); len(kept) > 0 {
+			if kept := pulid.Keep(entity.Contacts); len(kept) > 0 {
 				dq = dq.Where(buncolgen.CarrierContactColumns.ID.NotIn(), bun.List(kept))
 			}
 			return dq
@@ -419,7 +402,7 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
 			dq = buncolgen.CarrierInsurancePolicyScopeTenantDelete(dq, tenantInfo).
 				Where(buncolgen.CarrierInsurancePolicyColumns.CarrierID.Eq(), entity.ID)
-			if kept := keepIDs(entity.InsurancePolicies); len(kept) > 0 {
+			if kept := pulid.Keep(entity.InsurancePolicies); len(kept) > 0 {
 				dq = dq.Where(buncolgen.CarrierInsurancePolicyColumns.ID.NotIn(), bun.List(kept))
 			}
 			return dq
@@ -434,7 +417,7 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
 			dq = buncolgen.CarrierEDIChannelScopeTenantDelete(dq, tenantInfo).
 				Where(buncolgen.CarrierEDIChannelColumns.CarrierID.Eq(), entity.ID)
-			if kept := keepIDs(entity.EDIChannels); len(kept) > 0 {
+			if kept := pulid.Keep(entity.EDIChannels); len(kept) > 0 {
 				dq = dq.Where(buncolgen.CarrierEDIChannelColumns.ID.NotIn(), bun.List(kept))
 			}
 			return dq

@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -147,6 +146,7 @@ func (r *repository) ListConnection(
 			return dba.
 				NewSelect().
 				Model(entities).
+				Relation(buncolgen.Rel(buncolgen.RateMatrixRelations.FormulaTemplate)).
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return applyRateMatrixColumns(sq, req.RateMatrixColumns)
 				})
@@ -327,22 +327,6 @@ func (r *repository) Update(
 	return entity, nil
 }
 
-func stampDimensions(entity *ratematrix.RateMatrix, resetIDs bool) {
-	for _, dimension := range entity.Dimensions {
-		if dimension == nil {
-			continue
-		}
-
-		if resetIDs {
-			dimension.ID = pulid.Nil
-		}
-
-		dimension.RateMatrixID = entity.ID
-		dimension.OrganizationID = entity.OrganizationID
-		dimension.BusinessUnitID = entity.BusinessUnitID
-	}
-}
-
 func (r *repository) insertDimensions(
 	ctx context.Context,
 	entity *ratematrix.RateMatrix,
@@ -402,7 +386,7 @@ func (r *repository) SelectOptions(
 				cols.Code,
 				cols.Name,
 				cols.Description,
-				cols.ValueKind,
+				cols.FormulaTemplateID,
 				cols.Currency,
 				cols.Status,
 			},

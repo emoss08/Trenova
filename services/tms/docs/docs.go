@@ -39051,19 +39051,6 @@ const docTemplate = `{
                 "PartyTypeCarrier"
             ]
         },
-        "github_com_emoss08_trenova_internal_core_domain_rateagreement.PercentBasis": {
-            "type": "string",
-            "enum": [
-                "Linehaul",
-                "LinehaulPlusAccessorials",
-                "SellRate"
-            ],
-            "x-enum-varnames": [
-                "PercentBasisLinehaul",
-                "PercentBasisLinehaulPlusAccessorials",
-                "PercentBasisSellRate"
-            ]
-        },
         "github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement": {
             "type": "object",
             "properties": {
@@ -39410,6 +39397,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_commodity.FreightClass"
                 },
                 "formulaTemplateId": {
+                    "description": "A rule prices through exactly one of these two: a formula template, with\nthe rule's own rate bound in as the template's base rate, or a rate\nmatrix, whose cells carry the rates and whose own template says what they\nmean.",
                     "type": "string"
                 },
                 "freightClassSource": {
@@ -39493,9 +39481,6 @@ const docTemplate = `{
                         }
                     ]
                 },
-                "percentBasis": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.PercentBasis"
-                },
                 "priority": {
                     "type": "integer"
                 },
@@ -39510,9 +39495,6 @@ const docTemplate = `{
                 },
                 "rateMatrixId": {
                     "type": "string"
-                },
-                "ratingBasis": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.RatingBasis"
                 },
                 "roundingMode": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode"
@@ -39691,35 +39673,6 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
-        },
-        "github_com_emoss08_trenova_internal_core_domain_rateagreement.RatingBasis": {
-            "type": "string",
-            "enum": [
-                "Flat",
-                "PerMile",
-                "PerCwt",
-                "PerPiece",
-                "PerStop",
-                "PerPallet",
-                "PerLinearFoot",
-                "PerHour",
-                "Percent",
-                "Matrix",
-                "Formula"
-            ],
-            "x-enum-varnames": [
-                "RatingBasisFlat",
-                "RatingBasisPerMile",
-                "RatingBasisPerCwt",
-                "RatingBasisPerPiece",
-                "RatingBasisPerStop",
-                "RatingBasisPerPallet",
-                "RatingBasisPerLinearFoot",
-                "RatingBasisPerHour",
-                "RatingBasisPercent",
-                "RatingBasisMatrix",
-                "RatingBasisFormula"
-            ]
         },
         "github_com_emoss08_trenova_internal_core_domain_rateagreement.RuleStatus": {
             "type": "string",
@@ -40206,6 +40159,13 @@ const docTemplate = `{
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrixDimension"
                     }
                 },
+                "formulaTemplate": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.FormulaTemplate"
+                },
+                "formulaTemplateId": {
+                    "description": "FormulaTemplateID says what a cell's number means. The template prices the\nshipment with the matched cell's value bound as its base rate, so the same\ngrid is a per-mile tariff or a flat table depending on which template the\nmatrix names.",
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -40226,9 +40186,6 @@ const docTemplate = `{
                 },
                 "updatedAt": {
                     "type": "integer"
-                },
-                "valueKind": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratematrix.ValueKind"
                 },
                 "version": {
                     "type": "integer"
@@ -40337,29 +40294,6 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
-        },
-        "github_com_emoss08_trenova_internal_core_domain_ratematrix.ValueKind": {
-            "type": "string",
-            "enum": [
-                "FlatRate",
-                "PerMile",
-                "PerCwt",
-                "PerPiece",
-                "PerStop",
-                "Percent",
-                "Discount",
-                "MinimumOnly"
-            ],
-            "x-enum-varnames": [
-                "ValueKindFlatRate",
-                "ValueKindPerMile",
-                "ValueKindPerCwt",
-                "ValueKindPerPiece",
-                "ValueKindPerStop",
-                "ValueKindPercent",
-                "ValueKindDiscount",
-                "ValueKindMinimumOnly"
-            ]
         },
         "github_com_emoss08_trenova_internal_core_domain_ratequote.Outcome": {
             "type": "string",

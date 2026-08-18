@@ -11,13 +11,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// perMileTemplateID is the template every fixture prices through, so two rules
+// built for the same lane compare as unchanged unless a test moves a term.
+var perMileTemplateID = pulid.MustNew("ft_")
+
 func rule(laneKey, rate string) *rateagreement.RateAgreementRule {
+	templateID := perMileTemplateID
+
 	return &rateagreement.RateAgreementRule{
-		ID:          pulid.MustNew("ragr_"),
-		LaneKey:     laneKey,
-		Label:       laneKey,
-		RatingBasis: rateagreement.RatingBasisPerMile,
-		Rate:        decimal.NewNullDecimal(decimal.RequireFromString(rate)),
+		ID:                pulid.MustNew("ragr_"),
+		LaneKey:           laneKey,
+		Label:             laneKey,
+		FormulaTemplateID: &templateID,
+		Rate:              decimal.NewNullDecimal(decimal.RequireFromString(rate)),
 	}
 }
 
@@ -102,9 +108,13 @@ func TestDiff_AChangedLaneReportsEveryTermThatMoved(t *testing.T) {
 	existing := rule("ST:il>ST:ga", "2.10")
 	existing.MinCharge = decimal.NewNullDecimal(decimal.RequireFromString("450"))
 
+	// The sheet moves the lane off its formula template and onto a matrix,
+	// which has to surface as both halves of that move.
+	matrixID := pulid.MustNew("rmx_")
 	incoming := rule("ST:il>ST:ga", "2.35")
 	incoming.MinCharge = decimal.NewNullDecimal(decimal.RequireFromString("500"))
-	incoming.RatingBasis = rateagreement.RatingBasisFlat
+	incoming.FormulaTemplateID = nil
+	incoming.RateMatrixID = &matrixID
 
 	changes := rateimport.Diff(
 		[]*rateagreement.RateAgreementRule{existing},
@@ -116,7 +126,11 @@ func TestDiff_AChangedLaneReportsEveryTermThatMoved(t *testing.T) {
 		fields = append(fields, moved.Field)
 	}
 
-	assert.ElementsMatch(t, []string{"rate", "minCharge", "ratingBasis"}, fields)
+	assert.ElementsMatch(
+		t,
+		[]string{"rate", "minCharge", "formulaTemplateId", "rateMatrixId"},
+		fields,
+	)
 }
 
 // A term the contract had and the sheet drops is a change, not an absence. A
@@ -208,8 +222,14 @@ func TestSummarize_CountsEachKind(t *testing.T) {
 	t.Parallel()
 
 	summary := rateimport.Summarize(rateimport.Diff(
-		[]*rateagreement.RateAgreementRule{rule("ST:il>ST:ga", "2.10"), rule("ST:tx>ST:ca", "1.90")},
-		[]*rateagreement.RateAgreementRule{rule("ST:il>ST:ga", "2.35"), rule("ST:fl>ST:ny", "2.50")},
+		[]*rateagreement.RateAgreementRule{
+			rule("ST:il>ST:ga", "2.10"),
+			rule("ST:tx>ST:ca", "1.90"),
+		},
+		[]*rateagreement.RateAgreementRule{
+			rule("ST:il>ST:ga", "2.35"),
+			rule("ST:fl>ST:ny", "2.50"),
+		},
 	))
 
 	assert.Equal(t, 1, summary.Added)
@@ -236,8 +256,14 @@ func TestDiff_MatchesLanesByKeyRatherThanByPosition(t *testing.T) {
 	t.Parallel()
 
 	changes := rateimport.Diff(
-		[]*rateagreement.RateAgreementRule{rule("ST:il>ST:ga", "2.10"), rule("ST:tx>ST:ca", "1.90")},
-		[]*rateagreement.RateAgreementRule{rule("ST:tx>ST:ca", "1.90"), rule("ST:il>ST:ga", "2.10")},
+		[]*rateagreement.RateAgreementRule{
+			rule("ST:il>ST:ga", "2.10"),
+			rule("ST:tx>ST:ca", "1.90"),
+		},
+		[]*rateagreement.RateAgreementRule{
+			rule("ST:tx>ST:ca", "1.90"),
+			rule("ST:il>ST:ga", "2.10"),
+		},
 	)
 
 	assert.Equal(t, map[string]rateimport.ChangeKind{

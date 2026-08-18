@@ -93,6 +93,7 @@ func (s *Service) Calculate(
 		Template:  resolved,
 		Entity:    req.Entity,
 		Variables: req.Variables,
+		Overrides: req.Overrides,
 	})
 	if err != nil {
 		log.Error("failed to evaluate formula", zap.Error(err))
@@ -144,6 +145,7 @@ type RateRequest struct {
 	Template  *formulatemplate.FormulaTemplate
 	Entity    any
 	Variables map[string]any
+	Overrides map[string]any
 }
 
 func (s *Service) Rate(
@@ -162,6 +164,7 @@ func (s *Service) Rate(
 		Template:  req.Template,
 		Entity:    req.Entity,
 		Variables: req.Variables,
+		Overrides: req.Overrides,
 		Lookup:    lookup,
 	})
 	if err != nil {

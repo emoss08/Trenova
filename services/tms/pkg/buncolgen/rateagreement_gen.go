@@ -971,11 +971,9 @@ var RateAgreementRuleColumns = struct {
 	DaysOfWeek              Column // "days_of_week" → qualified: "ragr.days_of_week"
 	HazmatOnly              Column // "hazmat_only" → qualified: "ragr.hazmat_only"
 	TempControlOnly         Column // "temp_control_only" → qualified: "ragr.temp_control_only"
-	RatingBasis             Column // "rating_basis" → qualified: "ragr.rating_basis"
-	Rate                    Column // "rate" → qualified: "ragr.rate"
-	RateMatrixID            Column // "rate_matrix_id" → qualified: "ragr.rate_matrix_id"
 	FormulaTemplateID       Column // "formula_template_id" → qualified: "ragr.formula_template_id"
-	PercentBasis            Column // "percent_basis" → qualified: "ragr.percent_basis"
+	RateMatrixID            Column // "rate_matrix_id" → qualified: "ragr.rate_matrix_id"
+	Rate                    Column // "rate" → qualified: "ragr.rate"
 	Currency                Column // "currency" → qualified: "ragr.currency"
 	FreightClassSource      Column // "freight_class_source" → qualified: "ragr.freight_class_source"
 	FixedFreightClass       Column // "fixed_freight_class" → qualified: "ragr.fixed_freight_class"
@@ -1038,11 +1036,9 @@ var RateAgreementRuleColumns = struct {
 	DaysOfWeek:              NewColumn("days_of_week", "ragr"),
 	HazmatOnly:              NewColumn("hazmat_only", "ragr"),
 	TempControlOnly:         NewColumn("temp_control_only", "ragr"),
-	RatingBasis:             NewColumn("rating_basis", "ragr"),
-	Rate:                    NewColumn("rate", "ragr"),
-	RateMatrixID:            NewColumn("rate_matrix_id", "ragr"),
 	FormulaTemplateID:       NewColumn("formula_template_id", "ragr"),
-	PercentBasis:            NewColumn("percent_basis", "ragr"),
+	RateMatrixID:            NewColumn("rate_matrix_id", "ragr"),
+	Rate:                    NewColumn("rate", "ragr"),
 	Currency:                NewColumn("currency", "ragr"),
 	FreightClassSource:      NewColumn("freight_class_source", "ragr"),
 	FixedFreightClass:       NewColumn("fixed_freight_class", "ragr"),
@@ -1109,11 +1105,9 @@ var RateAgreementRuleFieldMap = map[string]string{
 	"daysOfWeek":              "days_of_week",
 	"hazmatOnly":              "hazmat_only",
 	"tempControlOnly":         "temp_control_only",
-	"ratingBasis":             "rating_basis",
-	"rate":                    "rate",
-	"rateMatrixId":            "rate_matrix_id",
 	"formulaTemplateId":       "formula_template_id",
-	"percentBasis":            "percent_basis",
+	"rateMatrixId":            "rate_matrix_id",
+	"rate":                    "rate",
 	"currency":                "currency",
 	"freightClassSource":      "freight_class_source",
 	"fixedFreightClass":       "fixed_freight_class",
@@ -1178,11 +1172,9 @@ var RateAgreementRuleInsertableColumns = []string{
 	"days_of_week",
 	"hazmat_only",
 	"temp_control_only",
-	"rating_basis",
-	"rate",
-	"rate_matrix_id",
 	"formula_template_id",
-	"percent_basis",
+	"rate_matrix_id",
+	"rate",
 	"currency",
 	"freight_class_source",
 	"fixed_freight_class",
@@ -1309,11 +1301,9 @@ var RateAgreementRuleFilter = struct {
 	DaysOfWeek              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "daysOfWeek" → DB: "days_of_week"
 	HazmatOnly              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hazmatOnly" → DB: "hazmat_only"
 	TempControlOnly         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tempControlOnly" → DB: "temp_control_only"
-	RatingBasis             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratingBasis" → DB: "rating_basis"
-	Rate                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
-	RateMatrixID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMatrixId" → DB: "rate_matrix_id"
 	FormulaTemplateID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
-	PercentBasis            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "percentBasis" → DB: "percent_basis"
+	RateMatrixID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMatrixId" → DB: "rate_matrix_id"
+	Rate                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
 	Currency                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currency" → DB: "currency"
 	FreightClassSource      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freightClassSource" → DB: "freight_class_source"
 	FixedFreightClass       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fixedFreightClass" → DB: "fixed_freight_class"
@@ -1452,20 +1442,14 @@ var RateAgreementRuleFilter = struct {
 	TempControlOnly: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("tempControlOnly", op, value)
 	},
-	RatingBasis: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("ratingBasis", op, value)
-	},
-	Rate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("rate", op, value)
+	FormulaTemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("formulaTemplateId", op, value)
 	},
 	RateMatrixID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("rateMatrixId", op, value)
 	},
-	FormulaTemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("formulaTemplateId", op, value)
-	},
-	PercentBasis: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("percentBasis", op, value)
+	Rate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rate", op, value)
 	},
 	Currency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("currency", op, value)

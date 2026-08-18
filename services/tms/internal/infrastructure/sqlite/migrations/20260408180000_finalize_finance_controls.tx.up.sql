@@ -99,6 +99,10 @@ ALTER TABLE "accounting_controls" ADD COLUMN "realized_fx_loss_account_id" TEXT;
 
 --bun:split
 
+ALTER TABLE "accounting_controls" DROP COLUMN "accounting_method";
+
+--bun:split
+
 ALTER TABLE "accounting_controls" DROP COLUMN "auto_create_journal_entries";
 
 --bun:split
@@ -135,6 +139,10 @@ ALTER TABLE "accounting_controls" DROP COLUMN "enable_reconciliation";
 
 --bun:split
 
+ALTER TABLE "accounting_controls" DROP COLUMN "reconciliation_threshold";
+
+--bun:split
+
 ALTER TABLE "accounting_controls" DROP COLUMN "reconciliation_threshold_action";
 
 --bun:split
@@ -144,6 +152,22 @@ ALTER TABLE "accounting_controls" DROP COLUMN "halt_on_pending_reconciliation";
 --bun:split
 
 ALTER TABLE "accounting_controls" DROP COLUMN "enable_reconciliation_notifications";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "revenue_recognition_method";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "defer_revenue_until_paid";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "expense_recognition_method";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "accrue_expenses";
 
 --bun:split
 
@@ -160,6 +184,10 @@ ALTER TABLE "accounting_controls" DROP COLUMN "retain_deleted_entries";
 --bun:split
 
 ALTER TABLE "accounting_controls" DROP COLUMN "enable_multi_currency";
+
+--bun:split
+
+ALTER TABLE "accounting_controls" DROP COLUMN "default_currency_code";
 
 --bun:split
 

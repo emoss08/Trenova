@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
@@ -151,7 +152,18 @@ func compare(prior, incoming *rateagreement.RateAgreementRule) Change {
 func movedFields(prior, incoming *rateagreement.RateAgreementRule) []FieldChange {
 	moved := make([]FieldChange, 0, 4)
 
-	compareString(&moved, "ratingBasis", string(prior.RatingBasis), string(incoming.RatingBasis))
+	compareString(
+		&moved,
+		"formulaTemplateId",
+		pulidText(prior.FormulaTemplateID),
+		pulidText(incoming.FormulaTemplateID),
+	)
+	compareString(
+		&moved,
+		"rateMatrixId",
+		pulidText(prior.RateMatrixID),
+		pulidText(incoming.RateMatrixID),
+	)
 	compareString(&moved, "currency", prior.Currency, incoming.Currency)
 	// The label is deliberately not compared. A sheet without a label column
 	// has one generated for it, and comparing a generated name to a stored one
@@ -195,6 +207,14 @@ func decimalText(value decimal.NullDecimal) string {
 	}
 
 	return value.Decimal.String()
+}
+
+func pulidText(id *pulid.ID) string {
+	if id == nil || id.IsNil() {
+		return ""
+	}
+
+	return id.String()
 }
 
 func sortByRisk(changes []Change) {

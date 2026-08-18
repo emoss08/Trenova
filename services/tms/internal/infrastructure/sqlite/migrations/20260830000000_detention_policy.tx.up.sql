@@ -323,6 +323,10 @@ ALTER TABLE "customer_billing_profiles" DROP COLUMN "detention_billing_enabled";
 
 --bun:split
 
+ALTER TABLE "customer_billing_profiles" DROP COLUMN "detention_free_minutes";
+
+--bun:split
+
 ALTER TABLE "customer_billing_profiles" DROP COLUMN "detention_rate_per_hour";
 
 --bun:split

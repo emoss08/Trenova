@@ -45,18 +45,6 @@ const (
 	BillingTransferCanceled       = BillingTransferStatus("Canceled")
 )
 
-type RatingMethod string
-
-const (
-	RatingMethodFlatRate        = RatingMethod("FlatRate")
-	RatingMethodPerMile         = RatingMethod("PerMile")
-	RatingMethodPerStop         = RatingMethod("PerStop")
-	RatingMethodPerPallet       = RatingMethod("PerPallet")
-	RatingMethodPerLinearFoot   = RatingMethod("PerLinearFeet")
-	RatingMethodOther           = RatingMethod("Other")
-	RatingMethodFormulaTemplate = RatingMethod("FormulaTemplate")
-)
-
 type MoveStatus string
 
 const (
@@ -215,21 +203,6 @@ func (v BillingTransferStatus) IsValid() bool {
 		BillingTransferSentBackToOps,
 		BillingTransferApproved,
 		BillingTransferCanceled:
-		return true
-	default:
-		return false
-	}
-}
-
-func (v RatingMethod) IsValid() bool {
-	switch v {
-	case RatingMethodFlatRate,
-		RatingMethodPerMile,
-		RatingMethodPerStop,
-		RatingMethodPerPallet,
-		RatingMethodPerLinearFoot,
-		RatingMethodOther,
-		RatingMethodFormulaTemplate:
 		return true
 	default:
 		return false

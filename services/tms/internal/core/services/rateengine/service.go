@@ -164,9 +164,7 @@ func (s *Service) rateFromAgreement(
 		Agreement:   winner.Agreement,
 	}
 
-	if winner.RatingBasis == rateagreement.RatingBasisFormula {
-		fields.FormulaTemplateID = winner.FormulaTemplateID
-	}
+	fields.FormulaTemplateID = winner.FormulaTemplateID
 
 	return s.finish(ctx, req, rateCtx, trace, fields)
 }

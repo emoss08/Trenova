@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rateimport"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -37,6 +38,7 @@ type Params struct {
 	Logger        *zap.Logger
 	Repo          repositories.RateImportRepository
 	AgreementRepo repositories.RateAgreementRepository
+	TemplateRepo  repositories.FormulaTemplateRepository
 	AuditService  services.AuditService
 }
 
@@ -44,6 +46,7 @@ type Service struct {
 	l             *zap.Logger
 	repo          repositories.RateImportRepository
 	agreementRepo repositories.RateAgreementRepository
+	templateRepo  repositories.FormulaTemplateRepository
 	audit         services.AuditService
 	now           func() int64
 }
@@ -53,6 +56,7 @@ func New(p Params) *Service {
 		l:             p.Logger.Named("service.rateimport"),
 		repo:          p.Repo,
 		agreementRepo: p.AgreementRepo,
+		templateRepo:  p.TemplateRepo,
 		audit:         p.AuditService,
 		now:           timeutils.NowUnix,
 	}
@@ -126,7 +130,12 @@ func (s *Service) Upload(
 		return nil, err
 	}
 
-	staged, err := stage(sheet, existing)
+	templates, err := s.templateResolver(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	staged, err := stage(sheet, existing, templates)
 	if err != nil {
 		return nil, errortypes.NewValidationError("file", errortypes.ErrInvalid, err.Error())
 	}
@@ -222,6 +231,47 @@ func readSheet(
 	}
 
 	return pkgrateimport.ReadCSV(content)
+}
+
+// templateResolver reads the organization's active freight charge templates
+// once and answers the row parser's name lookups from memory, so a
+// thousand-row sheet costs a page walk rather than a query per row.
+func (s *Service) templateResolver(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (pkgrateimport.TemplateResolver, error) {
+	byName := make(map[string]pulid.ID)
+
+	const pageSize = 100
+	for offset := 0; ; offset += pageSize {
+		page, err := s.templateRepo.List(ctx, &repositories.ListFormulaTemplatesRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{Limit: pageSize, Offset: offset},
+			},
+			Type:   string(formulatemplate.TemplateTypeFreightCharge),
+			Status: string(formulatemplate.StatusActive),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		for _, template := range page.Items {
+			name := strings.ToLower(strings.TrimSpace(template.Name))
+			if _, taken := byName[name]; !taken {
+				byName[name] = template.ID
+			}
+		}
+
+		if len(page.Items) < pageSize {
+			break
+		}
+	}
+
+	return func(name string) (pulid.ID, bool) {
+		id, ok := byName[strings.ToLower(strings.TrimSpace(name))]
+		return id, ok
+	}, nil
 }
 
 // currentRules is what the contract says now, which is the other half of the

@@ -17,6 +17,11 @@ type EvaluationRequest struct {
 	Template  *formulatemplate.FormulaTemplate
 	Entity    any
 	Variables map[string]any
+	// Overrides are engine-supplied bindings that may shadow schema fields —
+	// the rate engine binding a rule's rate or a matrix cell as baseRate.
+	// Caller-supplied variables can never shadow a field; overrides exist so
+	// the system itself can.
+	Overrides map[string]any
 	Lookup    RateTableLookup
 }
 
@@ -55,6 +60,9 @@ type CalculateRequest struct {
 	TemplateID pulid.ID
 	Entity     any
 	Variables  map[string]any
+	// Overrides carry engine-supplied bindings that may shadow schema fields.
+	// See EvaluationRequest.Overrides.
+	Overrides  map[string]any
 	TenantInfo pagination.TenantInfo
 	RatingDate int64
 }

@@ -4752,18 +4752,19 @@ type ComplexityRoot struct {
 	}
 
 	RateMatrix struct {
-		BusinessUnitID func(childComplexity int) int
-		Code           func(childComplexity int) int
-		CreatedAt      func(childComplexity int) int
-		Currency       func(childComplexity int) int
-		Description    func(childComplexity int) int
-		ID             func(childComplexity int) int
-		Name           func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
-		Status         func(childComplexity int) int
-		UpdatedAt      func(childComplexity int) int
-		ValueKind      func(childComplexity int) int
-		Version        func(childComplexity int) int
+		BusinessUnitID      func(childComplexity int) int
+		Code                func(childComplexity int) int
+		CreatedAt           func(childComplexity int) int
+		Currency            func(childComplexity int) int
+		Description         func(childComplexity int) int
+		FormulaTemplateID   func(childComplexity int) int
+		FormulaTemplateName func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		Name                func(childComplexity int) int
+		OrganizationID      func(childComplexity int) int
+		Status              func(childComplexity int) int
+		UpdatedAt           func(childComplexity int) int
+		Version             func(childComplexity int) int
 	}
 
 	RateMatrixConnection struct {
@@ -32103,6 +32104,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.RateMatrix.Description(childComplexity), true
+	case "RateMatrix.formulaTemplateId":
+		if e.ComplexityRoot.RateMatrix.FormulaTemplateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.FormulaTemplateID(childComplexity), true
+	case "RateMatrix.formulaTemplateName":
+		if e.ComplexityRoot.RateMatrix.FormulaTemplateName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RateMatrix.FormulaTemplateName(childComplexity), true
 	case "RateMatrix.id":
 		if e.ComplexityRoot.RateMatrix.ID == nil {
 			break
@@ -32133,12 +32146,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.RateMatrix.UpdatedAt(childComplexity), true
-	case "RateMatrix.valueKind":
-		if e.ComplexityRoot.RateMatrix.ValueKind == nil {
-			break
-		}
-
-		return e.ComplexityRoot.RateMatrix.ValueKind(childComplexity), true
 	case "RateMatrix.version":
 		if e.ComplexityRoot.RateMatrix.Version == nil {
 			break
@@ -50713,11 +50720,12 @@ type RateMatrix {
   description: String!
   status: String!
   """
-  What a cell's number means. The same grid is a per-mile tariff, a
-  hundredweight tariff or a discount table depending on this, so the list has to
-  show it — the numbers alone do not say.
+  The formula template that says what a cell's number means. The same grid is a
+  per-mile tariff or a flat table depending on which template prices it, so the
+  list has to show it — the numbers alone do not say.
   """
-  valueKind: String!
+  formulaTemplateId: ID!
+  formulaTemplateName: String!
   currency: String!
   version: Int!
   createdAt: Int!
@@ -62633,8 +62641,10 @@ func (ec *executionContext) childFields_RateMatrix(ctx context.Context, field gr
 		return ec.fieldContext_RateMatrix_description(ctx, field)
 	case "status":
 		return ec.fieldContext_RateMatrix_status(ctx, field)
-	case "valueKind":
-		return ec.fieldContext_RateMatrix_valueKind(ctx, field)
+	case "formulaTemplateId":
+		return ec.fieldContext_RateMatrix_formulaTemplateId(ctx, field)
+	case "formulaTemplateName":
+		return ec.fieldContext_RateMatrix_formulaTemplateName(ctx, field)
 	case "currency":
 		return ec.fieldContext_RateMatrix_currency(ctx, field)
 	case "version":
@@ -171194,16 +171204,39 @@ func (ec *executionContext) fieldContext_RateMatrix_status(_ context.Context, fi
 	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
-func (ec *executionContext) _RateMatrix_valueKind(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+func (ec *executionContext) _RateMatrix_formulaTemplateId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_RateMatrix_valueKind(ctx, field)
+			return ec.fieldContext_RateMatrix_formulaTemplateId(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.ValueKind, nil
+			return obj.FormulaTemplateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_RateMatrix_formulaTemplateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _RateMatrix_formulaTemplateName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.RateMatrix) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RateMatrix_formulaTemplateName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FormulaTemplateName, nil
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
@@ -171213,7 +171246,7 @@ func (ec *executionContext) _RateMatrix_valueKind(ctx context.Context, field gra
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_RateMatrix_valueKind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RateMatrix_formulaTemplateName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("RateMatrix", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
@@ -264128,8 +264161,13 @@ func (ec *executionContext) _RateMatrix(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "valueKind":
-			out.Values[i] = ec._RateMatrix_valueKind(ctx, field, obj)
+		case "formulaTemplateId":
+			out.Values[i] = ec._RateMatrix_formulaTemplateId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "formulaTemplateName":
+			out.Values[i] = ec._RateMatrix_formulaTemplateName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

@@ -5524,16 +5524,6 @@ components:
             x-enum-varnames:
                 - PartyTypeCustomer
                 - PartyTypeCarrier
-        github_com_emoss08_trenova_internal_core_domain_rateagreement.PercentBasis:
-            enum:
-                - Linehaul
-                - LinehaulPlusAccessorials
-                - SellRate
-            type: string
-            x-enum-varnames:
-                - PercentBasisLinehaul
-                - PercentBasisLinehaulPlusAccessorials
-                - PercentBasisSellRate
         github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement:
             properties:
                 accessorials:
@@ -5783,6 +5773,11 @@ components:
                 fixedFreightClass:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_commodity.FreightClass'
                 formulaTemplateId:
+                    description: |-
+                        A rule prices through exactly one of these two: a formula template, with
+                        the rule's own rate bound in as the template's base rate, or a rate
+                        matrix, whose cells carry the rates and whose own template says what they
+                        mean.
                     type: string
                 freightClassSource:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.FreightClassSource'
@@ -5847,8 +5842,6 @@ components:
                         belonging to other parties, which is the difference between reading a
                         handful of rows and reading thousands. Both are stamped from the parent
                         and are never the caller's to supply.
-                percentBasis:
-                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.PercentBasis'
                 priority:
                     type: integer
                 rate:
@@ -5859,8 +5852,6 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrix'
                 rateMatrixId:
                     type: string
-                ratingBasis:
-                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RatingBasis'
                 roundingMode:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
                 serviceModels:
@@ -5983,32 +5974,6 @@ components:
                 versionNumber:
                     type: integer
             type: object
-        github_com_emoss08_trenova_internal_core_domain_rateagreement.RatingBasis:
-            enum:
-                - Flat
-                - PerMile
-                - PerCwt
-                - PerPiece
-                - PerStop
-                - PerPallet
-                - PerLinearFoot
-                - PerHour
-                - Percent
-                - Matrix
-                - Formula
-            type: string
-            x-enum-varnames:
-                - RatingBasisFlat
-                - RatingBasisPerMile
-                - RatingBasisPerCwt
-                - RatingBasisPerPiece
-                - RatingBasisPerStop
-                - RatingBasisPerPallet
-                - RatingBasisPerLinearFoot
-                - RatingBasisPerHour
-                - RatingBasisPercent
-                - RatingBasisMatrix
-                - RatingBasisFormula
         github_com_emoss08_trenova_internal_core_domain_rateagreement.RuleStatus:
             enum:
                 - Active
@@ -6367,6 +6332,15 @@ components:
                     items:
                         $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.RateMatrixDimension'
                     type: array
+                formulaTemplate:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_formulatemplate.FormulaTemplate'
+                formulaTemplateId:
+                    description: |-
+                        FormulaTemplateID says what a cell's number means. The template prices the
+                        shipment with the matched cell's value bound as its base rate, so the same
+                        grid is a per-mile tariff or a flat table depending on which template the
+                        matrix names.
+                    type: string
                 id:
                     type: string
                 name:
@@ -6381,8 +6355,6 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_domaintypes.Status'
                 updatedAt:
                     type: integer
-                valueKind:
-                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratematrix.ValueKind'
                 version:
                     type: integer
             type: object
@@ -6454,26 +6426,6 @@ components:
                 updatedAt:
                     type: integer
             type: object
-        github_com_emoss08_trenova_internal_core_domain_ratematrix.ValueKind:
-            enum:
-                - FlatRate
-                - PerMile
-                - PerCwt
-                - PerPiece
-                - PerStop
-                - Percent
-                - Discount
-                - MinimumOnly
-            type: string
-            x-enum-varnames:
-                - ValueKindFlatRate
-                - ValueKindPerMile
-                - ValueKindPerCwt
-                - ValueKindPerPiece
-                - ValueKindPerStop
-                - ValueKindPercent
-                - ValueKindDiscount
-                - ValueKindMinimumOnly
         github_com_emoss08_trenova_internal_core_domain_ratequote.Outcome:
             enum:
                 - Rated

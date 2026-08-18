@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -35,13 +34,6 @@ func New(p Params) repositories.RateTableRepository {
 		db: p.DB,
 		l:  p.Logger.Named("postgres.rate-table-repository"),
 	}
-}
-
-func orderEntries(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.RateTableEntryColumns
-	return sq.Order(cols.SortOrder.OrderAsc()).
-		Order(cols.RangeMin.OrderAsc()).
-		Order(cols.MatchKey.OrderAsc())
 }
 
 func (r *repository) filterQuery(
@@ -119,14 +111,6 @@ func (r *repository) applyTotalCountFilters(
 	)
 }
 
-func applyRateTableColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.RateTableTable.All())
-	}
-
-	return q.Column(columns...)
-}
-
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListRateTableConnectionRequest,
@@ -166,7 +150,8 @@ func (r *repository) ListConnection(
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return r.applyCursorPageFilters(sq, req)
 			},
-		})
+		},
+	)
 	if err != nil {
 		log.Error("failed to scan rate tables", zap.Error(err))
 		return nil, err
@@ -259,22 +244,6 @@ func (r *repository) GetLookupData(
 	}
 
 	return entities, nil
-}
-
-func stampEntries(entity *ratetable.RateTable, resetIDs bool) {
-	for _, entry := range entity.Entries {
-		if entry == nil {
-			continue
-		}
-
-		if resetIDs {
-			entry.ID = pulid.Nil
-		}
-
-		entry.RateTableID = entity.ID
-		entry.OrganizationID = entity.OrganizationID
-		entry.BusinessUnitID = entity.BusinessUnitID
-	}
 }
 
 func (r *repository) insertEntries(ctx context.Context, entity *ratetable.RateTable) error {
