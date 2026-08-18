@@ -107,14 +107,6 @@ func (r *repository) applyTotalCountFilters(
 	)
 }
 
-func applyRateQuoteColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.RateQuoteTable.All())
-	}
-
-	return q.Column(columns...)
-}
-
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *repositories.ListRateQuoteConnectionRequest,

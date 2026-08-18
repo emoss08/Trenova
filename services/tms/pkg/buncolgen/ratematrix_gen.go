@@ -445,9 +445,9 @@ var RateMatrixColumns = struct {
 	Code              Column // "code" → qualified: "rmx.code"
 	Name              Column // "name" → qualified: "rmx.name"
 	Description       Column // "description" → qualified: "rmx.description"
-	ValueKind         Column // "value_kind" → qualified: "rmx.value_kind"
 	Currency          Column // "currency" → qualified: "rmx.currency"
 	Status            Column // "status" → qualified: "rmx.status"
+	FormulaTemplateID Column // "formula_template_id" → qualified: "rmx.formula_template_id"
 	RoundingMode      Column // "rounding_mode" → qualified: "rmx.rounding_mode"
 	RoundingPrecision Column // "rounding_precision" → qualified: "rmx.rounding_precision"
 	Version           Column // "version" → qualified: "rmx.version"
@@ -462,9 +462,9 @@ var RateMatrixColumns = struct {
 	Code:              NewColumn("code", "rmx"),
 	Name:              NewColumn("name", "rmx"),
 	Description:       NewColumn("description", "rmx"),
-	ValueKind:         NewColumn("value_kind", "rmx"),
 	Currency:          NewColumn("currency", "rmx"),
 	Status:            NewColumn("status", "rmx"),
+	FormulaTemplateID: NewColumn("formula_template_id", "rmx"),
 	RoundingMode:      NewColumn("rounding_mode", "rmx"),
 	RoundingPrecision: NewColumn("rounding_precision", "rmx"),
 	Version:           NewColumn("version", "rmx"),
@@ -485,9 +485,9 @@ var RateMatrixFieldMap = map[string]string{
 	"code":              "code",
 	"name":              "name",
 	"description":       "description",
-	"valueKind":         "value_kind",
 	"currency":          "currency",
 	"status":            "status",
+	"formulaTemplateId": "formula_template_id",
 	"roundingMode":      "rounding_mode",
 	"roundingPrecision": "rounding_precision",
 	"version":           "version",
@@ -504,9 +504,9 @@ var RateMatrixInsertableColumns = []string{
 	"code",
 	"name",
 	"description",
-	"value_kind",
 	"currency",
 	"status",
+	"formula_template_id",
 	"rounding_mode",
 	"rounding_precision",
 	"version",
@@ -520,13 +520,15 @@ var RateMatrixInsertableColumns = []string{
 //	q.Relation(RateMatrixRelations.BusinessUnit)
 //	// Bun eager-loads the BusinessUnit association via a separate query
 var RateMatrixRelations = struct {
-	BusinessUnit string
-	Organization string
-	Dimensions   string
+	BusinessUnit    string
+	Organization    string
+	FormulaTemplate string
+	Dimensions      string
 }{
-	BusinessUnit: "BusinessUnit",
-	Organization: "Organization",
-	Dimensions:   "Dimensions",
+	BusinessUnit:    "BusinessUnit",
+	Organization:    "Organization",
+	FormulaTemplate: "FormulaTemplate",
+	Dimensions:      "Dimensions",
 }
 
 // RateMatrixScopeTenant restricts a query to a single tenant by adding:
@@ -585,9 +587,9 @@ var RateMatrixFilter = struct {
 	Code              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
 	Name              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
 	Description       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	ValueKind         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "valueKind" → DB: "value_kind"
 	Currency          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currency" → DB: "currency"
 	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	FormulaTemplateID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
 	RoundingMode      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
 	RoundingPrecision func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
 	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -612,14 +614,14 @@ var RateMatrixFilter = struct {
 	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("description", op, value)
 	},
-	ValueKind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("valueKind", op, value)
-	},
 	Currency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("currency", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)
+	},
+	FormulaTemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("formulaTemplateId", op, value)
 	},
 	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("roundingMode", op, value)

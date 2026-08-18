@@ -3,7 +3,6 @@ package rateengine
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
@@ -11,25 +10,12 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-var (
-	// ErrUnsupportedBasis guards the switch over rating bases. It can only fire
-	// if a basis is added to the enum without being priced here.
-	ErrUnsupportedBasis = errors.New("rating basis is not supported")
+// ErrMissingRate is returned when a rule reaches pricing with neither a
+// formula template nor a rate matrix. Validation rejects this at write time,
+// so it means a row was written around the domain.
+var ErrMissingRate = errors.New("rule has no rating method to price with")
 
-	// ErrMissingRate is returned when a rule reaches pricing without the input
-	// its basis needs. Validation rejects this at write time, so it means a row
-	// was written around the domain.
-	ErrMissingRate = errors.New("rule has no rate to price with")
-
-	// ErrPercentWithoutBasis is returned when a percentage rule has nothing to
-	// take a percentage of.
-	ErrPercentWithoutBasis = errors.New("percentage rule has no basis amount")
-)
-
-var (
-	oneHundred        = decimal.NewFromInt(100)
-	poundsPerCwtUnits = decimal.NewFromInt(100)
-)
+var oneHundred = decimal.NewFromInt(100)
 
 // priceResult is the linehaul a rule produced, before fuel and accessorials.
 type priceResult struct {
@@ -70,47 +56,52 @@ func (s *Service) price(
 	return priceResult{Amount: amount, Currency: currency}, nil
 }
 
+// baseCharge dispatches to the rule's pricing method: a rate matrix when the
+// rule names one, and its formula template otherwise. Every rate in the system
+// is ultimately produced by a formula template — a matrix only decides which
+// number the matrix's own template prices with.
 func (s *Service) baseCharge(
 	ctx context.Context,
 	rateCtx *RateContext,
 	rule *rateagreement.RateAgreementRule,
 	trace *ratetypes.Trace,
 ) (decimal.Decimal, error) {
-	switch rule.RatingBasis {
-	case rateagreement.RatingBasisFlat:
-		return s.flatCharge(rateCtx, rule, trace)
-	case rateagreement.RatingBasisPerMile:
-		return unitCharge(rule, rateCtx.Distance, "mi", trace)
-	case rateagreement.RatingBasisPerCwt:
-		return s.hundredweightCharge(rateCtx, rule, trace)
-	case rateagreement.RatingBasisPerPiece:
-		return unitCharge(rule, decimal.NewFromInt(rateCtx.Pieces), "pieces", trace)
-	case rateagreement.RatingBasisPerStop:
-		return unitCharge(rule, decimal.NewFromInt(int64(rateCtx.Stops)), "stops", trace)
-	case rateagreement.RatingBasisPerPallet:
-		return unitCharge(rule, decimal.NewFromInt(rateCtx.Pallets), "pallets", trace)
-	case rateagreement.RatingBasisPerLinearFoot:
-		return unitCharge(rule, rateCtx.LinearFeet, "linear ft", trace)
-	case rateagreement.RatingBasisPerHour:
-		return unitCharge(rule, rateCtx.Hours, "hrs", trace)
-	case rateagreement.RatingBasisPercent:
-		return percentCharge(rateCtx, rule, trace)
-	case rateagreement.RatingBasisMatrix:
+	if rule.HasRateMatrix() {
 		return s.matrixCharge(ctx, rateCtx, rule, trace)
-	case rateagreement.RatingBasisFormula:
-		return s.formulaCharge(ctx, rateCtx, rule, trace)
-	default:
-		return decimal.Zero, fmt.Errorf("%w: %s", ErrUnsupportedBasis, rule.RatingBasis)
 	}
+
+	return s.formulaCharge(ctx, rateCtx, rule, trace)
 }
 
-// flatCharge is a fixed amount, unless the rule bands its flat rates by weight,
-// which is how "under 5,000 lb costs this, over costs that" is written.
-func (s *Service) flatCharge(
+// formulaCharge prices the rule through its formula template.
+//
+// The rule's own rate binds into the template as its base rate, so "two
+// dollars fifteen a mile" is a Per Mile template plus a rate on the lane —
+// the analyst types a number, never an expression. A rule without a rate lets
+// the shipment's own base rate flow through, which is how a template that
+// reads no rate at all (a share of existing charges, say) is used.
+//
+// Banded rules resolve their base rate through the weight breaks first, with
+// deficit rating applied: a shipment near the top of a band can be cheaper
+// declared at the bottom of the next one up, and the carrier lets the shipper
+// pay the lower of the two. The template then prices at the band's rate and
+// the rated weight.
+func (s *Service) formulaCharge(
+	ctx context.Context,
 	rateCtx *RateContext,
 	rule *rateagreement.RateAgreementRule,
 	trace *ratetypes.Trace,
 ) (decimal.Decimal, error) {
+	if !rule.HasFormulaTemplate() {
+		return decimal.Zero, ErrMissingRate
+	}
+
+	overrides := make(map[string]any, 3)
+	detail := make(map[string]any, 8)
+	boundRate := rule.Rate
+
+	var breakMinCharge decimal.NullDecimal
+
 	if len(rule.Breaks) > 0 {
 		result, err := rateagreement.ApplyDeficitRating(
 			rule.Breaks,
@@ -121,139 +112,89 @@ func (s *Service) flatCharge(
 			return decimal.Zero, err
 		}
 
-		recordBreak(rule, result, trace, "flat")
-
-		return result.UsedBreak.Rate, nil
+		boundRate = decimal.NewNullDecimal(result.UsedBreak.Rate)
+		breakMinCharge = result.UsedBreak.MinCharge
+		overrides["totalWeight"] = result.RatedWeight.InexactFloat64()
+		recordBreakSelection(result, detail, trace)
 	}
 
-	if !rule.Rate.Valid {
-		return decimal.Zero, ErrMissingRate
+	if boundRate.Valid {
+		overrides["baseRate"] = boundRate.Decimal.InexactFloat64()
 	}
 
-	trace.AddComponent(&ratetypes.Component{
-		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      "Flat rate",
-		Basis:      "flat",
-		Amount:     rule.Rate.Decimal,
-		Source:     ratetypes.ComponentSourceAgreementRule,
-		SourceID:   rule.ID.String(),
-		SourceName: rule.Label,
+	// SellTotal is only present on the buy side; binding it is what lets a
+	// carrier agreement be written as a share of what the customer pays.
+	if rateCtx.SellTotal.Valid {
+		overrides["sellTotal"] = rateCtx.SellTotal.Decimal.InexactFloat64()
+	}
+
+	resp, err := s.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
+		TemplateID: *rule.FormulaTemplateID,
+		Entity:     rateCtx.Entity,
+		Overrides:  overrides,
+		TenantInfo: rateCtx.TenantInfo,
+		RatingDate: rateCtx.AsOf,
 	})
-
-	return rule.Rate.Decimal, nil
-}
-
-func unitCharge(
-	rule *rateagreement.RateAgreementRule,
-	quantity decimal.Decimal,
-	unit string,
-	trace *ratetypes.Trace,
-) (decimal.Decimal, error) {
-	if !rule.Rate.Valid {
-		return decimal.Zero, ErrMissingRate
+	if err != nil {
+		return decimal.Zero, err
 	}
 
-	amount := rule.Rate.Decimal.Mul(quantity)
+	amount := resp.Amount
+	if breakMinCharge.Valid && amount.LessThan(breakMinCharge.Decimal) {
+		trace.Guardrails = append(trace.Guardrails, ratetypes.Guardrail{
+			Kind:    ratetypes.ComponentKindMinimumCharge,
+			Applied: true,
+			Bound:   breakMinCharge.Decimal,
+			Raw:     amount,
+			Result:  breakMinCharge.Decimal,
+		})
+		amount = breakMinCharge.Decimal
+	}
+
+	recordFormulaResponse(resp, detail, trace)
+
+	basis := resp.FormulaTemplateName
+	if boundRate.Valid {
+		basis += " @ " + boundRate.Decimal.String()
+	}
 
 	trace.AddComponent(&ratetypes.Component{
 		Kind:       ratetypes.ComponentKindLinehaul,
 		Label:      linehaulLabel,
-		Basis:      quantity.String() + " " + unit + " @ " + rule.Rate.Decimal.String(),
-		Quantity:   decimal.NewNullDecimal(quantity),
-		Rate:       rule.Rate,
+		Basis:      basis,
+		Rate:       boundRate,
 		Amount:     amount,
-		Source:     ratetypes.ComponentSourceAgreementRule,
-		SourceID:   rule.ID.String(),
-		SourceName: rule.Label,
+		Source:     ratetypes.ComponentSourceFormulaTemplate,
+		SourceID:   resp.FormulaTemplateID,
+		SourceName: resp.FormulaTemplateName,
+		Detail:     detail,
 	})
 
 	return amount, nil
 }
 
-// hundredweightCharge prices by weight, through the rule's bands when it has
-// them and at its single rate when it does not.
-//
-// Class tariffs get cheaper per hundredweight as freight gets heavier, so the
-// banded path also applies deficit rating: a shipment near the top of a band
-// can be cheaper declared at the bottom of the next one up, and the carrier
-// lets the shipper pay the lower of the two.
-func (s *Service) hundredweightCharge(
-	rateCtx *RateContext,
-	rule *rateagreement.RateAgreementRule,
-	trace *ratetypes.Trace,
-) (decimal.Decimal, error) {
-	if len(rule.Breaks) == 0 {
-		if !rule.Rate.Valid {
-			return decimal.Zero, ErrMissingRate
-		}
-
-		hundredweights := rateCtx.Weight.Div(poundsPerCwtUnits)
-		amount := rule.Rate.Decimal.Mul(hundredweights)
-
-		trace.AddComponent(&ratetypes.Component{
-			Kind:  ratetypes.ComponentKindLinehaul,
-			Label: linehaulLabel,
-			Basis: rateCtx.Weight.String() + " lb (" + hundredweights.String() +
-				" cwt) @ " + rule.Rate.Decimal.String(),
-			Quantity:   decimal.NewNullDecimal(hundredweights),
-			Rate:       rule.Rate,
-			Amount:     amount,
-			Source:     ratetypes.ComponentSourceAgreementRule,
-			SourceID:   rule.ID.String(),
-			SourceName: rule.Label,
-		})
-
-		return amount, nil
-	}
-
-	result, err := rateagreement.ApplyDeficitRating(
-		rule.Breaks,
-		rateCtx.Weight,
-		rule.AllowDeficitRating,
-	)
-	if err != nil {
-		return decimal.Zero, err
-	}
-
-	recordBreak(rule, result, trace, "cwt")
-
-	return result.Charge, nil
-}
-
-// recordBreak writes the band that priced the shipment, and separately records
-// a bump when one happened.
+// recordBreakSelection writes which band priced the shipment into the trace
+// detail, and separately warns when a bump happened.
 //
 // The bump gets its own line because it is the first thing a shipper questions
 // on an LTL invoice — the weight billed is not the weight shipped — and the
 // answer is that it cost them less.
-func recordBreak(
-	rule *rateagreement.RateAgreementRule,
+func recordBreakSelection(
 	result rateagreement.BreakResult,
+	detail map[string]any,
 	trace *ratetypes.Trace,
-	unit string,
 ) {
-	detail := map[string]any{
+	breakDetail := map[string]any{
+		"label":        result.UsedBreak.DisplayLabel(),
+		"rate":         result.UsedBreak.Rate.String(),
 		"fromWeight":   result.UsedBreak.FromWeight.String(),
 		"actualWeight": result.ActualWeight.String(),
 		"ratedWeight":  result.RatedWeight.String(),
 	}
 	if result.UsedBreak.ToWeight.Valid {
-		detail["toWeight"] = result.UsedBreak.ToWeight.Decimal.String()
+		breakDetail["toWeight"] = result.UsedBreak.ToWeight.Decimal.String()
 	}
-
-	trace.AddComponent(&ratetypes.Component{
-		Kind:  ratetypes.ComponentKindWeightBreak,
-		Label: "Weight break " + result.UsedBreak.DisplayLabel(),
-		Basis: result.RatedWeight.String() + " lb @ " +
-			result.UsedBreak.Rate.String() + "/" + unit,
-		Quantity:   decimal.NewNullDecimal(result.RatedWeight),
-		Rate:       decimal.NewNullDecimal(result.UsedBreak.Rate),
-		Amount:     result.Charge,
-		Source:     ratetypes.ComponentSourceAgreementRule,
-		SourceID:   rule.ID.String(),
-		SourceName: rule.Label,
-		Detail:     detail,
-	})
+	detail["weightBreak"] = breakDetail
 
 	if !result.Bumped {
 		return
@@ -265,89 +206,19 @@ func recordBreak(
 	)
 }
 
-// percentCharge takes a share of another amount, which is how buy side rates
-// written as a percentage of what the customer pays are expressed.
-func percentCharge(
-	rateCtx *RateContext,
-	rule *rateagreement.RateAgreementRule,
+// recordFormulaResponse writes what the template computed into the trace
+// detail, so a formula priced rate is as readable in the trace as a structured
+// one rather than arriving as a single unexplained number.
+func recordFormulaResponse(
+	resp *formulatemplatetypes.CalculateResponse,
+	detail map[string]any,
 	trace *ratetypes.Trace,
-) (decimal.Decimal, error) {
-	if !rule.Rate.Valid {
-		return decimal.Zero, ErrMissingRate
-	}
-
-	var basis decimal.Decimal
-
-	switch rule.PercentBasis {
-	case rateagreement.PercentBasisSellRate:
-		if !rateCtx.SellTotal.Valid {
-			return decimal.Zero, ErrPercentWithoutBasis
-		}
-		basis = rateCtx.SellTotal.Decimal
-	case rateagreement.PercentBasisLinehaul,
-		rateagreement.PercentBasisLinehaulPlusAccessorials:
-		// Both of these describe a share of the sell side's own linehaul, which
-		// on the buy side is the only amount already known at this point. The
-		// distinction between them is applied when accessorials are summed.
-		if !rateCtx.SellTotal.Valid {
-			return decimal.Zero, ErrPercentWithoutBasis
-		}
-		basis = rateCtx.SellTotal.Decimal
-	default:
-		return decimal.Zero, ErrPercentWithoutBasis
-	}
-
-	amount := basis.Mul(rule.Rate.Decimal).Div(oneHundred)
-
-	trace.AddComponent(&ratetypes.Component{
-		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      linehaulLabel,
-		Basis:      rule.Rate.Decimal.String() + "% of " + basis.String(),
-		Quantity:   decimal.NewNullDecimal(basis),
-		Rate:       rule.Rate,
-		Amount:     amount,
-		Source:     ratetypes.ComponentSourceAgreementRule,
-		SourceID:   rule.ID.String(),
-		SourceName: rule.Label,
-	})
-
-	return amount, nil
-}
-
-// formulaCharge hands the rule to the existing formula engine.
-//
-// This is the escape hatch that keeps the structured bases from having to cover
-// everything. It also means every formula template an organization has already
-// written keeps working — the difference is only that the contract now chooses
-// which one applies, instead of somebody picking it on the shipment.
-func (s *Service) formulaCharge(
-	ctx context.Context,
-	rateCtx *RateContext,
-	rule *rateagreement.RateAgreementRule,
-	trace *ratetypes.Trace,
-) (decimal.Decimal, error) {
-	if rule.FormulaTemplateID == nil || rule.FormulaTemplateID.IsNil() {
-		return decimal.Zero, ErrMissingRate
-	}
-
-	resp, err := s.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
-		TemplateID: *rule.FormulaTemplateID,
-		Entity:     rateCtx.Entity,
-		TenantInfo: rateCtx.TenantInfo,
-		RatingDate: rateCtx.AsOf,
-	})
-	if err != nil {
-		return decimal.Zero, err
-	}
-
-	detail := map[string]any{"expression": resp.Expression}
+) {
+	detail["expression"] = resp.Expression
 	if resp.VersionNumber > 0 {
 		detail["versionNumber"] = resp.VersionNumber
 	}
 
-	// The template's own named breakdown lines carry through onto the
-	// component, so a formula priced rate is as readable in the trace as a
-	// structured one rather than arriving as a single unexplained number.
 	if len(resp.Breakdown) > 0 {
 		lines := make(map[string]string, len(resp.Breakdown))
 		for _, item := range resp.Breakdown {
@@ -373,19 +244,6 @@ func (s *Service) formulaCharge(
 			Result:  resp.Amount,
 		})
 	}
-
-	trace.AddComponent(&ratetypes.Component{
-		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      linehaulLabel,
-		Basis:      resp.FormulaTemplateName,
-		Amount:     resp.Amount,
-		Source:     ratetypes.ComponentSourceFormulaTemplate,
-		SourceID:   resp.FormulaTemplateID,
-		SourceName: resp.FormulaTemplateName,
-		Detail:     detail,
-	})
-
-	return resp.Amount, nil
 }
 
 // guardrailKindForBound translates the formula engine's own bound naming into
@@ -460,8 +318,9 @@ func applyAbsoluteMinimum(
 // the contract guarantees, which is how a carrier is kept whole on a lane too
 // short to be worth dispatching.
 //
-// It only means anything to a per-mile rate; on any other basis the miles are
-// not what is being multiplied.
+// It only means anything on a per-mile lane, which is why it reads the rule's
+// own rate: a minimum billable distance is only ever written on a rule whose
+// rate is a per-mile number.
 func (s *Service) applyDeficitDistance(
 	_ context.Context,
 	rateCtx *RateContext,
@@ -469,8 +328,7 @@ func (s *Service) applyDeficitDistance(
 	amount decimal.Decimal,
 	trace *ratetypes.Trace,
 ) decimal.Decimal {
-	if rule.RatingBasis != rateagreement.RatingBasisPerMile ||
-		!rule.MinBillableDistance.Valid || !rule.Rate.Valid {
+	if !rule.MinBillableDistance.Valid || !rule.Rate.Valid {
 		return amount
 	}
 

@@ -5752,7 +5752,7 @@
       "kind": "query",
       "domain": "rate",
       "sourceFile": "src/operations/rate/table.graphql",
-      "hash": "sha256:d6233ff4478b91c9b28cbd6c844e05fc535c6bb9bf0ab723ab7304d5c950d5f8",
+      "hash": "sha256:c569db5982efa83831c0dc805451065fb475bcec3178d3ace366a852c610fe93",
       "rootFields": [
         "rateMatrices"
       ],
@@ -5768,7 +5768,7 @@
         "RateMatrixRowFields"
       ],
       "usages": [],
-      "sdl": "query RateMatrixTable($input: DataTableConnectionInput!) {\n  rateMatrices(input: $input) {\n    edges {\n      node {\n        ...RateMatrixRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RateMatrixRowFields on RateMatrix {\n  id\n  businessUnitId\n  organizationId\n  code\n  name\n  description\n  status\n  valueKind\n  currency\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query RateMatrixTable($input: DataTableConnectionInput!) {\n  rateMatrices(input: $input) {\n    edges {\n      node {\n        ...RateMatrixRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RateMatrixRowFields on RateMatrix {\n  id\n  businessUnitId\n  organizationId\n  code\n  name\n  description\n  status\n  formulaTemplateId\n  formulaTemplateName\n  currency\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "RateQuoteTable",
@@ -10376,7 +10376,7 @@
         "RateMatrixTable"
       ],
       "usages": [],
-      "sdl": "fragment RateMatrixRowFields on RateMatrix {\n  id\n  businessUnitId\n  organizationId\n  code\n  name\n  description\n  status\n  valueKind\n  currency\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment RateMatrixRowFields on RateMatrix {\n  id\n  businessUnitId\n  organizationId\n  code\n  name\n  description\n  status\n  formulaTemplateId\n  formulaTemplateName\n  currency\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "RateQuoteRowFields",

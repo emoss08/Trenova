@@ -151,7 +151,6 @@ func (s *LookupMatrixSeed) createMatrix(
 		Name:           def.name,
 		Description:    def.description,
 		Status:         domaintypes.StatusActive,
-		ValueKind:      ratematrix.ValueKindFlatRate,
 		Currency:       "USD",
 	}
 

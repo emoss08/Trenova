@@ -9472,8 +9472,12 @@ func init() {
 				FieldMapKey: "status",
 			},
 			{
-				Name:        "valueKind",
-				FieldMapKey: "valueKind",
+				Name:        "formulaTemplateId",
+				FieldMapKey: "formulaTemplateId",
+			},
+			{
+				Name:    "formulaTemplateName",
+				Special: "formulaTemplateName",
 			},
 			{
 				Name:        "currency",

@@ -5,38 +5,48 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
-// basisSpellings maps what a rate sheet says to what the engine means.
+// basisSpellings maps what a rate sheet says to the standard formula template
+// that prices it.
 //
 // A sheet says "per mile" or "flat" the way a person writes it, and refusing to
 // read that is how bulk import earns a reputation for being more work than
 // typing the lanes in.
-var basisSpellings = map[string]rateagreement.RatingBasis{
-	"flat":          rateagreement.RatingBasisFlat,
-	"flatrate":      rateagreement.RatingBasisFlat,
-	"permile":       rateagreement.RatingBasisPerMile,
-	"mile":          rateagreement.RatingBasisPerMile,
-	"mileage":       rateagreement.RatingBasisPerMile,
-	"percwt":        rateagreement.RatingBasisPerCwt,
-	"cwt":           rateagreement.RatingBasisPerCwt,
-	"hundredweight": rateagreement.RatingBasisPerCwt,
-	"perpiece":      rateagreement.RatingBasisPerPiece,
-	"piece":         rateagreement.RatingBasisPerPiece,
-	"perstop":       rateagreement.RatingBasisPerStop,
-	"stop":          rateagreement.RatingBasisPerStop,
-	"perpallet":     rateagreement.RatingBasisPerPallet,
-	"pallet":        rateagreement.RatingBasisPerPallet,
-	"perlinearfoot": rateagreement.RatingBasisPerLinearFoot,
-	"linearfoot":    rateagreement.RatingBasisPerLinearFoot,
-	"perhour":       rateagreement.RatingBasisPerHour,
-	"hour":          rateagreement.RatingBasisPerHour,
-	"hourly":        rateagreement.RatingBasisPerHour,
-	"percent":       rateagreement.RatingBasisPercent,
+var basisSpellings = map[string]string{
+	"flat":          formulatemplate.StandardFlatRate,
+	"flatrate":      formulatemplate.StandardFlatRate,
+	"permile":       formulatemplate.StandardPerMile,
+	"mile":          formulatemplate.StandardPerMile,
+	"mileage":       formulatemplate.StandardPerMile,
+	"percwt":        formulatemplate.StandardPerCwt,
+	"cwt":           formulatemplate.StandardPerCwt,
+	"hundredweight": formulatemplate.StandardPerCwt,
+	"perpiece":      formulatemplate.StandardPerPiece,
+	"piece":         formulatemplate.StandardPerPiece,
+	"perstop":       formulatemplate.StandardPerStop,
+	"stop":          formulatemplate.StandardPerStop,
+	"perpallet":     formulatemplate.StandardPerPallet,
+	"pallet":        formulatemplate.StandardPerPallet,
+	"perpound":      formulatemplate.StandardPerPound,
+	"pound":         formulatemplate.StandardPerPound,
+	"perlinearfoot": formulatemplate.StandardPerLinearFoot,
+	"linearfoot":    formulatemplate.StandardPerLinearFoot,
+	"perhour":       formulatemplate.StandardPerHour,
+	"hour":          formulatemplate.StandardPerHour,
+	"hourly":        formulatemplate.StandardPerHour,
+	"percent":       formulatemplate.StandardPercentOfSellRate,
 }
+
+// TemplateResolver finds the organization's active formula template with a
+// given name. ParseRow is pure and cannot ask the database, so the lookup is
+// handed in by whoever staged the sheet.
+type TemplateResolver func(name string) (pulid.ID, bool)
 
 var scopeSpellings = map[string]rategeo.ScopeType{
 	"state":      rategeo.ScopeTypeState,
@@ -69,7 +79,11 @@ var ErrBlankRow = errors.New("this row is empty")
 // A blank row comes back as ErrBlankRow, which callers skip. Anything else that
 // cannot be read is refused with the reason, which becomes the row's error in
 // the staged import.
-func ParseRow(mapping Mapping, row []string) (*rateagreement.RateAgreementRule, error) {
+func ParseRow(
+	mapping Mapping,
+	row []string,
+	templates TemplateResolver,
+) (*rateagreement.RateAgreementRule, error) {
 	if blank(row) {
 		return nil, ErrBlankRow
 	}
@@ -99,9 +113,17 @@ func ParseRow(mapping Mapping, row []string) (*rateagreement.RateAgreementRule, 
 		)
 	}
 
-	basis, err := parseBasis(mapping.Value(row, FieldRatingBasis))
+	templateName, err := parseBasis(mapping.Value(row, FieldRatingBasis))
 	if err != nil {
 		return nil, err
+	}
+
+	templateID, ok := templates(templateName)
+	if !ok {
+		return nil, fmt.Errorf(
+			"no active formula template named %q exists to price this rate type",
+			templateName,
+		)
 	}
 
 	rate, err := parseMoney(mapping.Value(row, FieldRate))
@@ -124,7 +146,7 @@ func ParseRow(mapping Mapping, row []string) (*rateagreement.RateAgreementRule, 
 		DestinationCity:       destination.City,
 		LaneKey:               rategeo.LaneKey(originKey, destinationKey),
 		Direction:             rateagreement.DirectionDirectional,
-		RatingBasis:           basis,
+		FormulaTemplateID:     &templateID,
 		Rate:                  rate,
 		Currency:              mapping.Value(row, FieldCurrency),
 	}
@@ -209,20 +231,20 @@ func parseScope(
 
 var errHalfALane = errors.New("this row does not say where the lane runs")
 
-func parseBasis(raw string) (rateagreement.RatingBasis, error) {
+func parseBasis(raw string) (string, error) {
 	// A sheet with no basis column is a flat rate sheet, which most are.
 	if raw == "" {
-		return rateagreement.RatingBasisFlat, nil
+		return formulatemplate.StandardFlatRate, nil
 	}
 
-	basis, ok := basisSpellings[normalize(raw)]
+	templateName, ok := basisSpellings[normalize(raw)]
 	if !ok {
 		// Guessing would be worse than refusing: the same number priced per
 		// mile and priced flat are very different money.
 		return "", fmt.Errorf("%q is not a rate type this importer recognises", raw)
 	}
 
-	return basis, nil
+	return templateName, nil
 }
 
 // parseMoney reads a number the way a spreadsheet writes one.

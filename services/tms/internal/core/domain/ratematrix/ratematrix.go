@@ -13,6 +13,7 @@ package ratematrix
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -51,9 +52,14 @@ type RateMatrix struct {
 	Code        string             `json:"code"        bun:"code,type:VARCHAR(64),notnull"`
 	Name        string             `json:"name"        bun:"name,type:VARCHAR(100),notnull"`
 	Description string             `json:"description" bun:"description,type:TEXT,nullzero"`
-	ValueKind   ValueKind          `json:"valueKind"   bun:"value_kind,type:rate_matrix_value_kind_enum,notnull"`
 	Currency    string             `json:"currency"    bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
 	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
+
+	// FormulaTemplateID says what a cell's number means. The template prices the
+	// shipment with the matched cell's value bound as its base rate, so the same
+	// grid is a per-mile tariff or a flat table depending on which template the
+	// matrix names.
+	FormulaTemplateID pulid.ID `json:"formulaTemplateId" bun:"formula_template_id,type:VARCHAR(100),notnull"`
 
 	RoundingMode      ratetypes.RoundingMode `json:"roundingMode"      bun:"rounding_mode,type:rate_rounding_mode_enum,notnull,default:'HalfUp'"`
 	RoundingPrecision int16                  `json:"roundingPrecision" bun:"rounding_precision,type:SMALLINT,notnull,default:2"`
@@ -64,9 +70,10 @@ type RateMatrix struct {
 	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
 
-	BusinessUnit *tenant.BusinessUnit   `json:"-"                    bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization   `json:"-"                    bun:"rel:belongs-to,join:organization_id=id"`
-	Dimensions   []*RateMatrixDimension `json:"dimensions,omitempty" bun:"rel:has-many,join:id=rate_matrix_id"`
+	BusinessUnit    *tenant.BusinessUnit             `json:"-"                         bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization    *tenant.Organization             `json:"-"                         bun:"rel:belongs-to,join:organization_id=id"`
+	FormulaTemplate *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty" bun:"rel:belongs-to,join:formula_template_id=id"`
+	Dimensions      []*RateMatrixDimension           `json:"dimensions,omitempty"      bun:"rel:has-many,join:id=rate_matrix_id"`
 }
 
 // applyDefaults fills in the values the database would have defaulted, so a
@@ -103,9 +110,8 @@ func (rm *RateMatrix) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(0, maxDescriptionLength).
 				Error("Description cannot be longer than 500 characters"),
 		),
-		validation.Field(&rm.ValueKind,
-			validation.Required.Error("Value kind is required"),
-			domainvalidation.ValidEnum[ValueKind]("Value kind is invalid"),
+		validation.Field(&rm.FormulaTemplateID,
+			validation.Required.Error("Formula template is required"),
 		),
 		validation.Field(&rm.Currency,
 			validation.Required.Error("Currency is required"),
@@ -273,7 +279,6 @@ func (rm *RateMatrix) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightB,
 			},
-			{Name: "value_kind", Type: domaintypes.FieldTypeEnum},
 			{Name: "status", Type: domaintypes.FieldTypeEnum},
 		},
 	}

@@ -2722,14 +2722,15 @@ type RateMatrix struct {
 	Name           string `json:"name"`
 	Description    string `json:"description"`
 	Status         string `json:"status"`
-	// What a cell's number means. The same grid is a per-mile tariff, a
-	// hundredweight tariff or a discount table depending on this, so the list has to
-	// show it — the numbers alone do not say.
-	ValueKind string `json:"valueKind"`
-	Currency  string `json:"currency"`
-	Version   int    `json:"version"`
-	CreatedAt int    `json:"createdAt"`
-	UpdatedAt int    `json:"updatedAt"`
+	// The formula template that says what a cell's number means. The same grid is a
+	// per-mile tariff or a flat table depending on which template prices it, so the
+	// list has to show it — the numbers alone do not say.
+	FormulaTemplateID   string `json:"formulaTemplateId"`
+	FormulaTemplateName string `json:"formulaTemplateName"`
+	Currency            string `json:"currency"`
+	Version             int    `json:"version"`
+	CreatedAt           int    `json:"createdAt"`
+	UpdatedAt           int    `json:"updatedAt"`
 }
 
 type RateMatrixConnection struct {

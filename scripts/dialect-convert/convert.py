@@ -267,7 +267,7 @@ DISCARD_PREFIXES = {
 
 
 class Converter:
-    def __init__(self, profile: dict):
+    def __init__(self, profile: dict, future_drops: dict[str, set[str]] | None = None):
         self.p = profile
         self.enums: dict[str, list[str]] = {}
         self.domains: dict[str, str] = {}
@@ -279,6 +279,12 @@ class Converter:
         # column, so track both to decide whether a drop can be emitted.
         self.check_columns: dict[str, set[str]] = collections.defaultdict(set)
         self.table_indexes: dict[str, list[tuple[str, set[str]]]] = collections.defaultdict(list)
+        # Columns a later migration in the chain drops. A CHECK that mentions
+        # one is never emitted at all: SQLite cannot alter a CHECK out of the
+        # way, so emitting it would pin the column and make the later DROP
+        # COLUMN impossible. Skipping the CHECK only weakens integrity the way
+        # every skipped constraint already does.
+        self.future_drops: dict[str, set[str]] = future_drops or {}
         self.skipped: list[tuple[str, str, str]] = []
         self.downgrades: list[tuple[str, str, str]] = []
 
@@ -491,6 +497,11 @@ class Converter:
         for col in RE["quoted"].findall(c):
             if col.lower() in self.dropped_columns[table.lower()]:
                 self.skip(f, "references_dropped_column", c)
+                return ""
+        if "CHECK" in up:
+            doomed = self.future_drops.get(table.lower(), set())
+            if doomed and _identifiers(c) & doomed:
+                self.skip(f, "check_on_column_dropped_later", c)
                 return ""
 
         out = _rename_functions(RE["not_valid"].sub("", RE["cast"].sub("", c)), self.p)
@@ -866,11 +877,33 @@ def _split_default(value: str) -> tuple[str, str]:
 # entry point
 # --------------------------------------------------------------------------
 
+RE_FUTURE_ALTER = re.compile(
+    r'(?is)ALTER\s+TABLE\s+(?:ONLY\s+)?(?:IF\s+EXISTS\s+)?("?[A-Za-z_]\w*"?)\s+([^;]*);'
+)
+RE_FUTURE_DROP_COLUMN = re.compile(r'(?i)DROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?("?[A-Za-z_]\w*"?)')
+
+
+def _collect_future_drops(source: str, names: list[str]) -> dict[str, set[str]]:
+    """Every column any migration in the chain drops, keyed by table.
+
+    The converter needs this before it emits the CREATE TABLE that first
+    declares the column: a CHECK emitted there would pin the column against
+    SQLite's DROP COLUMN forever, since a CHECK cannot be altered afterwards."""
+    drops: dict[str, set[str]] = collections.defaultdict(set)
+    for name in names:
+        with open(os.path.join(source, name), encoding="utf-8") as fh:
+            sql = fh.read()
+        for table, actions in RE_FUTURE_ALTER.findall(sql):
+            for col in RE_FUTURE_DROP_COLUMN.findall(actions):
+                drops[_unquote(table).lower()].add(_unquote(col).lower())
+    return drops
+
+
 def run(profile_name: str, source: str, target: str, report_path: str | None) -> Converter:
     profile = PROFILES[profile_name]
-    converter = Converter(profile)
 
     names = sorted(n for n in os.listdir(source) if n.endswith(".up.sql"))
+    converter = Converter(profile, _collect_future_drops(source, names))
 
     os.makedirs(target, exist_ok=True)
     for existing in os.listdir(target):

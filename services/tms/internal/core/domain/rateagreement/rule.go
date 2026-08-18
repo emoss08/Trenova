@@ -102,11 +102,13 @@ type RateAgreementRule struct {
 	HazmatOnly      bool  `json:"hazmatOnly"      bun:"hazmat_only,type:BOOLEAN,notnull,default:false"`
 	TempControlOnly bool  `json:"tempControlOnly" bun:"temp_control_only,type:BOOLEAN,notnull,default:false"`
 
-	RatingBasis       RatingBasis         `json:"ratingBasis"       bun:"rating_basis,type:rate_agreement_basis_enum,notnull"`
-	Rate              decimal.NullDecimal `json:"rate"              bun:"rate,type:NUMERIC(19,6),nullzero"`
-	RateMatrixID      *pulid.ID           `json:"rateMatrixId"      bun:"rate_matrix_id,type:VARCHAR(100),nullzero"`
+	// A rule prices through exactly one of these two: a formula template, with
+	// the rule's own rate bound in as the template's base rate, or a rate
+	// matrix, whose cells carry the rates and whose own template says what they
+	// mean.
 	FormulaTemplateID *pulid.ID           `json:"formulaTemplateId" bun:"formula_template_id,type:VARCHAR(100),nullzero"`
-	PercentBasis      PercentBasis        `json:"percentBasis"      bun:"percent_basis,type:rate_agreement_percent_basis_enum,nullzero"`
+	RateMatrixID      *pulid.ID           `json:"rateMatrixId"      bun:"rate_matrix_id,type:VARCHAR(100),nullzero"`
+	Rate              decimal.NullDecimal `json:"rate"              bun:"rate,type:NUMERIC(19,6),nullzero"`
 	Currency          string              `json:"currency"          bun:"currency,type:VARCHAR(3),nullzero"`
 
 	FreightClassSource FreightClassSource     `json:"freightClassSource" bun:"freight_class_source,type:rate_freight_class_source_enum,notnull,default:'Commodity'"`
@@ -324,8 +326,7 @@ func (rar *RateAgreementRule) applyDefaults() {
 
 // ValidateWithin checks the rule against the agreement it belongs to, which is
 // the only place the two can be compared — a rule's currency defaults from the
-// header, and a sell-side rule may not be written as a percentage of the sell
-// rate.
+// header, and its effective window must sit inside the agreement's.
 func (rar *RateAgreementRule) ValidateWithin(
 	agreement *RateAgreement,
 	multiErr *errortypes.MultiError,
@@ -334,14 +335,6 @@ func (rar *RateAgreementRule) ValidateWithin(
 
 	if agreement == nil {
 		return
-	}
-
-	if rar.PercentBasis == PercentBasisSellRate && agreement.PartyType != PartyTypeCarrier {
-		multiErr.Add(
-			"percentBasis",
-			errortypes.ErrInvalid,
-			"Only a carrier agreement can be priced as a share of the sell rate",
-		)
 	}
 
 	// A rule that starts before its agreement does, or runs past its end, would
@@ -387,13 +380,6 @@ func (rar *RateAgreementRule) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&rar.DestinationScopeType,
 			validation.Required.Error("Destination scope type is required"),
 			domainvalidation.ValidEnum[rategeo.ScopeType]("Destination scope type is invalid"),
-		),
-		validation.Field(&rar.RatingBasis,
-			validation.Required.Error("Rating basis is required"),
-			domainvalidation.ValidEnum[RatingBasis]("Rating basis is invalid"),
-		),
-		validation.Field(&rar.PercentBasis,
-			domainvalidation.ValidEnum[PercentBasis]("Percent basis is invalid"),
 		),
 		validation.Field(&rar.FreightClassSource,
 			validation.Required.Error("Freight class source is required"),
@@ -517,80 +503,56 @@ func validateScopeSide(multiErr *errortypes.MultiError, side *scopeSide) {
 	}
 }
 
-// validatePricing insists on exactly the one input the chosen basis reads.
-// A rule carrying both a rate and a matrix leaves the engine to guess, and a
-// rule carrying neither prices at nothing.
+// HasFormulaTemplate and HasRateMatrix name the rule's two pricing methods.
+func (rar *RateAgreementRule) HasFormulaTemplate() bool {
+	return rar.FormulaTemplateID != nil && !rar.FormulaTemplateID.IsNil()
+}
+
+func (rar *RateAgreementRule) HasRateMatrix() bool {
+	return rar.RateMatrixID != nil && !rar.RateMatrixID.IsNil()
+}
+
+// validatePricing insists on exactly one pricing method. A rule naming both a
+// formula template and a matrix leaves the engine to guess, and a rule naming
+// neither prices at nothing. A matrix rated rule's rates live in the cells, so
+// a rate or breaks written on it would sit there looking as though they
+// applied.
 func (rar *RateAgreementRule) validatePricing(multiErr *errortypes.MultiError) {
-	rar.validateRequiredPricingInput(multiErr)
-	rar.validateUnusedPricingInput(multiErr)
+	hasFormula := rar.HasFormulaTemplate()
+	hasMatrix := rar.HasRateMatrix()
 
-	if rar.Rate.Valid && rar.Rate.Decimal.IsNegative() {
-		multiErr.Add("rate", errortypes.ErrInvalid, "Rate cannot be negative")
-	}
-}
-
-// validateRequiredPricingInput checks that the basis has the input it reads.
-func (rar *RateAgreementRule) validateRequiredPricingInput(
-	multiErr *errortypes.MultiError,
-) {
-	switch rar.RatingBasis { //nolint:exhaustive // banded bases share the default arm
-	case RatingBasisMatrix:
-		if rar.RateMatrixID == nil || rar.RateMatrixID.IsNil() {
-			multiErr.Add("rateMatrixId", errortypes.ErrRequired, "Rate matrix is required")
-		}
-	case RatingBasisFormula:
-		if rar.FormulaTemplateID == nil || rar.FormulaTemplateID.IsNil() {
-			multiErr.Add(
-				"formulaTemplateId",
-				errortypes.ErrRequired,
-				"Formula template is required",
-			)
-		}
-	case RatingBasisPercent:
-		if rar.PercentBasis == "" {
-			multiErr.Add("percentBasis", errortypes.ErrRequired, "Percent basis is required")
-		}
-		if !rar.Rate.Valid {
-			multiErr.Add("rate", errortypes.ErrRequired, "Rate is required")
-		}
-	default:
-		// Banded rules carry their rates on the breaks instead of the rule.
-		if !rar.Rate.Valid && len(rar.Breaks) == 0 {
-			multiErr.Add("rate", errortypes.ErrRequired, "Rate is required")
-		}
-	}
-}
-
-// validateUnusedPricingInput rejects the inputs the chosen basis will never
-// read, which would otherwise sit on the rule looking as though they applied.
-func (rar *RateAgreementRule) validateUnusedPricingInput(
-	multiErr *errortypes.MultiError,
-) {
-	hasMatrix := rar.RateMatrixID != nil && !rar.RateMatrixID.IsNil()
-	hasFormula := rar.FormulaTemplateID != nil && !rar.FormulaTemplateID.IsNil()
-
-	if rar.RatingBasis != RatingBasisMatrix && hasMatrix {
+	switch {
+	case !hasFormula && !hasMatrix:
 		multiErr.Add(
-			"rateMatrixId",
-			errortypes.ErrInvalid,
-			"A rate matrix only applies to a matrix rated rule",
+			"formulaTemplateId",
+			errortypes.ErrRequired,
+			"A rule prices by a formula template or a rate matrix",
 		)
-	}
-
-	if rar.RatingBasis != RatingBasisFormula && hasFormula {
+	case hasFormula && hasMatrix:
 		multiErr.Add(
 			"formulaTemplateId",
 			errortypes.ErrInvalid,
-			"A formula template only applies to a formula rated rule",
+			"A rule prices by a formula template or a rate matrix, not both",
 		)
+	case hasMatrix:
+		if rar.Rate.Valid {
+			multiErr.Add(
+				"rate",
+				errortypes.ErrInvalid,
+				"A matrix rated rule reads its rates from the matrix cells",
+			)
+		}
+		if len(rar.Breaks) > 0 {
+			multiErr.Add(
+				"breaks",
+				errortypes.ErrInvalid,
+				"Weight breaks only apply to a formula rated rule",
+			)
+		}
 	}
 
-	if len(rar.Breaks) > 0 && !rar.RatingBasis.SupportsWeightBreaks() {
-		multiErr.Add(
-			"breaks",
-			errortypes.ErrInvalid,
-			"Weight breaks only apply to a hundredweight or flat rated rule",
-		)
+	if rar.Rate.Valid && rar.Rate.Decimal.IsNegative() {
+		multiErr.Add("rate", errortypes.ErrInvalid, "Rate cannot be negative")
 	}
 }
 

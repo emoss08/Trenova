@@ -5173,7 +5173,7 @@ export type RateAgreementRowFieldsFragment = { id: string, businessUnitId: strin
 
 export type RateZoneRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateZoneRowFieldsFragment' };
 
-export type RateMatrixRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: string, valueKind: string, currency: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateMatrixRowFieldsFragment' };
+export type RateMatrixRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: string, formulaTemplateId: string, formulaTemplateName: string, currency: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateMatrixRowFieldsFragment' };
 
 export type RateQuoteRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, shipmentId: string | null, partyType: RateAgreementPartyType, partyId: string, purpose: RateQuotePurpose, outcome: RateQuoteOutcome, rateAgreementId: string | null, rateAgreementRuleId: string | null, formulaTemplateId: string | null, specificityScore: number, currency: string, billingCurrency: string, linehaulAmount: string, totalAmount: string, billingAmount: string, foregoneAmount: string | null, overrideReason: string, asOf: number, ratedAt: number, ratedById: string | null, engineVersion: string, createdAt: number } & { ' $fragmentName'?: 'RateQuoteRowFieldsFragment' };
 
@@ -8216,7 +8216,8 @@ export const RateMatrixRowFieldsFragmentDoc = new TypedDocumentString(`
   name
   description
   status
-  valueKind
+  formulaTemplateId
+  formulaTemplateName
   currency
   version
   createdAt
@@ -18151,12 +18152,13 @@ fragment RateMatrixRowFields on RateMatrix {
   name
   description
   status
-  valueKind
+  formulaTemplateId
+  formulaTemplateName
   currency
   version
   createdAt
   updatedAt
-}`, {"hash":"sha256:d6233ff4478b91c9b28cbd6c844e05fc535c6bb9bf0ab723ab7304d5c950d5f8"}) as unknown as TypedDocumentString<RateMatrixTableQuery, RateMatrixTableQueryVariables>;
+}`, {"hash":"sha256:c569db5982efa83831c0dc805451065fb475bcec3178d3ace366a852c610fe93"}) as unknown as TypedDocumentString<RateMatrixTableQuery, RateMatrixTableQueryVariables>;
 export const RateQuoteTableDocument = new TypedDocumentString(`
     query RateQuoteTable($input: DataTableConnectionInput!) {
   rateQuotes(input: $input) {

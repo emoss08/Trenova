@@ -37,6 +37,7 @@ type stagedBatch struct {
 func stage(
 	sheet *pkgrateimport.Sheet,
 	existing []*rateagreement.RateAgreementRule,
+	templates pkgrateimport.TemplateResolver,
 ) (*stagedBatch, error) {
 	mapping, unmapped := pkgrateimport.GuessMapping(sheet.Headers)
 
@@ -60,7 +61,7 @@ func stage(
 	incoming := make([]*rateagreement.RateAgreementRule, 0, len(sheet.Rows))
 
 	for index, cells := range sheet.Rows {
-		rule, err := pkgrateimport.ParseRow(mapping, cells)
+		rule, err := pkgrateimport.ParseRow(mapping, cells, templates)
 
 		if errors.Is(err, pkgrateimport.ErrBlankRow) {
 			// A blank row is padding, not a failure. Staging it would report a

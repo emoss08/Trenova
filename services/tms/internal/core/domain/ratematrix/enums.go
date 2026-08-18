@@ -10,41 +10,6 @@ package ratematrix
 // fifth axis is a sign the tariff wants to be two matrices.
 const MaxDimensions = 4
 
-// ValueKind says what a cell's number means, which is what tells the engine how
-// to turn it into money.
-type ValueKind string
-
-const (
-	ValueKindFlatRate    = ValueKind("FlatRate")
-	ValueKindPerMile     = ValueKind("PerMile")
-	ValueKindPerCwt      = ValueKind("PerCwt")
-	ValueKindPerPiece    = ValueKind("PerPiece")
-	ValueKindPerStop     = ValueKind("PerStop")
-	ValueKindPercent     = ValueKind("Percent")
-	ValueKindDiscount    = ValueKind("Discount")
-	ValueKindMinimumOnly = ValueKind("MinimumOnly")
-)
-
-func (vk ValueKind) String() string {
-	return string(vk)
-}
-
-func (vk ValueKind) IsValid() bool {
-	switch vk {
-	case ValueKindFlatRate,
-		ValueKindPerMile,
-		ValueKindPerCwt,
-		ValueKindPerPiece,
-		ValueKindPerStop,
-		ValueKindPercent,
-		ValueKindDiscount,
-		ValueKindMinimumOnly:
-		return true
-	default:
-		return false
-	}
-}
-
 // DimensionKind names what one axis of a matrix varies by.
 type DimensionKind string
 

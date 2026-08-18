@@ -15,10 +15,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func perMileRule(
+func formulaRule(
 	originType, destinationType rategeo.ScopeType,
 	originValue, destinationValue string,
 ) *rateagreement.RateAgreementRule {
+	templateID := pulid.MustNew("ft_")
+
 	return &rateagreement.RateAgreementRule{
 		ID:                    pulid.MustNew("ragr_"),
 		Status:                rateagreement.RuleStatusActive,
@@ -27,7 +29,7 @@ func perMileRule(
 		OriginScopeValue:      originValue,
 		DestinationScopeType:  destinationType,
 		DestinationScopeValue: destinationValue,
-		RatingBasis:           rateagreement.RatingBasisPerMile,
+		FormulaTemplateID:     &templateID,
 		Rate:                  nullDec("2.15"),
 		EffectiveFrom:         1,
 	}
@@ -36,7 +38,7 @@ func perMileRule(
 func TestApplyLaneKeyIsSetOnValidate(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeZip3, rategeo.ScopeTypeState, "60601", "ust_ga")
+	rule := formulaRule(rategeo.ScopeTypeZip3, rategeo.ScopeTypeState, "60601", "ust_ga")
 
 	multiErr := errortypes.NewMultiError()
 	rule.Validate(multiErr)
@@ -53,7 +55,7 @@ func TestStoredLaneKeyIsReachableFromTheShipmentsCandidates(t *testing.T) {
 	t.Parallel()
 
 	stateID := pulid.MustNew("ust_")
-	rule := perMileRule(
+	rule := formulaRule(
 		rategeo.ScopeTypeZip3,
 		rategeo.ScopeTypeState,
 		"60601",
@@ -72,7 +74,7 @@ func TestStoredLaneKeyIsReachableFromTheShipmentsCandidates(t *testing.T) {
 func TestBidirectionalRuleIsReachableFromEitherEnd(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeZip3, rategeo.ScopeTypeZip3, "606", "303")
+	rule := formulaRule(rategeo.ScopeTypeZip3, rategeo.ScopeTypeZip3, "606", "303")
 	rule.Direction = rateagreement.DirectionBidirectional
 	rule.ApplyLaneKey()
 
@@ -86,7 +88,7 @@ func TestBidirectionalRuleIsReachableFromEitherEnd(t *testing.T) {
 func TestDirectionalRuleHasNoReverseKey(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeZip3, rategeo.ScopeTypeZip3, "606", "303")
+	rule := formulaRule(rategeo.ScopeTypeZip3, rategeo.ScopeTypeZip3, "606", "303")
 
 	_, ok := rule.ReverseLaneKey()
 
@@ -100,9 +102,9 @@ func TestDirectionalRuleHasNoReverseKey(t *testing.T) {
 func TestGeographyOutranksEveryConditionCombined(t *testing.T) {
 	t.Parallel()
 
-	narrowLane := perMileRule(rategeo.ScopeTypeZip5, rategeo.ScopeTypeZip5, "60601", "30301")
+	narrowLane := formulaRule(rategeo.ScopeTypeZip5, rategeo.ScopeTypeZip5, "60601", "30301")
 
-	loadedStateRule := perMileRule(
+	loadedStateRule := formulaRule(
 		rategeo.ScopeTypeState,
 		rategeo.ScopeTypeState,
 		"ust_il",
@@ -141,8 +143,8 @@ func TestConditionsCanNeverOutweighOneStepOfGeography(t *testing.T) {
 func TestConditionsBreakATieBetweenEquallyNarrowLanes(t *testing.T) {
 	t.Parallel()
 
-	plain := perMileRule(rategeo.ScopeTypeState, rategeo.ScopeTypeState, "ust_il", "ust_ga")
-	withCommodity := perMileRule(
+	plain := formulaRule(rategeo.ScopeTypeState, rategeo.ScopeTypeState, "ust_il", "ust_ga")
+	withCommodity := formulaRule(
 		rategeo.ScopeTypeState,
 		rategeo.ScopeTypeState,
 		"ust_il",
@@ -159,7 +161,7 @@ func TestEffectiveWindowIsHalfOpen(t *testing.T) {
 	t.Parallel()
 
 	end := int64(200)
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
+	rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
 	rule.EffectiveFrom = 100
 	rule.EffectiveTo = &end
 
@@ -172,7 +174,7 @@ func TestEffectiveWindowIsHalfOpen(t *testing.T) {
 func TestUnsetDaysOfWeekMeansEveryDay(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
+	rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
 
 	for weekday := range 7 {
 		assert.True(t, rule.MatchesDayOfWeek(weekday))
@@ -182,7 +184,7 @@ func TestUnsetDaysOfWeekMeansEveryDay(t *testing.T) {
 func TestDaysOfWeekBitmask(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
+	rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
 	// Monday through Friday.
 	rule.DaysOfWeek = 1<<1 | 1<<2 | 1<<3 | 1<<4 | 1<<5
 
@@ -214,7 +216,7 @@ func baseFacts() *rateagreement.MatchFacts {
 func TestAnUnrestrictedRuleMatchesEverything(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
+	rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
 
 	matched, reason := rule.Matches(baseFacts())
 
@@ -343,7 +345,7 @@ func TestMatchesReportsWhyARuleWasRejected(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
+			rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
 			rule.Status = rateagreement.RuleStatusActive
 			tt.mutate(rule)
 
@@ -367,7 +369,7 @@ func TestOneQualifyingCommodityIsEnough(t *testing.T) {
 	t.Parallel()
 
 	priced := pulid.MustNew("com_")
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
+	rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
 	rule.CommodityIDs = []pulid.ID{priced}
 
 	facts := baseFacts()
@@ -384,7 +386,7 @@ func TestOneQualifyingCommodityIsEnough(t *testing.T) {
 func TestWeightRangeBoundsAreInclusive(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
+	rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
 	rule.MinWeight = nullDec("5000")
 	rule.MaxWeight = nullDec("10000")
 
@@ -404,50 +406,133 @@ func TestWeightRangeBoundsAreInclusive(t *testing.T) {
 	}
 }
 
-func TestRuleRejectsAMissingRate(t *testing.T) {
+// A rule prices through exactly one of a formula template or a rate matrix. A
+// rule naming both leaves the engine to guess which one the contract meant,
+// and a rule naming neither prices at nothing.
+func TestRulePricesByExactlyOneMethod(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
-	rule.Rate = decimal.NullDecimal{}
+	matrixID := pulid.MustNew("rmx_")
 
-	multiErr := errortypes.NewMultiError()
-	rule.Validate(multiErr)
+	tests := []struct {
+		name    string
+		mutate  func(*rateagreement.RateAgreementRule)
+		wantErr bool
+	}{
+		{
+			name:    "a formula rule with a rate is valid",
+			mutate:  func(*rateagreement.RateAgreementRule) {},
+			wantErr: false,
+		},
+		{
+			name: "a formula rule with neither rate nor breaks is valid",
+			mutate: func(r *rateagreement.RateAgreementRule) {
+				r.Rate = decimal.NullDecimal{}
+			},
+			wantErr: false,
+		},
+		{
+			name: "a formula rule may carry weight breaks instead of a rate",
+			mutate: func(r *rateagreement.RateAgreementRule) {
+				r.Rate = decimal.NullDecimal{}
+				r.Breaks = []*rateagreement.RateAgreementRuleBreak{
+					weightBreak("0", "1000", "30"),
+					weightBreak("1000", "", "10"),
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name: "a rule with no pricing method is rejected",
+			mutate: func(r *rateagreement.RateAgreementRule) {
+				r.FormulaTemplateID = nil
+			},
+			wantErr: true,
+		},
+		{
+			name: "a rule naming both methods is rejected",
+			mutate: func(r *rateagreement.RateAgreementRule) {
+				r.RateMatrixID = &matrixID
+			},
+			wantErr: true,
+		},
+		{
+			name: "a matrix rule with only the matrix is valid",
+			mutate: func(r *rateagreement.RateAgreementRule) {
+				r.FormulaTemplateID = nil
+				r.Rate = decimal.NullDecimal{}
+				r.RateMatrixID = &matrixID
+			},
+			wantErr: false,
+		},
+		{
+			name: "a matrix rule may not carry a rate",
+			mutate: func(r *rateagreement.RateAgreementRule) {
+				r.FormulaTemplateID = nil
+				r.RateMatrixID = &matrixID
+			},
+			wantErr: true,
+		},
+		{
+			name: "a matrix rule may not carry weight breaks",
+			mutate: func(r *rateagreement.RateAgreementRule) {
+				r.FormulaTemplateID = nil
+				r.Rate = decimal.NullDecimal{}
+				r.RateMatrixID = &matrixID
+				r.Breaks = []*rateagreement.RateAgreementRuleBreak{
+					weightBreak("0", "", "30"),
+				}
+			},
+			wantErr: true,
+		},
+		{
+			name: "a negative rate is rejected",
+			mutate: func(r *rateagreement.RateAgreementRule) {
+				r.Rate = nullDec("-1")
+			},
+			wantErr: true,
+		},
+	}
 
-	assert.True(t, multiErr.HasErrors())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
+			tt.mutate(rule)
+
+			multiErr := errortypes.NewMultiError()
+			rule.Validate(multiErr)
+
+			if tt.wantErr {
+				assert.True(t, multiErr.HasErrors())
+			} else {
+				assert.False(t, multiErr.HasErrors(), "%v", multiErr)
+			}
+		})
+	}
 }
 
-func TestMatrixRuleRequiresAMatrix(t *testing.T) {
+func TestPricingMethodHelpersNameTheMethod(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
-	rule.RatingBasis = rateagreement.RatingBasisMatrix
-	rule.Rate = decimal.NullDecimal{}
+	rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
 
-	multiErr := errortypes.NewMultiError()
-	rule.Validate(multiErr)
+	assert.True(t, rule.HasFormulaTemplate())
+	assert.False(t, rule.HasRateMatrix())
 
-	assert.True(t, multiErr.HasErrors())
-}
+	matrixID := pulid.MustNew("rmx_")
+	rule.FormulaTemplateID = nil
+	rule.RateMatrixID = &matrixID
 
-// A rule carrying two pricing inputs leaves the engine to guess which one the
-// contract meant.
-func TestFormulaOnANonFormulaRuleIsRejected(t *testing.T) {
-	t.Parallel()
-
-	templateID := pulid.MustNew("ft_")
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
-	rule.FormulaTemplateID = &templateID
-
-	multiErr := errortypes.NewMultiError()
-	rule.Validate(multiErr)
-
-	assert.True(t, multiErr.HasErrors())
+	assert.False(t, rule.HasFormulaTemplate())
+	assert.True(t, rule.HasRateMatrix())
 }
 
 func TestRadiusLaneNeedsACentreAndADistance(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeRadius, rategeo.ScopeTypeAny, "", "")
+	rule := formulaRule(rategeo.ScopeTypeRadius, rategeo.ScopeTypeAny, "", "")
 
 	multiErr := errortypes.NewMultiError()
 	rule.Validate(multiErr)
@@ -472,8 +557,7 @@ func TestRadiusLaneNeedsACentreAndADistance(t *testing.T) {
 func TestWeightBreaksMustBeContiguous(t *testing.T) {
 	t.Parallel()
 
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
-	rule.RatingBasis = rateagreement.RatingBasisPerCwt
+	rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
 	rule.Rate = decimal.NullDecimal{}
 	rule.Breaks = []*rateagreement.RateAgreementRuleBreak{
 		weightBreak("0", "1000", "30"),
@@ -485,20 +569,6 @@ func TestWeightBreaksMustBeContiguous(t *testing.T) {
 	rule.Validate(multiErr)
 
 	assert.True(t, multiErr.HasErrors(), "a gap between breaks must be rejected")
-}
-
-func TestWeightBreaksOnAPerMileRuleAreRejected(t *testing.T) {
-	t.Parallel()
-
-	rule := perMileRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
-	rule.Breaks = []*rateagreement.RateAgreementRuleBreak{
-		weightBreak("0", "", "30"),
-	}
-
-	multiErr := errortypes.NewMultiError()
-	rule.Validate(multiErr)
-
-	assert.True(t, multiErr.HasErrors())
 }
 
 // The lane editor scores lanes as they are typed, before anything is saved, so

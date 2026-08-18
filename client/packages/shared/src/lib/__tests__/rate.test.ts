@@ -17,7 +17,7 @@ function lane(overrides: Partial<RateAgreementRule> = {}): RateAgreementRule {
     destinationScopeValue: "",
     destinationCity: "",
     direction: "Directional",
-    ratingBasis: "PerMile",
+    formulaTemplateId: "ft_per_mile",
     freightClassSource: "Commodity",
     allowDeficitRating: true,
     daysOfWeek: 0,

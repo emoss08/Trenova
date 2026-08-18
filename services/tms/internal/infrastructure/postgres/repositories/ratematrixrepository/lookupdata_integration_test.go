@@ -104,7 +104,6 @@ func insertLookupFixture(
 		Code:           fixture.code,
 		Name:           fixture.code,
 		Status:         fixture.status,
-		ValueKind:      ratematrix.ValueKindFlatRate,
 		Currency:       "USD",
 	}
 	_, err := db.NewInsert().Model(matrix).Exec(ctx)

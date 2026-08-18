@@ -1,7 +1,7 @@
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { rateMatrixValueKindChoices, statusChoices } from "@/lib/choices";
+import { statusChoices } from "@/lib/choices";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import type { RateMatrix } from "@trenova/shared/types/rate";
 
@@ -62,28 +62,19 @@ export function getColumns(): ColumnDef<RateMatrix>[] {
     },
     {
       // Without this the list is a set of grids of anonymous numbers. The same
-      // grid is a per-mile tariff or a discount table depending on this field,
-      // and nothing else on the row says which.
-      accessorKey: "valueKind",
+      // grid is a per-mile tariff or a flat table depending on which formula
+      // template prices it, and nothing else on the row says which.
+      accessorKey: "formulaTemplateName",
       header: "Rates are",
-      cell: ({ row }) => {
-        const choice = rateMatrixValueKindChoices.find(
-          (option) => option.value === row.original.valueKind,
-        );
-
-        return <span className="text-sm">{choice?.label ?? row.original.valueKind}</span>;
-      },
+      cell: ({ row }) => <span className="text-sm">{row.original.formulaTemplateName || "—"}</span>,
       size: 170,
       minSize: 140,
       maxSize: 210,
       meta: {
         label: "Rates are",
-        apiField: "valueKind",
-        filterable: true,
-        sortable: true,
-        filterType: "select",
-        filterOptions: rateMatrixValueKindChoices,
-        defaultFilterOperator: "eq",
+        apiField: "formulaTemplateId",
+        filterable: false,
+        sortable: false,
       },
     },
     {

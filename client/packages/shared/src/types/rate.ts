@@ -88,25 +88,6 @@ export type RateMatrixDimensionKind = z.infer<typeof rateMatrixDimensionKindSche
 export const rateMatrixMatchModeSchema = z.enum(["Exact", "Range"]);
 export type RateMatrixMatchMode = z.infer<typeof rateMatrixMatchModeSchema>;
 
-/**
- * What a cell's number means, which is what tells the engine how to spend it.
- *
- * The same grid of numbers is a per-mile tariff, a hundredweight tariff or a
- * discount table depending on this one field, so it is stated on the matrix
- * rather than inferred from the lane that reads it.
- */
-export const rateMatrixValueKindSchema = z.enum([
-  "FlatRate",
-  "PerMile",
-  "PerCwt",
-  "PerPiece",
-  "PerStop",
-  "Percent",
-  "Discount",
-  "MinimumOnly",
-]);
-export type RateMatrixValueKind = z.infer<typeof rateMatrixValueKindSchema>;
-
 export const rateMatrixRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
 
 export const rateMatrixDimensionSchema = z.object({
@@ -131,7 +112,17 @@ export const rateMatrixSchema = z.object({
   name: z.string({ error: "Name is required" }).min(1, { error: "Name is required" }).max(100),
   description: z.string().max(500).default(""),
   status: statusSchema.default("Active"),
-  valueKind: rateMatrixValueKindSchema.default("FlatRate"),
+  /**
+   * The formula template that says what a cell's number means. The same grid
+   * of numbers is a per-mile tariff or a flat table depending on which
+   * template prices it, so it is stated on the matrix rather than inferred
+   * from the lane that reads it.
+   */
+  formulaTemplateId: z
+    .string({ error: "Formula template is required" })
+    .min(1, { error: "Formula template is required" }),
+  /** Server-derived for list views; never sent back. */
+  formulaTemplateName: optionalStringSchema,
   currency: z.string().length(3).default("USD"),
   roundingMode: rateMatrixRoundingModeSchema.default("HalfUp"),
   roundingPrecision: z.number().int().min(0).max(6).default(2),
@@ -207,25 +198,6 @@ export type RateAgreementStatus = z.infer<typeof rateAgreementStatusSchema>;
 export const rateRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
 export type RateRoundingMode = z.infer<typeof rateRoundingModeSchema>;
 
-/** How a lane arrives at its linehaul. */
-export const ratingBasisSchema = z.enum([
-  "Flat",
-  "PerMile",
-  "PerCwt",
-  "PerPiece",
-  "PerStop",
-  "PerPallet",
-  "PerLinearFoot",
-  "PerHour",
-  "Percent",
-  "Matrix",
-  "Formula",
-]);
-export type RatingBasis = z.infer<typeof ratingBasisSchema>;
-
-export const ratePercentBasisSchema = z.enum(["Linehaul", "LinehaulPlusAccessorials", "SellTotal"]);
-export type RatePercentBasis = z.infer<typeof ratePercentBasisSchema>;
-
 export const rateDirectionSchema = z.enum(["Directional", "Bidirectional"]);
 export type RateDirection = z.infer<typeof rateDirectionSchema>;
 
@@ -300,11 +272,9 @@ export const rateAgreementRuleSchema = z
     hazmatOnly: z.boolean().default(false),
     tempControlOnly: z.boolean().default(false),
 
-    ratingBasis: ratingBasisSchema,
-    rate: decimalStringSchema,
-    rateMatrixId: z.string().nullish(),
     formulaTemplateId: z.string().nullish(),
-    percentBasis: ratePercentBasisSchema.nullish(),
+    rateMatrixId: z.string().nullish(),
+    rate: decimalStringSchema,
     currency: z.string().nullish(),
 
     freightClassSource: freightClassSourceSchema.default("Commodity"),
@@ -326,25 +296,22 @@ export const rateAgreementRuleSchema = z
 
     breaks: z.array(rateAgreementRuleBreakSchema).default([]),
   })
-  .refine((rule) => rule.ratingBasis !== "Matrix" || Boolean(rule.rateMatrixId), {
-    path: ["rateMatrixId"],
-    message: "A matrix rated lane needs a rate matrix",
-  })
-  .refine((rule) => rule.ratingBasis !== "Formula" || Boolean(rule.formulaTemplateId), {
+  .refine((rule) => Boolean(rule.formulaTemplateId) || Boolean(rule.rateMatrixId), {
     path: ["formulaTemplateId"],
-    message: "A formula rated lane needs a formula template",
+    message: "A lane prices by a formula template or a rate matrix",
   })
-  .refine(
-    (rule) =>
-      rule.ratingBasis === "Matrix" ||
-      rule.ratingBasis === "Formula" ||
-      rule.rate != null ||
-      (rule.breaks?.length ?? 0) > 0,
-    {
-      path: ["rate"],
-      message: "A rate is required unless the lane is banded, matrix or formula rated",
-    },
-  );
+  .refine((rule) => !(rule.formulaTemplateId && rule.rateMatrixId), {
+    path: ["formulaTemplateId"],
+    message: "A lane prices by a formula template or a rate matrix, not both",
+  })
+  .refine((rule) => !rule.rateMatrixId || rule.rate == null, {
+    path: ["rate"],
+    message: "A matrix rated lane reads its rates from the matrix cells",
+  })
+  .refine((rule) => !rule.rateMatrixId || (rule.breaks?.length ?? 0) === 0, {
+    path: ["breaks"],
+    message: "Weight breaks only apply to a formula rated lane",
+  });
 export type RateAgreementRule = z.infer<typeof rateAgreementRuleSchema>;
 
 export const rateAgreementAccessorialSchema = z.object({

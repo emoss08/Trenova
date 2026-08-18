@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/shopspring/decimal"
 )
@@ -61,9 +62,7 @@ func (s *Service) matrixCharge(
 		return decimal.Zero, err
 	}
 
-	amount := s.applyCellValue(rateCtx, matrix, match, trace)
-
-	return amount, nil
+	return s.applyCellValue(ctx, rateCtx, matrix, match, trace)
 }
 
 // buildAxes fills each declared axis from the shipment.
@@ -215,42 +214,31 @@ func equipmentKeys(rateCtx *RateContext) []string {
 	return keys
 }
 
-// applyCellValue turns a cell's number into money according to what the matrix
-// says the number means.
+// applyCellValue turns a cell's number into money by evaluating the matrix's
+// formula template with the cell's value bound as its base rate. What a cell
+// means — a per-mile rate, a flat amount — is whatever the matrix's template
+// does with it.
 func (s *Service) applyCellValue(
+	ctx context.Context,
 	rateCtx *RateContext,
 	matrix *ratematrix.RateMatrix,
 	match *ratematrix.Match,
 	trace *ratetypes.Trace,
-) decimal.Decimal {
+) (decimal.Decimal, error) {
 	cell := match.Cell
 
-	var (
-		amount   decimal.Decimal
-		quantity decimal.Decimal
-		unit     string
-	)
-
-	switch matrix.ValueKind {
-	case ratematrix.ValueKindPerMile:
-		quantity, unit = rateCtx.Distance, "mi"
-		amount = cell.Value.Mul(quantity)
-	case ratematrix.ValueKindPerCwt:
-		quantity, unit = rateCtx.Weight.Div(poundsPerCwtUnits), "cwt"
-		amount = cell.Value.Mul(quantity)
-	case ratematrix.ValueKindPerPiece:
-		quantity, unit = decimal.NewFromInt(rateCtx.Pieces), "pieces"
-		amount = cell.Value.Mul(quantity)
-	case ratematrix.ValueKindPerStop:
-		quantity, unit = decimal.NewFromInt(int64(rateCtx.Stops)), "stops"
-		amount = cell.Value.Mul(quantity)
-	case ratematrix.ValueKindFlatRate, ratematrix.ValueKindMinimumOnly,
-		ratematrix.ValueKindPercent, ratematrix.ValueKindDiscount:
-		amount = cell.Value
-	default:
-		amount = cell.Value
+	resp, err := s.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
+		TemplateID: matrix.FormulaTemplateID,
+		Entity:     rateCtx.Entity,
+		Overrides:  map[string]any{"baseRate": cell.Value.InexactFloat64()},
+		TenantInfo: rateCtx.TenantInfo,
+		RatingDate: rateCtx.AsOf,
+	})
+	if err != nil {
+		return decimal.Zero, err
 	}
 
+	amount := resp.Amount
 	if cell.MinCharge.Valid && amount.LessThan(cell.MinCharge.Decimal) {
 		trace.Guardrails = append(trace.Guardrails, ratetypes.Guardrail{
 			Kind:    ratetypes.ComponentKindMinimumCharge,
@@ -262,32 +250,29 @@ func (s *Service) applyCellValue(
 		amount = cell.MinCharge.Decimal
 	}
 
-	basis := cell.Value.String()
-	if unit != "" {
-		basis = quantity.String() + " " + unit + " @ " + cell.Value.String()
+	// The keys actually read are recorded, not just the cell id, so a reader
+	// can see which zone and which break the rate came from without going and
+	// looking the cell up.
+	detail := map[string]any{
+		"cellId":          cell.ID.String(),
+		"matchedKeys":     nonEmpty(match.MatchedKeys[:]),
+		"formulaTemplate": resp.FormulaTemplateName,
 	}
+	recordFormulaResponse(resp, detail, trace)
 
 	trace.AddComponent(&ratetypes.Component{
 		Kind:       ratetypes.ComponentKindLinehaul,
 		Label:      linehaulLabel,
-		Basis:      basis,
-		Quantity:   decimal.NewNullDecimal(quantity),
+		Basis:      resp.FormulaTemplateName + " @ " + cell.Value.String(),
 		Rate:       decimal.NewNullDecimal(cell.Value),
 		Amount:     amount,
 		Source:     ratetypes.ComponentSourceRateMatrix,
 		SourceID:   matrix.ID.String(),
 		SourceName: matrix.Name,
-		// The keys actually read are recorded, not just the cell id, so a
-		// reader can see which zone and which break the rate came from without
-		// going and looking the cell up.
-		Detail: map[string]any{
-			"cellId":      cell.ID.String(),
-			"matchedKeys": nonEmpty(match.MatchedKeys[:]),
-			"valueKind":   matrix.ValueKind.String(),
-		},
+		Detail:     detail,
 	})
 
-	return amount
+	return amount, nil
 }
 
 func nonEmpty(values []string) []string {

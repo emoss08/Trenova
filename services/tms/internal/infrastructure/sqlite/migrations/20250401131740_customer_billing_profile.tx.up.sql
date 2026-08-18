@@ -59,7 +59,6 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
     CONSTRAINT "ck_customer_billing_profiles_billing_cycle_day_of_week" CHECK ("billing_cycle_day_of_week" IS NULL OR ("billing_cycle_day_of_week" >= 0 AND "billing_cycle_day_of_week" <= 6)),
     CONSTRAINT "ck_customer_billing_profiles_invoice_copies" CHECK ("invoice_copies" >= 1),
     CONSTRAINT "ck_customer_billing_profiles_grace_period_days" CHECK ("grace_period_days" >= 0),
-    CONSTRAINT "ck_customer_billing_profiles_detention_free_minutes" CHECK ("detention_free_minutes" >= 0),
     CONSTRAINT "ck_customer_billing_profiles_billing_currency" CHECK (length("billing_currency") = 3)
 );
 

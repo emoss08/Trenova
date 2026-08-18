@@ -118,20 +118,26 @@ func rateMatrixToModel(entity *ratematrix.RateMatrix) *gqlmodel.RateMatrix {
 		return nil
 	}
 
-	return &gqlmodel.RateMatrix{
-		ID:             entity.ID.String(),
-		BusinessUnitID: entity.BusinessUnitID.String(),
-		OrganizationID: entity.OrganizationID.String(),
-		Code:           entity.Code,
-		Name:           entity.Name,
-		Description:    entity.Description,
-		Status:         string(entity.Status),
-		ValueKind:      string(entity.ValueKind),
-		Currency:       entity.Currency,
-		Version:        int(entity.Version),
-		CreatedAt:      int(entity.CreatedAt),
-		UpdatedAt:      int(entity.UpdatedAt),
+	model := &gqlmodel.RateMatrix{
+		ID:                entity.ID.String(),
+		BusinessUnitID:    entity.BusinessUnitID.String(),
+		OrganizationID:    entity.OrganizationID.String(),
+		Code:              entity.Code,
+		Name:              entity.Name,
+		Description:       entity.Description,
+		Status:            string(entity.Status),
+		FormulaTemplateID: entity.FormulaTemplateID.String(),
+		Currency:          entity.Currency,
+		Version:           int(entity.Version),
+		CreatedAt:         int(entity.CreatedAt),
+		UpdatedAt:         int(entity.UpdatedAt),
 	}
+
+	if entity.FormulaTemplate != nil {
+		model.FormulaTemplateName = entity.FormulaTemplate.Name
+	}
+
+	return model
 }
 
 func rateMatrixConnectionToModel(

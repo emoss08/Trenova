@@ -56,13 +56,7 @@ CREATE TABLE IF NOT EXISTS "accounting_controls"(
     CONSTRAINT "fk_accounting_controls_default_retained_earnings_account" FOREIGN KEY ("default_retained_earnings_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_accounting_controls_currency_gain_account" FOREIGN KEY ("currency_gain_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_accounting_controls_currency_loss_account" FOREIGN KEY ("currency_loss_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
-    CONSTRAINT "uq_accounting_controls_organization" UNIQUE ("organization_id"),
-    CONSTRAINT "ck_accounting_controls_reconciliation_threshold_positive" CHECK ("reconciliation_threshold" >= 0),
-    CONSTRAINT "ck_accounting_controls_currency_code_length" CHECK (length("default_currency_code") = 3),
-    CONSTRAINT "ck_accounting_controls_cash_revenue_coherence" CHECK ("accounting_method" != 'Cash' OR "revenue_recognition_method" = 'OnPayment'),
-    CONSTRAINT "ck_accounting_controls_cash_expense_coherence" CHECK ("accounting_method" NOT IN ('Cash', 'Hybrid') OR "expense_recognition_method" = 'OnPayment'),
-    CONSTRAINT "ck_accounting_controls_defer_revenue_coherence" CHECK ("accounting_method" != 'Cash' OR "defer_revenue_until_paid" = FALSE),
-    CONSTRAINT "ck_accounting_controls_accrue_expenses_coherence" CHECK ("accounting_method" NOT IN ('Cash', 'Hybrid') OR "accrue_expenses" = FALSE)
+    CONSTRAINT "uq_accounting_controls_organization" UNIQUE ("organization_id")
 );
 
 --bun:split

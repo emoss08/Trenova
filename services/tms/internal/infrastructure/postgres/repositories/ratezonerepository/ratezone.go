@@ -233,28 +233,6 @@ func (r *repository) ResolveMembership(
 	return zoneIDs, nil
 }
 
-// stampMembers re-seats the tenancy and parent on every member.
-//
-// None of those three are the caller's to supply: a payload that named a
-// different zone would move a member between zones as a side effect of editing
-// the one it arrived under.
-func stampMembers(entity *ratezone.RateZone, resetIDs bool) {
-	for _, member := range entity.Members {
-		if member == nil {
-			continue
-		}
-
-		if resetIDs {
-			member.ID = pulid.Nil
-		}
-
-		member.RateZoneID = entity.ID
-		member.OrganizationID = entity.OrganizationID
-		member.BusinessUnitID = entity.BusinessUnitID
-		member.ApplyMatchKey()
-	}
-}
-
 func (r *repository) insertMembers(ctx context.Context, entity *ratezone.RateZone) error {
 	if len(entity.Members) == 0 {
 		return nil

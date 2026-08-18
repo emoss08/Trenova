@@ -121,14 +121,10 @@ func (r *repository) ListResults(
 				Where(cols.RateSimulationID.Eq(), req.RateSimulationID)
 		})
 
-	// A targeted amendment leaves most shipments untouched, and a grid of
-	// unchanged rows buries the handful that moved.
 	if req.ChangedOnly {
 		q = q.Where(cols.Delta.NotEq(), 0)
 	}
 
-	// Largest increases first: the shipment that will produce the phone call is
-	// what somebody opened this for.
 	q = q.Order(cols.Delta.OrderDesc())
 
 	if req.Filter != nil {

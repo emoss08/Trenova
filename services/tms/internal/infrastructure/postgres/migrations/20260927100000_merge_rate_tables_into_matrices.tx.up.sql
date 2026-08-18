@@ -34,7 +34,7 @@ $$;
 INSERT INTO "rate_matrices"(
     "id", "business_unit_id", "organization_id",
     "code", "name", "description",
-    "value_kind", "currency", "status",
+    "currency", "status",
     "rounding_mode", "rounding_precision",
     "version", "created_at", "updated_at"
 )
@@ -45,7 +45,6 @@ SELECT
     rt.key,
     rt.name,
     rt.description,
-    'FlatRate',
     'USD',
     CASE WHEN rt.active THEN 'Active'::status_enum ELSE 'Inactive'::status_enum END,
     'HalfUp',

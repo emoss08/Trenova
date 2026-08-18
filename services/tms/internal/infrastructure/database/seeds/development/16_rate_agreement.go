@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
@@ -63,6 +64,7 @@ func NewRateAgreementSeed() *RateAgreementSeed {
 		seedhelpers.SeedShipment,
 		seedhelpers.SeedTestData,
 		seedhelpers.SeedFuelSurcharge,
+		seedhelpers.SeedFormulaTemplate,
 	)
 
 	return seed
@@ -125,6 +127,7 @@ type rateSeedRefs struct {
 	now        int64
 	zones      map[string]pulid.ID
 	states     map[string]pulid.ID
+	templates  map[string]pulid.ID
 	customer   *customer.Customer
 	accessorls map[string]pulid.ID
 	programID  *pulid.ID
@@ -190,6 +193,7 @@ func (s *RateAgreementSeed) loadRefs(
 		now:        timeutils.NowUnix(),
 		zones:      make(map[string]pulid.ID),
 		states:     make(map[string]pulid.ID),
+		templates:  make(map[string]pulid.ID),
 		accessorls: make(map[string]pulid.ID),
 	}
 
@@ -208,6 +212,22 @@ func (s *RateAgreementSeed) loadRefs(
 
 	for _, state := range states {
 		refs.states[state.Abbreviation] = state.ID
+	}
+
+	var templates []formulatemplate.FormulaTemplate
+	if err := tx.NewSelect().
+		Model(&templates).
+		Column("id", "name").
+		Where("organization_id = ?", org.ID).
+		Where("business_unit_id = ?", org.BusinessUnitID).
+		Where("status = ?", formulatemplate.StatusActive).
+		Where("type = ?", formulatemplate.TemplateTypeFreightCharge).
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("load formula templates: %w", err)
+	}
+
+	for _, template := range templates {
+		refs.templates[template.Name] = template.ID
 	}
 
 	cust := new(customer.Customer)
@@ -399,18 +419,26 @@ func (s *RateAgreementSeed) createMatrix(
 	sc *seedhelpers.SeedContext,
 	refs *rateSeedRefs,
 ) error {
+	perMileID, ok := refs.templates[formulatemplate.StandardPerMile]
+	if !ok {
+		return fmt.Errorf(
+			"the %q formula template is not seeded; the zone matrix cannot say what its cells mean",
+			formulatemplate.StandardPerMile,
+		)
+	}
+
 	matrix := &ratematrix.RateMatrix{
-		ID:             pulid.MustNew("rmx_"),
-		OrganizationID: refs.orgID,
-		BusinessUnitID: refs.buID,
-		Code:           rateMatrixCode,
-		Name:           "Zone to Zone Truckload",
-		Description:    "Per-mile linehaul by origin region and destination region",
-		Status:         domaintypes.StatusActive,
-		Currency:       "USD",
-		ValueKind:      ratematrix.ValueKindPerMile,
-		CreatedAt:      refs.now,
-		UpdatedAt:      refs.now,
+		ID:                pulid.MustNew("rmx_"),
+		OrganizationID:    refs.orgID,
+		BusinessUnitID:    refs.buID,
+		Code:              rateMatrixCode,
+		Name:              "Zone to Zone Truckload",
+		Description:       "Per-mile linehaul by origin region and destination region",
+		Status:            domaintypes.StatusActive,
+		Currency:          "USD",
+		FormulaTemplateID: perMileID,
+		CreatedAt:         refs.now,
+		UpdatedAt:         refs.now,
 	}
 
 	if _, err := tx.NewInsert().Model(matrix).Exec(ctx); err != nil {
@@ -500,11 +528,15 @@ type laneDef struct {
 	destType    rategeo.ScopeType
 	destValue   string
 	destCity    string
-	basis       rateagreement.RatingBasis
-	rate        string
-	minCharge   string
-	minMiles    string
-	priority    int16
+	// template names the standard formula template that prices the lane, and
+	// useMatrix points the lane at the zone matrix instead — a lane carries
+	// exactly one of the two.
+	template  string
+	useMatrix bool
+	rate      string
+	minCharge string
+	minMiles  string
+	priority  int16
 }
 
 // zoneRef and stateRef mark a lane value that has to be resolved to an id once
@@ -540,7 +572,7 @@ func seededLanes() []resolvedLane {
 				originCity: "Dallas",
 				destType:   rategeo.ScopeTypeCityState,
 				destCity:   "Chicago",
-				basis:      rateagreement.RatingBasisPerMile,
+				template:   formulatemplate.StandardPerMile,
 				rate:       "2.55",
 				minCharge:  "850.00",
 				minMiles:   "250",
@@ -555,7 +587,7 @@ func seededLanes() []resolvedLane {
 				label:      "Southwest to Midwest, zone pair",
 				originType: rategeo.ScopeTypeZone,
 				destType:   rategeo.ScopeTypeZone,
-				basis:      rateagreement.RatingBasisMatrix,
+				useMatrix:  true,
 				minCharge:  "750.00",
 			},
 			originSrc:   scopeSourceZone,
@@ -568,7 +600,7 @@ func seededLanes() []resolvedLane {
 				label:      "West Coast to Midwest, zone pair",
 				originType: rategeo.ScopeTypeZone,
 				destType:   rategeo.ScopeTypeZone,
-				basis:      rateagreement.RatingBasisMatrix,
+				useMatrix:  true,
 				minCharge:  "950.00",
 			},
 			originSrc:   scopeSourceZone,
@@ -581,7 +613,7 @@ func seededLanes() []resolvedLane {
 				label:      "Texas to Illinois, state pair",
 				originType: rategeo.ScopeTypeState,
 				destType:   rategeo.ScopeTypeState,
-				basis:      rateagreement.RatingBasisPerMile,
+				template:   formulatemplate.StandardPerMile,
 				rate:       "2.40",
 				minCharge:  "800.00",
 			},
@@ -595,7 +627,7 @@ func seededLanes() []resolvedLane {
 				label:      "Anywhere to anywhere, contract floor",
 				originType: rategeo.ScopeTypeAny,
 				destType:   rategeo.ScopeTypeAny,
-				basis:      rateagreement.RatingBasisPerMile,
+				template:   formulatemplate.StandardPerMile,
 				rate:       "2.10",
 				minCharge:  "600.00",
 				priority:   -10,
@@ -748,7 +780,6 @@ func (s *RateAgreementSeed) buildRule(
 		DestinationScopeValue: destValue,
 		DestinationCity:       lane.def.destCity,
 		Direction:             rateagreement.DirectionDirectional,
-		RatingBasis:           lane.def.basis,
 		Priority:              lane.def.priority,
 		EffectiveFrom:         rateSeedEffectiveFrom,
 		CreatedAt:             refs.now,
@@ -769,9 +800,15 @@ func (s *RateAgreementSeed) buildRule(
 		)
 	}
 
-	if lane.def.basis == rateagreement.RatingBasisMatrix {
+	if lane.def.useMatrix {
 		matrixID := refs.matrixID
 		rule.RateMatrixID = &matrixID
+	} else {
+		templateID, ok := refs.templates[lane.def.template]
+		if !ok {
+			return nil, false
+		}
+		rule.FormulaTemplateID = &templateID
 	}
 
 	// The lane key and specificity are what the database indexes and orders by,

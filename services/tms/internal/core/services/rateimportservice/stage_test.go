@@ -3,6 +3,7 @@ package rateimportservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,13 +20,30 @@ func sheet(rows ...[]string) *pkgrateimport.Sheet {
 	}
 }
 
+// standardTemplates stands in for the organization's seeded formula templates,
+// which is what staging resolves a sheet's rate types against. Existing rules
+// price through the same per-mile template, so a lane the sheet restates
+// identically compares as unchanged.
+var standardTemplates = map[string]pulid.ID{
+	formulatemplate.StandardFlatRate: pulid.MustNew("ft_"),
+	formulatemplate.StandardPerMile:  pulid.MustNew("ft_"),
+}
+
+func resolveTemplate(name string) (pulid.ID, bool) {
+	id, ok := standardTemplates[name]
+
+	return id, ok
+}
+
 func existingRule(laneKey, rate string) *rateagreement.RateAgreementRule {
+	templateID := standardTemplates[formulatemplate.StandardPerMile]
+
 	return &rateagreement.RateAgreementRule{
-		ID:          pulid.MustNew("ragr_"),
-		LaneKey:     laneKey,
-		Label:       laneKey,
-		RatingBasis: rateagreement.RatingBasisPerMile,
-		Rate:        decimal.NewNullDecimal(decimal.RequireFromString(rate)),
+		ID:                pulid.MustNew("ragr_"),
+		LaneKey:           laneKey,
+		Label:             laneKey,
+		FormulaTemplateID: &templateID,
+		Rate:              decimal.NewNullDecimal(decimal.RequireFromString(rate)),
 	}
 }
 
@@ -39,7 +57,7 @@ func TestStage_ReadsEveryRowAndKeepsTheOnesThatFailed(t *testing.T) {
 		[]string{"IL", "GA", "PerMile", "2.35"},
 		[]string{"TX", "CA", "per furlong", "1.90"},
 		[]string{"OH", "PA", "PerMile", "2.00"},
-	), nil)
+	), nil, resolveTemplate)
 
 	require.NoError(t, err)
 	require.Len(t, staged.Rows, 3)
@@ -57,7 +75,7 @@ func TestStage_NumbersRowsAsTheyAppearInTheFile(t *testing.T) {
 	staged, err := stage(sheet(
 		[]string{"IL", "GA", "PerMile", "2.35"},
 		[]string{"TX", "CA", "PerMile", "1.90"},
-	), nil)
+	), nil, resolveTemplate)
 
 	require.NoError(t, err)
 	assert.Equal(t, 2, staged.Rows[0].RowNumber)
@@ -73,6 +91,7 @@ func TestStage_AFailedRowDoesNotLookLikeARemoval(t *testing.T) {
 	staged, err := stage(
 		sheet([]string{"IL", "GA", "per furlong", "2.35"}),
 		[]*rateagreement.RateAgreementRule{existingRule("ST:IL>ST:GA", "2.10")},
+		resolveTemplate,
 	)
 
 	require.NoError(t, err)
@@ -92,6 +111,7 @@ func TestStage_DiffsWhatReadAgainstTheContract(t *testing.T) {
 	staged, err := stage(
 		sheet([]string{"IL", "GA", "PerMile", "2.35"}),
 		[]*rateagreement.RateAgreementRule{existingRule("ST:IL>ST:GA", "2.10")},
+		resolveTemplate,
 	)
 
 	require.NoError(t, err)
@@ -111,7 +131,7 @@ func TestStage_ASheetWithNoUsableMappingIsRefusedUpFront(t *testing.T) {
 		FirstDataRow: 2,
 	}
 
-	_, err := stage(unusable, nil)
+	_, err := stage(unusable, nil, resolveTemplate)
 
 	require.Error(t, err)
 }
@@ -128,7 +148,7 @@ func TestStage_ReportsTheColumnsItReadNothingFrom(t *testing.T) {
 		FirstDataRow: 2,
 	}
 
-	staged, err := stage(withExtra, nil)
+	staged, err := stage(withExtra, nil, resolveTemplate)
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"Sales Rep"}, staged.UnmappedHeaders)
@@ -142,7 +162,7 @@ func TestStage_BlankRowsAreNotStagedAtAll(t *testing.T) {
 	staged, err := stage(sheet(
 		[]string{"IL", "GA", "PerMile", "2.35"},
 		[]string{"", "", "", ""},
-	), nil)
+	), nil, resolveTemplate)
 
 	require.NoError(t, err)
 	assert.Len(t, staged.Rows, 1)
@@ -165,6 +185,7 @@ func TestCommitPlan_SupersedesOnlyWhatTheDiffSaidWouldChange(t *testing.T) {
 			[]string{"OH", "PA", "PerMile", "2.00"},
 		),
 		[]*rateagreement.RateAgreementRule{changed, untouched},
+		resolveTemplate,
 	)
 	require.NoError(t, err)
 
@@ -185,6 +206,7 @@ func TestCommitPlan_WithdrawsTheLanesTheSheetDropped(t *testing.T) {
 	staged, err := stage(
 		sheet([]string{"IL", "GA", "PerMile", "2.35"}),
 		[]*rateagreement.RateAgreementRule{dropped},
+		resolveTemplate,
 	)
 	require.NoError(t, err)
 
@@ -201,7 +223,7 @@ func TestCommitPlan_CarriesOnlyTheRowsThatRead(t *testing.T) {
 	staged, err := stage(sheet(
 		[]string{"IL", "GA", "PerMile", "2.35"},
 		[]string{"TX", "CA", "per furlong", "1.90"},
-	), nil)
+	), nil, resolveTemplate)
 	require.NoError(t, err)
 
 	plan := commitPlan(staged)
@@ -218,7 +240,7 @@ func TestCommitPlan_DropsADuplicatedLaneRatherThanWritingBoth(t *testing.T) {
 	staged, err := stage(sheet(
 		[]string{"IL", "GA", "PerMile", "2.35"},
 		[]string{"IL", "GA", "PerMile", "2.60"},
-	), nil)
+	), nil, resolveTemplate)
 	require.NoError(t, err)
 
 	plan := commitPlan(staged)
@@ -232,6 +254,7 @@ func TestStagedBatch_KnowsWhetherCommittingWouldDoAnything(t *testing.T) {
 	staged, err := stage(
 		sheet([]string{"IL", "GA", "PerMile", "2.10"}),
 		[]*rateagreement.RateAgreementRule{existingRule("ST:IL>ST:GA", "2.10")},
+		resolveTemplate,
 	)
 
 	require.NoError(t, err)

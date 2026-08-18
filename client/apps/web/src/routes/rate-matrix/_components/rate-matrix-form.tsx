@@ -1,13 +1,9 @@
+import { FormulaTemplateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import {
-  currencyChoices,
-  rateMatrixValueKindChoices,
-  rateRoundingModeChoices,
-  statusChoices,
-} from "@/lib/choices";
+import { currencyChoices, rateRoundingModeChoices, statusChoices } from "@/lib/choices";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { RateMatrix } from "@trenova/shared/types/rate";
 import { useFormContext } from "react-hook-form";
@@ -72,14 +68,13 @@ export function RateMatrixForm() {
       >
         <FormGroup cols={2}>
           <FormControl>
-            <SelectField
+            <FormulaTemplateAutocompleteField<RateMatrix>
               control={control}
               rules={{ required: true }}
-              name="valueKind"
-              label="Value Kind"
-              placeholder="Select value kind"
-              description="What each number in the grid means — the same grid is a per-mile tariff or a discount table depending on this"
-              options={rateMatrixValueKindChoices}
+              name="formulaTemplateId"
+              label="Rating Method"
+              placeholder="Select rating method"
+              description="The formula template that says what each number in the grid means — the same grid is a per-mile tariff or a flat table depending on which template prices it"
             />
           </FormControl>
           <FormControl>

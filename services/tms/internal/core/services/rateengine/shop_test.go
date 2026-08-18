@@ -29,7 +29,7 @@ func buyRule(carrierID pulid.ID, amount string) *rateagreement.RateAgreementRule
 	rule := perMileRule("1", 100)
 	rule.PartyType = rateagreement.PartyTypeCarrier
 	rule.PartyID = carrierID
-	rule.RatingBasis = rateagreement.RatingBasisFlat
+	rule.FormulaTemplateID = &flatTemplateID
 	rule.Rate = decimal.NewNullDecimal(decimal.RequireFromString(amount))
 	rule.Agreement.PartyType = rateagreement.PartyTypeCarrier
 
@@ -55,6 +55,8 @@ func expectBuyRules(d *deps, byCarrier map[pulid.ID]*rateagreement.RateAgreement
 
 			return &repositories.ResolveRateRulesResult{}, nil
 		})
+
+	expectTemplates(d)
 }
 
 func expectGuide(d *deps, entries ...*tender.RoutingGuideEntry) *tender.RoutingGuide {
@@ -195,6 +197,29 @@ func TestShop_ReportsMarginAgainstTheSellPrice(t *testing.T) {
 		"margin was %s", result.Options[0].Margin.Amount)
 	assert.True(t, result.Options[0].Margin.Percent.Equal(decimal.NewFromInt(30)),
 		"percent was %s", result.Options[0].Margin.Percent)
+}
+
+// A carrier agreement written as a share of what the customer pays needs the
+// sell total in scope, so the buy side binds it into the template alongside the
+// rule's own rate.
+func TestShop_BindsTheSellTotalIntoTheCarriersTemplate(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+	expectGuide(d, guideEntry(cheapCarrier, 1, 900))
+	expectBuyRules(d, map[pulid.ID]*rateagreement.RateAgreementRule{
+		cheapCarrier: buyRule(cheapCarrier, "1400"),
+	})
+
+	_, err := d.svc.Shop(t.Context(), shopRequest(services.ShopStrategyLeastCost))
+
+	require.NoError(t, err)
+	require.Len(t, d.calcRequests, 1)
+
+	req := d.calcRequests[0]
+	assert.Equal(t, flatTemplateID, req.TemplateID)
+	assert.Equal(t, 1400.0, req.Overrides["baseRate"])
+	assert.Equal(t, 2000.0, req.Overrides["sellTotal"])
 }
 
 // A carrier no contract covers is not an error and must not take the shopping

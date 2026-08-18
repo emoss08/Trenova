@@ -134,6 +134,8 @@ func (e *Engine) Evaluate(
 		return nil, errors.NewSchemaError(req.Template.SchemaID, "build environment", err)
 	}
 
+	mergeVariables(env, req.Overrides)
+
 	e.applyVariableDefaults(req.Template, env)
 
 	result, err := e.evaluateProgram(ctx, req.Template.Expression, env, req.Lookup, resolveFailures)

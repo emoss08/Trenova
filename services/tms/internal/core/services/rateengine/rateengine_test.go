@@ -2,11 +2,13 @@ package rateengine
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
+	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
@@ -36,6 +38,11 @@ type deps struct {
 	exchange   *mocks.MockExchangeRateService
 	guides     *stubRoutingGuides
 	svc        *Service
+
+	// calcRequests records every request the engine handed the formula
+	// calculator, so a test can assert what was bound in rather than only what
+	// came out.
+	calcRequests []*formulatemplatetypes.CalculateRequest
 }
 
 // stubRoutingGuides stands in for the routing guide repository.
@@ -100,6 +107,77 @@ var (
 	buID   = pulid.MustNew("bu_")
 	custID = pulid.MustNew("cus_")
 )
+
+// The stub template ids are fixed rather than minted, because they end up in
+// the trace as component source ids and the golden file has to see the same
+// bytes on every run.
+var (
+	perMileTemplateID = pulid.ID("ft_per_mile_stub")
+	flatTemplateID    = pulid.ID("ft_flat_rate_stub")
+	perCwtTemplateID  = pulid.ID("ft_per_cwt_stub")
+)
+
+// testDistance is the mileage testShipment carries, which the per-mile stub
+// template multiplies the bound base rate by.
+var testDistance = decimal.NewFromInt(720)
+
+// expectTemplates stands in for the formula engine the way the seeded
+// templates behave: the template names the arithmetic, and the engine's
+// Overrides carry the numbers bound into it.
+func expectTemplates(d *deps) {
+	d.formula.EXPECT().Calculate(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			req *formulatemplatetypes.CalculateRequest,
+		) (*formulatemplatetypes.CalculateResponse, error) {
+			d.calcRequests = append(d.calcRequests, req)
+
+			return stubTemplateResponse(req)
+		}).Maybe()
+}
+
+func stubTemplateResponse(
+	req *formulatemplatetypes.CalculateRequest,
+) (*formulatemplatetypes.CalculateResponse, error) {
+	baseRate := overrideDecimal(req.Overrides, "baseRate")
+
+	switch req.TemplateID {
+	case perMileTemplateID:
+		return &formulatemplatetypes.CalculateResponse{
+			Amount:              baseRate.Mul(testDistance),
+			FormulaTemplateID:   perMileTemplateID.String(),
+			FormulaTemplateName: "Per Mile",
+			Expression:          "baseRate * totalDistance",
+		}, nil
+	case flatTemplateID:
+		return &formulatemplatetypes.CalculateResponse{
+			Amount:              baseRate,
+			FormulaTemplateID:   flatTemplateID.String(),
+			FormulaTemplateName: "Flat Rate",
+			Expression:          "baseRate",
+		}, nil
+	case perCwtTemplateID:
+		weight := overrideDecimal(req.Overrides, "totalWeight")
+
+		return &formulatemplatetypes.CalculateResponse{
+			Amount:              baseRate.Mul(weight.Div(decimal.NewFromInt(100))),
+			FormulaTemplateID:   perCwtTemplateID.String(),
+			FormulaTemplateName: "Per CWT",
+			Expression:          "baseRate * (totalWeight / 100)",
+		}, nil
+	default:
+		return nil, fmt.Errorf("no stub template for %s", req.TemplateID)
+	}
+}
+
+func overrideDecimal(overrides map[string]any, key string) decimal.Decimal {
+	value, ok := overrides[key].(float64)
+	if !ok {
+		return decimal.Zero
+	}
+
+	return decimal.NewFromFloat(value)
+}
 
 func tenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: orgID, BuID: buID}
@@ -167,7 +245,7 @@ func perMileRule(rate string, specificity int32) *rateagreement.RateAgreementRul
 		Direction:            rateagreement.DirectionDirectional,
 		OriginScopeType:      rategeo.ScopeTypeAny,
 		DestinationScopeType: rategeo.ScopeTypeAny,
-		RatingBasis:          rateagreement.RatingBasisPerMile,
+		FormulaTemplateID:    &perMileTemplateID,
 		Rate:                 decimal.NewNullDecimal(decimal.RequireFromString(rate)),
 		SpecificityScore:     specificity,
 		EffectiveFrom:        1,
@@ -198,6 +276,10 @@ func expectRules(d *deps, rules ...*rateagreement.RateAgreementRule) {
 			Rules: rules,
 			Total: len(rules),
 		}, nil).Once()
+
+	if len(rules) > 0 {
+		expectTemplates(d)
+	}
 }
 
 func TestPerMileRatePricesDistance(t *testing.T) {
@@ -466,4 +548,318 @@ func TestUnpersistedRatingNeverWritesAQuote(t *testing.T) {
 	require.NotNil(t, result.Quote)
 	assert.Equal(t, ratequote.PurposeWhatIf, result.Quote.Purpose)
 	d.quotes.AssertNotCalled(t, "Record", mock.Anything, mock.Anything)
+}
+
+// The rule's own rate is not arithmetic the engine performs any more; it is a
+// number bound into the template as its base rate. What has to be right is the
+// binding.
+func TestRuleRateBindsIntoTheTemplateAsItsBaseRate(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+	expectRules(d, perMileRule("2.15", 100))
+
+	result, err := d.svc.RateShipment(t.Context(), rateRequest(testShipment()))
+
+	require.NoError(t, err)
+	require.Len(t, d.calcRequests, 1)
+
+	req := d.calcRequests[0]
+	assert.Equal(t, perMileTemplateID, req.TemplateID)
+	assert.Equal(t, 2.15, req.Overrides["baseRate"])
+	assert.NotContains(t, req.Overrides, "totalWeight")
+	assert.NotContains(t, req.Overrides, "sellTotal")
+
+	trace := result.Quote.Trace
+	require.NotEmpty(t, trace.Components)
+
+	linehaul := trace.Components[0]
+	assert.Equal(t, ratetypes.ComponentSourceFormulaTemplate, linehaul.Source)
+	assert.Equal(t, perMileTemplateID.String(), linehaul.SourceID)
+	assert.Equal(t, "Per Mile @ 2.15", linehaul.Basis)
+	assert.True(t, linehaul.Rate.Valid)
+	assert.True(t, linehaul.Rate.Decimal.Equal(decimal.RequireFromString("2.15")))
+	assert.Equal(t, "baseRate * totalDistance", linehaul.Detail["expression"])
+}
+
+// The quote names the formula template the winning rule priced through, so a
+// reader can go from the number to the arithmetic that produced it.
+func TestQuoteCarriesTheWinningRulesFormulaTemplate(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+	expectRules(d, perMileRule("2.15", 100))
+
+	result, err := d.svc.RateShipment(t.Context(), rateRequest(testShipment()))
+
+	require.NoError(t, err)
+	require.NotNil(t, result.FormulaTemplateID)
+	assert.Equal(t, perMileTemplateID, *result.FormulaTemplateID)
+}
+
+func bandedRule(allowDeficit bool) *rateagreement.RateAgreementRule {
+	rule := perMileRule("0", 100)
+	rule.FormulaTemplateID = &perCwtTemplateID
+	rule.Rate = decimal.NullDecimal{}
+	rule.AllowDeficitRating = allowDeficit
+	rule.Breaks = []*rateagreement.RateAgreementRuleBreak{
+		{
+			ID:         pulid.MustNew("ragb_"),
+			FromWeight: decimal.Zero,
+			ToWeight:   decimal.NewNullDecimal(decimal.NewFromInt(20000)),
+			Rate:       decimal.NewFromInt(10),
+		},
+		{
+			ID:         pulid.MustNew("ragb_"),
+			FromWeight: decimal.NewFromInt(20000),
+			ToWeight:   decimal.NewNullDecimal(decimal.NewFromInt(45000)),
+			Rate:       decimal.NewFromInt(8),
+		},
+		{
+			ID:         pulid.MustNew("ragb_"),
+			FromWeight: decimal.NewFromInt(45000),
+			Rate:       decimal.NewFromInt(6),
+		},
+	}
+
+	return rule
+}
+
+// A banded rule prices at whichever band the weight falls in, and the band's
+// rate and the rated weight are what get bound into the template.
+func TestWeightBreaksBindTheBandRateAndRatedWeight(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+	expectRules(d, bandedRule(false))
+
+	result, err := d.svc.RateShipment(t.Context(), rateRequest(testShipment()))
+
+	require.NoError(t, err)
+	// 40,000 lb falls in the 20,000-45,000 band at $8/cwt, which is $3,200.
+	assert.True(t, result.Amount.Equal(decimal.RequireFromString("3200")),
+		"amount was %s", result.Amount)
+
+	require.Len(t, d.calcRequests, 1)
+	req := d.calcRequests[0]
+	assert.Equal(t, perCwtTemplateID, req.TemplateID)
+	assert.Equal(t, 8.0, req.Overrides["baseRate"])
+	assert.Equal(t, 40000.0, req.Overrides["totalWeight"])
+
+	linehaul := result.Quote.Trace.Components[0]
+	assert.Equal(t, "Per CWT @ 8", linehaul.Basis)
+	breakDetail, ok := linehaul.Detail["weightBreak"].(map[string]any)
+	require.True(t, ok, "linehaul detail should carry the weight break")
+	assert.Equal(t, "20000-45000", breakDetail["label"])
+	assert.Equal(t, "40000", breakDetail["ratedWeight"])
+	assert.Empty(t, result.Quote.Trace.Warnings)
+}
+
+// A shipment near the top of its band can be cheaper declared at the bottom of
+// the next one up, and the carrier lets the shipper pay the lower of the two.
+// The trace has to say the billed weight is not the shipped weight, because
+// that is the first thing questioned on the invoice.
+func TestDeficitRatingBumpsToTheCheaperBand(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+	expectRules(d, bandedRule(true))
+
+	result, err := d.svc.RateShipment(t.Context(), rateRequest(testShipment()))
+
+	require.NoError(t, err)
+	// 40,000 lb at $8/cwt is $3,200; declared at 45,000 lb the $6/cwt band
+	// charges $2,700, so the shipment is bumped.
+	assert.True(t, result.Amount.Equal(decimal.RequireFromString("2700")),
+		"amount was %s", result.Amount)
+
+	require.Len(t, d.calcRequests, 1)
+	req := d.calcRequests[0]
+	assert.Equal(t, 6.0, req.Overrides["baseRate"])
+	assert.Equal(t, 45000.0, req.Overrides["totalWeight"])
+
+	trace := result.Quote.Trace
+	require.NotEmpty(t, trace.Warnings)
+	assert.Contains(t, trace.Warnings[0], "45000")
+	assert.Contains(t, trace.Warnings[0], "40000")
+
+	breakDetail, ok := trace.Components[0].Detail["weightBreak"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "45000+", breakDetail["label"])
+	assert.Equal(t, "45000", breakDetail["ratedWeight"])
+	assert.Equal(t, "40000", breakDetail["actualWeight"])
+}
+
+// A band's own minimum charge is a floor on what the band's rate produces,
+// applied before anything else touches the amount.
+func TestBandMinimumChargeClampsTheTemplatesAnswer(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+
+	rule := perMileRule("0", 100)
+	rule.FormulaTemplateID = &perCwtTemplateID
+	rule.Rate = decimal.NullDecimal{}
+	rule.Breaks = []*rateagreement.RateAgreementRuleBreak{
+		{
+			ID:         pulid.MustNew("ragb_"),
+			FromWeight: decimal.Zero,
+			Rate:       decimal.NewFromInt(1),
+			MinCharge:  decimal.NewNullDecimal(decimal.NewFromInt(500)),
+		},
+	}
+
+	expectRules(d, rule)
+
+	result, err := d.svc.RateShipment(t.Context(), rateRequest(testShipment()))
+
+	require.NoError(t, err)
+	// 40,000 lb at $1/cwt is $400, lifted to the band's $500 floor.
+	assert.True(t, result.Amount.Equal(decimal.RequireFromString("500")),
+		"amount was %s", result.Amount)
+
+	guardrails := result.Quote.Trace.Guardrails
+	require.Len(t, guardrails, 1)
+	assert.True(t, guardrails[0].Applied)
+	assert.True(t, guardrails[0].Raw.Equal(decimal.RequireFromString("400")))
+	assert.True(t, guardrails[0].Bound.Equal(decimal.RequireFromString("500")))
+}
+
+// distanceMatrix is a one-axis tariff banded by mileage, whose cells mean
+// whatever the matrix's own template does with them.
+func distanceMatrix(cellValue string) (*ratematrix.RateMatrix, *ratematrix.RateMatrixCell) {
+	matrixID := pulid.MustNew("rmx_")
+
+	matrix := &ratematrix.RateMatrix{
+		ID:                matrixID,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		Code:              "DIST",
+		Name:              "Distance bands",
+		Currency:          "USD",
+		FormulaTemplateID: perMileTemplateID,
+		Dimensions: []*ratematrix.RateMatrixDimension{
+			{
+				ID:           pulid.MustNew("rmd_"),
+				RateMatrixID: matrixID,
+				Position:     0,
+				Kind:         ratematrix.DimensionKindDistance,
+				MatchMode:    ratematrix.MatchModeRange,
+			},
+		},
+	}
+
+	cell := &ratematrix.RateMatrixCell{
+		ID:           pulid.MustNew("rmc_"),
+		RateMatrixID: matrixID,
+		D0Min:        decimal.NewNullDecimal(decimal.Zero),
+		D0Max:        decimal.NewNullDecimal(decimal.NewFromInt(1000)),
+		Value:        decimal.RequireFromString(cellValue),
+	}
+
+	return matrix, cell
+}
+
+func matrixRule(matrix *ratematrix.RateMatrix) *rateagreement.RateAgreementRule {
+	rule := perMileRule("0", 100)
+	rule.FormulaTemplateID = nil
+	rule.Rate = decimal.NullDecimal{}
+	rule.RateMatrixID = &matrix.ID
+
+	return rule
+}
+
+func expectMatrix(
+	d *deps,
+	matrix *ratematrix.RateMatrix,
+	cells ...*ratematrix.RateMatrixCell,
+) {
+	d.matrices.On("GetByID", mock.Anything, mock.Anything).
+		Return(matrix, nil).Once()
+	d.matrices.On("LookupCells", mock.Anything, mock.Anything).
+		Return(cells, nil).Once()
+}
+
+// A cell is a number, not a meaning: the matrix's template is what turns it
+// into money, with the cell's value bound in as the base rate.
+func TestMatrixCellValueBindsIntoTheMatrixTemplate(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+
+	matrix, cell := distanceMatrix("2.15")
+	expectRules(d, matrixRule(matrix))
+	expectMatrix(d, matrix, cell)
+
+	result, err := d.svc.RateShipment(t.Context(), rateRequest(testShipment()))
+
+	require.NoError(t, err)
+	// The 0-1,000 mile cell reads 2.15, and the matrix's per-mile template
+	// prices 720 mi at $2.15, which is $1,548.
+	assert.True(t, result.Amount.Equal(decimal.RequireFromString("1548")),
+		"amount was %s", result.Amount)
+
+	require.Len(t, d.calcRequests, 1)
+	req := d.calcRequests[0]
+	assert.Equal(t, perMileTemplateID, req.TemplateID)
+	assert.Equal(t, map[string]any{"baseRate": 2.15}, req.Overrides)
+
+	linehaul := result.Quote.Trace.Components[0]
+	assert.Equal(t, ratetypes.ComponentSourceRateMatrix, linehaul.Source)
+	assert.Equal(t, matrix.ID.String(), linehaul.SourceID)
+	assert.Equal(t, "Distance bands", linehaul.SourceName)
+	assert.Equal(t, "Per Mile @ 2.15", linehaul.Basis)
+	assert.Equal(t, cell.ID.String(), linehaul.Detail["cellId"])
+	assert.Equal(t, "Per Mile", linehaul.Detail["formulaTemplate"])
+
+	// A matrix rated rule has no formula template of its own, and the quote
+	// must not pretend it does.
+	assert.Nil(t, result.FormulaTemplateID)
+}
+
+func TestMatrixCellMinimumChargeClampsTheTemplatesAnswer(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+
+	matrix, cell := distanceMatrix("0.10")
+	cell.MinCharge = decimal.NewNullDecimal(decimal.NewFromInt(200))
+	expectRules(d, matrixRule(matrix))
+	expectMatrix(d, matrix, cell)
+
+	result, err := d.svc.RateShipment(t.Context(), rateRequest(testShipment()))
+
+	require.NoError(t, err)
+	// 720 mi at the cell's $0.10 is $72, lifted to the cell's $200 floor.
+	assert.True(t, result.Amount.Equal(decimal.RequireFromString("200")),
+		"amount was %s", result.Amount)
+
+	guardrails := result.Quote.Trace.Guardrails
+	require.Len(t, guardrails, 1)
+	assert.True(t, guardrails[0].Applied)
+	assert.True(t, guardrails[0].Raw.Equal(decimal.RequireFromString("72")))
+}
+
+// A rule with neither a formula template nor a matrix is a row written around
+// the domain. It is recorded as an error on the quote rather than thrown away,
+// because the quote is where somebody will look for the contract that needs
+// fixing.
+func TestRuleWithNoRatingMethodRecordsTheError(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+
+	rule := perMileRule("2.15", 100)
+	rule.FormulaTemplateID = nil
+
+	expectRules(d, rule)
+
+	result, err := d.svc.RateShipment(t.Context(), rateRequest(testShipment()))
+
+	require.NoError(t, err)
+	assert.Equal(t, ratequote.OutcomeError, result.Outcome)
+	assert.True(t, result.Amount.IsZero(), "amount was %s", result.Amount)
+	require.NotNil(t, result.Quote)
+	require.NotNil(t, result.Quote.Trace)
+	assert.Equal(t, ErrMissingRate.Error(), result.Quote.Trace.Error)
 }
