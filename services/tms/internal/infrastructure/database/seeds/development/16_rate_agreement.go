@@ -407,6 +407,7 @@ func (s *RateAgreementSeed) createMatrix(
 		Name:           "Zone to Zone Truckload",
 		Description:    "Per-mile linehaul by origin region and destination region",
 		Status:         domaintypes.StatusActive,
+		ValueKind:      ratematrix.ValueKindPerMile,
 		Currency:       "USD",
 		CreatedAt:      refs.now,
 		UpdatedAt:      refs.now,
