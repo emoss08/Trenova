@@ -92,7 +92,7 @@ func applyAxisFilter(
 	}
 
 	if len(axis.Keys) > 0 {
-		return q.Where(columns.key.In(), bun.In(axis.Keys))
+		return q.Where(columns.key.In(), bun.List(axis.Keys))
 	}
 
 	if !axis.Quantity.Valid {

@@ -29,9 +29,13 @@ type AdditionalCharge struct {
 	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId" bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
 	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"    bun:"fuel_surcharge_detail,type:JSONB,nullzero"`
 	DetentionOccurrenceID  *pulid.ID                `json:"detentionOccurrenceId"  bun:"detention_occurrence_id,type:VARCHAR(100),nullzero"`
-	Version                int64                    `json:"version"                bun:"version,type:BIGINT"`
-	CreatedAt              int64                    `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64                    `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	// RateAgreementAccessorialID marks a charge the contract's own accessorial
+	// schedule produced, and is what its reconciliation pass matches on.
+	RateAgreementAccessorialID *pulid.ID `json:"rateAgreementAccessorialId" bun:"rate_agreement_accessorial_id,type:VARCHAR(100),nullzero"`
+	RateQuoteID                *pulid.ID `json:"rateQuoteId"                bun:"rate_quote_id,type:VARCHAR(100),nullzero"`
+	Version                    int64     `json:"version"                    bun:"version,type:BIGINT"`
+	CreatedAt                  int64     `json:"createdAt"                  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                  int64     `json:"updatedAt"                  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnit      *tenant.BusinessUnit                 `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization      *tenant.Organization                 `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`
@@ -41,12 +45,18 @@ type AdditionalCharge struct {
 
 // RestoreSystemOwnedCharges re-seats the fields of an inbound charge set that
 // the rating engines own rather than the caller: whether a charge was machine
-// generated, and the detention occurrence it settles.
+// generated, and which engine owns it.
 //
-// No caller may claim either one. A payload that drops the occurrence link —
+// No caller may claim any of them. A payload that drops the occurrence link —
 // an older client, an integration, any editor that rebuilds the list from the
 // fields it cares about — would otherwise turn a detention charge into a manual
-// one and leave the next recalculation free to bill the same dwell twice.
+// one and leave the next recalculation free to bill the same dwell twice. The
+// same is true of the agreement link: a contract accessorial that lost its
+// owner would stop being reconciled and would be added again on every save.
+//
+// Exactly one owner column is set on any system charge, which the database
+// enforces. That is what keeps three engines writing charges from ever billing
+// the same thing twice.
 func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
 	originals := make(map[pulid.ID]*AdditionalCharge, len(original))
 	for _, charge := range original {
@@ -65,11 +75,42 @@ func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
 		if charge.ID.IsNil() || source == nil {
 			charge.IsSystemGenerated = false
 			charge.DetentionOccurrenceID = nil
+			charge.RateAgreementAccessorialID = nil
+			charge.FuelSurchargeProgramID = nil
 			continue
 		}
 
 		charge.IsSystemGenerated = source.IsSystemGenerated
 		charge.DetentionOccurrenceID = source.DetentionOccurrenceID
+		charge.RateAgreementAccessorialID = source.RateAgreementAccessorialID
+		charge.FuelSurchargeProgramID = source.FuelSurchargeProgramID
+	}
+}
+
+// SystemOwner names the engine that owns a machine generated charge, which is
+// how the reconciliation passes tell their own rows apart from each other's.
+type SystemOwner string
+
+const (
+	SystemOwnerNone      = SystemOwner("")
+	SystemOwnerFuel      = SystemOwner("FuelSurcharge")
+	SystemOwnerDetention = SystemOwner("Detention")
+	SystemOwnerAgreement = SystemOwner("RateAgreement")
+)
+
+// Owner reports which engine, if any, owns this charge.
+func (a *AdditionalCharge) Owner() SystemOwner {
+	switch {
+	case !a.IsSystemGenerated:
+		return SystemOwnerNone
+	case a.FuelSurchargeProgramID != nil:
+		return SystemOwnerFuel
+	case a.DetentionOccurrenceID != nil:
+		return SystemOwnerDetention
+	case a.RateAgreementAccessorialID != nil:
+		return SystemOwnerAgreement
+	default:
+		return SystemOwnerNone
 	}
 }
 

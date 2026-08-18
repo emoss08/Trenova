@@ -192,8 +192,8 @@ func TestDaysOfWeekBitmask(t *testing.T) {
 	assert.False(t, rule.MatchesDayOfWeek(6), "Saturday")
 }
 
-func baseFacts() rateagreement.MatchFacts {
-	return rateagreement.MatchFacts{
+func baseFacts() *rateagreement.MatchFacts {
+	return &rateagreement.MatchFacts{
 		RatingDate:     100,
 		Weekday:        2,
 		ServiceTypeID:  pulid.MustNew("svt_"),
@@ -349,7 +349,7 @@ func TestMatchesReportsWhyARuleWasRejected(t *testing.T) {
 
 			facts := baseFacts()
 			if tt.facts != nil {
-				tt.facts(&facts)
+				tt.facts(facts)
 			}
 
 			matched, reason := rule.Matches(facts)

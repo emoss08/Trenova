@@ -221,7 +221,7 @@ func (r *repository) ResolveMembership(
 		).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.RateZoneMemberScopeTenant(sq, req.TenantInfo).
-				Where(memberCols.MatchKey.In(), bun.In(req.MatchKeys)).
+				Where(memberCols.MatchKey.In(), bun.List(req.MatchKeys)).
 				Where(zoneCols.Status.Eq(), domaintypes.StatusActive)
 		}).
 		Scan(ctx, &zoneIDs)

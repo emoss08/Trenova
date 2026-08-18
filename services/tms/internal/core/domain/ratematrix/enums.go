@@ -92,7 +92,7 @@ func (dk DimensionKind) IsValid() bool {
 // IsNumeric reports whether values on this axis are quantities, which is what
 // decides whether the axis can be banded into ranges.
 func (dk DimensionKind) IsNumeric() bool {
-	switch dk {
+	switch dk { //nolint:exhaustive // every other axis is keyed, not banded
 	case DimensionKindWeightBreak,
 		DimensionKindDistance,
 		DimensionKindPieceCount,

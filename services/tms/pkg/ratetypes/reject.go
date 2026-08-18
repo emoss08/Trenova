@@ -49,7 +49,7 @@ func (rr RejectReason) String() string {
 // reading a trace: a rule that lost is competition, a rule that did not match
 // is a lane the contract does not cover.
 func (rr RejectReason) Lost() bool {
-	switch rr {
+	switch rr { //nolint:exhaustive // every other reason means the rate applied
 	case RejectReasonLostOnPriority,
 		RejectReasonLostOnSpecificity,
 		RejectReasonLostOnEffectiveDate,
@@ -60,58 +60,43 @@ func (rr RejectReason) Lost() bool {
 	}
 }
 
+// rejectExplanations is the sentence shown for each reason.
+//
+// A map rather than a switch: the entries are pure data, and keeping them in
+// one literal means a new reason without a sentence is a visible hole rather
+// than a case somebody forgot to add.
+var rejectExplanations = map[RejectReason]string{
+	RejectReasonNone:                  "Applied",
+	RejectReasonLaneMismatch:          "The lane does not cover this origin and destination",
+	RejectReasonNotEffective:          "The rate was not in effect on the rating date",
+	RejectReasonAgreementNotEffective: "The agreement was not in effect on the rating date",
+	RejectReasonAgreementInactive:     "The agreement is not active",
+	RejectReasonRuleInactive:          "The rate is not active",
+	RejectReasonServiceTypeMismatch:   "The rate is limited to other service types",
+	RejectReasonShipmentTypeMismatch:  "The rate is limited to other shipment types",
+	RejectReasonEquipmentMismatch:     "The rate is limited to other equipment",
+	RejectReasonServiceModelMismatch:  "The rate is limited to another mode",
+	RejectReasonCommodityMismatch:     "The rate is limited to other commodities",
+	RejectReasonFreightClassMismatch:  "The rate is limited to other freight classes",
+	RejectReasonWeightOutOfRange:      "The shipment weight falls outside the rate's range",
+	RejectReasonDistanceOutOfRange:    "The distance falls outside the rate's range",
+	RejectReasonStopsOutOfRange:       "The stop count falls outside the rate's range",
+	RejectReasonDayOfWeekExcluded:     "The rate does not apply on this day of the week",
+	RejectReasonHazmatRequired:        "The rate applies only to hazmat shipments",
+	RejectReasonTempControlRequired:   "The rate applies only to temperature controlled shipments",
+	RejectReasonOutsideRadius:         "The shipment falls outside the rate's radius",
+	RejectReasonLostOnPriority:        "Another rate carried a higher priority",
+	RejectReasonLostOnSpecificity:     "Another rate was written more specifically",
+	RejectReasonLostOnEffectiveDate:   "Another rate took effect more recently",
+	RejectReasonLostOnTiebreak:        "Another rate matched equally well and was created first",
+	RejectReasonPricingError:          "The rate could not be calculated",
+}
+
 // Explanation is a sentence a person can read without knowing the model.
 func (rr RejectReason) Explanation() string {
-	switch rr {
-	case RejectReasonNone:
-		return "Applied"
-	case RejectReasonLaneMismatch:
-		return "The lane does not cover this origin and destination"
-	case RejectReasonNotEffective:
-		return "The rate was not in effect on the rating date"
-	case RejectReasonAgreementNotEffective:
-		return "The agreement was not in effect on the rating date"
-	case RejectReasonAgreementInactive:
-		return "The agreement is not active"
-	case RejectReasonRuleInactive:
-		return "The rate is not active"
-	case RejectReasonServiceTypeMismatch:
-		return "The rate is limited to other service types"
-	case RejectReasonShipmentTypeMismatch:
-		return "The rate is limited to other shipment types"
-	case RejectReasonEquipmentMismatch:
-		return "The rate is limited to other equipment"
-	case RejectReasonServiceModelMismatch:
-		return "The rate is limited to another mode"
-	case RejectReasonCommodityMismatch:
-		return "The rate is limited to other commodities"
-	case RejectReasonFreightClassMismatch:
-		return "The rate is limited to other freight classes"
-	case RejectReasonWeightOutOfRange:
-		return "The shipment weight falls outside the rate's range"
-	case RejectReasonDistanceOutOfRange:
-		return "The distance falls outside the rate's range"
-	case RejectReasonStopsOutOfRange:
-		return "The stop count falls outside the rate's range"
-	case RejectReasonDayOfWeekExcluded:
-		return "The rate does not apply on this day of the week"
-	case RejectReasonHazmatRequired:
-		return "The rate applies only to hazmat shipments"
-	case RejectReasonTempControlRequired:
-		return "The rate applies only to temperature controlled shipments"
-	case RejectReasonOutsideRadius:
-		return "The shipment falls outside the rate's radius"
-	case RejectReasonLostOnPriority:
-		return "Another rate carried a higher priority"
-	case RejectReasonLostOnSpecificity:
-		return "Another rate was written more specifically"
-	case RejectReasonLostOnEffectiveDate:
-		return "Another rate took effect more recently"
-	case RejectReasonLostOnTiebreak:
-		return "Another rate matched equally well and was created first"
-	case RejectReasonPricingError:
-		return "The rate could not be calculated"
-	default:
-		return string(rr)
+	if explanation, ok := rejectExplanations[rr]; ok {
+		return explanation
 	}
+
+	return string(rr)
 }

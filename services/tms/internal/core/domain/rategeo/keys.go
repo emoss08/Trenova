@@ -104,7 +104,7 @@ type Place struct {
 // The result is ordered most specific first. Nothing depends on that ordering —
 // the winner is chosen by stored specificity, not by position — but it keeps
 // the keys readable in a trace.
-func (p Place) MatchKeys() []string {
+func (p *Place) MatchKeys() []string {
 	keys := make([]string, 0, 6+len(p.ZoneIDs))
 
 	if !p.LocationID.IsNil() {

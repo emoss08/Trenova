@@ -414,7 +414,9 @@ func (rar *RateAgreementRule) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&rar.EquipmentClasses,
 			validation.Each(
-				domainvalidation.ValidEnum[modeprofile.EquipmentClass]("Equipment class is invalid"),
+				domainvalidation.ValidEnum[modeprofile.EquipmentClass](
+					"Equipment class is invalid",
+				),
 			),
 		),
 		validation.Field(&rar.Currency,
@@ -437,7 +439,7 @@ func (rar *RateAgreementRule) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (rar *RateAgreementRule) validateScopes(multiErr *errortypes.MultiError) {
-	validateScopeSide(multiErr, scopeSide{
+	validateScopeSide(multiErr, &scopeSide{
 		field:        "originScopeValue",
 		radiusField:  "originRadiusMeters",
 		scope:        rar.OriginScope(),
@@ -447,7 +449,7 @@ func (rar *RateAgreementRule) validateScopes(multiErr *errortypes.MultiError) {
 		label:        "Origin",
 	})
 
-	validateScopeSide(multiErr, scopeSide{
+	validateScopeSide(multiErr, &scopeSide{
 		field:        "destinationScopeValue",
 		radiusField:  "destinationRadiusMeters",
 		scope:        rar.DestinationScope(),
@@ -468,7 +470,7 @@ type scopeSide struct {
 	label        string
 }
 
-func validateScopeSide(multiErr *errortypes.MultiError, side scopeSide) {
+func validateScopeSide(multiErr *errortypes.MultiError, side *scopeSide) {
 	if side.scope.Type == rategeo.ScopeTypeRadius {
 		if side.radiusMeters == nil || *side.radiusMeters <= 0 {
 			multiErr.Add(
@@ -519,17 +521,25 @@ func validateScopeSide(multiErr *errortypes.MultiError, side scopeSide) {
 // A rule carrying both a rate and a matrix leaves the engine to guess, and a
 // rule carrying neither prices at nothing.
 func (rar *RateAgreementRule) validatePricing(multiErr *errortypes.MultiError) {
-	hasMatrix := rar.RateMatrixID != nil && !rar.RateMatrixID.IsNil()
-	hasFormula := rar.FormulaTemplateID != nil && !rar.FormulaTemplateID.IsNil()
-	hasBreaks := len(rar.Breaks) > 0
+	rar.validateRequiredPricingInput(multiErr)
+	rar.validateUnusedPricingInput(multiErr)
 
-	switch rar.RatingBasis {
+	if rar.Rate.Valid && rar.Rate.Decimal.IsNegative() {
+		multiErr.Add("rate", errortypes.ErrInvalid, "Rate cannot be negative")
+	}
+}
+
+// validateRequiredPricingInput checks that the basis has the input it reads.
+func (rar *RateAgreementRule) validateRequiredPricingInput(
+	multiErr *errortypes.MultiError,
+) {
+	switch rar.RatingBasis { //nolint:exhaustive // banded bases share the default arm
 	case RatingBasisMatrix:
-		if !hasMatrix {
+		if rar.RateMatrixID == nil || rar.RateMatrixID.IsNil() {
 			multiErr.Add("rateMatrixId", errortypes.ErrRequired, "Rate matrix is required")
 		}
 	case RatingBasisFormula:
-		if !hasFormula {
+		if rar.FormulaTemplateID == nil || rar.FormulaTemplateID.IsNil() {
 			multiErr.Add(
 				"formulaTemplateId",
 				errortypes.ErrRequired,
@@ -545,10 +555,19 @@ func (rar *RateAgreementRule) validatePricing(multiErr *errortypes.MultiError) {
 		}
 	default:
 		// Banded rules carry their rates on the breaks instead of the rule.
-		if !rar.Rate.Valid && !hasBreaks {
+		if !rar.Rate.Valid && len(rar.Breaks) == 0 {
 			multiErr.Add("rate", errortypes.ErrRequired, "Rate is required")
 		}
 	}
+}
+
+// validateUnusedPricingInput rejects the inputs the chosen basis will never
+// read, which would otherwise sit on the rule looking as though they applied.
+func (rar *RateAgreementRule) validateUnusedPricingInput(
+	multiErr *errortypes.MultiError,
+) {
+	hasMatrix := rar.RateMatrixID != nil && !rar.RateMatrixID.IsNil()
+	hasFormula := rar.FormulaTemplateID != nil && !rar.FormulaTemplateID.IsNil()
 
 	if rar.RatingBasis != RatingBasisMatrix && hasMatrix {
 		multiErr.Add(
@@ -566,16 +585,12 @@ func (rar *RateAgreementRule) validatePricing(multiErr *errortypes.MultiError) {
 		)
 	}
 
-	if hasBreaks && !rar.RatingBasis.SupportsWeightBreaks() {
+	if len(rar.Breaks) > 0 && !rar.RatingBasis.SupportsWeightBreaks() {
 		multiErr.Add(
 			"breaks",
 			errortypes.ErrInvalid,
 			"Weight breaks only apply to a hundredweight or flat rated rule",
 		)
-	}
-
-	if rar.Rate.Valid && rar.Rate.Decimal.IsNegative() {
-		multiErr.Add("rate", errortypes.ErrInvalid, "Rate cannot be negative")
 	}
 }
 

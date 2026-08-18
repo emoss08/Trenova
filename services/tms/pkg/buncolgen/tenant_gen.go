@@ -725,6 +725,10 @@ var BillingControlColumns = struct {
 	NotifyOnBillingExceptions             Column // "notify_on_billing_exceptions" → qualified: "bc.notify_on_billing_exceptions"
 	RateVarianceTolerancePercent          Column // "rate_variance_tolerance_percent" → qualified: "bc.rate_variance_tolerance_percent"
 	RateVarianceAutoResolutionMode        Column // "rate_variance_auto_resolution_mode" → qualified: "bc.rate_variance_auto_resolution_mode"
+	UnratedShipmentDisposition            Column // "unrated_shipment_disposition" → qualified: "bc.unrated_shipment_disposition"
+	FallbackFormulaTemplateID             Column // "fallback_formula_template_id" → qualified: "bc.fallback_formula_template_id"
+	RequireRateOverrideReason             Column // "require_rate_override_reason" → qualified: "bc.require_rate_override_reason"
+	EnforceMarginFloor                    Column // "enforce_margin_floor" → qualified: "bc.enforce_margin_floor"
 	Version                               Column // "version" → qualified: "bc.version"
 	CreatedAt                             Column // "created_at" → qualified: "bc.created_at"
 	UpdatedAt                             Column // "updated_at" → qualified: "bc.updated_at"
@@ -751,6 +755,10 @@ var BillingControlColumns = struct {
 	NotifyOnBillingExceptions:             NewColumn("notify_on_billing_exceptions", "bc"),
 	RateVarianceTolerancePercent:          NewColumn("rate_variance_tolerance_percent", "bc"),
 	RateVarianceAutoResolutionMode:        NewColumn("rate_variance_auto_resolution_mode", "bc"),
+	UnratedShipmentDisposition:            NewColumn("unrated_shipment_disposition", "bc"),
+	FallbackFormulaTemplateID:             NewColumn("fallback_formula_template_id", "bc"),
+	RequireRateOverrideReason:             NewColumn("require_rate_override_reason", "bc"),
+	EnforceMarginFloor:                    NewColumn("enforce_margin_floor", "bc"),
 	Version:                               NewColumn("version", "bc"),
 	CreatedAt:                             NewColumn("created_at", "bc"),
 	UpdatedAt:                             NewColumn("updated_at", "bc"),
@@ -783,6 +791,10 @@ var BillingControlFieldMap = map[string]string{
 	"notifyOnBillingExceptions":             "notify_on_billing_exceptions",
 	"rateVarianceTolerancePercent":          "rate_variance_tolerance_percent",
 	"rateVarianceAutoResolutionMode":        "rate_variance_auto_resolution_mode",
+	"unratedShipmentDisposition":            "unrated_shipment_disposition",
+	"fallbackFormulaTemplateId":             "fallback_formula_template_id",
+	"requireRateOverrideReason":             "require_rate_override_reason",
+	"enforceMarginFloor":                    "enforce_margin_floor",
 	"version":                               "version",
 	"createdAt":                             "created_at",
 	"updatedAt":                             "updated_at",
@@ -813,6 +825,10 @@ var BillingControlInsertableColumns = []string{
 	"notify_on_billing_exceptions",
 	"rate_variance_tolerance_percent",
 	"rate_variance_auto_resolution_mode",
+	"unrated_shipment_disposition",
+	"fallback_formula_template_id",
+	"require_rate_override_reason",
+	"enforce_margin_floor",
 	"version",
 	"created_at",
 	"updated_at",
@@ -903,6 +919,10 @@ var BillingControlFilter = struct {
 	NotifyOnBillingExceptions             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notifyOnBillingExceptions" → DB: "notify_on_billing_exceptions"
 	RateVarianceTolerancePercent          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateVarianceTolerancePercent" → DB: "rate_variance_tolerance_percent"
 	RateVarianceAutoResolutionMode        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateVarianceAutoResolutionMode" → DB: "rate_variance_auto_resolution_mode"
+	UnratedShipmentDisposition            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unratedShipmentDisposition" → DB: "unrated_shipment_disposition"
+	FallbackFormulaTemplateID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fallbackFormulaTemplateId" → DB: "fallback_formula_template_id"
+	RequireRateOverrideReason             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireRateOverrideReason" → DB: "require_rate_override_reason"
+	EnforceMarginFloor                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceMarginFloor" → DB: "enforce_margin_floor"
 	Version                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -972,6 +992,18 @@ var BillingControlFilter = struct {
 	},
 	RateVarianceAutoResolutionMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("rateVarianceAutoResolutionMode", op, value)
+	},
+	UnratedShipmentDisposition: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("unratedShipmentDisposition", op, value)
+	},
+	FallbackFormulaTemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fallbackFormulaTemplateId", op, value)
+	},
+	RequireRateOverrideReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requireRateOverrideReason", op, value)
+	},
+	EnforceMarginFloor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enforceMarginFloor", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

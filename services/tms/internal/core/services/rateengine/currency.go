@@ -25,9 +25,9 @@ func (s *Service) convert(
 	rateCtx *RateContext,
 	priced priceResult,
 	trace *ratetypes.Trace,
-) (decimal.Decimal, error) {
+) decimal.Decimal {
 	if priced.Currency == "" || priced.Currency == rateCtx.BillingCurrency {
-		return priced.Amount, nil
+		return priced.Amount
 	}
 
 	result, err := s.exchange.Convert(
@@ -55,7 +55,7 @@ func (s *Service) convert(
 				"the amount is stated in " + priced.Currency,
 		)
 
-		return priced.Amount, nil
+		return priced.Amount
 	}
 
 	trace.FX = &ratetypes.FXConversion{
@@ -65,7 +65,7 @@ func (s *Service) convert(
 		RateDate:     result.Date,
 	}
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:  ratetypes.ComponentKindCurrencyConversion,
 		Label: "Currency conversion",
 		Basis: priced.Amount.String() + " " + result.FromCurrency + " @ " +
@@ -75,5 +75,5 @@ func (s *Service) convert(
 		Source: ratetypes.ComponentSourceExchangeRate,
 	})
 
-	return result.Converted, nil
+	return result.Converted
 }

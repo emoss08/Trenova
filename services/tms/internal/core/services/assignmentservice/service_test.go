@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
@@ -150,7 +151,8 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -194,7 +196,8 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 		shipmentRepo: mocks.NewMockShipmentRepository(t),
 		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -251,7 +254,8 @@ func TestAssignToMove_RejectsDispatchBlockingHold(t *testing.T) {
 		shipmentRepo: mocks.NewMockShipmentRepository(t),
 		holdRepo:     holdRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -373,7 +377,8 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 		trailerRepo:         trailerRepo,
 		locationRepo:        locationRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -503,7 +508,8 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 		dispatchControlRepo: dispatchControlRepo,
 		continuityRepo:      continuityRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -622,7 +628,8 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -693,7 +700,8 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 		shipmentRepo: shipmentRepo,
 		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -736,7 +744,8 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 		shipmentRepo: mocks.NewMockShipmentRepository(t),
 		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -961,7 +970,8 @@ func newAssignToMoveService(
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),

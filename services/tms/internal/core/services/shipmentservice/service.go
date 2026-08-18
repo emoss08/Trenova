@@ -411,6 +411,7 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	entity.ApplyEntryMethodDefault(original)
 	s.restoreAssignmentsForExistingMoves(original, entity)
 	s.restoreSystemOwnedAdditionalChargeFields(original, entity)
+	shipment.RestoreRateOwnedFields(original, entity)
 	if err = s.syncOrderMembershipForUpdate(ctx, original, entity); err != nil {
 		return nil, err
 	}

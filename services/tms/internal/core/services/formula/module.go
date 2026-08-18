@@ -33,6 +33,10 @@ func asFormulaCalculator(s *Service) services.FormulaCalculator {
 	return s
 }
 
+func asFormulaPredicateEvaluator(s *Service) services.FormulaPredicateEvaluator {
+	return s
+}
+
 var Module = fx.Module(
 	"formula",
 	fx.Provide(
@@ -42,5 +46,6 @@ var Module = fx.Module(
 		engine.NewEnvironmentBuilder,
 		NewService,
 		asFormulaCalculator,
+		asFormulaPredicateEvaluator,
 	),
 )

@@ -218,15 +218,17 @@ type Trace struct {
 
 // AddComponent appends a step and keeps the running total consistent, so no
 // caller has to remember to.
-func (t *Trace) AddComponent(component Component) {
+func (t *Trace) AddComponent(component *Component) {
 	running := component.Amount
 	if len(t.Components) > 0 {
 		running = t.Components[len(t.Components)-1].RunningTotal.Add(component.Amount)
 	}
 
-	component.Sequence = int16(len(t.Components))
+	// A rate has tens of components, not thousands.
+	sequence := len(t.Components)
+	component.Sequence = int16(sequence) //nolint:gosec // bounded by component count
 	component.RunningTotal = running
-	t.Components = append(t.Components, component)
+	t.Components = append(t.Components, *component)
 }
 
 // Warn records something a reader should know that did not stop the rating —

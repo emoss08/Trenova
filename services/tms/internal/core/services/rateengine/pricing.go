@@ -70,7 +70,6 @@ func (s *Service) price(
 	return priceResult{Amount: amount, Currency: currency}, nil
 }
 
-//nolint:cyclop // one arm per rating basis; splitting it would only hide the shape
 func (s *Service) baseCharge(
 	ctx context.Context,
 	rateCtx *RateContext,
@@ -131,7 +130,7 @@ func (s *Service) flatCharge(
 		return decimal.Zero, ErrMissingRate
 	}
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:       ratetypes.ComponentKindLinehaul,
 		Label:      "Flat rate",
 		Basis:      "flat",
@@ -156,9 +155,9 @@ func unitCharge(
 
 	amount := rule.Rate.Decimal.Mul(quantity)
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      "Linehaul",
+		Label:      linehaulLabel,
 		Basis:      quantity.String() + " " + unit + " @ " + rule.Rate.Decimal.String(),
 		Quantity:   decimal.NewNullDecimal(quantity),
 		Rate:       rule.Rate,
@@ -191,9 +190,9 @@ func (s *Service) hundredweightCharge(
 		hundredweights := rateCtx.Weight.Div(poundsPerCwtUnits)
 		amount := rule.Rate.Decimal.Mul(hundredweights)
 
-		trace.AddComponent(ratetypes.Component{
+		trace.AddComponent(&ratetypes.Component{
 			Kind:  ratetypes.ComponentKindLinehaul,
-			Label: "Linehaul",
+			Label: linehaulLabel,
 			Basis: rateCtx.Weight.String() + " lb (" + hundredweights.String() +
 				" cwt) @ " + rule.Rate.Decimal.String(),
 			Quantity:   decimal.NewNullDecimal(hundredweights),
@@ -242,7 +241,7 @@ func recordBreak(
 		detail["toWeight"] = result.UsedBreak.ToWeight.Decimal.String()
 	}
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:  ratetypes.ComponentKindWeightBreak,
 		Label: "Weight break " + result.UsedBreak.DisplayLabel(),
 		Basis: result.RatedWeight.String() + " lb @ " +
@@ -300,9 +299,9 @@ func percentCharge(
 
 	amount := basis.Mul(rule.Rate.Decimal).Div(oneHundred)
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      "Linehaul",
+		Label:      linehaulLabel,
 		Basis:      rule.Rate.Decimal.String() + "% of " + basis.String(),
 		Quantity:   decimal.NewNullDecimal(basis),
 		Rate:       rule.Rate,
@@ -375,9 +374,9 @@ func (s *Service) formulaCharge(
 		})
 	}
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      "Linehaul",
+		Label:      linehaulLabel,
 		Basis:      resp.FormulaTemplateName,
 		Amount:     resp.Amount,
 		Source:     ratetypes.ComponentSourceFormulaTemplate,
@@ -410,7 +409,7 @@ func applyDiscount(
 
 	discount := amount.Mul(rule.DiscountPercent.Decimal).Div(oneHundred)
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:       ratetypes.ComponentKindDiscount,
 		Label:      "Discount",
 		Basis:      rule.DiscountPercent.Decimal.String() + "% off " + amount.String(),
@@ -436,7 +435,7 @@ func applyAbsoluteMinimum(
 		return amount
 	}
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:       ratetypes.ComponentKindAbsoluteMinCharge,
 		Label:      "Absolute minimum charge",
 		Basis:      "raised from " + amount.String(),
@@ -481,7 +480,7 @@ func (s *Service) applyDeficitDistance(
 
 	billed := rule.Rate.Decimal.Mul(rule.MinBillableDistance.Decimal)
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:  ratetypes.ComponentKindDeficitDistance,
 		Label: "Minimum billable distance",
 		Basis: "billed at " + rule.MinBillableDistance.Decimal.String() +
@@ -520,7 +519,7 @@ func applyGuardrails(
 	}
 
 	if minimum.Valid && amount.LessThan(minimum.Decimal) {
-		trace.AddComponent(ratetypes.Component{
+		trace.AddComponent(&ratetypes.Component{
 			Kind:       ratetypes.ComponentKindMinimumCharge,
 			Label:      "Minimum charge",
 			Basis:      "raised from " + amount.String(),
@@ -541,7 +540,7 @@ func applyGuardrails(
 	}
 
 	if maximum.Valid && amount.GreaterThan(maximum.Decimal) {
-		trace.AddComponent(ratetypes.Component{
+		trace.AddComponent(&ratetypes.Component{
 			Kind:       ratetypes.ComponentKindMaximumCharge,
 			Label:      "Maximum charge",
 			Basis:      "reduced from " + amount.String(),
@@ -580,7 +579,7 @@ func applyRounding(
 		return amount
 	}
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:   ratetypes.ComponentKindRounding,
 		Label:  "Rounding",
 		Basis:  rule.EffectiveRoundingMode(agreement).String(),

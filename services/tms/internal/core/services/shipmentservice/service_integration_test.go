@@ -1055,7 +1055,7 @@ func newIntegrationShipmentService(
 
 	audit := &mocks.NoopAuditService{}
 	realtime := &mocks.NoopRealtimeService{}
-	commercial := newTestCommercialCalculator(formulaSvc, accessorialRepo)
+	commercial := newTestCommercialCalculator(t, formulaSvc, accessorialRepo)
 
 	svc := New(Params{
 		Logger:          zap.NewNop(),

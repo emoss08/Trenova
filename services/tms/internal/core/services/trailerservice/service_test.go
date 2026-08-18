@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
@@ -322,7 +323,8 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 	deps.svc.shipmentValidator = shipmentservice.NewTestValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Formula:         mocks.NewMockFormulaCalculator(t),
+		Logger:          zap.NewNop(),
+		RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 	})
 
@@ -524,7 +526,8 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 	deps.svc.shipmentValidator = shipmentservice.NewTestValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateengine.NewFallbackEngine(t, formula),
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 	})
 
@@ -575,7 +578,8 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 	deps.svc.shipmentValidator = shipmentservice.NewTestValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Formula:         mocks.NewMockFormulaCalculator(t),
+		Logger:          zap.NewNop(),
+		RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 	})
 

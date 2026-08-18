@@ -133,7 +133,7 @@ func (s *Service) rateFromAgreement(
 		// is where somebody will look for it.
 		trace.Error = err.Error()
 
-		return s.finish(ctx, req, rateCtx, trace, quoteFields{
+		return s.finish(ctx, req, rateCtx, trace, &quoteFields{
 			Outcome:     ratequote.OutcomeError,
 			Amount:      decimal.Zero,
 			Currency:    rateCtx.BillingCurrency,
@@ -143,14 +143,11 @@ func (s *Service) rateFromAgreement(
 		})
 	}
 
-	converted, err := s.convert(ctx, rateCtx, priced, trace)
-	if err != nil {
-		return nil, err
-	}
+	converted := s.convert(ctx, rateCtx, priced, trace)
 
 	trace.Totals = totalsFor(converted)
 
-	fields := quoteFields{
+	fields := &quoteFields{
 		Outcome:     ratequote.OutcomeRated,
 		Amount:      converted,
 		Currency:    priced.Currency,
@@ -183,7 +180,7 @@ func (s *Service) rateWithoutAgreement(
 		disposition = req.BillingControl.UnratedShipmentDisposition
 	}
 
-	switch disposition {
+	switch disposition { //nolint:exhaustive // the fallback disposition is the default arm
 	case tenant.UnratedShipmentDispositionBlock:
 		return nil, errortypes.NewBusinessError(
 			"No rate agreement covers this lane",
@@ -193,7 +190,7 @@ func (s *Service) rateWithoutAgreement(
 		trace.Warn("No rate agreement covers this lane")
 		trace.Totals = totalsFor(decimal.Zero)
 
-		return s.finish(ctx, req, rateCtx, trace, quoteFields{
+		return s.finish(ctx, req, rateCtx, trace, &quoteFields{
 			Outcome:  ratequote.OutcomeNoRateFound,
 			Amount:   decimal.Zero,
 			Currency: rateCtx.BillingCurrency,
@@ -216,7 +213,7 @@ func (s *Service) rateFromFallbackTemplate(
 		trace.Warn("No rate agreement covers this lane and no formula template was set")
 		trace.Totals = totalsFor(decimal.Zero)
 
-		return s.finish(ctx, req, rateCtx, trace, quoteFields{
+		return s.finish(ctx, req, rateCtx, trace, &quoteFields{
 			Outcome:  ratequote.OutcomeNoRateFound,
 			Amount:   decimal.Zero,
 			Currency: rateCtx.BillingCurrency,
@@ -230,20 +227,19 @@ func (s *Service) rateFromFallbackTemplate(
 		RatingDate: rateCtx.AsOf,
 	})
 	if err != nil {
-		trace.Error = err.Error()
-		trace.Totals = totalsFor(decimal.Zero)
-
-		return s.finish(ctx, req, rateCtx, trace, quoteFields{
-			Outcome:           ratequote.OutcomeError,
-			Amount:            decimal.Zero,
-			Currency:          rateCtx.BillingCurrency,
-			FormulaTemplateID: &templateID,
-		})
+		// A template that will not evaluate has always failed the save, and it
+		// keeps failing it. This is the path an organization with no contracts
+		// takes for every shipment, and quietly turning a broken formula into a
+		// zero-dollar load would be a change in behaviour nobody asked for.
+		// A rule inside a contract is treated differently — see rateFromAgreement
+		// — because there a failure is recorded and flagged rather than allowed
+		// to block every shipment on the lane.
+		return nil, err
 	}
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      "Linehaul",
+		Label:      linehaulLabel,
 		Basis:      resp.FormulaTemplateName,
 		Amount:     resp.Amount,
 		Source:     ratetypes.ComponentSourceFormulaTemplate,
@@ -253,7 +249,7 @@ func (s *Service) rateFromFallbackTemplate(
 	})
 	trace.Totals = totalsFor(resp.Amount)
 
-	return s.finish(ctx, req, rateCtx, trace, quoteFields{
+	return s.finish(ctx, req, rateCtx, trace, &quoteFields{
 		Outcome:           ratequote.OutcomeFormulaFallback,
 		Amount:            resp.Amount,
 		Currency:          rateCtx.BillingCurrency,
@@ -293,7 +289,7 @@ func (s *Service) finish(
 	req *services.RateShipmentRequest,
 	rateCtx *RateContext,
 	trace *ratetypes.Trace,
-	fields quoteFields,
+	fields *quoteFields,
 ) (*services.RatedShipment, error) {
 	quote := s.buildQuote(req, rateCtx, trace, fields)
 
@@ -320,7 +316,7 @@ func (s *Service) buildQuote(
 	req *services.RateShipmentRequest,
 	rateCtx *RateContext,
 	trace *ratetypes.Trace,
-	fields quoteFields,
+	fields *quoteFields,
 ) *ratequote.RateQuote {
 	purpose := req.Purpose
 	if purpose == "" {

@@ -60,7 +60,7 @@ func TestSelectCellAcrossZoneAndWeightBreak(t *testing.T) {
 		quantity("4200"),
 	}
 
-	match, err := ratematrix.SelectCell(dimensions, []*ratematrix.RateMatrixCell{light, heavy}, values)
+	match, err := ratematrix.SelectCell(dimensions, []*ratematrix.RateMatrixCell{light, heavy}, &values)
 
 	require.NoError(t, err)
 	assert.Equal(t, heavy.ID, match.Cell.ID)
@@ -90,7 +90,7 @@ func TestWeightBreakBoundaryBelongsToTheUpperBand(t *testing.T) {
 	match, err := ratematrix.SelectCell(
 		dimensions,
 		[]*ratematrix.RateMatrixCell{lower, upper},
-		ratematrix.LookupValues{quantity("1000")},
+		&ratematrix.LookupValues{quantity("1000")},
 	)
 
 	require.NoError(t, err)
@@ -112,7 +112,7 @@ func TestOpenEndedTopBandCatchesAnythingHeavier(t *testing.T) {
 	match, err := ratematrix.SelectCell(
 		dimensions,
 		[]*ratematrix.RateMatrixCell{top},
-		ratematrix.LookupValues{quantity("48000")},
+		&ratematrix.LookupValues{quantity("48000")},
 	)
 
 	require.NoError(t, err)
@@ -143,7 +143,7 @@ func TestEarlierCandidateKeyWins(t *testing.T) {
 		// Deliberately supplied in the losing order to prove the ranking, not
 		// the slice order, decides.
 		[]*ratematrix.RateMatrixCell{fallback, preferred},
-		ratematrix.LookupValues{exactKeys("CHI_METRO", "MIDWEST")},
+		&ratematrix.LookupValues{exactKeys("CHI_METRO", "MIDWEST")},
 	)
 
 	require.NoError(t, err)
@@ -173,14 +173,14 @@ func TestTieBreaksDeterministicallyByCellID(t *testing.T) {
 	forward, err := ratematrix.SelectCell(
 		dimensions,
 		[]*ratematrix.RateMatrixCell{first, second},
-		ratematrix.LookupValues{exactKeys("SE")},
+		&ratematrix.LookupValues{exactKeys("SE")},
 	)
 	require.NoError(t, err)
 
 	reversed, err := ratematrix.SelectCell(
 		dimensions,
 		[]*ratematrix.RateMatrixCell{second, first},
-		ratematrix.LookupValues{exactKeys("SE")},
+		&ratematrix.LookupValues{exactKeys("SE")},
 	)
 	require.NoError(t, err)
 
@@ -199,7 +199,7 @@ func TestSelectCellRejectsAMissingDimensionValue(t *testing.T) {
 	_, err := ratematrix.SelectCell(
 		dimensions,
 		nil,
-		ratematrix.LookupValues{exactKeys("SE")},
+		&ratematrix.LookupValues{exactKeys("SE")},
 	)
 
 	require.ErrorIs(t, err, ratematrix.ErrDimensionValueMissing)
@@ -219,7 +219,7 @@ func TestSelectCellReportsWhenNothingCovers(t *testing.T) {
 	_, err := ratematrix.SelectCell(
 		dimensions,
 		[]*ratematrix.RateMatrixCell{cell},
-		ratematrix.LookupValues{exactKeys("SE")},
+		&ratematrix.LookupValues{exactKeys("SE")},
 	)
 
 	require.ErrorIs(t, err, ratematrix.ErrNoMatchingCell)

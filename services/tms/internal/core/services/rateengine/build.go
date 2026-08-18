@@ -18,9 +18,6 @@ import (
 // without a customer on the sell side, or without a carrier on the buy side.
 var ErrNoParty = errors.New("rating has no party to price against")
 
-// cubicFeetPerCubicInch converts the dimensions commodities are recorded in.
-var inchesPerFoot = decimal.NewFromInt(12)
-
 // buildContext freezes everything a rating will read.
 //
 // Once this returns, nothing else about the shipment is consulted. That is the
@@ -87,10 +84,10 @@ func partyFor(req *services.RateShipmentRequest) (pulid.ID, error) {
 		return req.PartyID, nil
 	}
 
-	if req.Shipment.CustomerID.IsNil() {
-		return pulid.Nil, ErrNoParty
-	}
-
+	// A shipment with no customer yet is not an engine failure. Every shipment
+	// needs one and the validator says so far more clearly than this could, so
+	// rating treats it as a lane no contract covers and lets the save fail on
+	// the field that is actually wrong.
 	return req.Shipment.CustomerID, nil
 }
 

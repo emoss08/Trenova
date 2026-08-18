@@ -69,7 +69,7 @@ func (o Outcome) IsValid() bool {
 
 // Priced reports whether the outcome produced a usable amount.
 func (o Outcome) Priced() bool {
-	switch o {
+	switch o { //nolint:exhaustive // the remaining outcomes produced no amount
 	case OutcomeRated, OutcomeFormulaFallback, OutcomeManualOverride:
 		return true
 	default:

@@ -151,7 +151,7 @@ func (r *repository) baseCandidateQuery(
 				})
 
 			if len(req.PartyIDs) > 0 {
-				sq = sq.Where(cols.PartyID.In(), bun.In(req.PartyIDs))
+				sq = sq.Where(cols.PartyID.In(), bun.List(req.PartyIDs))
 			}
 
 			// A rule cannot outlive the contract it belongs to. Suspending or
@@ -184,7 +184,7 @@ func (r *repository) resolveKeyedRules(
 	// One row over the limit, so the caller can tell a full page from a capped
 	// one without a second count.
 	err := r.baseCandidateQuery(ctx, req, &entities).
-		Where(cols.LaneKey.In(), bun.In(req.LaneKeys)).
+		Where(cols.LaneKey.In(), bun.List(req.LaneKeys)).
 		Apply(candidateOrder).
 		Limit(limit + 1).
 		Scan(ctx)
@@ -275,7 +275,7 @@ func (r *repository) attachAgreements(
 		Model(&agreements).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.RateAgreementScopeTenant(sq, tenantInfo).
-				Where(cols.ID.In(), bun.In(ids))
+				Where(cols.ID.In(), bun.List(ids))
 		}).
 		Scan(ctx)
 	if err != nil {

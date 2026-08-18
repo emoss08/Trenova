@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -1283,7 +1284,8 @@ func newIntegrationHarness(
 		AuditService:     noopAuditService{},
 		WorkflowStarter:  starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         &fakeFormulaCalculator{amount: formulaAmount},
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, &fakeFormulaCalculator{amount: formulaAmount}),
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
 		Generator:         &fakeGenerator{},
@@ -1332,7 +1334,8 @@ func (h *integrationHarness) buildService(
 		AuditService:    noopAuditService{},
 		WorkflowStarter: starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         &fakeFormulaCalculator{amount: formulaAmount},
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, &fakeFormulaCalculator{amount: formulaAmount}),
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
 		Generator:         &fakeGenerator{},

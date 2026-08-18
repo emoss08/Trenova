@@ -35,6 +35,11 @@ import (
 // same context with a different version means we did.
 const EngineVersion = "1.0.0"
 
+// linehaulLabel is what every path that produces the base charge calls it, so
+// the trace reads the same whether the number came from a rate per mile, a
+// matrix cell or a formula.
+const linehaulLabel = "Linehaul"
+
 // RateContext is everything a rating reads.
 //
 // It is assembled once, from the shipment and its relations, and then nothing
@@ -105,8 +110,8 @@ func (rc *RateContext) Weekday() int {
 }
 
 // MatchFacts projects the context onto the values a rule is checked against.
-func (rc *RateContext) MatchFacts() rateagreement.MatchFacts {
-	return rateagreement.MatchFacts{
+func (rc *RateContext) MatchFacts() *rateagreement.MatchFacts {
+	return &rateagreement.MatchFacts{
 		RatingDate:          rc.AsOf,
 		Weekday:             rc.Weekday(),
 		ServiceTypeID:       rc.ServiceTypeID,

@@ -183,7 +183,7 @@ func (rb RatingBasis) IsValid() bool {
 
 // UsesRate reports whether the basis reads the rule's own rate column.
 func (rb RatingBasis) UsesRate() bool {
-	switch rb {
+	switch rb { //nolint:exhaustive // every other basis reads the rate column
 	case RatingBasisMatrix, RatingBasisFormula:
 		return false
 	default:

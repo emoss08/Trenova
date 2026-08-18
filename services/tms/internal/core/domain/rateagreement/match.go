@@ -49,7 +49,7 @@ type MatchFacts struct {
 // which is the convention detention policies and fuel surcharge programs
 // already follow. Checks run cheapest first so a rule that is out of date or
 // out of service costs almost nothing to reject.
-func (rar *RateAgreementRule) Matches(facts MatchFacts) (bool, ratetypes.RejectReason) {
+func (rar *RateAgreementRule) Matches(facts *MatchFacts) (bool, ratetypes.RejectReason) {
 	if rar.Status != RuleStatusActive {
 		return false, ratetypes.RejectReasonRuleInactive
 	}
@@ -112,7 +112,7 @@ func (rar *RateAgreementRule) Matches(facts MatchFacts) (bool, ratetypes.RejectR
 // matchesEquipment treats the tractor, trailer and equipment class filters as
 // one dimension. A rule may narrow by any of them, and the shipment has to
 // satisfy every one the rule actually names.
-func (rar *RateAgreementRule) matchesEquipment(facts MatchFacts) bool {
+func (rar *RateAgreementRule) matchesEquipment(facts *MatchFacts) bool {
 	if !matchesID(rar.TractorTypeIDs, facts.TractorTypeID) {
 		return false
 	}

@@ -172,7 +172,7 @@ func (rm *RateMatrix) validateDimensions(multiErr *errortypes.MultiError) {
 		positions[dimension.Position] = struct{}{}
 	}
 
-	for position := range int16(len(rm.Dimensions)) {
+	for position := range int16(len(rm.Dimensions)) { //nolint:gosec // bounded by MaxDimensions
 		if _, ok := positions[position]; !ok {
 			multiErr.Add(
 				"dimensions",

@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShipment_ApplyEntryMethodDefault(t *testing.T) {
@@ -113,4 +115,55 @@ func TestShipment_ShipperStopSkipsNilAndNonOriginStops(t *testing.T) {
 	if got := entity.ShipperStop(); got != nil {
 		t.Fatalf("ShipperStop() = %v, want nil", got)
 	}
+}
+
+// Clearing an override is a deliberate act, never a side effect of saving
+// something else. A client that round-trips a shipment without the rating
+// fields must not thereby unlock an invoiced load or wipe a negotiated rate.
+func TestRestoreRateOwnedFields_CallersCannotClearAnOverride(t *testing.T) {
+	t.Parallel()
+
+	setBy := pulid.MustNew("usr_")
+	setAt := int64(500)
+	quoteID := pulid.MustNew("rqt_")
+	agreementID := pulid.MustNew("ragr_")
+	ruleID := pulid.MustNew("ragr_")
+
+	original := &Shipment{
+		RateOverrideAmount:  decimal.NewNullDecimal(decimal.NewFromInt(1400)),
+		RateOverrideReason:  "Spot rate agreed with the customer",
+		RateOverrideByID:    &setBy,
+		RateOverrideAt:      &setAt,
+		RateLocked:          true,
+		RateQuoteID:         &quoteID,
+		RateAgreementID:     &agreementID,
+		RateAgreementRuleID: &ruleID,
+	}
+
+	updated := &Shipment{}
+
+	RestoreRateOwnedFields(original, updated)
+
+	require.True(t, updated.HasRateOverride())
+	require.True(t, decimal.NewFromInt(1400).Equal(updated.RateOverrideAmount.Decimal))
+	require.Equal(t, "Spot rate agreed with the customer", updated.RateOverrideReason)
+	require.Equal(t, setBy, *updated.RateOverrideByID)
+	require.Equal(t, setAt, *updated.RateOverrideAt)
+	require.True(t, updated.RateLocked)
+	require.Equal(t, quoteID, *updated.RateQuoteID)
+	require.Equal(t, agreementID, *updated.RateAgreementID)
+	require.Equal(t, ruleID, *updated.RateAgreementRuleID)
+}
+
+// A forged override on a create — where there is no original to compare
+// against — is left alone here; the create path never calls this.
+func TestRestoreRateOwnedFields_IgnoresAMissingSide(t *testing.T) {
+	t.Parallel()
+
+	updated := &Shipment{RateLocked: true}
+
+	RestoreRateOwnedFields(nil, updated)
+	RestoreRateOwnedFields(&Shipment{}, nil)
+
+	require.True(t, updated.RateLocked)
 }

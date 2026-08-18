@@ -51,6 +51,12 @@ func (s *Service) resolve(
 
 	laneKeys := rateCtx.LaneKeys()
 
+	// No party means no contract, and querying for one would be a scan across
+	// every rule in the tenant to find nothing.
+	if rateCtx.PartyID.IsNil() {
+		return &Resolution{LaneKeysTried: laneKeys}, nil
+	}
+
 	fetched, err := s.agreementRepo.ResolveRules(ctx, &repositories.ResolveRateRulesRequest{
 		TenantInfo:           rateCtx.TenantInfo,
 		PartyType:            rateCtx.PartyType,
@@ -69,7 +75,7 @@ func (s *Service) resolve(
 
 	resolution := &Resolution{
 		LaneKeysTried:  laneKeys,
-		CandidateCount: int32(fetched.Total),
+		CandidateCount: int32(fetched.Total), //nolint:gosec // bounded by the resolve query limit
 		Capped:         fetched.Capped,
 		Candidates:     make([]ratetypes.Candidate, 0, len(fetched.Rules)),
 	}
@@ -104,7 +110,10 @@ func (s *Service) resolve(
 	}
 
 	if resolution.Winner != nil {
-		resolution.TieBreak = tieBreak(resolution.Winner, runnerUp(fetched.Rules, facts, resolution.Winner))
+		resolution.TieBreak = tieBreak(
+			resolution.Winner,
+			runnerUp(fetched.Rules, facts, resolution.Winner),
+		)
 	}
 
 	if fetched.Capped {
@@ -235,7 +244,7 @@ func tieBreak(winner, runnerUp *rateagreement.RateAgreementRule) string {
 // margin is described against.
 func runnerUp(
 	rules []*rateagreement.RateAgreementRule,
-	facts rateagreement.MatchFacts,
+	facts *rateagreement.MatchFacts,
 	winner *rateagreement.RateAgreementRule,
 ) *rateagreement.RateAgreementRule {
 	seenWinner := false

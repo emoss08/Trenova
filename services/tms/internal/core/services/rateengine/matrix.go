@@ -56,7 +56,7 @@ func (s *Service) matrixCharge(
 		return decimal.Zero, err
 	}
 
-	match, err := ratematrix.SelectCell(dimensions, cells, values)
+	match, err := ratematrix.SelectCell(dimensions, cells, &values)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -99,7 +99,6 @@ func (s *Service) buildAxes(
 	return values, axes
 }
 
-//nolint:cyclop // one arm per dimension kind; a map of closures would read worse
 func (s *Service) axisValue(
 	ctx context.Context,
 	rateCtx *RateContext,
@@ -178,7 +177,7 @@ func placeKeys(
 
 	scope := rategeo.Scope{Value: place.PostalCode}
 
-	switch dimension.Kind {
+	switch dimension.Kind { //nolint:exhaustive // the other kinds are not geographic
 	case ratematrix.DimensionKindZip5:
 		scope.Type = rategeo.ScopeTypeZip5
 	case ratematrix.DimensionKindZip3:
@@ -266,9 +265,9 @@ func (s *Service) applyCellValue(
 		basis = quantity.String() + " " + unit + " @ " + cell.Value.String()
 	}
 
-	trace.AddComponent(ratetypes.Component{
+	trace.AddComponent(&ratetypes.Component{
 		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      "Linehaul",
+		Label:      linehaulLabel,
 		Basis:      basis,
 		Quantity:   decimal.NewNullDecimal(quantity),
 		Rate:       decimal.NewNullDecimal(cell.Value),
@@ -314,7 +313,7 @@ func (s *Service) resolveFreightClass(
 	rule *rateagreement.RateAgreementRule,
 	trace *ratetypes.Trace,
 ) commodity.FreightClass {
-	switch rule.FreightClassSource {
+	switch rule.FreightClassSource { //nolint:exhaustive // the commodity source is the default arm
 	case rateagreement.FreightClassSourceFixed:
 		trace.Inputs.FreightClassUsed = rule.FixedFreightClass.String()
 		trace.Inputs.FreightClassSource = rule.FreightClassSource.String()

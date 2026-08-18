@@ -80,11 +80,11 @@ func (r *repository) closeOutRules(
 		NewUpdate().
 		Model((*rateagreement.RateAgreementRule)(nil)).
 		Set(cols.EffectiveTo.Set(), req.EffectiveFrom).
-		Set(cols.UpdatedAt.SetExpr("EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint")).
+		Set(cols.UpdatedAt.SetExpr(r.db.NowEpoch())).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return buncolgen.RateAgreementRuleScopeTenantUpdate(uq, req.TenantInfo).
 				Where(cols.RateAgreementID.Eq(), req.RateAgreementID).
-				Where(cols.ID.In(), bun.In(req.SupersededIDs)).
+				Where(cols.ID.In(), bun.List(req.SupersededIDs)).
 				WhereGroup(" AND ", func(wq *bun.UpdateQuery) *bun.UpdateQuery {
 					return wq.
 						Where(cols.EffectiveTo.IsNull()).

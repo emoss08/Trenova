@@ -57,7 +57,7 @@ type Match struct {
 func SelectCell(
 	dimensions []*RateMatrixDimension,
 	cells []*RateMatrixCell,
-	values LookupValues,
+	values *LookupValues,
 ) (*Match, error) {
 	if err := validateLookupInputs(dimensions, values); err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func SelectCell(
 	return matches[0], nil
 }
 
-func validateLookupInputs(dimensions []*RateMatrixDimension, values LookupValues) error {
+func validateLookupInputs(dimensions []*RateMatrixDimension, values *LookupValues) error {
 	for _, dimension := range dimensions {
 		if dimension == nil {
 			continue
@@ -115,7 +115,7 @@ func validateLookupInputs(dimensions []*RateMatrixDimension, values LookupValues
 func matchCell(
 	dimensions []*RateMatrixDimension,
 	cell *RateMatrixCell,
-	values LookupValues,
+	values *LookupValues,
 ) (*Match, bool) {
 	match := &Match{Cell: cell}
 

@@ -366,3 +366,126 @@ func TestResolveShipmentCharge_TenderDateBasis(t *testing.T) {
 	assert.Equal(t, "2026-07-06", resolved.Detail.PriceDate)
 	assert.False(t, resolved.Detail.UsedFallback)
 }
+
+type capturingProgramRepo struct {
+	repositories.FuelSurchargeProgramRepository
+	program   *fuelsurcharge.FuelSurchargeProgram
+	requested pulid.ID
+}
+
+func (s *capturingProgramRepo) GetByID(
+	_ context.Context,
+	req *repositories.GetFuelSurchargeProgramByIDRequest,
+) (*fuelsurcharge.FuelSurchargeProgram, error) {
+	s.requested = req.ProgramID
+	return s.program, nil
+}
+
+func (f *resolverFixture) resolveWith(
+	ctx context.Context,
+	override *services.FuelProgramOverride,
+) (*services.ResolvedFuelSurcharge, error) {
+	return f.service.ResolveShipmentCharge(ctx, &services.ResolveShipmentChargeRequest{
+		Shipment: f.shipment,
+		Linehaul: decimal.NewFromInt(2500),
+		Override: override,
+	})
+}
+
+// One customer can hold several contracts, and their billing profile only ever
+// named one program. The contract's own binding is the more specific statement.
+func TestResolveShipmentCharge_ContractProgramBeatsTheCustomerDefault(t *testing.T) {
+	t.Parallel()
+
+	f := newResolverFixture(t)
+	programRepo := &capturingProgramRepo{program: f.program}
+	f.service.programRepo = programRepo
+
+	contractProgramID := pulid.MustNew("fsp_")
+	agreementID := pulid.MustNew("ragr_")
+
+	resolved, err := f.resolveWith(t.Context(), &services.FuelProgramOverride{
+		AgreementID: agreementID,
+		ProgramID:   contractProgramID,
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, resolved)
+	assert.Equal(t, contractProgramID, programRepo.requested)
+	assert.Equal(t, agreementID.String(), resolved.Detail.AgreementID)
+	assert.False(t, resolved.Detail.TermsOverridden)
+}
+
+// An all-in rate is a negotiated term, so a waiver must stop the resolution
+// rather than fall through to the customer's default program.
+func TestResolveShipmentCharge_ContractWaivesFuel(t *testing.T) {
+	t.Parallel()
+
+	f := newResolverFixture(t)
+
+	resolved, err := f.resolveWith(t.Context(), &services.FuelProgramOverride{
+		AgreementID: pulid.MustNew("ragr_"),
+		ProgramID:   pulid.MustNew("fsp_"),
+		Waived:      true,
+	})
+
+	require.NoError(t, err)
+	assert.Nil(t, resolved)
+}
+
+func TestResolveShipmentCharge_ContractOverridesThePeg(t *testing.T) {
+	t.Parallel()
+
+	f := newResolverFixture(t)
+
+	// The program pegs at 1.20; the contract pegs at 2.20. At 3.70 a gallon
+	// that is thirty five-cent steps instead of fifty, so 30c a mile.
+	resolved, err := f.resolveWith(t.Context(), &services.FuelProgramOverride{
+		AgreementID: pulid.MustNew("ragr_"),
+		PegPrice:    nullDec("2.20"),
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, resolved)
+	assert.True(t, dec("300").Equal(resolved.Amount), "got %s", resolved.Amount.String())
+	assert.True(t, resolved.Detail.TermsOverridden)
+
+	assert.True(t, dec("1.20").Equal(f.program.PegPrice.Decimal),
+		"the shared program must not be mutated by one contract's terms")
+}
+
+func TestResolveShipmentCharge_ContractCapsTheSurcharge(t *testing.T) {
+	t.Parallel()
+
+	f := newResolverFixture(t)
+
+	resolved, err := f.resolveWith(t.Context(), &services.FuelProgramOverride{
+		AgreementID: pulid.MustNew("ragr_"),
+		CapAmount:   nullDec("250"),
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, resolved)
+	assert.True(t, dec("250").Equal(resolved.Amount), "got %s", resolved.Amount.String())
+	assert.True(t, resolved.Detail.CapApplied)
+	assert.True(t, resolved.Detail.TermsOverridden)
+}
+
+// A contract that renegotiates the terms without naming a program still runs
+// the customer's program — the terms attach to whichever program applies.
+func TestResolveShipmentCharge_TermOverrideWithoutAProgramUsesTheCustomerDefault(t *testing.T) {
+	t.Parallel()
+
+	f := newResolverFixture(t)
+	programRepo := &capturingProgramRepo{program: f.program}
+	f.service.programRepo = programRepo
+
+	resolved, err := f.resolveWith(t.Context(), &services.FuelProgramOverride{
+		AgreementID: pulid.MustNew("ragr_"),
+		CapAmount:   nullDec("250"),
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, resolved)
+	assert.Equal(t, f.programID, programRepo.requested)
+}

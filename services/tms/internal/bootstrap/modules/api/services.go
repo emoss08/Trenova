@@ -415,6 +415,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	distanceprofileservice.New,
 	storedmileageservice.New,
 	exchangerateservice.New,
+	func(s *exchangerateservice.Service) services.ExchangeRateService { return s },
 	fuelsurchargeservice.New,
 	func(s *fuelsurchargeservice.Service) services.FuelSurchargeResolver { return s },
 	apikeyservice.New,

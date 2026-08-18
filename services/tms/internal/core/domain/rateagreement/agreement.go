@@ -66,10 +66,10 @@ type RateAgreement struct {
 	ContractRef   string        `json:"contractRef"   bun:"contract_ref,type:VARCHAR(100),nullzero"`
 	DocumentID    *pulid.ID     `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero"`
 
-	Priority          int16  `json:"priority"      bun:"priority,type:SMALLINT,notnull,default:0"`
-	EffectiveFrom     int64  `json:"effectiveFrom" bun:"effective_from,type:BIGINT,notnull"`
-	EffectiveTo       *int64 `json:"effectiveTo"   bun:"effective_to,type:BIGINT,nullzero"`
-	AutoRenew         bool   `json:"autoRenew"     bun:"auto_renew,type:BOOLEAN,notnull,default:false"`
+	Priority          int16  `json:"priority"          bun:"priority,type:SMALLINT,notnull,default:0"`
+	EffectiveFrom     int64  `json:"effectiveFrom"     bun:"effective_from,type:BIGINT,notnull"`
+	EffectiveTo       *int64 `json:"effectiveTo"       bun:"effective_to,type:BIGINT,nullzero"`
+	AutoRenew         bool   `json:"autoRenew"         bun:"auto_renew,type:BOOLEAN,notnull,default:false"`
 	RenewalNoticeDays int16  `json:"renewalNoticeDays" bun:"renewal_notice_days,type:SMALLINT,notnull,default:30"`
 
 	Currency          string                 `json:"currency"          bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`

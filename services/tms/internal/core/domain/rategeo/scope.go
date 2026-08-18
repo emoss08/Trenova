@@ -97,7 +97,7 @@ func (st ScopeType) Weight() int32 {
 // accompanying value. Any matches everywhere and Radius is described by a
 // centre point and a distance rather than by a name, so neither carries one.
 func (st ScopeType) RequiresValue() bool {
-	switch st {
+	switch st { //nolint:exhaustive // every other scope names a place
 	case ScopeTypeAny, ScopeTypeRadius:
 		return false
 	default:

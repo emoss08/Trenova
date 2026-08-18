@@ -31,13 +31,8 @@ func (s *Service) ResolveShipmentCharge(
 		zap.String("shipmentId", entity.ID.String()),
 	)
 
-	profile, err := s.customerRepo.GetBillingProfile(ctx, entity.CustomerID)
-	if err != nil {
-		log.Warn("failed to load customer billing profile for fuel surcharge", zap.Error(err))
-		return nil, nil
-	}
-
-	if profile == nil || !profile.AppliesFuelSurcharge() {
+	programID, ok := s.resolveProgramID(ctx, req, log)
+	if !ok {
 		return nil, nil
 	}
 
@@ -47,7 +42,7 @@ func (s *Service) ResolveShipmentCharge(
 	}
 
 	program, err := s.programRepo.GetByID(ctx, &repositories.GetFuelSurchargeProgramByIDRequest{
-		ProgramID:    *profile.FuelSurchargeProgramID,
+		ProgramID:    programID,
 		TenantInfo:   tenantInfo,
 		IncludeRows:  true,
 		IncludeIndex: true,
@@ -56,6 +51,8 @@ func (s *Service) ResolveShipmentCharge(
 		log.Warn("failed to load fuel surcharge program", zap.Error(err))
 		return nil, nil
 	}
+
+	program = applyOverrideTerms(program, req.Override)
 
 	basisDate := s.resolveBasisDate(ctx, entity, program)
 
@@ -108,12 +105,83 @@ func (s *Service) ResolveShipmentCharge(
 		now:              s.now(),
 	})
 
+	if req.Override != nil {
+		detail.AgreementID = req.Override.AgreementID.String()
+		detail.TermsOverridden = req.Override.AppliesTerms()
+	}
+
 	return &services.ResolvedFuelSurcharge{
 		ProgramID:           program.ID,
 		AccessorialChargeID: program.AccessorialChargeID,
 		Amount:              result.Amount,
 		Detail:              detail,
 	}, nil
+}
+
+// resolveProgramID decides which fuel program prices this shipment.
+//
+// The order is contract, then customer billing profile, then nothing. A
+// contract that waives fuel stops here: an all-in rate is a negotiated term,
+// and falling through to the customer default would bill a surcharge the
+// customer was promised they would not see.
+func (s *Service) resolveProgramID(
+	ctx context.Context,
+	req *services.ResolveShipmentChargeRequest,
+	log *zap.Logger,
+) (pulid.ID, bool) {
+	if override := req.Override; override != nil {
+		if override.Waived {
+			return pulid.Nil, false
+		}
+
+		if !override.ProgramID.IsNil() {
+			return override.ProgramID, true
+		}
+	}
+
+	profile, err := s.customerRepo.GetBillingProfile(ctx, req.Shipment.CustomerID)
+	if err != nil {
+		log.Warn("failed to load customer billing profile for fuel surcharge", zap.Error(err))
+		return pulid.Nil, false
+	}
+
+	if profile == nil || !profile.AppliesFuelSurcharge() {
+		return pulid.Nil, false
+	}
+
+	return *profile.FuelSurchargeProgramID, true
+}
+
+// applyOverrideTerms returns the program as the contract renegotiated it.
+//
+// The program is copied rather than mutated: it is a shared, cached record, and
+// one contract's cap must not leak into the next shipment rated against the
+// same program.
+func applyOverrideTerms(
+	program *fuelsurcharge.FuelSurchargeProgram,
+	override *services.FuelProgramOverride,
+) *fuelsurcharge.FuelSurchargeProgram {
+	if program == nil || !override.AppliesTerms() {
+		return program
+	}
+
+	amended := *program
+
+	if override.PegPrice.Valid {
+		amended.PegPrice = override.PegPrice
+	}
+
+	if override.IncrementRate.Valid {
+		amended.IncrementRate = override.IncrementRate
+	}
+
+	// A contract cap replaces the program's rather than competing with it: the
+	// negotiated ceiling is the one the customer signed.
+	if override.CapAmount.Valid {
+		amended.MaxAmount = override.CapAmount
+	}
+
+	return &amended
 }
 
 func (s *Service) resolveBasisDate(

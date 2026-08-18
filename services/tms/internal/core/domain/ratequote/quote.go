@@ -56,14 +56,14 @@ type RateQuote struct {
 	FormulaTemplateID      *pulid.ID `json:"formulaTemplateId"      bun:"formula_template_id,type:VARCHAR(100),nullzero"`
 	SpecificityScore       int32     `json:"specificityScore"       bun:"specificity_score,type:INTEGER,notnull,default:0"`
 
-	Currency          string              `json:"currency"        bun:"currency,type:VARCHAR(3),notnull"`
-	LinehaulAmount    decimal.Decimal     `json:"linehaulAmount"  bun:"linehaul_amount,type:NUMERIC(19,4),notnull,default:0"`
-	FuelAmount        decimal.Decimal     `json:"fuelAmount"      bun:"fuel_amount,type:NUMERIC(19,4),notnull,default:0"`
+	Currency          string              `json:"currency"          bun:"currency,type:VARCHAR(3),notnull"`
+	LinehaulAmount    decimal.Decimal     `json:"linehaulAmount"    bun:"linehaul_amount,type:NUMERIC(19,4),notnull,default:0"`
+	FuelAmount        decimal.Decimal     `json:"fuelAmount"        bun:"fuel_amount,type:NUMERIC(19,4),notnull,default:0"`
 	AccessorialAmount decimal.Decimal     `json:"accessorialAmount" bun:"accessorial_amount,type:NUMERIC(19,4),notnull,default:0"`
-	TotalAmount       decimal.Decimal     `json:"totalAmount"     bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"`
-	CostAmount        decimal.NullDecimal `json:"costAmount"      bun:"cost_amount,type:NUMERIC(19,4),nullzero"`
-	MarginAmount      decimal.NullDecimal `json:"marginAmount"    bun:"margin_amount,type:NUMERIC(19,4),nullzero"`
-	MarginPercent     decimal.NullDecimal `json:"marginPercent"   bun:"margin_percent,type:NUMERIC(9,4),nullzero"`
+	TotalAmount       decimal.Decimal     `json:"totalAmount"       bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"`
+	CostAmount        decimal.NullDecimal `json:"costAmount"        bun:"cost_amount,type:NUMERIC(19,4),nullzero"`
+	MarginAmount      decimal.NullDecimal `json:"marginAmount"      bun:"margin_amount,type:NUMERIC(19,4),nullzero"`
+	MarginPercent     decimal.NullDecimal `json:"marginPercent"     bun:"margin_percent,type:NUMERIC(9,4),nullzero"`
 
 	// The billing amounts are the same money in the organization's own
 	// currency. Both are stored, along with the rate used, so the quote stays
@@ -97,10 +97,10 @@ type RateQuote struct {
 
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	BusinessUnit *tenant.BusinessUnit         `json:"-"                    bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization         `json:"-"                    bun:"rel:belongs-to,join:organization_id=id"`
-	Agreement    *rateagreement.RateAgreement `json:"agreement,omitempty"  bun:"rel:belongs-to,join:rate_agreement_id=id"`
-	RatedBy      *tenant.User                 `json:"ratedBy,omitempty"    bun:"rel:belongs-to,join:rated_by_id=id"`
+	BusinessUnit *tenant.BusinessUnit         `json:"-"                   bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization         `json:"-"                   bun:"rel:belongs-to,join:organization_id=id"`
+	Agreement    *rateagreement.RateAgreement `json:"agreement,omitempty" bun:"rel:belongs-to,join:rate_agreement_id=id"`
+	RatedBy      *tenant.User                 `json:"ratedBy,omitempty"   bun:"rel:belongs-to,join:rated_by_id=id"`
 }
 
 // Explanation is the one line answer to "why this rate", assembled from what

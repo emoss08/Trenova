@@ -7,45 +7,59 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
+	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/maputils"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type Params struct {
 	fx.In
 
-	Formula         services.FormulaCalculator
-	AccessorialRepo repositories.AccessorialChargeRepository
-	FuelSurcharge   services.FuelSurchargeResolver
-	DetentionEngine *detentionservice.Service
+	Logger             *zap.Logger
+	RateEngine         services.RateEngine
+	Predicate          services.FormulaPredicateEvaluator
+	AccessorialRepo    repositories.AccessorialChargeRepository
+	AgreementRepo      repositories.RateAgreementRepository
+	BillingControlRepo repositories.BillingControlRepository
+	FuelSurcharge      services.FuelSurchargeResolver
+	DetentionEngine    *detentionservice.Service
 }
 
 type Calculator struct {
-	formula         services.FormulaCalculator
-	accessorialRepo repositories.AccessorialChargeRepository
-	fuelSurcharge   services.FuelSurchargeResolver
-	detentionEngine *detentionservice.Service
-	now             func() int64
+	logger             *zap.Logger
+	rateEngine         services.RateEngine
+	predicate          services.FormulaPredicateEvaluator
+	accessorialRepo    repositories.AccessorialChargeRepository
+	agreementRepo      repositories.RateAgreementRepository
+	billingControlRepo repositories.BillingControlRepository
+	fuelSurcharge      services.FuelSurchargeResolver
+	detentionEngine    *detentionservice.Service
+	now                func() int64
 }
 
 func New(p Params) *Calculator {
 	return &Calculator{
-		formula:         p.Formula,
-		accessorialRepo: p.AccessorialRepo,
-		fuelSurcharge:   p.FuelSurcharge,
-		detentionEngine: p.DetentionEngine,
-		now:             timeutils.NowUnix,
+		logger:             p.Logger.Named("service.shipmentcommercial"),
+		rateEngine:         p.RateEngine,
+		predicate:          p.Predicate,
+		accessorialRepo:    p.AccessorialRepo,
+		agreementRepo:      p.AgreementRepo,
+		billingControlRepo: p.BillingControlRepo,
+		fuelSurcharge:      p.FuelSurcharge,
+		detentionEngine:    p.DetentionEngine,
+		now:                timeutils.NowUnix,
 	}
 }
 
@@ -147,8 +161,19 @@ func (c *Calculator) calculateCommercialTotals(
 		return decimal.Zero, decimal.Zero, nil, err
 	}
 
+	// The contract is read once and used twice: it prices its own accessorials,
+	// and it may point fuel at a different program than the customer default.
+	agreement := c.loadAgreement(ctx, entity)
+
+	// Contract accessorials are applied before fuel, because a fuel program
+	// taking a percentage of linehaul plus accessorials has to see them first.
+	// A locked shipment is left entirely alone.
+	if !entity.RateLocked {
+		c.syncAgreementAccessorials(ctx, entity, agreement)
+	}
+
 	if sync.fuel {
-		if err = c.syncFuelSurcharge(ctx, entity, baseCharge); err != nil {
+		if err = c.syncFuelSurcharge(ctx, entity, baseCharge, agreement); err != nil {
 			return decimal.Zero, decimal.Zero, nil, err
 		}
 	}
@@ -183,39 +208,202 @@ func CalculateAdditionalCharge(
 	}
 }
 
+// calculateBaseCharge produces the linehaul.
+//
+// There are three ways to arrive at one, in strict order of authority. A rate
+// somebody set by hand wins outright — re-rating is triggered by a stop edit,
+// an assignment, a fuel price job, and any of those silently replacing a
+// negotiated spot rate is exactly what makes people switch auto-rating off. A
+// locked shipment keeps what it already had, because the customer has seen it.
+// Otherwise the rate engine resolves the contract covering the lane, falling
+// back to the shipment's own formula template when none does.
 func (c *Calculator) calculateBaseCharge(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	userID pulid.ID,
 ) (decimal.Decimal, *shipment.RatingDetail, error) {
-	resp, err := c.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
-		TemplateID: entity.FormulaTemplateID,
-		Entity:     entity,
+	if entity.RateLocked {
+		return c.lockedCharge(entity), entity.RatingDetail, nil
+	}
+
+	rated, err := c.rateEngine.RateShipment(ctx, &services.RateShipmentRequest{
+		Shipment:  entity,
+		Purpose:   ratequote.PurposeRating,
+		PartyType: rateagreement.PartyTypeCustomer,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity.OrganizationID,
 			BuID:   entity.BusinessUnitID,
 			UserID: userID,
 		},
-		RatingDate: ratingDate(entity, c.now),
+		BillingControl: c.billingControl(ctx, entity),
+		Persist:        true,
+		UserID:         userID,
 	})
 	if err != nil {
 		return decimal.Zero, nil, err
 	}
 
-	result, _ := resp.Amount.Float64()
-	detail := &shipment.RatingDetail{
-		FormulaTemplateID:   resp.FormulaTemplateID,
-		FormulaTemplateName: resp.FormulaTemplateName,
-		Expression:          resp.Expression,
-		ResolvedVariables:   maputils.WithoutFuncValues(resp.Variables),
-		Result:              result,
-		RatedAt:             c.now(),
-		VersionNumber:       resp.VersionNumber,
-		Breakdown:           ratingBreakdown(resp.Breakdown),
-		Guardrail:           ratingGuardrail(resp.Guardrail),
+	c.applyQuote(entity, rated)
+
+	if entity.HasRateOverride() {
+		return c.overriddenCharge(entity, rated), entity.RatingDetail, nil
 	}
 
-	return resp.Amount, detail, nil
+	return rated.Amount, entity.RatingDetail, nil
+}
+
+// lockedCharge keeps an invoiced shipment exactly as it was. Nothing is
+// recomputed and no quote is written: the numbers have already been billed.
+func (c *Calculator) lockedCharge(entity *shipment.Shipment) decimal.Decimal {
+	if entity.FreightChargeAmount.Valid {
+		return entity.FreightChargeAmount.Decimal
+	}
+
+	return decimal.Zero
+}
+
+// overriddenCharge returns the hand-set linehaul, and records on the quote what
+// the contract would have charged instead.
+//
+// That difference is the rate leakage report. Storing it on the row that caused
+// it, rather than recomputing it later, is the only way it stays true after the
+// contract has been amended.
+func (c *Calculator) overriddenCharge(
+	entity *shipment.Shipment,
+	rated *services.RatedShipment,
+) decimal.Decimal {
+	override := entity.RateOverrideAmount.Decimal
+
+	if rated.Quote != nil {
+		rated.Quote.Outcome = ratequote.OutcomeManualOverride
+		rated.Quote.OverrideReason = entity.RateOverrideReason
+		rated.Quote.ForegoneAmount = decimal.NewNullDecimal(rated.Amount.Sub(override))
+		rated.Quote.LinehaulAmount = override
+		rated.Quote.TotalAmount = override
+		rated.Quote.BillingAmount = override
+	}
+
+	if entity.RatingDetail != nil {
+		result, _ := override.Float64()
+		entity.RatingDetail.Result = result
+		entity.RatingDetail.Source = string(ratequote.OutcomeManualOverride)
+		entity.RatingDetail.Explanation = overrideExplanation(entity)
+	}
+
+	return override
+}
+
+func overrideExplanation(entity *shipment.Shipment) string {
+	if entity.RateOverrideReason == "" {
+		return "Rate set by hand"
+	}
+
+	return "Rate set by hand: " + entity.RateOverrideReason
+}
+
+// applyQuote stamps the rating decision back onto the shipment, so the record
+// of what priced it travels with the shipment rather than only in the quote.
+func (c *Calculator) applyQuote(
+	entity *shipment.Shipment,
+	rated *services.RatedShipment,
+) {
+	entity.RateAgreementID = rated.AgreementID
+	entity.RateAgreementRuleID = rated.RuleID
+
+	if rated.Quote != nil && !rated.Quote.ID.IsNil() {
+		quoteID := rated.Quote.ID
+		entity.RateQuoteID = &quoteID
+	}
+
+	// A rule that delegates to a formula keeps the shipment's template field
+	// meaningful, so the existing billing screen goes on showing which formula
+	// produced the number.
+	if rated.FormulaTemplateID != nil && !rated.FormulaTemplateID.IsNil() {
+		entity.FormulaTemplateID = *rated.FormulaTemplateID
+	}
+
+	entity.RatingDetail = ratingDetailFromQuote(rated)
+}
+
+func ratingDetailFromQuote(rated *services.RatedShipment) *shipment.RatingDetail {
+	result, _ := rated.Amount.Float64()
+
+	detail := &shipment.RatingDetail{
+		Result: result,
+		Source: string(rated.Outcome),
+	}
+
+	quote := rated.Quote
+	if quote == nil {
+		return detail
+	}
+
+	detail.RatedAt = quote.RatedAt
+	detail.Explanation = quote.Explanation()
+	if !quote.ID.IsNil() {
+		detail.RateQuoteID = quote.ID.String()
+	}
+	if quote.RateAgreementID != nil {
+		detail.AgreementID = quote.RateAgreementID.String()
+	}
+	if quote.RateAgreementRuleID != nil {
+		detail.RuleID = quote.RateAgreementRuleID.String()
+	}
+	if quote.FormulaTemplateID != nil {
+		detail.FormulaTemplateID = quote.FormulaTemplateID.String()
+	}
+
+	if trace := quote.Trace; trace != nil {
+		detail.Breakdown = breakdownFromTrace(trace)
+
+		if winner := trace.Winner(); winner != nil {
+			detail.AgreementName = winner.AgreementName
+			detail.RuleLabel = winner.RuleLabel
+		}
+	}
+
+	return detail
+}
+
+// breakdownFromTrace renders the trace's components as the breakdown lines the
+// existing billing screen already knows how to display, so the rating panel
+// keeps working unchanged while showing far more than it used to.
+func breakdownFromTrace(trace *ratetypes.Trace) []shipment.RatingBreakdownItem {
+	if len(trace.Components) == 0 {
+		return nil
+	}
+
+	items := make([]shipment.RatingBreakdownItem, 0, len(trace.Components))
+	for _, component := range trace.Components {
+		amount, _ := component.Amount.Float64()
+		items = append(items, shipment.RatingBreakdownItem{
+			Name:   component.Kind.String(),
+			Label:  component.Label,
+			Amount: amount,
+		})
+	}
+
+	return items
+}
+
+// billingControl carries the organization's decision about what to do when no
+// agreement covers a lane. A failure to load it is not worth failing a save
+// over: the default it falls back to is the behaviour that existed before rate
+// agreements, which is the safe answer.
+func (c *Calculator) billingControl(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) *tenant.BillingControl {
+	if c.billingControlRepo == nil {
+		return nil
+	}
+
+	control, err := c.billingControlRepo.GetByOrgID(ctx, entity.OrganizationID)
+	if err != nil {
+		return nil
+	}
+
+	return control
 }
 
 func ratingDate(entity *shipment.Shipment, now func() int64) int64 {
@@ -226,51 +414,6 @@ func ratingDate(entity *shipment.Shipment, now func() int64) int64 {
 		return entity.CreatedAt
 	}
 	return now()
-}
-
-func ratingBreakdown(
-	items []formulatemplatetypes.BreakdownAmount,
-) []shipment.RatingBreakdownItem {
-	if len(items) == 0 {
-		return nil
-	}
-
-	breakdown := make([]shipment.RatingBreakdownItem, 0, len(items))
-	for _, item := range items {
-		amount, _ := item.Amount.Float64()
-		breakdown = append(breakdown, shipment.RatingBreakdownItem{
-			Name:   item.Name,
-			Label:  item.Label,
-			Amount: amount,
-			Error:  item.Error,
-		})
-	}
-
-	return breakdown
-}
-
-func ratingGuardrail(result *formulatemplatetypes.GuardrailResult) *shipment.RatingGuardrail {
-	if result == nil {
-		return nil
-	}
-
-	raw, _ := result.RawAmount.Float64()
-	guardrail := &shipment.RatingGuardrail{
-		Applied:   result.Applied,
-		Bound:     result.Bound,
-		RawResult: raw,
-	}
-
-	if result.MinCharge != nil {
-		minCharge, _ := result.MinCharge.Float64()
-		guardrail.MinCharge = &minCharge
-	}
-	if result.MaxCharge != nil {
-		maxCharge, _ := result.MaxCharge.Float64()
-		guardrail.MaxCharge = &maxCharge
-	}
-
-	return guardrail
 }
 
 func (c *Calculator) syncDetentionCharge(
@@ -385,6 +528,7 @@ func (c *Calculator) syncFuelSurcharge(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	baseCharge decimal.Decimal,
+	agreement *rateagreement.RateAgreement,
 ) error {
 	if entity == nil || c.fuelSurcharge == nil {
 		return nil
@@ -400,6 +544,7 @@ func (c *Calculator) syncFuelSurcharge(
 			Shipment:         entity,
 			Linehaul:         baseCharge,
 			AccessorialTotal: nonFuelSurchargeChargeTotal(entity, baseCharge),
+			Override:         fuelOverride(agreement),
 		},
 	)
 	if err != nil {
