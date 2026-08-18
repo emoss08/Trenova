@@ -27,6 +27,7 @@ export function RateZonePanel({ open, onOpenChange, mode, row }: DataTablePanelP
         onOpenChange={onOpenChange}
         row={row}
         form={form}
+        size="lg"
         url="/rate-zones/"
         queryKey="rate-zone-list"
         title="Rate Zone"
@@ -41,6 +42,7 @@ export function RateZonePanel({ open, onOpenChange, mode, row }: DataTablePanelP
       open={open}
       onOpenChange={onOpenChange}
       form={form}
+      size="lg"
       url="/rate-zones/"
       queryKey="rate-zone-list"
       title="Rate Zone"

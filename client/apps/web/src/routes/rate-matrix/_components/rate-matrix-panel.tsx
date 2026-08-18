@@ -66,6 +66,7 @@ export function RateMatrixPanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
+        size="xl"
         queryKey="rate-matrix-list"
         title="Rate Matrix"
         fieldKey="name"
@@ -86,6 +87,7 @@ export function RateMatrixPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
+      size="xl"
       queryKey="rate-matrix-list"
       title="Rate Matrix"
       description="Enter a published tariff as the grid it was published as, and point any lane at it."

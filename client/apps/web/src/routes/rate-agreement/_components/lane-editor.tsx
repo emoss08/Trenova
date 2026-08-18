@@ -17,7 +17,7 @@ import {
   laneSpecificity,
 } from "@trenova/shared/lib/rate";
 import type { RateAgreement, RateAgreementRule } from "@trenova/shared/types/rate";
-import { PlusIcon, TrashIcon, TriangleAlertIcon } from "lucide-react";
+import { PlusIcon, TriangleAlertIcon } from "lucide-react";
 import { useMemo } from "react";
 import type { Control } from "react-hook-form";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
@@ -135,10 +135,10 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
   const laneKey = rule ? laneKeyPreview(rule) : null;
 
   return (
-    <div className="rounded-md border p-3">
+    <div className="rounded-md border bg-card p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium">
+          <p className="text-sm font-medium">
             {rule ? laneDisplayLabel(rule, index) : `Lane ${index + 1}`}
           </p>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -152,8 +152,8 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
             )}
           </div>
         </div>
-        <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
-          <TrashIcon className="size-3.5" />
+        <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={onRemove}>
+          Remove
         </Button>
       </div>
 
@@ -184,8 +184,18 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
       </FormGroup>
 
       <div className="mt-3 grid gap-3 md:grid-cols-2">
-        <LaneScopeFields control={control} side="origin" namePrefix={`rules.${index}.`} />
-        <LaneScopeFields control={control} side="destination" namePrefix={`rules.${index}.`} />
+        <div className="rounded-md border bg-muted/30 p-3">
+          <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+            Origin
+          </p>
+          <LaneScopeFields control={control} side="origin" namePrefix={`rules.${index}.`} />
+        </div>
+        <div className="rounded-md border bg-muted/30 p-3">
+          <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
+            Destination
+          </p>
+          <LaneScopeFields control={control} side="destination" namePrefix={`rules.${index}.`} />
+        </div>
       </div>
 
       <FormGroup cols={3} className="mt-3">
@@ -194,7 +204,7 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
             control={control}
             rules={{ required: true }}
             name={`rules.${index}.ratingBasis` as never}
-            label="Priced by"
+            label="Rating Basis"
             placeholder="Basis"
             description="How this lane arrives at a linehaul"
             options={ratingBasisChoices}
@@ -207,7 +217,7 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
               control={control}
               rules={{ required: true }}
               name={`rules.${index}.rateMatrixId` as never}
-              label="Rate matrix"
+              label="Rate Matrix"
               placeholder="Matrix"
               description="The grid this lane reads its price from"
             />
@@ -218,7 +228,7 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
               control={control}
               rules={{ required: true }}
               name={`rules.${index}.formulaTemplateId` as never}
-              label="Formula template"
+              label="Formula Template"
               placeholder="Template"
               description="The expression this lane evaluates, for rates no structured method covers"
             />
@@ -231,6 +241,9 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
                 name={`rules.${index}.rate` as never}
                 label="Rate"
                 placeholder="2.55"
+                sideText="$"
+                decimalScale={4}
+                thousandSeparator
                 description="Leave empty when the lane is banded by weight"
               />
             </FormControl>
@@ -240,7 +253,7 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
                   control={control}
                   rules={{ required: true }}
                   name={`rules.${index}.percentBasis` as never}
-                  label="Percent of"
+                  label="Percent Basis"
                   placeholder="Basis"
                   description="What the percentage is taken from"
                   options={ratePercentBasisChoices}
@@ -256,8 +269,11 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
           <NumberField
             control={control}
             name={`rules.${index}.minCharge` as never}
-            label="Minimum charge"
-            placeholder="850"
+            label="Minimum Charge"
+            placeholder="850.00"
+            sideText="$"
+            decimalScale={2}
+            thousandSeparator
             description="The floor this lane never prices below"
           />
         </FormControl>
@@ -265,8 +281,11 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
           <NumberField
             control={control}
             name={`rules.${index}.maxCharge` as never}
-            label="Maximum charge"
-            placeholder=""
+            label="Maximum Charge"
+            placeholder="0.00"
+            sideText="$"
+            decimalScale={2}
+            thousandSeparator
             description="A ceiling, when the contract sets one"
           />
         </FormControl>
@@ -274,8 +293,9 @@ function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
           <NumberField
             control={control}
             name={`rules.${index}.minBillableDistance` as never}
-            label="Minimum miles"
+            label="Minimum Billable Miles"
             placeholder="250"
+            sideText="mi"
             description="Short hauls bill at this distance however far they actually ran"
           />
         </FormControl>

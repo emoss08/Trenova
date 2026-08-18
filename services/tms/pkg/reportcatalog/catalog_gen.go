@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:e9bda9e35c10740012c68e03845584daa3a60ac1a8f3d297dc918f54327f9191"
+const Version = "sha256:f328cc7994f08055dd0c0f628782fdfbc19e4ab8642383921096944eb9d67d93"
 
 var Default = Catalog{
 	Version: Version,
@@ -4845,6 +4845,84 @@ var Default = Catalog{
 					Label:    "Rating Detail",
 					Type:     FieldJSON,
 					Nullable: true,
+				},
+				{
+					Key:          "rateQuoteId",
+					Column:       buncolgen.NewColumn("rate_quote_id", "sp"),
+					Label:        "Rate Quote ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "rateAgreementId",
+					Column:       buncolgen.NewColumn("rate_agreement_id", "sp"),
+					Label:        "Rate Agreement ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "rateAgreementRuleId",
+					Column:       buncolgen.NewColumn("rate_agreement_rule_id", "sp"),
+					Label:        "Rate Agreement Rule ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "rateOverrideAmount",
+					Column:       buncolgen.NewColumn("rate_override_amount", "sp"),
+					Label:        "Rate Override Amount",
+					Type:         FieldDecimal,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+				},
+				{
+					Key:          "rateOverrideReason",
+					Column:       buncolgen.NewColumn("rate_override_reason", "sp"),
+					Label:        "Rate Override Reason",
+					Type:         FieldString,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "rateOverrideById",
+					Column:       buncolgen.NewColumn("rate_override_by_id", "sp"),
+					Label:        "Rate Override By ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "rateOverrideAt",
+					Column:       buncolgen.NewColumn("rate_override_at", "sp"),
+					Label:        "Rate Override At",
+					Type:         FieldEpoch,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "rateLocked",
+					Column:       buncolgen.NewColumn("rate_locked", "sp"),
+					Label:        "Rate Locked",
+					Type:         FieldBool,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
 				},
 				{
 					Key:          "version",

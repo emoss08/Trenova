@@ -212,7 +212,15 @@ var PortalInvitationSpec TypeSpec
 
 var PortalPtoSpec TypeSpec
 
+var RateAgreementSpec TypeSpec
+
+var RateMatrixSpec TypeSpec
+
+var RateQuoteSpec TypeSpec
+
 var RateTableSpec TypeSpec
+
+var RateZoneSpec TypeSpec
 
 var RecurringDeductionSpec TypeSpec
 
@@ -9294,6 +9302,307 @@ func init() {
 		},
 	}
 
+	RateAgreementSpec = TypeSpec{
+		TypeName: "RateAgreement",
+		FieldMap: buncolgen.RateAgreementFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "partyType",
+				FieldMapKey: "partyType",
+			},
+			{
+				Name:        "customerId",
+				FieldMapKey: "customerId",
+			},
+			{
+				Name:        "carrierId",
+				FieldMapKey: "carrierId",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "agreementType",
+				FieldMapKey: "agreementType",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "contractRef",
+				FieldMapKey: "contractRef",
+			},
+			{
+				Name:        "priority",
+				FieldMapKey: "priority",
+			},
+			{
+				Name:        "effectiveFrom",
+				FieldMapKey: "effectiveFrom",
+			},
+			{
+				Name:        "effectiveTo",
+				FieldMapKey: "effectiveTo",
+			},
+			{
+				Name:        "autoRenew",
+				FieldMapKey: "autoRenew",
+			},
+			{
+				Name:        "renewalNoticeDays",
+				FieldMapKey: "renewalNoticeDays",
+			},
+			{
+				Name:        "currency",
+				FieldMapKey: "currency",
+			},
+			{
+				Name:        "defaultMinCharge",
+				FieldMapKey: "defaultMinCharge",
+			},
+			{
+				Name:        "defaultMaxCharge",
+				FieldMapKey: "defaultMaxCharge",
+			},
+			{
+				Name:        "marginFloorPercent",
+				FieldMapKey: "marginFloorPercent",
+			},
+			{
+				Name:        "maxPayPercentOfSell",
+				FieldMapKey: "maxPayPercentOfSell",
+			},
+			{
+				Name:        "submittedById",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "submittedAt",
+				FieldMapKey: "submittedAt",
+			},
+			{
+				Name:        "approvedById",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "approvedAt",
+				FieldMapKey: "approvedAt",
+			},
+			{
+				Name:        "reviewComment",
+				FieldMapKey: "reviewComment",
+			},
+			{
+				Name:        "currentVersionNumber",
+				FieldMapKey: "currentVersionNumber",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	RateMatrixSpec = TypeSpec{
+		TypeName: "RateMatrix",
+		FieldMap: buncolgen.RateMatrixFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "valueKind",
+				FieldMapKey: "valueKind",
+			},
+			{
+				Name:        "currency",
+				FieldMapKey: "currency",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	RateQuoteSpec = TypeSpec{
+		TypeName: "RateQuote",
+		FieldMap: buncolgen.RateQuoteFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "shipmentId",
+				FieldMapKey: "shipmentId",
+			},
+			{
+				Name:        "partyType",
+				FieldMapKey: "partyType",
+			},
+			{
+				Name:        "partyId",
+				FieldMapKey: "partyId",
+			},
+			{
+				Name:        "purpose",
+				FieldMapKey: "purpose",
+			},
+			{
+				Name:        "outcome",
+				FieldMapKey: "outcome",
+			},
+			{
+				Name:        "rateAgreementId",
+				FieldMapKey: "rateAgreementId",
+			},
+			{
+				Name:        "rateAgreementRuleId",
+				FieldMapKey: "rateAgreementRuleId",
+			},
+			{
+				Name:        "formulaTemplateId",
+				FieldMapKey: "formulaTemplateId",
+			},
+			{
+				Name:        "specificityScore",
+				FieldMapKey: "specificityScore",
+			},
+			{
+				Name:        "currency",
+				FieldMapKey: "currency",
+			},
+			{
+				Name:        "billingCurrency",
+				FieldMapKey: "billingCurrency",
+			},
+			{
+				Name:        "linehaulAmount",
+				FieldMapKey: "linehaulAmount",
+			},
+			{
+				Name:        "totalAmount",
+				FieldMapKey: "totalAmount",
+			},
+			{
+				Name:        "billingAmount",
+				FieldMapKey: "billingAmount",
+			},
+			{
+				Name:        "foregoneAmount",
+				FieldMapKey: "foregoneAmount",
+			},
+			{
+				Name:        "overrideReason",
+				FieldMapKey: "overrideReason",
+			},
+			{
+				Name:        "asOf",
+				FieldMapKey: "asOf",
+			},
+			{
+				Name:        "ratedAt",
+				FieldMapKey: "ratedAt",
+			},
+			{
+				Name:        "ratedById",
+				FieldMapKey: "ratedById",
+			},
+			{
+				Name:        "engineVersion",
+				FieldMapKey: "engineVersion",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
 	RateTableSpec = TypeSpec{
 		TypeName: "RateTable",
 		FieldMap: buncolgen.RateTableFieldMap,
@@ -9359,6 +9668,57 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+		},
+	}
+
+	RateZoneSpec = TypeSpec{
+		TypeName: "RateZone",
+		FieldMap: buncolgen.RateZoneFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

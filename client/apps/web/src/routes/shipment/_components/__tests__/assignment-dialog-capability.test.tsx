@@ -77,8 +77,8 @@ describe("AssignmentDialog coverage modes", () => {
 
     renderDialog();
 
-    expect(screen.getByRole("radio", { name: "Driver" })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: "Carrier" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Driver" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Carrier" })).toBeInTheDocument();
   });
 
   it("drops the driver tab for an organization that employs no drivers", () => {
@@ -86,9 +86,9 @@ describe("AssignmentDialog coverage modes", () => {
 
     renderDialog();
 
-    expect(screen.queryByRole("radio", { name: "Driver" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Driver" })).toBeNull();
     // One remaining mode is not a choice, so the whole control goes with it.
-    expect(screen.queryByRole("radiogroup", { name: "Coverage type" })).toBeNull();
+    expect(screen.queryByRole("tablist", { name: "Coverage type" })).toBeNull();
   });
 
   it("opens straight into carrier coverage when the driver mode is unavailable", () => {

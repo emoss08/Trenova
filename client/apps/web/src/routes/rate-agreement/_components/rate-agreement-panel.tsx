@@ -115,6 +115,7 @@ export function RateAgreementPanel({
         onOpenChange={onOpenChange}
         row={row}
         form={form}
+        size="xl"
         queryKey="rate-agreement-list"
         title="Rate Agreement"
         fieldKey="name"
@@ -135,6 +136,7 @@ export function RateAgreementPanel({
       open={open}
       onOpenChange={onOpenChange}
       form={form}
+      size="xl"
       queryKey="rate-agreement-list"
       title="Rate Agreement"
       description="Write the contract once, and every shipment on its lanes prices itself against it."
