@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -150,6 +151,13 @@ func (c *Calculator) calculateCommercialTotals(
 	userID pulid.ID,
 	sync chargeSyncOptions,
 ) (decimal.Decimal, decimal.Decimal, *shipment.RatingDetail, error) {
+	// One shipment can reach the formula engine several times over — the base
+	// charge, a contract accessorial priced by template, a fuel program that
+	// evaluates one. Each of those would otherwise re-read the tenant's rate
+	// tables. A caller walking a batch installs its own memo first, and this
+	// one steps aside for it.
+	ctx = ratetablecache.With(ctx)
+
 	if sync.detention {
 		if err := c.syncDetentionCharge(ctx, entity, control); err != nil {
 			return decimal.Zero, decimal.Zero, nil, err

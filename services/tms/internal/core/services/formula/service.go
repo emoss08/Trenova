@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -181,18 +182,31 @@ func (s *Service) Rate(
 	}, nil
 }
 
+// buildLookup reads the tenant's rate tables, once per unit of work.
+//
+// Reading them is expensive — every active table with every entry — and rating
+// now happens on every shipment write and in batches. The memo is only present
+// when a caller installed one; without it this behaves exactly as it always
+// did, which is what keeps a formula evaluated outside a request working.
 func (s *Service) buildLookup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (formulatemplatetypes.RateTableLookup, error) {
-	tables, err := s.rateTableRepo.GetLookupData(ctx, &repositories.GetRateTableLookupDataRequest{
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
+	return ratetablecache.Get(
+		ctx,
+		tenantInfo.OrgID,
+		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
+			tables, err := s.rateTableRepo.GetLookupData(
+				ctx,
+				&repositories.GetRateTableLookupDataRequest{TenantInfo: tenantInfo},
+			)
+			if err != nil {
+				return nil, err
+			}
 
-	return NewRateTableLookup(tables), nil
+			return NewRateTableLookup(tables), nil
+		},
+	)
 }
 
 func applyGuardrails(
