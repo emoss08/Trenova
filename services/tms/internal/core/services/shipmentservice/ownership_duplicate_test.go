@@ -248,7 +248,7 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		commercial: newTestCommercialCalculator(
+		commercial: newTestCommercialCalculator(t,
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),

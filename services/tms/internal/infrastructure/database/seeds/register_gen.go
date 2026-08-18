@@ -38,4 +38,5 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewDetentionSeed())
 	r.MustRegister(development.NewCarrierSeed())
 	r.MustRegister(development.NewRoutingGuideSeed())
+	r.MustRegister(development.NewRateAgreementSeed())
 }

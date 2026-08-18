@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
@@ -29,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelpricejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/recurringshipmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
@@ -69,6 +71,7 @@ func Options() fx.Option {
 		fx.Provide(telematicsinfra.NewFactory),
 		formula.Module,
 		formulatemplateservice.Module,
+		rateengine.Module,
 		editransport.Module,
 		temporaljobs.Module,
 		schedule.Module,
@@ -82,6 +85,7 @@ func Options() fx.Option {
 		emailjobs.Module,
 		exchangeratejobs.Module,
 		fuelpricejobs.Module,
+		ratesimjobs.Module,
 		thumbnailjobs.Module,
 		smsjobs.Module,
 		samsarajobs.Module,

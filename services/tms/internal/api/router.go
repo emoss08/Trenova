@@ -81,9 +81,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateagreementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationpublichandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateimporthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratematrixhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratequotehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratesimulationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratezonehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
@@ -222,6 +228,12 @@ type RouterParams struct {
 	HoldReasonHandler               *holdreasonhandler.Handler
 	RecurringShipmentHandler        *recurringshipmenthandler.Handler
 	RateTableHandler                *ratetablehandler.Handler
+	RateAgreementHandler            *rateagreementhandler.Handler
+	RateZoneHandler                 *ratezonehandler.Handler
+	RateMatrixHandler               *ratematrixhandler.Handler
+	RateSimulationHandler           *ratesimulationhandler.Handler
+	RateImportHandler               *rateimporthandler.Handler
+	RateQuoteHandler                *ratequotehandler.Handler
 	DetentionPolicyHandler          *detentionpolicyhandler.Handler
 	DetentionHandler                *detentionhandler.Handler
 	IntegrationHandler              *integrationhandler.Handler
@@ -342,6 +354,12 @@ type Router struct {
 	holdReasonHandler               *holdreasonhandler.Handler
 	recurringShipmentHandler        *recurringshipmenthandler.Handler
 	rateTableHandler                *ratetablehandler.Handler
+	rateAgreementHandler            *rateagreementhandler.Handler
+	rateZoneHandler                 *ratezonehandler.Handler
+	rateMatrixHandler               *ratematrixhandler.Handler
+	rateSimulationHandler           *ratesimulationhandler.Handler
+	rateImportHandler               *rateimporthandler.Handler
+	rateQuoteHandler                *ratequotehandler.Handler
 	detentionPolicyHandler          *detentionpolicyhandler.Handler
 	detentionHandler                *detentionhandler.Handler
 	integrationHandler              *integrationhandler.Handler
@@ -464,6 +482,12 @@ func NewRouter(p RouterParams) *Router {
 		holdReasonHandler:               p.HoldReasonHandler,
 		recurringShipmentHandler:        p.RecurringShipmentHandler,
 		rateTableHandler:                p.RateTableHandler,
+		rateAgreementHandler:            p.RateAgreementHandler,
+		rateZoneHandler:                 p.RateZoneHandler,
+		rateMatrixHandler:               p.RateMatrixHandler,
+		rateSimulationHandler:           p.RateSimulationHandler,
+		rateImportHandler:               p.RateImportHandler,
+		rateQuoteHandler:                p.RateQuoteHandler,
 		detentionPolicyHandler:          p.DetentionPolicyHandler,
 		detentionHandler:                p.DetentionHandler,
 		integrationHandler:              p.IntegrationHandler,
@@ -653,6 +677,12 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.holdReasonHandler.RegisterRoutes(protected)
 	r.recurringShipmentHandler.RegisterRoutes(protected)
 	r.rateTableHandler.RegisterRoutes(protected)
+	r.rateAgreementHandler.RegisterRoutes(protected)
+	r.rateZoneHandler.RegisterRoutes(protected)
+	r.rateMatrixHandler.RegisterRoutes(protected)
+	r.rateSimulationHandler.RegisterRoutes(protected)
+	r.rateImportHandler.RegisterRoutes(protected)
+	r.rateQuoteHandler.RegisterRoutes(protected)
 	r.detentionPolicyHandler.RegisterRoutes(protected)
 	r.detentionHandler.RegisterRoutes(protected)
 	r.integrationHandler.RegisterRoutes(protected)

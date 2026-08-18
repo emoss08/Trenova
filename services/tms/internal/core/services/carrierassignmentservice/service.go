@@ -45,6 +45,9 @@ type Params struct {
 	Realtime          portservices.RealtimeService
 	CostAccrual       portservices.CarrierCostAccrual `optional:"true"`
 	TenderGuard       portservices.TenderGuard        `optional:"true"`
+	RateEngine        portservices.RateEngine         `optional:"true"`
+	AgreementRepo     repositories.RateAgreementRepository
+	BillingCtrlRepo   repositories.BillingControlRepository
 }
 
 type Service struct {
@@ -64,6 +67,9 @@ type Service struct {
 	realtime          portservices.RealtimeService
 	costAccrual       portservices.CarrierCostAccrual
 	tenderGuard       portservices.TenderGuard
+	rateEngine        portservices.RateEngine
+	agreementRepo     repositories.RateAgreementRepository
+	billingCtrlRepo   repositories.BillingControlRepository
 }
 
 func New(p Params) *Service {
@@ -84,6 +90,9 @@ func New(p Params) *Service {
 		realtime:          p.Realtime,
 		costAccrual:       p.CostAccrual,
 		tenderGuard:       p.TenderGuard,
+		rateEngine:        p.RateEngine,
+		agreementRepo:     p.AgreementRepo,
+		billingCtrlRepo:   p.BillingCtrlRepo,
 	}
 }
 
@@ -196,6 +205,10 @@ func (s *Service) AssignToMove(
 				return txErr
 			}
 			replaced = true
+		}
+
+		if txErr = s.rateBuySide(txCtx, req, original); txErr != nil {
+			return txErr
 		}
 
 		entity := s.buildAssignment(req, move)
@@ -499,6 +512,7 @@ func (s *Service) buildAssignment(
 		ExternalTractorNumber: req.ExternalTractorNumber,
 		ExternalTrailerNumber: req.ExternalTrailerNumber,
 		AssignedByID:          assignedBy,
+		RateQuoteID:           req.RateQuoteID,
 		Accessorials:          accessorials,
 	}
 	entity.SyncTotals(move.Distance)

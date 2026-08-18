@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
@@ -381,7 +382,8 @@ func newIntegrationService(
 		RateTableRepo: moveIntgStubRateTableRepo{},
 	})
 	commercial := shipmentcommercial.New(shipmentcommercial.Params{
-		Formula:         formulaSvc,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateengine.NewFallbackEngine(t, formulaSvc),
 		AccessorialRepo: accessorialRepo,
 	})
 

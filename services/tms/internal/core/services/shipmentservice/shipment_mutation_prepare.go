@@ -24,6 +24,8 @@ func (s *service) normalizeAdditionalChargeSystemGenerationForCreate(
 
 		charge.IsSystemGenerated = false
 		charge.DetentionOccurrenceID = nil
+		charge.RateAgreementAccessorialID = nil
+		charge.FuelSurchargeProgramID = nil
 	}
 }
 

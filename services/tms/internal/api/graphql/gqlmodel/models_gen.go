@@ -2665,6 +2665,126 @@ type PostCustomerPaymentInput struct {
 type Query struct {
 }
 
+// A negotiated agreement with a customer or a carrier. The lane rules it carries
+// are what decide the price of a shipment; the agreement itself carries the terms
+// they are all written under.
+type RateAgreement struct {
+	ID                   string                 `json:"id"`
+	BusinessUnitID       string                 `json:"businessUnitId"`
+	OrganizationID       string                 `json:"organizationId"`
+	PartyType            RateAgreementPartyType `json:"partyType"`
+	CustomerID           *string                `json:"customerId,omitempty"`
+	CarrierID            *string                `json:"carrierId,omitempty"`
+	Code                 string                 `json:"code"`
+	Name                 string                 `json:"name"`
+	Description          string                 `json:"description"`
+	AgreementType        RateAgreementType      `json:"agreementType"`
+	Status               RateAgreementStatus    `json:"status"`
+	ContractRef          string                 `json:"contractRef"`
+	Priority             int                    `json:"priority"`
+	EffectiveFrom        int                    `json:"effectiveFrom"`
+	EffectiveTo          *int                   `json:"effectiveTo,omitempty"`
+	AutoRenew            bool                   `json:"autoRenew"`
+	RenewalNoticeDays    int                    `json:"renewalNoticeDays"`
+	Currency             string                 `json:"currency"`
+	DefaultMinCharge     *string                `json:"defaultMinCharge,omitempty"`
+	DefaultMaxCharge     *string                `json:"defaultMaxCharge,omitempty"`
+	MarginFloorPercent   *string                `json:"marginFloorPercent,omitempty"`
+	MaxPayPercentOfSell  *string                `json:"maxPayPercentOfSell,omitempty"`
+	SubmittedByID        *string                `json:"submittedById,omitempty"`
+	SubmittedAt          *int                   `json:"submittedAt,omitempty"`
+	ApprovedByID         *string                `json:"approvedById,omitempty"`
+	ApprovedAt           *int                   `json:"approvedAt,omitempty"`
+	ReviewComment        string                 `json:"reviewComment"`
+	CurrentVersionNumber int                    `json:"currentVersionNumber"`
+	Version              int                    `json:"version"`
+	CreatedAt            int                    `json:"createdAt"`
+	UpdatedAt            int                    `json:"updatedAt"`
+}
+
+type RateAgreementConnection struct {
+	Edges      []*RateAgreementEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type RateAgreementEdge struct {
+	Node   *RateAgreement `json:"node"`
+	Cursor string         `json:"cursor"`
+}
+
+// A multi-dimensional rate table — origin zone by destination zone by weight break
+// by class, and any subset of that.
+type RateMatrix struct {
+	ID             string `json:"id"`
+	BusinessUnitID string `json:"businessUnitId"`
+	OrganizationID string `json:"organizationId"`
+	Code           string `json:"code"`
+	Name           string `json:"name"`
+	Description    string `json:"description"`
+	Status         string `json:"status"`
+	// What a cell's number means. The same grid is a per-mile tariff, a
+	// hundredweight tariff or a discount table depending on this, so the list has to
+	// show it — the numbers alone do not say.
+	ValueKind string `json:"valueKind"`
+	Currency  string `json:"currency"`
+	Version   int    `json:"version"`
+	CreatedAt int    `json:"createdAt"`
+	UpdatedAt int    `json:"updatedAt"`
+}
+
+type RateMatrixConnection struct {
+	Edges      []*RateMatrixEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type RateMatrixEdge struct {
+	Node   *RateMatrix `json:"node"`
+	Cursor string      `json:"cursor"`
+}
+
+// The record of how one shipment was priced: which agreement and rule won, what
+// each term contributed, and what it came to. Quotes are never edited — correcting
+// one means re-rating, which writes a new quote and supersedes the old.
+type RateQuote struct {
+	ID                  string                 `json:"id"`
+	BusinessUnitID      string                 `json:"businessUnitId"`
+	OrganizationID      string                 `json:"organizationId"`
+	ShipmentID          *string                `json:"shipmentId,omitempty"`
+	PartyType           RateAgreementPartyType `json:"partyType"`
+	PartyID             string                 `json:"partyId"`
+	Purpose             RateQuotePurpose       `json:"purpose"`
+	Outcome             RateQuoteOutcome       `json:"outcome"`
+	RateAgreementID     *string                `json:"rateAgreementId,omitempty"`
+	RateAgreementRuleID *string                `json:"rateAgreementRuleId,omitempty"`
+	FormulaTemplateID   *string                `json:"formulaTemplateId,omitempty"`
+	SpecificityScore    int                    `json:"specificityScore"`
+	Currency            string                 `json:"currency"`
+	BillingCurrency     string                 `json:"billingCurrency"`
+	LinehaulAmount      string                 `json:"linehaulAmount"`
+	TotalAmount         string                 `json:"totalAmount"`
+	BillingAmount       string                 `json:"billingAmount"`
+	ForegoneAmount      *string                `json:"foregoneAmount,omitempty"`
+	OverrideReason      string                 `json:"overrideReason"`
+	AsOf                int                    `json:"asOf"`
+	RatedAt             int                    `json:"ratedAt"`
+	RatedByID           *string                `json:"ratedById,omitempty"`
+	EngineVersion       string                 `json:"engineVersion"`
+	CreatedAt           int                    `json:"createdAt"`
+}
+
+type RateQuoteConnection struct {
+	Edges      []*RateQuoteEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount *int             `json:"totalCount,omitempty"`
+}
+
+type RateQuoteEdge struct {
+	Node   *RateQuote `json:"node"`
+	Cursor string     `json:"cursor"`
+}
+
 type RateTableConnection struct {
 	Edges      []*RateTableEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
@@ -2674,6 +2794,33 @@ type RateTableConnection struct {
 type RateTableEdge struct {
 	Node   *ratetable.RateTable `json:"node"`
 	Cursor string               `json:"cursor"`
+}
+
+// A named grouping of geography that lane rules and rate matrices are written
+// against, so a tariff can say "Southeast" rather than listing two hundred postal
+// prefixes.
+type RateZone struct {
+	ID             string `json:"id"`
+	BusinessUnitID string `json:"businessUnitId"`
+	OrganizationID string `json:"organizationId"`
+	Code           string `json:"code"`
+	Name           string `json:"name"`
+	Description    string `json:"description"`
+	Status         string `json:"status"`
+	Version        int    `json:"version"`
+	CreatedAt      int    `json:"createdAt"`
+	UpdatedAt      int    `json:"updatedAt"`
+}
+
+type RateZoneConnection struct {
+	Edges      []*RateZoneEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+	TotalCount *int            `json:"totalCount,omitempty"`
+}
+
+type RateZoneEdge struct {
+	Node   *RateZone `json:"node"`
+	Cursor string    `json:"cursor"`
 }
 
 type RecordMyStopActionInput struct {
@@ -5805,6 +5952,307 @@ func (e *NotificationState) UnmarshalJSON(b []byte) error {
 }
 
 func (e NotificationState) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type RateAgreementPartyType string
+
+const (
+	RateAgreementPartyTypeCustomer RateAgreementPartyType = "Customer"
+	RateAgreementPartyTypeCarrier  RateAgreementPartyType = "Carrier"
+)
+
+var AllRateAgreementPartyType = []RateAgreementPartyType{
+	RateAgreementPartyTypeCustomer,
+	RateAgreementPartyTypeCarrier,
+}
+
+func (e RateAgreementPartyType) IsValid() bool {
+	switch e {
+	case RateAgreementPartyTypeCustomer, RateAgreementPartyTypeCarrier:
+		return true
+	}
+	return false
+}
+
+func (e RateAgreementPartyType) String() string {
+	return string(e)
+}
+
+func (e *RateAgreementPartyType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RateAgreementPartyType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RateAgreementPartyType", str)
+	}
+	return nil
+}
+
+func (e RateAgreementPartyType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RateAgreementPartyType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RateAgreementPartyType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type RateAgreementStatus string
+
+const (
+	RateAgreementStatusDraft     RateAgreementStatus = "Draft"
+	RateAgreementStatusInReview  RateAgreementStatus = "InReview"
+	RateAgreementStatusActive    RateAgreementStatus = "Active"
+	RateAgreementStatusSuspended RateAgreementStatus = "Suspended"
+	RateAgreementStatusExpired   RateAgreementStatus = "Expired"
+	RateAgreementStatusArchived  RateAgreementStatus = "Archived"
+)
+
+var AllRateAgreementStatus = []RateAgreementStatus{
+	RateAgreementStatusDraft,
+	RateAgreementStatusInReview,
+	RateAgreementStatusActive,
+	RateAgreementStatusSuspended,
+	RateAgreementStatusExpired,
+	RateAgreementStatusArchived,
+}
+
+func (e RateAgreementStatus) IsValid() bool {
+	switch e {
+	case RateAgreementStatusDraft, RateAgreementStatusInReview, RateAgreementStatusActive, RateAgreementStatusSuspended, RateAgreementStatusExpired, RateAgreementStatusArchived:
+		return true
+	}
+	return false
+}
+
+func (e RateAgreementStatus) String() string {
+	return string(e)
+}
+
+func (e *RateAgreementStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RateAgreementStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RateAgreementStatus", str)
+	}
+	return nil
+}
+
+func (e RateAgreementStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RateAgreementStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RateAgreementStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type RateAgreementType string
+
+const (
+	RateAgreementTypeContract  RateAgreementType = "Contract"
+	RateAgreementTypeTariff    RateAgreementType = "Tariff"
+	RateAgreementTypeSpot      RateAgreementType = "Spot"
+	RateAgreementTypeProject   RateAgreementType = "Project"
+	RateAgreementTypeDedicated RateAgreementType = "Dedicated"
+)
+
+var AllRateAgreementType = []RateAgreementType{
+	RateAgreementTypeContract,
+	RateAgreementTypeTariff,
+	RateAgreementTypeSpot,
+	RateAgreementTypeProject,
+	RateAgreementTypeDedicated,
+}
+
+func (e RateAgreementType) IsValid() bool {
+	switch e {
+	case RateAgreementTypeContract, RateAgreementTypeTariff, RateAgreementTypeSpot, RateAgreementTypeProject, RateAgreementTypeDedicated:
+		return true
+	}
+	return false
+}
+
+func (e RateAgreementType) String() string {
+	return string(e)
+}
+
+func (e *RateAgreementType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RateAgreementType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RateAgreementType", str)
+	}
+	return nil
+}
+
+func (e RateAgreementType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RateAgreementType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RateAgreementType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type RateQuoteOutcome string
+
+const (
+	RateQuoteOutcomeRated           RateQuoteOutcome = "Rated"
+	RateQuoteOutcomeFormulaFallback RateQuoteOutcome = "FormulaFallback"
+	RateQuoteOutcomeManualOverride  RateQuoteOutcome = "ManualOverride"
+	RateQuoteOutcomeNoRateFound     RateQuoteOutcome = "NoRateFound"
+	RateQuoteOutcomeError           RateQuoteOutcome = "Error"
+)
+
+var AllRateQuoteOutcome = []RateQuoteOutcome{
+	RateQuoteOutcomeRated,
+	RateQuoteOutcomeFormulaFallback,
+	RateQuoteOutcomeManualOverride,
+	RateQuoteOutcomeNoRateFound,
+	RateQuoteOutcomeError,
+}
+
+func (e RateQuoteOutcome) IsValid() bool {
+	switch e {
+	case RateQuoteOutcomeRated, RateQuoteOutcomeFormulaFallback, RateQuoteOutcomeManualOverride, RateQuoteOutcomeNoRateFound, RateQuoteOutcomeError:
+		return true
+	}
+	return false
+}
+
+func (e RateQuoteOutcome) String() string {
+	return string(e)
+}
+
+func (e *RateQuoteOutcome) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RateQuoteOutcome(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RateQuoteOutcome", str)
+	}
+	return nil
+}
+
+func (e RateQuoteOutcome) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RateQuoteOutcome) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RateQuoteOutcome) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type RateQuotePurpose string
+
+const (
+	RateQuotePurposeRating     RateQuotePurpose = "Rating"
+	RateQuotePurposeQuote      RateQuotePurpose = "Quote"
+	RateQuotePurposeShopping   RateQuotePurpose = "Shopping"
+	RateQuotePurposeSimulation RateQuotePurpose = "Simulation"
+	RateQuotePurposeWhatIf     RateQuotePurpose = "WhatIf"
+)
+
+var AllRateQuotePurpose = []RateQuotePurpose{
+	RateQuotePurposeRating,
+	RateQuotePurposeQuote,
+	RateQuotePurposeShopping,
+	RateQuotePurposeSimulation,
+	RateQuotePurposeWhatIf,
+}
+
+func (e RateQuotePurpose) IsValid() bool {
+	switch e {
+	case RateQuotePurposeRating, RateQuotePurposeQuote, RateQuotePurposeShopping, RateQuotePurposeSimulation, RateQuotePurposeWhatIf:
+		return true
+	}
+	return false
+}
+
+func (e RateQuotePurpose) String() string {
+	return string(e)
+}
+
+func (e *RateQuotePurpose) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RateQuotePurpose(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RateQuotePurpose", str)
+	}
+	return nil
+}
+
+func (e RateQuotePurpose) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RateQuotePurpose) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RateQuotePurpose) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

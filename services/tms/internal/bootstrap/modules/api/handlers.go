@@ -78,9 +78,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateagreementhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationpublichandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateimporthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratematrixhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratequotehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratesimulationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratezonehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
@@ -201,6 +207,12 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	recurringshipmenthandler.New,
 	ratetablehandler.New,
 	detentionpolicyhandler.New,
+	rateagreementhandler.New,
+	ratezonehandler.New,
+	ratematrixhandler.New,
+	ratesimulationhandler.New,
+	rateimporthandler.New,
+	ratequotehandler.New,
 	detentionhandler.New,
 	invoiceadjustmenthandler.New,
 	invoiceadjustmentcontrolhandler.New,

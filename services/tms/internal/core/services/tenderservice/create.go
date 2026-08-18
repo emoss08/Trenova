@@ -446,6 +446,11 @@ func (s *Service) buildGuideOffers(
 	}
 	multiErr := errortypes.NewMultiError()
 
+	// The shipment is read once, and only when some entry actually asks for
+	// contract pricing. Reading it for every guide would put a query on a path
+	// that has never needed one.
+	entity := s.shipmentForContractPricing(ctx, tenantInfo, guide, move)
+
 	for idx, entry := range guide.Entries {
 		if entry == nil {
 			continue
@@ -472,7 +477,17 @@ func (s *Service) buildGuideOffers(
 			continue
 		}
 
-		if entry.RateMethod == shipment.CarrierRateMethodPerMile &&
+		price := s.priceGuideEntry(ctx, tenantInfo, entry, entity)
+		if price.reason != "" {
+			plan.skipped = append(plan.skipped, guideEntryScreening{
+				carrierName: carrierEntity.Name,
+				rank:        entry.Rank,
+				reasons:     []string{price.reason},
+			})
+			continue
+		}
+
+		if price.method == shipment.CarrierRateMethodPerMile &&
 			(move.Distance == nil || *move.Distance <= 0) {
 			entryErr.Add(
 				"rateMethod",
@@ -487,8 +502,8 @@ func (s *Service) buildGuideOffers(
 			BusinessUnitID:  tenantInfo.BuID,
 			CarrierID:       entry.CarrierID,
 			Rank:            entry.Rank,
-			RateMethod:      entry.RateMethod,
-			Rate:            entry.Rate,
+			RateMethod:      price.method,
+			Rate:            price.rate,
 			OfferTTLSeconds: entry.OfferTTLSeconds,
 			Channel:         entry.Channel,
 			Status:          tender.OfferStatusPending,

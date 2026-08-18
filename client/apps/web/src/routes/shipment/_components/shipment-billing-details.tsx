@@ -15,6 +15,7 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
 import { queries } from "@/lib/queries";
+import { WhyThisRate } from "./why-this-rate";
 import { getProfile } from "@trenova/shared/lib/capability";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { CreditStatus } from "@trenova/shared/types/customer";
@@ -183,8 +184,9 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
 }
 
 function RatingBreakdownCard() {
-  const { control } = useFormContext<Shipment>();
+  const { control, getValues } = useFormContext<Shipment>();
   const ratingDetail = useWatch({ control, name: "ratingDetail" });
+  const shipmentId = getValues("id");
 
   const breakdown = ratingDetail?.breakdown ?? [];
   const guardrail = ratingDetail?.guardrail;
@@ -193,20 +195,30 @@ function RatingBreakdownCard() {
     return null;
   }
 
+  // The contract that priced the shipment leads, since that is what somebody
+  // reading an invoice recognises. The formula name only appears when a formula
+  // is what actually produced the number.
+  const source = ratingDetail.agreementName || ratingDetail.formulaTemplateName;
+
   return (
     <div className="mt-3 rounded-lg border bg-muted/50 p-2">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <span className="text-xs font-medium">Rating Breakdown</span>
           <p className="mt-0.5 text-2xs text-muted-foreground">
-            Itemized amounts from {ratingDetail.formulaTemplateName || "the rating formula"}
+            {ratingDetail.ruleLabel
+              ? `${source} — ${ratingDetail.ruleLabel}`
+              : `Itemized amounts from ${source || "the rating formula"}`}
           </p>
         </div>
-        {ratingDetail.versionNumber ? (
-          <Badge variant="outline" className="font-mono text-2xs">
-            v{ratingDetail.versionNumber}
-          </Badge>
-        ) : null}
+        <div className="flex items-center gap-1">
+          <WhyThisRate shipmentId={shipmentId} />
+          {ratingDetail.versionNumber ? (
+            <Badge variant="outline" className="font-mono text-2xs">
+              v{ratingDetail.versionNumber}
+            </Badge>
+          ) : null}
+        </div>
       </div>
 
       {breakdown.length > 0 && (

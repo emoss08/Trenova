@@ -290,6 +290,7 @@ var RoutingGuideEntryColumns = struct {
 	Rank            Column // "rank" → qualified: "rge.rank"
 	RateMethod      Column // "rate_method" → qualified: "rge.rate_method"
 	Rate            Column // "rate" → qualified: "rge.rate"
+	UseContractRate Column // "use_contract_rate" → qualified: "rge.use_contract_rate"
 	OfferTTLSeconds Column // "offer_ttl_seconds" → qualified: "rge.offer_ttl_seconds"
 	Channel         Column // "channel" → qualified: "rge.channel"
 	Version         Column // "version" → qualified: "rge.version"
@@ -304,6 +305,7 @@ var RoutingGuideEntryColumns = struct {
 	Rank:            NewColumn("rank", "rge"),
 	RateMethod:      NewColumn("rate_method", "rge"),
 	Rate:            NewColumn("rate", "rge"),
+	UseContractRate: NewColumn("use_contract_rate", "rge"),
 	OfferTTLSeconds: NewColumn("offer_ttl_seconds", "rge"),
 	Channel:         NewColumn("channel", "rge"),
 	Version:         NewColumn("version", "rge"),
@@ -324,6 +326,7 @@ var RoutingGuideEntryFieldMap = map[string]string{
 	"rank":            "rank",
 	"rateMethod":      "rate_method",
 	"rate":            "rate",
+	"useContractRate": "use_contract_rate",
 	"offerTtlSeconds": "offer_ttl_seconds",
 	"channel":         "channel",
 	"version":         "version",
@@ -342,6 +345,7 @@ var RoutingGuideEntryInsertableColumns = []string{
 	"rank",
 	"rate_method",
 	"rate",
+	"use_contract_rate",
 	"offer_ttl_seconds",
 	"channel",
 	"version",
@@ -420,6 +424,7 @@ var RoutingGuideEntryFilter = struct {
 	Rank            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rank" → DB: "rank"
 	RateMethod      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMethod" → DB: "rate_method"
 	Rate            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
+	UseContractRate func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "useContractRate" → DB: "use_contract_rate"
 	OfferTTLSeconds func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "offerTtlSeconds" → DB: "offer_ttl_seconds"
 	Channel         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "channel" → DB: "channel"
 	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -449,6 +454,9 @@ var RoutingGuideEntryFilter = struct {
 	},
 	Rate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("rate", op, value)
+	},
+	UseContractRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("useContractRate", op, value)
 	},
 	OfferTTLSeconds: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("offerTtlSeconds", op, value)

@@ -80,6 +80,11 @@ export const Resource = {
   RateTable: "rate_table",
   FuelSurchargeProgram: "fuel_surcharge_program",
   DetentionPolicy: "detention_policy",
+  RateAgreement: "rate_agreement",
+  RateZone: "rate_zone",
+  RateMatrix: "rate_matrix",
+  RateQuote: "rate_quote",
+  RateSimulation: "rate_simulation",
 
   // Agent
   AgentRun: "agent_run",

@@ -1413,6 +1413,103 @@ func (r *Registry) registerBillingResources() {
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
+
+	r.registerRateResources()
+}
+
+// registerRateResources covers the commercial layer: the contracts that decide
+// which rate applies, the geography and matrices they are written against, and
+// the quotes recording what each shipment was actually priced at.
+func (r *Registry) registerRateResources() {
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceRateAgreement.String(),
+		DisplayName: "Rate Agreement",
+		Description: "Customer and carrier rate agreements, their lane rules, accessorial schedules, and versions",
+		Category:    "Billing",
+		Operations: append(
+			standardOpsWithDelete,
+			OperationDefinition{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Activate a rate agreement so it prices shipments",
+			},
+			OperationDefinition{
+				Operation:   OpReject,
+				DisplayName: "Reject",
+				Description: "Send a rate agreement back for revision",
+			},
+			OperationDefinition{
+				Operation:   OpDuplicate,
+				DisplayName: "Duplicate",
+				Description: "Copy a rate agreement as the basis for a new one",
+			},
+		),
+		// A rate agreement is the negotiated price, which is exactly what a
+		// competitor would want and what a customer would object to seeing.
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceRateZone.String(),
+		DisplayName:        "Rate Zone",
+		Description:        "Named groupings of geography that lane rules and rate matrices are written against",
+		Category:           "Billing",
+		Operations:         standardOpsWithDelete,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceRateMatrix.String(),
+		DisplayName:        "Rate Matrix",
+		Description:        "Multi-dimensional rate tables, their axes, cells, and density classification scales",
+		Category:           "Billing",
+		Operations:         standardOpsWithDelete,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceRateSimulation.String(),
+		DisplayName: "Rate Simulation",
+		Description: "Replays of a proposed contract against freight that already moved, and what it would have charged",
+		Category:    "Billing",
+		// A simulation is run and read; its results are produced by the engine
+		// and never edited, so there is nothing to update.
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View simulations and their results",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Run a simulation against historical shipments",
+			},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Remove a simulation and its results",
+			},
+		},
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceRateQuote.String(),
+		DisplayName: "Rate Quote",
+		Description: "The record of how each shipment was priced, including every rate considered and why it lost",
+		Category:    "Billing",
+		// Quotes are written by the rating engine and never edited: correcting
+		// one means re-rating, which produces a new quote and supersedes the old.
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View rate quotes and their explanations",
+			},
+		},
+		DefaultSensitivity: SensitivityConfidential,
+	})
 }
 
 func (r *Registry) registerCustomerResources() {

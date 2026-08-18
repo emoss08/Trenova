@@ -644,7 +644,7 @@ function toShipmentInput(
     ownerId: payload.ownerId,
     enteredById: payload.enteredById,
     canceledById: payload.canceledById,
-    formulaTemplateId: payload.formulaTemplateId,
+    formulaTemplateId: payload.formulaTemplateId ?? "",
     consolidationGroupId: payload.consolidationGroupId,
     status: payload.status,
     tenderStatus: payload.tenderStatus ?? undefined,

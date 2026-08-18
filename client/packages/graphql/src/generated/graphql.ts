@@ -1722,6 +1722,39 @@ export type PostCustomerPaymentInput = {
   referenceNumber?: string | null | undefined;
 };
 
+export type RateAgreementPartyType =
+  | 'Carrier'
+  | 'Customer';
+
+export type RateAgreementStatus =
+  | 'Active'
+  | 'Archived'
+  | 'Draft'
+  | 'Expired'
+  | 'InReview'
+  | 'Suspended';
+
+export type RateAgreementType =
+  | 'Contract'
+  | 'Dedicated'
+  | 'Project'
+  | 'Spot'
+  | 'Tariff';
+
+export type RateQuoteOutcome =
+  | 'Error'
+  | 'FormulaFallback'
+  | 'ManualOverride'
+  | 'NoRateFound'
+  | 'Rated';
+
+export type RateQuotePurpose =
+  | 'Quote'
+  | 'Rating'
+  | 'Shopping'
+  | 'Simulation'
+  | 'WhatIf';
+
 export type RateTableLookupType =
   | 'Exact'
   | 'Range';
@@ -5149,6 +5182,42 @@ export type RateTableTableQueryVariables = Exact<{
 
 export type RateTableTableQuery = { rateTables: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateTableTableRowFieldsFragment': RateTableTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type RateAgreementRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, code: string, name: string, description: string, agreementType: RateAgreementType, status: RateAgreementStatus, contractRef: string, priority: number, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, currency: string, defaultMinCharge: string | null, defaultMaxCharge: string | null, marginFloorPercent: string | null, maxPayPercentOfSell: string | null, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, currentVersionNumber: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateAgreementRowFieldsFragment' };
+
+export type RateZoneRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateZoneRowFieldsFragment' };
+
+export type RateMatrixRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: string, valueKind: string, currency: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateMatrixRowFieldsFragment' };
+
+export type RateQuoteRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, shipmentId: string | null, partyType: RateAgreementPartyType, partyId: string, purpose: RateQuotePurpose, outcome: RateQuoteOutcome, rateAgreementId: string | null, rateAgreementRuleId: string | null, formulaTemplateId: string | null, specificityScore: number, currency: string, billingCurrency: string, linehaulAmount: string, totalAmount: string, billingAmount: string, foregoneAmount: string | null, overrideReason: string, asOf: number, ratedAt: number, ratedById: string | null, engineVersion: string, createdAt: number } & { ' $fragmentName'?: 'RateQuoteRowFieldsFragment' };
+
+export type RateAgreementTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type RateAgreementTableQuery = { rateAgreements: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateAgreementRowFieldsFragment': RateAgreementRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type RateZoneTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type RateZoneTableQuery = { rateZones: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateZoneRowFieldsFragment': RateZoneRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type RateMatrixTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type RateMatrixTableQuery = { rateMatrices: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateMatrixRowFieldsFragment': RateMatrixRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type RateQuoteTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type RateQuoteTableQuery = { rateQuotes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateQuoteRowFieldsFragment': RateQuoteRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type RecurringShipmentTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceShipmentId: string, customerId: string | null, originLocationId: string | null, destinationLocationId: string | null, name: string, description: string, status: RecurringShipmentStatus, cronExpression: string, timezone: string, startDate: number | null, endDate: number | null, maxOccurrences: number | null, leadTimeDays: number, skipWeekends: boolean, exceptionPolicy: RecurringShipmentExceptionPolicy, blackoutDates: Array<string> | null, autoGenerate: boolean, nextOccurrenceAt: number | null, lastOccurrenceAt: number | null, lastRunAt: number | null, generationCount: number, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, originLocation: { id: string, name: string, code: string } | null, destinationLocation: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'RecurringShipmentTableRowFieldsFragment' };
 
 export type RecurringShipmentTableQueryVariables = Exact<{
@@ -8117,6 +8186,99 @@ export const RateTableTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"RateTableTableRowFields"}) as unknown as TypedDocumentString<RateTableTableRowFieldsFragment, unknown>;
+export const RateAgreementRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment RateAgreementRowFields on RateAgreement {
+  id
+  businessUnitId
+  organizationId
+  partyType
+  customerId
+  carrierId
+  code
+  name
+  description
+  agreementType
+  status
+  contractRef
+  priority
+  effectiveFrom
+  effectiveTo
+  autoRenew
+  renewalNoticeDays
+  currency
+  defaultMinCharge
+  defaultMaxCharge
+  marginFloorPercent
+  maxPayPercentOfSell
+  submittedById
+  submittedAt
+  approvedById
+  approvedAt
+  reviewComment
+  currentVersionNumber
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"RateAgreementRowFields"}) as unknown as TypedDocumentString<RateAgreementRowFieldsFragment, unknown>;
+export const RateZoneRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment RateZoneRowFields on RateZone {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  status
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"RateZoneRowFields"}) as unknown as TypedDocumentString<RateZoneRowFieldsFragment, unknown>;
+export const RateMatrixRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment RateMatrixRowFields on RateMatrix {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  status
+  valueKind
+  currency
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"RateMatrixRowFields"}) as unknown as TypedDocumentString<RateMatrixRowFieldsFragment, unknown>;
+export const RateQuoteRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment RateQuoteRowFields on RateQuote {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  partyType
+  partyId
+  purpose
+  outcome
+  rateAgreementId
+  rateAgreementRuleId
+  formulaTemplateId
+  specificityScore
+  currency
+  billingCurrency
+  linehaulAmount
+  totalAmount
+  billingAmount
+  foregoneAmount
+  overrideReason
+  asOf
+  ratedAt
+  ratedById
+  engineVersion
+  createdAt
+}
+    `, {"fragmentName":"RateQuoteRowFields"}) as unknown as TypedDocumentString<RateQuoteRowFieldsFragment, unknown>;
 export const RecurringShipmentTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment RecurringShipmentTableRowFields on RecurringShipment {
   id
@@ -17941,6 +18103,163 @@ fragment RateTableTableRowFields on RateTable {
   createdAt
   updatedAt
 }`, {"hash":"sha256:809e150e9d42fd0b2fecd3ced6e252820043552da234d6c6c72295e9303ffeee"}) as unknown as TypedDocumentString<RateTableTableQuery, RateTableTableQueryVariables>;
+export const RateAgreementTableDocument = new TypedDocumentString(`
+    query RateAgreementTable($input: DataTableConnectionInput!) {
+  rateAgreements(input: $input) {
+    edges {
+      node {
+        ...RateAgreementRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment RateAgreementRowFields on RateAgreement {
+  id
+  businessUnitId
+  organizationId
+  partyType
+  customerId
+  carrierId
+  code
+  name
+  description
+  agreementType
+  status
+  contractRef
+  priority
+  effectiveFrom
+  effectiveTo
+  autoRenew
+  renewalNoticeDays
+  currency
+  defaultMinCharge
+  defaultMaxCharge
+  marginFloorPercent
+  maxPayPercentOfSell
+  submittedById
+  submittedAt
+  approvedById
+  approvedAt
+  reviewComment
+  currentVersionNumber
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:1476a40285f491ba853288a24e42a9b285f4e8f81b4d3385731aa1d3e48cf2b0"}) as unknown as TypedDocumentString<RateAgreementTableQuery, RateAgreementTableQueryVariables>;
+export const RateZoneTableDocument = new TypedDocumentString(`
+    query RateZoneTable($input: DataTableConnectionInput!) {
+  rateZones(input: $input) {
+    edges {
+      node {
+        ...RateZoneRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment RateZoneRowFields on RateZone {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  status
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:e0ec9f87ef3249b3a0301b471d14dbb3f5285ab692526431438a3d5d5bb31450"}) as unknown as TypedDocumentString<RateZoneTableQuery, RateZoneTableQueryVariables>;
+export const RateMatrixTableDocument = new TypedDocumentString(`
+    query RateMatrixTable($input: DataTableConnectionInput!) {
+  rateMatrices(input: $input) {
+    edges {
+      node {
+        ...RateMatrixRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment RateMatrixRowFields on RateMatrix {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  status
+  valueKind
+  currency
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:d6233ff4478b91c9b28cbd6c844e05fc535c6bb9bf0ab723ab7304d5c950d5f8"}) as unknown as TypedDocumentString<RateMatrixTableQuery, RateMatrixTableQueryVariables>;
+export const RateQuoteTableDocument = new TypedDocumentString(`
+    query RateQuoteTable($input: DataTableConnectionInput!) {
+  rateQuotes(input: $input) {
+    edges {
+      node {
+        ...RateQuoteRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}
+fragment RateQuoteRowFields on RateQuote {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  partyType
+  partyId
+  purpose
+  outcome
+  rateAgreementId
+  rateAgreementRuleId
+  formulaTemplateId
+  specificityScore
+  currency
+  billingCurrency
+  linehaulAmount
+  totalAmount
+  billingAmount
+  foregoneAmount
+  overrideReason
+  asOf
+  ratedAt
+  ratedById
+  engineVersion
+  createdAt
+}`, {"hash":"sha256:a6f96656a47e367e900d37944525cacd8e0b3b742f8bf504572cce3a7b1fd499"}) as unknown as TypedDocumentString<RateQuoteTableQuery, RateQuoteTableQueryVariables>;
 export const RecurringShipmentTableDocument = new TypedDocumentString(`
     query RecurringShipmentTable($input: DataTableConnectionInput!) {
   recurringShipments(input: $input) {

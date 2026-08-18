@@ -16,6 +16,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/core/domain/rateimport"
+	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/core/domain/ratequote"
+	"github.com/emoss08/trenova/internal/core/domain/ratesimulation"
+	"github.com/emoss08/trenova/internal/core/domain/ratezone"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
@@ -102,6 +108,24 @@ func RegisterEntities() []any {
 		&report.ReportDefinitionRevision{},
 		&report.ReportRun{},
 		&report.ReportSchedule{},
+		&ratezone.RateZone{},
+		&ratezone.RateZoneMember{},
+		&ratematrix.RateMatrix{},
+		&ratematrix.RateMatrixDimension{},
+		&ratematrix.RateMatrixCell{},
+		&ratematrix.DensityScale{},
+		&ratematrix.DensityScaleTier{},
+		&ratesimulation.RateSimulation{},
+		&ratesimulation.RateSimulationResult{},
+		&rateimport.RateImportBatch{},
+		&rateimport.RateImportRow{},
+		&rateagreement.RateAgreement{},
+		&rateagreement.RateAgreementVersion{},
+		&rateagreement.RateAgreementRule{},
+		&rateagreement.RateAgreementRuleBreak{},
+		&rateagreement.RateAgreementAccessorial{},
+		&rateagreement.RateAgreementFuelBinding{},
+		&ratequote.RateQuote{},
 	}
 }
 

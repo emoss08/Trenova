@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -180,18 +182,31 @@ func (s *Service) Rate(
 	}, nil
 }
 
+// buildLookup reads the tenant's rate tables, once per unit of work.
+//
+// Reading them is expensive — every active table with every entry — and rating
+// now happens on every shipment write and in batches. The memo is only present
+// when a caller installed one; without it this behaves exactly as it always
+// did, which is what keeps a formula evaluated outside a request working.
 func (s *Service) buildLookup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (formulatemplatetypes.RateTableLookup, error) {
-	tables, err := s.rateTableRepo.GetLookupData(ctx, &repositories.GetRateTableLookupDataRequest{
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
+	return ratetablecache.Get(
+		ctx,
+		tenantInfo.OrgID,
+		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
+			tables, err := s.rateTableRepo.GetLookupData(
+				ctx,
+				&repositories.GetRateTableLookupDataRequest{TenantInfo: tenantInfo},
+			)
+			if err != nil {
+				return nil, err
+			}
 
-	return NewRateTableLookup(tables), nil
+			return NewRateTableLookup(tables), nil
+		},
+	)
 }
 
 func applyGuardrails(
@@ -276,6 +291,41 @@ func (s *Service) EvaluateExpression(
 		Variables: result.Variables,
 		Breakdown: result.Breakdown,
 	}, nil
+}
+
+// EvaluatePredicate answers a yes-or-no question about an entity.
+//
+// The expression language has no boolean result type of its own — every
+// evaluation lands on a decimal, with true and false arriving as one and zero —
+// so the truth test is "not zero". That also makes a numeric condition like
+// `totalStops - 2` behave the way somebody writing it would expect.
+//
+// No rate-table lookup is built. A condition that reaches for a rate table is
+// asking the wrong question, and building one would put a full tenant table
+// load on the save path of every shipment.
+func (s *Service) EvaluatePredicate(
+	ctx context.Context,
+	req *services.EvaluatePredicateRequest,
+) (bool, error) {
+	result, err := s.engine.EvaluateExpression(
+		ctx,
+		&formulatemplatetypes.ExpressionEvaluationRequest{
+			Expression: req.Expression,
+			Entity:     req.Entity,
+			SchemaID:   req.SchemaID,
+		},
+	)
+	if err != nil {
+		s.l.Warn("failed to evaluate predicate",
+			zap.String("operation", "EvaluatePredicate"),
+			zap.String("schemaId", req.SchemaID),
+			zap.Error(err),
+		)
+
+		return false, err
+	}
+
+	return !result.Value.IsZero(), nil
 }
 
 func (s *Service) ValidateExpression(ctx context.Context, expression, schemaID string) error {

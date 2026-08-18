@@ -31,6 +31,20 @@ type AssignMoveToCarrierRequest struct {
 	ExternalTrailerNumber    string                     `json:"externalTrailerNumber"`
 	Replace                  bool                       `json:"replace"`
 	OverrideInsuranceWarning bool                       `json:"overrideInsuranceWarning"`
+
+	// AutoRate asks the carrier's contract to price this assignment instead of
+	// taking the rate from the request. A rate typed alongside it wins: that is
+	// a negotiated number, and overruling it is what makes people switch
+	// auto-rating off.
+	AutoRate bool `json:"autoRate"`
+
+	// OverrideMarginFloor lets somebody assign a carrier the contract's margin
+	// terms would otherwise refuse, the same escape the insurance warning has.
+	OverrideMarginFloor bool `json:"overrideMarginFloor"`
+
+	// RateQuoteID is filled in by auto-rating rather than sent by a client. It
+	// names the quote that decided the pay.
+	RateQuoteID *pulid.ID `json:"-"`
 }
 
 func (r *AssignMoveToCarrierRequest) Validate() *errortypes.MultiError {

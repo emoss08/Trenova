@@ -1459,7 +1459,7 @@ func TestApprovalTransitions(t *testing.T) {
 
 			req := &ApprovalActionRequest{
 				TenantInfo: newTenantInfo(),
-				TemplateID: template.ID,
+				EntityID:   template.ID,
 				Comment:    tt.comment,
 			}
 
@@ -1501,7 +1501,7 @@ func TestSubmit_StampsSubmissionFields(t *testing.T) {
 
 	result, err := deps.svc.Submit(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
-		TemplateID: template.ID,
+		EntityID:   template.ID,
 		Comment:    "ready for review",
 	})
 
@@ -1536,7 +1536,7 @@ func TestApprove_StampsApprovalAndKeepsSubmission(t *testing.T) {
 
 	result, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
-		TemplateID: template.ID,
+		EntityID:   template.ID,
 		Comment:    "approved",
 	})
 
@@ -1559,7 +1559,7 @@ func TestReject_RequiresComment(t *testing.T) {
 
 	result, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
 		TenantInfo: newTenantInfo(),
-		TemplateID: pulid.MustNew("ft_"),
+		EntityID:   pulid.MustNew("ft_"),
 	})
 
 	require.Error(t, err)
@@ -1586,7 +1586,7 @@ func TestReject_ClearsSubmissionFields(t *testing.T) {
 
 	result, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
 		TenantInfo: newTenantInfo(),
-		TemplateID: template.ID,
+		EntityID:   template.ID,
 		Comment:    "expression is wrong",
 	})
 

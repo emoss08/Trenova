@@ -1,6 +1,7 @@
 import { CarrierAutocompleteField } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
+import { SwitchField } from "@/components/fields/switch-field";
 import { carrierRateMethodChoices, offerTtlChoices, tenderChannelChoices } from "@/lib/choices";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl } from "@trenova/shared/components/ui/form";
@@ -140,6 +141,15 @@ export function RoutingGuideEntryEditor() {
                 rules={{ required: true }}
                 options={tenderChannelChoices}
                 description="How the offer reaches the carrier."
+              />
+            </FormControl>
+            <FormControl>
+              <SwitchField
+                control={control}
+                name={`entries.${index}.useContractRate`}
+                label="Price from the contract"
+                outlined
+                description="Offer what this carrier's contract says today. The rate above is kept for a lane no contract covers."
               />
             </FormControl>
           </div>

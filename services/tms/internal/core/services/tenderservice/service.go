@@ -47,6 +47,7 @@ type Params struct {
 	Notifications         *notificationservice.Service          `optional:"true"`
 	EDIChannel            portservices.EDITenderChannel         `optional:"true"`
 	RateConIssuer         portservices.RateConfirmationIssuer   `optional:"true"`
+	RateEngine            portservices.RateEngine               `optional:"true"`
 }
 
 type Service struct {
@@ -71,6 +72,7 @@ type Service struct {
 	assigner              portservices.CarrierMoveAssigner
 	ediChannel            portservices.EDITenderChannel
 	rateConIssuer         portservices.RateConfirmationIssuer
+	rateEngine            portservices.RateEngine
 }
 
 func New(p Params) *Service {
@@ -95,6 +97,7 @@ func New(p Params) *Service {
 		notifications:         p.Notifications,
 		ediChannel:            p.EDIChannel,
 		rateConIssuer:         p.RateConIssuer,
+		rateEngine:            p.RateEngine,
 	}
 }
 

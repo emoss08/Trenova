@@ -26,6 +26,8 @@ type CarrierAssignmentRequestBody = {
   externalTrailerNumber: string;
   replace: boolean;
   overrideInsuranceWarning: boolean;
+  autoRate: boolean;
+  overrideMarginFloor: boolean;
 };
 
 export function toCarrierAssignmentRequestBody(
@@ -49,6 +51,8 @@ export function toCarrierAssignmentRequestBody(
     externalTrailerNumber: payload.externalTrailerNumber,
     replace,
     overrideInsuranceWarning: payload.overrideInsuranceWarning,
+    autoRate: payload.autoRate,
+    overrideMarginFloor: payload.overrideMarginFloor,
   };
 }
 

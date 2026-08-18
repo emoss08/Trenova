@@ -80,7 +80,8 @@ func newValidatorBuilder(
 		WithCustomRule(createCapabilityPolicyRule(
 			profileSvc, controlRepo, shipmentRepo, equipmentTypeRepo, permitSvc,
 		)).
-		WithCustomRule(createBOLValidationRule(customerRepo))
+		WithCustomRule(createBOLValidationRule(customerRepo)).
+		WithCustomRule(createRateCoverageRule())
 
 	if db == nil {
 		return builder

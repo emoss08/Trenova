@@ -8,12 +8,14 @@ import {
   CarrierEligibilityAlerts,
   carrierEligibilityBlocksSubmit,
 } from "@/components/carrier-assignment/carrier-assignment-fields";
+import { CarrierShoppingPanel } from "@/components/carrier-assignment/carrier-shopping-panel";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { LocateTrailerDialog } from "@/routes/trailer/_components/locate-trailer-dialog";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ShopOption } from "@trenova/shared/types/rate";
 import {
   Alert,
   AlertAction,
@@ -311,6 +313,7 @@ export function AssignmentDialog({
           ) : (
             <CarrierAssignmentTab
               moveId={moveId}
+              shipmentId={shipmentId}
               existingCarrierAssignment={hasCarrierCoverage ? existingCarrierAssignment : null}
               onCarrierAssigned={onCarrierAssigned}
               onClose={handleClose}
@@ -466,16 +469,23 @@ function toCarrierAssignmentDefaults(
     externalTractorNumber: existing.externalTractorNumber ?? "",
     externalTrailerNumber: existing.externalTrailerNumber ?? "",
     overrideInsuranceWarning: false,
+    // Replacing an assignment starts from what it already carried, so the rate
+    // is preserved rather than re-derived — the previous one may have been
+    // negotiated.
+    autoRate: false,
+    overrideMarginFloor: false,
   };
 }
 
 function CarrierAssignmentTab({
   moveId,
+  shipmentId,
   existingCarrierAssignment,
   onCarrierAssigned,
   onClose,
 }: {
   moveId: string;
+  shipmentId?: string | null;
   existingCarrierAssignment?: CarrierAssignment | null;
   onCarrierAssigned?: (carrierAssignment: CarrierAssignment) => void;
   onClose: () => void;
@@ -530,6 +540,19 @@ function CarrierAssignmentTab({
     [mutateAsync, onClose],
   );
 
+  // Picking a shopped carrier fills the form with the number its contract
+  // produced, rather than assigning straight away. The rate is still somebody's
+  // to change, and the eligibility checks still have to run.
+  const chooseCarrier = useCallback(
+    (option: ShopOption) => {
+      form.setValue("carrierId", option.carrierId, { shouldDirty: true });
+      form.setValue("rateMethod", "Flat", { shouldDirty: true });
+      form.setValue("baseRate", option.cost, { shouldDirty: true });
+      toast.success(`Rate from ${option.carrierName || "the contract"} applied`);
+    },
+    [form],
+  );
+
   const submitBlocked =
     !!carrierId &&
     (isPreviewLoading || carrierEligibilityBlocksSubmit(eligibility, overrideInsuranceWarning));
@@ -548,6 +571,9 @@ function CarrierAssignmentTab({
             eligibility={carrierId ? eligibility : undefined}
             isLoading={!!carrierId && isPreviewLoading}
           />
+          {/* Shopping needs a shipment to price. A move dialog opened without
+              one still assigns; it just cannot compare carriers. */}
+          {shipmentId && <CarrierShoppingPanel shipmentId={shipmentId} onChoose={chooseCarrier} />}
           <CarrierAssignmentFields form={form} />
         </div>
       </ScrollArea>

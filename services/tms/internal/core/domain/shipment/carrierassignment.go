@@ -58,12 +58,16 @@ type CarrierAssignment struct {
 	ExternalTractorNumber string                  `json:"externalTractorNumber" bun:"external_tractor_number,type:VARCHAR(50),nullzero"`
 	ExternalTrailerNumber string                  `json:"externalTrailerNumber" bun:"external_trailer_number,type:VARCHAR(50),nullzero"`
 	AssignedByID          *pulid.ID               `json:"assignedById"          bun:"assigned_by_id,type:VARCHAR(100),nullzero"`
-	ConfirmedAt           *int64                  `json:"confirmedAt"           bun:"confirmed_at,type:BIGINT,nullzero"`
-	CanceledAt            *int64                  `json:"canceledAt"            bun:"canceled_at,type:BIGINT,nullzero"`
-	CancellationReason    string                  `json:"cancellationReason"    bun:"cancellation_reason,type:TEXT,nullzero"`
-	Version               int64                   `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt             int64                   `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64                   `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	// RateQuoteID names the buy side quote that decided what this carrier is
+	// paid. Absent when somebody typed the rate, which stays the ordinary case
+	// until an organization writes carrier contracts.
+	RateQuoteID        *pulid.ID `json:"rateQuoteId"        bun:"rate_quote_id,type:VARCHAR(100),nullzero"`
+	ConfirmedAt        *int64    `json:"confirmedAt"        bun:"confirmed_at,type:BIGINT,nullzero"`
+	CanceledAt         *int64    `json:"canceledAt"         bun:"canceled_at,type:BIGINT,nullzero"`
+	CancellationReason string    `json:"cancellationReason" bun:"cancellation_reason,type:TEXT,nullzero"`
+	Version            int64     `json:"version"            bun:"version,type:BIGINT"`
+	CreatedAt          int64     `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt          int64     `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	ShipmentMove *ShipmentMove                   `json:"shipmentMove,omitempty" bun:"rel:belongs-to,join:shipment_move_id=id"`
 	Carrier      *carrier.Carrier                `json:"carrier,omitempty"      bun:"rel:belongs-to,join:carrier_id=id"`

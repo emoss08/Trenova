@@ -39,4 +39,11 @@ type FuelSurchargeDetail struct {
 	UsedFallback    bool     `json:"usedFallback"`
 	Stale           bool     `json:"stale"`
 	CalculatedAt    int64    `json:"calculatedAt"`
+
+	// AgreementID names the contract whose fuel binding selected this program,
+	// and TermsOverridden says whether that contract also changed the program's
+	// peg, increment or cap. Together they answer the question a fuel dispute
+	// always opens with: whose numbers are these?
+	AgreementID     string `json:"agreementId,omitempty"`
+	TermsOverridden bool   `json:"termsOverridden,omitempty"`
 }
