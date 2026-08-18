@@ -100,8 +100,11 @@ func (s *Service) resolve(
 			candidate.MatchedOn = matchedOn(rule)
 		} else {
 			// Everything that matched but arrived later lost, and the ordering
-			// term that put the winner first is the reason.
+			// term that put the winner first is the reason. The sentence has to
+			// move with it: a rule that lost on specificity saying "Applied" is
+			// the opposite of what happened.
 			candidate.RejectReason = lossReason(resolution.Winner, rule)
+			candidate.RejectDetail = candidate.RejectReason.Explanation()
 		}
 
 		candidate.Rank = rank
