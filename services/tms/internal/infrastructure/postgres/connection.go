@@ -151,7 +151,6 @@ func reportingSettings(cfg *config.Config) connectionSettings {
 				"%dms",
 				max(cfg.Database.GetIdleTxTimeout().Milliseconds(), 1),
 			),
-			"default_transaction_read_only": "on",
 		},
 		registerStats: false,
 	}

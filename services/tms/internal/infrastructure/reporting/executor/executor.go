@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -56,9 +58,16 @@ func (x *Executor) Open(
 
 	queryCtx, cancel := context.WithTimeout(ctx, timeout)
 
-	//nolint:rowserrcheck // rows.Err is checked by datasetReader.Next on stream end
-	rows, err := x.db.DB().QueryContext(queryCtx, req.Compiled.SQL, req.Compiled.Args...)
+	tx, err := x.db.DB().BeginTx(queryCtx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("begin read-only report transaction: %w", err)
+	}
+
+	//nolint:rowserrcheck // rows.Err is checked by datasetReader.Next on stream end
+	rows, err := tx.QueryContext(queryCtx, req.Compiled.SQL, req.Compiled.Args...)
+	if err != nil {
+		_ = tx.Rollback()
 		cancel()
 		return nil, fmt.Errorf("execute report query: %w", err)
 	}
@@ -66,6 +75,7 @@ func (x *Executor) Open(
 	return &datasetReader{
 		schema:   req.Compiled.Columns,
 		rows:     rows,
+		tx:       tx,
 		cancel:   cancel,
 		maxRows:  maxRows,
 		compiled: req.Compiled,
@@ -77,6 +87,7 @@ func (x *Executor) Open(
 type datasetReader struct {
 	schema    []services.ReportResultColumn
 	rows      *sql.Rows
+	tx        bun.Tx
 	cancel    context.CancelFunc
 	maxRows   int64
 	count     int64
@@ -151,7 +162,13 @@ func (r *datasetReader) Totals(ctx context.Context) (services.ReportRow, error) 
 	queryCtx, cancel := context.WithTimeout(ctx, r.timeout)
 	defer cancel()
 
-	row := r.db.DB().QueryRowContext(queryCtx, r.compiled.TotalsSQL, r.compiled.TotalsArgs...)
+	tx, err := r.db.DB().BeginTx(queryCtx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return nil, fmt.Errorf("begin read-only totals transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	row := tx.QueryRowContext(queryCtx, r.compiled.TotalsSQL, r.compiled.TotalsArgs...)
 
 	raw := make([]any, len(r.schema))
 	scanTargets := make([]any, len(r.schema))
@@ -181,6 +198,9 @@ func (r *datasetReader) Close() error {
 	}
 	r.closed = true
 	err := r.rows.Close()
+	if rbErr := r.tx.Rollback(); rbErr != nil && !errors.Is(rbErr, sql.ErrTxDone) && err == nil {
+		err = rbErr
+	}
 	r.cancel()
 	return err
 }
