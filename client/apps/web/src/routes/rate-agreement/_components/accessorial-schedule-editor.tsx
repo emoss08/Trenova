@@ -7,7 +7,7 @@ import { accessorialChargeMethodChoices, rateUnitChoices } from "@/lib/choices";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import type { RateAgreement, RateAgreementAccessorial } from "@trenova/shared/types/rate";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 const NEW_ACCESSORIAL = {
@@ -49,10 +49,22 @@ export function AccessorialScheduleEditor() {
         const autoApplies = Boolean(row?.autoApply);
 
         return (
-          <div key={field.id} className="rounded-md border p-3">
-            <div className="mb-2 flex items-center justify-end">
-              <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
-                <TrashIcon className="size-3.5" />
+          <div key={field.id} className="rounded-md border bg-card p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-medium">
+                Accessorial {index + 1}
+                {row?.waived && (
+                  <span className="text-muted-foreground ml-2 text-xs font-normal">Waived</span>
+                )}
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs"
+                onClick={() => remove(index)}
+              >
+                Remove
               </Button>
             </div>
 
@@ -84,7 +96,7 @@ export function AccessorialScheduleEditor() {
                     control={control}
                     rules={{ required: true }}
                     name={`accessorials.${index}.rateUnit` as never}
-                    label="Per"
+                    label="Rate Unit"
                     placeholder="Unit"
                     description="What a unit is on this charge"
                     options={rateUnitChoices}
@@ -96,7 +108,10 @@ export function AccessorialScheduleEditor() {
                     control={control}
                     name={`accessorials.${index}.amount` as never}
                     label="Amount"
-                    placeholder="75"
+                    placeholder="75.00"
+                    sideText="$"
+                    decimalScale={2}
+                    thousandSeparator
                     description="What the contract charges"
                   />
                 </FormControl>
@@ -109,8 +124,11 @@ export function AccessorialScheduleEditor() {
                   <NumberField
                     control={control}
                     name={`accessorials.${index}.amount` as never}
-                    label="Amount per unit"
-                    placeholder="65"
+                    label="Amount Per Unit"
+                    placeholder="65.00"
+                    sideText="$"
+                    decimalScale={2}
+                    thousandSeparator
                     description="What the contract charges for each unit"
                   />
                 </FormControl>
@@ -118,7 +136,7 @@ export function AccessorialScheduleEditor() {
                   <NumberField
                     control={control}
                     name={`accessorials.${index}.freeUnits` as never}
-                    label="Free units"
+                    label="Free Units"
                     placeholder="2"
                     description="Units the contract gives away before charging"
                   />
@@ -127,8 +145,11 @@ export function AccessorialScheduleEditor() {
                   <NumberField
                     control={control}
                     name={`accessorials.${index}.maxAmount` as never}
-                    label="Maximum"
-                    placeholder=""
+                    label="Maximum Amount"
+                    placeholder="0.00"
+                    sideText="$"
+                    decimalScale={2}
+                    thousandSeparator
                     description="A ceiling on what this charge can reach"
                   />
                 </FormControl>
@@ -140,7 +161,7 @@ export function AccessorialScheduleEditor() {
                 <SwitchField
                   control={control}
                   name={`accessorials.${index}.autoApply` as never}
-                  label="Applies automatically"
+                  label="Auto Apply"
                   description="Added to every shipment this contract prices, so it never depends on somebody remembering"
                   outlined
                 />
@@ -162,7 +183,7 @@ export function AccessorialScheduleEditor() {
                   <InputField
                     control={control}
                     name={`accessorials.${index}.applyCondition` as never}
-                    label="Only when"
+                    label="Apply Condition"
                     placeholder="totalStops > 2"
                     description="An expression in the same language the rating formulas use. Leave empty to apply to every shipment."
                   />

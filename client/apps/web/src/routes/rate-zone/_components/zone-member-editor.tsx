@@ -8,7 +8,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import type { GenericSelectOption } from "@trenova/shared/types/fields";
 import type { RateZone, RateZoneMember } from "@trenova/shared/types/rate";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 /**
@@ -49,10 +49,17 @@ export function ZoneMemberEditor() {
         const scopeType = members[index]?.scopeType;
 
         return (
-          <div key={field.id} className="rounded-md border p-3">
-            <div className="mb-2 flex items-center justify-end">
-              <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
-                <TrashIcon className="size-3.5" />
+          <div key={field.id} className="rounded-md border bg-card p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-medium">Place {index + 1}</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs"
+                onClick={() => remove(index)}
+              >
+                Remove
               </Button>
             </div>
 
@@ -62,8 +69,8 @@ export function ZoneMemberEditor() {
                   control={control}
                   rules={{ required: true }}
                   name={`members.${index}.scopeType` as never}
-                  label="Kind"
-                  placeholder="Kind"
+                  label="Place Type"
+                  placeholder="Select type"
                   description="How this place is named"
                   options={MEMBER_SCOPE_CHOICES}
                 />

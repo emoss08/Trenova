@@ -6,7 +6,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { MAX_MATRIX_DIMENSIONS } from "@trenova/shared/lib/rate-matrix";
 import type { RateMatrix, RateMatrixDimension } from "@trenova/shared/types/rate";
-import { PlusIcon, TrashIcon, TriangleAlertIcon } from "lucide-react";
+import { PlusIcon, TriangleAlertIcon } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 /**
@@ -56,13 +56,17 @@ export function DimensionEditor() {
         const matchMode = dimensions[index]?.matchMode;
 
         return (
-          <div key={field.id} className="rounded-md border p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-muted-foreground text-xs font-medium">
-                {index === 0 ? "First axis" : `Axis ${index + 1}`}
-              </span>
-              <Button type="button" variant="ghost" size="sm" onClick={() => removeAxis(index)}>
-                <TrashIcon className="size-3.5" />
+          <div key={field.id} className="rounded-md border bg-card p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-sm font-medium">Axis {index + 1}</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs"
+                onClick={() => removeAxis(index)}
+              >
+                Remove
               </Button>
             </div>
 
@@ -72,8 +76,8 @@ export function DimensionEditor() {
                   control={control}
                   rules={{ required: true }}
                   name={`dimensions.${index}.kind` as never}
-                  label="Looks up by"
-                  placeholder="Looks up by"
+                  label="Dimension"
+                  placeholder="Select dimension"
                   description="What about the shipment this axis reads"
                   options={rateMatrixDimensionKindChoices}
                 />
@@ -83,8 +87,8 @@ export function DimensionEditor() {
                   control={control}
                   rules={{ required: true }}
                   name={`dimensions.${index}.matchMode` as never}
-                  label="Matched as"
-                  placeholder="Matched as"
+                  label="Match Mode"
+                  placeholder="Select match mode"
                   description={
                     matchMode === "Range"
                       ? "Bands, each covering from its floor up to but not including the next"
@@ -97,7 +101,7 @@ export function DimensionEditor() {
                 <InputField
                   control={control}
                   name={`dimensions.${index}.label` as never}
-                  label="Header"
+                  label="Label"
                   placeholder="Origin zone"
                   description="What this axis is called in the grid — leave blank to use the kind"
                 />
