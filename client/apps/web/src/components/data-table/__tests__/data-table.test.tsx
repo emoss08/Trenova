@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
 import { DataTable } from "../data-table";
+import { ControlsProvider, useControls } from "@/contexts/control-context";
 import { DataTableProvider, useDataTable } from "@/contexts/data-table-context";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useTable } from "@tanstack/react-table";
@@ -409,7 +410,6 @@ describe("DataTablePagination", () => {
 
 describe("ControlsProvider memoization", () => {
   it("context value is referentially stable when open does not change", async () => {
-    const { ControlsProvider, useControls } = await import("@/contexts/control-context");
     const capturedValues: unknown[] = [];
 
     function Capture() {
