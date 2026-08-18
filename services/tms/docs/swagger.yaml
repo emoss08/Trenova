@@ -8892,6 +8892,14 @@ definitions:
                 type: string
             updatedAt:
                 type: integer
+            useContractRate:
+                description: |-
+                    UseContractRate offers what the carrier's contract says today rather than
+                    the rate frozen on this entry. A guide written a year ago carries the
+                    number somebody typed a year ago; a contract carries the one that was
+                    negotiated. The rate above stays as the fallback for a lane no contract
+                    covers.
+                type: boolean
             version:
                 type: integer
         type: object

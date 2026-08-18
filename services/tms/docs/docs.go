@@ -43060,6 +43060,10 @@ const docTemplate = `{
                 "updatedAt": {
                     "type": "integer"
                 },
+                "useContractRate": {
+                    "description": "UseContractRate offers what the carrier's contract says today rather than\nthe rate frozen on this entry. A guide written a year ago carries the\nnumber somebody typed a year ago; a contract carries the one that was\nnegotiated. The rate above stays as the fallback for a lane no contract\ncovers.",
+                    "type": "boolean"
+                },
                 "version": {
                     "type": "integer"
                 }

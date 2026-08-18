@@ -31,14 +31,21 @@ type RoutingGuideEntry struct {
 	RoutingGuideID pulid.ID `json:"routingGuideId" bun:"routing_guide_id,type:VARCHAR(100),notnull"`
 	CarrierID      pulid.ID `json:"carrierId"      bun:"carrier_id,type:VARCHAR(100),notnull"`
 
-	Rank            int16                      `json:"rank"            bun:"rank,type:SMALLINT,notnull"`
-	RateMethod      shipment.CarrierRateMethod `json:"rateMethod"      bun:"rate_method,type:VARCHAR(50),notnull,default:'Flat'"`
-	Rate            decimal.Decimal            `json:"rate"            bun:"rate,type:NUMERIC(19,4),notnull"`
-	OfferTTLSeconds int32                      `json:"offerTtlSeconds" bun:"offer_ttl_seconds,type:INTEGER,notnull"`
-	Channel         Channel                    `json:"channel"         bun:"channel,type:VARCHAR(50),notnull,default:'Email'"`
-	Version         int64                      `json:"version"         bun:"version,type:BIGINT"`
-	CreatedAt       int64                      `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt       int64                      `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Rank       int16                      `json:"rank"       bun:"rank,type:SMALLINT,notnull"`
+	RateMethod shipment.CarrierRateMethod `json:"rateMethod" bun:"rate_method,type:VARCHAR(50),notnull,default:'Flat'"`
+	Rate       decimal.Decimal            `json:"rate"       bun:"rate,type:NUMERIC(19,4),notnull"`
+
+	// UseContractRate offers what the carrier's contract says today rather than
+	// the rate frozen on this entry. A guide written a year ago carries the
+	// number somebody typed a year ago; a contract carries the one that was
+	// negotiated. The rate above stays as the fallback for a lane no contract
+	// covers.
+	UseContractRate bool    `json:"useContractRate" bun:"use_contract_rate,type:BOOLEAN,notnull,default:false"`
+	OfferTTLSeconds int32   `json:"offerTtlSeconds" bun:"offer_ttl_seconds,type:INTEGER,notnull"`
+	Channel         Channel `json:"channel"         bun:"channel,type:VARCHAR(50),notnull,default:'Email'"`
+	Version         int64   `json:"version"         bun:"version,type:BIGINT"`
+	CreatedAt       int64   `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt       int64   `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	RoutingGuide *RoutingGuide    `json:"routingGuide,omitempty" bun:"rel:belongs-to,join:routing_guide_id=id"`
 	Carrier      *carrier.Carrier `json:"carrier,omitempty"      bun:"rel:belongs-to,join:carrier_id=id"`

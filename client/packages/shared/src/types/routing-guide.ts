@@ -26,6 +26,7 @@ export const routingGuideEntrySchema = z.object({
   rate: decimalStringSchema,
   offerTtlSeconds: z.number().int(),
   channel: tenderChannelSchema,
+  useContractRate: z.boolean().default(false),
   carrier: tenderCarrierSummarySchema.nullish(),
 });
 export type RoutingGuideEntry = z.infer<typeof routingGuideEntrySchema>;
@@ -67,6 +68,12 @@ const routingGuideEntryPayloadSchema = z.object({
     .min(MIN_OFFER_TTL_SECONDS, { error: "Offer expiry must be at least 5 minutes" })
     .max(MAX_OFFER_TTL_SECONDS, { error: "Offer expiry cannot exceed 7 days" }),
   channel: tenderChannelSchema,
+  /**
+   * Offers what the carrier's contract says today rather than the rate below.
+   * The rate stays as the fallback for a lane no contract covers, so turning
+   * this on cannot leave an entry with no rate at all.
+   */
+  useContractRate: z.boolean().default(false),
 });
 export type RoutingGuideEntryPayload = z.infer<typeof routingGuideEntryPayloadSchema>;
 
@@ -217,6 +224,7 @@ export const emptyRoutingGuideEntry = (rank: number): RoutingGuideEntryPayload =
   rate: 0,
   offerTtlSeconds: DEFAULT_OFFER_TTL_SECONDS,
   channel: "Email",
+  useContractRate: false,
 });
 
 export const emptyRoutingGuidePayload: RoutingGuidePayloadInput = {
