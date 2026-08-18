@@ -363,6 +363,44 @@ const (
 	)
 )
 
+// UnratedShipmentDisposition says what happens when no rate agreement covers a
+// shipment's lane.
+//
+// The default preserves the behaviour that existed before agreements: fall back
+// to the formula template on the shipment. An organization that has not written
+// a contract yet therefore sees no change whatsoever, and opting in is a matter
+// of writing the first agreement rather than flipping a switch.
+type UnratedShipmentDisposition string
+
+const (
+	// UnratedShipmentDispositionFallbackFormulaTemplate prices from the
+	// shipment's own formula template, or the organization's fallback template.
+	UnratedShipmentDispositionFallbackFormulaTemplate = UnratedShipmentDisposition(
+		"FallbackFormulaTemplate",
+	)
+	// UnratedShipmentDispositionZeroAndFlag prices at nothing and raises a
+	// billing exception, for organizations that would rather see the gap than
+	// have a number invented for it.
+	UnratedShipmentDispositionZeroAndFlag = UnratedShipmentDisposition("ZeroAndFlag")
+	// UnratedShipmentDispositionBlock refuses the save outright.
+	UnratedShipmentDispositionBlock = UnratedShipmentDisposition("Block")
+)
+
+func (usd UnratedShipmentDisposition) String() string {
+	return string(usd)
+}
+
+func (usd UnratedShipmentDisposition) IsValid() bool {
+	switch usd {
+	case UnratedShipmentDispositionFallbackFormulaTemplate,
+		UnratedShipmentDispositionZeroAndFlag,
+		UnratedShipmentDispositionBlock:
+		return true
+	default:
+		return false
+	}
+}
+
 type PaymentTerm string
 
 const (

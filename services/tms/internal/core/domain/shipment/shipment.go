@@ -242,6 +242,52 @@ func FirstShipperStop(moves []*ShipmentMove) *Stop {
 	return best
 }
 
+// DeliveryStop is the last place the shipment is delivered to, which is the
+// destination end of the lane a rate is written against.
+func (s *Shipment) DeliveryStop() *Stop {
+	if s == nil {
+		return nil
+	}
+
+	return LastConsigneeStop(s.Moves)
+}
+
+// LastConsigneeStop mirrors FirstShipperStop from the other end of the trip.
+//
+// The ordering is the same one read backwards — latest move, then latest stop
+// within it — and the stop id settles a tie so the answer never depends on the
+// order the moves happened to be loaded in.
+func LastConsigneeStop(moves []*ShipmentMove) *Stop {
+	var best *Stop
+	var bestMoveSeq int64
+	var bestStopSeq int64
+	bestStopID := ""
+
+	for _, move := range moves {
+		if move == nil {
+			continue
+		}
+		for _, stop := range move.Stops {
+			if stop == nil || !stop.IsDestinationStop() {
+				continue
+			}
+			stopID := stop.ID.String()
+			if best == nil ||
+				move.Sequence > bestMoveSeq ||
+				(move.Sequence == bestMoveSeq &&
+					(stop.Sequence > bestStopSeq ||
+						(stop.Sequence == bestStopSeq && stopID > bestStopID))) {
+				best = stop
+				bestMoveSeq = move.Sequence
+				bestStopSeq = stop.Sequence
+				bestStopID = stopID
+			}
+		}
+	}
+
+	return best
+}
+
 func (s *Shipment) GetID() pulid.ID {
 	return s.ID
 }
