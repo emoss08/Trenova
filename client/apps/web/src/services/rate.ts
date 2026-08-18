@@ -6,6 +6,7 @@ import {
   rateMatrixSchema,
   rateQuoteSchema,
   ratedShipmentSchema,
+  rateImportBatchSchema,
   rateSimulationSchema,
   shopResultSchema,
   rateZoneSchema,
@@ -15,6 +16,8 @@ import {
   type RateQuote,
   type RatedShipment,
   type RateZone,
+  type RateImportBatch,
+  type RateImportRow,
   type RateSimulation,
   type RateSimulationResult,
   type ShopResult,
@@ -259,6 +262,67 @@ export class RateSimulationService {
 
     const response = await api.get<{ results?: RateSimulationResult[] }>(
       `/rate-simulations/${id}/results/?${query.toString()}`,
+    );
+
+    return response?.results ?? [];
+  }
+}
+
+export class RateImportService {
+  public async getById(id: string): Promise<RateImportBatch> {
+    const response = await api.get<RateImportBatch>(`/rate-imports/${id}/`);
+
+    return safeParse(rateImportBatchSchema, response, "Rate Import");
+  }
+
+  /** The sheets uploaded against one agreement, newest first. */
+  public async listForAgreement(rateAgreementId: string): Promise<RateImportBatch[]> {
+    const response = await api.get<{ results?: RateImportBatch[] }>(
+      `/rate-imports/?rateAgreementId=${encodeURIComponent(rateAgreementId)}&limit=20`,
+    );
+
+    return response?.results ?? [];
+  }
+
+  /**
+   * Reads a sheet and stages what committing it would do.
+   *
+   * Nothing about the agreement changes here — what comes back is the dry run,
+   * and applying it takes a second, deliberate call.
+   */
+  public async upload(payload: {
+    rateAgreementId: string;
+    effectiveFrom: number;
+    file: File;
+  }): Promise<RateImportBatch> {
+    const form = new FormData();
+    form.append("file", payload.file);
+    form.append("rateAgreementId", payload.rateAgreementId);
+    form.append("effectiveFrom", String(payload.effectiveFrom));
+
+    const response = await api.upload<RateImportBatch>("/rate-imports/", form);
+
+    return safeParse(rateImportBatchSchema, response, "Rate Import");
+  }
+
+  /** Applies a reviewed sheet to its agreement. */
+  public async commit(id: string): Promise<RateImportBatch> {
+    const response = await api.post<RateImportBatch>(`/rate-imports/${id}/commit/`, {});
+
+    return safeParse(rateImportBatchSchema, response, "Rate Import");
+  }
+
+  /** Closes a sheet somebody read and said no to. */
+  public async discard(id: string): Promise<RateImportBatch> {
+    const response = await api.post<RateImportBatch>(`/rate-imports/${id}/discard/`, {});
+
+    return safeParse(rateImportBatchSchema, response, "Rate Import");
+  }
+
+  /** The rows that would not read, which is what somebody opens an import to fix. */
+  public async listFailedRows(id: string): Promise<RateImportRow[]> {
+    const response = await api.get<{ results?: RateImportRow[] }>(
+      `/rate-imports/${id}/rows/?failedOnly=true&limit=100`,
     );
 
     return response?.results ?? [];

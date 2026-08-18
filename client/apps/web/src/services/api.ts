@@ -21,6 +21,7 @@ import { DetentionAnalyticsService, DetentionPolicyService, DetentionService } f
 import {
   RateAgreementService,
   RateMatrixService,
+  RateImportService,
   RateSimulationService,
   RateQuoteService,
   RateZoneService,
@@ -139,6 +140,7 @@ class APIService {
   public rateZoneService: RateZoneService;
   public rateMatrixService: RateMatrixService;
   public rateSimulationService: RateSimulationService;
+  public rateImportService: RateImportService;
   public rateQuoteService: RateQuoteService;
   public detentionAnalyticsService: DetentionAnalyticsService;
   public dispatchControlService: DispatchControlService;
@@ -226,6 +228,7 @@ class APIService {
     this.rateZoneService = new RateZoneService();
     this.rateMatrixService = new RateMatrixService();
     this.rateSimulationService = new RateSimulationService();
+    this.rateImportService = new RateImportService();
     this.rateQuoteService = new RateQuoteService();
     this.detentionAnalyticsService = new DetentionAnalyticsService();
     this.dispatchControlService = new DispatchControlService();

@@ -60,6 +60,7 @@ export type BaseEndpoint =
   | "/rate-matrices/"
   | "/rate-quotes/"
   | "/rate-simulations/"
+  | "/rate-imports/"
   | "/users/"
   | "/workers/"
   | "/worker-pto/"

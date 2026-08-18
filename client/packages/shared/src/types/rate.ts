@@ -786,3 +786,94 @@ export const rateSimulationResultSchema = z.object({
   createdAt: z.number().nullish(),
 });
 export type RateSimulationResult = z.infer<typeof rateSimulationResultSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*                                   Import                                    */
+/* -------------------------------------------------------------------------- */
+
+export const rateImportStatusSchema = z.enum([
+  "Pending",
+  "Parsed",
+  "Committed",
+  "Failed",
+  "Discarded",
+]);
+export type RateImportStatus = z.infer<typeof rateImportStatusSchema>;
+
+export const rateImportFormatSchema = z.enum(["CSV", "XLSX"]);
+export type RateImportFormat = z.infer<typeof rateImportFormatSchema>;
+
+/** What committing a sheet would do to one lane. */
+export const rateImportChangeKindSchema = z.enum([
+  "Removed",
+  "Added",
+  "Changed",
+  "Duplicate",
+  "Unchanged",
+]);
+export type RateImportChangeKind = z.infer<typeof rateImportChangeKindSchema>;
+
+/**
+ * One term that moved.
+ *
+ * "This went up" is not reviewable; "this went from 2.10 to 2.35" is.
+ */
+export const rateImportFieldChangeSchema = z.object({
+  field: z.string(),
+  before: z.string().default(""),
+  after: z.string().default(""),
+});
+export type RateImportFieldChange = z.infer<typeof rateImportFieldChangeSchema>;
+
+export const rateImportChangeSchema = z.object({
+  kind: rateImportChangeKindSchema,
+  laneKey: z.string().default(""),
+  label: z.string().default(""),
+  existingId: z.string().nullish(),
+  fields: z.array(rateImportFieldChangeSchema).nullish(),
+});
+export type RateImportChange = z.infer<typeof rateImportChangeSchema>;
+
+export const rateImportSummarySchema = z.object({
+  added: z.number().int().default(0),
+  changed: z.number().int().default(0),
+  removed: z.number().int().default(0),
+  duplicate: z.number().int().default(0),
+  unchanged: z.number().int().default(0),
+});
+export type RateImportSummary = z.infer<typeof rateImportSummarySchema>;
+
+export const rateImportBatchSchema = z.object({
+  ...tenantInfoSchema.shape,
+
+  rateAgreementId: z.string(),
+  fileName: z.string().default(""),
+  sourceFormat: rateImportFormatSchema,
+  status: rateImportStatusSchema,
+  effectiveFrom: z.number().int(),
+
+  mapping: z.record(z.string(), z.number()).nullish(),
+  unmappedHeaders: z.array(z.string()).nullish(),
+  changes: z.array(rateImportChangeSchema).nullish(),
+  summary: rateImportSummarySchema.nullish(),
+
+  rowCount: z.number().int().default(0),
+  errorCount: z.number().int().default(0),
+  error: z.string().default(""),
+
+  uploadedById: z.string().nullish(),
+  committedAt: z.number().nullish(),
+  committedBy: z.string().nullish(),
+});
+export type RateImportBatch = z.infer<typeof rateImportBatchSchema>;
+
+/** One row of the uploaded sheet, as it was read. */
+export const rateImportRowSchema = z.object({
+  id: optionalStringSchema,
+  rateImportBatchId: optionalStringSchema,
+  rowNumber: z.number().int(),
+  cells: z.array(z.string()).nullish(),
+  laneKey: z.string().default(""),
+  error: z.string().default(""),
+});
+export type RateImportRow = z.infer<typeof rateImportRowSchema>;
