@@ -1120,7 +1120,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			assert.Equal(t, 1, batch.FailedCount)
 
 			temporalStarter := &fakeWorkflowStarter{enabled: true}
-			h.service = h.buildService(temporalStarter, decimal.NewFromInt(100))
+			h.service = h.buildService(t, temporalStarter, decimal.NewFromInt(100))
 			items := make([]*servicesports.InvoiceAdjustmentRequest, 0, batchInlineThreshold+1)
 			for i := range batchInlineThreshold + 1 {
 				items = append(items, &servicesports.InvoiceAdjustmentRequest{
@@ -1296,9 +1296,12 @@ func newIntegrationHarness(
 }
 
 func (h *integrationHarness) buildService(
+	t *testing.T,
 	starter servicesports.WorkflowStarter,
 	formulaAmount decimal.Decimal,
 ) servicesports.InvoiceAdjustmentService {
+	t.Helper()
+
 	return New(Params{
 		Logger:      zap.NewNop(),
 		DB:          h.conn,
