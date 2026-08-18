@@ -100,35 +100,28 @@ func (c *Calculator) syncAgreementAccessorials(
 
 // applicableAccessorials picks the schedule rows that apply to this shipment.
 //
-// Only rows marked to apply automatically are considered; the rest are prices
-// waiting for somebody to add the charge. An empty service or shipment type set
-// means the row does not care, which is the same convention every other scoped
-// record in the system uses.
+// The contract answers everything it can on its own, and this adds the one test
+// it cannot: the expression, which needs a formula engine. Splitting it that way
+// is what lets the buy side reach the same answer without a second copy of the
+// selection rules.
 //
-// The cheap set checks run before the expression, because a condition is the
-// only test here that costs anything to answer.
+// The contract's cheap tests run first, because the condition is the only one
+// here that costs anything to answer.
 func (c *Calculator) applicableAccessorials(
 	ctx context.Context,
 	agreement *rateagreement.RateAgreement,
 	entity *shipment.Shipment,
 	ratedAt int64,
 ) []*rateagreement.RateAgreementAccessorial {
-	applicable := make([]*rateagreement.RateAgreementAccessorial, 0, len(agreement.Accessorials))
+	scoped := agreement.AutoApplyAccessorials(rateagreement.AccessorialFacts{
+		At:             ratedAt,
+		ServiceTypeID:  entity.ServiceTypeID,
+		ShipmentTypeID: entity.ShipmentTypeID,
+	})
 
-	for _, accessorial := range agreement.Accessorials {
-		if accessorial == nil || !accessorial.AutoApply || accessorial.Waived {
-			continue
-		}
+	applicable := make([]*rateagreement.RateAgreementAccessorial, 0, len(scoped))
 
-		if !accessorial.IsEffectiveAt(ratedAt) {
-			continue
-		}
-
-		if !matchesIDSet(accessorial.ServiceTypeIDs, entity.ServiceTypeID) ||
-			!matchesIDSet(accessorial.ShipmentTypeIDs, entity.ShipmentTypeID) {
-			continue
-		}
-
+	for _, accessorial := range scoped {
 		if !c.conditionHolds(ctx, accessorial, entity) {
 			continue
 		}
@@ -175,20 +168,6 @@ func (c *Calculator) conditionHolds(
 	}
 
 	return holds
-}
-
-func matchesIDSet(allowed []pulid.ID, value pulid.ID) bool {
-	if len(allowed) == 0 {
-		return true
-	}
-
-	for _, candidate := range allowed {
-		if candidate == value {
-			return true
-		}
-	}
-
-	return false
 }
 
 // reconcileAgreementCharges rewrites the shipment's contract accessorials so

@@ -201,3 +201,59 @@ func (s *Service) billingControl(ctx context.Context, orgID pulid.ID) *tenant.Bi
 
 	return control
 }
+
+// ShopRequest asks what several carriers would charge to haul a saved shipment.
+type ShopRequest struct {
+	TenantInfo pagination.TenantInfo
+	ShipmentID pulid.ID
+	Strategy   services.ShopStrategy
+	// CarrierIDs is an explicit shortlist. Left empty, the shipment's routing
+	// guide supplies the candidates.
+	CarrierIDs []pulid.ID
+	AsOf       int64
+	Limit      int
+	// Persist keeps each option's quote, so the carrier that was picked and the
+	// ones that were not are both answerable later.
+	Persist bool
+}
+
+// Shop prices a saved shipment against several carriers and ranks them.
+//
+// The sell price it measures margin against is the shipment's own total, which
+// is the number the customer is being charged. Taking it from the request would
+// let a screen ask "what is my margin if I pretend this sold for more", which
+// is a question worth asking but not one the record of a decision should carry.
+func (s *Service) Shop(
+	ctx context.Context,
+	req *ShopRequest,
+) (*services.ShopResult, error) {
+	log := s.l.With(
+		zap.String("operation", "Shop"),
+		zap.String("shipmentId", req.ShipmentID.String()),
+	)
+
+	entity, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         req.ShipmentID,
+		TenantInfo: req.TenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		log.Error("failed to load shipment for shopping", zap.Error(err))
+		return nil, err
+	}
+
+	return s.engine.Shop(ctx, &services.ShopRequest{
+		Shipment:       entity,
+		TenantInfo:     req.TenantInfo,
+		Strategy:       req.Strategy,
+		CarrierIDs:     req.CarrierIDs,
+		AsOf:           req.AsOf,
+		BillingControl: s.billingControl(ctx, req.TenantInfo.OrgID),
+		SellTotal:      entity.TotalChargeAmount,
+		Limit:          req.Limit,
+		Persist:        req.Persist,
+		UserID:         req.TenantInfo.UserID,
+	})
+}

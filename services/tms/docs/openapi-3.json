@@ -9796,6 +9796,10 @@
                     "rateMethod": {
                         "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_shipment.CarrierRateMethod"
                     },
+                    "rateQuoteId": {
+                        "description": "RateQuoteID names the buy side quote that decided what this carrier is\npaid. Absent when somebody typed the rate, which stays the ordinary case\nuntil an organization writes carrier contracts.",
+                        "type": "string"
+                    },
                     "shipmentMove": {
                         "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentMove"
                     },
@@ -13342,6 +13346,10 @@
                         },
                         "type": "array"
                     },
+                    "autoRate": {
+                        "description": "AutoRate asks the carrier's contract to price this assignment instead of\ntaking the rate from the request. A rate typed alongside it wins: that is\na negotiated number, and overruling it is what makes people switch\nauto-rating off.",
+                        "type": "boolean"
+                    },
                     "baseRate": {
                         "type": "number"
                     },
@@ -13364,6 +13372,10 @@
                         "type": "number"
                     },
                     "overrideInsuranceWarning": {
+                        "type": "boolean"
+                    },
+                    "overrideMarginFloor": {
+                        "description": "OverrideMarginFloor lets somebody assign a carrier the contract's margin\nterms would otherwise refuse, the same escape the insurance warning has.",
                         "type": "boolean"
                     },
                     "proNumber": {
@@ -14896,6 +14908,69 @@
                     }
                 },
                 "type": "object"
+            },
+            "github_com_emoss08_trenova_internal_core_ports_services.ShopOption": {
+                "properties": {
+                    "agreementId": {
+                        "type": "string"
+                    },
+                    "carrierId": {
+                        "type": "string"
+                    },
+                    "carrierName": {
+                        "type": "string"
+                    },
+                    "cost": {
+                        "type": "number"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "guideRank": {
+                        "description": "GuideRank is the routing guide's own rank, zero when the carrier did not\ncome from a guide.",
+                        "type": "integer"
+                    },
+                    "margin": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.MarginVerdict"
+                    },
+                    "note": {
+                        "description": "Note says why this option ranked where it did, or why it could not be\npriced at all. It is what makes a shopping result answerable months later.",
+                        "type": "string"
+                    },
+                    "offerTtlSeconds": {
+                        "description": "OfferTTLSeconds is how long the guide gives the carrier to accept.",
+                        "type": "integer"
+                    },
+                    "outcome": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.Outcome"
+                    },
+                    "quote": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.RateQuote"
+                    },
+                    "rank": {
+                        "description": "Rank is this option's position in the returned order, from one.",
+                        "type": "integer"
+                    },
+                    "ruleId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "github_com_emoss08_trenova_internal_core_ports_services.ShopStrategy": {
+                "enum": [
+                    "LeastCost",
+                    "BestMargin",
+                    "GuideRank",
+                    "FastestAccept"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ShopStrategyLeastCost",
+                    "ShopStrategyBestMargin",
+                    "ShopStrategyGuideRank",
+                    "ShopStrategyFastestAccept"
+                ]
             },
             "github_com_emoss08_trenova_internal_core_ports_services.UpdateAPIKeyRequest": {
                 "properties": {
@@ -17247,6 +17322,38 @@
                 },
                 "type": "object"
             },
+            "github_com_emoss08_trenova_pkg_ratetypes.MarginVerdict": {
+                "properties": {
+                    "abovePayCeiling": {
+                        "description": "AbovePayCeiling means the carrier is being paid a larger share of the\nsell price than the buy side contract allows.",
+                        "type": "boolean"
+                    },
+                    "amount": {
+                        "type": "number"
+                    },
+                    "belowFloor": {
+                        "type": "boolean"
+                    },
+                    "ceilingApplies": {
+                        "type": "boolean"
+                    },
+                    "explanation": {
+                        "description": "Explanation says what was breached and by how much, in the words the\nadvisory or the block will carry. Empty when nothing was breached.",
+                        "type": "string"
+                    },
+                    "floorApplies": {
+                        "type": "boolean"
+                    },
+                    "payPercent": {
+                        "description": "PayPercent is the buy price as a share of the sell price.",
+                        "type": "number"
+                    },
+                    "percent": {
+                        "type": "number"
+                    }
+                },
+                "type": "object"
+            },
             "github_com_emoss08_trenova_pkg_ratetypes.RejectReason": {
                 "enum": [
                     "",
@@ -17873,7 +17980,7 @@
             },
             "internal_api_handlers_ratequotehandler.ratedShipment": {
                 "properties": {
-                    "agreementID": {
+                    "agreementId": {
                         "description": "Agreement and Rule are set when a contract priced the shipment, so the\ncaller can stamp them on it without re-reading the quote.",
                         "type": "string"
                     },
@@ -17884,7 +17991,7 @@
                     "currency": {
                         "type": "string"
                     },
-                    "formulaTemplateID": {
+                    "formulaTemplateId": {
                         "description": "FormulaTemplateID is set when the rule delegated to a formula, or when\nthe rating fell back to one because no agreement covered the lane.",
                         "type": "string"
                     },
@@ -17894,8 +18001,71 @@
                     "quote": {
                         "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_ratequote.RateQuote"
                     },
-                    "ruleID": {
+                    "ruleId": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "internal_api_handlers_ratequotehandler.shopRequest": {
+                "properties": {
+                    "asOf": {
+                        "type": "integer"
+                    },
+                    "carrierIds": {
+                        "description": "CarrierIDs is an explicit shortlist. Left empty the shipment's routing\nguide supplies the candidates, which is the ordinary case.",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "limit": {
+                        "type": "integer"
+                    },
+                    "persist": {
+                        "description": "Persist keeps each option's quote, so the carrier that was picked and the\nones that were not are both answerable later. A screen browsing options\nleaves it off.",
+                        "type": "boolean"
+                    },
+                    "strategy": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.ShopStrategy"
+                            }
+                        ],
+                        "description": "Strategy is what \"best\" means for this run. Left empty it is least cost,\nwhich is what somebody shopping without saying what they meant is asking."
+                    }
+                },
+                "type": "object"
+            },
+            "internal_api_handlers_ratequotehandler.shopResult": {
+                "properties": {
+                    "options": {
+                        "items": {
+                            "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.ShopOption"
+                        },
+                        "type": "array"
+                    },
+                    "routingGuideId": {
+                        "description": "RoutingGuideID names the guide the candidates came from, absent when the\ncaller supplied its own shortlist or no guide covered the lane.",
+                        "type": "string"
+                    },
+                    "sellTotal": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/decimal.NullDecimal"
+                            }
+                        ],
+                        "description": "SellTotal is the number margin was measured against, echoed back so a\nstored result explains itself."
+                    },
+                    "strategy": {
+                        "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.ShopStrategy"
+                    },
+                    "warnings": {
+                        "description": "Warnings covers what the caller should know but that did not stop the\nshopping: carriers with no contract, a guide that matched nothing.",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
                     }
                 },
                 "type": "object"
@@ -42819,6 +42989,106 @@
                     }
                 ],
                 "summary": "Explain or re-price a shipment",
+                "tags": [
+                    "Rate Quotes"
+                ]
+            }
+        },
+        "/rate-quotes/shipment/{shipmentID}/shop/": {
+            "post": {
+                "description": "Prices the shipment against each carrier that could haul it and ranks them, with a full trace per option. Candidates come from the lane's routing guide unless a shortlist is supplied.",
+                "operationId": "shopShipment",
+                "parameters": [
+                    {
+                        "description": "Shipment ID",
+                        "in": "path",
+                        "name": "shipmentID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/internal_api_handlers_ratequotehandler.shopRequest"
+                            }
+                        }
+                    },
+                    "description": "Shopping payload",
+                    "required": true,
+                    "x-originalParamName": "request"
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/internal_api_handlers_ratequotehandler.shopResult"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Shop a shipment against several carriers",
                 "tags": [
                     "Rate Quotes"
                 ]

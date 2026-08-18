@@ -1,6 +1,7 @@
 package rateengine
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -8,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -32,7 +34,30 @@ type deps struct {
 	quotes     *mocks.MockRateQuoteRepository
 	formula    *mocks.MockFormulaCalculator
 	exchange   *mocks.MockExchangeRateService
+	guides     *stubRoutingGuides
 	svc        *Service
+}
+
+// stubRoutingGuides stands in for the routing guide repository.
+//
+// It is a stub rather than a generated mock because rating needs exactly one of
+// that repository's seven methods, and hand-maintaining the other six would be
+// six chances to drift.
+type stubRoutingGuides struct {
+	repositories.RoutingGuideRepository
+
+	guide *tender.RoutingGuide
+	err   error
+	calls int
+}
+
+func (s *stubRoutingGuides) MatchLane(
+	_ context.Context,
+	_ *repositories.MatchLaneRequest,
+) (*tender.RoutingGuide, error) {
+	s.calls++
+
+	return s.guide, s.err
 }
 
 func setup(t *testing.T) *deps {
@@ -46,6 +71,7 @@ func setup(t *testing.T) *deps {
 		quotes:     mocks.NewMockRateQuoteRepository(t),
 		formula:    mocks.NewMockFormulaCalculator(t),
 		exchange:   mocks.NewMockExchangeRateService(t),
+		guides:     &stubRoutingGuides{},
 	}
 
 	d.svc = &Service{
@@ -57,6 +83,7 @@ func setup(t *testing.T) *deps {
 		quoteRepo:     d.quotes,
 		formula:       d.formula,
 		exchange:      d.exchange,
+		routingGuides: d.guides,
 		now:           func() int64 { return testNow },
 	}
 

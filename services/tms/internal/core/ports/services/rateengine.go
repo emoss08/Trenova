@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -59,9 +60,129 @@ type RatedShipment struct {
 	FormulaTemplateID *pulid.ID `json:"formulaTemplateId,omitempty"`
 }
 
+// ShopStrategy is what "best" means for one shopping run.
+//
+// It is a per-request choice rather than a setting, because the answer changes
+// with the load: a cheap carrier is the right pick on a lane with room in it and
+// the wrong pick on one the customer will cancel over.
+type ShopStrategy string
+
+const (
+	// ShopStrategyLeastCost ranks by what the carrier charges, cheapest first.
+	ShopStrategyLeastCost = ShopStrategy("LeastCost")
+	// ShopStrategyBestMargin ranks by what is left after paying them, which is
+	// not the same order as least cost once contracts price accessorials and
+	// fuel differently.
+	ShopStrategyBestMargin = ShopStrategy("BestMargin")
+	// ShopStrategyGuideRank keeps the routing guide's own order, so a committed
+	// primary carrier is offered the load first whatever the spot market says.
+	ShopStrategyGuideRank = ShopStrategy("GuideRank")
+	// ShopStrategyFastestAccept ranks by the shortest offer expiry the guide
+	// allows, for a load that has to move now.
+	ShopStrategyFastestAccept = ShopStrategy("FastestAccept")
+)
+
+func (s ShopStrategy) IsValid() bool {
+	switch s {
+	case ShopStrategyLeastCost,
+		ShopStrategyBestMargin,
+		ShopStrategyGuideRank,
+		ShopStrategyFastestAccept:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s ShopStrategy) String() string { return string(s) }
+
+// ShopRequest asks what each carrier would charge to haul this shipment.
+type ShopRequest struct {
+	Shipment   *shipment.Shipment
+	TenantInfo pagination.TenantInfo
+	Strategy   ShopStrategy
+
+	// CarrierIDs is an explicit shortlist. Left empty, the shipment's routing
+	// guide supplies the candidates, which is the ordinary case.
+	CarrierIDs []pulid.ID
+
+	// AsOf overrides the rating date. Zero uses the shipment's own.
+	AsOf int64
+
+	// BillingControl decides what a lane no carrier contract covers does.
+	BillingControl *tenant.BillingControl
+
+	// SellTotal is what the load is being sold for. It is what makes margin
+	// answerable, and carrier contracts written as a share of the sell price
+	// cannot be priced without it.
+	SellTotal decimal.NullDecimal
+
+	// Limit caps the options returned. Zero means the default.
+	Limit int
+
+	// Persist writes each option's quote. Shopping to decide is worth
+	// recording; shopping to look around is not.
+	Persist bool
+	UserID  pulid.ID
+}
+
+// ShopOption is one carrier's answer.
+type ShopOption struct {
+	CarrierID   pulid.ID `json:"carrierId"`
+	CarrierName string   `json:"carrierName"`
+
+	// Rank is this option's position in the returned order, from one.
+	Rank int `json:"rank"`
+	// GuideRank is the routing guide's own rank, zero when the carrier did not
+	// come from a guide.
+	GuideRank int16 `json:"guideRank"`
+	// OfferTTLSeconds is how long the guide gives the carrier to accept.
+	OfferTTLSeconds int32 `json:"offerTtlSeconds"`
+
+	Outcome  ratequote.Outcome `json:"outcome"`
+	Cost     decimal.Decimal   `json:"cost"`
+	Currency string            `json:"currency"`
+
+	Margin ratetypes.MarginVerdict `json:"margin"`
+
+	Quote       *ratequote.RateQuote `json:"quote,omitempty"`
+	AgreementID *pulid.ID            `json:"agreementId,omitempty"`
+	RuleID      *pulid.ID            `json:"ruleId,omitempty"`
+
+	// Note says why this option ranked where it did, or why it could not be
+	// priced at all. It is what makes a shopping result answerable months later.
+	Note string `json:"note,omitempty"`
+}
+
+// Priced reports whether a contract actually put a number on this carrier.
+func (o *ShopOption) Priced() bool {
+	return o.Outcome.Priced()
+}
+
+// ShopResult is the ranked answer, plus what it was ranked by.
+type ShopResult struct {
+	Strategy ShopStrategy  `json:"strategy"`
+	Options  []*ShopOption `json:"options"`
+
+	// RoutingGuideID names the guide the candidates came from, absent when the
+	// caller supplied its own shortlist or no guide covered the lane.
+	RoutingGuideID *pulid.ID `json:"routingGuideId,omitempty"`
+
+	// SellTotal is the number margin was measured against, echoed back so a
+	// stored result explains itself.
+	SellTotal decimal.NullDecimal `json:"sellTotal"`
+
+	// Warnings covers what the caller should know but that did not stop the
+	// shopping: carriers with no contract, a guide that matched nothing.
+	Warnings []string `json:"warnings,omitempty"`
+}
+
 // RateEngine prices a shipment against the contracts that cover it.
 type RateEngine interface {
 	// RateShipment resolves and prices one side of a shipment, and records a
 	// quote explaining what it did.
 	RateShipment(ctx context.Context, req *RateShipmentRequest) (*RatedShipment, error)
+
+	// Shop prices the same shipment against several carriers and ranks them.
+	Shop(ctx context.Context, req *ShopRequest) (*ShopResult, error)
 }

@@ -556,6 +556,7 @@ var CarrierAssignmentColumns = struct {
 	ExternalTractorNumber Column // "external_tractor_number" → qualified: "casn.external_tractor_number"
 	ExternalTrailerNumber Column // "external_trailer_number" → qualified: "casn.external_trailer_number"
 	AssignedByID          Column // "assigned_by_id" → qualified: "casn.assigned_by_id"
+	RateQuoteID           Column // "rate_quote_id" → qualified: "casn.rate_quote_id"
 	ConfirmedAt           Column // "confirmed_at" → qualified: "casn.confirmed_at"
 	CanceledAt            Column // "canceled_at" → qualified: "casn.canceled_at"
 	CancellationReason    Column // "cancellation_reason" → qualified: "casn.cancellation_reason"
@@ -582,6 +583,7 @@ var CarrierAssignmentColumns = struct {
 	ExternalTractorNumber: NewColumn("external_tractor_number", "casn"),
 	ExternalTrailerNumber: NewColumn("external_trailer_number", "casn"),
 	AssignedByID:          NewColumn("assigned_by_id", "casn"),
+	RateQuoteID:           NewColumn("rate_quote_id", "casn"),
 	ConfirmedAt:           NewColumn("confirmed_at", "casn"),
 	CanceledAt:            NewColumn("canceled_at", "casn"),
 	CancellationReason:    NewColumn("cancellation_reason", "casn"),
@@ -614,6 +616,7 @@ var CarrierAssignmentFieldMap = map[string]string{
 	"externalTractorNumber": "external_tractor_number",
 	"externalTrailerNumber": "external_trailer_number",
 	"assignedById":          "assigned_by_id",
+	"rateQuoteId":           "rate_quote_id",
 	"confirmedAt":           "confirmed_at",
 	"canceledAt":            "canceled_at",
 	"cancellationReason":    "cancellation_reason",
@@ -644,6 +647,7 @@ var CarrierAssignmentInsertableColumns = []string{
 	"external_tractor_number",
 	"external_trailer_number",
 	"assigned_by_id",
+	"rate_quote_id",
 	"confirmed_at",
 	"canceled_at",
 	"cancellation_reason",
@@ -736,6 +740,7 @@ var CarrierAssignmentFilter = struct {
 	ExternalTractorNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalTractorNumber" → DB: "external_tractor_number"
 	ExternalTrailerNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalTrailerNumber" → DB: "external_trailer_number"
 	AssignedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assignedById" → DB: "assigned_by_id"
+	RateQuoteID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateQuoteId" → DB: "rate_quote_id"
 	ConfirmedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confirmedAt" → DB: "confirmed_at"
 	CanceledAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledAt" → DB: "canceled_at"
 	CancellationReason    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancellationReason" → DB: "cancellation_reason"
@@ -799,6 +804,9 @@ var CarrierAssignmentFilter = struct {
 	},
 	AssignedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("assignedById", op, value)
+	},
+	RateQuoteID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rateQuoteId", op, value)
 	},
 	ConfirmedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("confirmedAt", op, value)

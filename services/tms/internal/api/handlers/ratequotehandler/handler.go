@@ -70,6 +70,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 
 	api.POST("/quote/", h.pm.RequirePermission(resource, permission.OpRead), h.quote)
+	api.POST(
+		"/shipment/:shipmentID/shop/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.shop,
+	)
 }
 
 // @Summary List rate quotes
@@ -350,4 +355,72 @@ func tenantOf(authCtx *authctx.AuthContext) pagination.TenantInfo {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
+}
+
+// shopResult names the engine's ranked answer in this package so the generated
+// API documentation has something to point at.
+//
+//nolint:unused // referenced by the swagger annotation below
+type shopResult = services.ShopResult
+
+type shopRequest struct {
+	// Strategy is what "best" means for this run. Left empty it is least cost,
+	// which is what somebody shopping without saying what they meant is asking.
+	Strategy services.ShopStrategy `json:"strategy"`
+	// CarrierIDs is an explicit shortlist. Left empty the shipment's routing
+	// guide supplies the candidates, which is the ordinary case.
+	CarrierIDs []pulid.ID `json:"carrierIds"`
+	AsOf       int64      `json:"asOf"`
+	Limit      int        `json:"limit"`
+	// Persist keeps each option's quote, so the carrier that was picked and the
+	// ones that were not are both answerable later. A screen browsing options
+	// leaves it off.
+	Persist bool `json:"persist"`
+}
+
+// @Summary Shop a shipment against several carriers
+// @Description Prices the shipment against each carrier that could haul it and ranks them, with a full trace per option. Candidates come from the lane's routing guide unless a shortlist is supplied.
+// @ID shopShipment
+// @Tags Rate Quotes
+// @Accept json
+// @Produce json
+// @Param shipmentID path string true "Shipment ID"
+// @Param request body shopRequest true "Shopping payload"
+// @Success 200 {object} ratequotehandler.shopResult
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-quotes/shipment/{shipmentID}/shop/ [post]
+func (h *Handler) shop(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	shipmentID, err := h.shipmentID(c)
+	if err != nil {
+		return
+	}
+
+	body := new(shopRequest)
+	if err = c.ShouldBindJSON(body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	result, err := h.service.Shop(c.Request.Context(), &ratequoteservice.ShopRequest{
+		TenantInfo: tenantOf(authCtx),
+		ShipmentID: shipmentID,
+		Strategy:   body.Strategy,
+		CarrierIDs: body.CarrierIDs,
+		AsOf:       body.AsOf,
+		Limit:      body.Limit,
+		Persist:    body.Persist,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }

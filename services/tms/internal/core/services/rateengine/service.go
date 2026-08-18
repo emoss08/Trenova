@@ -30,6 +30,7 @@ type Params struct {
 	Formula       services.FormulaCalculator
 	Exchange      services.ExchangeRateService
 	ModeProfile   services.ModeProfileService
+	RoutingGuides repositories.RoutingGuideRepository
 }
 
 type Service struct {
@@ -42,6 +43,7 @@ type Service struct {
 	formula       services.FormulaCalculator
 	exchange      services.ExchangeRateService
 	modeProfile   services.ModeProfileService
+	routingGuides repositories.RoutingGuideRepository
 	now           func() int64
 }
 
@@ -57,6 +59,7 @@ func New(p Params) *Service {
 		formula:       p.Formula,
 		exchange:      p.Exchange,
 		modeProfile:   p.ModeProfile,
+		routingGuides: p.RoutingGuides,
 		now:           timeutils.NowUnix,
 	}
 }
@@ -143,6 +146,7 @@ func (s *Service) rateFromAgreement(
 			AgreementID: &winner.RateAgreementID,
 			RuleID:      &winner.ID,
 			Specificity: winner.SpecificityScore,
+			Agreement:   winner.Agreement,
 		})
 	}
 
@@ -157,6 +161,7 @@ func (s *Service) rateFromAgreement(
 		AgreementID: &winner.RateAgreementID,
 		RuleID:      &winner.ID,
 		Specificity: winner.SpecificityScore,
+		Agreement:   winner.Agreement,
 	}
 
 	if winner.RatingBasis == rateagreement.RatingBasisFormula {
@@ -178,6 +183,23 @@ func (s *Service) rateWithoutAgreement(
 	rateCtx *RateContext,
 	trace *ratetypes.Trace,
 ) (*services.RatedShipment, error) {
+	// The buy side never falls back to a formula template. The one a shipment
+	// carries is the customer's rating method, so falling back to it would pay
+	// the carrier whatever the customer is charged: a load sold at $2,000 would
+	// settle at $2,000 and the margin would be exactly nothing. A carrier with
+	// no contract has no rate, and saying so is what makes somebody go and
+	// write the contract.
+	if rateCtx.PartyType == rateagreement.PartyTypeCarrier {
+		trace.Warn("No carrier agreement covers this lane")
+		trace.Totals = totalsFor(decimal.Zero)
+
+		return s.finish(ctx, req, rateCtx, trace, &quoteFields{
+			Outcome:  ratequote.OutcomeNoRateFound,
+			Amount:   decimal.Zero,
+			Currency: rateCtx.BillingCurrency,
+		})
+	}
+
 	disposition := tenant.UnratedShipmentDispositionFallbackFormulaTemplate
 	if req.BillingControl != nil && req.BillingControl.UnratedShipmentDisposition != "" {
 		disposition = req.BillingControl.UnratedShipmentDisposition
@@ -285,6 +307,12 @@ type quoteFields struct {
 	RuleID            *pulid.ID
 	FormulaTemplateID *pulid.ID
 	Specificity       int32
+
+	// Agreement is the contract that priced this, carried so a fresh quote
+	// exposes the same relation one read back from the database does. A caller
+	// reading a negotiated term off the quote should not get nothing merely
+	// because the quote has not been round tripped yet.
+	Agreement *rateagreement.RateAgreement
 }
 
 func (s *Service) finish(
@@ -301,6 +329,13 @@ func (s *Service) finish(
 		if err != nil {
 			return nil, err
 		}
+
+		// The stored row comes back without its relations loaded, and the
+		// contract is what a caller reads negotiated terms from.
+		if recorded != nil && recorded.Agreement == nil {
+			recorded.Agreement = quote.Agreement
+		}
+
 		quote = recorded
 	}
 
@@ -343,6 +378,7 @@ func (s *Service) buildQuote(
 		RateAgreementRuleID: fields.RuleID,
 		FormulaTemplateID:   fields.FormulaTemplateID,
 		SpecificityScore:    fields.Specificity,
+		Agreement:           fields.Agreement,
 		Currency:            defaultString(fields.Currency, rateCtx.BillingCurrency),
 		LinehaulAmount:      fields.Amount,
 		TotalAmount:         fields.Amount,

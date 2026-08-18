@@ -9,9 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -195,4 +198,59 @@ func TestMissingModeServiceBehavesAsNothingConfigured(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, ratequote.OutcomeRated, result.Outcome)
+}
+
+// The formula template a shipment carries is the customer's rating method. On
+// the buy side, falling back to it would pay the carrier whatever the customer
+// is charged — a load sold at $2,000 would settle at $2,000 and the margin
+// would be exactly nothing.
+//
+// A carrier with no contract has no rate. That is the honest answer, and it is
+// the one that makes somebody go and write the contract.
+func TestBuySideDoesNotFallBackToTheShipmentsFormulaTemplate(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+	expectRules(d)
+
+	entity := testShipment()
+	entity.FormulaTemplateID = pulid.MustNew("ft_")
+
+	result, err := d.svc.RateShipment(t.Context(), &services.RateShipmentRequest{
+		Shipment:   entity,
+		TenantInfo: tenantInfo(),
+		PartyType:  rateagreement.PartyTypeCarrier,
+		PartyID:    pulid.MustNew("car_"),
+		Purpose:    ratequote.PurposeRating,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, ratequote.OutcomeNoRateFound, result.Outcome)
+	assert.True(t, result.Amount.IsZero(), "amount was %s", result.Amount)
+	d.formula.AssertNotCalled(t, "Calculate", mock.Anything, mock.Anything)
+}
+
+// The sell side keeps the fallback, because that is what makes adopting rate
+// agreements safe: until a customer contract exists, every shipment rates
+// exactly as it did before.
+func TestSellSideStillFallsBackToTheShipmentsFormulaTemplate(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+	expectRules(d)
+
+	templateID := pulid.MustNew("ft_")
+	entity := testShipment()
+	entity.FormulaTemplateID = templateID
+
+	d.formula.EXPECT().Calculate(mock.Anything, mock.Anything).
+		Return(&formulatemplatetypes.CalculateResponse{
+			Amount:            decimal.RequireFromString("1500"),
+			FormulaTemplateID: templateID.String(),
+		}, nil)
+
+	result, err := d.svc.RateShipment(t.Context(), rateRequest(entity))
+
+	require.NoError(t, err)
+	assert.Equal(t, ratequote.OutcomeFormulaFallback, result.Outcome)
 }
