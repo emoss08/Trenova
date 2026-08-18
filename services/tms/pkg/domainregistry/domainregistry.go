@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/core/domain/rateimport"
 	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/ratesimulation"
@@ -116,6 +117,8 @@ func RegisterEntities() []any {
 		&ratematrix.DensityScaleTier{},
 		&ratesimulation.RateSimulation{},
 		&ratesimulation.RateSimulationResult{},
+		&rateimport.RateImportBatch{},
+		&rateimport.RateImportRow{},
 		&rateagreement.RateAgreement{},
 		&rateagreement.RateAgreementVersion{},
 		&rateagreement.RateAgreementRule{},

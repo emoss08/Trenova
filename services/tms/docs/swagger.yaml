@@ -6137,6 +6137,128 @@ definitions:
             - ScopeTypeZip3
             - ScopeTypeZip5
             - ScopeTypeLocation
+    github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch:
+        properties:
+            agreement:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+            businessUnitId:
+                type: string
+            changes:
+                description: 'Changes is the dry run: what committing this sheet would do to each lane.'
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_rateimport.Change'
+                type: array
+            committedAt:
+                type: integer
+            committedBy:
+                type: string
+            createdAt:
+                type: integer
+            effectiveFrom:
+                description: |-
+                    EffectiveFrom is the day the imported rules start pricing. It is the
+                    caller's decision rather than the sheet's: a tariff is negotiated to take
+                    effect on a date, and the day somebody happened to upload it is not it.
+                type: integer
+            error:
+                type: string
+            errorCount:
+                type: integer
+            fileName:
+                type: string
+            id:
+                type: string
+            mapping:
+                additionalProperties:
+                    type: integer
+                description: |-
+                    Mapping is which column supplied which field. It is stored so a committed
+                    import can explain itself, and so the next sheet from the same source can
+                    start from what worked last time.
+                type: object
+            organizationId:
+                type: string
+            rateAgreementId:
+                type: string
+            rowCount:
+                type: integer
+            rows:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportRow'
+                type: array
+            sourceFormat:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.SourceFormat'
+            status:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.Status'
+            summary:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_rateimport.Summary'
+            unmappedHeaders:
+                description: |-
+                    UnmappedHeaders are the columns nothing was read from. They are kept
+                    because a column silently ignored is how a sheet imports looking complete
+                    while a discount nobody noticed never made it in.
+                items:
+                    type: string
+                type: array
+            updatedAt:
+                type: integer
+            uploadedById:
+                type: string
+            version:
+                type: integer
+        type: object
+    github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportRow:
+        properties:
+            businessUnitId:
+                type: string
+            cells:
+                items:
+                    type: string
+                type: array
+            createdAt:
+                type: integer
+            error:
+                type: string
+            id:
+                type: string
+            laneKey:
+                type: string
+            organizationId:
+                type: string
+            rateImportBatchId:
+                type: string
+            rowNumber:
+                description: |-
+                    RowNumber is the line in the uploaded file, counting the header as one,
+                    so it matches what somebody sees in their spreadsheet.
+                type: integer
+            rule:
+                allOf:
+                    - $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementRule'
+                description: Rule is what the row parsed to, absent when it could not be read.
+        type: object
+    github_com_emoss08_trenova_internal_core_domain_rateimport.SourceFormat:
+        enum:
+            - CSV
+            - XLSX
+        type: string
+        x-enum-varnames:
+            - SourceFormatCSV
+            - SourceFormatXLSX
+    github_com_emoss08_trenova_internal_core_domain_rateimport.Status:
+        enum:
+            - Pending
+            - Parsed
+            - Committed
+            - Failed
+            - Discarded
+        type: string
+        x-enum-varnames:
+            - StatusPending
+            - StatusParsed
+            - StatusCommitted
+            - StatusFailed
+            - StatusDiscarded
     github_com_emoss08_trenova_internal_core_domain_ratematrix.DensityScale:
         properties:
             businessUnitId:
@@ -11844,6 +11966,32 @@ definitions:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementVersion'
                 type: array
         type: object
+    ? github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateimport_RateImportBatch
+    :   properties:
+            count:
+                type: integer
+            next:
+                type: string
+            previous:
+                type: string
+            results:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch'
+                type: array
+        type: object
+    ? github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateimport_RateImportRow
+    :   properties:
+            count:
+                type: integer
+            next:
+                type: string
+            previous:
+                type: string
+            results:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportRow'
+                type: array
+        type: object
     github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratematrix_DensityScale:
         properties:
             count:
@@ -12116,6 +12264,60 @@ definitions:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.APIKeyResponse'
                 type: array
+        type: object
+    github_com_emoss08_trenova_pkg_rateimport.Change:
+        properties:
+            existingId:
+                description: |-
+                    ExistingID names the rule this would supersede, so a commit knows what to
+                    close out. Absent on an added lane.
+                type: string
+            fields:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_pkg_rateimport.FieldChange'
+                type: array
+            kind:
+                $ref: '#/definitions/github_com_emoss08_trenova_pkg_rateimport.ChangeKind'
+            label:
+                type: string
+            laneKey:
+                type: string
+        type: object
+    github_com_emoss08_trenova_pkg_rateimport.ChangeKind:
+        enum:
+            - Removed
+            - Added
+            - Changed
+            - Duplicate
+            - Unchanged
+        type: string
+        x-enum-varnames:
+            - ChangeKindRemoved
+            - ChangeKindAdded
+            - ChangeKindChanged
+            - ChangeKindDuplicate
+            - ChangeKindUnchanged
+    github_com_emoss08_trenova_pkg_rateimport.FieldChange:
+        properties:
+            after:
+                type: string
+            before:
+                type: string
+            field:
+                type: string
+        type: object
+    github_com_emoss08_trenova_pkg_rateimport.Summary:
+        properties:
+            added:
+                type: integer
+            changed:
+                type: integer
+            duplicate:
+                type: integer
+            removed:
+                type: integer
+            unchanged:
+                type: integer
         type: object
     github_com_emoss08_trenova_pkg_ratesimulation.Summary:
         properties:
@@ -24851,6 +25053,292 @@ paths:
             summary: Void a rate confirmation
             tags:
                 - RateConfirmations
+    /rate-imports/:
+        get:
+            operationId: listRateImports
+            parameters:
+                - description: Narrow to one agreement's imports
+                  in: query
+                  name: rateAgreementId
+                  type: string
+                - description: Page size
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+                - description: Page offset
+                  in: query
+                  minimum: 0
+                  name: offset
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateimport_RateImportBatch'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List rate imports
+            tags:
+                - Rate Imports
+        post:
+            consumes:
+                - multipart/form-data
+            description: 'Reads a CSV or XLSX rate sheet and stages what committing it would do. Nothing about the agreement changes: applying it takes a second, deliberate call.'
+            operationId: uploadRateSheet
+            parameters:
+                - description: The rate sheet
+                  in: formData
+                  name: file
+                  required: true
+                  type: file
+                - description: The agreement to import into
+                  in: formData
+                  name: rateAgreementId
+                  required: true
+                  type: string
+                - description: The day the imported rules start pricing
+                  in: formData
+                  name: effectiveFrom
+                  required: true
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "201":
+                    description: Created
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Upload a rate sheet
+            tags:
+                - Rate Imports
+    /rate-imports/{rateImportID}:
+        get:
+            description: 'Returns the staged import and its dry run: what committing this sheet would do to each lane.'
+            operationId: getRateImport
+            parameters:
+                - description: Rate import ID
+                  in: path
+                  name: rateImportID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Get a rate import
+            tags:
+                - Rate Imports
+    /rate-imports/{rateImportID}/commit:
+        post:
+            description: Amends the agreement with the sheet's lanes, closing out the ones it replaces. History is never mutated.
+            operationId: commitRateImport
+            parameters:
+                - description: Rate import ID
+                  in: path
+                  name: rateImportID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Apply a reviewed rate import
+            tags:
+                - Rate Imports
+    /rate-imports/{rateImportID}/discard:
+        post:
+            description: Closes an import somebody read and said no to.
+            operationId: discardRateImport
+            parameters:
+                - description: Rate import ID
+                  in: path
+                  name: rateImportID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Discard a rate import
+            tags:
+                - Rate Imports
+    /rate-imports/{rateImportID}/rows:
+        get:
+            operationId: listRateImportRows
+            parameters:
+                - description: Rate import ID
+                  in: path
+                  name: rateImportID
+                  required: true
+                  type: string
+                - description: Only the rows that could not be read
+                  in: query
+                  name: failedOnly
+                  type: boolean
+                - description: Page size
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+                - description: Page offset
+                  in: query
+                  minimum: 0
+                  name: offset
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateimport_RateImportRow'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List a rate import's rows
+            tags:
+                - Rate Imports
     /rate-matrices/:
         get:
             consumes:
@@ -33168,6 +33656,8 @@ tags:
       x-displayName: Permits
     - name: Rate Agreements
       x-displayName: Rate Agreements
+    - name: Rate Imports
+      x-displayName: Rate Imports
     - name: Rate Matrices
       x-displayName: Rate Matrices
     - name: Rate Quotes
@@ -33256,6 +33746,7 @@ x-tagGroups:
         - Jurisdiction Rules
         - Permits
         - Rate Agreements
+        - Rate Imports
         - Rate Matrices
         - Rate Quotes
         - Rate Simulations

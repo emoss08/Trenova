@@ -18177,6 +18177,444 @@ const docTemplate = `{
                 }
             }
         },
+        "/rate-imports/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Imports"
+                ],
+                "summary": "List rate imports",
+                "operationId": "listRateImports",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Narrow to one agreement's imports",
+                        "name": "rateAgreementId",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateimport_RateImportBatch"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Reads a CSV or XLSX rate sheet and stages what committing it would do. Nothing about the agreement changes: applying it takes a second, deliberate call.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Imports"
+                ],
+                "summary": "Upload a rate sheet",
+                "operationId": "uploadRateSheet",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "The rate sheet",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The agreement to import into",
+                        "name": "rateAgreementId",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The day the imported rules start pricing",
+                        "name": "effectiveFrom",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/rate-imports/{rateImportID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the staged import and its dry run: what committing this sheet would do to each lane.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Imports"
+                ],
+                "summary": "Get a rate import",
+                "operationId": "getRateImport",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rate import ID",
+                        "name": "rateImportID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/rate-imports/{rateImportID}/commit": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Amends the agreement with the sheet's lanes, closing out the ones it replaces. History is never mutated.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Imports"
+                ],
+                "summary": "Apply a reviewed rate import",
+                "operationId": "commitRateImport",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rate import ID",
+                        "name": "rateImportID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/rate-imports/{rateImportID}/discard": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Closes an import somebody read and said no to.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Imports"
+                ],
+                "summary": "Discard a rate import",
+                "operationId": "discardRateImport",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rate import ID",
+                        "name": "rateImportID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/rate-imports/{rateImportID}/rows": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Imports"
+                ],
+                "summary": "List a rate import's rows",
+                "operationId": "listRateImportRows",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rate import ID",
+                        "name": "rateImportID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Only the rows that could not be read",
+                        "name": "failedOnly",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateimport_RateImportRow"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/rate-matrices/": {
             "get": {
                 "security": [
@@ -39456,6 +39894,168 @@ const docTemplate = `{
                 "ScopeTypeLocation"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch": {
+            "type": "object",
+            "properties": {
+                "agreement": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "changes": {
+                    "description": "Changes is the dry run: what committing this sheet would do to each lane.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_rateimport.Change"
+                    }
+                },
+                "committedAt": {
+                    "type": "integer"
+                },
+                "committedBy": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "effectiveFrom": {
+                    "description": "EffectiveFrom is the day the imported rules start pricing. It is the\ncaller's decision rather than the sheet's: a tariff is negotiated to take\neffect on a date, and the day somebody happened to upload it is not it.",
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "errorCount": {
+                    "type": "integer"
+                },
+                "fileName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mapping": {
+                    "description": "Mapping is which column supplied which field. It is stored so a committed\nimport can explain itself, and so the next sheet from the same source can\nstart from what worked last time.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "rateAgreementId": {
+                    "type": "string"
+                },
+                "rowCount": {
+                    "type": "integer"
+                },
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportRow"
+                    }
+                },
+                "sourceFormat": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.SourceFormat"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.Status"
+                },
+                "summary": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_rateimport.Summary"
+                },
+                "unmappedHeaders": {
+                    "description": "UnmappedHeaders are the columns nothing was read from. They are kept\nbecause a column silently ignored is how a sheet imports looking complete\nwhile a discount nobody noticed never made it in.",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "uploadedById": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportRow": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "cells": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "laneKey": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "rateImportBatchId": {
+                    "type": "string"
+                },
+                "rowNumber": {
+                    "description": "RowNumber is the line in the uploaded file, counting the header as one,\nso it matches what somebody sees in their spreadsheet.",
+                    "type": "integer"
+                },
+                "rule": {
+                    "description": "Rule is what the row parsed to, absent when it could not be read.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementRule"
+                        }
+                    ]
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_rateimport.SourceFormat": {
+            "type": "string",
+            "enum": [
+                "CSV",
+                "XLSX"
+            ],
+            "x-enum-varnames": [
+                "SourceFormatCSV",
+                "SourceFormatXLSX"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_rateimport.Status": {
+            "type": "string",
+            "enum": [
+                "Pending",
+                "Parsed",
+                "Committed",
+                "Failed",
+                "Discarded"
+            ],
+            "x-enum-varnames": [
+                "StatusPending",
+                "StatusParsed",
+                "StatusCommitted",
+                "StatusFailed",
+                "StatusDiscarded"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_ratematrix.DensityScale": {
             "type": "object",
             "properties": {
@@ -47693,6 +48293,46 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateimport_RateImportBatch": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "next": {
+                    "type": "string"
+                },
+                "previous": {
+                    "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportBatch"
+                    }
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_rateimport_RateImportRow": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "next": {
+                    "type": "string"
+                },
+                "previous": {
+                    "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateimport.RateImportRow"
+                    }
+                }
+            }
+        },
         "github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_ratematrix_DensityScale": {
             "type": "object",
             "properties": {
@@ -48110,6 +48750,81 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.APIKeyResponse"
                     }
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_rateimport.Change": {
+            "type": "object",
+            "properties": {
+                "existingId": {
+                    "description": "ExistingID names the rule this would supersede, so a commit knows what to\nclose out. Absent on an added lane.",
+                    "type": "string"
+                },
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_pkg_rateimport.FieldChange"
+                    }
+                },
+                "kind": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_pkg_rateimport.ChangeKind"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "laneKey": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_rateimport.ChangeKind": {
+            "type": "string",
+            "enum": [
+                "Removed",
+                "Added",
+                "Changed",
+                "Duplicate",
+                "Unchanged"
+            ],
+            "x-enum-varnames": [
+                "ChangeKindRemoved",
+                "ChangeKindAdded",
+                "ChangeKindChanged",
+                "ChangeKindDuplicate",
+                "ChangeKindUnchanged"
+            ]
+        },
+        "github_com_emoss08_trenova_pkg_rateimport.FieldChange": {
+            "type": "object",
+            "properties": {
+                "after": {
+                    "type": "string"
+                },
+                "before": {
+                    "type": "string"
+                },
+                "field": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_rateimport.Summary": {
+            "type": "object",
+            "properties": {
+                "added": {
+                    "type": "integer"
+                },
+                "changed": {
+                    "type": "integer"
+                },
+                "duplicate": {
+                    "type": "integer"
+                },
+                "removed": {
+                    "type": "integer"
+                },
+                "unchanged": {
+                    "type": "integer"
                 }
             }
         },
