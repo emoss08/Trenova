@@ -214,7 +214,11 @@ func (h *Handler) appliedForShipment(c *gin.Context) {
 }
 
 // ratedShipment names the engine's result in this package so the generated API
-// documentation can describe what these endpoints return.
+// documentation can describe what these endpoints return. The generator only
+// resolves types the annotated file imports, which is the whole reason it is
+// here rather than referenced directly.
+//
+//nolint:unused // referenced from the swagger annotations, not from Go code
 type ratedShipment = services.RatedShipment
 
 type explainRequest struct {

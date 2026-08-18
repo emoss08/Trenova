@@ -28,6 +28,7 @@ const (
 	SeedNormalAccount SeedID = "NormalAccount" // from 02_normalaccount.go
 	SeedOrganizationRolePermissionsSync SeedID = "OrganizationRolePermissionsSync" // from 08_organization_role_permissions_sync.go
 	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
+	SeedRateAgreement SeedID = "RateAgreement" // from 16_rate_agreement.go
 	SeedRateTable SeedID = "RateTable" // from 09_ratetable.go
 	SeedRoutingGuide SeedID = "RoutingGuide" // from 15_routing_guide.go
 	SeedServiceFailureReasonCode SeedID = "ServiceFailureReasonCode" // from 09_service_failure_reason_code.go
@@ -59,6 +60,7 @@ var AllSeedIDs = []SeedID{
 	SeedNormalAccount,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
+	SeedRateAgreement,
 	SeedRateTable,
 	SeedRoutingGuide,
 	SeedServiceFailureReasonCode,
@@ -97,6 +99,7 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedLocation,
 	SeedLocationCategory,
 	SeedNormalAccount,
+	SeedRateAgreement,
 	SeedRateTable,
 	SeedRoutingGuide,
 	SeedShipment,
