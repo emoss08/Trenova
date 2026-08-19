@@ -85,7 +85,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/ratematrixhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratequotehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratesimulationhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/ratezonehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
@@ -205,7 +204,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	documenttypehandler.New,
 	holdreasonhandler.New,
 	recurringshipmenthandler.New,
-	ratetablehandler.New,
 	detentionpolicyhandler.New,
 	rateagreementhandler.New,
 	ratezonehandler.New,

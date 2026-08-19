@@ -305,13 +305,6 @@ const billingModule: NavModule = {
           includeBetaTag: true,
         },
         {
-          id: "rate-tables",
-          label: "Rate Tables",
-          path: "/billing/configuration-files/rate-tables",
-          resource: Resource.RateTable,
-          includeBetaTag: true,
-        },
-        {
           id: "customers",
           label: "Customers",
           path: "/billing/configuration-files/customers",
@@ -864,16 +857,6 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["rate", "matrix", "tariff", "grid", "weight break", "class", "ltl"],
-    },
-    {
-      id: "create-rate-table",
-      label: "Create Rate Table",
-      description: "Add a new rate table",
-      path: "/billing/configuration-files/rate-tables",
-      resource: Resource.RateTable,
-      requiredOperation: Operation.Create,
-      query: { panelType: "create" },
-      keywords: ["rate", "table", "lookup"],
     },
     {
       id: "create-detention-policy",

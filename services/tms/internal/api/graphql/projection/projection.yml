@@ -29,6 +29,8 @@ aliases:
 virtuals:
   ApiKey:
     - permissionScope
+  RateMatrix:
+    - formulaTemplateName
   VehiclePosition:
     - tractorCode
     - primaryWorkerId

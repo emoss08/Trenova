@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -508,7 +507,7 @@ func newTestFormulaService(
 		Resolver:      res,
 		Repo:          repo,
 		VersionRepo:   stubTotalsVersionRepo{},
-		RateTableRepo: stubTotalsRateTableRepo{},
+		RateMatrixRepo: stubTotalsMatrixRepo{},
 	})
 }
 
@@ -523,14 +522,14 @@ func (stubTotalsVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-type stubTotalsRateTableRepo struct {
-	repositories.RateTableRepository
+type stubTotalsMatrixRepo struct {
+	repositories.RateMatrixRepository
 }
 
-func (stubTotalsRateTableRepo) GetLookupData(
+func (stubTotalsMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateTableLookupDataRequest,
-) ([]*ratetable.RateTable, error) {
+	_ *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
 	return nil, nil
 }
 

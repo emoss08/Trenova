@@ -1388,15 +1388,6 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceRateTable.String(),
-		DisplayName:        "Rate Table",
-		Description:        "Tenant rate lookup tables (fuel surcharges, lane rates, weight breaks)",
-		Category:           "Billing",
-		Operations:         standardOpsWithDelete,
-		DefaultSensitivity: SensitivityInternal,
-	})
-
-	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceFuelSurchargeProgram.String(),
 		DisplayName:        "Fuel Surcharge Program",
 		Description:        "Fuel surcharge programs, fuel price indices, and DOE weekly price data",

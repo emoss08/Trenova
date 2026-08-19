@@ -1755,10 +1755,6 @@ export type RateQuotePurpose =
   | 'Simulation'
   | 'WhatIf';
 
-export type RateTableLookupType =
-  | 'Exact'
-  | 'Range';
-
 export type RateUnit =
   | 'Day'
   | 'Hour'
@@ -5173,15 +5169,6 @@ export type UpdateOrganizationSettingsMutationVariables = Exact<{
 
 export type UpdateOrganizationSettingsMutation = { updateOrganization: { ' $fragmentRefs'?: { 'OrganizationSettingsFieldsFragment': OrganizationSettingsFieldsFragment } } };
 
-export type RateTableTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, key: string, description: string, lookupType: RateTableLookupType, active: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateTableTableRowFieldsFragment' };
-
-export type RateTableTableQueryVariables = Exact<{
-  input: DataTableConnectionInput;
-}>;
-
-
-export type RateTableTableQuery = { rateTables: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'RateTableTableRowFieldsFragment': RateTableTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
-
 export type RateAgreementRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, code: string, name: string, description: string, agreementType: RateAgreementType, status: RateAgreementStatus, contractRef: string, priority: number, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, currency: string, defaultMinCharge: string | null, defaultMaxCharge: string | null, marginFloorPercent: string | null, maxPayPercentOfSell: string | null, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, currentVersionNumber: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateAgreementRowFieldsFragment' };
 
 export type RateZoneRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateZoneRowFieldsFragment' };
@@ -8171,21 +8158,6 @@ export const OrganizationSettingsFieldsFragmentDoc = new TypedDocumentString(`
   name
   abbreviation
 }`, {"fragmentName":"OrganizationSettingsFields"}) as unknown as TypedDocumentString<OrganizationSettingsFieldsFragment, unknown>;
-export const RateTableTableRowFieldsFragmentDoc = new TypedDocumentString(`
-    fragment RateTableTableRowFields on RateTable {
-  id
-  businessUnitId
-  organizationId
-  name
-  key
-  description
-  lookupType
-  active
-  version
-  createdAt
-  updatedAt
-}
-    `, {"fragmentName":"RateTableTableRowFields"}) as unknown as TypedDocumentString<RateTableTableRowFieldsFragment, unknown>;
 export const RateAgreementRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment RateAgreementRowFields on RateAgreement {
   id
@@ -18073,37 +18045,6 @@ fragment OrganizationSettingsFields on Organization {
     ...OrganizationSettingsStateFields
   }
 }`, {"hash":"sha256:2570700a28884d232092d9f71c54fedff5dd1a7323568e57a8c4b571869f400e"}) as unknown as TypedDocumentString<UpdateOrganizationSettingsMutation, UpdateOrganizationSettingsMutationVariables>;
-export const RateTableTableDocument = new TypedDocumentString(`
-    query RateTableTable($input: DataTableConnectionInput!) {
-  rateTables(input: $input) {
-    edges {
-      node {
-        ...RateTableTableRowFields
-      }
-    }
-    totalCount
-    pageInfo {
-      ...DataTablePageInfoFields
-    }
-  }
-}
-    fragment DataTablePageInfoFields on PageInfo {
-  hasNextPage
-  endCursor
-}
-fragment RateTableTableRowFields on RateTable {
-  id
-  businessUnitId
-  organizationId
-  name
-  key
-  description
-  lookupType
-  active
-  version
-  createdAt
-  updatedAt
-}`, {"hash":"sha256:809e150e9d42fd0b2fecd3ced6e252820043552da234d6c6c72295e9303ffeee"}) as unknown as TypedDocumentString<RateTableTableQuery, RateTableTableQueryVariables>;
 export const RateAgreementTableDocument = new TypedDocumentString(`
     query RateAgreementTable($input: DataTableConnectionInput!) {
   rateAgreements(input: $input) {

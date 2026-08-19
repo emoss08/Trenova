@@ -6,7 +6,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
+	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/shopspring/decimal"
 )
@@ -17,57 +18,79 @@ type rateBand struct {
 	value float64
 }
 
-type rateTableLookup struct {
+// matrixLookup answers a formula's lookup() calls from single-axis rate
+// matrices.
+//
+// The expression language keeps calling them tables — lookup("fuel_tiers", x)
+// reads exactly as it always did — but the storage behind the name is a rate
+// matrix with one axis. Exact axes become a key map, banded axes become sorted
+// bands, and the value comes back as the same raw number a rate table entry
+// held.
+type matrixLookup struct {
 	exact  map[string]map[string]float64
 	ranges map[string][]rateBand
 }
 
-var _ formulatemplatetypes.RateTableLookup = (*rateTableLookup)(nil)
+var _ formulatemplatetypes.RateTableLookup = (*matrixLookup)(nil)
 
-func NewRateTableLookup(tables []*ratetable.RateTable) formulatemplatetypes.RateTableLookup {
-	lookup := &rateTableLookup{
+// NewMatrixLookup builds the lookup provider from every single-axis matrix the
+// repository handed over.
+//
+// A matrix whose one axis matches exactly contributes a key map; one banded by
+// range contributes bands sorted by their floor, matched half-open the way the
+// matrix's own ContainsQuantity matches. Codes are indexed as stored — the
+// repository already restricts to active matrices.
+func NewMatrixLookup(
+	data []*repositories.RateMatrixLookupData,
+) formulatemplatetypes.RateTableLookup {
+	lookup := &matrixLookup{
 		exact:  make(map[string]map[string]float64),
 		ranges: make(map[string][]rateBand),
 	}
 
-	for _, table := range tables {
-		if table == nil || !table.Active {
+	for _, item := range data {
+		if item == nil || item.Matrix == nil || len(item.Matrix.Dimensions) != 1 {
 			continue
 		}
 
-		switch table.LookupType {
-		case ratetable.LookupTypeExact:
-			entries := make(map[string]float64, len(table.Entries))
-			for _, entry := range table.Entries {
-				if entry == nil || entry.MatchKey == nil {
+		axis := item.Matrix.Dimensions[0]
+		if axis == nil {
+			continue
+		}
+
+		switch axis.MatchMode {
+		case ratematrix.MatchModeExact:
+			entries := make(map[string]float64, len(item.Cells))
+			for _, cell := range item.Cells {
+				if cell == nil {
 					continue
 				}
-				entries[*entry.MatchKey] = entry.Value.InexactFloat64()
+				entries[cell.D0Key] = cell.Value.InexactFloat64()
 			}
-			lookup.exact[table.Key] = entries
-		case ratetable.LookupTypeRange:
-			bands := make([]rateBand, 0, len(table.Entries))
-			for _, entry := range table.Entries {
-				if entry == nil || !entry.RangeMin.Valid {
+			lookup.exact[item.Matrix.Code] = entries
+		case ratematrix.MatchModeRange:
+			bands := make([]rateBand, 0, len(item.Cells))
+			for _, cell := range item.Cells {
+				if cell == nil || !cell.D0Min.Valid {
 					continue
 				}
 				bands = append(bands, rateBand{
-					min:   entry.RangeMin.Decimal,
-					max:   entry.RangeMax,
-					value: entry.Value.InexactFloat64(),
+					min:   cell.D0Min.Decimal,
+					max:   cell.D0Max,
+					value: cell.Value.InexactFloat64(),
 				})
 			}
 			sort.Slice(bands, func(a, b int) bool {
 				return bands[a].min.LessThan(bands[b].min)
 			})
-			lookup.ranges[table.Key] = bands
+			lookup.ranges[item.Matrix.Code] = bands
 		}
 	}
 
 	return lookup
 }
 
-func (l *rateTableLookup) Has(table string) bool {
+func (l *matrixLookup) Has(table string) bool {
 	if _, ok := l.exact[table]; ok {
 		return true
 	}
@@ -75,7 +98,7 @@ func (l *rateTableLookup) Has(table string) bool {
 	return ok
 }
 
-func (l *rateTableLookup) Lookup(table string, key any) (float64, error) {
+func (l *matrixLookup) Lookup(table string, key any) (float64, error) {
 	if entries, ok := l.exact[table]; ok {
 		return lookupExact(table, entries, key)
 	}
