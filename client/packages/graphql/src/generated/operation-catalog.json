@@ -1,6 +1,6 @@
 {
-  "operationCount": 423,
-  "fragmentCount": 126,
+  "operationCount": 422,
+  "fragmentCount": 125,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -5794,29 +5794,6 @@
       "sdl": "query RateQuoteTable($input: DataTableConnectionInput!) {\n  rateQuotes(input: $input) {\n    edges {\n      node {\n        ...RateQuoteRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RateQuoteRowFields on RateQuote {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  partyType\n  partyId\n  purpose\n  outcome\n  rateAgreementId\n  rateAgreementRuleId\n  formulaTemplateId\n  specificityScore\n  currency\n  billingCurrency\n  linehaulAmount\n  totalAmount\n  billingAmount\n  foregoneAmount\n  overrideReason\n  asOf\n  ratedAt\n  ratedById\n  engineVersion\n  createdAt\n}"
     },
     {
-      "name": "RateTableTable",
-      "kind": "query",
-      "domain": "rate-table",
-      "sourceFile": "src/operations/rate-table/table.graphql",
-      "hash": "sha256:809e150e9d42fd0b2fecd3ced6e252820043552da234d6c6c72295e9303ffeee",
-      "rootFields": [
-        "rateTables"
-      ],
-      "variables": [
-        {
-          "name": "input",
-          "type": "DataTableConnectionInput!",
-          "defaultValue": null
-        }
-      ],
-      "fragments": [
-        "DataTablePageInfoFields",
-        "RateTableTableRowFields"
-      ],
-      "usages": [],
-      "sdl": "query RateTableTable($input: DataTableConnectionInput!) {\n  rateTables(input: $input) {\n    edges {\n      node {\n        ...RateTableTableRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RateTableTableRowFields on RateTable {\n  id\n  businessUnitId\n  organizationId\n  name\n  key\n  description\n  lookupType\n  active\n  version\n  createdAt\n  updatedAt\n}"
-    },
-    {
       "name": "RateZoneTable",
       "kind": "query",
       "domain": "rate",
@@ -9692,7 +9669,6 @@
         "RateAgreementTable",
         "RateMatrixTable",
         "RateQuoteTable",
-        "RateTableTable",
         "RateZoneTable",
         "RecurringDeductionTable",
         "RecurringEarningTable",
@@ -10413,18 +10389,6 @@
       ],
       "usages": [],
       "sdl": "fragment RateQuoteRowFields on RateQuote {\n  id\n  businessUnitId\n  organizationId\n  shipmentId\n  partyType\n  partyId\n  purpose\n  outcome\n  rateAgreementId\n  rateAgreementRuleId\n  formulaTemplateId\n  specificityScore\n  currency\n  billingCurrency\n  linehaulAmount\n  totalAmount\n  billingAmount\n  foregoneAmount\n  overrideReason\n  asOf\n  ratedAt\n  ratedById\n  engineVersion\n  createdAt\n}"
-    },
-    {
-      "name": "RateTableTableRowFields",
-      "typeCondition": "RateTable",
-      "domain": "rate-table",
-      "sourceFile": "src/operations/rate-table/table.graphql",
-      "fragments": [],
-      "usedByOperations": [
-        "RateTableTable"
-      ],
-      "usages": [],
-      "sdl": "fragment RateTableTableRowFields on RateTable {\n  id\n  businessUnitId\n  organizationId\n  name\n  key\n  description\n  lookupType\n  active\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "RateZoneRowFields",

@@ -138,7 +138,6 @@ import type {
   FuelSurchargeRateRounding,
   FuelSurchargeStepRounding,
 } from "@/types/fuel-surcharge";
-import type { RateTableLookupType } from "@/types/rate-table";
 import type {
   RecurringShipmentExceptionPolicy,
   RecurringShipmentStatus,
@@ -192,11 +191,6 @@ export const formulaTemplateTypeChoices = [
   { label: "Freight Charge", value: "FreightCharge" },
   { label: "Accessorial Charge", value: "AccessorialCharge" },
 ] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateType>>;
-
-export const rateTableLookupTypeChoices = [
-  { label: "Exact", value: "Exact", color: "#2563eb" },
-  { label: "Range", value: "Range", color: "#9333ea" },
-] satisfies ReadonlyArray<GenericSelectOption<RateTableLookupType>>;
 
 export const fuelIndexSourceChoices = [
   { label: "DOE / EIA", value: "EIA", color: "#1a6fb5" },
@@ -2229,6 +2223,7 @@ export const rateMatrixDimensionKindChoices = [
   { label: "Equipment type", value: "EquipmentType" },
   { label: "Service type", value: "ServiceType" },
   { label: "Custom", value: "Custom" },
+  { label: "Quantity", value: "Quantity" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
 export const rateMatrixMatchModeChoices = [

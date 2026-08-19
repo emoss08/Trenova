@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -171,7 +170,7 @@ func setupServiceWithRepo(
 		Resolver:      res,
 		Repo:          repo,
 		VersionRepo:   &stubVersionRepo{},
-		RateTableRepo: &stubRateTableRepo{},
+		RateMatrixRepo: &stubMatrixRepo{},
 	})
 }
 
@@ -187,31 +186,16 @@ func (s *stubVersionRepo) GetEffectiveVersion(
 	return s.effectiveVersion, nil
 }
 
-type stubRateTableRepo struct {
-	repositories.RateTableRepository
-	tables []*ratetable.RateTable
+type stubMatrixRepo struct {
+	repositories.RateMatrixRepository
+	data []*repositories.RateMatrixLookupData
 }
 
-func (s *stubRateTableRepo) GetLookupData(
+func (s *stubMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateTableLookupDataRequest,
-) ([]*ratetable.RateTable, error) {
-	return s.tables, nil
-}
-
-func (s *stubRateTableRepo) GetByKeys(
-	_ context.Context,
-	req *repositories.GetRateTablesByKeysRequest,
-) ([]*ratetable.RateTable, error) {
-	matched := make([]*ratetable.RateTable, 0, len(req.Keys))
-	for _, table := range s.tables {
-		for _, key := range req.Keys {
-			if table.Key == key {
-				matched = append(matched, table)
-			}
-		}
-	}
-	return matched, nil
+	_ *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
+	return s.data, nil
 }
 
 func TestService_ValidateExpression(t *testing.T) {

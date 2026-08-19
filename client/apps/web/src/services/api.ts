@@ -63,7 +63,6 @@ import { OrganizationService } from "./organization";
 import { PageFavoriteService } from "./page-favorite";
 import { PlatformBillingService } from "./platform-billing";
 import { RateConfirmationService } from "./rate-confirmation";
-import { RateTableService } from "./rate-table";
 import { RoutingGuideService } from "./routing-guide";
 import { TenderService } from "./tender";
 import { RealtimeService, realtimeService } from "@trenova/shared/services/realtime";
@@ -123,7 +122,6 @@ class APIService {
   public locationService: LocationService;
   public holdReasonService: HoldReasonService;
   public recurringShipmentService: RecurringShipmentService;
-  public rateTableService: RateTableService;
   public shipmentCommentService: ShipmentCommentService;
   public shipmentControlService: ShipmentControlService;
   public shipmentEventService: ShipmentEventService;
@@ -211,7 +209,6 @@ class APIService {
     this.locationService = new LocationService();
     this.holdReasonService = new HoldReasonService();
     this.recurringShipmentService = new RecurringShipmentService();
-    this.rateTableService = new RateTableService();
     this.shipmentCommentService = new ShipmentCommentService();
     this.shipmentControlService = new ShipmentControlService();
     this.shipmentEventService = new ShipmentEventService();

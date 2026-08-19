@@ -50,7 +50,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
@@ -2784,17 +2783,6 @@ type RateQuoteConnection struct {
 type RateQuoteEdge struct {
 	Node   *RateQuote `json:"node"`
 	Cursor string     `json:"cursor"`
-}
-
-type RateTableConnection struct {
-	Edges      []*RateTableEdge `json:"edges"`
-	PageInfo   *PageInfo        `json:"pageInfo"`
-	TotalCount *int             `json:"totalCount,omitempty"`
-}
-
-type RateTableEdge struct {
-	Node   *ratetable.RateTable `json:"node"`
-	Cursor string               `json:"cursor"`
 }
 
 // A named grouping of geography that lane rules and rate matrices are written

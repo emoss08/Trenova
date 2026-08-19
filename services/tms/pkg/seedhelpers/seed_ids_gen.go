@@ -25,11 +25,11 @@ const (
 	SeedJurisdictionRulesBaseline SeedID = "JurisdictionRulesBaseline" // from 11_jurisdiction_rules_baseline.go
 	SeedLocation SeedID = "Location" // from 05_location.go
 	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
+	SeedLookupMatrix SeedID = "LookupMatrix" // from 09_lookup_matrix.go
 	SeedNormalAccount SeedID = "NormalAccount" // from 02_normalaccount.go
 	SeedOrganizationRolePermissionsSync SeedID = "OrganizationRolePermissionsSync" // from 08_organization_role_permissions_sync.go
 	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
 	SeedRateAgreement SeedID = "RateAgreement" // from 16_rate_agreement.go
-	SeedRateTable SeedID = "RateTable" // from 09_ratetable.go
 	SeedRoutingGuide SeedID = "RoutingGuide" // from 15_routing_guide.go
 	SeedServiceFailureReasonCode SeedID = "ServiceFailureReasonCode" // from 09_service_failure_reason_code.go
 	SeedShipment SeedID = "Shipment" // from 07_shipment.go
@@ -57,11 +57,11 @@ var AllSeedIDs = []SeedID{
 	SeedJurisdictionRulesBaseline,
 	SeedLocation,
 	SeedLocationCategory,
+	SeedLookupMatrix,
 	SeedNormalAccount,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
 	SeedRateAgreement,
-	SeedRateTable,
 	SeedRoutingGuide,
 	SeedServiceFailureReasonCode,
 	SeedShipment,
@@ -98,9 +98,9 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedFuelSurcharge,
 	SeedLocation,
 	SeedLocationCategory,
+	SeedLookupMatrix,
 	SeedNormalAccount,
 	SeedRateAgreement,
-	SeedRateTable,
 	SeedRoutingGuide,
 	SeedShipment,
 	SeedTestData,
