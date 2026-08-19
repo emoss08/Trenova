@@ -61,6 +61,20 @@ func (r *repository) AmendRules(
 	return nil
 }
 
+// applyOpenRuleWindow keeps only the rules an amendment has not closed out: the
+// ones still open ended, or ending after the given moment. Unlike
+// applyRuleWindow it does not require a rule to have started, so future-dated
+// lanes survive the filter.
+func applyOpenRuleWindow(q *bun.SelectQuery, asOf int64) *bun.SelectQuery {
+	cols := buncolgen.RateAgreementRuleColumns
+
+	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.
+			Where(cols.EffectiveTo.IsNull()).
+			WhereOr(cols.EffectiveTo.Gt(), asOf)
+	})
+}
+
 // closeOutRules ends the superseded rules at the instant their replacements
 // begin. Windows are half open, so the two never overlap and never leave a gap.
 //

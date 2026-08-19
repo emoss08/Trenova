@@ -1,5 +1,6 @@
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
+import { useEditRecordReset } from "@/hooks/use-edit-record-reset";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -33,6 +34,17 @@ export function RateMatrixPanel({
     resolver: zodResolver(rateMatrixSchema) as Resolver<RateMatrix>,
     defaultValues: DEFAULT_MATRIX as RateMatrix,
     mode: "onChange",
+  });
+
+  // The table row carries no dimensions; without the full record the axes tab
+  // opens empty, and saving that emptiness would strip the grid of its axes.
+  useEditRecordReset(form, {
+    open,
+    mode,
+    queryKey: "rate-matrix",
+    id: row?.id,
+    version: row?.version,
+    fetch: (id) => apiService.rateMatrixService.getById(id),
   });
 
   const formTabs = useMemo(

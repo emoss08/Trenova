@@ -23,11 +23,12 @@ type ListRateAgreementConnectionRequest struct {
 type GetRateAgreementByIDRequest struct {
 	RateAgreementID pulid.ID              `json:"rateAgreementId"`
 	TenantInfo      pagination.TenantInfo `json:"-"`
-	IncludeRules    bool                  `json:"includeRules"`
-	IncludeChildren bool                  `json:"includeChildren"`
+	// IncludeChildren loads the rules with their weight breaks, the
+	// accessorial schedule, and the fuel binding.
+	IncludeChildren bool `json:"includeChildren"`
 	// AsOf narrows the loaded rules to those effective at a moment. Zero loads
-	// every rule, which is what an editor needs; a rating needs only the live
-	// ones.
+	// every rule that has not been closed out — current and future lanes,
+	// which is what an editor needs; a rating passes the moment it prices at.
 	AsOf int64 `json:"asOf"`
 }
 

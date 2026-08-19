@@ -1,5 +1,6 @@
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
+import { useEditRecordReset } from "@/hooks/use-edit-record-reset";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -64,6 +65,18 @@ export function RateAgreementPanel({
     resolver: zodResolver(rateAgreementSchema) as Resolver<RateAgreement>,
     defaultValues: DEFAULT_AGREEMENT as RateAgreement,
     mode: "onChange",
+  });
+
+  // The table row carries only the header; without the full record every child
+  // editor opens empty, and saving that emptiness would erase the contract's
+  // lanes, accessorials and fuel terms.
+  useEditRecordReset(form, {
+    open,
+    mode,
+    queryKey: "rate-agreement",
+    id: row?.id,
+    version: row?.version,
+    fetch: (id) => apiService.rateAgreementService.getById(id),
   });
 
   const formTabs = useMemo(

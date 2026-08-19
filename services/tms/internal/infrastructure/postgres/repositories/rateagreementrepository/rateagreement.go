@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -181,18 +182,29 @@ func (r *repository) GetByID(
 				Where(cols.ID.Eq(), req.RateAgreementID)
 		})
 
-	if req.IncludeRules {
-		q = q.Relation(
-			buncolgen.Rel(buncolgen.RateAgreementRelations.Rules),
-			func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyRuleWindow(sq, req.AsOf).
-					Order(buncolgen.RateAgreementRuleColumns.SpecificityScore.OrderDesc())
-			},
-		)
-	}
-
 	if req.IncludeChildren {
 		q = q.
+			Relation(
+				buncolgen.Rel(buncolgen.RateAgreementRelations.Rules),
+				func(sq *bun.SelectQuery) *bun.SelectQuery {
+					if req.AsOf > 0 {
+						sq = applyRuleWindow(sq, req.AsOf)
+					} else {
+						// With no moment given this is an editor load, which
+						// wants every lane that still has a future — current
+						// and forthcoming — and none of the closed-out history
+						// an amendment leaves behind.
+						sq = applyOpenRuleWindow(sq, timeutils.NowUnix())
+					}
+					return sq.Order(
+						buncolgen.RateAgreementRuleColumns.SpecificityScore.OrderDesc(),
+					)
+				},
+			).
+			Relation(buncolgen.Rel(
+				buncolgen.RateAgreementRelations.Rules,
+				buncolgen.RateAgreementRuleRelations.Breaks,
+			)).
 			Relation(buncolgen.Rel(buncolgen.RateAgreementRelations.Accessorials)).
 			Relation(buncolgen.Rel(buncolgen.RateAgreementRelations.FuelBinding))
 	}
@@ -287,7 +299,23 @@ func (r *repository) Create(
 			return iErr
 		}
 
-		return r.writeChildren(c, entity, false)
+		if cErr := r.writeChildren(c, entity, false); cErr != nil {
+			return cErr
+		}
+
+		if len(entity.Rules) == 0 {
+			return nil
+		}
+
+		return r.insertRules(c, &repositories.AmendRateAgreementRulesRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			RateAgreementID: entity.ID,
+			EffectiveFrom:   entity.EffectiveFrom,
+			Rules:           entity.Rules,
+		})
 	})
 	if err != nil {
 		log.Error("failed to create rate agreement", zap.Error(err))

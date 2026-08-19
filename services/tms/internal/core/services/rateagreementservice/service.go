@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -127,9 +128,46 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	updated, err := s.repo.Update(ctx, entity)
-	if err != nil {
+	// A save's lane edits become an amendment: changed lanes are superseded by
+	// successors effective from this moment, dropped lanes are closed out, and
+	// restated lanes are left untouched. The moment can never precede the
+	// agreement itself, or a successor would be reachable on dates the
+	// contract does not cover.
+	amendAt := max(timeutils.NowUnix(), original.EffectiveFrom)
+
+	plan, planErr := planRuleAmendment(original.Rules, entity.Rules, amendAt)
+	if planErr != nil {
+		return nil, planErr
+	}
+
+	if _, err = s.repo.Update(ctx, entity); err != nil {
 		log.Error("failed to update rate agreement", zap.Error(err))
+		return nil, err
+	}
+
+	if plan != nil {
+		if err = s.repo.AmendRules(ctx, &repositories.AmendRateAgreementRulesRequest{
+			TenantInfo:      tenantOf(entity),
+			RateAgreementID: entity.ID,
+			EffectiveFrom:   amendAt,
+			SupersededIDs:   plan.SupersededIDs,
+			Rules:           plan.Inserts,
+		}); err != nil {
+			log.Error("failed to amend rate agreement rules on save", zap.Error(err))
+			return nil, err
+		}
+	}
+
+	// The caller gets what the database now holds rather than an echo of what
+	// it sent: rules with their minted identities, and none of the rows the
+	// amendment closed out.
+	updated, err := s.repo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
+		RateAgreementID: entity.ID,
+		TenantInfo:      tenantOf(entity),
+		IncludeChildren: true,
+	})
+	if err != nil {
+		log.Error("failed to reload rate agreement after save", zap.Error(err))
 		return nil, err
 	}
 

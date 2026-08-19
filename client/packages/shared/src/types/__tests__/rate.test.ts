@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rateAgreementRuleSchema, rateMatrixSchema } from "../rate";
+import { rateAgreementAccessorialSchema, rateAgreementRuleSchema, rateMatrixSchema } from "../rate";
 
 /**
  * The smallest payload the schema accepts, so each test states only the
@@ -68,7 +68,7 @@ describe("rateAgreementRuleSchema pricing method", () => {
       rule({
         formulaTemplateId: null,
         rateMatrixId: "rmx_zone_tl",
-        breaks: [{ minQuantity: 0, maxQuantity: null, rate: 12, minCharge: null, sortOrder: 0 }],
+        breaks: [{ fromWeight: 0, toWeight: null, rate: 12, minCharge: null, sortOrder: 0 }],
       }),
     );
 
@@ -79,11 +79,70 @@ describe("rateAgreementRuleSchema pricing method", () => {
   it("accepts weight breaks on a formula lane", () => {
     const result = rateAgreementRuleSchema.safeParse(
       rule({
-        breaks: [{ minQuantity: 0, maxQuantity: null, rate: 12, minCharge: null, sortOrder: 0 }],
+        breaks: [{ fromWeight: 0, toWeight: null, rate: 12, minCharge: null, sortOrder: 0 }],
       }),
     );
 
     expect(result.success).toBe(true);
+  });
+});
+
+/**
+ * What the Go API actually emits, which the schemas must read back. A nil
+ * pulid marshals as JSON null (shared/pulid/pulid.go MarshalJSON), and an
+ * unset nullzero enum column marshals as "" — and the agreement endpoints
+ * echo submitted rules verbatim, so both shapes reach the client on every
+ * save, not just on degenerate rows.
+ */
+describe("rateAgreementRuleSchema server echo tolerance", () => {
+  it("accepts a rule echoed back with a null id, as an unsaved lane is", () => {
+    const result = rateAgreementRuleSchema.safeParse(rule({ id: null }));
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts an empty rounding mode, which is how Go writes an unset one", () => {
+    const result = rateAgreementRuleSchema.safeParse(rule({ roundingMode: "" }));
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.roundingMode ?? null).toBeNull();
+    }
+  });
+
+  it("accepts a weight break echoed back with a null id", () => {
+    const result = rateAgreementRuleSchema.safeParse(
+      rule({
+        breaks: [
+          {
+            id: null,
+            fromWeight: 0,
+            toWeight: null,
+            rate: 12,
+            minCharge: null,
+            sortOrder: 0,
+          },
+        ],
+      }),
+    );
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("rateAgreementAccessorialSchema server echo tolerance", () => {
+  it("accepts an empty rate unit on a flat accessorial, which Go writes for an unset one", () => {
+    const result = rateAgreementAccessorialSchema.safeParse({
+      accessorialChargeId: "acc_detention",
+      method: "Flat",
+      rateUnit: "",
+      amount: 75,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.rateUnit ?? null).toBeNull();
+    }
   });
 });
 

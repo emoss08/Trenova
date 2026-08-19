@@ -6,6 +6,19 @@ import {
   tenantInfoSchema,
 } from "./helpers";
 
+/**
+ * An identifier the agreement endpoints may echo back as JSON null: rules and
+ * their children are validated but not persisted by a plain save, so the
+ * response carries the submitted rows verbatim, and Go marshals a nil pulid as
+ * null rather than omitting the key. Normalized to undefined so the output
+ * type matches `optionalStringSchema`.
+ */
+const echoedIdSchema = z
+  .string()
+  .nullable()
+  .transform((val) => val ?? undefined)
+  .optional();
+
 /* -------------------------------------------------------------------------- */
 /*                                  Geography                                  */
 /* -------------------------------------------------------------------------- */
@@ -207,14 +220,15 @@ export const rateRuleStatusSchema = z.enum(["Active", "Inactive"]);
 export type RateRuleStatus = z.infer<typeof rateRuleStatusSchema>;
 
 export const rateAgreementRuleBreakSchema = z.object({
-  id: optionalStringSchema,
-  organizationId: optionalStringSchema,
-  businessUnitId: optionalStringSchema,
-  rateAgreementRuleId: optionalStringSchema,
-  minQuantity: decimalStringSchema,
-  maxQuantity: decimalStringSchema,
+  id: echoedIdSchema,
+  organizationId: echoedIdSchema,
+  businessUnitId: echoedIdSchema,
+  rateAgreementRuleId: echoedIdSchema,
+  fromWeight: decimalStringSchema,
+  toWeight: decimalStringSchema,
   rate: decimalStringSchema,
   minCharge: decimalStringSchema,
+  label: z.string().max(50).default(""),
   sortOrder: z.number().int().default(0),
 });
 export type RateAgreementRuleBreak = z.infer<typeof rateAgreementRuleBreakSchema>;
@@ -229,8 +243,11 @@ export type RateAgreementRuleBreak = z.infer<typeof rateAgreementRuleBreakSchema
 export const rateAgreementRuleSchema = z
   .object({
     ...tenantInfoSchema.shape,
+    id: echoedIdSchema,
+    organizationId: echoedIdSchema,
+    businessUnitId: echoedIdSchema,
 
-    rateAgreementId: optionalStringSchema,
+    rateAgreementId: echoedIdSchema,
     label: z.string().max(150).default(""),
     status: rateRuleStatusSchema.default("Active"),
 
@@ -286,7 +303,8 @@ export const rateAgreementRuleSchema = z
     minCharge: decimalStringSchema,
     maxCharge: decimalStringSchema,
     minBillableDistance: decimalStringSchema,
-    roundingMode: rateRoundingModeSchema.nullish(),
+    // Go stores this nullzero, so an unset mode arrives as "" rather than null.
+    roundingMode: rateRoundingModeSchema.nullish().or(z.literal("").transform(() => null)),
 
     priority: z.number().int().default(0),
     effectiveFrom: z.number().int(),
@@ -319,7 +337,11 @@ export const rateAgreementAccessorialSchema = z.object({
   rateAgreementId: optionalStringSchema,
   accessorialChargeId: z.string({ error: "Accessorial charge is required" }),
   method: z.enum(["Flat", "PerUnit", "Percentage"]),
-  rateUnit: z.enum(["Mile", "Hour", "Day", "Stop"]).nullish(),
+  // Go stores this nullzero, so an unset unit arrives as "" rather than null.
+  rateUnit: z
+    .enum(["Mile", "Hour", "Day", "Stop"])
+    .nullish()
+    .or(z.literal("").transform(() => null)),
   amount: decimalStringSchema,
   waived: z.boolean().default(false),
   autoApply: z.boolean().default(false),
