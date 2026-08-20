@@ -389,6 +389,12 @@ export const rateAgreementFuelBindingSchema = z
   );
 export type RateAgreementFuelBinding = z.infer<typeof rateAgreementFuelBindingSchema>;
 
+/** One term the version changed, as the server diffed it. */
+export const versionFieldChangeSchema = z.object({
+  from: z.unknown().nullish(),
+  to: z.unknown().nullish(),
+});
+
 export const rateAgreementVersionSchema = z.object({
   id: optionalStringSchema,
   rateAgreementId: optionalStringSchema,
@@ -396,6 +402,7 @@ export const rateAgreementVersionSchema = z.object({
   effectiveFrom: z.number().int(),
   effectiveTo: z.number().int().nullish(),
   changeMessage: z.string().default(""),
+  changeSummary: z.record(z.string(), versionFieldChangeSchema).nullish(),
   createdById: z.string().nullish(),
   createdAt: z.number().int().optional(),
 });
@@ -856,6 +863,15 @@ export const rateImportBatchSchema = z.object({
   committedBy: z.string().nullish(),
 });
 export type RateImportBatch = z.infer<typeof rateImportBatchSchema>;
+
+/** What an upload needs before a file means anything: where, and from when. */
+export const rateImportUploadSchema = z.object({
+  rateAgreementId: z
+    .string({ error: "An agreement is required" })
+    .min(1, { error: "An agreement is required" }),
+  effectiveFrom: z.number({ error: "An effective date is required" }).int(),
+});
+export type RateImportUploadValues = z.infer<typeof rateImportUploadSchema>;
 
 /** One row of the uploaded sheet, as it was read. */
 export const rateImportRowSchema = z.object({

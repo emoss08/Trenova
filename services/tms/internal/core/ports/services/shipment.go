@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 type ShipmentUIPolicy struct {
@@ -145,6 +146,26 @@ type MoveStatusObserver interface {
 	) error
 }
 
+// SetRateOverrideRequest replaces the contract's answer with a hand-set rate,
+// or removes one so the contract prices the shipment again.
+//
+// The override fields are system-owned on every other write path — a plain
+// save cannot set or clear them — so this request is the only way a rate gets
+// overridden, which is what makes the audit trail complete.
+type SetRateOverrideRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ShipmentID pulid.ID              `json:"-"`
+
+	// Amount is the hand-set linehaul. Ignored when Clear is set.
+	Amount decimal.NullDecimal `json:"amount"`
+	Reason string              `json:"reason"`
+	// RateLocked freezes the shipment's numbers against every re-rating path,
+	// for a shipment already invoiced whose numbers the customer has seen.
+	RateLocked bool `json:"rateLocked"`
+	// Clear removes the override instead of setting one.
+	Clear bool `json:"clear"`
+}
+
 type ShipmentService interface {
 	List(
 		ctx context.Context,
@@ -192,6 +213,11 @@ type ShipmentService interface {
 	Cancel(
 		ctx context.Context,
 		req *repositories.CancelShipmentRequest,
+		actor *RequestActor,
+	) (*shipment.Shipment, error)
+	SetRateOverride(
+		ctx context.Context,
+		req *SetRateOverrideRequest,
 		actor *RequestActor,
 	) (*shipment.Shipment, error)
 	Uncancel(

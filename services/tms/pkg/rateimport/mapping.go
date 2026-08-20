@@ -187,20 +187,31 @@ var (
 // It is a different question from whether every column was placed: a sheet can
 // carry a sales rep column nobody needs and still import perfectly well. What
 // it cannot do is describe half a lane, or omit the price.
+//
+// Every missing column is reported at once. Reporting one, waiting for a
+// re-upload, then reporting the next turns fixing a template into as many
+// round trips as it has mistakes.
 func (m Mapping) Validate() error {
+	return errors.Join(m.Problems()...)
+}
+
+// Problems lists everything that stops this mapping from producing rules.
+func (m Mapping) Problems() []error {
+	problems := make([]error, 0, 3)
+
 	if !m.Has(FieldOriginValue) && !m.Has(FieldOriginCity) {
-		return ErrNoOriginColumn
+		problems = append(problems, ErrNoOriginColumn)
 	}
 
 	if !m.Has(FieldDestinationValue) && !m.Has(FieldDestinationCity) {
-		return ErrNoDestinationColumn
+		problems = append(problems, ErrNoDestinationColumn)
 	}
 
 	if !m.Has(FieldRate) {
-		return ErrNoRateColumn
+		problems = append(problems, ErrNoRateColumn)
 	}
 
-	return nil
+	return problems
 }
 
 // Value reads a field out of one row, or empty when the sheet does not carry it

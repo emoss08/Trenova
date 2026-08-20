@@ -10616,6 +10616,23 @@ definitions:
             name:
                 type: string
         type: object
+    github_com_emoss08_trenova_internal_core_ports_services.SetRateOverrideRequest:
+        properties:
+            amount:
+                allOf:
+                    - $ref: '#/definitions/decimal.NullDecimal'
+                description: Amount is the hand-set linehaul. Ignored when Clear is set.
+            clear:
+                description: Clear removes the override instead of setting one.
+                type: boolean
+            rateLocked:
+                description: |-
+                    RateLocked freezes the shipment's numbers against every re-rating path,
+                    for a shipment already invoiced whose numbers the customer has seen.
+                type: boolean
+            reason:
+                type: string
+        type: object
     github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadiness:
         properties:
             canMarkReadyToInvoice:
@@ -12902,6 +12919,13 @@ definitions:
     internal_api_handlers_rateconfirmationhandler.voidRequest:
         properties:
             reason:
+                type: string
+        type: object
+    internal_api_handlers_rateimporthandler.TemplateResponse:
+        properties:
+            content:
+                type: string
+            fileName:
                 type: string
         type: object
     internal_api_handlers_ratematrixhandler.replaceCellsRequest:
@@ -25218,6 +25242,30 @@ paths:
             summary: List a rate import's rows
             tags:
                 - Rate Imports
+    /rate-imports/template/:
+        get:
+            description: Returns a starter CSV whose columns the importer recognises, with two example rows showing how lanes are described.
+            operationId: rateSheetTemplate
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/internal_api_handlers_rateimporthandler.TemplateResponse'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Download the rate sheet template
+            tags:
+                - Rate Imports
     /rate-matrices/:
         get:
             consumes:
@@ -30191,6 +30239,60 @@ paths:
             summary: Update a recorded permit
             tags:
                 - Permits
+    /shipments/{shipmentID}/rate-override/:
+        post:
+            consumes:
+                - application/json
+            description: Replaces the contract's rate with a hand-set amount, or clears one so the contract prices the shipment again. The shipment is re-rated immediately, and the quote records what the contract would have charged instead.
+            operationId: setShipmentRateOverride
+            parameters:
+                - description: Shipment ID
+                  in: path
+                  name: shipmentID
+                  required: true
+                  type: string
+                - description: The override, or clear=true to remove one
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SetRateOverrideRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Set or clear a manual rate override
+            tags:
+                - Shipments
     /shipments/{shipmentID}/recalculate-distance/:
         post:
             operationId: recalculateShipmentDistance

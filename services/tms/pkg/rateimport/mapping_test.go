@@ -140,3 +140,17 @@ func TestMapping_WithoutBothEndsOfTheLaneIsRefused(t *testing.T) {
 
 	require.ErrorIs(t, mapping.Validate(), rateimport.ErrNoDestinationColumn)
 }
+
+// A sheet missing several required columns is told about all of them at once.
+// Reporting one, waiting for a re-upload, then reporting the next turns fixing
+// a template into as many round trips as it has mistakes.
+func TestMapping_ReportsEveryMissingColumnAtOnce(t *testing.T) {
+	t.Parallel()
+
+	mapping, _ := rateimport.GuessMapping([]string{"Sales Rep"})
+
+	err := mapping.Validate()
+	require.ErrorIs(t, err, rateimport.ErrNoOriginColumn)
+	require.ErrorIs(t, err, rateimport.ErrNoDestinationColumn)
+	require.ErrorIs(t, err, rateimport.ErrNoRateColumn)
+}

@@ -15,6 +15,7 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { DeltaValue, StatTile } from "@/components/metric-tiles";
 import { apiService } from "@/services/api";
 import type {
   BacktestResult,
@@ -23,15 +24,7 @@ import type {
   FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 import { useMutation } from "@tanstack/react-query";
-import {
-  AlertTriangleIcon,
-  ArrowDownIcon,
-  ArrowRightIcon,
-  ArrowUpIcon,
-  HistoryIcon,
-  PlayIcon,
-  ShieldIcon,
-} from "lucide-react";
+import { AlertTriangleIcon, ArrowRightIcon, HistoryIcon, PlayIcon, ShieldIcon } from "lucide-react";
 import { useState } from "react";
 import { useWatch, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -55,43 +48,6 @@ const SOURCE_OPTIONS: { value: CandidateSource; label: string; description: stri
     description: "Use a previously saved version snapshot",
   },
 ];
-
-function formatDeltaPct(deltaPct: number): string {
-  return `${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(2)}%`;
-}
-
-function DeltaValue({ delta, deltaPct }: { delta: number; deltaPct?: number }) {
-  const isZero = delta === 0;
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 font-mono tabular-nums",
-        isZero
-          ? "text-muted-foreground"
-          : delta > 0
-            ? "text-emerald-600 dark:text-emerald-400"
-            : "text-red-600 dark:text-red-400",
-      )}
-    >
-      {!isZero &&
-        (delta > 0 ? <ArrowUpIcon className="size-3" /> : <ArrowDownIcon className="size-3" />)}
-      {formatCurrency(Math.abs(delta))}
-      {deltaPct !== undefined && !isZero && (
-        <span className="text-2xs opacity-80">({formatDeltaPct(deltaPct)})</span>
-      )}
-    </span>
-  );
-}
-
-function StatTile({ label, value, tone }: { label: string; value: string; tone?: string }) {
-  return (
-    <div className="rounded-lg border bg-muted/30 px-3 py-2">
-      <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
-      <p className={cn("mt-0.5 text-lg font-semibold tabular-nums", tone)}>{value}</p>
-    </div>
-  );
-}
 
 function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
   return (

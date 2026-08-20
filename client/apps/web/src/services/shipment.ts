@@ -120,6 +120,21 @@ export class ShipmentService {
     return safeParse(shipmentSchema, response, "Shipment");
   }
 
+  /**
+   * Sets or clears the manual rate override.
+   *
+   * This is the only path that writes the override — a plain save cannot set
+   * or clear one — and the shipment is re-rated immediately, recording what
+   * the contract would have charged instead.
+   */
+  public async setRateOverride(
+    shipmentId: string,
+    payload: { amount?: number; reason?: string; rateLocked?: boolean; clear?: boolean },
+  ) {
+    const response = await api.post<Shipment>(`/shipments/${shipmentId}/rate-override/`, payload);
+    return safeParse(shipmentSchema, response, "Shipment");
+  }
+
   public async calculateTotals(payload: Shipment, _signal?: AbortSignal) {
     const response = await calculateShipmentTotalsGraphQL(payload);
     return safeParse(shipmentTotalsResponseSchema, response, "Shipment Totals");

@@ -82,6 +82,7 @@ func (s *Service) Create(
 	// A new agreement starts in Draft whatever the payload says. Creating one
 	// already active would route around the review the organization asked for.
 	entity.Status = rateagreement.StatusDraft
+	entity.CurrentVersionNumber = 1
 	entity.StampRules()
 
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
@@ -93,6 +94,12 @@ func (s *Service) Create(
 		log.Error("failed to create rate agreement", zap.Error(err))
 		return nil, err
 	}
+
+	s.recordVersion(
+		ctx, log, created,
+		created.EffectiveFrom, userID,
+		"Initial terms", nil,
+	)
 
 	s.audit(log, created, nil, permission.OpCreate, userID, "Rate agreement created")
 
@@ -123,6 +130,14 @@ func (s *Service) Update(
 	// save. Otherwise an editor could activate an agreement by resending it.
 	entity.Status = original.Status
 	entity.StampRules()
+
+	// The version number is the service's to manage: it advances exactly when
+	// the negotiated header terms change, whatever number the payload carries.
+	changeSummary, termsChanged := headerTermsChanged(original, entity)
+	entity.CurrentVersionNumber = original.CurrentVersionNumber
+	if termsChanged {
+		entity.CurrentVersionNumber = original.CurrentVersionNumber + 1
+	}
 
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
@@ -156,6 +171,10 @@ func (s *Service) Update(
 			log.Error("failed to amend rate agreement rules on save", zap.Error(err))
 			return nil, err
 		}
+	}
+
+	if termsChanged {
+		s.recordVersion(ctx, log, entity, amendAt, userID, "", changeSummary)
 	}
 
 	// The caller gets what the database now holds rather than an echo of what

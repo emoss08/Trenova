@@ -11,6 +11,7 @@ import {
   shopResultSchema,
   rateZoneSchema,
   type RateAgreement,
+  type RateAgreementVersion,
   type RateMatrix,
   type RateMatrixCell,
   type RateQuote,
@@ -50,6 +51,15 @@ export class RateAgreementService {
     const response = await api.put<RateAgreement>(`/rate-agreements/${id}/`, data);
 
     return safeParse(rateAgreementSchema, response, "Rate Agreement");
+  }
+
+  /** The header terms as they stood at each renegotiation, newest first. */
+  public async listVersions(id: string): Promise<RateAgreementVersion[]> {
+    const response = await api.get<{ results?: RateAgreementVersion[] }>(
+      `/rate-agreements/${id}/versions/`,
+    );
+
+    return response?.results ?? [];
   }
 
   /**
@@ -273,6 +283,11 @@ export class RateImportService {
     const response = await api.get<RateImportBatch>(`/rate-imports/${id}/`);
 
     return safeParse(rateImportBatchSchema, response, "Rate Import");
+  }
+
+  /** The starter sheet a person fills in instead of guessing at column names. */
+  public async template(): Promise<{ fileName: string; content: string }> {
+    return api.get<{ fileName: string; content: string }>("/rate-imports/template/");
   }
 
   /** The sheets uploaded against one agreement, newest first. */

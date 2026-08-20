@@ -222,6 +222,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legac
 		h.uncancel,
 	)
 	api.POST(
+		"/:shipmentID/rate-override/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpUpdate),
+		h.setRateOverride,
+	)
+	api.POST(
 		"/:shipmentID/transfer-ownership/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpUpdate),
 		h.transferOwnership,
@@ -978,6 +983,52 @@ func (h *Handler) cancel(c *gin.Context) {
 
 	actor := actorutil.FromAuthContext(authCtx)
 	entity, err := h.service.Cancel(c.Request.Context(), req, actor)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, entity)
+}
+
+// @Summary Set or clear a manual rate override
+// @Description Replaces the contract's rate with a hand-set amount, or clears one so the contract prices the shipment again. The shipment is re-rated immediately, and the quote records what the contract would have charged instead.
+// @ID setShipmentRateOverride
+// @Tags Shipments
+// @Accept json
+// @Produce json
+// @Param shipmentID path string true "Shipment ID"
+// @Param request body services.SetRateOverrideRequest true "The override, or clear=true to remove one"
+// @Success 200 {object} shipment.Shipment
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /shipments/{shipmentID}/rate-override/ [post]
+func (h *Handler) setRateOverride(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req := &services.SetRateOverrideRequest{}
+	if err = c.ShouldBindJSON(req); err != nil && !errors.Is(err, io.EOF) {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.ShipmentID = shipmentID
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}
+
+	actor := actorutil.FromAuthContext(authCtx)
+	entity, err := h.service.SetRateOverride(c.Request.Context(), req, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

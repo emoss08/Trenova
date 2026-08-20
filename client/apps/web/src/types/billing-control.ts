@@ -7,12 +7,7 @@ import {
 
 const decimalNumberSchema = z.coerce.number().finite();
 
-export const transferScheduleSchema = z.enum([
-  "Continuous",
-  "Hourly",
-  "Daily",
-  "Weekly",
-]);
+export const transferScheduleSchema = z.enum(["Continuous", "Hourly", "Daily", "Weekly"]);
 export type TransferSchedule = z.infer<typeof transferScheduleSchema>;
 
 export const paymentTermSchema = z.enum([
@@ -26,12 +21,7 @@ export const paymentTermSchema = z.enum([
 ]);
 export type PaymentTerm = z.infer<typeof paymentTermSchema>;
 
-export const enforcementLevelSchema = z.enum([
-  "Ignore",
-  "Warn",
-  "RequireReview",
-  "Block",
-]);
+export const enforcementLevelSchema = z.enum(["Ignore", "Warn", "RequireReview", "Block"]);
 export type EnforcementLevel = z.infer<typeof enforcementLevelSchema>;
 
 export const billingExceptionDispositionSchema = z.enum([
@@ -40,22 +30,13 @@ export const billingExceptionDispositionSchema = z.enum([
 ]);
 export type BillingExceptionDisposition = z.infer<typeof billingExceptionDispositionSchema>;
 
-export const readyToBillAssignmentModeSchema = z.enum([
-  "ManualOnly",
-  "AutomaticWhenEligible",
-]);
+export const readyToBillAssignmentModeSchema = z.enum(["ManualOnly", "AutomaticWhenEligible"]);
 export type ReadyToBillAssignmentMode = z.infer<typeof readyToBillAssignmentModeSchema>;
 
-export const billingQueueTransferModeSchema = z.enum([
-  "ManualOnly",
-  "AutomaticWhenReady",
-]);
+export const billingQueueTransferModeSchema = z.enum(["ManualOnly", "AutomaticWhenReady"]);
 export type BillingQueueTransferMode = z.infer<typeof billingQueueTransferModeSchema>;
 
-export const invoiceDraftCreationModeSchema = z.enum([
-  "ManualOnly",
-  "AutomaticWhenTransferred",
-]);
+export const invoiceDraftCreationModeSchema = z.enum(["ManualOnly", "AutomaticWhenTransferred"]);
 export type InvoiceDraftCreationMode = z.infer<typeof invoiceDraftCreationModeSchema>;
 
 export const invoicePostingModeSchema = z.enum([
@@ -69,6 +50,13 @@ export const rateVarianceAutoResolutionModeSchema = z.enum([
   "BypassReviewWithinTolerance",
 ]);
 export type RateVarianceAutoResolutionMode = z.infer<typeof rateVarianceAutoResolutionModeSchema>;
+
+export const unratedShipmentDispositionSchema = z.enum([
+  "FallbackFormulaTemplate",
+  "ZeroAndFlag",
+  "Block",
+]);
+export type UnratedShipmentDisposition = z.infer<typeof unratedShipmentDispositionSchema>;
 
 export const billingControlSchema = z.object({
   id: optionalStringSchema,
@@ -101,6 +89,11 @@ export const billingControlSchema = z.object({
 
   rateVarianceTolerancePercent: decimalNumberSchema,
   rateVarianceAutoResolutionMode: rateVarianceAutoResolutionModeSchema,
+
+  unratedShipmentDisposition: unratedShipmentDispositionSchema,
+  fallbackFormulaTemplateId: z.string().nullish(),
+  requireRateOverrideReason: z.boolean(),
+  enforceMarginFloor: z.boolean(),
 });
 
 export type BillingControl = z.infer<typeof billingControlSchema>;
