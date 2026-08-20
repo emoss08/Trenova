@@ -19,7 +19,7 @@ type DeskSummaryRailProps = {
  */
 export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
   return (
-    <dl className="grid grid-cols-2 p-4 gap-x-6 gap-y-6 border-b pb-4 sm:grid-cols-4 sm:gap-y-0 sm:divide-x sm:divide-border">
+    <dl className="sm:divide-border grid grid-cols-2 gap-x-6 gap-y-6 border-b p-4 pb-4 sm:grid-cols-4 sm:gap-y-0 sm:divide-x">
       <DeskMetric
         label="Collectable now"
         value={<DeskMoney value={summary.amountAtRisk} />}

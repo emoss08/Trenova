@@ -213,10 +213,10 @@ function tooltipRow(format: ChartFormatters, nameToSeries?: (name: string) => st
     return (
       <>
         <span className="size-2.5 shrink-0 rounded-[2px]" style={{ background: item?.color }} />
-        <span className="flex-1 truncate text-muted-foreground">
+        <span className="text-muted-foreground flex-1 truncate">
           {nameToSeries ? key : format.label(seriesId)}
         </span>
-        <span className="ml-4 font-mono font-medium text-foreground tabular-nums">
+        <span className="text-foreground ml-4 font-mono font-medium tabular-nums">
           {format.value(seriesId, value)}
         </span>
       </>
@@ -272,7 +272,7 @@ function selectionCells(points: ChartPoint[], select: CategorySelect | undefined
 
 function EmptyChart({ message }: { message: string }) {
   return (
-    <div className="flex h-full min-h-32 w-full items-center justify-center p-4 text-center text-xs text-muted-foreground">
+    <div className="text-muted-foreground flex h-full min-h-32 w-full items-center justify-center p-4 text-center text-xs">
       {message}
     </div>
   );
@@ -311,7 +311,7 @@ function KpiTile({
 
   return (
     <div className={cn("flex h-full flex-col justify-center gap-1 p-4", className)}>
-      <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
         {chart.title || column.label}
       </p>
       <p className="text-2xl font-semibold tracking-tight tabular-nums">
@@ -335,9 +335,9 @@ function KpiTile({
       )}
       {attainment !== null && (
         <div className="flex flex-col gap-1">
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="bg-muted h-1.5 overflow-hidden rounded-full">
             <div
-              className="h-full rounded-full bg-primary transition-[width] duration-500"
+              className="bg-primary h-full rounded-full transition-[width] duration-500"
               style={{ width: `${Math.min(Math.max(attainment, 0), 1) * 100}%` }}
             />
           </div>

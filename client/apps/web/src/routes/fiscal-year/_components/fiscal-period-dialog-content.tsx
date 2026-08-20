@@ -92,15 +92,15 @@ function CloseDialog({
             You are about to close <strong>Period {record.periodNumber}</strong>
             {record.name && ` (${record.name})`}.
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Closing this period will:
           </p>
-          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+          <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
             <li>Prevent new transactions from being posted</li>
             <li>Require reopening to make any changes</li>
             <li>Enable locking once all reconciliations are complete</li>
           </ul>
-          <p className="font-semibold text-destructive">
+          <p className="text-destructive font-semibold">
             Are you sure you want to continue?
           </p>
         </AlertDialogDescription>
@@ -158,10 +158,10 @@ function ReopenDialog({
             <strong>Period {record.periodNumber}</strong>
             {record.name && ` (${record.name})`}.
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Reopening this period will:
           </p>
-          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+          <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
             <li>Allow new transactions to be posted</li>
             <li>Enable edits to existing entries</li>
             <li>Require reclosing before locking</li>
@@ -219,16 +219,16 @@ function LockDialog({
             You are about to lock <strong>Period {record.periodNumber}</strong>
             {record.name && ` (${record.name})`}.
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Locking this period will:
           </p>
-          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+          <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
             <li>Permanently prevent all changes</li>
             <li>Finalize all financial data</li>
             <li>Require special permission to unlock</li>
             <li>Complete the period close workflow</li>
           </ul>
-          <p className="font-semibold text-destructive">
+          <p className="text-destructive font-semibold">
             This is typically done after audits are complete. Continue?
           </p>
         </AlertDialogDescription>
@@ -282,16 +282,16 @@ function UnlockDialog({
             <strong>Period {record.periodNumber}</strong>
             {record.name && ` (${record.name})`}.
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Unlocking this period will:
           </p>
-          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+          <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
             <li>Return the period to Closed status</li>
             <li>Allow reopening if needed</li>
             <li>Require manager approval</li>
             <li>Create an audit trail entry</li>
           </ul>
-          <p className="font-semibold text-destructive">
+          <p className="text-destructive font-semibold">
             This action should only be taken in exceptional circumstances with
             proper authorization.
           </p>

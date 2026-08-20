@@ -80,7 +80,7 @@ export function getColumns(): ColumnDef<RecurringDeductionRow>[] {
         <span className="text-xs">
           <span className="font-mono font-medium">{row.original.payCode?.code ?? "—"}</span>
           {row.original.payCode?.name && (
-            <span className="ml-1.5 text-muted-foreground">{row.original.payCode.name}</span>
+            <span className="text-muted-foreground ml-1.5">{row.original.payCode.name}</span>
           )}
         </span>
       ),

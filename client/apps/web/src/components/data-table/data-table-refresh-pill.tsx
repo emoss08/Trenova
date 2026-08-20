@@ -20,7 +20,7 @@ export function DataTableRefreshPill({ visible, onRefresh, onDismiss }: DataTabl
           transition={{ duration: 0.15, ease: "easeOut" }}
           className="absolute top-2 left-1/2 z-30 -translate-x-1/2"
         >
-          <div className="flex items-center gap-0.5 rounded-full border border-border bg-popover py-0.5 pr-0.5 pl-1 shadow-md">
+          <div className="border-border bg-popover flex items-center gap-0.5 rounded-full border py-0.5 pr-0.5 pl-1 shadow-md">
             <Button
               type="button"
               variant="ghost"
@@ -35,7 +35,7 @@ export function DataTableRefreshPill({ visible, onRefresh, onDismiss }: DataTabl
               type="button"
               variant="ghost"
               size="icon-xs"
-              className="size-5 rounded-full text-muted-foreground"
+              className="text-muted-foreground size-5 rounded-full"
               onClick={onDismiss}
               aria-label="Dismiss refresh notification"
             >

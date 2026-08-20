@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { RateAgreementRule } from "@trenova/shared/types/rate";
@@ -55,11 +56,11 @@ export function LaneHistoryPopover({
       <PopoverContent align="end" className="w-96 p-0">
         <div className="border-b p-3">
           <p className="text-xs font-medium">Rate History</p>
-          <p className="mt-0.5 font-mono text-2xs text-muted-foreground">
+          <p className="text-2xs text-muted-foreground mt-0.5 font-mono">
             {displayLaneKey ?? laneKey}
           </p>
         </div>
-        <div className="max-h-72 overflow-y-auto p-3">
+        <ScrollArea className="h-70 px-3 pb-2">
           {isLoading && <p className="text-2xs text-muted-foreground">Reading the lineage…</p>}
           {!isLoading && (history?.length ?? 0) === 0 && (
             <p className="text-2xs text-muted-foreground">
@@ -71,7 +72,7 @@ export function LaneHistoryPopover({
               <HistoryEntry key={entry.id ?? entry.effectiveFrom} entry={entry} />
             ))}
           </div>
-        </div>
+        </ScrollArea>
       </PopoverContent>
     </Popover>
   );

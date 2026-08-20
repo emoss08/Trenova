@@ -33,7 +33,7 @@ function HashChip({ hash }: { hash: string }) {
   return (
     <span
       title={hash}
-      className="inline-flex items-center gap-0.5 rounded-md border bg-muted/40 py-0.5 pr-0.5 pl-1.5 font-mono text-2xs text-muted-foreground"
+      className="bg-muted/40 text-2xs text-muted-foreground inline-flex items-center gap-0.5 rounded-md border py-0.5 pr-0.5 pl-1.5 font-mono"
     >
       {short}
       <CopyIconButton value={hash} label="Copy hash" size="icon-xxs" />
@@ -62,9 +62,9 @@ function DocumentHeader({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
-      className="relative overflow-hidden rounded-lg border bg-card"
+      className="bg-card relative overflow-hidden rounded-lg border"
     >
-      <div className="pointer-events-none absolute inset-0 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,black,transparent)] [background-size:12px_12px] text-border" />
+      <div className="text-border pointer-events-none absolute inset-0 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,black,transparent)] [background-size:12px_12px]" />
       <div
         className={cn(
           "pointer-events-none absolute -top-20 -right-10 size-56 rounded-full blur-3xl",
@@ -82,7 +82,7 @@ function DocumentHeader({
           <Badge variant="secondary" className="font-normal">
             {domain}
           </Badge>
-          <span className="font-mono text-xs text-muted-foreground">{sourceFile}</span>
+          <span className="text-muted-foreground font-mono text-xs">{sourceFile}</span>
           {hash && <HashChip hash={hash} />}
         </div>
       </div>
@@ -92,7 +92,7 @@ function DocumentHeader({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-2xs font-medium tracking-wider text-muted-foreground/70 uppercase">
+    <span className="text-2xs text-muted-foreground/70 font-medium tracking-wider uppercase">
       {children}
     </span>
   );
@@ -107,14 +107,14 @@ function Chips({ values, onSelect }: { values: string[]; onSelect?: (name: strin
             key={value}
             type="button"
             onClick={() => onSelect(value)}
-            className="rounded-md border border-border bg-muted/40 px-1.5 py-0.5 font-mono text-xs text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5"
+            className="border-border bg-muted/40 text-foreground hover:border-primary/40 hover:bg-primary/5 rounded-md border px-1.5 py-0.5 font-mono text-xs transition-colors"
           >
             {value}
           </button>
         ) : (
           <span
             key={value}
-            className="rounded-md border border-border bg-muted/40 px-1.5 py-0.5 font-mono text-xs text-muted-foreground"
+            className="border-border bg-muted/40 text-muted-foreground rounded-md border px-1.5 py-0.5 font-mono text-xs"
           >
             {value}
           </span>
@@ -128,9 +128,9 @@ function UsagesTab({ usages }: { usages: string[] }) {
   if (usages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <FileCodeIcon className="size-6 text-muted-foreground" />
+        <FileCodeIcon className="text-muted-foreground size-6" />
         <p className="mt-2 text-sm font-medium">No references found</p>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-xs">
           This document is not referenced by any TypeScript source in <code>src/</code>.
         </p>
       </div>
@@ -145,9 +145,9 @@ function UsagesTab({ usages }: { usages: string[] }) {
         {usages.map((usage) => (
           <li
             key={usage}
-            className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-2.5 py-1.5"
+            className="border-border/60 bg-muted/30 flex items-center gap-2 rounded-md border px-2.5 py-1.5"
           >
-            <FileCodeIcon className="size-3.5 shrink-0 text-muted-foreground" />
+            <FileCodeIcon className="text-muted-foreground size-3.5 shrink-0" />
             <span className="truncate font-mono text-xs">{usage}</span>
           </li>
         ))}
@@ -181,7 +181,7 @@ function OperationDetail({
         hash={operation.hash}
       />
 
-      <TabsList variant="underline" className="w-full justify-start border-b border-border">
+      <TabsList variant="underline" className="border-border w-full justify-start border-b">
         <TabsTrigger value="definition">Definition</TabsTrigger>
         <TabsTrigger value="run">Run</TabsTrigger>
         <TabsTrigger value="usages">Usages ({operation.usages.length})</TabsTrigger>
@@ -199,7 +199,7 @@ function OperationDetail({
                       {operation.variables.map((variable) => (
                         <tr key={variable.name} className="border-b last:border-b-0">
                           <td className="w-1/3 px-2.5 py-1.5 font-mono">${variable.name}</td>
-                          <td className="px-2.5 py-1.5 font-mono text-muted-foreground">
+                          <td className="text-muted-foreground px-2.5 py-1.5 font-mono">
                             {variable.type}
                             {variable.defaultValue !== null && (
                               <span className="text-muted-foreground/60">
@@ -281,7 +281,7 @@ function FragmentDetail({
         kind="fragment"
         name={fragment.name}
         suffix={
-          <span className="font-mono text-sm text-muted-foreground">
+          <span className="text-muted-foreground font-mono text-sm">
             on {fragment.typeCondition}
           </span>
         }
@@ -289,7 +289,7 @@ function FragmentDetail({
         sourceFile={fragment.sourceFile}
       />
 
-      <TabsList variant="underline" className="w-full justify-start border-b border-border">
+      <TabsList variant="underline" className="border-border w-full justify-start border-b">
         <TabsTrigger value="definition">Definition</TabsTrigger>
         <TabsTrigger value="usages">Usages ({fragment.usages.length})</TabsTrigger>
       </TabsList>
@@ -356,14 +356,14 @@ export function DetailPanel({
   }
   return (
     <div className="relative flex h-full flex-col items-center justify-center overflow-hidden text-center">
-      <div className="pointer-events-none absolute inset-0 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)] [background-size:14px_14px] text-border/70" />
+      <div className="text-border/70 pointer-events-none absolute inset-0 [background-image:radial-gradient(currentColor_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)] [background-size:14px_14px]" />
       <div className="relative flex flex-col items-center">
-        <FileCodeIcon className="size-8 text-muted-foreground" />
+        <FileCodeIcon className="text-muted-foreground size-8" />
         <p className="mt-3 text-sm font-medium">Select an operation</p>
-        <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 max-w-xs text-xs">
           Search by name, field, or domain to inspect a GraphQL query, mutation, or fragment.
         </p>
-        <div className="mt-4 flex items-center gap-3 text-2xs text-muted-foreground/70">
+        <div className="text-2xs text-muted-foreground/70 mt-4 flex items-center gap-3">
           <span className="flex items-center gap-1">
             <Kbd>/</Kbd> search
           </span>

@@ -13,7 +13,7 @@ export function RevenueCell({ shipment }: { shipment: Shipment }) {
       <span className="font-table text-[11.5px] font-semibold tabular-nums">
         {formatCurrency(total)}
       </span>
-      <span className="font-table text-[9.5px] text-muted-foreground tabular-nums">
+      <span className="font-table text-muted-foreground text-[9.5px] tabular-nums">
         {rpm !== null ? `RPM ${formatCurrency(rpm)}` : "RPM —"}
       </span>
     </div>

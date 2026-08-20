@@ -37,7 +37,7 @@ function BellTrigger({ unreadCount, open }: { unreadCount: number; open: boolean
     <span className="relative">
       <BellIcon className={cn("size-3 transition-colors", open && "text-foreground")} />
       {unreadCount > 0 && (
-        <span className="absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-brand px-0.5 text-[9px] leading-none font-semibold text-brand-foreground tabular-nums">
+        <span className="bg-brand text-brand-foreground absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 text-[9px] leading-none font-semibold tabular-nums">
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}
@@ -78,12 +78,12 @@ function FeedEmptyState({ state, unreadOnly }: { state: NotificationState; unrea
 
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16">
-      <div className="flex size-11 items-center justify-center rounded-full border border-border bg-muted/60">
-        <Icon className="size-5 text-muted-foreground/70" />
+      <div className="border-border bg-muted/60 flex size-11 items-center justify-center rounded-full border">
+        <Icon className="text-muted-foreground/70 size-5" />
       </div>
       <div className="text-center">
-        <p className="text-xs font-medium text-foreground">{title}</p>
-        <p className="mt-0.5 max-w-56 text-2xs text-muted-foreground/70">{description}</p>
+        <p className="text-foreground text-xs font-medium">{title}</p>
+        <p className="text-2xs text-muted-foreground/70 mt-0.5 max-w-56">{description}</p>
       </div>
     </div>
   );
@@ -198,7 +198,7 @@ export function NotificationSheet() {
           <div className="flex items-center gap-2">
             <SheetTitle className="text-sm font-semibold">Notifications</SheetTitle>
             {unreadCount > 0 && (
-              <Badge variant="info" className="h-4.5 text-2xs tabular-nums">
+              <Badge variant="info" className="text-2xs h-4.5 tabular-nums">
                 {unreadCount} new
               </Badge>
             )}
@@ -217,7 +217,7 @@ export function NotificationSheet() {
           )}
         </div>
 
-        <div className="flex items-center justify-between border-b border-border pr-3 pl-2">
+        <div className="border-border flex items-center justify-between border-b pr-3 pl-2">
           <Tabs
             value={tab}
             onValueChange={(value) => setTab(value as NotificationState)}
@@ -263,7 +263,7 @@ export function NotificationSheet() {
 
             {isError && !isLoading && (
               <div className="flex flex-col items-center justify-center gap-3 py-16">
-                <CircleAlertIcon className="size-5 text-destructive/60" />
+                <CircleAlertIcon className="text-destructive/60 size-5" />
                 <p className="text-2xs text-muted-foreground">
                   Notifications couldn&apos;t be loaded.
                 </p>
@@ -280,7 +280,7 @@ export function NotificationSheet() {
             {!isLoading &&
               groups.map((group) => (
                 <div key={group.label}>
-                  <p className="px-4 pt-3 pb-1 text-2xs font-medium tracking-wider text-muted-foreground/70 uppercase">
+                  <p className="text-2xs text-muted-foreground/70 px-4 pt-3 pb-1 font-medium tracking-wider uppercase">
                     {group.label}
                   </p>
                   <AnimatePresence initial={false}>
@@ -308,7 +308,7 @@ export function NotificationSheet() {
             {hasNextPage && <div ref={sentinelRef} className="h-px w-full" />}
             {isFetchingNextPage && (
               <div className="flex items-center justify-center py-3">
-                <Spinner className="size-3.5 text-muted-foreground" />
+                <Spinner className="text-muted-foreground size-3.5" />
               </div>
             )}
         </ScrollArea>

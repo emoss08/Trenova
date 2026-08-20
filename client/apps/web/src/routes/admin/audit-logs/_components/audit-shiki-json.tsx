@@ -204,7 +204,7 @@ export function ShikiJsonBlock({
         "[&_pre]:m-0! [&_pre]:rounded-none! [&_pre]:border-0! [&_pre]:p-3! [&_pre]:text-xs!",
       )
     : cn(
-        "audit-shiki-json rounded-md border border-border/80",
+        "audit-shiki-json border-border/80 rounded-md border",
         "[&_pre]:m-0! [&_pre]:rounded-none! [&_pre]:border-0! [&_pre]:p-3! [&_pre]:text-xs!",
         className,
       );
@@ -212,28 +212,28 @@ export function ShikiJsonBlock({
   if (!baseHtml) {
     const fallbackClasses = hasToolbar
       ? "bg-muted/30"
-      : cn("rounded-md border border-border/80 bg-muted/30", className);
+      : cn("border-border/80 bg-muted/30 rounded-md border", className);
 
     return hasToolbar ? (
-      <div className={cn("overflow-hidden rounded-md border border-border/80", className)}>
+      <div className={cn("border-border/80 overflow-hidden rounded-md border", className)}>
         {searchable && (
-          <div className="flex items-center gap-2 border-b border-border/60 px-2 py-1.5">
+          <div className="border-border/60 flex items-center gap-2 border-b px-2 py-1.5">
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search JSON..."
-              leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               className="h-6 bg-transparent text-xs"
             />
           </div>
         )}
         <ScrollArea className={fallbackClasses} style={{ height: scrollHeight }}>
-          <pre className="p-3 font-mono text-xs text-foreground">{jsonCode}</pre>
+          <pre className="text-foreground p-3 font-mono text-xs">{jsonCode}</pre>
         </ScrollArea>
       </div>
     ) : (
       <ScrollArea className={fallbackClasses} style={{ height: scrollHeight }}>
-        <pre className="p-3 font-mono text-xs text-foreground">{jsonCode}</pre>
+        <pre className="text-foreground p-3 font-mono text-xs">{jsonCode}</pre>
       </ScrollArea>
     );
   }
@@ -247,17 +247,17 @@ export function ShikiJsonBlock({
   }
 
   return (
-    <div className={cn("overflow-hidden rounded-md border border-border/80", className)}>
-      <div className="flex items-center gap-2 border-b border-border/60 px-2 py-1.5">
+    <div className={cn("border-border/80 overflow-hidden rounded-md border", className)}>
+      <div className="border-border/60 flex items-center gap-2 border-b px-2 py-1.5">
         {searchable && (
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search JSON..."
-            leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
             rightElement={
               debouncedQuery ? (
-                <span className="pr-1 text-[10px] text-muted-foreground">
+                <span className="text-muted-foreground pr-1 text-[10px]">
                   {matchCount} {matchCount === 1 ? "match" : "matches"}
                 </span>
               ) : undefined
@@ -266,7 +266,7 @@ export function ShikiJsonBlock({
           />
         )}
         {copyPath && (
-          <span className="shrink-0 text-[10px] text-muted-foreground">
+          <span className="text-muted-foreground shrink-0 text-[10px]">
             Click line to copy path
           </span>
         )}
@@ -275,7 +275,7 @@ export function ShikiJsonBlock({
         <div
           ref={codeRef}
           onClick={handleCodeClick}
-          className={cn(copyPath && "cursor-pointer [&_pre_.line:hover]:bg-muted/50")}
+          className={cn(copyPath && "[&_pre_.line:hover]:bg-muted/50 cursor-pointer")}
           dangerouslySetInnerHTML={{ __html: displayHtml }}
         />
       </ScrollArea>

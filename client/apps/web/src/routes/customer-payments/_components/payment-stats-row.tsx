@@ -75,7 +75,7 @@ function StatTile({
     >
       <Card className="h-full gap-0 rounded-md py-3">
         <CardContent className="px-4">
-          <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+          <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
             {label}
           </p>
           <p
@@ -86,7 +86,7 @@ function StatTile({
           >
             {value}
           </p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">{detail}</p>
+          <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">{detail}</p>
         </CardContent>
       </Card>
     </m.div>

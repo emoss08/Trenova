@@ -74,7 +74,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
             className="size-7"
             title="Fuel surcharge audit detail"
           >
-            <FuelIcon className="size-3.5 text-primary" />
+            <FuelIcon className="text-primary size-3.5" />
           </Button>
         }
       />
@@ -86,7 +86,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
               {detail.method ?? ""}
             </Badge>
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             Every input frozen at rating time — the full defense for a fuel surcharge dispute
           </p>
         </div>

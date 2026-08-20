@@ -96,7 +96,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
   const data = status.data;
   if (!data) {
     return (
-      <p className="py-8 text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground py-8 text-center text-sm">
         Portal status could not be loaded.
       </p>
     );
@@ -106,10 +106,10 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-lg border border-border p-4">
+      <div className="border-border rounded-lg border p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <SmartphoneIcon className="size-4 text-muted-foreground" />
+            <SmartphoneIcon className="text-muted-foreground size-4" />
             <p className="text-sm font-semibold">Dash access</p>
           </div>
           {data.linked ? (
@@ -124,14 +124,14 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
         {data.linked && data.portalUser ? (
           <div className="mt-3 flex flex-col gap-1 text-sm">
             <p className="font-medium">{data.portalUser.name}</p>
-            <p className="text-xs text-muted-foreground">{data.portalUser.emailAddress}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">{data.portalUser.emailAddress}</p>
+            <p className="text-muted-foreground text-xs">
               Last sign-in: {formatDate(data.portalUser.lastLoginAt)}
             </p>
             <Button
               variant="outline"
               size="sm"
-              className="mt-2 w-fit text-destructive"
+              className="text-destructive mt-2 w-fit"
               onClick={() => setConfirmRevoke(true)}
             >
               Revoke access
@@ -139,9 +139,9 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
           </div>
         ) : hasPending && data.pendingInvitation ? (
           <div className="mt-3 flex flex-col gap-1 text-sm">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Invitation sent to{" "}
-              <span className="font-medium text-foreground">{data.pendingInvitation.email}</span> —
+              <span className="text-foreground font-medium">{data.pendingInvitation.email}</span> —
               expires {formatDate(data.pendingInvitation.expiresAt)}.
             </p>
             <Button
@@ -156,7 +156,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
           </div>
         ) : (
           <div className="mt-3 flex flex-col gap-2">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Invite this driver to Dash so they can see their loads, settlement statements, pay
               history, and raise pay questions from their phone.
             </p>
@@ -182,7 +182,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
         )}
 
         {inviteUrl ? (
-          <div className="mt-3 flex items-center gap-2 rounded-md border border-border bg-muted/40 p-2">
+          <div className="border-border bg-muted/40 mt-3 flex items-center gap-2 rounded-md border p-2">
             <p className="min-w-0 flex-1 truncate font-mono text-xs">{inviteUrl}</p>
             <Button variant="ghost" size="sm" className="h-7 px-2" onClick={copyInviteUrl}>
               {copied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
@@ -192,11 +192,11 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
       </div>
 
       {data.invitations.length > 0 ? (
-        <div className="rounded-lg border border-border">
-          <p className="px-4 pt-3 text-xs font-medium text-muted-foreground uppercase">
+        <div className="border-border rounded-lg border">
+          <p className="text-muted-foreground px-4 pt-3 text-xs font-medium uppercase">
             Invitation history
           </p>
-          <ul className="divide-y divide-border">
+          <ul className="divide-border divide-y">
             {data.invitations.map((invitation: PortalInvitationRow) => (
               <li
                 key={invitation.id}
@@ -204,7 +204,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm">{invitation.email}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Sent {formatDate(invitation.createdAt)}
                     {invitation.invitedBy ? ` by ${invitation.invitedBy.name}` : ""}
                     {invitation.acceptedAt
@@ -233,7 +233,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Keep access</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive hover:bg-destructive/90 text-white"
               disabled={revoke.isPending}
               onClick={(event) => {
                 event.preventDefault();

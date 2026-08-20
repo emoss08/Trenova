@@ -59,7 +59,7 @@ export function AiThinkingIndicator({
       aria-live="polite"
       aria-label={message}
       className={cn(
-        "inline-flex items-center gap-2 text-muted-foreground",
+        "text-muted-foreground inline-flex items-center gap-2",
         className,
       )}
     >

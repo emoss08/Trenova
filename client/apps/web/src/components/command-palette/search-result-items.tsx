@@ -57,7 +57,7 @@ export function ShipmentResultItem({
         <p className="truncate text-sm font-medium">
           <Highlight highlight={searchValue} text={meta?.proNumber ?? hit.title} />
         </p>
-        <div className="flex items-center gap-2 overflow-hidden text-2xs text-muted-foreground">
+        <div className="text-2xs text-muted-foreground flex items-center gap-2 overflow-hidden">
           {(meta?.customerName || meta?.customerCode) && (
             <p className="max-w-[220px] truncate">
               {meta?.customerName ? (
@@ -116,7 +116,7 @@ export function CustomerResultItem({
         <p className="truncate text-sm font-medium">
           <Highlight highlight={searchValue} text={hit.title} />
         </p>
-        <div className="flex items-center gap-2 text-2xs text-muted-foreground">
+        <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {meta?.code && (
             <p className="truncate">
               <Highlight highlight={searchValue} text={meta.code} />
@@ -157,7 +157,7 @@ export function WorkerResultItem({
         <p className="truncate text-sm font-medium">
           <Highlight highlight={searchValue} text={hit.title} />
         </p>
-        <div className="flex items-center gap-2 text-2xs text-muted-foreground">
+        <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {meta?.workerType && (
             <Badge variant="secondary" className="max-h-5 px-1.5 py-0 text-[10px]">
               {meta.workerType}
@@ -195,7 +195,7 @@ export function DocumentResultItem({
         <p className="truncate text-sm font-medium">
           <Highlight highlight={searchValue} text={hit.title} />
         </p>
-        <div className="flex items-center gap-2 text-2xs text-muted-foreground">
+        <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {meta?.documentType && (
             <Badge variant="secondary" className="max-h-5 px-1.5 py-0 text-[10px]">
               {meta.documentType}
@@ -234,7 +234,7 @@ export function GenericResultItem({
           <Highlight highlight={searchValue} text={hit.title} />
         </p>
         {hit.subtitle && (
-          <p className="truncate text-2xs text-muted-foreground">
+          <p className="text-2xs text-muted-foreground truncate">
             <Highlight highlight={searchValue} text={hit.subtitle} />
           </p>
         )}

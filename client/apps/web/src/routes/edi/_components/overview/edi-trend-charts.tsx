@@ -63,7 +63,7 @@ export function EDITrendCharts({ points }: { points: EDIVolumePoint[] }) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-md border bg-background p-6 text-sm text-muted-foreground">
+      <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
         No document activity in the selected time range.
       </div>
     );
@@ -71,8 +71,8 @@ export function EDITrendCharts({ points }: { points: EDIVolumePoint[] }) {
 
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-      <div className="rounded-md border bg-background p-3">
-        <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <div className="bg-background rounded-md border p-3">
+        <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
           Document volume
         </h3>
         <ChartContainer config={volumeChartConfig} className="mt-2 aspect-auto! h-[220px] w-full">
@@ -109,8 +109,8 @@ export function EDITrendCharts({ points }: { points: EDIVolumePoint[] }) {
           </LineChart>
         </ChartContainer>
       </div>
-      <div className="rounded-md border bg-background p-3">
-        <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <div className="bg-background rounded-md border p-3">
+        <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
           Delivery success rate
         </h3>
         <ChartContainer

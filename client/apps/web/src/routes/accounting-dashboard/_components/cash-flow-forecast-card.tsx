@@ -51,13 +51,13 @@ export function CashFlowForecastCard() {
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <CardTitle className="text-sm font-medium">Cash-flow forecast — 90 days</CardTitle>
-        <span className="text-xs text-muted-foreground">weekly, collected vs due</span>
+        <span className="text-muted-foreground text-xs">weekly, collected vs due</span>
       </CardHeader>
       <CardContent className="p-4">
         {isLoading ? (
           <Skeleton className="h-56 w-full" />
         ) : chartData.length === 0 ? (
-          <div className="flex h-56 items-center justify-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
             No receivables activity yet
           </div>
         ) : (

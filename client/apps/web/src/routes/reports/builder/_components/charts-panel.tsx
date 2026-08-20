@@ -66,7 +66,7 @@ function CoordinateField({
 
   return (
     <div className="flex flex-col gap-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-muted-foreground text-xs">{label}</Label>
       <Select
         value={value ?? (optional ? NONE : "")}
         onValueChange={(next) => {
@@ -156,9 +156,9 @@ function ChartEditor({
   const axisChoices = needsDimension ? dimensions : measures;
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-border p-2">
+    <div className="border-border flex flex-col gap-2 rounded-md border p-2">
       <div className="flex items-center gap-1.5">
-        <ChartColumnIcon className="size-3.5 text-muted-foreground" />
+        <ChartColumnIcon className="text-muted-foreground size-3.5" />
         <Input
           className="h-7 flex-1"
           value={chart.title ?? ""}
@@ -178,7 +178,7 @@ function ChartEditor({
 
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-muted-foreground">Type</Label>
+          <Label className="text-muted-foreground text-xs">Type</Label>
           <Select
             value={chart.type}
             onValueChange={(type) => {
@@ -225,7 +225,7 @@ function ChartEditor({
 
         {chart.type !== "kpi" && !chartNeedsCoordinates(chart.type) && (
           <div className="flex flex-col gap-1">
-            <Label className="text-xs text-muted-foreground">
+            <Label className="text-muted-foreground text-xs">
               {needsDimension ? "Group by" : "Horizontal axis"}
             </Label>
             <Select
@@ -251,7 +251,7 @@ function ChartEditor({
 
         {chart.type === "kpi" && (
           <div className="flex flex-col gap-1">
-            <Label className="text-xs text-muted-foreground">Compare against</Label>
+            <Label className="text-muted-foreground text-xs">Compare against</Label>
             <Select
               value={chart.compareId ?? NONE}
               onValueChange={(compareId) => {
@@ -283,7 +283,7 @@ function ChartEditor({
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label className="text-xs text-muted-foreground">
+        <Label className="text-muted-foreground text-xs">
           {singleSeries ? "Measure" : "Measures"}
         </Label>
         {measures.length === 0 ? (
@@ -307,8 +307,8 @@ function ChartEditor({
 
       <div className="grid grid-cols-2 gap-2">
         {chartSupportsStacking(chart.type) && seriesIds.length > 1 && (
-          <div className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1">
-            <Label className="text-xs text-muted-foreground">Stacked</Label>
+          <div className="border-border flex items-center justify-between gap-2 rounded-md border px-2 py-1">
+            <Label className="text-muted-foreground text-xs">Stacked</Label>
             <Switch
               checked={chart.stacked ?? false}
               onCheckedChange={(stacked) => onUpdate({ ...chart, stacked })}
@@ -316,8 +316,8 @@ function ChartEditor({
           </div>
         )}
         {(chart.type === "line" || chart.type === "area") && (
-          <div className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1">
-            <Label className="text-xs text-muted-foreground">Smooth</Label>
+          <div className="border-border flex items-center justify-between gap-2 rounded-md border px-2 py-1">
+            <Label className="text-muted-foreground text-xs">Smooth</Label>
             <Switch
               checked={chart.curved ?? false}
               onCheckedChange={(curved) => onUpdate({ ...chart, curved })}
@@ -325,8 +325,8 @@ function ChartEditor({
           </div>
         )}
         {(chart.type === "bar" || chart.type === "hbar") && (
-          <div className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1">
-            <Label className="text-xs text-muted-foreground">Show values</Label>
+          <div className="border-border flex items-center justify-between gap-2 rounded-md border px-2 py-1">
+            <Label className="text-muted-foreground text-xs">Show values</Label>
             <Switch
               checked={chart.showValues ?? false}
               onCheckedChange={(showValues) => onUpdate({ ...chart, showValues })}
@@ -334,8 +334,8 @@ function ChartEditor({
           </div>
         )}
         {seriesIds.length > 1 && chart.type !== "kpi" && (
-          <div className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1">
-            <Label className="text-xs text-muted-foreground">Legend</Label>
+          <div className="border-border flex items-center justify-between gap-2 rounded-md border px-2 py-1">
+            <Label className="text-muted-foreground text-xs">Legend</Label>
             <Switch
               checked={!chart.hideLegend}
               onCheckedChange={(shown) => onUpdate({ ...chart, hideLegend: !shown })}
@@ -344,7 +344,7 @@ function ChartEditor({
         )}
         {chart.type !== "kpi" && (
           <div className="flex flex-col gap-1">
-            <Label className="text-xs text-muted-foreground">Top N categories</Label>
+            <Label className="text-muted-foreground text-xs">Top N categories</Label>
             <Input
               className="h-7"
               type="number"
@@ -363,9 +363,9 @@ function ChartEditor({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-t border-border/60 pt-2">
+      <div className="border-border/60 grid grid-cols-2 gap-2 border-t pt-2">
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-muted-foreground">Target value</Label>
+          <Label className="text-muted-foreground text-xs">Target value</Label>
           <Input
             className="h-7"
             type="number"
@@ -385,7 +385,7 @@ function ChartEditor({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-muted-foreground">Target column</Label>
+          <Label className="text-muted-foreground text-xs">Target column</Label>
           <Select
             value={chart.goal?.columnId ?? NONE}
             onValueChange={(columnId) => {
@@ -420,7 +420,7 @@ function ChartEditor({
         </div>
         {(chart.goal?.value !== undefined || chart.goal?.columnId) && (
           <div className="col-span-2 flex flex-col gap-1">
-            <Label className="text-xs text-muted-foreground">Target label</Label>
+            <Label className="text-muted-foreground text-xs">Target label</Label>
             <Input
               className="h-7"
               placeholder="Target"
@@ -452,7 +452,7 @@ export function ChartsPanel({ index, ir, onChange }: ChartsPanelProps) {
 
   if (measures.length === 0 && !canMap) {
     return (
-      <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground px-2 py-4 text-center text-sm">
         Charts plot measures — add one to the report first.
       </p>
     );

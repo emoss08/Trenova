@@ -82,7 +82,7 @@ export function TimelineToolbar({
   const isCompact = density === "compact";
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5">
+    <div className="border-border flex flex-wrap items-center gap-2 border-b px-3 py-1.5">
       <div className="flex items-center gap-1">
         <Button
           type="button"
@@ -118,10 +118,10 @@ export function TimelineToolbar({
 
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
         <PopoverTrigger
-          className="flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] font-medium transition-colors hover:bg-muted"
+          className="hover:bg-muted flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] font-medium transition-colors"
           aria-label="Jump to date"
         >
-          <CalendarIcon className="size-3 text-muted-foreground" />
+          <CalendarIcon className="text-muted-foreground size-3" />
           {formatRangeLabel(anchor, zoom)}
         </PopoverTrigger>
         <PopoverContent align="start" className="w-auto p-0">
@@ -142,7 +142,7 @@ export function TimelineToolbar({
       <div
         role="group"
         aria-label="Timeline zoom"
-        className="inline-flex overflow-hidden rounded-md border border-border"
+        className="border-border inline-flex overflow-hidden rounded-md border"
       >
         {ZOOM_OPTIONS.map((option, index) => (
           <button
@@ -152,7 +152,7 @@ export function TimelineToolbar({
             aria-pressed={zoom === option.id}
             className={cn(
               "px-2 py-1 text-[11px] transition-colors",
-              index > 0 && "border-l border-border",
+              index > 0 && "border-border border-l",
               zoom === option.id
                 ? "bg-muted text-foreground"
                 : "bg-background text-muted-foreground hover:text-foreground",
@@ -221,14 +221,14 @@ export function TimelineToolbar({
 
       <div className="ml-auto flex items-center gap-3">
         {isFetching && (
-          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+          <span className="text-muted-foreground inline-flex items-center gap-1 text-[10px]">
             <Spinner className="size-3" />
             Refreshing
           </span>
         )}
         {truncated && (
           <span
-            className="inline-flex items-center gap-1 rounded border border-warning/30 bg-warning/10 px-1.5 py-0.5 text-[10px] text-warning"
+            className="border-warning/30 bg-warning/10 text-warning inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px]"
             title="Narrow the window or filters to see everything at once."
           >
             <TriangleAlertIcon className="size-3" />
@@ -239,14 +239,14 @@ export function TimelineToolbar({
           {LEGEND_ITEMS.map((item) => (
             <span
               key={item.label}
-              className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"
+              className="text-muted-foreground inline-flex items-center gap-1 text-[10px]"
             >
               <span className={cn("size-1.5 rounded-full", item.dotClass)} />
               {item.label}
             </span>
           ))}
         </div>
-        <p className="shrink-0 font-table text-[10.5px] text-muted-foreground tabular-nums">
+        <p className="font-table text-muted-foreground shrink-0 text-[10.5px] tabular-nums">
           {barCount} {barCount === 1 ? "load" : "loads"} in view
         </p>
       </div>

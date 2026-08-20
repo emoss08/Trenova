@@ -38,9 +38,9 @@ export function LatestChange() {
         "transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0",
       )}
     >
-      <span className="font-mono text-[10px] font-light text-muted-foreground">UPDATE</span>
+      <span className="text-muted-foreground font-mono text-[10px] font-light">UPDATE</span>
       <p className="text-xs font-medium">v{status.latestVersion} available</p>
-      <span className="text-[10px] text-muted-foreground">Running v{status.currentVersion}</span>
+      <span className="text-muted-foreground text-[10px]">Running v{status.currentVersion}</span>
       {status.latestRelease.htmlUrl && (
         <Button
           render={
@@ -61,7 +61,7 @@ export function LatestChange() {
         size="icon-sm"
         variant="ghost"
       >
-        <XIcon className="size-3.5 text-muted-foreground" />
+        <XIcon className="text-muted-foreground size-3.5" />
       </Button>
     </div>
   );

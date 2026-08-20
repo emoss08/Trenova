@@ -21,7 +21,7 @@ export function EditHomeLayoutPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-24 text-center">
         <p className="text-sm font-medium">That home screen no longer exists</p>
-        <p className="max-w-sm text-xs text-muted-foreground">
+        <p className="text-muted-foreground max-w-sm text-xs">
           It may have been deleted by another administrator.
         </p>
         <Link to="/admin/home-layouts" className="pt-1">

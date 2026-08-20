@@ -92,12 +92,12 @@ export function StopRuleEditor() {
     >
       {fields.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
-          <MapPinIcon className="size-8 text-muted-foreground/50" />
+          <MapPinIcon className="text-muted-foreground/50 size-8" />
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
+            <p className="text-muted-foreground text-sm font-medium">
               No stop rules defined
             </p>
-            <p className="mt-0.5 text-xs text-muted-foreground/70">
+            <p className="text-muted-foreground/70 mt-0.5 text-xs">
               Add stops to extract pickup and delivery locations from the
               document.
             </p>
@@ -140,7 +140,7 @@ function StopItem({
   return (
     <Collapsible defaultOpen>
       <div className="rounded-md border">
-        <CollapsibleTrigger className="flex w-full items-center justify-between p-3 text-sm font-medium hover:bg-muted/50">
+        <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between p-3 text-sm font-medium">
           <div className="flex items-center gap-2">
             <Badge variant={badgeVariant} className="capitalize">
               {currentRole}
@@ -158,7 +158,7 @@ function StopItem({
                 onRemove();
               }}
             >
-              <TrashIcon className="size-3.5 text-destructive" />
+              <TrashIcon className="text-destructive size-3.5" />
             </Button>
             <ChevronDownIcon className="size-4 transition-transform [[data-state=open]>&]:rotate-180" />
           </div>
@@ -238,7 +238,7 @@ function StopItem({
 
             <Separator />
 
-            <div className="rounded-md bg-muted/30 p-3">
+            <div className="bg-muted/30 rounded-md p-3">
               <StopExtractorEditor stopIndex={index} />
             </div>
           </div>
@@ -262,7 +262,7 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
           <h4 className="text-sm font-medium">
             Extractors ({fields.length})
           </h4>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             Each extractor pulls a specific piece of data (name, address, date)
             from this stop.
           </p>
@@ -288,9 +288,9 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
         </Button>
       </div>
       {fields.map((field, extIdx) => (
-        <div key={field.id} className="rounded border bg-background p-3">
+        <div key={field.id} className="bg-background rounded border p-3">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
               {field.fieldKey || `Extractor ${extIdx + 1}`}
             </span>
             <Button
@@ -300,7 +300,7 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
               className="size-6"
               onClick={() => remove(extIdx)}
             >
-              <TrashIcon className="size-3 text-destructive" />
+              <TrashIcon className="text-destructive size-3" />
             </Button>
           </div>
           <FormGroup cols={2}>

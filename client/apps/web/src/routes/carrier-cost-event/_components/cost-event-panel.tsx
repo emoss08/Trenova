@@ -73,7 +73,7 @@ export function CostEventPanel({
             </tbody>
           </table>
         </div>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground text-[11px]">
           Cost events accrue automatically when a carrier-covered shipment reaches your configured
           pay trigger and are locked once attached to a settlement.
         </p>

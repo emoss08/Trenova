@@ -5,12 +5,12 @@ import { Package, Search, Truck } from "lucide-react";
 export function SearchLoading({ query }: { query: string }) {
   return (
     <div className="flex h-60 flex-col items-center justify-center gap-2">
-      <Spinner variant="bars" className="size-8 text-primary" />
+      <Spinner variant="bars" className="text-primary size-8" />
       <div className="flex flex-col items-center text-center">
-        <h3 className="text-lg font-semibold text-foreground">
+        <h3 className="text-foreground text-lg font-semibold">
           Searching for <span className="font-mono">&quot;{query}&quot;</span>...
         </h3>
-        <p className="text-sm text-muted-foreground">This may take a few seconds...</p>
+        <p className="text-muted-foreground text-sm">This may take a few seconds...</p>
       </div>
     </div>
   );
@@ -32,9 +32,9 @@ export function SearchEmpty() {
 export function SearchKeepTyping() {
   return (
     <div className="flex h-60 flex-col items-center justify-center gap-2">
-      <Spinner variant="infinite" className="size-8 text-primary" />
+      <Spinner variant="infinite" className="text-primary size-8" />
       <div className="flex flex-col items-center text-center">
-        <p className="text-sm font-medium text-foreground">Keep typing to search records...</p>
+        <p className="text-foreground text-sm font-medium">Keep typing to search records...</p>
       </div>
     </div>
   );

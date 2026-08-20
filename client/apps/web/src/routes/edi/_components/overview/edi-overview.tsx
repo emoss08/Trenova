@@ -34,7 +34,7 @@ export function EDIOverview() {
   }
   if (isError || !data) {
     return (
-      <div className="rounded-md border bg-background p-6 text-sm text-muted-foreground">
+      <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
         The EDI operations summary could not be loaded. Retry shortly or check the API logs.
       </div>
     );
@@ -52,10 +52,10 @@ export function EDIOverview() {
   return (
     <div className="flex flex-col gap-6 p-3">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Counts, trends, and partner scorecards for the selected window.
         </p>
-        <div className="flex items-center gap-1 rounded-md border bg-background p-0.5">
+        <div className="bg-background flex items-center gap-1 rounded-md border p-0.5">
           {TIME_RANGE_OPTIONS.map((option) => (
             <Button
               key={option.label}
@@ -151,7 +151,7 @@ export function EDIOverview() {
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold">Trends</h2>
         {volumeQuery.isError ? (
-          <div className="rounded-md border bg-background p-6 text-sm text-muted-foreground">
+          <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
             The volume trend could not be loaded.
           </div>
         ) : (
@@ -161,7 +161,7 @@ export function EDIOverview() {
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold">Partner scorecards</h2>
         {scorecardsQuery.isError ? (
-          <div className="rounded-md border bg-background p-6 text-sm text-muted-foreground">
+          <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
             Partner scorecards could not be loaded.
           </div>
         ) : (
@@ -173,7 +173,7 @@ export function EDIOverview() {
           <h2 className="text-sm font-semibold">
             Recent failures
             {summary.attentionItems.length > 0 && (
-              <span className="ml-2 text-xs font-normal text-muted-foreground">
+              <span className="text-muted-foreground ml-2 text-xs font-normal">
                 showing the {summary.attentionItems.length} most recent
               </span>
             )}
@@ -188,11 +188,11 @@ export function EDIOverview() {
           </div>
         </div>
         {summary.attentionItems.length === 0 ? (
-          <div className="rounded-md border bg-background p-6 text-sm text-muted-foreground">
+          <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
             No dead-lettered messages or quarantined files. The pipeline is healthy.
           </div>
         ) : (
-          <div className="flex flex-col divide-y rounded-md border bg-background">
+          <div className="bg-background flex flex-col divide-y rounded-md border">
             {summary.attentionItems.map((item) => (
               <AttentionRow key={`${item.kind}-${item.id}`} item={item} />
             ))}
@@ -210,8 +210,8 @@ function AttentionRow({ item }: { item: EDISummaryAttentionItem }) {
     : `/edi/inbound-files?panelType=edit&panelEntityId=${item.id}`;
 
   return (
-    <Link to={target} className="flex items-start gap-3 p-3 transition-colors hover:bg-muted/40">
-      <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+    <Link to={target} className="hover:bg-muted/40 flex items-start gap-3 p-3 transition-colors">
+      <AlertTriangleIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">
@@ -219,17 +219,17 @@ function AttentionRow({ item }: { item: EDISummaryAttentionItem }) {
           </Badge>
           {item.reference && <span className="truncate text-sm font-medium">{item.reference}</span>}
           {item.partnerName && (
-            <span className="truncate text-xs text-muted-foreground">
+            <span className="text-muted-foreground truncate text-xs">
               {item.partnerCode ? `${item.partnerCode} — ` : ""}
               {item.partnerName}
             </span>
           )}
         </div>
         {item.error && (
-          <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.error}</div>
+          <div className="text-muted-foreground mt-1 line-clamp-2 text-xs">{item.error}</div>
         )}
       </div>
-      <div className="shrink-0 text-xs text-muted-foreground">
+      <div className="text-muted-foreground shrink-0 text-xs">
         <HoverCardTimestamp timestamp={item.occurredAt} />
       </div>
     </Link>

@@ -79,14 +79,14 @@ function GenerateBatchPanel({
       form={form}
       notice={
         period ? (
-          <div className="rounded-lg border bg-muted/30 p-3 text-sm">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase">
+          <div className="bg-muted/30 rounded-lg border p-3 text-sm">
+            <p className="text-muted-foreground text-[11px] font-medium uppercase">
               Current Pay Period
             </p>
             <p className="mt-1 font-medium">
               {formatSettlementDate(period.periodStart)} – {formatSettlementDate(period.periodEnd)}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Pays on {formatSettlementDate(period.payDate)}
             </p>
           </div>
@@ -111,7 +111,7 @@ function GenerateBatchPanel({
               description="Anything reviewers should know about this run, e.g. an off-cycle correction."
             />
           </FormControl>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Settlements can auto-post on approval based on your carrier settlement control policy.
           </p>
         </FormGroup>
@@ -167,7 +167,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
     <div className="flex h-full flex-col gap-4 overflow-y-auto">
       <div className="flex flex-wrap items-center gap-2">
         <CarrierSettlementBatchStatusBadge status={data.status as CarrierSettlementBatchStatus} />
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           {formatSettlementDate(data.periodStart)} – {formatSettlementDate(data.periodEnd)} · pays{" "}
           {formatSettlementDate(data.payDate)}
         </span>
@@ -184,18 +184,18 @@ function BatchDetail({ batchId }: { batchId: string }) {
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Settlements</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Settlements</p>
           <p className="mt-1 text-sm font-semibold tabular-nums">{data.settlementCount}</p>
         </div>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Total Gross</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Total Gross</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={data.totalGrossMinor} currency={data.currencyCode} />
           </p>
         </div>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Total Net</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Total Net</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={data.totalNetMinor}

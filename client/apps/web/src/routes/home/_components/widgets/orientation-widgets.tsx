@@ -50,7 +50,7 @@ export function QuickActionsWidget({ widget }: WidgetProps) {
               key={definition.id}
               to={href}
               title={definition.description}
-              className="flex h-7 items-center gap-1.5 truncate rounded-md border border-border bg-background px-2 text-xs font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+              className="border-border bg-background text-foreground/80 hover:bg-muted hover:text-foreground flex h-7 items-center gap-1.5 truncate rounded-md border px-2 text-xs font-medium transition-colors"
             >
               <Icon className="size-3 shrink-0" />
               <span className="truncate">{definition.label}</span>
@@ -80,7 +80,7 @@ export function FavoritesWidget({ widget }: WidgetProps) {
             <Link
               key={favorite.id}
               to={favorite.pageUrl}
-              className="flex items-center gap-2 rounded px-1.5 py-1 text-xs transition-colors hover:bg-muted/60"
+              className="hover:bg-muted/60 flex items-center gap-2 rounded px-1.5 py-1 text-xs transition-colors"
             >
               <StarIcon className="size-3 shrink-0 fill-amber-400 text-amber-400" />
               <span className="truncate">{favorite.pageTitle}</span>
@@ -128,7 +128,7 @@ function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean })
               <span className="text-muted-foreground">{entry.operation}</span>{" "}
               <span className="text-muted-foreground">{entry.resource}</span>
             </span>
-            <span className="shrink-0 font-table text-[9.5px] text-muted-foreground tabular-nums">
+            <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
               {formatToUserTimezone(entry.timestamp, {
                 showTimeZone: false,
                 showSeconds: false,
@@ -180,7 +180,7 @@ export function SavedViewsWidget({ widget }: WidgetProps) {
           <Link
             key={target.href}
             to={target.href}
-            className="rounded px-1.5 py-1 text-xs transition-colors hover:bg-muted/60"
+            className="hover:bg-muted/60 rounded px-1.5 py-1 text-xs transition-colors"
           >
             {target.label}
           </Link>
@@ -214,7 +214,7 @@ export function NotificationsWidget({ widget }: WidgetProps) {
           {notifications.map((notification) => (
             <div key={notification.id} className="flex flex-col gap-0.5 rounded px-1.5 py-1">
               <span className="truncate text-xs font-medium">{notification.title}</span>
-              <span className="truncate text-[10px] text-muted-foreground">
+              <span className="text-muted-foreground truncate text-[10px]">
                 {notification.message}
               </span>
             </div>

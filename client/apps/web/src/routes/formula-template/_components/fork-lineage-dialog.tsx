@@ -43,7 +43,7 @@ function LineageNode({
       <div className="flex items-start gap-2">
         {!isRoot && (
           <div className="flex flex-col items-center pt-2">
-            <div className="w-4 border-t border-border" />
+            <div className="border-border w-4 border-t" />
           </div>
         )}
         <div
@@ -58,11 +58,11 @@ function LineageNode({
             }
           }}
         >
-          <GitBranchIcon className="size-4 text-muted-foreground" />
+          <GitBranchIcon className="text-muted-foreground size-4" />
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium">{node.templateName}</span>
             {node.sourceVersion && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 Forked from v{node.sourceVersion}
               </span>
             )}
@@ -76,7 +76,7 @@ function LineageNode({
       </div>
 
       {hasChildren && (
-        <div className="mt-2 ml-6 border-l border-border pl-4">
+        <div className="border-border mt-2 ml-6 border-l pl-4">
           {node.forkedTemplates!.map((child, index) => (
             <div
               key={child.templateId}
@@ -141,12 +141,12 @@ export function ForkLineageDialog({
         <div className="max-h-[400px] overflow-y-auto py-4">
           {isLoading && (
             <div className="flex items-center justify-center py-8">
-              <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+              <Loader2Icon className="text-muted-foreground size-6 animate-spin" />
             </div>
           )}
 
           {error && (
-            <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+            <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8">
               <AlertCircleIcon className="size-8" />
               <p className="text-sm">Failed to load lineage data</p>
             </div>

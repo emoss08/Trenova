@@ -158,7 +158,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
 
       <div className="flex flex-col gap-2">
         {failures.length === 0 && (
-          <div className="rounded-md border border-dashed py-8 text-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground rounded-md border border-dashed py-8 text-center text-sm">
             No service failures recorded for this shipment.
           </div>
         )}
@@ -171,7 +171,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
           return (
             <div
               key={failure.id}
-              className={cn("rounded-md border bg-card p-3", terminal && "bg-muted/25")}
+              className={cn("bg-card rounded-md border p-3", terminal && "bg-muted/25")}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -182,7 +182,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                       <ColorOptionValue color={failureType.color} value={failureType.label} />
                     )}
                   </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
+                  <div className="text-muted-foreground mt-1 text-xs">
                     {failure.lateMinutes} minute(s) late after {failure.gracePeriodMinutes} minute
                     grace · <HoverCardTimestamp timestamp={failure.detectedAt} />
                   </div>
@@ -264,7 +264,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                 </div>
               </div>
               {failure.notes && (
-                <p className="mt-2 rounded bg-muted/40 px-2 py-1.5 text-xs">{failure.notes}</p>
+                <p className="bg-muted/40 mt-2 rounded px-2 py-1.5 text-xs">{failure.notes}</p>
               )}
               <ServiceFailureEDI214Readiness failure={failure} />
             </div>
@@ -285,7 +285,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
             </DialogDescription>
           </DialogHeader>
 
-          <div className="max-h-[28rem] overflow-y-auto rounded-md border bg-muted/20">
+          <div className="bg-muted/20 max-h-[28rem] overflow-y-auto rounded-md border">
             <div className="flex items-center gap-2 border-b px-3 py-2 text-sm font-medium">
               <InfoIcon className="size-4 text-amber-500" />
               Stop Results
@@ -332,12 +332,12 @@ function EvaluationStopGroup({
 
   return (
     <div className="border-b last:border-b-0">
-      <div className="flex items-center justify-between px-3 py-2 text-xs font-medium tracking-normal text-muted-foreground uppercase">
+      <div className="text-muted-foreground flex items-center justify-between px-3 py-2 text-xs font-medium tracking-normal uppercase">
         <span>{label}</span>
         <span>{count}</span>
       </div>
       {stops.length ? (
-        <div className="divide-y bg-background/70">
+        <div className="bg-background/70 divide-y">
           {stops.map((item, index) => (
             <ServiceFailureStopContext
               key={`${label}-${item.serviceFailureId ?? item.stopId ?? item.shipmentId ?? index}`}
@@ -348,7 +348,7 @@ function EvaluationStopGroup({
           ))}
         </div>
       ) : (
-        <p className="bg-background/70 px-3 py-3 text-xs text-muted-foreground">
+        <p className="bg-background/70 text-muted-foreground px-3 py-3 text-xs">
           No stop details were returned.
         </p>
       )}
@@ -376,7 +376,7 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
   const readiness = readinessQuery.data;
   if (readinessQuery.isLoading) {
     return (
-      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
         <SendIcon className="size-3.5" />
         Checking EDI 214 readiness
       </div>

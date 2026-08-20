@@ -23,7 +23,7 @@ export function getColumns(): ColumnDef<StoredMileage>[] {
           <div className="truncate font-medium">
             {stopLabel(row.original.originKey)} {"->"} {stopLabel(row.original.destinationKey)}
           </div>
-          <div className="truncate text-xs text-muted-foreground">
+          <div className="text-muted-foreground truncate text-xs">
             {row.original.intermediateKeys.length > 0
               ? `${row.original.intermediateKeys.length} intermediate stops`
               : row.original.routeHash}

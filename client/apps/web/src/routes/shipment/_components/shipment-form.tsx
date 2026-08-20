@@ -52,16 +52,16 @@ export function ShipmentForm() {
             <ShipmentMoveDetails />
           </div>
           {isFullyLocked && (
-            <div className="absolute inset-0 z-10 rounded-lg bg-background/60">
+            <div className="bg-background/60 absolute inset-0 z-10 rounded-lg">
               <div className="sticky top-1/3 flex flex-col items-center gap-3 py-12">
-                <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-                  <LockIcon className="size-5 text-muted-foreground" />
+                <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+                  <LockIcon className="text-muted-foreground size-5" />
                 </div>
                 <div className="max-w-sm text-center">
                   <p className="text-sm font-medium">
                     {isCanceled ? "Billing Canceled" : "Under Billing Review"}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-xs">
                     {isCanceled
                       ? "Billing for this shipment has been canceled. No further modifications can be made."
                       : "This shipment is currently being reviewed by the billing team and cannot be modified. If changes are needed, contact your billing department to have it returned to operations."}
@@ -102,10 +102,10 @@ function SectionLock({ locked, children }: { locked: boolean; children: ReactNod
   return (
     <div className="relative flex flex-col gap-6">
       {children}
-      <div className="absolute inset-0 z-10 flex cursor-not-allowed items-center justify-center rounded-lg bg-background/60">
-        <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-1.5">
-          <LockIcon className="size-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground">
+      <div className="bg-background/60 absolute inset-0 z-10 flex cursor-not-allowed items-center justify-center rounded-lg">
+        <div className="bg-muted flex items-center gap-2 rounded-md px-3 py-1.5">
+          <LockIcon className="text-muted-foreground size-3.5" />
+          <span className="text-muted-foreground text-xs font-medium">
             Locked — shipment has been invoiced
           </span>
         </div>

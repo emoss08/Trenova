@@ -88,30 +88,30 @@ export function TestDataEditor({ values, onChange, className }: TestDataEditorPr
   };
 
   return (
-    <div className={cn("rounded-lg border bg-muted/30", className)}>
+    <div className={cn("bg-muted/30 rounded-lg border", className)}>
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
         className="flex w-full items-center justify-between px-3 py-2 text-left"
       >
         <div className="flex items-center gap-2">
-          <Database className="size-3.5 text-muted-foreground" />
+          <Database className="text-muted-foreground size-3.5" />
           <span className="text-xs font-medium">Test Data</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             ({Object.keys(values).length} variables)
           </span>
         </div>
         {isExpanded ? (
-          <ChevronUp className="size-3.5 text-muted-foreground" />
+          <ChevronUp className="text-muted-foreground size-3.5" />
         ) : (
-          <ChevronDown className="size-3.5 text-muted-foreground" />
+          <ChevronDown className="text-muted-foreground size-3.5" />
         )}
       </button>
 
       {isExpanded && (
         <div className="border-t px-3 py-3">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Edit values below to test your expression with different inputs
             </p>
             <Button
@@ -119,7 +119,7 @@ export function TestDataEditor({ values, onChange, className }: TestDataEditorPr
               variant="ghost"
               size="sm"
               onClick={handleReset}
-              className="h-6 gap-1 px-2 text-xs text-muted-foreground"
+              className="text-muted-foreground h-6 gap-1 px-2 text-xs"
             >
               <RotateCcw className="size-3" />
               Reset
@@ -133,13 +133,13 @@ export function TestDataEditor({ values, onChange, className }: TestDataEditorPr
 
               return (
                 <div key={category.id}>
-                  <h4 className="mb-2 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+                  <h4 className="text-muted-foreground mb-2 text-[10px] font-semibold tracking-wide uppercase">
                     {category.label}
                   </h4>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                     {categoryVars.map((variable) => (
                       <div key={variable.name} className="space-y-1">
-                        <label className="block text-[10px] font-medium text-muted-foreground">
+                        <label className="text-muted-foreground block text-[10px] font-medium">
                           {variable.name}
                         </label>
                         {variable.type === "Boolean" ? (

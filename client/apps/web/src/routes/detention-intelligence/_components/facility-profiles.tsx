@@ -84,9 +84,9 @@ function FacilityRow({
         type="button"
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
-        className="group flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors outline-none hover:bg-muted/40 focus-visible:bg-muted/40"
+        className="group hover:bg-muted/40 focus-visible:bg-muted/40 flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors outline-none"
       >
-        <span className="w-4 shrink-0 text-2xs font-medium text-muted-foreground tabular-nums">
+        <span className="text-2xs text-muted-foreground w-4 shrink-0 font-medium tabular-nums">
           {rank}
         </span>
 
@@ -94,7 +94,7 @@ function FacilityRow({
           <p className="truncate text-sm leading-tight font-medium">
             {row.locationName || row.locationId}
           </p>
-          <p className="mt-0.5 truncate text-2xs text-muted-foreground tabular-nums">
+          <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
             {row.stopCount} {row.stopCount === 1 ? "stop" : "stops"} ·{" "}
             {row.breachCount} past free time
             {row.disputeCount > 0 ? ` · ${row.disputeCount} disputed` : ""}
@@ -108,7 +108,7 @@ function FacilityRow({
             scale={dwellScale}
             delay={Math.min(index, 10) * 0.03}
           />
-          <p className="mt-1.5 truncate text-2xs text-muted-foreground tabular-nums">
+          <p className="text-2xs text-muted-foreground mt-1.5 truncate tabular-nums">
             {formatDetentionMinutes(Math.round(row.medianDwellMinutes))} med ·{" "}
             {formatDetentionMinutes(Math.round(row.p90DwellMinutes))} p90
           </p>
@@ -120,7 +120,7 @@ function FacilityRow({
             barClassName={breachToneClass(breachRate)}
             delay={Math.min(index, 10) * 0.03}
           />
-          <p className="mt-1.5 text-2xs text-muted-foreground tabular-nums">
+          <p className="text-2xs text-muted-foreground mt-1.5 tabular-nums">
             {Math.round(breachRate * 100)}% breach
           </p>
         </div>
@@ -131,7 +131,7 @@ function FacilityRow({
           </p>
           <p
             className={cn(
-              "mt-0.5 truncate text-2xs tabular-nums",
+              "text-2xs mt-0.5 truncate tabular-nums",
               deltaToneClass(row.netMargin),
             )}
           >
@@ -141,7 +141,7 @@ function FacilityRow({
 
         <ChevronDownIcon
           className={cn(
-            "size-3.5 shrink-0 text-muted-foreground/60 transition-transform duration-200 group-hover:text-foreground",
+            "text-muted-foreground/60 group-hover:text-foreground size-3.5 shrink-0 transition-transform duration-200",
             open && "rotate-180",
           )}
         />
@@ -157,7 +157,7 @@ function FacilityRow({
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-dashed border-border bg-muted/20 px-3 py-3 sm:grid-cols-4">
+            <div className="border-border bg-muted/20 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-dashed px-3 py-3 sm:grid-cols-4">
               <MetricCell
                 label="Average dwell"
                 value={formatDetentionMinutes(Math.round(row.avgDwellMinutes))}
@@ -246,13 +246,13 @@ export function FacilityProfiles({
       footer={
         sorted.length > 0 ? (
           <div className="flex items-center justify-between gap-3">
-            <div className="hidden items-center gap-3 text-2xs text-muted-foreground md:flex">
+            <div className="text-2xs text-muted-foreground hidden items-center gap-3 md:flex">
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-4 rounded-full bg-foreground" />
+                <span className="bg-foreground h-1.5 w-4 rounded-full" />
                 median dwell
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-4 rounded-full bg-foreground/25" />
+                <span className="bg-foreground/25 h-1.5 w-4 rounded-full" />
                 p90 tail
               </span>
             </div>
@@ -280,7 +280,7 @@ export function FacilityProfiles({
           message="No detention settled at any facility in this window. Widen the range, or check that the detention engine is switched on for this organization."
         />
       ) : (
-        <div key={sort} className="divide-y divide-border">
+        <div key={sort} className="divide-border divide-y">
           {visible.map((row, rowIndex) => (
             <FacilityRow
               key={row.locationId}

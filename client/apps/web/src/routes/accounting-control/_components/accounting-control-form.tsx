@@ -188,7 +188,7 @@ function JournalPolicyCard() {
             <FormControl className="max-w-[720px]">
               <div className="flex flex-col gap-3">
                 <Label className="text-sm font-medium">Auto-Post Source Events</Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   Select the posted business events that are allowed to generate journal entries
                   automatically.
                 </p>
@@ -603,7 +603,7 @@ function CurrencyAndAccountsCard() {
               <>
                 <div className="flex flex-col gap-1 border-t pt-4">
                   <h3 className="text-sm font-medium">Currency Policy</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Configure exchange-rate date selection, override handling, and realized FX
                     accounts.
                   </p>
@@ -689,20 +689,20 @@ function OANDAReadinessPanel({
   }
 
   return (
-    <div className="max-w-[420px] rounded-md border border-border bg-background px-3.5 py-3">
+    <div className="border-border bg-background max-w-[420px] rounded-md border px-3.5 py-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 space-y-1">
           <div className="flex items-center gap-2">
             <span
               className={
                 ready
-                  ? "size-1.5 shrink-0 rounded-full bg-success"
-                  : "size-1.5 shrink-0 rounded-full bg-muted-foreground/50"
+                  ? "bg-success size-1.5 shrink-0 rounded-full"
+                  : "bg-muted-foreground/50 size-1.5 shrink-0 rounded-full"
               }
             />
-            <p className="text-sm font-medium text-foreground">{title}</p>
+            <p className="text-foreground text-sm font-medium">{title}</p>
           </div>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-muted-foreground text-sm">{description}</p>
         </div>
         <Button
           type="button"

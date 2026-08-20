@@ -72,7 +72,7 @@ function AgingSnapshot() {
   const totalOpen = (buckets?.totalOpenMinor ?? 0) / 100;
   if (chartData.length === 0) {
     return (
-      <div className="flex h-56 items-center justify-center text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
         Nothing outstanding — all caught up
       </div>
     );
@@ -104,7 +104,7 @@ function AgingSnapshot() {
           <span className="text-lg font-semibold tabular-nums">
             {formatCompactCurrency(totalOpen)}
           </span>
-          <span className="text-[11px] text-muted-foreground">total open</span>
+          <span className="text-muted-foreground text-[11px]">total open</span>
         </div>
       </div>
       <div className="w-44 shrink-0 space-y-2">
@@ -114,11 +114,11 @@ function AgingSnapshot() {
           return (
             <div key={bucket.key} className="flex items-center gap-2 text-xs">
               <span className={`size-2 shrink-0 rounded-full ${bucket.dotClass}`} />
-              <span className="w-10 text-muted-foreground">{bucket.label}</span>
+              <span className="text-muted-foreground w-10">{bucket.label}</span>
               <span className="flex-1 text-right font-medium tabular-nums">
                 {formatCurrency(amount)}
               </span>
-              <span className="w-9 text-right text-muted-foreground tabular-nums">
+              <span className="text-muted-foreground w-9 text-right tabular-nums">
                 {share.toFixed(0)}%
               </span>
             </div>
@@ -152,7 +152,7 @@ function AgingTrend() {
 
   if (chartData.length === 0) {
     return (
-      <div className="flex h-56 items-center justify-center text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
         No open receivables history yet
       </div>
     );

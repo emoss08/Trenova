@@ -175,7 +175,7 @@ export default function MatchingWorkspace() {
       {settlementControl && (
         <p
           data-testid="carrier-match-automation-status"
-          className="flex flex-wrap items-center gap-x-1.5 text-[11px] text-muted-foreground"
+          className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-[11px]"
         >
           <span>Auto-match: {settlementControl.autoMatchInboundInvoices ? "On" : "Off"}</span>
           <span aria-hidden>·</span>
@@ -185,7 +185,7 @@ export default function MatchingWorkspace() {
           </span>
           <Link
             to="/admin/carrier-settlement-control"
-            className="font-medium text-foreground underline underline-offset-2"
+            className="text-foreground font-medium underline underline-offset-2"
           >
             Automation settings
           </Link>
@@ -247,7 +247,7 @@ export default function MatchingWorkspace() {
                   ))}
                 </div>
                 <div className="flex flex-wrap items-center gap-1">
-                  <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
+                  <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
                     Created
                   </span>
                   {matchViaFilterChips.map((chip) => (
@@ -314,8 +314,8 @@ export default function MatchingWorkspace() {
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-card px-4 py-3">
-      <p className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">{label}</p>
+    <div className="bg-card rounded-lg border px-4 py-3">
+      <p className="text-muted-foreground text-[11px] tracking-[0.16em] uppercase">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
     </div>
   );
@@ -405,7 +405,7 @@ function InvoiceList({
 
   if (invoices.length === 0) {
     return (
-      <p className="p-4 text-center text-xs text-muted-foreground">
+      <p className="text-muted-foreground p-4 text-center text-xs">
         No carrier invoices match this view.
       </p>
     );
@@ -431,7 +431,7 @@ function InvoiceList({
               {invoice.reconciliationStatus}
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-[11px]">
             {invoice.proNumber ? `PRO ${invoice.proNumber} · ` : ""}
             {invoice.billToName || "Unknown bill-to"}
           </p>
@@ -482,7 +482,7 @@ function MatchList({
 
   if (matches.length === 0) {
     return (
-      <p className="p-4 text-center text-xs text-muted-foreground">
+      <p className="text-muted-foreground p-4 text-center text-xs">
         No matches in this view. Create one from an unmatched carrier invoice.
       </p>
     );
@@ -526,7 +526,7 @@ function MatchList({
               <CarrierInvoiceMatchStatusBadge status={match.status} />
             </div>
           </div>
-          <p className="mt-1 truncate text-[11px] text-muted-foreground">
+          <p className="text-muted-foreground mt-1 truncate text-[11px]">
             {match.carrier?.name ?? "Unknown carrier"}
             {match.carrierAssignment?.proNumber
               ? ` · PRO ${match.carrierAssignment.proNumber}`
@@ -592,7 +592,7 @@ function InvoiceDetail({
       <div className="rounded-lg border">
         <div className="border-b px-4 py-3">
           <h3 className="text-sm font-semibold">Invoice {invoice.invoiceNumber || invoice.id}</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             EDI 210 carrier freight invoice · received {formatSettlementDate(invoice.createdAt)}
           </p>
         </div>
@@ -628,10 +628,10 @@ function InvoiceDetail({
       </div>
 
       <div className="rounded-lg border p-4">
-        <h4 className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
           Carrier Link
         </h4>
-        <p className="mb-2 text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground mb-2 text-[11px]">
           {invoice.carrierId
             ? "This invoice is linked to a carrier in the master and can be matched against its assignments."
             : "Link the invoice to a carrier in the master before creating a match — suggest looks it up by SCAC and DOT number."}
@@ -687,8 +687,8 @@ function InvoiceDetail({
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-background px-3 py-2">
-      <p className="text-[10px] tracking-[0.16em] text-muted-foreground uppercase">{label}</p>
+    <div className="bg-background rounded-lg border px-3 py-2">
+      <p className="text-muted-foreground text-[10px] tracking-[0.16em] uppercase">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
     </div>
   );
@@ -739,15 +739,15 @@ function MatchDetail({
           {match.carrier?.name ?? "Unknown carrier"}
           {match.carrier?.scac ? ` (${match.carrier.scac})` : ""}
         </span>
-        <span className="ml-auto text-xs text-muted-foreground">
+        <span className="text-muted-foreground ml-auto text-xs">
           created {formatSettlementDate(match.createdAt)}
         </span>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-lg border">
-          <div className="border-b bg-muted/30 px-4 py-2">
-            <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          <div className="bg-muted/30 border-b px-4 py-2">
+            <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               Carrier Invoice
             </h4>
           </div>
@@ -772,8 +772,8 @@ function MatchDetail({
         </div>
 
         <div className="rounded-lg border">
-          <div className="border-b bg-muted/30 px-4 py-2">
-            <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          <div className="bg-muted/30 border-b px-4 py-2">
+            <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               Negotiated Buy Rate
             </h4>
           </div>
@@ -802,7 +802,7 @@ function MatchDetail({
                 </div>
                 {(assignment.accessorials ?? []).map((accessorial) => (
                   <div key={accessorial.id} className="flex justify-between pl-3">
-                    <span className="truncate text-muted-foreground">
+                    <span className="text-muted-foreground truncate">
                       {accessorial.description}
                     </span>
                     <span className="tabular-nums">
@@ -841,7 +841,7 @@ function MatchDetail({
               Variance:{" "}
               <AmountDisplay value={match.varianceMinor} variant="auto" currency={currency} />
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px]">
               {varianceToleranceMinor != null ? (
                 <>
                   Invoice minus expected · tolerance{" "}
@@ -895,7 +895,7 @@ function MatchDetail({
           </Button>
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {match.status === "Resolved"
             ? `Resolved${match.resolvedAt ? ` ${formatSettlementDate(match.resolvedAt)}` : ""}${match.resolutionNote ? ` — ${match.resolutionNote}` : ""}`
             : `Rejected${match.resolutionNote ? ` — ${match.resolutionNote}` : ""}`}

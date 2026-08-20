@@ -55,7 +55,7 @@ export function MapOptionsPopover({
           render={
             <PopoverTrigger
               render={
-                <Button variant="outline" size="icon" className="size-7 bg-background shadow-sm" />
+                <Button variant="outline" size="icon" className="bg-background size-7 shadow-sm" />
               }
             />
           }
@@ -71,7 +71,7 @@ export function MapOptionsPopover({
             {MAP_BASE_OPTIONS.map((opt) => (
               <label
                 key={opt.id}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm hover:bg-accent"
+                className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm"
               >
                 <input
                   type="radio"
@@ -90,13 +90,13 @@ export function MapOptionsPopover({
             {OVERLAY_OPTIONS.map((opt) => (
               <label
                 key={opt.id}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm hover:bg-accent"
+                className="hover:bg-accent flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm"
               >
                 <Checkbox
                   checked={overlays[opt.id]}
                   onCheckedChange={() => onToggleOverlay(opt.id)}
                 />
-                <opt.icon className="size-3.5 text-muted-foreground" />
+                <opt.icon className="text-muted-foreground size-3.5" />
                 {opt.label}
               </label>
             ))}
@@ -109,7 +109,7 @@ export function MapOptionsPopover({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+    <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
       {children}
     </span>
   );

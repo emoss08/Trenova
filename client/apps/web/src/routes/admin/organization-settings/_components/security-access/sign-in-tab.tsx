@@ -176,7 +176,7 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
       ) : isError ? (
         <ErrorState label="Identity providers could not be loaded." />
       ) : filteredProviders.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border bg-background">
+        <div className="bg-background overflow-hidden rounded-lg border">
           {filteredProviders.map((provider) => (
             <ProviderRow
               key={provider.id}
@@ -321,7 +321,7 @@ const ProviderRow = memo(function ProviderRow({
     <div className="grid gap-3 border-b p-3 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center">
       <div className="min-w-0 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-md border bg-muted/30">
+          <span className="bg-muted/30 flex size-9 items-center justify-center rounded-md border">
             <ProviderLogo name={provider.name} />
           </span>
           <div className="min-w-0">
@@ -335,12 +335,12 @@ const ProviderRow = memo(function ProviderRow({
               {provider.enforceSso && <Badge variant="warning">SSO enforced</Badge>}
               {provider.autoProvision && <Badge variant="info">Auto-provision</Badge>}
             </div>
-            <div className="truncate text-xs text-muted-foreground">
+            <div className="text-muted-foreground truncate text-xs">
               {provider.slug || "No slug"}
             </div>
           </div>
         </div>
-        <div className="grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
+        <div className="text-muted-foreground grid gap-2 text-xs md:grid-cols-2">
           <MetaLine label="Issuer" value={provider.oidcIssuerUrl || "-"} />
           <MetaLine label="Redirect URI" value={provider.oidcRedirectUrl || "-"} />
           <MetaLine label="Domains" value={provider.allowedDomains.join(", ") || "Any domain"} />
@@ -394,7 +394,7 @@ function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
             <button
               key={preset.slug}
               type="button"
-              className="flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50"
+              className="bg-background hover:bg-muted/50 flex items-center gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors"
               onClick={() => applyPreset(preset.slug)}
             >
               <ProviderLogo name={preset.name} />

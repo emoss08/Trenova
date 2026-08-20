@@ -61,7 +61,7 @@ export default function TemplateDesignerTab() {
           <Suspense fallback={<DesignerAsideSkeleton />}>
             <TemplateDesignerAside />
           </Suspense>
-          <main className="flex min-h-0 flex-col overflow-hidden rounded-md border bg-background">
+          <main className="bg-background flex min-h-0 flex-col overflow-hidden rounded-md border">
             <TemplateDesignerSelectionSync />
             <TemplateDesignerHeader />
             <TemplateDesignerReadOnlyBanner />
@@ -135,7 +135,7 @@ function TemplateDesignerHeader() {
   });
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/20 px-3 py-2">
+    <div className="bg-muted/20 flex flex-wrap items-center justify-between gap-3 border-b px-3 py-2">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className="truncate text-sm font-semibold">
@@ -145,7 +145,7 @@ function TemplateDesignerHeader() {
           {hasUnsavedChanges && <Badge variant="warning">Unsaved</Badge>}
           {!isEditable && selectedVersion ? <Badge variant="outline">Read-only</Badge> : null}
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-muted-foreground text-xs">
           {selectedVersion
             ? `Version ${selectedVersion.versionNumber} / ${metadataDraft.x12Version} / ${metadataDraft.functionalGroupId} / ${segmentsCount} segments`
             : "Create or select an outbound X12 204 template."}
@@ -285,7 +285,7 @@ function TemplateDesignerTabBar() {
   });
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-sidebar px-1">
+    <div className="bg-sidebar flex flex-wrap items-center justify-between gap-2 border-b px-1">
       <TabsList variant="underline">
         <TabsTrigger value="elements">Elements</TabsTrigger>
         <TabsTrigger value="scripts">Scripts</TabsTrigger>
@@ -356,7 +356,7 @@ function TemplateDesignerFooter() {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-t px-3 py-2">
-      <div className="text-xs text-muted-foreground">
+      <div className="text-muted-foreground text-xs">
         Draft changes are explicit. Segment, element, and script edits are not sent until Save Draft
         is clicked.
       </div>
@@ -388,7 +388,7 @@ function TemplateDesignerDiagnosticsAside() {
   const selectDiagnostic = useSelectDiagnostic();
 
   return (
-    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-background max-xl:hidden">
+    <aside className="bg-background flex h-full min-h-0 flex-col overflow-hidden rounded-md border max-xl:hidden">
       <PanelHeader icon={<AlertTriangleIcon />} title="Diagnostics" />
       <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0">
         <DiagnosticsList diagnostics={diagnostics} onSelect={selectDiagnostic} />

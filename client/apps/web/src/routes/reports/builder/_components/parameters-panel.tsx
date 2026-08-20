@@ -50,7 +50,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
   return (
     <div className="flex flex-col gap-2">
       {parameters.length === 0 && (
-        <p className="px-2 py-2 text-center text-sm text-muted-foreground">
+        <p className="text-muted-foreground px-2 py-2 text-center text-sm">
           {emptyMessage ??
             "Parameters prompt the runner for values — bind them to filters for reusable reports."}
         </p>
@@ -59,7 +59,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
         const update = (updated: ReportParameterDef) =>
           onChange(parameters.map((p, i) => (i === paramIndex ? updated : p)));
         return (
-          <div key={paramIndex} className="flex flex-col gap-2 rounded-md border border-border p-2">
+          <div key={paramIndex} className="border-border flex flex-col gap-2 rounded-md border p-2">
             <div className="flex items-center gap-1.5">
               <Input
                 className="h-7 flex-1 font-mono text-xs"
@@ -85,7 +85,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
-                <Label className="text-xs text-muted-foreground">Label</Label>
+                <Label className="text-muted-foreground text-xs">Label</Label>
                 <Input
                   className="h-7"
                   value={param.label ?? ""}
@@ -94,7 +94,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <Label className="text-xs text-muted-foreground">Type</Label>
+                <Label className="text-muted-foreground text-xs">Type</Label>
                 <Select
                   value={param.type}
                   onValueChange={(type) => {
@@ -123,7 +123,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
               </div>
               {param.type === "ref" ? (
                 <div className="flex flex-col gap-1">
-                  <Label className="text-xs text-muted-foreground">Entity</Label>
+                  <Label className="text-muted-foreground text-xs">Entity</Label>
                   <Select
                     value={param.refEntity ?? ""}
                     onValueChange={(refEntity) => {
@@ -145,7 +145,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
                 </div>
               ) : (
                 <div className="flex flex-col gap-1">
-                  <Label className="text-xs text-muted-foreground">Default</Label>
+                  <Label className="text-muted-foreground text-xs">Default</Label>
                   <Input
                     className="h-7"
                     type={param.type === "int" || param.type === "decimal" ? "number" : "text"}
@@ -165,14 +165,14 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
               )}
               <div className="flex flex-col gap-2 pt-1">
                 <div className="flex items-center justify-between gap-2">
-                  <Label className="text-xs text-muted-foreground">Required</Label>
+                  <Label className="text-muted-foreground text-xs">Required</Label>
                   <Switch
                     checked={param.required}
                     onCheckedChange={(required) => update({ ...param, required })}
                   />
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <Label className="text-xs text-muted-foreground">Multiple</Label>
+                  <Label className="text-muted-foreground text-xs">Multiple</Label>
                   <Switch
                     checked={param.multi ?? false}
                     onCheckedChange={(multi) => update({ ...param, multi, default: undefined })}
@@ -181,7 +181,7 @@ export function ParametersPanel({ parameters, onChange, emptyMessage }: Paramete
               </div>
               {param.type !== "bool" && param.type !== "epoch" && param.type !== "ref" && (
                 <div className="col-span-2 flex flex-col gap-1">
-                  <Label className="text-xs text-muted-foreground">Allowed Values</Label>
+                  <Label className="text-muted-foreground text-xs">Allowed Values</Label>
                   <Input
                     className="h-7"
                     placeholder="Any value — or comma-separated choices"

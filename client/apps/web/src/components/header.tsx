@@ -34,7 +34,7 @@ export function Header() {
     <header
       className={cn(
         "sticky top-0 z-50 flex h-10 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6",
-        "bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/50",
+        "bg-background/95 supports-backdrop-filter:bg-background/50 backdrop-blur-sm",
       )}
     >
       <div className="flex items-center gap-3">
@@ -46,7 +46,7 @@ export function Header() {
               <BreadcrumbLink
                 render={<Link to="/" />}
                 className={cn(
-                  "text-muted-foreground transition-opacity hover:text-foreground",
+                  "text-muted-foreground hover:text-foreground transition-opacity",
                   isLoading ? "opacity-50" : "",
                 )}
               >
@@ -61,7 +61,7 @@ export function Header() {
                     <BreadcrumbLink
                       render={<Link to={crumb.pathname} />}
                       className={cn(
-                        "text-muted-foreground transition-opacity hover:text-foreground",
+                        "text-muted-foreground hover:text-foreground transition-opacity",
                         isLoading ? "opacity-50" : "",
                       )}
                     >

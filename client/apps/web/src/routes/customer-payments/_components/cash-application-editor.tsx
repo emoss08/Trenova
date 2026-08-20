@@ -67,17 +67,17 @@ export function CashApplicationEditor({
       </div>
 
       {isLoadingItems ? (
-        <div className="flex h-32 items-center justify-center rounded-md border text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex h-32 items-center justify-center rounded-md border text-sm">
           Loading open invoices…
         </div>
       ) : rows.length === 0 ? (
-        <div className="flex h-32 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex h-32 items-center justify-center rounded-md border border-dashed text-sm">
           {emptyMessage}
         </div>
       ) : (
         <div className="max-h-72 overflow-y-auto rounded-md border">
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
+            <TableHeader className="bg-muted/80 sticky top-0 z-10 backdrop-blur">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="h-8 w-8" />
                 <TableHead className="h-8 text-xs">Invoice</TableHead>
@@ -119,7 +119,7 @@ export function CashApplicationEditor({
                         <span className="font-mono text-xs font-medium">
                           {row.invoiceNumber}
                         </span>
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-muted-foreground text-[11px]">
                           {formatDate(row.invoiceDate)}
                         </span>
                       </div>
@@ -170,7 +170,7 @@ export function CashApplicationEditor({
 
       <div
         className={cn(
-          "flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/30 px-3 py-2",
+          "bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2",
           totals.isOverBudget && "border-red-500/50 bg-red-500/5",
         )}
       >

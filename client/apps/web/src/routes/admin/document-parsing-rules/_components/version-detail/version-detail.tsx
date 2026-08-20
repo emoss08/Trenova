@@ -150,7 +150,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
           <button
             type="button"
             onClick={onBack}
-            className="group mt-2 flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            className="group text-muted-foreground hover:text-foreground mt-2 flex items-center gap-1 text-xs transition-colors"
           >
             <ArrowLeftIcon className="size-3 transition-transform group-hover:-translate-x-0.5" />
             Back to versions
@@ -171,7 +171,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                 {version.status}
               </Badge>
               {version.label && (
-                <span className="text-sm text-muted-foreground">{version.label}</span>
+                <span className="text-muted-foreground text-sm">{version.label}</span>
               )}
             </div>
             {isDraft && canActivate && (
@@ -197,7 +197,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                         Publishing will make this version the active rule used for document parsing.
                         This action:
                       </span>
-                      <ul className="ml-4 list-disc text-sm text-muted-foreground">
+                      <ul className="text-muted-foreground ml-4 list-disc text-sm">
                         <li>
                           Activates this version for all incoming documents matching its criteria
                         </li>
@@ -218,9 +218,9 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
           </div>
 
           {isReadOnly && (
-            <div className="flex items-start gap-2.5 rounded-md border border-info/50 bg-info/10 p-3">
-              <LockIcon className="mt-0.5 size-4 shrink-0 text-info" />
-              <div className="text-sm text-info">
+            <div className="border-info/50 bg-info/10 flex items-start gap-2.5 rounded-md border p-3">
+              <LockIcon className="text-info mt-0.5 size-4 shrink-0" />
+              <div className="text-info text-sm">
                 <p className="font-medium">Read-only version</p>
                 <p className="mt-0.5 text-xs opacity-80">
                   {version.status === "Published"
@@ -232,13 +232,13 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
           )}
 
           {hasValidationIssues && (
-            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3">
+            <div className="border-destructive/50 bg-destructive/10 rounded-md border p-3">
               <div className="mb-1.5 flex items-center gap-1.5">
-                <AlertTriangleIcon className="size-4 text-destructive" />
-                <p className="text-sm font-medium text-destructive">Validation Issues</p>
+                <AlertTriangleIcon className="text-destructive size-4" />
+                <p className="text-destructive text-sm font-medium">Validation Issues</p>
               </div>
               {fixtureCount !== null && (
-                <p className="mb-1 text-xs text-destructive/80">
+                <p className="text-destructive/80 mb-1 text-xs">
                   {fixtureCount} fixture{fixtureCount !== 1 ? "s" : ""} tested
                 </p>
               )}
@@ -247,10 +247,10 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
                   {fixtureFailures.map((failure, idx) => (
                     <li
                       key={idx}
-                      className="rounded bg-destructive/5 px-2 py-1 text-xs text-destructive"
+                      className="bg-destructive/5 text-destructive rounded px-2 py-1 text-xs"
                     >
                       <span className="font-medium">{failure.name}</span>
-                      <span className="mx-1.5 text-destructive/50">&mdash;</span>
+                      <span className="text-destructive/50 mx-1.5">&mdash;</span>
                       <span>{failure.error}</span>
                     </li>
                   ))}

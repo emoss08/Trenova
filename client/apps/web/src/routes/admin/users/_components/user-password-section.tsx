@@ -38,13 +38,13 @@ export function EditModePassword({
   return (
     <div className="space-y-4">
       {isLocked && (
-        <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
-          <LockIcon className="size-4 shrink-0 text-destructive" />
+        <div className="border-destructive/30 bg-destructive/10 flex items-start gap-3 rounded-lg border p-3">
+          <LockIcon className="text-destructive size-4 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-destructive">
+            <p className="text-destructive text-sm font-medium">
               Account Locked
             </p>
-            <p className="text-xs text-destructive/80">
+            <p className="text-destructive/80 text-xs">
               This account has been locked due to too many failed login
               attempts.
             </p>
@@ -74,8 +74,8 @@ export function EditModePassword({
       {showNewPassword && (
         <div
           className={cn(
-            "space-y-2 rounded-lg border bg-muted/30 p-3",
-            "animate-in duration-200 fade-in-0 slide-in-from-top-2",
+            "bg-muted/30 space-y-2 rounded-lg border p-3",
+            "animate-in fade-in-0 slide-in-from-top-2 duration-200",
           )}
         >
           <SensitiveField

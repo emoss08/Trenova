@@ -294,7 +294,7 @@ export default function CommoditiesSection() {
         title="Commodities"
         titleCount={commodities.length}
         description="Cargo items, weights, and hazardous material compliance"
-        className="border-t border-border pt-4"
+        className="border-border border-t pt-4"
         action={
           fields.length > 0 && (
             <Button type="button" variant="outline" size="xxs" onClick={handleAdd}>
@@ -308,7 +308,7 @@ export default function CommoditiesSection() {
           <div className="rounded-lg border">
             <div
               className={cn(
-                "grid gap-2 border-b border-border px-4 py-2 text-2xs text-muted-foreground uppercase",
+                "border-border text-2xs text-muted-foreground grid gap-2 border-b px-4 py-2 uppercase",
                 showDimensions ? "grid-cols-12" : "grid-cols-10",
               )}
             >
@@ -343,8 +343,8 @@ export default function CommoditiesSection() {
                     className={cn(
                       "grid items-center gap-2 px-4 py-2",
                       showDimensions ? "grid-cols-12" : "grid-cols-10",
-                      hasErrors && "bg-destructive/10 ring-1 ring-destructive ring-inset",
-                      !hasErrors && isDuplicate && "bg-warning/20 ring-1 ring-warning ring-inset",
+                      hasErrors && "bg-destructive/10 ring-destructive ring-1 ring-inset",
+                      !hasErrors && isDuplicate && "bg-warning/20 ring-warning ring-1 ring-inset",
                     )}
                   >
                     <div
@@ -364,7 +364,7 @@ export default function CommoditiesSection() {
                         {hasHazmat && (
                           <Tooltip>
                             <TooltipTrigger>
-                              <BiohazardIcon className="size-3.5 cursor-help text-warning" />
+                              <BiohazardIcon className="text-warning size-3.5 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="top" sideOffset={10}>
                               Commodity is classified as hazardous material.
@@ -374,7 +374,7 @@ export default function CommoditiesSection() {
                         {stackable && (
                           <Tooltip>
                             <TooltipTrigger>
-                              <BoxesIcon className="size-3.5 cursor-help text-success" />
+                              <BoxesIcon className="text-success size-3.5 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="top" sideOffset={10}>
                               Commodity is marked as stackable.
@@ -384,7 +384,7 @@ export default function CommoditiesSection() {
                         {fragile && (
                           <Tooltip>
                             <TooltipTrigger>
-                              <AlertCircleIcon className="size-3.5 cursor-help text-destructive" />
+                              <AlertCircleIcon className="text-destructive size-3.5 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="top" sideOffset={10}>
                               Commodity is marked as fragile.
@@ -393,14 +393,14 @@ export default function CommoditiesSection() {
                         )}
                       </div>
                     </div>
-                    <span className="col-span-2 text-xs text-muted-foreground">
+                    <span className="text-muted-foreground col-span-2 text-xs">
                       {truncateText(item?.pieces?.toLocaleString() ?? 0, 10)}
                     </span>
-                    <span className="col-span-2 text-xs text-muted-foreground">
+                    <span className="text-muted-foreground col-span-2 text-xs">
                       {truncateText(item?.weight?.toLocaleString() ?? 0, 8)} lbs
                     </span>
                     {showDimensions && (
-                      <span className="col-span-3 text-xs text-muted-foreground">
+                      <span className="text-muted-foreground col-span-3 text-xs">
                         {describeCommodityDimensions(item)}
                       </span>
                     )}
@@ -412,7 +412,7 @@ export default function CommoditiesSection() {
                         className="size-7"
                         onClick={() => handleEdit(index)}
                       >
-                        <PencilIcon className="size-3.5 text-muted-foreground" />
+                        <PencilIcon className="text-muted-foreground size-3.5" />
                       </Button>
                       <Button
                         type="button"
@@ -421,12 +421,12 @@ export default function CommoditiesSection() {
                         className="size-7"
                         onClick={() => remove(index)}
                       >
-                        <TrashIcon className="size-3.5 text-muted-foreground" />
+                        <TrashIcon className="text-muted-foreground size-3.5" />
                       </Button>
                       {hasErrors && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <TriangleAlertIcon className="size-3.5 cursor-help text-destructive" />
+                            <TriangleAlertIcon className="text-destructive size-3.5 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" sideOffset={10}>
                             <div className="space-y-1">
@@ -444,8 +444,8 @@ export default function CommoditiesSection() {
                 );
               })}
             </div>
-            <div className="flex flex-row items-center justify-end gap-3 rounded-b-lg border-t border-border bg-muted px-4 py-2">
-              <span className="text-xs text-muted-foreground">
+            <div className="border-border bg-muted flex flex-row items-center justify-end gap-3 rounded-b-lg border-t px-4 py-2">
+              <span className="text-muted-foreground text-xs">
                 {truncateText(totalPieces.toLocaleString(), 10)} total{" "}
                 {pluralize("piece", totalPieces)}
               </span>
@@ -469,7 +469,7 @@ export default function CommoditiesSection() {
                     <Tooltip>
                       <TooltipTrigger
                         render={
-                          <span className="cursor-help text-xs text-muted-foreground">
+                          <span className="text-muted-foreground cursor-help text-xs">
                             / {shipmentUIPolicy.maxShipmentWeightLimit.toLocaleString()} lbs
                           </span>
                         }
@@ -497,7 +497,7 @@ export default function CommoditiesSection() {
           />
         )}
         {duplicateCommodityIds.size > 0 && (
-          <p className="flex items-center gap-1 text-xs text-warning">
+          <p className="text-warning flex items-center gap-1 text-xs">
             <TriangleAlertIcon className="size-3.5" />
             Duplicate commodities detected in this shipment.
           </p>

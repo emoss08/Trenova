@@ -84,7 +84,7 @@ export default function DataTableSearch({
       placeholder={placeholder ?? "Search..."}
       className="h-7 w-48 text-sm"
       leftElement={
-        <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
+        <SearchIcon className="text-muted-foreground size-3.5 shrink-0" />
       }
       rightElement={<SearchSyntaxHelper />}
     />
@@ -99,7 +99,7 @@ function SearchSyntaxHelper() {
           <Button
             variant="ghost"
             size="icon"
-            className="size-6 cursor-help text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground size-6 cursor-help"
           >
             <HelpCircleIcon className="size-3.5" />
           </Button>
@@ -109,7 +109,7 @@ function SearchSyntaxHelper() {
         <div className="space-y-3">
           <div>
             <h4 className="font-medium">Search Syntax</h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Use these patterns to refine your search results.
             </p>
           </div>
@@ -119,12 +119,12 @@ function SearchSyntaxHelper() {
                 key={item.syntax}
                 className="grid grid-cols-[100px_1fr] gap-2 text-sm"
               >
-                <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+                <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
                   {item.syntax}
                 </code>
                 <div>
                   <p className="text-foreground">{item.description}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     e.g., <code className="font-mono">{item.example}</code>
                   </p>
                 </div>

@@ -32,7 +32,7 @@ function LaneCell({ row }: { row: RecurringShipment }) {
   return (
     <div className="flex items-center gap-1.5 text-sm">
       <span className="truncate">{origin ?? "—"}</span>
-      <ArrowRightIcon className="size-3 shrink-0 text-muted-foreground" />
+      <ArrowRightIcon className="text-muted-foreground size-3 shrink-0" />
       <span className="truncate">{destination ?? "—"}</span>
     </div>
   );

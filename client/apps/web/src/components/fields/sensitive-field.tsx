@@ -49,7 +49,7 @@ export function SensitiveField<T extends FieldValues>({
                 field.value && !fieldState.invalid ? (
                   <button
                     type="button"
-                    className="size-full cursor-pointer px-2 py-1 text-xs text-muted-foreground"
+                    className="text-muted-foreground size-full cursor-pointer px-2 py-1 text-xs"
                     onClick={togglePasswordVisibility}
                   >
                     {show ? "hide" : "show"}

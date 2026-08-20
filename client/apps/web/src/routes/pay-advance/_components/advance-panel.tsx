@@ -191,25 +191,25 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
         <PayAdvanceStatusBadge status={row.status as PayAdvanceStatus} />
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           {row.worker ? `${row.worker.firstName} ${row.worker.lastName}`.trim() : ""}
         </span>
       </div>
       <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Amount</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Amount</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={row.amountMinor} currency={row.currencyCode} />
           </p>
         </div>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Recovered</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Recovered</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={row.recoveredMinor} currency={row.currencyCode} />
           </p>
         </div>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Outstanding</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Outstanding</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={row.outstandingMinor}
@@ -219,7 +219,7 @@ function AdvanceDetail({ row, onClose }: { row: PayAdvanceRow; onClose: () => vo
           </p>
         </div>
       </div>
-      {row.notes && <p className="text-xs text-muted-foreground">{row.notes}</p>}
+      {row.notes && <p className="text-muted-foreground text-xs">{row.notes}</p>}
       {row.writeOffReason && (
         <p className="text-xs text-red-600 dark:text-red-400">
           Write-off reason: {row.writeOffReason}

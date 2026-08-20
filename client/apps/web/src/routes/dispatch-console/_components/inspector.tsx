@@ -70,7 +70,7 @@ function CandidateRow({
         </Badge>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px]">
         <span className="tabular-nums">Score {candidate.score}</span>
         <span>· {formatMiles(candidate.deadheadMiles)} empty</span>
         <span>· {formatClockDurationMs(candidate.driveRemainingMs)} drive left</span>
@@ -121,16 +121,16 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
   const openCarrierCancel = useDispatchConsoleStore.use.openCarrierCancel();
 
   return (
-    <div className="flex flex-col gap-1.5 border-b bg-muted/30 px-2.5 py-2">
+    <div className="bg-muted/30 flex flex-col gap-1.5 border-b px-2.5 py-2">
       <div className="flex items-center gap-1.5">
-        <Building2Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+        <Building2Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
         <span className="truncate text-xs font-medium">{move.assignedCarrierName}</span>
         <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
           Carrier
         </Badge>
       </div>
       {move.carrierTotalCost != null && (
-        <span className="text-[10px] text-muted-foreground tabular-nums">
+        <span className="text-muted-foreground text-[10px] tabular-nums">
           Total cost {formatCurrency(move.carrierTotalCost)}
         </span>
       )}
@@ -188,7 +188,7 @@ function TenderCoverageCard({
   }
 
   return (
-    <div className="flex max-h-72 flex-col gap-1.5 overflow-y-auto border-b bg-muted/30 px-2.5 py-2">
+    <div className="bg-muted/30 flex max-h-72 flex-col gap-1.5 overflow-y-auto border-b px-2.5 py-2">
       {isLoading ? (
         <Skeleton className="h-20 rounded-md" />
       ) : liveTender ? (
@@ -265,10 +265,10 @@ function MoveInspector({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-col gap-0.5 border-b px-2.5 py-2">
         <span className="font-mono text-xs font-semibold">{move.proNumber}</span>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-muted-foreground text-[11px]">
           {move.originCity}, {move.originState} → {move.destinationCity}, {move.destinationState}
         </span>
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-muted-foreground text-[10px]">
           Pickup{" "}
           {move.originWindowStart > 0 ? formatUnixDateTime(move.originWindowStart) : "unscheduled"}
         </span>
@@ -284,7 +284,7 @@ function MoveInspector({
 
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
         {canRankDrivers && (
-          <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
+          <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
             {candidates.length} candidates
           </span>
         )}
@@ -355,7 +355,7 @@ function MoveInspector({
                     />
                   ))}
               {!isLoading && candidates.length === 0 && (
-                <p className="px-1 py-6 text-center text-xs text-muted-foreground">
+                <p className="text-muted-foreground px-1 py-6 text-center text-xs">
                   No eligible driver for this move.
                   {!includeBlocked ? " Show ineligible drivers to see why." : ""}
                 </p>
@@ -385,7 +385,7 @@ function DriverMatchRow({
     <button
       type="button"
       onClick={() => onSelectMove(match.move.moveId)}
-      className="flex flex-col gap-1 rounded-md border bg-card p-2 text-left transition-colors hover:border-brand/40"
+      className="bg-card hover:border-brand/40 flex flex-col gap-1 rounded-md border p-2 text-left transition-colors"
     >
       <div className="flex items-start justify-between gap-2">
         <span className="truncate font-mono text-xs font-semibold">{match.move.proNumber}</span>
@@ -400,7 +400,7 @@ function DriverMatchRow({
         {match.move.originCity}, {match.move.originState} → {match.move.destinationCity},{" "}
         {match.move.destinationState}
       </span>
-      <span className="text-[10px] text-muted-foreground">
+      <span className="text-muted-foreground text-[10px]">
         {formatUnixDateTime(match.move.originWindowStart)} ·{" "}
         {formatMiles(match.score.deadheadMiles)} empty
       </span>
@@ -428,11 +428,11 @@ function DriverInspector({
         <span className="text-xs font-semibold">
           {driver.firstName} {driver.lastName}
         </span>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-muted-foreground text-[11px]">
           {driver.tractorCode ? `${driver.tractorCode} · ` : ""}
           {driver.formattedLocation || `${driver.city}, ${driver.stateAbbreviation}`}
         </span>
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-muted-foreground text-[10px]">
           Available {formatUnixDateTime(driver.projectedTimeAvailable)}
         </span>
       </div>
@@ -442,16 +442,16 @@ function DriverInspector({
 
         {driver.commitments.length > 0 && (
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
+            <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
               Committed
             </span>
             {driver.commitments.map((commitment) => (
               <div
                 key={commitment.moveId}
-                className="flex items-center justify-between gap-2 rounded border bg-muted/30 px-2 py-1"
+                className="bg-muted/30 flex items-center justify-between gap-2 rounded border px-2 py-1"
               >
                 <span className="truncate font-mono text-[10px]">{commitment.proNumber}</span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">
+                <span className="text-muted-foreground shrink-0 text-[10px]">
                   to {commitment.destinationCity}, {commitment.destinationState}
                 </span>
               </div>
@@ -460,7 +460,7 @@ function DriverInspector({
         )}
       </div>
 
-      <span className="border-b px-2.5 pb-1.5 text-[10px] tracking-wide text-muted-foreground uppercase">
+      <span className="text-muted-foreground border-b px-2.5 pb-1.5 text-[10px] tracking-wide uppercase">
         Best fit ({matches.length})
       </span>
 
@@ -479,7 +479,7 @@ function DriverInspector({
                 <DriverMatchRow key={match.move.moveId} match={match} onSelectMove={onSelectMove} />
               ))}
           {!isLoading && matches.length === 0 && (
-            <p className="px-1 py-6 text-center text-xs text-muted-foreground">
+            <p className="text-muted-foreground px-1 py-6 text-center text-xs">
               No open moves suit this driver right now.
             </p>
           )}
@@ -517,9 +517,9 @@ export function Inspector({
   );
 
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
+    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
       <header className="flex items-center justify-between border-b px-2.5 py-1.5">
-        <h2 className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
+        <h2 className="text-muted-foreground text-[10.5px] font-semibold tracking-wide uppercase">
           {selectedMove
             ? canRankDrivers
               ? "Rank drivers"
@@ -543,7 +543,7 @@ export function Inspector({
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 p-6 text-center">
           <p className="text-xs font-medium">Nothing selected</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-muted-foreground text-[11px]">
             {canRankDrivers
               ? "Select a move to rank drivers for it, or a driver to find them work."
               : "Select a move to see how it can be covered."}

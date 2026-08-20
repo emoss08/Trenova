@@ -146,12 +146,12 @@ export const DocumentUploadZone = forwardRef<
         >
           Select files
         </Button>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           or drag and drop them here
         </p>
       </div>
 
-      <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
+      <ul className="text-muted-foreground mt-4 space-y-1 text-xs">
         <li>• Supported formats: PDF, images, Word, Excel, and text files</li>
         <li>• Maximum file size: 50 MB per file</li>
         <li>• You can upload multiple files at once</li>

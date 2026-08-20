@@ -15,7 +15,7 @@ export function FinancialReportSection({ section, className }: FinancialReportSe
       <h3 className="text-sm font-semibold">{section.label}</h3>
       <div className="overflow-hidden rounded-md border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left text-muted-foreground">
+          <thead className="bg-muted/50 text-muted-foreground text-left">
             <tr>
               <th className="px-3 py-2 text-xs font-medium">Account Code</th>
               <th className="px-3 py-2 text-xs font-medium">Account Name</th>
@@ -26,7 +26,7 @@ export function FinancialReportSection({ section, className }: FinancialReportSe
             {section.lines.map((line) => (
               <tr
                 key={line.accountCode}
-                className="border-t transition-colors hover:bg-muted/50"
+                className="hover:bg-muted/50 border-t transition-colors"
               >
                 <td className="px-3 py-2 font-mono text-xs">{line.accountCode}</td>
                 <td className="px-3 py-2 text-xs">{line.accountName}</td>
@@ -36,7 +36,7 @@ export function FinancialReportSection({ section, className }: FinancialReportSe
               </tr>
             ))}
           </tbody>
-          <tfoot className="border-t bg-muted/30 font-medium">
+          <tfoot className="bg-muted/30 border-t font-medium">
             <tr>
               <td colSpan={2} className="px-3 py-2 text-right text-xs">
                 Total {section.label}

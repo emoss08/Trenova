@@ -278,7 +278,7 @@ function composeHeadline(
 ): ReactNode {
   return (
     <>
-      <span className="font-medium text-foreground">{actor}</span>
+      <span className="text-foreground font-medium">{actor}</span>
       {" "}
       {verb}
       {" "}
@@ -291,7 +291,7 @@ function composeHeadline(
 function formatTarget(event: ShipmentEvent): ReactNode {
   const proNumber = event.shipment?.proNumber;
   if (proNumber) {
-    return <span className="font-mono text-foreground">#{proNumber}</span>;
+    return <span className="text-foreground font-mono">#{proNumber}</span>;
   }
   return "a shipment";
 }

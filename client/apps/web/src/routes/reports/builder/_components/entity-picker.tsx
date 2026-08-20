@@ -25,19 +25,19 @@ function EntityTile({
       transition={{ duration: 0.2, delay: Math.min(index, 16) * 0.02, ease: "easeOut" }}
       onClick={onSelect}
       className={cn(
-        "group flex items-center gap-3 rounded-lg border border-border bg-card p-3 text-left",
+        "group border-border bg-card flex items-center gap-3 rounded-lg border p-3 text-left",
         "transition-[border-color,box-shadow,background-color] duration-200",
-        "hover:border-brand hover:bg-muted hover:ring-2 hover:ring-brand/25",
+        "hover:border-brand hover:bg-muted hover:ring-brand/25 hover:ring-2",
       )}
     >
       <CategoryTile category={entity.category} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{entity.label}</p>
-        <p className="truncate text-xs text-muted-foreground">
+        <p className="text-muted-foreground truncate text-xs">
           {entity.description || `${accessibleFields} fields`}
         </p>
       </div>
-      <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+      <ChevronRightIcon className="text-muted-foreground/50 group-hover:text-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
     </m.button>
   );
 }
@@ -79,7 +79,7 @@ export function EntityPicker({
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <h2 className="text-lg font-semibold">What is this report about?</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm">
             Every report has one primary entity — it defines what each row represents. You can bring
             in related data through joins afterward.
           </p>
@@ -88,7 +88,7 @@ export function EntityPicker({
               autoFocus
               className="pl-8"
               placeholder="Search entities..."
-              leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -97,7 +97,7 @@ export function EntityPicker({
 
         <div className="mt-6 flex flex-col gap-6">
           {grouped.length === 0 && (
-            <p className="py-12 text-center text-sm text-muted-foreground">
+            <p className="text-muted-foreground py-12 text-center text-sm">
               No entities match &quot;{search}&quot;.
             </p>
           )}
@@ -107,7 +107,7 @@ export function EntityPicker({
               .reduce((total, [, groupEntities]) => total + groupEntities.length, 0);
             return (
               <div key={category}>
-                <p className="mb-2 text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+                <p className="text-2xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
                   {category}
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">

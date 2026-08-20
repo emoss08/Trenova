@@ -111,7 +111,7 @@ function VersionList({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">
+        <h3 className="text-muted-foreground text-sm font-medium">
           {sortedVersions.length} version{sortedVersions.length !== 1 ? "s" : ""}
         </h3>
         {canCreate && (
@@ -130,12 +130,12 @@ function VersionList({
 
       {sortedVersions.length === 0 && (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-12 text-center">
-          <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-            <GitBranchIcon className="size-5 text-muted-foreground" />
+          <div className="bg-muted flex size-10 items-center justify-center rounded-full">
+            <GitBranchIcon className="text-muted-foreground size-5" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium">No versions yet</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
+            <p className="text-muted-foreground max-w-xs text-xs">
               Versions define how documents are parsed. Each version contains match criteria, field
               extraction rules, and stop definitions. Create a draft to get started.
             </p>
@@ -154,14 +154,14 @@ function VersionList({
               key={v.id}
               type="button"
               onClick={() => onSelectVersion(v.id!)}
-              className="flex w-full items-center justify-between rounded-md border p-3 text-left transition-colors hover:bg-muted/50"
+              className="hover:bg-muted/50 flex w-full items-center justify-between rounded-md border p-3 text-left transition-colors"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">Version {v.versionNumber}</span>
-                  {v.label && <span className="text-xs text-muted-foreground">{v.label}</span>}
+                  {v.label && <span className="text-muted-foreground text-xs">{v.label}</span>}
                 </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-3 text-xs">
                   <span className="flex items-center gap-1">
                     <LayersIcon className="size-3" />
                     {parserLabel}
@@ -186,7 +186,7 @@ function VersionList({
                   {v.status}
                 </Badge>
                 {v.createdAt && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-muted-foreground text-xs">
                     {formatUnixDate(v.createdAt)}
                   </span>
                 )}

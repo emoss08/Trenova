@@ -282,7 +282,7 @@ function ShipmentDraftCard() {
               return (
                 <div
                   key={option.value}
-                  className="flex items-start gap-3 rounded-md border border-border/80 p-3"
+                  className="border-border/80 flex items-start gap-3 rounded-md border p-3"
                 >
                   <Checkbox
                     checked={checked}

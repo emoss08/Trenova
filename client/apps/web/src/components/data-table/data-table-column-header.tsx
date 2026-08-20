@@ -57,10 +57,10 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="sm" className="-ml-3 data-open:bg-accent">
+            <Button variant="ghost" size="sm" className="data-open:bg-accent -ml-3">
               <span className="uppercase">{title}</span>
               {showSortIndex && (
-                <span className="ml-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                <span className="bg-primary text-primary-foreground ml-1 flex size-4 items-center justify-center rounded-full text-[10px] font-medium">
                   {sortIndex + 1}
                 </span>
               )}
@@ -77,13 +77,13 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
         <DropdownMenuContent align="start">
           <DropdownMenuGroup>
             <DropdownMenuItem
-              startContent={<ArrowUpIcon className="size-3.5 text-muted-foreground/70" />}
+              startContent={<ArrowUpIcon className="text-muted-foreground/70 size-3.5" />}
               title="Asc"
               label="Asc"
               onClick={() => handleSort("asc")}
             />
             <DropdownMenuItem
-              startContent={<ArrowDownIcon className="size-3.5 text-muted-foreground/70" />}
+              startContent={<ArrowDownIcon className="text-muted-foreground/70 size-3.5" />}
               title="Desc"
               label="Desc"
               onClick={() => handleSort("desc")}
@@ -92,7 +92,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  startContent={<ArrowUpDownIcon className="size-3.5 text-muted-foreground/70" />}
+                  startContent={<ArrowUpDownIcon className="text-muted-foreground/70 size-3.5" />}
                   title="Clear sort"
                   label="Clear sort"
                   onClick={() => handleSort(null)}
@@ -106,7 +106,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
                   <DropdownMenuItem
                     onClick={() => column.pin("start")}
                     startContent={
-                      <PinIcon className="size-3.5 -rotate-45 text-muted-foreground/70" />
+                      <PinIcon className="text-muted-foreground/70 size-3.5 -rotate-45" />
                     }
                     title="Pin left"
                     label="Pin left"
@@ -116,7 +116,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
                   <DropdownMenuItem
                     onClick={() => column.pin("end")}
                     startContent={
-                      <PinIcon className="size-3.5 rotate-45 text-muted-foreground/70" />
+                      <PinIcon className="text-muted-foreground/70 size-3.5 rotate-45" />
                     }
                     title="Pin right"
                     label="Pin right"
@@ -125,7 +125,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
                 {column.getIsPinned() && (
                   <DropdownMenuItem
                     onClick={() => column.pin(false)}
-                    startContent={<PinOffIcon className="size-3.5 text-muted-foreground/70" />}
+                    startContent={<PinOffIcon className="text-muted-foreground/70 size-3.5" />}
                     title="Unpin"
                     label="Unpin"
                   />
@@ -137,7 +137,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => column.toggleVisibility(false)}
-                  startContent={<EyeOffIcon className="size-3.5 text-muted-foreground/70" />}
+                  startContent={<EyeOffIcon className="text-muted-foreground/70 size-3.5" />}
                   title="Hide"
                   label="Hide"
                 />

@@ -75,14 +75,14 @@ function GenerateBatchPanel({
       form={form}
       notice={
         period ? (
-          <div className="rounded-lg border bg-muted/30 p-3 text-sm">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase">
+          <div className="bg-muted/30 rounded-lg border p-3 text-sm">
+            <p className="text-muted-foreground text-[11px] font-medium uppercase">
               Current Pay Period
             </p>
             <p className="mt-1 font-medium">
               {formatDate(period.periodStart)} – {formatDate(period.periodEnd)}
             </p>
-            <p className="text-xs text-muted-foreground">Pays on {formatDate(period.payDate)}</p>
+            <p className="text-muted-foreground text-xs">Pays on {formatDate(period.payDate)}</p>
           </div>
         ) : undefined
       }
@@ -105,7 +105,7 @@ function GenerateBatchPanel({
               description="Anything reviewers should know about this run, e.g. an off-cycle correction."
             />
           </FormControl>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Clean settlements can auto-approve based on your settlement control policy; anything
             with exceptions stays in review.
           </p>
@@ -169,7 +169,7 @@ function BatchDetail({ batchId }: { batchId: string }) {
     <div className="flex h-full flex-col gap-4 overflow-y-auto">
       <div className="flex flex-wrap items-center gap-2">
         <SettlementBatchStatusBadge status={data.status as SettlementBatchStatus} />
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           {formatDate(data.periodStart)} – {formatDate(data.periodEnd)} · pays{" "}
           {formatDate(data.payDate)}
         </span>
@@ -186,25 +186,25 @@ function BatchDetail({ batchId }: { batchId: string }) {
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Settlements</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Settlements</p>
           <p className="mt-1 text-sm font-semibold tabular-nums">{data.settlementCount}</p>
         </div>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Exceptions</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Exceptions</p>
           <p className="mt-1 flex items-center gap-1 text-sm font-semibold tabular-nums">
             {data.exceptionCount > 0 && <TriangleAlert className="size-3.5 text-amber-500" />}
             {data.exceptionCount}
           </p>
         </div>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Total Gross</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Total Gross</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={data.totalGrossMinor} currency={data.currencyCode} />
           </p>
         </div>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Total Net</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Total Net</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay
               value={data.totalNetMinor}

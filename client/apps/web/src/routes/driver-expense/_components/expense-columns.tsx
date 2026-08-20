@@ -55,7 +55,7 @@ export function getColumns(): ColumnDef<DriverExpenseRow>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <span className="line-clamp-2 max-w-96 text-xs text-muted-foreground">
+        <span className="text-muted-foreground line-clamp-2 max-w-96 text-xs">
           {row.original.description}
         </span>
       ),
@@ -78,7 +78,7 @@ export function getColumns(): ColumnDef<DriverExpenseRow>[] {
         row.original.receiptDocumentId ? (
           <Badge variant="secondary">Attached</Badge>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-muted-foreground text-xs">—</span>
         ),
       size: 90,
       meta: { apiField: "receiptDocumentId", label: "Receipt" },
@@ -98,11 +98,11 @@ export function getColumns(): ColumnDef<DriverExpenseRow>[] {
           <div className="flex flex-col">
             <span className="text-xs">{formatUnixDate(row.original.reviewedAt)}</span>
             {row.original.reviewedBy ? (
-              <span className="text-xs text-muted-foreground">{row.original.reviewedBy.name}</span>
+              <span className="text-muted-foreground text-xs">{row.original.reviewedBy.name}</span>
             ) : null}
           </div>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-muted-foreground text-xs">—</span>
         ),
       size: 130,
       meta: { apiField: "reviewedAt", label: "Reviewed" },

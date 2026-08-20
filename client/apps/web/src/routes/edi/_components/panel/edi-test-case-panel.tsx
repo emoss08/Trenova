@@ -342,7 +342,7 @@ function TestCaseVerdict({
     actualWarnings === expectedWarnings && actualErrors === expectedErrors && codesPass;
 
   return (
-    <div className="mb-4 flex items-center justify-between gap-3 rounded-md border bg-muted/20 p-3">
+    <div className="bg-muted/20 mb-4 flex items-center justify-between gap-3 rounded-md border p-3">
       <div className="flex items-center gap-3">
         <EDITestCaseVerdictBadge passed={passed} />
         <div className="text-sm">
@@ -351,7 +351,7 @@ function TestCaseVerdict({
             {verdictCountLine("Errors", actualErrors, expectedErrors)}
           </p>
           {!passed && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Review the inspector diagnostics, then either fix the payload/template or update the
               expected counts and codes.
             </p>

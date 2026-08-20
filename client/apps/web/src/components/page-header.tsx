@@ -23,7 +23,7 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   return (
-    <div className={cn("border-b border-border p-4", className)}>
+    <div className={cn("border-border border-b p-4", className)}>
       <div
         className={cn(
           "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",

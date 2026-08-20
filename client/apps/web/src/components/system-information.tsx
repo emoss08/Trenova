@@ -4,9 +4,9 @@ import React from "react";
 
 export function SystemInformation() {
   return (
-    <div className="ml-auto flex items-center gap-1 px-3 text-center font-table text-xs text-muted-foreground">
+    <div className="font-table text-muted-foreground ml-auto flex items-center gap-1 px-3 text-center text-xs">
       <SystemStatus />
-      <Dot className="size-2.5 text-muted-foreground" />
+      <Dot className="text-muted-foreground size-2.5" />
       <UserCurrentTime />
     </div>
   );
@@ -30,7 +30,7 @@ function SystemStatus() {
   return (
     <div className="flex flex-row items-center justify-center gap-1 text-center">
       <div className="mb-0.5 size-1.5 rounded-full bg-green-500" />
-      <span className="text-xs text-muted-foreground">Systems nominal</span>
+      <span className="text-muted-foreground text-xs">Systems nominal</span>
     </div>
   );
 }

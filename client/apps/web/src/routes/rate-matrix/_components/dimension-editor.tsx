@@ -56,7 +56,7 @@ export function DimensionEditor() {
         const matchMode = dimensions[index]?.matchMode;
 
         return (
-          <div key={field.id} className="rounded-md border bg-card p-4">
+          <div key={field.id} className="bg-card rounded-md border p-4">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-medium">Axis {index + 1}</p>
               <Button

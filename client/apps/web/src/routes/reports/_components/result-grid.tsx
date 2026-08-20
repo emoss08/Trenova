@@ -146,7 +146,7 @@ export function ResultGrid({
     <div className={cn("relative flex min-h-0 flex-1 flex-col", className)}>
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto">
         <div className="min-w-fit">
-          <div className="sticky top-0 z-10 flex border-b border-border bg-background/95 backdrop-blur-sm">
+          <div className="border-border bg-background/95 sticky top-0 z-10 flex border-b backdrop-blur-sm">
             {visibleColumns.map(({ column }) => {
               const numeric = isNumericDisplay(column.display);
               const active = sort?.columnId === column.id;
@@ -158,9 +158,9 @@ export function ResultGrid({
                   onClick={() => onSortChange?.(nextSort(sort, column.id))}
                   className={cn(
                     COLUMN_WIDTH,
-                    "flex shrink-0 items-center gap-1 px-3 py-1.5 text-2xs font-medium tracking-wide text-muted-foreground uppercase",
+                    "text-2xs text-muted-foreground flex shrink-0 items-center gap-1 px-3 py-1.5 font-medium tracking-wide uppercase",
                     numeric && "justify-end",
-                    onSortChange && "transition-colors hover:text-foreground",
+                    onSortChange && "hover:text-foreground transition-colors",
                     active && "text-foreground",
                   )}
                   title={column.label}
@@ -186,7 +186,7 @@ export function ResultGrid({
               return (
                 <div
                   key={virtualRow.key}
-                  className="absolute top-0 left-0 flex w-full border-b border-border/40 transition-colors hover:bg-accent/40"
+                  className="border-border/40 hover:bg-accent/40 absolute top-0 left-0 flex w-full border-b transition-colors"
                   style={{
                     height: virtualRow.size,
                     transform: `translateY(${virtualRow.start}px)`,
@@ -223,13 +223,13 @@ export function ResultGrid({
           </div>
 
           {visibleRows.length === 0 && (
-            <p className="p-8 text-center text-xs text-muted-foreground">{emptyMessage}</p>
+            <p className="text-muted-foreground p-8 text-center text-xs">{emptyMessage}</p>
           )}
         </div>
       </div>
 
       {totals && (
-        <div className="flex shrink-0 border-t-2 border-border bg-muted/40">
+        <div className="border-border bg-muted/40 flex shrink-0 border-t-2">
           {visibleColumns.map(({ column, index: columnIndex }) => {
             const numeric = isNumericDisplay(column.display);
             const value = totals[columnIndex];
@@ -258,7 +258,7 @@ export function ResultGrid({
 
       {loading && (
         <div className="pointer-events-none absolute top-2 right-2">
-          <Spinner className="size-3.5 text-muted-foreground" />
+          <Spinner className="text-muted-foreground size-3.5" />
         </div>
       )}
     </div>

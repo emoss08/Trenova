@@ -32,8 +32,8 @@ function Section({
   return (
     <section className="space-y-2">
       <div>
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        <h3 className="text-foreground text-sm font-semibold">{title}</h3>
+        {description && <p className="text-muted-foreground text-xs">{description}</p>}
       </div>
       {children}
     </section>
@@ -42,9 +42,9 @@ function Section({
 
 function EntryDetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[140px_1fr] gap-2 border-b border-border/60 py-2 last:border-b-0">
-      <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 text-sm text-foreground">{value}</dd>
+    <div className="border-border/60 grid grid-cols-[140px_1fr] gap-2 border-b py-2 last:border-b-0">
+      <dt className="text-muted-foreground text-sm font-medium">{label}</dt>
+      <dd className="text-foreground min-w-0 text-sm">{value}</dd>
     </div>
   );
 }
@@ -63,9 +63,9 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
             Sensitive
           </Badge>
         )}
-        <p className="text-xs wrap-break-word text-foreground">{formatted.value}</p>
+        <p className="text-foreground text-xs wrap-break-word">{formatted.value}</p>
         {formatted.transformed && (
-          <p className="font-mono text-[11px] text-muted-foreground">
+          <p className="text-muted-foreground font-mono text-[11px]">
             Raw: {formatAuditValue(value)}
           </p>
         )}
@@ -108,26 +108,26 @@ function ChangeRow({
   to: unknown;
 }) {
   return (
-    <div className="space-y-2 border-b border-border/60 py-3 last:border-b-0">
+    <div className="border-border/60 space-y-2 border-b py-3 last:border-b-0">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground">{formatFieldLabel(path)}</p>
+          <p className="text-foreground text-sm font-medium">{formatFieldLabel(path)}</p>
         </div>
         <div className="flex items-center gap-1">
-          <p className="text-xs font-medium text-muted-foreground">
+          <p className="text-muted-foreground text-xs font-medium">
             Action: {changeTypeLabel(type)}
           </p>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <div className="space-y-1 rounded-md border border-red-500/20 bg-red-500/8 p-2.5">
-          <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+          <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
             Previous Value
           </p>
           <AuditValueCell value={from} path={`${path}.from`} />
         </div>
         <div className="space-y-1 rounded-md border border-green-500/20 bg-green-500/8 p-2.5">
-          <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+          <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
             Current Value
           </p>
           <AuditValueCell value={to} path={`${path}.to`} />
@@ -164,7 +164,7 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
     >
       <div className="space-y-5">
         <Section title="Entry Details" description="Detailed information about this audit event">
-          <dl className="rounded-md border border-border/70 px-3">
+          <dl className="border-border/70 rounded-md border px-3">
             <EntryDetailRow
               label="Event ID"
               value={<span className="font-mono text-xs break-all">{row.id}</span>}
@@ -195,9 +195,9 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
 
         <Section title="Changes" description="Field-level before/after values">
           <ScrollArea className="h-76">
-            <div className="rounded-md border border-border/70 px-3">
+            <div className="border-border/70 rounded-md border px-3">
               {changedFields.length === 0 ? (
-                <div className="py-3 text-xs text-muted-foreground italic">
+                <div className="text-muted-foreground py-3 text-xs italic">
                   No changes recorded.
                 </div>
               ) : (

@@ -56,7 +56,7 @@ const MappingsPanel = memo(function MappingsPanel({
   disabled: boolean;
 }) {
   return (
-    <div className="rounded-lg border bg-background">
+    <div className="bg-background rounded-lg border">
       <PanelHeader
         icon={<UsersRoundIcon />}
         title="Group role mappings"

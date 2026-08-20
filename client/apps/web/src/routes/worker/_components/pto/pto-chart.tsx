@@ -56,13 +56,13 @@ async function fetchPTOChartData(
 const CustomTooltip = memo(
   ({ workers, id, value }: { workers: PTOChartWorker[]; id: string; value: number }) => {
     return (
-      <div className="min-w-[150px] rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-xl">
+      <div className="border-border bg-popover text-popover-foreground min-w-[150px] rounded-lg border p-3 shadow-xl">
         <div className="mb-2 flex items-center gap-2">
           <div className="text-sm font-semibold">{id}</div>
           <div className="text-sm opacity-70">({value})</div>
         </div>
         {workers.length > 0 && (
-          <div className="border-t border-border pt-2">
+          <div className="border-border border-t pt-2">
             <div className="mb-1 text-xs font-medium opacity-60">Workers:</div>
             <div className="space-y-0.5 text-xs">
               {workers.slice(0, 5).map((worker: PTOChartWorker, idx: number) => (
@@ -94,7 +94,7 @@ function ChartLoadingState({ className }: { className?: string }) {
 function ChartEmptyState() {
   return (
     <div className="flex h-full w-full items-center justify-center">
-      <p className="text-sm text-muted-foreground">No PTO data available for the selected period</p>
+      <p className="text-muted-foreground text-sm">No PTO data available for the selected period</p>
     </div>
   );
 }
@@ -103,8 +103,8 @@ function ChartErrorState({ message }: { message?: string }) {
   return (
     <div className="flex h-full w-full items-center justify-center">
       <div className="text-center">
-        <p className="text-sm text-destructive">Failed to load chart data</p>
-        <p className="text-xs text-muted-foreground">{message || "An error occurred"}</p>
+        <p className="text-destructive text-sm">Failed to load chart data</p>
+        <p className="text-muted-foreground text-xs">{message || "An error occurred"}</p>
       </div>
     </div>
   );

@@ -62,7 +62,7 @@ export function getColumns(): ColumnDef<DetentionPolicy>[] {
       accessorKey: "code",
       header: "Code",
       cell: ({ row }) => (
-        <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+        <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
           {row.original.code}
         </span>
       ),

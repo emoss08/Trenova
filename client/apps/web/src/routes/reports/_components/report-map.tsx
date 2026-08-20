@@ -128,7 +128,7 @@ export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
 
 function MapNotice({ message }: { message: string }) {
   return (
-    <div className="flex h-full w-full items-center justify-center p-4 text-center text-xs text-muted-foreground">
+    <div className="text-muted-foreground flex h-full w-full items-center justify-center p-4 text-center text-xs">
       {message}
     </div>
   );

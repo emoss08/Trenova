@@ -26,14 +26,14 @@ export function CollectionsWorklistCard() {
         <CardTitle className="text-sm font-medium">
           Collections worklist
           {rows.length > 0 ? (
-            <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground tabular-nums">
+            <span className="bg-muted text-muted-foreground ml-2 rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums">
               {rows.length}
             </span>
           ) : null}
         </CardTitle>
         <Link
           to="/accounting/ar/open-items"
-          className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+          className="text-muted-foreground hover:text-foreground text-xs hover:underline"
         >
           Open items
         </Link>
@@ -46,7 +46,7 @@ export function CollectionsWorklistCard() {
             ))}
           </div>
         ) : rows.length === 0 ? (
-          <div className="flex h-56 flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex h-56 flex-col items-center justify-center gap-2 text-sm">
             <CheckCircle2Icon className="size-5 text-emerald-500" />
             Nothing needs attention right now
           </div>
@@ -71,7 +71,7 @@ function WorklistRow({ item, index }: { item: ARWorklistItem; index: number }) {
     >
       <Link
         to={`/accounting/ar/customer-ledger?customerId=${item.customerId}`}
-        className="flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/50"
+        className="hover:bg-muted/50 flex items-center gap-3 rounded-md px-2 py-2 transition-colors"
       >
         <span
           className={cn(
@@ -85,7 +85,7 @@ function WorklistRow({ item, index }: { item: ARWorklistItem; index: number }) {
           <div className="flex items-baseline justify-between gap-2">
             <span className="truncate text-xs">
               <span className="font-mono font-medium">{item.invoiceNumber}</span>
-              <span className="ml-1.5 text-muted-foreground">{item.customerName}</span>
+              <span className="text-muted-foreground ml-1.5">{item.customerName}</span>
             </span>
             <span className="shrink-0 text-xs font-semibold tabular-nums">
               {formatCurrency(item.openAmountMinor / 100)}
@@ -93,11 +93,11 @@ function WorklistRow({ item, index }: { item: ARWorklistItem; index: number }) {
           </div>
           <div className="mt-0.5 flex items-center gap-1.5">
             {item.daysPastDue > 0 ? (
-              <span className="text-[11px] text-muted-foreground tabular-nums">
+              <span className="text-muted-foreground text-[11px] tabular-nums">
                 {item.daysPastDue}d past due
               </span>
             ) : (
-              <span className="text-[11px] text-muted-foreground">not yet due</span>
+              <span className="text-muted-foreground text-[11px]">not yet due</span>
             )}
             {item.isDisputed ? <Badge variant="orange">Disputed</Badge> : null}
             {item.hasShortPay ? <Badge variant="inactive">Short-paid</Badge> : null}

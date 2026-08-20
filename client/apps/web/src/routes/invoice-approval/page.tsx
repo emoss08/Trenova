@@ -214,7 +214,7 @@ export function InvoiceApprovalPage() {
               value={query}
               onChange={(event) => void setSearchParams({ query: event.target.value })}
               placeholder="Search invoice, customer, reason..."
-              leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               className="h-7 text-xs"
             />
             <Select
@@ -279,7 +279,7 @@ export function InvoiceApprovalPage() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate text-xs font-medium">{row.originalInvoiceNumber}</p>
-                        <p className="truncate text-2xs text-muted-foreground">
+                        <p className="text-2xs text-muted-foreground truncate">
                           {row.customerName}
                         </p>
                       </div>
@@ -294,7 +294,7 @@ export function InvoiceApprovalPage() {
                       </span>
                     </div>
                     {row.reason ? (
-                      <p className="mt-1.5 line-clamp-1 text-2xs text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground mt-1.5 line-clamp-1">
                         {row.reason}
                       </p>
                     ) : null}
@@ -373,7 +373,7 @@ function ApprovalDetail({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{selectedRow.originalInvoiceNumber}</h2>
-          <p className="text-sm text-muted-foreground">{selectedRow.customerName}</p>
+          <p className="text-muted-foreground text-sm">{selectedRow.customerName}</p>
         </div>
         <p className="text-2xl font-bold tabular-nums">{formatCurrency(netDelta)}</p>
       </div>
@@ -385,7 +385,7 @@ function ApprovalDetail({
 
       <div className="grid gap-5 xl:grid-cols-2">
         <div className="flex flex-col gap-5">
-          <div className="rounded-lg border bg-card p-3">
+          <div className="bg-card rounded-lg border p-3">
             <SectionLabel>Financial Impact</SectionLabel>
             <div className="mt-2 space-y-2">
               <ChargeSummaryRow
@@ -402,22 +402,22 @@ function ApprovalDetail({
           </div>
 
           {selectedRow.reason || selectedRow.policyReason ? (
-            <div className="rounded-lg border bg-card p-3">
+            <div className="bg-card rounded-lg border p-3">
               <SectionLabel>Reason</SectionLabel>
               {selectedRow.reason ? (
-                <p className="mt-1.5 border-l-2 border-muted-foreground/20 pl-2.5 text-xs text-muted-foreground italic">
+                <p className="border-muted-foreground/20 text-muted-foreground mt-1.5 border-l-2 pl-2.5 text-xs italic">
                   {selectedRow.reason}
                 </p>
               ) : null}
               {selectedRow.policyReason ? (
-                <p className="mt-1.5 text-2xs text-muted-foreground">
+                <p className="text-2xs text-muted-foreground mt-1.5">
                   Policy: {selectedRow.policyReason}
                 </p>
               ) : null}
             </div>
           ) : null}
 
-          <div className="rounded-lg border bg-card p-3">
+          <div className="bg-card rounded-lg border p-3">
             <SectionLabel>Context</SectionLabel>
             <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
               <PropertyCell label="Requested By">
@@ -456,9 +456,9 @@ function ApprovalDetail({
             ) : null}
           </div>
 
-          <div className="rounded-lg border bg-card p-3">
+          <div className="bg-card rounded-lg border p-3">
             <SectionLabel>Linked Artifacts</SectionLabel>
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs">
+            <div className="text-2xs mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
               <ArtifactLink
                 to={`/billing/invoices?item=${selectedRow.originalInvoiceId}`}
                 label="Original Invoice"
@@ -492,11 +492,11 @@ function ApprovalDetail({
         </div>
 
         <div className="flex flex-col gap-5">
-          <div className="rounded-lg border bg-card p-3">
+          <div className="bg-card rounded-lg border p-3">
             <SectionLabel>Charge Detail</SectionLabel>
             <div className="mt-2 overflow-hidden rounded-md border">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-muted-foreground">
+                <thead className="bg-muted/50 text-muted-foreground text-left">
                   <tr>
                     <th className="px-3 py-2 text-xs font-medium">Line</th>
                     <th className="px-3 py-2 text-xs font-medium">Description</th>
@@ -506,8 +506,8 @@ function ApprovalDetail({
                 </thead>
                 <tbody>
                   {detail.lines.map((line) => (
-                    <tr key={line.id} className="border-t transition-colors hover:bg-muted/50">
-                      <td className="px-3 py-2 font-mono text-2xs">{line.lineNumber}</td>
+                    <tr key={line.id} className="hover:bg-muted/50 border-t transition-colors">
+                      <td className="text-2xs px-3 py-2 font-mono">{line.lineNumber}</td>
                       <td className="px-3 py-2 text-xs">{line.description}</td>
                       <td className="px-3 py-2 text-right text-xs tabular-nums">
                         {formatCurrency(Number(line.creditAmount))}
@@ -522,7 +522,7 @@ function ApprovalDetail({
             </div>
           </div>
 
-          <div className="rounded-lg border bg-card p-3">
+          <div className="bg-card rounded-lg border p-3">
             <SectionLabel>Decision</SectionLabel>
             <div className="mt-2">
               {!showRejectForm ? (
@@ -591,8 +591,8 @@ function ApprovalDetail({
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-card px-3 py-2.5">
-      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+    <div className="bg-card rounded-lg border px-3 py-2.5">
+      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
@@ -601,7 +601,7 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 }
 
 function SectionLabel({ children }: { children: ReactNode }) {
-  return <p className="text-xs font-medium text-muted-foreground">{children}</p>;
+  return <p className="text-muted-foreground text-xs font-medium">{children}</p>;
 }
 
 function PropertyCell({ label, children }: { label: string; children: ReactNode }) {
@@ -625,14 +625,14 @@ function ChargeSummaryRow({
   return (
     <div className="flex items-center justify-between">
       <span
-        className={cn("text-sm", bold ? "font-medium text-foreground" : "text-muted-foreground")}
+        className={cn("text-sm", bold ? "text-foreground font-medium" : "text-muted-foreground")}
       >
         {label}
       </span>
       <span
         className={cn(
           "tracking-tight tabular-nums",
-          bold ? "text-base font-semibold text-foreground" : "text-sm text-muted-foreground",
+          bold ? "text-foreground text-base font-semibold" : "text-muted-foreground text-sm",
         )}
       >
         {value}
@@ -645,7 +645,7 @@ function ArtifactLink({ to, label }: { to: string; label: string }) {
   return (
     <Link
       to={to}
-      className="inline-flex items-center gap-0.5 text-muted-foreground hover:text-foreground hover:underline"
+      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 hover:underline"
     >
       {label}
       <ExternalLinkIcon className="size-2.5" />

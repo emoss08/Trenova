@@ -17,7 +17,7 @@ export function CarrierTabbedForm() {
       onValueChange={(value) => setActiveTab(value as string)}
       className="-m-4 flex flex-1 flex-col overflow-hidden"
     >
-      <div className="border-b border-border px-4">
+      <div className="border-border border-b px-4">
         <TabsList variant="underline">
           <TabsTab value="identity">
             <TruckIcon className="size-4" />

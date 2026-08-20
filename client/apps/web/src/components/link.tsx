@@ -126,7 +126,7 @@ export function EntityRedirectLink({
 
   const linkClassName = React.useMemo(
     () =>
-      cn("inline-flex w-full items-center text-primary underline hover:text-primary/70", className),
+      cn("text-primary hover:text-primary/70 inline-flex w-full items-center underline", className),
     [className],
   );
 

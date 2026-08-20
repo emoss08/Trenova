@@ -43,7 +43,7 @@ export function TransportProfileFields({
   if (method === "AS2") {
     return (
       <>
-        <FormSection title="AS2 Identifiers" className="rounded-md border bg-muted/20 p-3">
+        <FormSection title="AS2 Identifiers" className="bg-muted/20 rounded-md border p-3">
           <FormGroup cols={2}>
             <FormControl>
               <InputField
@@ -77,7 +77,7 @@ export function TransportProfileFields({
             </FormControl>
           </FormGroup>
         </FormSection>
-        <FormSection title="Security and MDN" className="rounded-md border bg-muted/20 p-3">
+        <FormSection title="Security and MDN" className="bg-muted/20 rounded-md border p-3">
           <FormGroup cols={2}>
             <FormControl>
               <SelectField
@@ -154,7 +154,7 @@ export function TransportProfileFields({
             </FormControl>
           </FormGroup>
         </FormSection>
-        <FormSection title="Certificates" className="rounded-md border bg-muted/20 p-3">
+        <FormSection title="Certificates" className="bg-muted/20 rounded-md border p-3">
           <FormGroup cols={1}>
             <FormControl cols="full">
               <EDICertificateField
@@ -201,7 +201,7 @@ export function TransportProfileFields({
 
   return (
     <>
-      <FormSection title="VAN Mailbox" className="rounded-md border bg-muted/20 p-3">
+      <FormSection title="VAN Mailbox" className="bg-muted/20 rounded-md border p-3">
         <FormGroup cols={2}>
           <FormControl>
             <InputField
@@ -509,7 +509,7 @@ export function SecretProfileFields({
   return (
     <div className="space-y-3">
       {secretState && secretState.length > 0 && (
-        <div className="rounded-md border bg-muted/20 p-3">
+        <div className="bg-muted/20 rounded-md border p-3">
           <div className="mb-2 text-sm font-medium">Saved Secrets</div>
           <div className="flex flex-wrap gap-1.5">
             {secretState.map((secret) => (

@@ -97,7 +97,7 @@ function groupByStatus(items: DocumentPacketItem[]) {
 
 function PacketItem({ item }: { item: DocumentPacketItem }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2">
+    <div className="bg-background flex items-center justify-between gap-3 rounded-md border px-3 py-2">
       <div className="flex min-w-0 items-center gap-2.5">
         {getStatusIcon(item.status)}
         <div className="min-w-0">
@@ -105,7 +105,7 @@ function PacketItem({ item }: { item: DocumentPacketItem }) {
             <span className="truncate text-sm font-medium">
               {item.documentTypeName}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {item.documentTypeCode}
             </span>
           </div>
@@ -149,8 +149,8 @@ export function PacketCompletenessPanel({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="rounded-lg border bg-card">
-        <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between px-4 py-3 transition-colors hover:bg-accent/50">
+      <div className="bg-card rounded-lg border">
+        <CollapsibleTrigger className="hover:bg-accent/50 flex w-full cursor-pointer items-center justify-between px-4 py-3 transition-colors">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium">Packet Status</span>
             <Badge variant={getStatusBadgeVariant(summary.status)}>
@@ -160,7 +160,7 @@ export function PacketCompletenessPanel({
                   ? "Needs Review"
                   : summary.status}
             </Badge>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               {summary.satisfiedRules}/{summary.totalRules} rules satisfied
             </span>
             {summary.missingRequired > 0 && (
@@ -185,7 +185,7 @@ export function PacketCompletenessPanel({
             )}
           </div>
           <ChevronDownIcon
-            className={`size-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`text-muted-foreground size-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
           />
         </CollapsibleTrigger>
 
@@ -193,7 +193,7 @@ export function PacketCompletenessPanel({
           <div className="space-y-3 border-t px-4 py-3">
             {[...grouped.entries()].map(([status, items]) => (
               <div key={status} className="space-y-1.5">
-                <div className="flex items-center gap-2 text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wider uppercase">
                   {getStatusIcon(status)}
                   <span>
                     {getStatusLabel(status)} ({items.length})

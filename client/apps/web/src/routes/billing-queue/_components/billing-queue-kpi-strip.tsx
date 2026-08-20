@@ -51,7 +51,7 @@ export function BillingQueueKPIStrip({
 
   return (
     <div className="mx-4 mt-3">
-      <div className="flex items-center rounded-lg border bg-card">
+      <div className="bg-card flex items-center rounded-lg border">
         {metrics.map((metric, index) => (
           <button
             key={metric.key}
@@ -64,7 +64,7 @@ export function BillingQueueKPIStrip({
               statusFilter === metric.key && "bg-muted",
             )}
           >
-            <span className="text-xs text-muted-foreground">{metric.label}</span>
+            <span className="text-muted-foreground text-xs">{metric.label}</span>
             <span className="text-sm font-semibold tabular-nums">{metric.value}</span>
           </button>
         ))}

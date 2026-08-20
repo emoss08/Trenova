@@ -41,7 +41,7 @@ export function ShipmentSearchPreview({ shipmentId }: { shipmentId?: string }) {
 
   if (!shipmentId) {
     return (
-      <div className="flex h-full w-full items-center justify-center text-2xs text-muted-foreground">
+      <div className="text-2xs text-muted-foreground flex h-full w-full items-center justify-center">
         Hover a shipment to preview details
       </div>
     );
@@ -53,7 +53,7 @@ export function ShipmentSearchPreview({ shipmentId }: { shipmentId?: string }) {
 
   if (isError || !data) {
     return (
-      <div className="flex h-full items-center justify-center text-2xs text-muted-foreground">
+      <div className="text-2xs text-muted-foreground flex h-full items-center justify-center">
         Unable to load shipment.
       </div>
     );
@@ -100,7 +100,7 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
             <span className="text-base font-semibold">{shipment.proNumber || shipment.id}</span>
             <ShipmentStatusBadge status={shipment.status} />
           </div>
-          <p className="max-w-full truncate text-xs text-muted-foreground">
+          <p className="text-muted-foreground max-w-full truncate text-xs">
             {shipment.customer?.name}
             {shipment.customer?.code && ` (${shipment.customer.code})`}
             {shipment.bol && ` · BOL: ${shipment.bol}`}
@@ -109,17 +109,17 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
         <ShipmentRouteMap moves={shipment.moves} />
         {(originLabel || destLabel) && (
           <div className="flex flex-col gap-0.5 border-t pt-2">
-            <span className="text-2xs font-medium text-muted-foreground">Route</span>
+            <span className="text-2xs text-muted-foreground font-medium">Route</span>
             <div className="flex items-center gap-1.5 text-xs font-medium">
               <span>{originLabel ?? "—"}</span>
-              <ArrowRightIcon className="size-3 shrink-0 text-muted-foreground" />
+              <ArrowRightIcon className="text-muted-foreground size-3 shrink-0" />
               <span>{destLabel ?? "—"}</span>
             </div>
           </div>
         )}
         {details.length > 0 && (
           <div className="flex flex-col gap-1.5 border-t pt-2">
-            <span className="text-2xs font-medium text-muted-foreground">Details</span>
+            <span className="text-2xs text-muted-foreground font-medium">Details</span>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               {details.map((d) => (
                 <div key={d.label} className="flex flex-col">
@@ -150,7 +150,7 @@ function MoveCard({ move }: { move: ShipmentMove }) {
   const sortedStops = [...move.stops].sort((a, b) => a.sequence - b.sequence);
 
   return (
-    <div className="rounded-lg border bg-card p-2.5">
+    <div className="bg-card rounded-lg border p-2.5">
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-semibold">Move {move.sequence + 1}</span>
@@ -178,7 +178,7 @@ function MoveCard({ move }: { move: ShipmentMove }) {
 
           return (
             <div key={stop.id} className="relative flex gap-2.5 pb-4 last:pb-0">
-              {!isLast && <div className="absolute top-3 -bottom-2 left-[4px] w-px bg-border" />}
+              {!isLast && <div className="bg-border absolute top-3 -bottom-2 left-[4px] w-px" />}
               <div className="relative z-1 flex flex-col items-center">
                 <div className={`mt-0.5 size-2.5 shrink-0 rounded-full ${dotColor}`} />
               </div>
@@ -186,7 +186,7 @@ function MoveCard({ move }: { move: ShipmentMove }) {
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-medium">{stop.type}</span>
                   {stop.location?.name && (
-                    <span className="truncate text-2xs text-muted-foreground">
+                    <span className="text-2xs text-muted-foreground truncate">
                       – {stop.location.name}
                     </span>
                   )}
@@ -255,7 +255,7 @@ function PreviewSkeleton() {
         </div>
       </div>
       <div className="flex flex-col gap-2 border-t pt-2">
-        <div className="rounded-lg border bg-card p-2.5">
+        <div className="bg-card rounded-lg border p-2.5">
           <div className="mb-2 flex items-center justify-between">
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-4 w-14 rounded-full" />

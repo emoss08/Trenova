@@ -168,7 +168,7 @@ export function RolePermissionsEditor({
       </div>
 
       {permissions.length === 0 ? (
-        <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+        <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
           No permissions configured for this role.
         </div>
       ) : (
@@ -229,7 +229,7 @@ function PermissionRow({
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium">{resourceLabel}</p>
             {resourceDef?.category && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 ({resourceDef.category})
               </span>
             )}
@@ -238,7 +238,7 @@ function PermissionRow({
             {availableOperations.map((opDef) => (
               <label
                 key={opDef.operation}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                className="text-muted-foreground flex items-center gap-1.5 text-xs"
                 title={opDef.description}
               >
                 <Checkbox
@@ -255,7 +255,7 @@ function PermissionRow({
             ))}
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Scope:</span>
+            <span className="text-muted-foreground text-xs">Scope:</span>
             <Select
               value={permission.dataScope}
               onValueChange={(value) => onDataScopeChange(value as DataScope)}
@@ -598,7 +598,7 @@ export function CreateRolePermissionsEditor({
       </div>
 
       {permissions.length === 0 ? (
-        <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+        <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
           No permissions configured. Add permissions to define what this role
           can do.
         </div>
@@ -657,7 +657,7 @@ function CreatePermissionRow({
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium">{resourceLabel}</p>
             {resourceDef?.category && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 ({resourceDef.category})
               </span>
             )}
@@ -666,7 +666,7 @@ function CreatePermissionRow({
             {availableOperations.map((opDef) => (
               <label
                 key={opDef.operation}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                className="text-muted-foreground flex items-center gap-1.5 text-xs"
                 title={opDef.description}
               >
                 <Checkbox
@@ -682,7 +682,7 @@ function CreatePermissionRow({
             ))}
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Scope:</span>
+            <span className="text-muted-foreground text-xs">Scope:</span>
             <Select
               value={permission.dataScope}
               onValueChange={(value) => onDataScopeChange(value as DataScope)}

@@ -21,19 +21,19 @@ export function FormulaReferencePanel({ className }: { className?: string }) {
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-            <BookOpen className="size-4 text-primary" />
+          <div className="bg-primary/10 flex size-8 items-center justify-center rounded-lg">
+            <BookOpen className="text-primary size-4" />
           </div>
           <div>
             <CardTitle className="text-sm font-medium">Reference</CardTitle>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Available variables and functions
             </p>
           </div>
         </div>
         <ChevronDown
           className={cn(
-            "size-4 text-muted-foreground transition-transform",
+            "text-muted-foreground size-4 transition-transform",
             isCollapsed && "-rotate-90",
           )}
         />
@@ -48,7 +48,7 @@ export function FormulaReferencePanel({ className }: { className?: string }) {
               className={cn(
                 "flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors",
                 activeTab === "variables"
-                  ? "border-b-2 border-primary text-primary"
+                  ? "border-primary text-primary border-b-2"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -61,7 +61,7 @@ export function FormulaReferencePanel({ className }: { className?: string }) {
               className={cn(
                 "flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors",
                 activeTab === "functions"
-                  ? "border-b-2 border-primary text-primary"
+                  ? "border-primary text-primary border-b-2"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -81,31 +81,31 @@ export function FormulaReferencePanel({ className }: { className?: string }) {
 
                   return (
                     <div key={category.id}>
-                      <h4 className="mb-1 px-2 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+                      <h4 className="text-muted-foreground mb-1 px-2 text-[10px] font-semibold tracking-wide uppercase">
                         {category.label}
                       </h4>
                       <div className="space-y-1">
                         {categoryVars.map((variable) => (
                           <div
                             key={variable.name}
-                            className="group flex items-start gap-3 rounded-md p-2 transition-colors hover:bg-muted/50"
+                            className="group hover:bg-muted/50 flex items-start gap-3 rounded-md p-2 transition-colors"
                           >
-                            <code className="mt-0.5 shrink-0 rounded bg-primary/10 px-1.5 py-0.5 font-mono text-xs text-primary">
+                            <code className="bg-primary/10 text-primary mt-0.5 shrink-0 rounded px-1.5 py-0.5 font-mono text-xs">
                               {variable.name}
                             </code>
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-muted-foreground text-xs">
                                 {variable.description}
                               </p>
                             </div>
-                            <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium">
                               {variable.type}
                             </span>
                           </div>
                         ))}
                       </div>
                       {category.id === "computed" && (
-                        <p className="mt-2 px-2 text-[10px] text-muted-foreground italic">
+                        <p className="text-muted-foreground mt-2 px-2 text-[10px] italic">
                           Commodity data (weight, pieces, hazmat) is available
                           through computed rollup variables. Direct commodity
                           iteration is not supported in formulas.
@@ -122,13 +122,13 @@ export function FormulaReferencePanel({ className }: { className?: string }) {
                 {AVAILABLE_FUNCTIONS.map((func) => (
                   <div
                     key={func.name}
-                    className="group flex items-start gap-3 rounded-md p-2 transition-colors hover:bg-muted/50"
+                    className="group hover:bg-muted/50 flex items-start gap-3 rounded-md p-2 transition-colors"
                   >
-                    <code className="mt-0.5 shrink-0 rounded bg-chart-2/10 px-1.5 py-0.5 font-mono text-xs text-chart-2">
+                    <code className="bg-chart-2/10 text-chart-2 mt-0.5 shrink-0 rounded px-1.5 py-0.5 font-mono text-xs">
                       {func.signature}
                     </code>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {func.description}
                       </p>
                     </div>

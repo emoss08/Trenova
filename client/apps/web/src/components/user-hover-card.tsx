@@ -58,13 +58,13 @@ export function UserHoverCard({
               </div>
             </div>
             {hoveredUserData?.emailAddress && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 {hoveredUserData.emailAddress}
               </div>
             )}
           </div>
         ) : (
-          <div className="text-sm text-muted-foreground">User not found</div>
+          <div className="text-muted-foreground text-sm">User not found</div>
         )}
       </HoverCardContent>
     </HoverCard>

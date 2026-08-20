@@ -205,20 +205,20 @@ function VehicleDetailCard({
       onClick={(e) => e.stopPropagation()}
     >
       <div className={cn("relative mb-8", !pinned && "pointer-events-none")}>
-        <div className="cc-fade-in relative z-10 flex w-64 flex-col gap-2.5 rounded-lg border bg-popover p-3 text-xs text-popover-foreground shadow-lg ring-1 ring-foreground/10">
+        <div className="cc-fade-in bg-popover text-popover-foreground ring-foreground/10 relative z-10 flex w-64 flex-col gap-2.5 rounded-lg border p-3 text-xs shadow-lg ring-1">
           <div className="flex items-start justify-between gap-2">
             <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="flex items-center gap-1.5 truncate text-sm font-semibold text-foreground">
-                <TruckIcon className="size-3.5 shrink-0 text-muted-foreground" />
+              <span className="text-foreground flex items-center gap-1.5 truncate text-sm font-semibold">
+                <TruckIcon className="text-muted-foreground size-3.5 shrink-0" />
                 {position.tractorCode}
                 {stale && (
-                  <span className="rounded bg-warning/15 px-1 py-px text-[8.5px] font-bold tracking-wide text-warning uppercase">
+                  <span className="bg-warning/15 text-warning rounded px-1 py-px text-[8.5px] font-bold tracking-wide uppercase">
                     Stale
                   </span>
                 )}
               </span>
               {position.primaryWorkerName && (
-                <span className="flex items-center gap-1 text-2xs text-muted-foreground">
+                <span className="text-2xs text-muted-foreground flex items-center gap-1">
                   <UserIcon className="size-3" />
                   {position.primaryWorkerName}
                 </span>
@@ -228,7 +228,7 @@ function VehicleDetailCard({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground rounded"
                 aria-label="Close vehicle info"
               >
                 <XIcon className="size-3.5" />
@@ -239,7 +239,7 @@ function VehicleDetailCard({
           <Separator />
           <div
             className={cn(
-              "grid gap-2 text-2xs tabular-nums",
+              "text-2xs grid gap-2 tabular-nums",
               position.fuelPercent != null ? "grid-cols-3" : "grid-cols-2",
             )}
           >
@@ -263,8 +263,8 @@ function VehicleDetailCard({
             <>
               <Separator />
               <div className="flex items-start gap-2">
-                <MapPinIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 text-2xs leading-relaxed text-foreground">
+                <MapPinIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+                <span className="text-2xs text-foreground min-w-0 leading-relaxed">
                   {position.formattedLocation}
                 </span>
               </div>

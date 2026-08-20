@@ -28,7 +28,7 @@ export function ApprovedChartOptions({
   return (
     <ChartOptionsOuter>
       <ChartOptionsInner>
-        <p className="text-sm text-muted-foreground">Color Scheme:</p>
+        <p className="text-muted-foreground text-sm">Color Scheme:</p>
         <Select
           items={APPROVED_PTO_COLOR_SCHEMES}
           value={colorScheme}

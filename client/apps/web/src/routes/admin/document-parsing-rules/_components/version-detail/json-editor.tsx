@@ -123,9 +123,9 @@ export function JsonEditor() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-start gap-2 rounded-md border border-muted bg-muted/30 p-2.5">
-        <InfoIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-        <p className="text-xs text-muted-foreground">
+      <div className="border-muted bg-muted/30 flex items-start gap-2 rounded-md border p-2.5">
+        <InfoIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+        <p className="text-muted-foreground text-xs">
           The JSON editor and the Rule Builder share the same underlying data.
           Edits made here must be applied to take effect in the builder, and
           vice versa. Use &ldquo;Refresh from Builder&rdquo; to pull the latest builder
@@ -184,15 +184,15 @@ export function JsonEditor() {
             </TooltipContent>
           </Tooltip>
         </div>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           {lineCount} line{lineCount !== 1 ? "s" : ""} · {charCount.toLocaleString()} chars
         </span>
       </div>
 
       {parseError && (
-        <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-2.5">
-          <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0 text-destructive" />
-          <p className="text-xs text-destructive">{parseError}</p>
+        <div className="border-destructive/50 bg-destructive/10 flex items-start gap-2 rounded-md border p-2.5">
+          <AlertTriangleIcon className="text-destructive mt-0.5 size-3.5 shrink-0" />
+          <p className="text-destructive text-xs">{parseError}</p>
         </div>
       )}
 

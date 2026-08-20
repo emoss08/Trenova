@@ -56,7 +56,7 @@ export function SamsaraIntegrationModal({
         <DialogTitle className="sr-only">Settings</DialogTitle>
         <DialogDescription className="sr-only">Customize your settings here.</DialogDescription>
         <SidebarProvider>
-          <Sidebar collapsible="none" className="hidden border-r border-border md:flex">
+          <Sidebar collapsible="none" className="border-border hidden border-r md:flex">
             <SidebarContent>
               <SidebarGroup>
                 <SidebarGroupContent>

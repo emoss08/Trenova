@@ -87,21 +87,21 @@ export function MentionReply({
   return (
     <div className="mt-1.5 flex flex-col gap-1.5">
       {notification.message && (
-        <div className="rounded-md border-l-2 border-border bg-muted/50 px-2.5 py-1.5 text-2xs leading-relaxed text-muted-foreground">
+        <div className="border-border bg-muted/50 text-2xs text-muted-foreground rounded-md border-l-2 px-2.5 py-1.5 leading-relaxed">
           {notification.message}
         </div>
       )}
 
       {sent ? (
-        <div className="flex items-center gap-1.5 text-2xs text-muted-foreground">
-          <CheckIcon className="size-3 text-success" />
+        <div className="text-2xs text-muted-foreground flex items-center gap-1.5">
+          <CheckIcon className="text-success size-3" />
           <span>Reply sent</span>
           {link && (
             <>
               <span aria-hidden>·</span>
               <button
                 type="button"
-                className="font-medium text-brand hover:underline"
+                className="text-brand font-medium hover:underline"
                 onClick={openThread}
               >
                 View conversation
@@ -123,7 +123,7 @@ export function MentionReply({
             onKeyDown={onKeyDown}
           />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground/60">
+            <span className="text-muted-foreground/60 text-[10px]">
               {mentionToken ? `${authorDisplayName} will be notified` : "Enter to send"}
             </span>
             <div className="flex items-center gap-1">

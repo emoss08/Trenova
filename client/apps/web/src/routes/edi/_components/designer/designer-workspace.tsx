@@ -20,7 +20,7 @@ export function DesignerWorkspace() {
       onValueChange={(tab) => void setDesignerUrlState({ designerTab: tab as typeof designerTab })}
       className="grid h-[calc(100vh-11rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden"
     >
-      <TabsList variant="underline" className="w-full justify-start border-b border-border px-1">
+      <TabsList variant="underline" className="border-border w-full justify-start border-b px-1">
         <TabsTrigger value="templates" className="max-w-34">
           <Layers3Icon data-icon="inline-start" />
           Templates

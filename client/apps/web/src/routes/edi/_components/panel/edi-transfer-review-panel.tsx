@@ -134,7 +134,7 @@ export function EDITransferReviewPanel({
         <EDITransferPanelContent transfer={transfer}>
           <TransferOverview transfer={transfer} mappingRows={mappingRows} />
           <Tabs defaultValue="tender" className="min-h-0 gap-3">
-            <TabsList variant="underline" className="w-full border-b border-border">
+            <TabsList variant="underline" className="border-border w-full border-b">
               <TabsTrigger value="tender">
                 <RouteIcon data-icon="inline-start" />
                 Tender

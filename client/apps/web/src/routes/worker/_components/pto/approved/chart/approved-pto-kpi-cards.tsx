@@ -48,7 +48,7 @@ export function ApprovedPTOKPICards({
         icon={TrendingUp}
       />
       {requestedError && !requestedLoading && (
-        <p className="col-span-full rounded-md border border-dashed border-border px-2.5 py-2 text-xs text-muted-foreground">
+        <p className="border-border text-muted-foreground col-span-full rounded-md border border-dashed px-2.5 py-2 text-xs">
           Requested PTO metric is temporarily unavailable.
         </p>
       )}
@@ -68,18 +68,18 @@ function MetricCard({
   icon: LucideIcon;
 }) {
   return (
-    <Card className="group relative gap-0 overflow-hidden border-border/80 transition-colors hover:border-border">
+    <Card className="group border-border/80 hover:border-border relative gap-0 overflow-hidden transition-colors">
       <CardHeader className="relative flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+        <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
           {label}
         </CardTitle>
-        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-accent">
+        <span className="bg-accent inline-flex size-7 shrink-0 items-center justify-center rounded-md">
           <Icon className="size-4" />
         </span>
       </CardHeader>
       <CardContent className="relative space-y-1 pt-0">
         <p className="text-3xl leading-none font-semibold tracking-tight">{value}</p>
-        {detail ? <p className="text-[11px] text-muted-foreground">{detail}</p> : null}
+        {detail ? <p className="text-muted-foreground text-[11px]">{detail}</p> : null}
       </CardContent>
     </Card>
   );

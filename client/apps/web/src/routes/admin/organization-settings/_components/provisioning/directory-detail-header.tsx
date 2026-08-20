@@ -30,7 +30,7 @@ export function DirectoryDetailHeader({
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
-    <div className="rounded-lg border bg-background p-3">
+    <div className="bg-background rounded-lg border p-3">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -43,7 +43,7 @@ export function DirectoryDetailHeader({
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Manage SCIM tokens, group-to-role mappings, and provisioning audit events.
           </p>
         </div>

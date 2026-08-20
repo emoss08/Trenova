@@ -53,9 +53,9 @@ export default function RunConsole({ isWorkflowRunning }: { isWorkflowRunning: b
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-background">
-      <div className="flex items-center justify-between border-b border-border bg-sidebar px-3 py-2">
-        <div className="inline-flex items-center gap-2 text-xs font-medium text-foreground">
+    <div className="border-border bg-background overflow-hidden rounded-lg border">
+      <div className="border-border bg-sidebar flex items-center justify-between border-b px-3 py-2">
+        <div className="text-foreground inline-flex items-center gap-2 text-xs font-medium">
           <TerminalIcon className="size-3.5" />
           Run Console
           {isWorkflowRunning && (

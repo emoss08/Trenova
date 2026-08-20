@@ -164,7 +164,7 @@ function DivergenceChip({
   onReset: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-1.5 self-start rounded-full border border-border/70 bg-card py-0.5 pr-1 pl-2.5 text-2xs text-muted-foreground">
+    <div className="border-border/70 bg-card text-2xs text-muted-foreground flex flex-wrap items-center gap-1.5 self-start rounded-full border py-0.5 pr-1 pl-2.5">
       <span>Customized{presetName ? ` from ${presetName}` : ""}</span>
       <Button
         variant="ghost"

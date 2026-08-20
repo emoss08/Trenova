@@ -75,14 +75,14 @@ function HosRow({ state, withDivider }: { state: WorkerHosState; withDivider: bo
 
   return (
     <div
-      className={cn("flex flex-col gap-1 px-0.5 py-1.5", withDivider && "border-t border-border")}
+      className={cn("flex flex-col gap-1 px-0.5 py-1.5", withDivider && "border-border border-t")}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1">
           {severity === "critical" && (
             <Tooltip>
               <TooltipTrigger
-                render={<span className="flex shrink-0 items-center text-destructive" />}
+                render={<span className="text-destructive flex shrink-0 items-center" />}
               >
                 <AlertTriangleIcon className="size-3" />
               </TooltipTrigger>
@@ -120,7 +120,7 @@ function HosRow({ state, withDivider }: { state: WorkerHosState; withDivider: bo
 function HosSkeletonRow({ withDivider }: { withDivider: boolean }) {
   return (
     <div
-      className={cn("flex flex-col gap-1.5 px-0.5 py-2", withDivider && "border-t border-border")}
+      className={cn("flex flex-col gap-1.5 px-0.5 py-2", withDivider && "border-border border-t")}
     >
       <div className="flex items-center justify-between gap-2">
         <Skeleton className="h-3 w-24" />
@@ -141,11 +141,11 @@ function HosSkeletonRow({ withDivider }: { withDivider: boolean }) {
 function ConnectSamsaraState() {
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-6 text-center">
-      <span className="inline-flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+      <span className="bg-muted text-muted-foreground inline-flex size-8 items-center justify-center rounded-full">
         <PlugZapIcon className="size-4" />
       </span>
       <p className="text-[11.5px] font-medium">Connect Samsara to watch driver clocks</p>
-      <p className="max-w-55 text-[10.5px] leading-snug text-muted-foreground">
+      <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
         Live hours-of-service visibility turns on once the Samsara telematics integration is enabled
         for your organization.
       </p>
@@ -165,7 +165,7 @@ function ConnectSamsaraState() {
 function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-5 text-center">
-      <p className="text-[10.5px] text-muted-foreground">
+      <p className="text-muted-foreground text-[10.5px]">
         HOS data could not be loaded from Samsara.
       </p>
       <Button variant="outline" size="xs" onClick={onRetry}>
@@ -230,7 +230,7 @@ export function HosWatch({ enabled = true }: { enabled?: boolean }) {
     body = <ErrorState onRetry={() => void hosQuery.refetch()} />;
   } else if (rows.length === 0) {
     body = (
-      <p className="px-2 py-4 text-center text-[10.5px] text-muted-foreground">
+      <p className="text-muted-foreground px-2 py-4 text-center text-[10.5px]">
         No HOS data yet — drivers appear once Samsara reports clocks.
       </p>
     );
@@ -240,19 +240,19 @@ export function HosWatch({ enabled = true }: { enabled?: boolean }) {
         {rows.map((state, i) => (
           <HosRow key={state.workerId} state={state} withDivider={i > 0} />
         ))}
-        <div className="flex items-center justify-between gap-2 border-t border-border px-0.5 py-1.5">
-          <span className="flex items-center gap-1 font-table text-[9px] text-muted-foreground tabular-nums">
+        <div className="border-border flex items-center justify-between gap-2 border-t px-0.5 py-1.5">
+          <span className="font-table text-muted-foreground flex items-center gap-1 text-[9px] tabular-nums">
             <span
               aria-hidden
               className={cn(
                 "size-1 rounded-full",
-                live ? "animate-pulse bg-success" : "bg-muted-foreground",
+                live ? "bg-success animate-pulse" : "bg-muted-foreground",
               )}
             />
             {live ? "Live" : "Offline"}
           </span>
           {freshestRecordedAt > 0 && (
-            <span className="font-table text-[9px] text-muted-foreground tabular-nums">
+            <span className="font-table text-muted-foreground text-[9px] tabular-nums">
               Updated {formatElapsedTime(freshestRecordedAt * 1000, now)}
             </span>
           )}

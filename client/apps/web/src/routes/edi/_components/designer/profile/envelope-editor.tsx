@@ -12,7 +12,7 @@ export function EnvelopeEditor({
     onChange({ ...envelope, [key]: value });
   };
   return (
-    <div className="space-y-2 rounded-md border bg-muted/30 p-2">
+    <div className="bg-muted/30 space-y-2 rounded-md border p-2">
       <div className="text-xs font-medium">X12 Envelope</div>
       <div className="grid grid-cols-2 gap-2">
         <InputBlock

@@ -39,7 +39,7 @@ export function JournalReversalForm() {
       <FormSection
         title="Reason"
         description="Explain why this journal entry needs to be reversed"
-        className="border-t border-border pt-4"
+        className="border-border border-t pt-4"
       >
         <FormGroup cols={2}>
           <FormControl>

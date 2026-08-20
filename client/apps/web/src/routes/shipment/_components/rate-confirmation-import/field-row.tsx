@@ -69,14 +69,14 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
   if (field.status === "missing" && !isEditing) {
     return (
       <div
-        className="group flex items-center gap-2 rounded px-2 py-1 transition-colors hover:bg-muted/50"
+        className="group hover:bg-muted/50 flex items-center gap-2 rounded px-2 py-1 transition-colors"
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="row"
       >
         <div className={cn("size-1.5 shrink-0 rounded-full", style.dot)} />
-        <span className="text-xs text-muted-foreground/50">{field.label}</span>
-        <span className="text-xs text-muted-foreground/30 italic">Not extracted</span>
+        <span className="text-muted-foreground/50 text-xs">{field.label}</span>
+        <span className="text-muted-foreground/30 text-xs italic">Not extracted</span>
         <Button
           variant="ghost"
           size="icon-xs"
@@ -105,7 +105,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-baseline gap-2">
-              <span className="shrink-0 text-2xs text-muted-foreground">{field.label}</span>
+              <span className="text-2xs text-muted-foreground shrink-0">{field.label}</span>
               {isEditing ? (
                 <Input
                   ref={inputRef}
@@ -115,7 +115,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
                   className="h-6 flex-1 text-xs"
                 />
               ) : (
-                <span className="truncate text-xs text-foreground">{displayVal}</span>
+                <span className="text-foreground truncate text-xs">{displayVal}</span>
               )}
             </div>
             <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
@@ -139,7 +139,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
 
           {/* Evidence — constrained width, truncated */}
           {field.evidenceExcerpt && !isEditing && (
-            <p className="mt-0.5 max-w-[320px] truncate text-2xs text-muted-foreground/40">
+            <p className="text-2xs text-muted-foreground/40 mt-0.5 max-w-[320px] truncate">
               &ldquo;{field.evidenceExcerpt}&rdquo;
               {field.pageNumber != null && <span className="ml-1">p.{field.pageNumber}</span>}
             </p>
@@ -150,7 +150,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
             <div className="mt-0.5">
               <button
                 type="button"
-                className="flex items-center gap-1 text-2xs text-muted-foreground/50 transition-colors hover:text-muted-foreground"
+                className="text-2xs text-muted-foreground/50 hover:text-muted-foreground flex items-center gap-1 transition-colors"
                 onClick={() => setShowAlts(!showAlts)}
               >
                 <ChevronDownIcon className={cn("size-2.5 transition-transform", showAlts && "rotate-180")} />
@@ -162,7 +162,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
                     <button
                       key={alt}
                       type="button"
-                      className="rounded border px-1.5 py-0.5 text-2xs transition-colors hover:bg-muted"
+                      className="text-2xs hover:bg-muted rounded border px-1.5 py-0.5 transition-colors"
                       onClick={() => {
                         onSelectAlternative?.(field.key, alt);
                         setShowAlts(false);

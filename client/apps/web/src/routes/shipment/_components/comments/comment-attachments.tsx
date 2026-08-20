@@ -44,7 +44,7 @@ export function CommentAttachments({ attachments }: { attachments: ShipmentComme
             <button
               key={image.documentId}
               type="button"
-              className="group/attachment relative size-24 overflow-hidden rounded-lg border border-border bg-muted transition-shadow hover:shadow-md"
+              className="group/attachment border-border bg-muted relative size-24 overflow-hidden rounded-lg border transition-shadow hover:shadow-md"
               onClick={() => setLightboxIndex(index)}
               aria-label={`Open ${image.originalName ?? image.fileName}`}
             >
@@ -66,14 +66,14 @@ export function CommentAttachments({ attachments }: { attachments: ShipmentComme
               href={attachmentDownloadUrl(file)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex max-w-60 items-center gap-2 rounded-md border border-border bg-card px-2 py-1.5 transition-colors hover:bg-muted"
+              className="border-border bg-card hover:bg-muted flex max-w-60 items-center gap-2 rounded-md border px-2 py-1.5 transition-colors"
             >
               <DocumentFileTypeIcon fileType={file.mimeType} fileName={file.fileName} size="sm" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-xs font-medium">
                   {file.originalName ?? file.fileName}
                 </span>
-                <span className="block text-2xs text-muted-foreground">
+                <span className="text-2xs text-muted-foreground block">
                   {formatFileSize(file.fileSize)}
                 </span>
               </span>
@@ -135,7 +135,7 @@ function AttachmentLightbox({
               </DialogTitle>
               <DialogDescription className="sr-only">Image attachment preview</DialogDescription>
             </DialogHeader>
-            <div className="relative flex max-h-[70vh] items-center justify-center overflow-hidden rounded-md bg-muted/40">
+            <div className="bg-muted/40 relative flex max-h-[70vh] items-center justify-center overflow-hidden rounded-md">
               <img
                 src={attachmentViewUrl(current)}
                 alt={current.originalName ?? current.fileName}

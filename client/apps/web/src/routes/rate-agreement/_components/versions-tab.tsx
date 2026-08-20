@@ -43,9 +43,9 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
   if (!versions || versions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-        <ClockIcon className="mb-3 size-8 text-muted-foreground" />
+        <ClockIcon className="text-muted-foreground mb-3 size-8" />
         <p className="text-sm font-medium">No versions recorded yet</p>
-        <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 max-w-sm text-xs">
           A version is written when the negotiated header terms change, so a dispute can always read
           the contract as it stood on a date.
         </p>
@@ -67,7 +67,7 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
           {versions.map((version) => (
             <TableRow key={version.id ?? version.versionNumber}>
               <TableCell>
-                <Badge variant="outline" className="font-mono text-2xs">
+                <Badge variant="outline" className="text-2xs font-mono">
                   v{version.versionNumber}
                 </Badge>
               </TableCell>
@@ -78,7 +78,7 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
                   {version.effectiveTo ? formatUnixDateMedium(version.effectiveTo) : "current"}
                 </span>
               </TableCell>
-              <TableCell className="text-xs text-muted-foreground">
+              <TableCell className="text-muted-foreground text-xs">
                 {describeVersion(version)}
               </TableCell>
             </TableRow>

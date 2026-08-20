@@ -55,7 +55,7 @@ function Inner({ children }: { children: React.ReactNode }) {
       title="Billing & Rating"
       description="Customer, rating method, and charge amounts"
       action={<PreviousRatesButton request={previousRatesRequest} />}
-      className="border-t border-border pt-4"
+      className="border-border border-t pt-4"
     >
       {children}
     </FormSection>
@@ -128,14 +128,14 @@ function ChargeSummaryRow({
   return (
     <div className="flex items-center justify-between">
       <span
-        className={cn("text-sm", bold ? "font-medium text-foreground" : "text-muted-foreground")}
+        className={cn("text-sm", bold ? "text-foreground font-medium" : "text-muted-foreground")}
       >
         {label}
       </span>
       <span
         className={cn(
           "tracking-tight tabular-nums",
-          bold ? "text-base font-semibold text-foreground" : "text-sm text-muted-foreground",
+          bold ? "text-foreground text-base font-semibold" : "text-muted-foreground text-sm",
         )}
       >
         {formatCurrency(value ?? 0)}
@@ -151,17 +151,17 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
   const freightChargeAmount = useWatch({ control, name: "freightChargeAmount" });
 
   return (
-    <div className="relative mt-3 overflow-hidden rounded-lg border bg-muted/50 p-2">
+    <div className="bg-muted/50 relative mt-3 overflow-hidden rounded-lg border p-2">
       {isCalculating && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/50 backdrop-blur-[2px]">
+        <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-[2px]">
           <TextShimmer as="span" className="text-sm font-medium" duration={1.5}>
             Calculating...
           </TextShimmer>
         </div>
       )}
       {error && !isCalculating && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-destructive/5 backdrop-blur-[2px]">
-          <div className="flex items-center gap-2 text-destructive">
+        <div className="bg-destructive/5 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-[2px]">
+          <div className="text-destructive flex items-center gap-2">
             <AlertTriangleIcon className="size-4" />
             <span className="text-sm font-medium">{error}</span>
           </div>
@@ -169,7 +169,7 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
       )}
       <div className="mb-3">
         <span className="text-xs font-medium">Charge Summary</span>
-        <p className="mt-0.5 text-2xs text-muted-foreground">
+        <p className="text-2xs text-muted-foreground mt-0.5">
           Automatically calculated based on the rating method, freight charges, and any additional
           accessorial charges.
         </p>
@@ -202,11 +202,11 @@ function RatingBreakdownCard() {
   const source = ratingDetail.agreementName || ratingDetail.formulaTemplateName;
 
   return (
-    <div className="mt-3 rounded-lg border bg-muted/50 p-2">
+    <div className="bg-muted/50 mt-3 rounded-lg border p-2">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <span className="text-xs font-medium">Rating Breakdown</span>
-          <p className="mt-0.5 text-2xs text-muted-foreground">
+          <p className="text-2xs text-muted-foreground mt-0.5">
             {ratingDetail.ruleLabel
               ? `${source} — ${ratingDetail.ruleLabel}`
               : `Itemized amounts from ${source || "the rating formula"}`}
@@ -216,7 +216,7 @@ function RatingBreakdownCard() {
           <RateOverrideDialog />
           <WhyThisRate shipmentId={shipmentId} />
           {ratingDetail.versionNumber ? (
-            <Badge variant="outline" className="font-mono text-2xs">
+            <Badge variant="outline" className="text-2xs font-mono">
               v{ratingDetail.versionNumber}
             </Badge>
           ) : null}
@@ -227,14 +227,14 @@ function RatingBreakdownCard() {
         <div className="space-y-2">
           {breakdown.map((item) => (
             <div key={item.name} className="flex items-center justify-between gap-3">
-              <span className="text-sm text-muted-foreground">{item.label || item.name}</span>
+              <span className="text-muted-foreground text-sm">{item.label || item.name}</span>
               {item.error ? (
-                <span className="flex items-center gap-1 text-xs text-destructive">
+                <span className="text-destructive flex items-center gap-1 text-xs">
                   <AlertTriangleIcon className="size-3" />
                   {item.error}
                 </span>
               ) : (
-                <span className="text-sm tracking-tight text-muted-foreground tabular-nums">
+                <span className="text-muted-foreground text-sm tracking-tight tabular-nums">
                   {formatCurrency(item.amount)}
                 </span>
               )}
@@ -246,7 +246,7 @@ function RatingBreakdownCard() {
       {guardrail?.applied && (
         <div
           className={cn(
-            "flex items-start gap-2 rounded-md border bg-background/50 px-2 py-1.5",
+            "bg-background/50 flex items-start gap-2 rounded-md border px-2 py-1.5",
             breakdown.length > 0 && "mt-3",
           )}
         >

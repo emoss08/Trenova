@@ -37,20 +37,20 @@ export function DocumentBulkActionDock({
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"
         >
-          <div className="flex items-center gap-1 rounded-lg border border-background/20 bg-foreground px-2 py-1.5 shadow-lg">
+          <div className="border-background/20 bg-foreground flex items-center gap-1 rounded-lg border px-2 py-1.5 shadow-lg">
             <Tooltip>
               <TooltipTrigger
                 render={
                   <Button
                     variant="ghost"
-                    className="h-7 cursor-pointer rounded-md border border-muted-foreground/40 text-muted-foreground shadow-none hover:bg-accent/20 dark:hover:bg-accent/20"
+                    className="border-muted-foreground/40 text-muted-foreground hover:bg-accent/20 dark:hover:bg-accent/20 h-7 cursor-pointer rounded-md border shadow-none"
                     size="sm"
                     onClick={onClearSelection}
                   >
-                    <span className="text-sm font-medium text-background tabular-nums">
+                    <span className="text-background text-sm font-medium tabular-nums">
                       {selectedCount} selected
                     </span>{" "}
-                    <XIcon className="size-3 text-background" />
+                    <XIcon className="text-background size-3" />
                   </Button>
                 }
               />
@@ -61,7 +61,7 @@ export function DocumentBulkActionDock({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 gap-1.5 px-2 text-background hover:bg-accent/20 hover:text-background dark:hover:bg-accent/20"
+                  className="text-background hover:bg-accent/20 hover:text-background dark:hover:bg-accent/20 h-7 gap-1.5 px-2"
                   onClick={onSelectAll}
                 >
                   <CheckCheckIcon className="size-4" />

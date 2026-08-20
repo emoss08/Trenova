@@ -115,7 +115,7 @@ export function SourceDrillDownPage() {
             label={`Open ${sourceLabel}`}
           />
           {sourceInfo?.sourceDocumentNumber ? (
-            <span className="inline-flex items-center rounded-md border bg-muted/50 px-2 py-0.5 font-mono text-xs text-muted-foreground">
+            <span className="bg-muted/50 text-muted-foreground inline-flex items-center rounded-md border px-2 py-0.5 font-mono text-xs">
               {sourceInfo.sourceDocumentNumber}
             </span>
           ) : null}
@@ -187,13 +187,13 @@ export function SourceDrillDownPage() {
                 <CardContent className="px-0">
                   <div className="flex items-center justify-between px-4 py-2.5">
                     <p className="text-sm font-medium">Net impact by account</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       across {postings.length} entries
                     </p>
                   </div>
                   <div className="overflow-hidden border-t">
                     <table className="w-full text-sm">
-                      <thead className="bg-muted/50 text-left text-muted-foreground">
+                      <thead className="bg-muted/50 text-muted-foreground text-left">
                         <tr>
                           <th className="px-4 py-2 text-xs font-medium">Account</th>
                           <th className="px-4 py-2 text-right text-xs font-medium">Debits</th>
@@ -284,11 +284,11 @@ function SummaryTile({
     >
       <Card className="h-full gap-0 rounded-lg py-3">
         <CardContent className="px-4">
-          <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+          <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
             {label}
           </p>
           <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums">{value}</p>
-          {detail ? <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p> : null}
+          {detail ? <p className="text-muted-foreground mt-0.5 text-xs">{detail}</p> : null}
         </CardContent>
       </Card>
     </m.div>

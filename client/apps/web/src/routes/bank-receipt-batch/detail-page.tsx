@@ -40,15 +40,15 @@ function SummaryCard({
   colorClass?: string;
 }) {
   return (
-    <div className="rounded-lg border bg-card px-4 py-3">
+    <div className="bg-card rounded-lg border px-4 py-3">
       <div className="flex items-center gap-2">
         <Icon className={`size-4 ${colorClass ?? "text-muted-foreground"}`} />
-        <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+        <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
           {label}
         </p>
       </div>
       <p className="mt-1.5 text-2xl font-semibold tabular-nums">{count}</p>
-      <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+      <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
         {formatCurrency(amount / 100)}
       </p>
     </div>
@@ -158,35 +158,35 @@ export function BankReceiptBatchDetailPage() {
           />
         </div>
 
-        <div className="rounded-lg border bg-card p-4">
+        <div className="bg-card rounded-lg border p-4">
           <h3 className="mb-3 text-sm font-semibold">Batch Info</h3>
           <div className="grid gap-4 sm:grid-cols-4">
             <div>
-              <p className="text-2xs font-medium text-muted-foreground">Source</p>
+              <p className="text-2xs text-muted-foreground font-medium">Source</p>
               <p className="text-xs font-medium">{batch.source}</p>
             </div>
             <div>
-              <p className="text-2xs font-medium text-muted-foreground">Reference</p>
+              <p className="text-2xs text-muted-foreground font-medium">Reference</p>
               <p className="font-mono text-xs font-medium">{batch.reference || "\u2014"}</p>
             </div>
             <div>
-              <p className="text-2xs font-medium text-muted-foreground">Status</p>
+              <p className="text-2xs text-muted-foreground font-medium">Status</p>
               <div className="mt-0.5">
                 <AccountingStatusBadge status={batch.status} />
               </div>
             </div>
             <div>
-              <p className="text-2xs font-medium text-muted-foreground">Created</p>
+              <p className="text-2xs text-muted-foreground font-medium">Created</p>
               <p className="text-xs">{formatTimestamp(batch.createdAt ?? 0)}</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg border bg-card">
+        <div className="bg-card rounded-lg border">
           <div className="flex items-center justify-between border-b px-4 py-3">
             <h3 className="text-sm font-semibold">
               Receipts
-              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              <span className="text-muted-foreground ml-1.5 text-xs font-normal">
                 ({receipts.length})
               </span>
             </h3>
@@ -204,7 +204,7 @@ export function BankReceiptBatchDetailPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-muted-foreground">
+                <thead className="bg-muted/50 text-muted-foreground text-left">
                   <tr>
                     <th className="px-4 py-2.5 text-xs font-medium">Reference #</th>
                     <th className="px-4 py-2.5 text-xs font-medium">Date</th>
@@ -231,7 +231,7 @@ export function BankReceiptBatchDetailPage() {
                       <td className="px-4 py-2.5">
                         <AccountingStatusBadge status={receipt.status} />
                       </td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">
+                      <td className="text-muted-foreground px-4 py-2.5 text-xs">
                         {receipt.memo || "\u2014"}
                       </td>
                     </tr>

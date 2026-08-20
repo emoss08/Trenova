@@ -72,17 +72,17 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm">
+      <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm">
         <span className="text-muted-foreground">Total</span>
         <span className="font-mono font-medium tabular-nums">
           {formatCurrency(summary.currentTotal)}
         </span>
-        <ArrowRightIcon className="size-3.5 text-muted-foreground" />
+        <ArrowRightIcon className="text-muted-foreground size-3.5" />
         <span className="font-mono font-medium tabular-nums">
           {formatCurrency(summary.candidateTotal)}
         </span>
         <DeltaValue delta={summary.totalDelta} deltaPct={summary.totalDeltaPct} />
-        <span className="ml-auto text-xs text-muted-foreground">
+        <span className="text-muted-foreground ml-auto text-xs">
           Max increase {formatCurrency(summary.maxIncrease)} · Max decrease{" "}
           {formatCurrency(summary.maxDecrease)}
         </span>
@@ -133,7 +133,7 @@ function BacktestResultRow({ result }: { result: BacktestResult }) {
           {hasError && (
             <Tooltip>
               <TooltipTrigger
-                render={<AlertTriangleIcon className="size-3.5 text-destructive" />}
+                render={<AlertTriangleIcon className="text-destructive size-3.5" />}
               />
               <TooltipContent side="left" className="max-w-72 text-xs">
                 {result.currentError && <p>Current: {result.currentError}</p>}
@@ -174,10 +174,10 @@ export default function FormulaTemplateBacktestTab({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="bg-muted/30 rounded-lg border p-3">
         <div className="mb-3">
           <p className="text-sm font-medium">Backtest Candidate</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             Re-rate recent shipments priced by this template and compare against their current
             amounts. Nothing is saved.
           </p>
@@ -197,7 +197,7 @@ export default function FormulaTemplateBacktestTab({
               )}
             >
               <p className="text-xs font-medium">{option.label}</p>
-              <p className="mt-0.5 text-2xs text-muted-foreground">{option.description}</p>
+              <p className="text-2xs text-muted-foreground mt-0.5">{option.description}</p>
             </button>
           ))}
         </div>
@@ -205,7 +205,7 @@ export default function FormulaTemplateBacktestTab({
         <div className="flex flex-wrap items-end gap-3">
           {source === "version" && (
             <div className="w-32">
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
                 Version
               </label>
               <NumberFieldRoot
@@ -222,7 +222,7 @@ export default function FormulaTemplateBacktestTab({
             </div>
           )}
           <div className="w-32">
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
               Shipment Limit
             </label>
             <NumberFieldRoot
@@ -273,7 +273,7 @@ export default function FormulaTemplateBacktestTab({
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="py-8 text-center text-sm text-muted-foreground"
+                      className="text-muted-foreground py-8 text-center text-sm"
                     >
                       No shipments have been rated with this template yet
                     </TableCell>
@@ -290,13 +290,13 @@ export default function FormulaTemplateBacktestTab({
       ) : (
         !mutation.isPending && (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-            <HistoryIcon className="mb-3 size-8 text-muted-foreground" />
+            <HistoryIcon className="text-muted-foreground mb-3 size-8" />
             <p className="text-sm font-medium">No backtest results yet</p>
-            <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 max-w-sm text-xs">
               Run a backtest to preview how the candidate expression would change charges on
               shipments already rated by this template.
               {template?.currentVersionNumber ? (
-                <Badge variant="outline" className="ml-1 font-mono text-2xs">
+                <Badge variant="outline" className="text-2xs ml-1 font-mono">
                   head v{template.currentVersionNumber}
                 </Badge>
               ) : null}

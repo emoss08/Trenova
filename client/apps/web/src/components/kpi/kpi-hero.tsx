@@ -52,7 +52,7 @@ export function KpiHero({
         <span className="font-mono text-[28px] leading-none font-semibold tracking-tight tabular-nums">
           {value}
         </span>
-        {unit && <span className="font-mono text-xs text-muted-foreground">{unit}</span>}
+        {unit && <span className="text-muted-foreground font-mono text-xs">{unit}</span>}
       </div>
       {breakdown && <SegmentedBar segments={breakdown} />}
       <div className="mt-auto flex items-end justify-between gap-2">

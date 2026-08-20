@@ -56,7 +56,7 @@ function CopyableInput({ value, label }: { value: string; label: string }) {
           <button
             type="button"
             onClick={() => copy(value, { timeout: 3000, withToast: true })}
-            className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="text-muted-foreground hover:bg-accent hover:text-foreground flex size-7 items-center justify-center rounded-md transition-colors"
           >
             {isCopied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
           </button>
@@ -70,7 +70,7 @@ function SectionHeader({ title, description }: { title: string; description: str
   return (
     <div>
       <h4 className="text-sm font-medium">{title}</h4>
-      <p className="text-xs text-muted-foreground">{description}</p>
+      <p className="text-muted-foreground text-xs">{description}</p>
     </div>
   );
 }
@@ -156,28 +156,28 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="rounded-xl border border-border bg-background transition-shadow has-[[data-state=open]]:shadow-sm">
+      <div className="border-border bg-background rounded-xl border transition-shadow has-[[data-state=open]]:shadow-sm">
         {/* Provider Header / Trigger */}
         <CollapsibleTrigger
           render={
             <button
               type="button"
-              className="flex w-full items-center gap-4 rounded-xl px-5 py-4 text-left transition-colors hover:bg-muted/30"
+              className="hover:bg-muted/30 flex w-full items-center gap-4 rounded-xl px-5 py-4 text-left transition-colors"
             />
           }
         >
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-background shadow-xs">
+          <div className="border-border bg-background flex size-10 shrink-0 items-center justify-center rounded-lg border shadow-xs">
             <EntraLogo className="size-6" />
           </div>
           <div className="min-w-0 flex-1">
             <span className="text-sm font-semibold tracking-tight">Microsoft Entra ID</span>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-0.5 text-xs">
               {enabled ? "Active" : "Not configured"} &middot; OpenID Connect
             </p>
           </div>
           <ChevronRightIcon
             className={cn(
-              "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+              "text-muted-foreground size-4 shrink-0 transition-transform duration-200",
               open && "rotate-90",
             )}
           />
@@ -349,9 +349,9 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                           description="Share this URL with your users for Entra ID SSO sign-in."
                         />
                         <CopyableInput value={tenantLoginUrl} label="Login URL" />
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           Replace{" "}
-                          <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
+                          <code className="bg-muted rounded px-1 py-0.5 font-mono text-[11px]">
                             {"{loginSlug}"}
                           </code>{" "}
                           with your organization&apos;s login slug from General settings.

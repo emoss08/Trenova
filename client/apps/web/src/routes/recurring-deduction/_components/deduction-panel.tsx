@@ -274,7 +274,7 @@ function DeductionForm({ isEdit }: { isEdit: boolean }) {
         </FormControl>
       </FormGroup>
       {escrowContribution && !isEdit && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           The deduction links to the driver&apos;s active escrow account when saved. Open an escrow
           account for the driver first if one doesn&apos;t exist.
         </p>

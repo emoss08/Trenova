@@ -689,14 +689,14 @@ export function SamsaraWorkerSyncCard({
   const content = (
     <div className="space-y-4">
       {embedded && (
-        <div className="flex flex-col border-b border-border p-4 leading-tight">
+        <div className="border-border flex flex-col border-b p-4 leading-tight">
           <div className="flex flex-row items-center gap-2">
             <p className="text-2xl font-semibold">Samsara Worker Sync</p>
             <Badge variant={isTrackingWorkflow ? activeStatusVariant : "secondary"}>
               {currentStatusLabel}
             </Badge>
           </div>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             Sync Trenova worker records directly into Samsara.
           </span>
         </div>
@@ -773,8 +773,8 @@ export function SamsaraWorkerSyncCard({
       </div>
       <ScrollArea className="flex max-h-[calc(100vh-14rem)] flex-col px-4 [&_[data-slot=scroll-area-viewport]>div]:block!">
         <div className="space-y-3 pr-3">
-          <div className="grid gap-2 rounded-md border border-border bg-muted/30 p-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+          <div className="border-border bg-muted/30 grid gap-2 rounded-md border p-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+            <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
               <p>Workflow</p>
               <div className="mt-1">
                 <Badge variant={isTrackingWorkflow ? activeStatusVariant : "secondary"}>
@@ -782,21 +782,21 @@ export function SamsaraWorkerSyncCard({
                 </Badge>
               </div>
             </div>
-            <div className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+            <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
               <p>Workflow ID</p>
-              <p className="mt-1 truncate font-mono text-foreground">
+              <p className="text-foreground mt-1 truncate font-mono">
                 {trackedWorkflowId ?? "N/A"}
               </p>
             </div>
-            <div className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+            <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
               <p>Run ID</p>
-              <p className="mt-1 truncate font-mono text-foreground">
+              <p className="text-foreground mt-1 truncate font-mono">
                 {statusResponse?.runId || trackedRunId || "N/A"}
               </p>
             </div>
-            <div className="rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+            <div className="border-border bg-background text-muted-foreground rounded-md border p-3 text-xs">
               <p>Last Updated</p>
-              <p className="mt-1 text-foreground">
+              <p className="text-foreground mt-1">
                 {generateDateTimeStringFromUnixTimestamp(
                   statusResponse?.closedAt || statusResponse?.startedAt,
                 )}
@@ -804,24 +804,24 @@ export function SamsaraWorkerSyncCard({
             </div>
           </div>
           {readiness && (
-            <div className="grid gap-2 rounded-md border border-border bg-muted/30 p-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-md border border-border bg-background p-3">
+            <div className="border-border bg-muted/30 grid gap-2 rounded-md border p-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
+              <div className="border-border bg-background rounded-md border p-3">
                 <p className="text-muted-foreground">Synced Active</p>
-                <p className="font-semibold text-foreground">
+                <p className="text-foreground font-semibold">
                   {readiness.syncedActiveWorkers} / {readiness.activeWorkers}
                 </p>
               </div>
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className="border-border bg-background rounded-md border p-3">
                 <p className="text-muted-foreground">Unsynced Active</p>
-                <p className="font-semibold text-foreground">{readiness.unsyncedActiveWorkers}</p>
+                <p className="text-foreground font-semibold">{readiness.unsyncedActiveWorkers}</p>
               </div>
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className="border-border bg-background rounded-md border p-3">
                 <p className="text-muted-foreground">Total Workers</p>
-                <p className="font-semibold text-foreground">{readiness.totalWorkers}</p>
+                <p className="text-foreground font-semibold">{readiness.totalWorkers}</p>
               </div>
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className="border-border bg-background rounded-md border p-3">
                 <p className="text-muted-foreground">Readiness Scan</p>
-                <p className="font-semibold text-foreground">
+                <p className="text-foreground font-semibold">
                   {formatToUserTimezone(readiness.lastCalculatedAt)}
                 </p>
               </div>
@@ -832,7 +832,7 @@ export function SamsaraWorkerSyncCard({
             <RunConsole isWorkflowRunning={isWorkflowRunning} />
           </Suspense>
           {statusQuery.isLoading && isTrackingWorkflow && (
-            <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="text-muted-foreground inline-flex items-center gap-2 text-xs">
               <Spinner className="size-3.5" />
               Loading workflow status...
             </div>
@@ -850,7 +850,7 @@ export function SamsaraWorkerSyncCard({
           {driftRows.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-sm font-medium">Detected Drift ({driftRows.length})</h3>
-              <div className="rounded-md border border-border">
+              <div className="border-border rounded-md border">
                 <Table containerClassName="max-h-72 rounded-md">
                   <TableHeader>
                     <TableRow>
@@ -890,7 +890,7 @@ export function SamsaraWorkerSyncCard({
                 )}
               </div>
 
-              <div className="rounded-md border border-border">
+              <div className="border-border rounded-md border">
                 <Table containerClassName="max-h-72 rounded-md">
                   <TableHeader>
                     <TableRow>
@@ -968,7 +968,7 @@ export function SamsaraWorkerSyncCard({
 
   return (
     <div>
-      <div className="border-b border-border">
+      <div className="border-border border-b">
         <div>Samsara Worker Sync</div>
         <div>Start and monitor worker synchronization from TMS to Samsara.</div>
       </div>

@@ -144,7 +144,7 @@ function UploadItem({
 
       <div className="min-w-0 flex-1">
         <p
-          className="truncate text-sm font-medium text-foreground"
+          className="text-foreground truncate text-sm font-medium"
           title={file.name}
         >
           {file.name}
@@ -158,41 +158,41 @@ function UploadItem({
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <span className="text-xs text-muted-foreground">{progress}%</span>
+              <span className="text-muted-foreground text-xs">{progress}%</span>
             </>
           )}
           {status === "processing" && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               Compressing...
             </span>
           )}
           {status === "uploaded" && (
-            <span className="text-xs text-muted-foreground">Uploaded, waiting...</span>
+            <span className="text-muted-foreground text-xs">Uploaded, waiting...</span>
           )}
           {status === "verifying" && (
-            <span className="text-xs text-muted-foreground">Verifying...</span>
+            <span className="text-muted-foreground text-xs">Verifying...</span>
           )}
           {status === "paused" && (
-            <span className="text-xs text-muted-foreground">Paused</span>
+            <span className="text-muted-foreground text-xs">Paused</span>
           )}
           {status === "retrying" && (
-            <span className="text-xs text-muted-foreground">Retrying...</span>
+            <span className="text-muted-foreground text-xs">Retrying...</span>
           )}
           {status === "completing" && (
-            <span className="text-xs text-muted-foreground">Finalizing...</span>
+            <span className="text-muted-foreground text-xs">Finalizing...</span>
           )}
           {status === "quarantined" && (
             <span className="text-xs text-red-400">Quarantined</span>
           )}
           {status === "pending" && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {retryCount && retryCount > 0
                 ? `Retrying (${retryCount})...`
                 : "Waiting..."}
             </span>
           )}
           {status === "success" && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {formatFileSize(file.size)}
             </span>
           )}
@@ -378,10 +378,10 @@ function FullDropzone({
       >
         Select files
       </Button>
-      <p className="mt-2 text-sm text-muted-foreground">
+      <p className="text-muted-foreground mt-2 text-sm">
         or drag and drop them here
       </p>
-      <p className="mt-3 text-xs text-muted-foreground">
+      <p className="text-muted-foreground mt-3 text-xs">
         {supportedFormatsLabel}, up to {maxFileSizeLabel}
       </p>
       <input
@@ -535,28 +535,28 @@ export function UploadPanel({
             damping: 30,
             bounce: 0,
           }}
-          className="dark fixed right-3 bottom-3 z-50 w-[400px] overflow-hidden rounded-lg border bg-popover shadow-2xl"
+          className="dark bg-popover fixed right-3 bottom-3 z-50 w-[400px] overflow-hidden rounded-lg border shadow-2xl"
           onDragOver={hasUploads ? handleDragOver : undefined}
           onDragLeave={hasUploads ? handleDragLeave : undefined}
           onDrop={hasUploads ? handleDrop : undefined}
         >
           {isDraggingOver && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/10">
-              <p className="text-sm font-medium text-primary">
+            <div className="border-primary bg-primary/10 absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed">
+              <p className="text-primary text-sm font-medium">
                 Drop files to add
               </p>
             </div>
           )}
 
-          <div className="flex items-center justify-between border-b border-border px-3 py-2">
-            <h3 className="text-sm font-medium text-foreground">{title}</h3>
+          <div className="border-border flex items-center justify-between border-b px-3 py-2">
+            <h3 className="text-foreground text-sm font-medium">{title}</h3>
             <div className="flex items-center gap-1">
               {counts.completed > 0 && onClearCompleted && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onClearCompleted}
-                  className="h-7 px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className="text-muted-foreground hover:bg-muted hover:text-foreground h-7 px-2 text-xs"
                 >
                   Clear
                 </Button>
@@ -587,7 +587,7 @@ export function UploadPanel({
           </div>
 
           {description && (
-            <p className="border-b border-border px-3 py-2 text-xs text-muted-foreground">
+            <p className="border-border text-muted-foreground border-b px-3 py-2 text-xs">
               {description}
             </p>
           )}
@@ -630,7 +630,7 @@ export function UploadPanel({
                     <ScrollArea className="mt-2 h-56 px-3">
                       <div className="space-y-1.5">
                         {filteredUploads.length === 0 ? (
-                          <p className="py-4 text-center text-xs text-muted-foreground">
+                          <p className="text-muted-foreground py-4 text-center text-xs">
                             No uploads in this category
                           </p>
                         ) : (
@@ -663,8 +663,8 @@ export function UploadPanel({
             )}
           </AnimatePresence>
           {hasUploads && (
-            <div className="flex items-center justify-between border-t border-border bg-muted/50 px-3 py-2">
-              <span className="text-xs text-muted-foreground">
+            <div className="border-border bg-muted/50 flex items-center justify-between border-t px-3 py-2">
+              <span className="text-muted-foreground text-xs">
                 {activeCount > 0
                   ? `Uploading ${activeCount} file${activeCount > 1 ? "s" : ""}...`
                   : `${counts.completed} completed`}

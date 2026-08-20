@@ -54,10 +54,10 @@ export function KpiRing({
             <span className="font-mono text-[22px] leading-none font-semibold tracking-tight tabular-nums">
               {value}
             </span>
-            {unit && <span className="font-mono text-[11px] text-muted-foreground">{unit}</span>}
+            {unit && <span className="text-muted-foreground font-mono text-[11px]">{unit}</span>}
           </div>
           {target !== undefined && (
-            <span className="font-mono text-[9.5px] tracking-wide text-muted-foreground/80 uppercase">
+            <span className="text-muted-foreground/80 font-mono text-[9.5px] tracking-wide uppercase">
               Target {target}
               {unit ?? ""}
             </span>

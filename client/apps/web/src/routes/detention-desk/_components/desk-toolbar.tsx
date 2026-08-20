@@ -90,15 +90,15 @@ export function DeskToolbar({
               onClick={() => onLane(filter.id)}
               className={cn(
                 "-mb-px border-b-2 pt-1 pb-2 text-xs transition-colors",
-                "focus-visible:ring-ring focus-visible:-outline-offset-2 focus-visible:ring-2 focus-visible:outline-none",
+                "focus-visible:ring-ring focus-visible:ring-2 focus-visible:-outline-offset-2 focus-visible:outline-none",
                 "disabled:pointer-events-none disabled:opacity-40",
                 isActive
                   ? "border-foreground text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
+                  : "text-muted-foreground hover:text-foreground border-transparent",
               )}
             >
               {filter.label}
-              <span className="ml-1.5 text-muted-foreground tabular-nums">{count}</span>
+              <span className="text-muted-foreground ml-1.5 tabular-nums">{count}</span>
             </button>
           );
         })}
@@ -118,7 +118,7 @@ export function DeskToolbar({
           placeholder="Search facility, customer, PRO"
           aria-label="Search the detention desk"
           inputContainerClassName="w-56"
-          leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           rightElement={
             search.length > 0 ? (
               <Button
@@ -131,7 +131,7 @@ export function DeskToolbar({
                 <XIcon className="size-3" />
               </Button>
             ) : (
-              <Kbd className="mr-1 bg-transparent text-muted-foreground/60">/</Kbd>
+              <Kbd className="text-muted-foreground/60 mr-1 bg-transparent">/</Kbd>
             )
           }
         />
@@ -142,7 +142,7 @@ export function DeskToolbar({
               <Button
                 variant="ghost"
                 size="sm"
-                className="gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground gap-1 px-2 text-xs"
               >
                 {activeSort.label}
                 <ChevronDownIcon className="size-3" />

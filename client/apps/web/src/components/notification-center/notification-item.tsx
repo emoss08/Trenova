@@ -115,23 +115,23 @@ export function NotificationItem({
           <p
             className={cn(
               "truncate text-xs leading-snug",
-              isUnread ? "font-medium text-foreground" : "text-muted-foreground",
+              isUnread ? "text-foreground font-medium" : "text-muted-foreground",
             )}
           >
             {notification.title}
           </p>
           <span className="flex shrink-0 items-center gap-1.5">
-            <span className="text-2xs whitespace-nowrap text-muted-foreground/60 tabular-nums">
+            <span className="text-2xs text-muted-foreground/60 whitespace-nowrap tabular-nums">
               {formatTimestamp(notification.createdAt)}
             </span>
-            {isUnread && <span className="size-1.5 rounded-full bg-brand" aria-hidden />}
+            {isUnread && <span className="bg-brand size-1.5 rounded-full" aria-hidden />}
           </span>
         </div>
 
         {!descriptor.hideMessage &&
           notification.message &&
           notification.message !== notification.title && (
-            <p className="mt-0.5 line-clamp-2 text-2xs leading-relaxed text-muted-foreground">
+            <p className="text-2xs text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
               {notification.message}
             </p>
           )}
@@ -141,7 +141,7 @@ export function NotificationItem({
 
       <div
         className={cn(
-          "absolute top-2 right-3 flex items-center gap-0.5 rounded-md border border-border bg-background p-0.5 shadow-sm",
+          "border-border bg-background absolute top-2 right-3 flex items-center gap-0.5 rounded-md border p-0.5 shadow-sm",
           "opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100",
         )}
       >

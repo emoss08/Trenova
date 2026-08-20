@@ -24,7 +24,7 @@ export function ViewersStack({ viewers }: { viewers: ShipmentViewer[] }) {
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.5, opacity: 0 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  className="block rounded-full ring-2 ring-background"
+                  className="ring-background block rounded-full ring-2"
                 >
                   <ResolvedUserAvatar
                     userId={viewer.userId}
@@ -37,7 +37,7 @@ export function ViewersStack({ viewers }: { viewers: ShipmentViewer[] }) {
               ))}
             </AnimatePresence>
             {overflow > 0 && (
-              <span className="z-10 flex size-6 items-center justify-center rounded-full bg-muted text-2xs font-medium ring-2 ring-background">
+              <span className="bg-muted text-2xs ring-background z-10 flex size-6 items-center justify-center rounded-full font-medium ring-2">
                 +{overflow}
               </span>
             )}

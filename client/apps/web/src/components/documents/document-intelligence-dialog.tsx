@@ -174,7 +174,7 @@ function ConflictSection({
 
   return (
     <div className="rounded-lg border border-dashed p-3">
-      <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+      <div className="text-foreground mb-2 flex items-center gap-2 text-sm font-medium">
         <AlertCircleIcon className="size-4" />
         Conflicts detected
       </div>
@@ -204,7 +204,7 @@ function ConflictSection({
               </div>
             ) : null}
             {conflict.evidenceExcerpt ? (
-              <div className="mt-2 rounded-md bg-muted/40 px-2 py-1 font-mono text-[11px] text-muted-foreground">
+              <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px]">
                 {conflict.evidenceExcerpt}
               </div>
             ) : null}
@@ -218,7 +218,7 @@ function ConflictSection({
 function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
   if (stops.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+      <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
         No shipment stops were extracted from this document.
       </div>
     );
@@ -233,7 +233,7 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {stop.role} stop #{stop.sequence}
               </div>
               <div className="mt-1 text-sm font-medium">
@@ -256,14 +256,14 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
             </div>
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
-            <div className="rounded-md bg-muted/20 p-2">
-              <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            <div className="bg-muted/20 rounded-md p-2">
+              <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
                 Address
               </div>
               <div className="mt-1 text-sm">{formatStopSummary(stop)}</div>
             </div>
-            <div className="rounded-md bg-muted/20 p-2">
-              <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            <div className="bg-muted/20 rounded-md p-2">
+              <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
                 Timing
               </div>
               <div className="mt-1 text-sm">
@@ -273,7 +273,7 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
             </div>
           </div>
           {stop.evidenceExcerpt ? (
-            <div className="mt-2 rounded-md bg-muted/40 px-2 py-1 font-mono text-[11px] whitespace-pre-wrap text-muted-foreground">
+            <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px] whitespace-pre-wrap">
               {stop.evidenceExcerpt}
             </div>
           ) : null}
@@ -295,7 +295,7 @@ function IntelligenceSummary({
   return (
     <div className="grid gap-3 md:grid-cols-6">
       <div className="rounded-lg border p-3">
-        <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Classification
         </div>
         <div className="mt-1 text-sm">
@@ -303,7 +303,7 @@ function IntelligenceSummary({
         </div>
       </div>
       <div className="rounded-lg border p-3">
-        <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Confidence
         </div>
         <div className="mt-1 text-sm">
@@ -313,7 +313,7 @@ function IntelligenceSummary({
         </div>
       </div>
       <div className="rounded-lg border p-3">
-        <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Review Status
         </div>
         <div className="mt-1 text-sm">
@@ -321,7 +321,7 @@ function IntelligenceSummary({
         </div>
       </div>
       <div className="rounded-lg border p-3">
-        <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Classifier Source
         </div>
         <div className="mt-1 text-sm">
@@ -329,7 +329,7 @@ function IntelligenceSummary({
         </div>
       </div>
       <div className="rounded-lg border p-3">
-        <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Provider Fingerprint
         </div>
         <div className="mt-1 text-sm">
@@ -337,7 +337,7 @@ function IntelligenceSummary({
         </div>
       </div>
       <div className="rounded-lg border p-3">
-        <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Missing Critical Fields
         </div>
         <div className="mt-1 text-sm">
@@ -348,7 +348,7 @@ function IntelligenceSummary({
       </div>
       {intelligence?.classificationReason ? (
         <div className="rounded-lg border p-3 md:col-span-6">
-          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Classification Reason
           </div>
           <div className="mt-1 text-sm">
@@ -369,7 +369,7 @@ function AnalysisSnapshotCard({
 }) {
   if (!analysis) {
     return (
-      <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+      <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
         No analysis captured.
       </div>
     );
@@ -381,7 +381,7 @@ function AnalysisSnapshotCard({
     <div className="rounded-lg border p-3">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {title}
           </div>
           <div className="mt-1 text-sm font-medium">
@@ -400,20 +400,20 @@ function AnalysisSnapshotCard({
         </div>
       </div>
       <div className="grid gap-2 md:grid-cols-3">
-        <div className="rounded-md bg-muted/20 p-2">
-          <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="bg-muted/20 rounded-md p-2">
+          <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
             Fields
           </div>
           <div className="mt-1 text-sm">{fieldCount}</div>
         </div>
-        <div className="rounded-md bg-muted/20 p-2">
-          <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="bg-muted/20 rounded-md p-2">
+          <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
             Stops
           </div>
           <div className="mt-1 text-sm">{analysis.stops?.length ?? 0}</div>
         </div>
-        <div className="rounded-md bg-muted/20 p-2">
-          <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="bg-muted/20 rounded-md p-2">
+          <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
             Source
           </div>
           <div className="mt-1 text-sm">{analysis.classifierSource || "Unknown"}</div>
@@ -421,7 +421,7 @@ function AnalysisSnapshotCard({
       </div>
       {analysis.missingFields?.length ? (
         <div className="mt-3">
-          <div className="mb-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground mb-1 text-[11px] font-medium tracking-wide uppercase">
             Missing Fields
           </div>
           <div className="flex flex-wrap gap-2">
@@ -435,7 +435,7 @@ function AnalysisSnapshotCard({
       ) : null}
       {analysis.stops?.length ? (
         <div className="mt-3">
-          <div className="mb-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground mb-1 text-[11px] font-medium tracking-wide uppercase">
             Stops
           </div>
           <StopsSection stops={analysis.stops.slice(0, 3)} />
@@ -458,14 +458,14 @@ function AIDiagnosticsSection({
     <div className="grid gap-3">
       <div>
         <h3 className="text-sm font-medium">AI Extraction Diagnostics</h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Compare the non-AI fallback result with the AI candidate and see why
           the AI output was accepted, rejected, or skipped.
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         <div className="rounded-lg border p-3">
-          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             AI Outcome
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -480,7 +480,7 @@ function AIDiagnosticsSection({
           </div>
         </div>
         <div className="rounded-lg border p-3">
-          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Rejection Reason
           </div>
           <div className="mt-1 text-sm">
@@ -505,7 +505,7 @@ function AIDiagnosticsSection({
 function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
   if (!draft || draft.status === "Unavailable") {
     return (
-      <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+      <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
         No shipment draft is available for this document.
       </div>
     );
@@ -513,8 +513,8 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
 
   if (draft.status === "Failed") {
     return (
-      <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-        <div className="font-medium text-foreground">
+      <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
+        <div className="text-foreground font-medium">
           Shipment draft extraction failed.
         </div>
         <div className="mt-1">
@@ -534,7 +534,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+      <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
         The system classified this as a rate confirmation, but no structured
         shipment fields were extracted.
       </div>
@@ -545,7 +545,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
     <div className="grid gap-2">
       <div className="grid gap-3 md:grid-cols-3">
         <div className="rounded-lg border p-3">
-          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Draft Confidence
           </div>
           <div className="mt-1 text-sm font-medium">
@@ -555,7 +555,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           </div>
         </div>
         <div className="rounded-lg border p-3">
-          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Review Status
           </div>
           <div className="mt-1 text-sm">
@@ -563,7 +563,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           </div>
         </div>
         <div className="rounded-lg border p-3">
-          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Missing Critical Fields
           </div>
           <div className="mt-1 text-sm">
@@ -597,7 +597,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
 
       {signals.length > 0 ? (
         <div className="rounded-lg border p-3">
-          <div className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
             <SparklesIcon className="size-3.5" />
             Classification Signals
           </div>
@@ -612,8 +612,8 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       ) : null}
 
       {missingFields.length > 0 ? (
-        <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-          <div className="mb-2 flex items-center gap-2 font-medium text-foreground">
+        <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
+          <div className="text-foreground mb-2 flex items-center gap-2 font-medium">
             <AlertCircleIcon className="size-4" />
             Review needed before using this draft
           </div>
@@ -630,7 +630,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       <ConflictSection conflicts={conflicts} />
 
       <div className="grid gap-2">
-        <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Extracted Stops
         </div>
         <StopsSection stops={stops} />
@@ -639,7 +639,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
       {entries.map(({ key, field }) => (
         <div key={key} className="rounded-lg border p-3">
           <div className="flex items-start justify-between gap-3">
-            <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
               {field.label || key}
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -660,7 +660,7 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
             {formatValue(field.value)}
           </div>
           {field.excerpt ? (
-            <div className="mt-2 rounded-md bg-muted/40 px-2 py-1 font-mono text-[11px] text-muted-foreground">
+            <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px]">
               {field.pageNumber ? (
                 <div className="mb-1 font-sans text-[10px] uppercase">
                   Page {field.pageNumber}
@@ -692,7 +692,7 @@ function ContentSection({
       <div className="grid gap-3">
         {intelligence?.signals?.length ? (
           <div className="rounded-lg border p-3">
-            <div className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <div className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
               Classification Confidence
             </div>
             <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -720,17 +720,17 @@ function ContentSection({
         <AIDiagnosticsSection diagnostics={aiDiagnostics} />
 
         <div className="grid gap-2">
-          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Canonical Stops
           </div>
           <StopsSection stops={intelligence?.stops ?? []} />
         </div>
 
         <ScrollArea
-          className="h-80 rounded-lg border bg-muted/20 p-3"
+          className="bg-muted/20 h-80 rounded-lg border p-3"
           viewportClassName="p-3"
         >
-          <pre className="font-mono text-xs whitespace-pre-wrap text-foreground">
+          <pre className="text-foreground font-mono text-xs whitespace-pre-wrap">
             {content.contentText}
           </pre>
         </ScrollArea>
@@ -739,10 +739,10 @@ function ContentSection({
             {content.pages.slice(0, 6).map((page) => (
               <div
                 key={page.id}
-                className="rounded-lg border p-3 text-xs text-muted-foreground"
+                className="text-muted-foreground rounded-lg border p-3 text-xs"
               >
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="font-medium text-foreground">
+                  <span className="text-foreground font-medium">
                     Page {page.pageNumber}
                   </span>
                   <div className="flex items-center gap-2">
@@ -770,14 +770,14 @@ function ContentSection({
 
   if (fallbackStatus === "Extracting" || fallbackStatus === "Pending") {
     return (
-      <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+      <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
         Extraction is still in progress.
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+    <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
       {fallbackError ||
         content?.failureMessage ||
         "No extracted text is available for this document."}
@@ -903,14 +903,14 @@ export function DocumentIntelligenceDialog({
                       <h3 className="text-sm font-medium">
                         Document Intelligence
                       </h3>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         Extraction status, classification, and structured
                         output.
                       </p>
                     </div>
                     <div className="grid gap-3">
                       {!supportsTargetedReextract ? (
-                        <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                        <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
                           Extraction was not requested for this document. OCR and AI extraction now
                           run only through the targeted rate confirmation import flow.
                         </div>
@@ -924,7 +924,7 @@ export function DocumentIntelligenceDialog({
                       />
                       <div className="grid gap-3 md:grid-cols-2">
                         <div className="rounded-lg border p-3">
-                          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                             Extraction Source
                           </div>
                           <div className="mt-1 text-sm">
@@ -932,7 +932,7 @@ export function DocumentIntelligenceDialog({
                           </div>
                         </div>
                         <div className="rounded-lg border p-3">
-                          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                             Pages
                           </div>
                           <div className="mt-1 text-sm">
@@ -946,13 +946,13 @@ export function DocumentIntelligenceDialog({
                   <section className="grid gap-3">
                     <div>
                       <h3 className="text-sm font-medium">Shipment Draft</h3>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         Review structured fields extracted from supported
                         shipment documents.
                       </p>
                     </div>
                     {isDraftLoading ? (
-                      <div className="flex items-center gap-2 rounded-lg border p-3 text-sm text-muted-foreground">
+                      <div className="text-muted-foreground flex items-center gap-2 rounded-lg border p-3 text-sm">
                         <LoaderCircleIcon className="size-4 animate-spin" />
                         Loading shipment draft...
                       </div>
@@ -963,7 +963,7 @@ export function DocumentIntelligenceDialog({
                           shipmentDraft.status === "Unavailable") &&
                         document.detectedKind &&
                         document.detectedKind !== "RateConfirmation" ? (
-                          <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                          <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
                             This document is available for classification,
                             search, and extracted-text review, but it does not
                             produce a shipment draft.
@@ -976,13 +976,13 @@ export function DocumentIntelligenceDialog({
                   <section className="grid gap-3">
                     <div>
                       <h3 className="text-sm font-medium">Extracted Text</h3>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         Full extracted text used for search and document
                         classification.
                       </p>
                     </div>
                     {isContentLoading ? (
-                      <div className="flex items-center gap-2 rounded-lg border p-3 text-sm text-muted-foreground">
+                      <div className="text-muted-foreground flex items-center gap-2 rounded-lg border p-3 text-sm">
                         <LoaderCircleIcon className="size-4 animate-spin" />
                         Loading extracted content...
                       </div>

@@ -45,10 +45,10 @@ function MetricCard({
   colorClass?: string;
 }) {
   return (
-    <div className="rounded-lg border bg-card px-4 py-3">
+    <div className="bg-card rounded-lg border px-4 py-3">
       <div className="flex items-center gap-2">
-        <Icon className={cn("size-4 text-muted-foreground", colorClass)} />
-        <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+        <Icon className={cn("text-muted-foreground size-4", colorClass)} />
+        <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
           {label}
         </p>
       </div>
@@ -78,7 +78,7 @@ function AgingBar({
         <span className="text-muted-foreground">{label}</span>
         <span className="font-medium tabular-nums">{formatCurrency(amount / 100)}</span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
         <div
           className={cn("h-full rounded-full transition-all", colorClass)}
           style={{ width: `${pct}%` }}
@@ -197,7 +197,7 @@ export function CustomerStatementPage() {
           </Button>
           <div className="flex items-end gap-3">
             <div>
-              <label className="mb-1 block text-2xs font-medium text-muted-foreground">
+              <label className="text-2xs text-muted-foreground mb-1 block font-medium">
                 Statement Date
               </label>
               <Input
@@ -208,7 +208,7 @@ export function CustomerStatementPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-2xs font-medium text-muted-foreground">
+              <label className="text-2xs text-muted-foreground mb-1 block font-medium">
                 Start Date
               </label>
               <Input
@@ -250,7 +250,7 @@ export function CustomerStatementPage() {
           />
         </div>
 
-        <div className="rounded-lg border bg-card p-4">
+        <div className="bg-card rounded-lg border p-4">
           <h3 className="mb-3 text-sm font-semibold">Aging Summary</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <AgingBar
@@ -286,11 +286,11 @@ export function CustomerStatementPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border bg-card">
+        <div className="bg-card rounded-lg border">
           <div className="border-b px-4 py-3">
             <h3 className="text-sm font-semibold">
               Transaction History
-              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              <span className="text-muted-foreground ml-1.5 text-xs font-normal">
                 ({statement.transactions.length})
               </span>
             </h3>
@@ -307,7 +307,7 @@ export function CustomerStatementPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-muted-foreground">
+                <thead className="bg-muted/50 text-muted-foreground text-left">
                   <tr>
                     <th className="px-4 py-2.5 text-xs font-medium">Date</th>
                     <th className="px-4 py-2.5 text-xs font-medium">Document</th>
@@ -321,20 +321,20 @@ export function CustomerStatementPage() {
                   {statement.transactions.map((txn: ARStatementTransaction, idx: number) => (
                     <tr
                       key={`${txn.documentNumber}-${idx}`}
-                      className="border-t transition-colors hover:bg-muted/40"
+                      className="hover:bg-muted/40 border-t transition-colors"
                     >
                       <td className="px-4 py-2.5 text-xs">{formatDate(txn.transactionDate)}</td>
                       <td className="px-4 py-2.5 font-mono text-xs font-medium">
                         {txn.documentNumber}
                       </td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">
+                      <td className="text-muted-foreground px-4 py-2.5 text-xs">
                         {txn.eventType}
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         {txn.chargeMinor > 0 ? (
                           <AmountDisplay value={txn.chargeMinor} className="text-xs" />
                         ) : (
-                          <span className="text-xs text-muted-foreground">{"\u2014"}</span>
+                          <span className="text-muted-foreground text-xs">{"\u2014"}</span>
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-right">
@@ -344,7 +344,7 @@ export function CustomerStatementPage() {
                             className="text-xs text-green-600 dark:text-green-400"
                           />
                         ) : (
-                          <span className="text-xs text-muted-foreground">{"\u2014"}</span>
+                          <span className="text-muted-foreground text-xs">{"\u2014"}</span>
                         )}
                       </td>
                       <td className="px-4 py-2.5 text-right">
@@ -362,18 +362,18 @@ export function CustomerStatementPage() {
         </div>
 
         {statement.openItems.length > 0 ? (
-          <div className="rounded-lg border bg-card">
+          <div className="bg-card rounded-lg border">
             <div className="border-b px-4 py-3">
               <h3 className="text-sm font-semibold">
                 Open Items
-                <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                <span className="text-muted-foreground ml-1.5 text-xs font-normal">
                   ({statement.openItems.length})
                 </span>
               </h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-muted-foreground">
+                <thead className="bg-muted/50 text-muted-foreground text-left">
                   <tr>
                     <th className="px-4 py-2.5 text-xs font-medium">Invoice</th>
                     <th className="px-4 py-2.5 text-xs font-medium">Invoice Date</th>
@@ -387,7 +387,7 @@ export function CustomerStatementPage() {
                   {statement.openItems.map((item: AROpenItem) => (
                     <tr
                       key={item.invoiceNumber}
-                      className="border-t transition-colors hover:bg-muted/40"
+                      className="hover:bg-muted/40 border-t transition-colors"
                     >
                       <td className="px-4 py-2.5 font-mono text-xs font-medium">
                         {item.invoiceNumber}
@@ -409,7 +409,7 @@ export function CustomerStatementPage() {
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="border-t bg-muted/30">
+                <tfoot className="bg-muted/30 border-t">
                   <tr>
                     <td colSpan={4} className="px-4 py-2.5 text-right text-xs font-medium">
                       Total Open

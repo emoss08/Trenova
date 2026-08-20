@@ -83,11 +83,11 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-lg border bg-background">
+    <div className="bg-background flex h-full min-h-0 flex-col rounded-lg border">
       <div className="flex shrink-0 items-center justify-between border-b p-3">
         <div>
           <div className="text-sm font-medium">SCIM directories</div>
-          <div className="text-xs text-muted-foreground">Directory sync tenants</div>
+          <div className="text-muted-foreground text-xs">Directory sync tenants</div>
         </div>
         <Button size="sm" onClick={onAdd}>
           <PlusIcon />
@@ -147,14 +147,14 @@ function DirectoryRailItem({
     <button
       type="button"
       className={cn(
-        "flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/40",
+        "hover:bg-muted/40 flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition-colors",
         selected && "bg-muted/60",
       )}
       onClick={() => onSelect(directory.id)}
     >
       <div className="min-w-0">
         <div className="truncate text-sm font-medium">{directory.tenantSlug}</div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-muted-foreground text-xs">
           Updated {formatUnixDateTimeOrDash(directory.updatedAt || directory.createdAt)}
         </div>
       </div>

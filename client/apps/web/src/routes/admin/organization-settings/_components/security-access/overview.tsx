@@ -69,15 +69,15 @@ export function SecurityOverview({
           tone={activePolicyCount > 0 ? "info" : "muted"}
         />
       </div>
-      <div className="rounded-lg border bg-muted/20">
+      <div className="bg-muted/20 rounded-lg border">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <div>
             <div className="text-sm font-medium">Recent security activity</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-muted-foreground text-xs">
               Latest authentication and risk signals
             </div>
           </div>
-          <ActivityIcon className="size-4 text-muted-foreground" />
+          <ActivityIcon className="text-muted-foreground size-4" />
         </div>
         <div className="divide-y">
           {recentActivity.length > 0 ? (

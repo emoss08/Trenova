@@ -118,7 +118,7 @@ export default function ShipmentMapPanel({
     return (
       <div
         className={cn(
-          "flex items-center justify-center rounded-lg border bg-card px-6 text-center text-sm text-muted-foreground",
+          "bg-card text-muted-foreground flex items-center justify-center rounded-lg border px-6 text-center text-sm",
           isFullscreen ? "fixed inset-0 z-50 h-screen rounded-none border-none" : "h-full",
         )}
       >
@@ -132,16 +132,16 @@ export default function ShipmentMapPanel({
     <APIProvider apiKey={data.config.apiKey}>
       <div
         className={cn(
-          "relative flex w-full flex-col overflow-hidden rounded-lg border bg-card",
+          "bg-card relative flex w-full flex-col overflow-hidden rounded-lg border",
           isFullscreen
             ? "fixed inset-0 z-50 h-screen rounded-none border-none"
             : "h-[clamp(420px,calc(100vh-380px),540px)]",
         )}
       >
-        <div className="flex h-9 shrink-0 items-center justify-between border-b border-border bg-card px-2.5">
+        <div className="border-border bg-card flex h-9 shrink-0 items-center justify-between border-b px-2.5">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="text-xs font-semibold text-foreground">Live Map</span>
-            <span className="shrink truncate rounded-md border border-border bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+            <span className="text-foreground text-xs font-semibold">Live Map</span>
+            <span className="border-border bg-muted/60 text-muted-foreground shrink truncate rounded-md border px-1.5 py-0.5 font-mono text-[10px]">
               {delayedCount} at-risk · {inTransitCount} in-transit
             </span>
           </div>
@@ -233,17 +233,17 @@ function LiveMapSyncOverlay({
 
   return (
     <div className="pointer-events-none absolute top-3 left-3 z-10 flex items-center gap-1.5">
-      <span className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 font-mono text-[10px] font-medium text-foreground shadow-sm backdrop-blur-sm">
+      <span className="border-border bg-background text-foreground inline-flex items-center gap-1 rounded-md border px-2 py-1 font-mono text-[10px] font-medium shadow-sm backdrop-blur-sm">
         <span
           aria-hidden
           className={cn(
             "size-1.5 rounded-full",
-            live ? "animate-pulse bg-success" : "bg-muted-foreground",
+            live ? "bg-success animate-pulse" : "bg-muted-foreground",
           )}
         />
         {live ? "LIVE" : "OFFLINE"} · {unitCount} units
       </span>
-      <span className="rounded-md border border-border bg-background px-2 py-1 font-mono text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
+      <span className="border-border bg-background text-muted-foreground rounded-md border px-2 py-1 font-mono text-[10px] font-medium shadow-sm backdrop-blur-sm">
         synced {formatElapsedTime(syncedAt, now)}
       </span>
     </div>

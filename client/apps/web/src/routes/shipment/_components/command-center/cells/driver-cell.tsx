@@ -29,11 +29,11 @@ export function DriverCell({ shipment }: { shipment: Shipment }) {
     return (
       <div className="flex flex-col gap-0.5">
         <span className="inline-flex min-w-0 items-center gap-1 text-[11.5px] font-medium">
-          <Building2Icon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+          <Building2Icon className="text-muted-foreground size-3 shrink-0" aria-hidden />
           <span className="truncate">{carrierName}</span>
         </span>
         {carrierLine && (
-          <span className="truncate font-table text-[9.5px] text-muted-foreground tabular-nums">
+          <span className="font-table text-muted-foreground truncate text-[9.5px] tabular-nums">
             {carrierLine}
           </span>
         )}
@@ -46,7 +46,7 @@ export function DriverCell({ shipment }: { shipment: Shipment }) {
   // brokers every load never wanted the driver it was being asked for.
   if (!driver) {
     return (
-      <div className={cn("inline-flex items-center gap-1 text-[11px] font-medium text-warning")}>
+      <div className={cn("text-warning inline-flex items-center gap-1 text-[11px] font-medium")}>
         <TriangleAlertIcon className="size-3" />
         <span>Needs coverage</span>
       </div>
@@ -60,7 +60,7 @@ export function DriverCell({ shipment }: { shipment: Shipment }) {
     <div className="flex flex-col gap-0.5">
       <span className="truncate text-[11.5px] font-medium">{name}</span>
       {equipmentLine && (
-        <span className="truncate font-table text-[9.5px] text-muted-foreground tabular-nums">
+        <span className="font-table text-muted-foreground truncate text-[9.5px] tabular-nums">
           {equipmentLine}
         </span>
       )}

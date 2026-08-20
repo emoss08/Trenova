@@ -106,7 +106,7 @@ export function DashboardTileBody({
 
   if (tile.kind === "text") {
     return (
-      <div className="min-h-0 flex-1 overflow-auto p-4 text-sm whitespace-pre-wrap text-foreground/90">
+      <div className="text-foreground/90 min-h-0 flex-1 overflow-auto p-4 text-sm whitespace-pre-wrap">
         {tile.text}
       </div>
     );

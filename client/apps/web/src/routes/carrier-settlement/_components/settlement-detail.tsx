@@ -125,8 +125,8 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
   const isTerminal = settlement.status === "Paid" || settlement.status === "Voided";
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3 py-2">
-      <p className="text-[11px] text-muted-foreground">
+    <div className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+      <p className="text-muted-foreground text-[11px]">
         {isTerminal
           ? "This settlement is finalized and shown here for record-keeping."
           : "This is a read-only view — process, adjust, or pay this settlement from the workspace."}
@@ -150,12 +150,12 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
       <div className="flex flex-wrap items-center gap-2">
         <CarrierSettlementStatusBadge status={settlement.status as CarrierSettlementStatus} />
         {settlement.carrier && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             {settlement.carrier.name}
             {settlement.carrier.scac ? ` (${settlement.carrier.scac})` : ""}
           </span>
         )}
-        <span className="ml-auto text-xs text-muted-foreground">
+        <span className="text-muted-foreground ml-auto text-xs">
           {formatSettlementDate(settlement.periodStart)} –{" "}
           {formatSettlementDate(settlement.periodEnd)} · pays{" "}
           {formatSettlementDate(settlement.payDate)}
@@ -205,7 +205,7 @@ function SummaryTile({
           : "bg-muted/30",
       )}
     >
-      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
         {label}
       </p>
       <div className="mt-1 text-sm font-semibold">{children}</div>
@@ -351,7 +351,7 @@ function SettlementActions({
         onChanged={onChanged}
       />
       {status === "Voided" && settlement.voidReason && (
-        <span className="text-xs text-muted-foreground">Voided: {settlement.voidReason}</span>
+        <span className="text-muted-foreground text-xs">Voided: {settlement.voidReason}</span>
       )}
       <span className="sr-only">
         <Button variant="ghost" onClick={onClose}>
@@ -497,7 +497,7 @@ function MarkPaidDialog({
         <div className="flex flex-col gap-3">
           <div>
             <p className="mb-1 text-xs font-medium">Payment method</p>
-            <p className="mb-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mb-1 text-[11px]">
               How the payable was remitted — defaults to the carrier&apos;s preferred method.
             </p>
             <div className="flex gap-2">
@@ -524,7 +524,7 @@ function MarkPaidDialog({
               onChange={(e) => setPaymentReference(e.target.value)}
               placeholder="Check number / ACH trace (optional)"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               The check number or ACH trace so the payment reconciles against the bank.
             </p>
           </div>
@@ -593,7 +593,7 @@ function AddAdjustmentDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description (e.g. Detention - Chicago 6/12)"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               Appears as the line item on the carrier&apos;s statement — say what and when.
             </p>
           </div>
@@ -604,7 +604,7 @@ function AddAdjustmentDialog({
               placeholder="Amount (e.g. 150.00 or -75.00)"
               inputMode="decimal"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               Dollars, not cents; positive increases the payable, negative reduces it.
             </p>
           </div>
@@ -657,7 +657,7 @@ function SettlementLines({
   });
 
   if (grouped.length === 0) {
-    return <p className="text-sm text-muted-foreground">This settlement has no line items.</p>;
+    return <p className="text-muted-foreground text-sm">This settlement has no line items.</p>;
   }
 
   return (
@@ -667,7 +667,7 @@ function SettlementLines({
         return (
           <div key={eventType}>
             <div className="mb-1 flex items-baseline justify-between">
-              <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                 {lineTypeLabel(eventType)}
               </h4>
               <AmountDisplay value={subtotal} currency={settlement.currencyCode} />
@@ -680,12 +680,12 @@ function SettlementLines({
                       <td className="px-3 py-2">
                         <span className="font-medium">{line.description}</span>
                         {line.proNumber && (
-                          <span className="ml-2 font-mono text-muted-foreground">
+                          <span className="text-muted-foreground ml-2 font-mono">
                             {line.proNumber}
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right text-muted-foreground">
+                      <td className="text-muted-foreground px-3 py-2 text-right">
                         {line.costEventId ? (
                           <span title="Traced back to the accrued cost event">cost event</span>
                         ) : null}
@@ -739,13 +739,13 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
   ].filter((line): line is string => !!line && line.trim() !== "");
 
   return (
-    <div className="rounded-lg border bg-muted/30 p-3">
-      <h4 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+    <div className="bg-muted/30 rounded-lg border p-3">
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
         Remittance
       </h4>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-          <p className="text-[11px] text-muted-foreground">Remit to</p>
+          <p className="text-muted-foreground text-[11px]">Remit to</p>
           {remitLines.length > 0 ? (
             remitLines.map((line) => (
               <p key={line} className="text-xs font-medium">
@@ -753,14 +753,14 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
               </p>
             ))
           ) : (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               No remit-to address on file — set it on the carrier record.
             </p>
           )}
         </div>
         <div className="flex flex-col gap-1.5">
           <div>
-            <p className="text-[11px] text-muted-foreground">Payment method</p>
+            <p className="text-muted-foreground text-[11px]">Payment method</p>
             <p className="text-xs font-medium">
               {settlement.paymentMethod ||
                 (carrier.paymentMethod === "ACHManual" ? "ACH (Manual)" : carrier.paymentMethod)}
@@ -768,7 +768,7 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
             </p>
           </div>
           <div>
-            <p className="text-[11px] text-muted-foreground">Payment terms</p>
+            <p className="text-muted-foreground text-[11px]">Payment terms</p>
             <p className="text-xs font-medium">Net {carrier.paymentTermDays} days</p>
           </div>
         </div>
@@ -803,13 +803,13 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
 
   return (
     <div>
-      <h4 className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
         Rate Confirmations
       </h4>
       {isLoading ? (
         <Skeleton className="h-10 w-full" />
       ) : active.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground text-[11px]">
           No rate confirmations on the covered moves.
         </p>
       ) : (
@@ -822,7 +822,7 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
               <RateConfirmationStatusBadge status={rateCon.status} />
               <span className="text-muted-foreground tabular-nums">rev {rateCon.revision}</span>
               {rateCon.confirmedByName && (
-                <span className="truncate text-muted-foreground">
+                <span className="text-muted-foreground truncate">
                   confirmed by {rateCon.confirmedByName}
                 </span>
               )}
@@ -864,7 +864,7 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
 
   return (
     <div>
-      <h4 className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <h4 className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
         Invoice Matches
       </h4>
       <ul className="flex flex-col gap-1">
@@ -922,7 +922,7 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
 
   return (
     <div className="border-t pt-3">
-      <h4 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
         History
       </h4>
       <ol className="flex flex-col gap-1">

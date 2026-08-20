@@ -10,7 +10,7 @@ export function DetentionDeskPage() {
 
   return (
     <PageLayout
-      className="p-0 gap-y-0"
+      className="gap-y-0 p-0"
       pageHeaderProps={{
         title: "Detention Desk",
         description:

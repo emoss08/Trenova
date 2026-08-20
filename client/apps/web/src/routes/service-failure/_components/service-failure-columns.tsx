@@ -168,7 +168,7 @@ export function getColumns(): ColumnDef<ServiceFailure>[] {
         row.original.reasonCode ? (
           <div className="flex min-w-0 flex-col">
             <span className="truncate font-medium">{row.original.reasonCode.code}</span>
-            <span className="truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground truncate">
               {row.original.reasonCode.label}
             </span>
           </div>

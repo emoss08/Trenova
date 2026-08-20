@@ -49,22 +49,22 @@ function CannedReportCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <h3 className="truncate text-sm font-medium">{report.name}</h3>
-            <span className="rounded-sm bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground">
+            <span className="bg-muted text-2xs text-muted-foreground rounded-sm px-1.5 py-0.5">
               v{report.version}
             </span>
           </div>
-          <p className="mt-0.5 line-clamp-2 min-h-8 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 line-clamp-2 min-h-8 text-xs">
             {report.description}
           </p>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-end border-t border-border/60 pt-3">
+      <div className="border-border/60 mt-3 flex items-center justify-end border-t pt-3">
         <div className="flex items-center gap-1.5">
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 gap-1 px-2 text-2xs"
+            className="text-2xs h-6 gap-1 px-2"
             render={<Link to={`/reports/explore?canned=${encodeURIComponent(report.key)}`} />}
           >
             <TableIcon className="size-3" />
@@ -74,7 +74,7 @@ function CannedReportCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 gap-1 px-2 text-2xs"
+              className="text-2xs h-6 gap-1 px-2"
               onClick={onCustomize}
               disabled={customizing}
             >
@@ -83,7 +83,7 @@ function CannedReportCard({
             </Button>
           )}
           {canRun && (
-            <Button size="sm" variant="outline" className="h-6 gap-1 px-2 text-2xs" onClick={onRun}>
+            <Button size="sm" variant="outline" className="text-2xs h-6 gap-1 px-2" onClick={onRun}>
               <PlayIcon className="size-3" />
               Run
             </Button>

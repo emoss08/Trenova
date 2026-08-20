@@ -46,7 +46,7 @@ export function FiscalYearActivateAlertDialogContent({
         <AlertDialogTitle>
           Set Fiscal Year {record?.year} as Current?
         </AlertDialogTitle>
-        <div className="flex flex-col space-y-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex flex-col space-y-2 text-sm">
           <p>
             This will mark this fiscal year as the active year for transaction
             posting.
@@ -120,7 +120,7 @@ export function FiscalYearCloseAlertDialogContent({
             </div>
           </div>
         )}
-        <div className="flex flex-col text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex flex-col text-sm">
           <p>
             This prevent new transactions. Only adjusting entries will be
             allowed.
@@ -174,7 +174,7 @@ export function FiscalYearLockAlertDialogContent({
     <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>Lock Fiscal Year {record?.year}?</AlertDialogTitle>
-        <div className="flex flex-col space-y-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex flex-col space-y-2 text-sm">
           <p>
             Locking this fiscal year will make it completely read-only. No
             transactions or adjustments will be allowed.
@@ -251,10 +251,10 @@ export function FiscalYearUnlockAlertDialogContent({
           </p>
 
           <div className="space-y-2">
-            <p className="font-semibold text-foreground">
+            <p className="text-foreground font-semibold">
               Typical reasons for unlocking:
             </p>
-            <ul className="ml-2 list-inside list-disc space-y-1 text-muted-foreground">
+            <ul className="text-muted-foreground ml-2 list-inside list-disc space-y-1">
               <li>Audit adjustments required after lock</li>
               <li>Correction of material accounting errors</li>
               <li>Regulatory compliance requirements</li>
@@ -263,8 +263,8 @@ export function FiscalYearUnlockAlertDialogContent({
           </div>
 
           <div className="mt-4 space-y-2">
-            <p className="font-semibold text-foreground">After unlocking:</p>
-            <ul className="ml-2 list-inside list-disc space-y-1 text-muted-foreground">
+            <p className="text-foreground font-semibold">After unlocking:</p>
+            <ul className="text-muted-foreground ml-2 list-inside list-disc space-y-1">
               <li>Adjusting entries can be posted (if enabled)</li>
               <li>Financial reports may need regeneration</li>
               <li>The year should be re-locked after corrections</li>
@@ -272,8 +272,8 @@ export function FiscalYearUnlockAlertDialogContent({
             </ul>
           </div>
 
-          <div className="mt-4 rounded-md bg-muted p-3">
-            <p className="text-xs text-muted-foreground">
+          <div className="bg-muted mt-4 rounded-md p-3">
+            <p className="text-muted-foreground text-xs">
               <strong>Note:</strong> This action requires administrator
               privileges and will be recorded in the audit log with your user ID
               and timestamp.

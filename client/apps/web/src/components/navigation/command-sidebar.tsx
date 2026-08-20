@@ -31,7 +31,7 @@ function SearchTrigger() {
     <button
       type="button"
       onClick={() => setOpen(true)}
-      className="flex h-7 w-full items-center gap-2 rounded-md border border-border bg-background px-2 text-xs text-muted-foreground transition-colors hover:border-ring/40 hover:text-foreground"
+      className="border-border bg-background text-muted-foreground hover:border-ring/40 hover:text-foreground flex h-7 w-full items-center gap-2 rounded-md border px-2 text-xs transition-colors"
     >
       <Search className="size-3.5 shrink-0" strokeWidth={1.75} />
       <span className="flex-1 truncate text-left">Search or jump to…</span>
@@ -55,7 +55,7 @@ export function CommandSidebar() {
   return (
     <aside
       className={cn(
-        "flex h-screen flex-col border-r border-border bg-sidebar transition-[width] duration-200",
+        "border-border bg-sidebar flex h-screen flex-col border-r transition-[width] duration-200",
         collapsed ? "w-0 overflow-hidden border-r-0" : "w-64",
       )}
     >
@@ -75,7 +75,7 @@ export function CommandSidebar() {
         </nav>
       </ScrollArea>
 
-      <div className="w-64 border-t border-border p-1.5">
+      <div className="border-border w-64 border-t p-1.5">
         <UserMenu />
       </div>
     </aside>

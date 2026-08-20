@@ -163,14 +163,14 @@ function MappingItemRow({
   const isStop = targetKind === TARGET_KIND.stopField;
 
   return (
-    <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3">
+    <div className="border-border bg-muted/30 flex flex-col gap-3 rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Field {index + 1}</span>
+        <span className="text-muted-foreground text-xs font-medium">Field {index + 1}</span>
         <Button
           type="button"
           variant="ghost"
           size="xs"
-          className="size-6 p-0 text-muted-foreground hover:text-destructive"
+          className="text-muted-foreground hover:text-destructive size-6 p-0"
           onClick={onRemove}
           disabled={!canRemove}
           aria-label={`Remove field ${index + 1}`}
@@ -256,7 +256,7 @@ function MappingEditor({
   };
 
   return (
-    <div className="rounded-md border border-border p-3">
+    <div className="border-border rounded-md border p-3">
       <Form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
         <FormGroup cols={2}>
           <FormControl cols="full">
@@ -297,7 +297,7 @@ function MappingEditor({
           </FormControl>
         </FormGroup>
 
-        <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+        <div className="border-border flex items-center justify-between gap-2 border-t pt-3">
           <span className="text-sm font-medium">Field mappings</span>
           <Button
             type="button"
@@ -322,7 +322,7 @@ function MappingEditor({
           ))}
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
+        <div className="border-border flex items-center justify-end gap-2 border-t pt-3">
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
             Cancel
           </Button>
@@ -363,7 +363,7 @@ function MappingRow({
             {mapping.items.length} {mapping.items.length === 1 ? "field" : "fields"}
           </Badge>
         </div>
-        <p className="truncate text-xs text-muted-foreground">
+        <p className="text-muted-foreground truncate text-xs">
           {mapping.templateName || mapping.templateId}
         </p>
       </div>
@@ -380,7 +380,7 @@ function MappingRow({
         type="button"
         variant="ghost"
         size="xs"
-        className="size-7 p-0 text-muted-foreground hover:text-destructive"
+        className="text-muted-foreground hover:text-destructive size-7 p-0"
         onClick={onDelete}
         aria-label={`Delete ${mapping.name}`}
       >
@@ -462,14 +462,14 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
     body = (
       <div className="rounded-md border border-dashed p-6 text-center">
         <p className="text-sm font-medium">No form mappings yet</p>
-        <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
+        <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
           Map a driver form&apos;s fields onto shipment data.
         </p>
       </div>
     );
   } else {
     body = (
-      <div className="divide-y divide-border rounded-md border border-border">
+      <div className="divide-border border-border divide-y rounded-md border">
         {mappings.map((mapping) => (
           <MappingRow
             key={mapping.id}
@@ -485,11 +485,11 @@ export function SamsaraFormMappingSection({ open }: { open: boolean }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 border-t border-border pt-4">
+    <div className="border-border flex flex-col gap-3 border-t pt-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
           <p className="text-sm font-semibold">Form field mapping</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Map driver form template fields onto shipment and stop data.
           </p>
         </div>

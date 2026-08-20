@@ -128,12 +128,12 @@ export function UnassignedQueueList({
   return (
     <div className="flex flex-col gap-1.5">
       {isLoading && (
-        <div className="flex items-center gap-2 text-[10.5px] text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-[10.5px]">
           <Spinner className="size-3" /> Loading…
         </div>
       )}
       {!isLoading && visible.length === 0 && (
-        <p className="py-3 text-center text-[10.5px] text-muted-foreground">
+        <p className="text-muted-foreground py-3 text-center text-[10.5px]">
           All loads are assigned ✓
         </p>
       )}
@@ -149,12 +149,12 @@ export function UnassignedQueueList({
             key={s.id}
             type="button"
             onClick={() => s.id && onSelect(s.id)}
-            className="flex flex-col gap-1 rounded border border-border bg-muted/30 px-2 py-1.5 text-left transition-colors hover:border-foreground/20 hover:bg-muted/60"
+            className="border-border bg-muted/30 hover:border-foreground/20 hover:bg-muted/60 flex flex-col gap-1 rounded border px-2 py-1.5 text-left transition-colors"
           >
             <div className="flex items-center justify-between gap-1.5">
               <div className="flex min-w-0 items-center gap-1">
-                <GripVerticalIcon className="size-2.5 shrink-0 text-muted-foreground" />
-                <span className="truncate font-table text-[10.5px] font-semibold tabular-nums">
+                <GripVerticalIcon className="text-muted-foreground size-2.5 shrink-0" />
+                <span className="font-table truncate text-[10.5px] font-semibold tabular-nums">
                   {origin} → {dest}
                 </span>
               </div>
@@ -167,16 +167,16 @@ export function UnassignedQueueList({
                 {priority.label}
               </span>
             </div>
-            <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+            <div className="text-muted-foreground flex items-center justify-between gap-2 text-[10px]">
               <span className="truncate">{s.customer?.name ?? "No Customer Found"}</span>
             </div>
-            <div className="flex items-baseline justify-between gap-2 font-table tabular-nums">
-              <span className="truncate text-[9.5px] text-muted-foreground">
+            <div className="font-table flex items-baseline justify-between gap-2 tabular-nums">
+              <span className="text-muted-foreground truncate text-[9.5px]">
                 pickup {pickupDisplay(s)}
               </span>
               <span className="text-[10.5px] font-semibold">
                 {formatCurrency(revenue)}{" "}
-                <span className="text-[9.5px] font-normal text-muted-foreground">· {miles}mi</span>
+                <span className="text-muted-foreground text-[9.5px] font-normal">· {miles}mi</span>
               </span>
             </div>
           </button>

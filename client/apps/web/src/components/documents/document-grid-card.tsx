@@ -96,13 +96,13 @@ export function DocumentGridCard({
   return (
     <div
       className={cn(
-        "group relative flex h-full min-w-[200px] flex-col overflow-hidden rounded-lg border bg-card",
+        "group bg-card relative flex h-full min-w-[200px] flex-col overflow-hidden rounded-lg border",
         isDeleting && "pointer-events-none opacity-50",
-        isSelected && "ring-1 ring-primary/20",
+        isSelected && "ring-primary/20 ring-1",
         className,
       )}
     >
-      <div className="flex aspect-square items-center justify-center bg-muted/30 p-4">
+      <div className="bg-muted/30 flex aspect-square items-center justify-center p-4">
         {showThumbnail ? (
           <LazyImage
             src={previewUrl ?? ""}
@@ -115,8 +115,8 @@ export function DocumentGridCard({
             className="flex flex-col items-center justify-center gap-2"
             title="Generating thumbnail..."
           >
-            <LoaderCircleIcon className="size-8 animate-spin text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Generating preview...</span>
+            <LoaderCircleIcon className="text-muted-foreground size-8 animate-spin" />
+            <span className="text-muted-foreground text-xs">Generating preview...</span>
           </div>
         ) : isPreviewUnavailable ? (
           <div
@@ -128,7 +128,7 @@ export function DocumentGridCard({
               fileName={document.originalName}
               size="xl"
             />
-            <span className="text-xs text-muted-foreground">Preview unavailable</span>
+            <span className="text-muted-foreground text-xs">Preview unavailable</span>
           </div>
         ) : (
           <DocumentFileTypeIcon
@@ -143,16 +143,16 @@ export function DocumentGridCard({
         <p className="truncate text-sm font-medium" title={document.originalName}>
           {document.originalName}
         </p>
-        <p className="truncate text-xs text-muted-foreground">
+        <p className="text-muted-foreground truncate text-xs">
           {formatFileSize(document.fileSize)} · {formatUnixDateMedium(document.createdAt)}
         </p>
         {documentTypeName && (
-          <p className="truncate text-xs text-muted-foreground">{documentTypeName}</p>
+          <p className="text-muted-foreground truncate text-xs">{documentTypeName}</p>
         )}
         {document.versionNumber > 1 && onVersions && (
           <button
             type="button"
-            className="mt-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground mt-0.5 text-[10px]"
             onClick={(e) => {
               e.stopPropagation();
               onVersions(document);
@@ -173,14 +173,14 @@ export function DocumentGridCard({
           <Checkbox
             checked={isSelected}
             onCheckedChange={handleCheckboxChange}
-            className="size-5 border-2 bg-background/80 backdrop-blur-sm"
+            className="bg-background/80 size-5 border-2 backdrop-blur-sm"
             aria-label={`Select ${document.originalName}`}
           />
         </div>
       )}
 
       {hasActions && (
-        <div className="absolute top-1.5 right-1.5 rounded-md border bg-background/80 p-0.5 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
+        <div className="bg-background/80 absolute top-1.5 right-1.5 rounded-md border p-0.5 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
           <DropdownMenu>
             <DropdownMenuTrigger
               render={

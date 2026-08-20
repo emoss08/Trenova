@@ -28,7 +28,7 @@ export function MappingReview({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="font-medium">Mapping Preview</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             Resolve required mappings before accepting and creating the receiving shipment.
           </div>
         </div>
@@ -44,10 +44,10 @@ export function MappingReview({
             key={mappingKey(row.entityType, row.sourceId)}
             className="grid gap-2 md:grid-cols-[1fr_1fr]"
           >
-            <div className="rounded-md border bg-muted/20 p-3 text-sm">
-              <div className="text-xs font-medium text-muted-foreground">Source value</div>
+            <div className="bg-muted/20 rounded-md border p-3 text-sm">
+              <div className="text-muted-foreground text-xs font-medium">Source value</div>
               <div className="mt-1 font-medium">{row.sourceLabel || "Unlabeled source value"}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{row.entityType}</div>
+              <div className="text-muted-foreground mt-1 text-xs">{row.entityType}</div>
             </div>
             <TargetLookup
               label="Local record"
@@ -84,7 +84,7 @@ export function MappingSummary({ mappingRows }: { mappingRows: EDIMappingResolut
       {mappingRows.map((row) => (
         <div
           key={mappingKey(row.entityType, row.sourceId)}
-          className="rounded-md border bg-muted/20 p-3"
+          className="bg-muted/20 rounded-md border p-3"
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-medium">{row.entityType}</span>
@@ -94,13 +94,13 @@ export function MappingSummary({ mappingRows }: { mappingRows: EDIMappingResolut
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
             <div>
-              <div className="text-xs font-medium text-muted-foreground">Source value</div>
+              <div className="text-muted-foreground text-xs font-medium">Source value</div>
               <div className="mt-1 truncate text-sm">
                 {row.sourceLabel || "Unlabeled source value"}
               </div>
             </div>
             <div>
-              <div className="text-xs font-medium text-muted-foreground">Local record</div>
+              <div className="text-muted-foreground text-xs font-medium">Local record</div>
               <div className="mt-1 truncate text-sm">
                 {row.targetLabel || (row.resolved ? "Mapped local record" : "No mapping saved")}
               </div>

@@ -165,7 +165,7 @@ function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
       }}
       titleNode={<DialogTitle>Create new location</DialogTitle>}
       descriptionNode={
-        <DialogDescription className="text-xs text-muted-foreground">
+        <DialogDescription className="text-muted-foreground text-xs">
           Fill out the form below to create a new Location.
         </DialogDescription>
       }
@@ -311,7 +311,7 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
       }
       descriptionNode={
         lastUpdatedDescription ? (
-          <DialogDescription className="text-xs text-muted-foreground">
+          <DialogDescription className="text-muted-foreground text-xs">
             {lastUpdatedDescription}
           </DialogDescription>
         ) : null
@@ -375,7 +375,7 @@ function DialogShell({
             onSubmit={form.handleSubmit(onValidSubmit)}
             className="flex h-full min-h-0 min-w-0 flex-col border-r"
           >
-            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+            <div className="border-border flex items-center justify-between border-b px-3 py-2">
               <div className="flex shrink-0 flex-col gap-1">
                 {titleNode}
                 {descriptionNode}
@@ -395,7 +395,7 @@ function DialogShell({
             <ScrollArea className="min-h-0 flex-1">
               <LocationForm />
             </ScrollArea>
-            <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3">
+            <div className="border-border bg-muted/30 flex shrink-0 items-center justify-end gap-2 border-t px-5 py-3">
               {footer}
             </div>
           </Form>

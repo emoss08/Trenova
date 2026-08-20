@@ -13,13 +13,13 @@ export default function InspectorHeader({
     <div className="flex flex-wrap items-start justify-between gap-3 border-b p-4">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <DatabaseIcon className="size-4 text-muted-foreground" />
+          <DatabaseIcon className="text-muted-foreground size-4" />
           <h2 className="truncate text-base font-semibold">{context?.title ?? fallbackTitle}</h2>
           {context?.status ? (
             <Badge variant={context.status.variant}>{context.status.label}</Badge>
           ) : null}
         </div>
-        <div className="mt-1 text-sm text-muted-foreground">
+        <div className="text-muted-foreground mt-1 text-sm">
           {context?.subtitle ?? "Loading message details."}
         </div>
       </div>

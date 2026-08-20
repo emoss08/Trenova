@@ -12,13 +12,13 @@ const CustomTooltip = ({ data, id, value }: any) => {
   const workers = data.workers?.[id] || [];
 
   return (
-    <div className="min-w-37.5 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-xl">
+    <div className="border-border bg-popover text-popover-foreground min-w-37.5 rounded-lg border p-3 shadow-xl">
       <div className="mb-2 flex items-center gap-2">
         <div className="text-sm font-semibold">{id}</div>
         <div className="text-sm opacity-70">({value})</div>
       </div>
       {workers.length > 0 && (
-        <div className="border-t border-border pt-2">
+        <div className="border-border border-t pt-2">
           <div className="space-y-0.5 text-xs">
             {workers.map((worker: any) => (
               <div key={worker.id}>
@@ -89,8 +89,8 @@ export default function ApprovedPTOChart({
     return (
       <div className="flex h-100 w-full items-center justify-center">
         <div className="text-center">
-          <p className="text-sm text-destructive">Failed to load chart data</p>
-          <p className="text-xs text-muted-foreground">{errorMessage || "An error occurred"}</p>
+          <p className="text-destructive text-sm">Failed to load chart data</p>
+          <p className="text-muted-foreground text-xs">{errorMessage || "An error occurred"}</p>
         </div>
       </div>
     );
@@ -99,7 +99,7 @@ export default function ApprovedPTOChart({
   if (!chartData || chartData.length === 0) {
     return (
       <div className="flex h-100 w-full items-center justify-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           No PTO data available for the selected period
         </p>
       </div>
@@ -112,7 +112,7 @@ export default function ApprovedPTOChart({
         colorScheme={colorScheme}
         setColorScheme={(value) => setColorScheme(value)}
       />
-      <p className="mb-2 text-xs text-muted-foreground">
+      <p className="text-muted-foreground mb-2 text-xs">
         Counts are daily occupancy. Multi-day PTO appears on each covered day.
       </p>
       <ResponsiveBar

@@ -25,7 +25,7 @@ const runStatusStyles: Record<RecurringShipmentRunStatus, string> = {
 
 function RunRow({ run }: { run: RecurringShipmentRun }) {
   return (
-    <div className="flex flex-col gap-1 rounded-md border border-border p-2.5">
+    <div className="border-border flex flex-col gap-1 rounded-md border p-2.5">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Badge variant="outline" className={cn("font-medium", runStatusStyles[run.status])}>
@@ -83,7 +83,7 @@ export function RecurringShipmentRunsDialog({
             </>
           )}
           {!isLoading && (data?.results?.length ?? 0) === 0 && (
-            <p className="py-6 text-center text-sm text-muted-foreground">
+            <p className="text-muted-foreground py-6 text-center text-sm">
               Nothing generated yet. Runs appear here as the schedule fires.
             </p>
           )}

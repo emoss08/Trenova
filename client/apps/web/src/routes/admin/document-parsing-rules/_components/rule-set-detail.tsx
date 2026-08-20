@@ -80,8 +80,8 @@ function TabPanelSkeleton() {
 function RuleSetDetailError({ message }: { message: string }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-      <TriangleAlertIcon className="size-8 text-muted-foreground" />
-      <p className="text-sm text-muted-foreground">{message}</p>
+      <TriangleAlertIcon className="text-muted-foreground size-8" />
+      <p className="text-muted-foreground text-sm">{message}</p>
     </div>
   );
 }
@@ -150,7 +150,7 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogMedia className="bg-destructive/10">
-                  <TrashIcon className="size-5 text-destructive" />
+                  <TrashIcon className="text-destructive size-5" />
                 </AlertDialogMedia>
                 <AlertDialogTitle>Delete Rule Set</AlertDialogTitle>
                 <AlertDialogDescription>

@@ -214,7 +214,7 @@ export function VersionHistoryPanel({
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="right" className="w-[500px] gap-0 sm:max-w-[500px]">
-          <SheetHeader className="border-b border-border pb-2">
+          <SheetHeader className="border-border border-b pb-2">
             <SheetTitle className="flex items-center gap-2">
               <ClockIcon className="size-5" />
               Version History
@@ -226,9 +226,9 @@ export function VersionHistoryPanel({
 
           <div className="flex h-[calc(100%-80px)] flex-col">
             {compareMode && selectedForCompare !== null && (
-              <div className="m-2 flex items-center justify-between gap-2 rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm">
+              <div className="border-primary/50 bg-primary/10 m-2 flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <GitCompareArrowsIcon className="size-4 text-primary" />
+                  <GitCompareArrowsIcon className="text-primary size-4" />
                   <span className="text-foreground">
                     Select another version to compare with{" "}
                     <span className="font-mono font-semibold">v{selectedForCompare}</span>
@@ -252,13 +252,13 @@ export function VersionHistoryPanel({
                 <VersionListSkeleton />
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <AlertCircleIcon className="mb-4 size-12 text-destructive" />
+                  <AlertCircleIcon className="text-destructive mb-4 size-12" />
                   <p className="text-muted-foreground">Failed to load version history</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Please try again later</p>
+                  <p className="text-muted-foreground mt-1 text-xs">Please try again later</p>
                 </div>
               ) : versions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <ClockIcon className="mb-4 size-12 text-muted-foreground" />
+                  <ClockIcon className="text-muted-foreground mb-4 size-12" />
                   <p className="text-muted-foreground">No version history yet</p>
                 </div>
               ) : (
@@ -504,10 +504,10 @@ function VersionItem({
     <>
       <div
         className={cn(
-          "group relative rounded-lg border bg-card p-3 transition-all hover:bg-sidebar",
+          "group bg-card hover:bg-sidebar relative rounded-lg border p-3 transition-all",
           isCurrent && "border-primary/50 bg-primary/5",
-          isSelectedForCompare && "ring-2 ring-primary ring-offset-2",
-          canCompareWith && "cursor-pointer hover:border-primary/50",
+          isSelectedForCompare && "ring-primary ring-2 ring-offset-2",
+          canCompareWith && "hover:border-primary/50 cursor-pointer",
         )}
         onClick={canCompareWith ? onCompareWith : undefined}
       >
@@ -521,7 +521,7 @@ function VersionItem({
                 </Badge>
               )}
               {isSelectedForCompare && (
-                <Badge variant="outline" className="border-primary text-xs text-primary">
+                <Badge variant="outline" className="border-primary text-primary text-xs">
                   Selected
                 </Badge>
               )}
@@ -585,12 +585,12 @@ function VersionItem({
             )}
 
             {version.changeMessage && (
-              <p className="mb-2 line-clamp-2 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mb-2 line-clamp-2 text-sm">
                 {version.changeMessage}
               </p>
             )}
 
-            <div className="flex items-center text-xs text-muted-foreground">
+            <div className="text-muted-foreground flex items-center text-xs">
               <span
                 className="cursor-help"
                 title={formatToUserTimezone(version.createdAt, {
@@ -781,7 +781,7 @@ function VersionItem({
             {VERSION_TAG_OPTIONS.map((option) => (
               <div
                 key={option.value}
-                className="flex items-center gap-3 rounded-md p-2 hover:bg-muted"
+                className="hover:bg-muted flex items-center gap-3 rounded-md p-2"
               >
                 <Checkbox
                   id={`tag-dialog-${version.id}-${option.value}`}
@@ -800,7 +800,7 @@ function VersionItem({
                   >
                     {option.label}
                   </span>
-                  <span className="mt-0.5 text-xs text-muted-foreground">{option.description}</span>
+                  <span className="text-muted-foreground mt-0.5 text-xs">{option.description}</span>
                 </label>
               </div>
             ))}

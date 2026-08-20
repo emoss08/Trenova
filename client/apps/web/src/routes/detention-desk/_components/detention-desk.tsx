@@ -66,7 +66,7 @@ export function DetentionDesk({ desk }: { desk: DetentionDeskState }) {
       {visible.length === 0 ? (
         <DeskNoMatches onReset={resetFilters} />
       ) : (
-        <div className="-mx-3 divide-y divide-border/60 px-4">
+        <div className="divide-border/60 -mx-3 divide-y px-4">
           <AnimatePresence initial={false}>
             {visible.map((entry) => (
               <m.div
@@ -89,7 +89,7 @@ export function DetentionDesk({ desk }: { desk: DetentionDeskState }) {
       )}
 
       {isFiltered && visible.length > 0 && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground p-2">
+        <div className="text-muted-foreground flex items-center gap-2 p-2 text-xs">
           <span className="tabular-nums">
             {visible.length} of {entries.length} {pluralize("stop", entries.length)}
           </span>

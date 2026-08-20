@@ -35,7 +35,7 @@ export default function FormattedViewTab({
               key={`${segment.index}-${segment.raw}`}
               type="button"
               onClick={() => onSelectSegment(segment.index)}
-              className="block w-full border-b px-3 py-2 text-left hover:bg-muted"
+              className="hover:bg-muted block w-full border-b px-3 py-2 text-left"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
@@ -58,7 +58,7 @@ export default function FormattedViewTab({
                       key={`${segment.index}-${element.position}`}
                       className="grid grid-cols-[5rem_minmax(160px,220px)_minmax(0,1fr)] gap-2 text-xs"
                     >
-                      <span className="font-mono text-muted-foreground">
+                      <span className="text-muted-foreground font-mono">
                         {segment.segmentId}
                         {String(element.position).padStart(2, "0")}
                       </span>
@@ -70,7 +70,7 @@ export default function FormattedViewTab({
                           element.value
                         )}
                         {element.components.length > 1 ? (
-                          <span className="ml-2 text-muted-foreground">
+                          <span className="text-muted-foreground ml-2">
                             {element.components
                               .map((component) => component.value || "[empty]")
                               .join(" > ")}

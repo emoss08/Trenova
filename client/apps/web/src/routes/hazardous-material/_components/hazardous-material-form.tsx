@@ -132,13 +132,13 @@ function DotHazmatNameField({
               }}
             />
             {showDropdown && (
-              <div className="absolute top-full left-0 z-50 mt-1 w-full overflow-hidden rounded-md bg-popover shadow-md ring-1 ring-foreground/10">
+              <div className="bg-popover ring-foreground/10 absolute top-full left-0 z-50 mt-1 w-full overflow-hidden rounded-md shadow-md ring-1">
                 <div className="max-h-[250px] overflow-y-auto p-1">
                   {results.map((option) => (
                     <button
                       key={option.id}
                       type="button"
-                      className="flex w-full cursor-pointer flex-col items-start rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
+                      className="hover:bg-accent flex w-full cursor-pointer flex-col items-start rounded-sm px-2 py-1.5 text-left text-sm"
                       onMouseDown={(e) => {
                         e.preventDefault();
                         handleSelect(option);
@@ -159,7 +159,7 @@ function DotHazmatNameField({
               </div>
             )}
             {enabled && isLoading && (
-              <div className="absolute top-full left-0 z-50 mt-1 flex w-full justify-center rounded-md bg-popover p-3 shadow-md ring-1 ring-foreground/10">
+              <div className="bg-popover ring-foreground/10 absolute top-full left-0 z-50 mt-1 flex w-full justify-center rounded-md p-3 shadow-md ring-1">
                 <Spinner className="size-4" />
               </div>
             )}

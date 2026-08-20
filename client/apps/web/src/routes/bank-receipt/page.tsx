@@ -154,7 +154,7 @@ export function BankReceiptPage() {
               value={query}
               onChange={(event) => void setSearchParams({ query: event.target.value })}
               placeholder="Search reference, memo..."
-              leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               className="h-7 text-xs"
             />
             <Select
@@ -214,7 +214,7 @@ export function BankReceiptPage() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate text-xs font-medium">{row.referenceNumber}</p>
-                        <p className="truncate text-2xs text-muted-foreground">
+                        <p className="text-2xs text-muted-foreground truncate">
                           {formatReceiptDate(row.receiptDate)}
                         </p>
                       </div>
@@ -227,7 +227,7 @@ export function BankReceiptPage() {
                       <AccountingStatusBadge status={row.status} />
                     </div>
                     {row.memo ? (
-                      <p className="mt-1.5 line-clamp-1 text-2xs text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground mt-1.5 line-clamp-1">
                         {row.memo}
                       </p>
                     ) : null}
@@ -298,7 +298,7 @@ function ReceiptDetail({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{receipt.referenceNumber}</h2>
-          <p className="text-sm text-muted-foreground">{formatReceiptDate(receipt.receiptDate)}</p>
+          <p className="text-muted-foreground text-sm">{formatReceiptDate(receipt.receiptDate)}</p>
         </div>
         <AmountDisplay value={receipt.amountMinor} className="text-2xl font-bold" />
       </div>
@@ -309,7 +309,7 @@ function ReceiptDetail({
 
       <div className="grid gap-5 xl:grid-cols-2">
         <div className="flex flex-col gap-5">
-          <div className="rounded-lg border bg-card p-3">
+          <div className="bg-card rounded-lg border p-3">
             <SectionLabel>Receipt Details</SectionLabel>
             <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
               <PropertyCell label="Reference">
@@ -330,7 +330,7 @@ function ReceiptDetail({
             {receipt.memo ? (
               <div className="mt-2.5">
                 <PropertyCell label="Memo">
-                  <p className="mt-0.5 text-xs text-muted-foreground">{receipt.memo}</p>
+                  <p className="text-muted-foreground mt-0.5 text-xs">{receipt.memo}</p>
                 </PropertyCell>
               </div>
             ) : null}
@@ -372,10 +372,10 @@ function ReceiptDetail({
 
         <div className="flex flex-col gap-5">
           {receipt.status !== "Matched" ? (
-            <div className="rounded-lg border bg-card p-3">
+            <div className="bg-card rounded-lg border p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <LinkIcon className="size-3.5 text-muted-foreground" />
+                  <LinkIcon className="text-muted-foreground size-3.5" />
                   <SectionLabel>Match Suggestions</SectionLabel>
                 </div>
                 {suggestionsQuery.data ? (
@@ -390,7 +390,7 @@ function ReceiptDetail({
                     <Skeleton className="h-10 w-full" />
                   </div>
                 ) : !suggestionsQuery.data || suggestionsQuery.data.length === 0 ? (
-                  <p className="py-4 text-center text-xs text-muted-foreground">
+                  <p className="text-muted-foreground py-4 text-center text-xs">
                     No match suggestions available.
                   </p>
                 ) : (
@@ -421,7 +421,7 @@ function SuggestionTable({
   return (
     <div className="overflow-hidden rounded-md border">
       <table className="w-full text-sm">
-        <thead className="bg-muted/50 text-left text-muted-foreground">
+        <thead className="bg-muted/50 text-muted-foreground text-left">
           <tr>
             <th className="px-3 py-2 text-xs font-medium">Reference</th>
             <th className="px-3 py-2 text-right text-xs font-medium">Amount</th>
@@ -434,16 +434,16 @@ function SuggestionTable({
           {suggestions.map((suggestion) => (
             <tr
               key={suggestion.customerPaymentId}
-              className="border-t transition-colors hover:bg-muted/50"
+              className="hover:bg-muted/50 border-t transition-colors"
             >
-              <td className="px-3 py-2 font-mono text-2xs">{suggestion.referenceNumber}</td>
+              <td className="text-2xs px-3 py-2 font-mono">{suggestion.referenceNumber}</td>
               <td className="px-3 py-2 text-right text-xs tabular-nums">
                 <AmountDisplay value={suggestion.amountMinor} className="text-xs" />
               </td>
               <td className="px-3 py-2 text-right">
                 <ScoreBadge score={suggestion.score} />
               </td>
-              <td className="max-w-[200px] px-3 py-2 text-2xs text-muted-foreground">
+              <td className="text-2xs text-muted-foreground max-w-[200px] px-3 py-2">
                 <span className="line-clamp-2">{suggestion.reason}</span>
               </td>
               <td className="px-3 py-2 text-right">
@@ -476,13 +476,13 @@ function ScoreBadge({ score }: { score: number }) {
 
 function SummaryCard({ label, value, amount }: { label: string; value: string; amount?: number }) {
   return (
-    <div className="rounded-lg border bg-card px-3 py-2.5">
-      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+    <div className="bg-card rounded-lg border px-3 py-2.5">
+      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
       {amount !== undefined ? (
-        <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+        <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
           {formatCurrency(amount / 100)}
         </p>
       ) : null}
@@ -491,7 +491,7 @@ function SummaryCard({ label, value, amount }: { label: string; value: string; a
 }
 
 function SectionLabel({ children }: { children: ReactNode }) {
-  return <p className="text-xs font-medium text-muted-foreground">{children}</p>;
+  return <p className="text-muted-foreground text-xs font-medium">{children}</p>;
 }
 
 function PropertyCell({ label, children }: { label: string; children: ReactNode }) {

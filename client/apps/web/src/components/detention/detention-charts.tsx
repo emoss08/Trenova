@@ -46,7 +46,7 @@ export function ShareBreakdown({
     <div className={className}>
       <div
         className={cn(
-          "flex h-2.5 w-full gap-px overflow-hidden rounded-full bg-muted",
+          "bg-muted flex h-2.5 w-full gap-px overflow-hidden rounded-full",
           trackClassName,
         )}
       >
@@ -79,7 +79,7 @@ export function ShareBreakdown({
               setPinned((current) => (current === segment.key ? null : segment.key))
             }
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-sm text-2xs transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50",
+              "text-2xs hover:text-foreground focus-visible:ring-ring/50 inline-flex items-center gap-1.5 rounded-sm transition-colors outline-none focus-visible:ring-[3px]",
               pinned === segment.key ? "text-foreground" : "text-muted-foreground",
             )}
           >
@@ -113,9 +113,9 @@ export function Meter({
   const clamped = Math.min(Math.max(value, 0), 1);
 
   return (
-    <div className={cn("h-1 w-full overflow-hidden rounded-full bg-muted", className)}>
+    <div className={cn("bg-muted h-1 w-full overflow-hidden rounded-full", className)}>
       <m.div
-        className={cn("h-full rounded-full bg-foreground", barClassName)}
+        className={cn("bg-foreground h-full rounded-full", barClassName)}
         initial={{ width: 0 }}
         animate={{ width: `${clamped * 100}%` }}
         transition={{ ...BAR_TRANSITION, delay }}
@@ -143,8 +143,8 @@ export function DivergingBar({
   const width = scale <= 0 ? 0 : (Math.abs(value) / scale) * 50;
 
   return (
-    <div className={cn("relative h-1.5 w-24 shrink-0 rounded-full bg-muted", className)}>
-      <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border" />
+    <div className={cn("bg-muted relative h-1.5 w-24 shrink-0 rounded-full", className)}>
+      <span className="bg-border absolute inset-y-0 left-1/2 w-px -translate-x-1/2" />
       <m.span
         className={cn(
           "absolute inset-y-0 rounded-full",
@@ -184,18 +184,18 @@ export function DwellSpreadRail({
   return (
     <div
       className={cn(
-        "relative h-1.5 w-full overflow-hidden rounded-full bg-muted",
+        "bg-muted relative h-1.5 w-full overflow-hidden rounded-full",
         className,
       )}
     >
       <m.span
-        className="absolute inset-y-0 left-0 rounded-full bg-foreground/25"
+        className="bg-foreground/25 absolute inset-y-0 left-0 rounded-full"
         initial={{ width: 0 }}
         animate={{ width: `${share(p90)}%` }}
         transition={{ ...BAR_TRANSITION, delay }}
       />
       <m.span
-        className="absolute inset-y-0 left-0 rounded-full bg-foreground"
+        className="bg-foreground absolute inset-y-0 left-0 rounded-full"
         initial={{ width: 0 }}
         animate={{ width: `${share(median)}%` }}
         transition={{ ...BAR_TRANSITION, delay: delay + 0.06 }}

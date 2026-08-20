@@ -170,20 +170,20 @@ export function WeatherTimeline({
 
   return (
     <MapControl position={ControlPosition.BOTTOM_CENTER}>
-      <div className="mb-2.5 w-[560px] rounded-md border bg-popover shadow-sm">
+      <div className="bg-popover mb-2.5 w-[560px] rounded-md border shadow-sm">
         <div className="flex items-center justify-between px-3 pt-2 pb-1">
           <Popover open={weatherLayerOpen} onOpenChange={setWeatherLayerOpen}>
             <PopoverTrigger
               render={
                 <button
                   type="button"
-                  className="flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent"
+                  className="hover:bg-accent flex items-center gap-2 rounded-md px-2 py-1 text-sm"
                 />
               }
             >
-              <activeOption.icon className="size-4 fill-foreground text-foreground" />
+              <activeOption.icon className="fill-foreground text-foreground size-4" />
               <span>{activeOption.label}</span>
-              <ChevronDownIcon className="size-3 text-muted-foreground" />
+              <ChevronDownIcon className="text-muted-foreground size-3" />
             </PopoverTrigger>
             <PopoverContent
               side="top"
@@ -196,9 +196,9 @@ export function WeatherTimeline({
                   key={opt.id}
                   type="button"
                   onClick={() => handleWeatherLayerChange(opt.id)}
-                  className="flex w-full items-start gap-1.5 rounded-md px-3 py-2 text-left hover:bg-accent"
+                  className="hover:bg-accent flex w-full items-start gap-1.5 rounded-md px-3 py-2 text-left"
                 >
-                  <opt.icon className="mt-px size-4 shrink-0 fill-foreground text-foreground" />
+                  <opt.icon className="fill-foreground text-foreground mt-px size-4 shrink-0" />
                   <div className="min-w-0">
                     <div className="text-sm font-medium">{opt.label}</div>
                     <div className="text-2xs text-muted-foreground">{opt.description}</div>
@@ -265,13 +265,13 @@ export function WeatherTimeline({
         </div>
         <div className="px-3 pb-2.5">
           <div ref={trackRef} className="relative h-4 cursor-pointer" onClick={handleTrackClick}>
-            <div className="absolute top-1.5 right-0 left-0 h-[4px] rounded-full bg-muted" />
+            <div className="bg-muted absolute top-1.5 right-0 left-0 h-[4px] rounded-full" />
             <div
-              className="absolute top-1.5 left-0 h-[4px] rounded-full bg-brand"
+              className="bg-brand absolute top-1.5 left-0 h-[4px] rounded-full"
               style={{ width: `${progress}%` }}
             />
             <div
-              className="absolute top-0 size-4 -translate-x-1/2 rounded-full border border-border bg-background shadow-sm"
+              className="border-border bg-background absolute top-0 size-4 -translate-x-1/2 rounded-full border shadow-sm"
               style={{ left: `${progress}%` }}
             />
           </div>
@@ -279,7 +279,7 @@ export function WeatherTimeline({
             {ticks.map((tick, i) => (
               <span
                 key={tick.label}
-                className="absolute text-[10px] whitespace-nowrap text-muted-foreground tabular-nums"
+                className="text-muted-foreground absolute text-[10px] whitespace-nowrap tabular-nums"
                 style={{
                   left: `${tick.position}%`,
                   transform:

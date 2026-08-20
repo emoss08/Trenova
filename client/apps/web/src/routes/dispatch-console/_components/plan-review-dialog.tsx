@@ -56,7 +56,7 @@ function PlannedAssignmentRow({
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-1.5">
           <span className="truncate font-mono text-xs font-semibold">{assignment.proNumber}</span>
-          <span className="text-[11px] text-muted-foreground">→</span>
+          <span className="text-muted-foreground text-[11px]">→</span>
           <span className="truncate text-xs">{assignment.workerName}</span>
           <span
             className={cn(
@@ -70,7 +70,7 @@ function PlannedAssignmentRow({
             {verdict.label}
           </Badge>
         </div>
-        <span className="text-[10.5px] text-muted-foreground">
+        <span className="text-muted-foreground text-[10.5px]">
           {assignment.rationale}
           {assignment.score.deadheadMiles != null &&
             ` · ${formatMiles(assignment.score.deadheadMiles)} empty`}
@@ -130,7 +130,7 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
     <div className="flex flex-col gap-1.5 px-3 py-2.5">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[11px] font-medium">{group.reason}</span>
-        <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+        <span className="text-muted-foreground shrink-0 text-[10px] tabular-nums">
           {group.proNumbers.length} move{group.proNumbers.length === 1 ? "" : "s"}
         </span>
       </div>
@@ -139,7 +139,7 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
         {shown.map((proNumber) => (
           <span
             key={proNumber}
-            className="rounded border border-border bg-muted/40 px-1.5 py-px font-mono text-[10px] leading-4"
+            className="border-border bg-muted/40 rounded border px-1.5 py-px font-mono text-[10px] leading-4"
           >
             {proNumber}
           </span>
@@ -147,7 +147,7 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
         {hidden > 0 ? (
           <button
             type="button"
-            className="px-1 text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground px-1 text-[10px] transition-colors"
             onClick={() => setShowAll(true)}
           >
             +{hidden} more
@@ -223,11 +223,11 @@ export function PlanReviewDialog({
       <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-1.5 text-sm">
-            <SparklesIcon className="size-4 text-brand" aria-hidden />
+            <SparklesIcon className="text-brand size-4" aria-hidden />
             Auto-assign proposal
           </DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-x-1.5 text-xs">
-            <span className="font-medium text-foreground tabular-nums">
+            <span className="text-foreground font-medium tabular-nums">
               {plan.assignments.length} pairing{plan.assignments.length === 1 ? "" : "s"}
             </span>
             {plan.uncovered.length > 0 && (
@@ -244,9 +244,9 @@ export function PlanReviewDialog({
         <ScrollArea className="min-h-0 flex-1 rounded-md border">
           {plan.assignments.length === 0 ? (
             <div className="flex flex-col items-center gap-1.5 px-6 py-8 text-center">
-              <SearchXIcon className="size-5 text-muted-foreground" aria-hidden />
+              <SearchXIcon className="text-muted-foreground size-5" aria-hidden />
               <span className="text-xs font-medium">No pairings to propose</span>
-              <span className="max-w-sm text-[11px] leading-snug text-muted-foreground">
+              <span className="text-muted-foreground max-w-sm text-[11px] leading-snug">
                 Every candidate was blocked or out of range for the moves in this window. The
                 reasons are grouped below.
               </span>
@@ -263,11 +263,11 @@ export function PlanReviewDialog({
           )}
           {uncoveredGroups.length > 0 && (
             <div className="flex flex-col border-t">
-              <span className="flex items-center gap-1 border-b bg-warning/[4%] px-3 py-1.5 text-[10.5px] font-semibold tracking-wide text-warning uppercase">
+              <span className="bg-warning/[4%] text-warning flex items-center gap-1 border-b px-3 py-1.5 text-[10.5px] font-semibold tracking-wide uppercase">
                 <TriangleAlertIcon className="size-3" aria-hidden />
                 Not covered
               </span>
-              <div className="flex flex-col divide-y divide-border">
+              <div className="divide-border flex flex-col divide-y">
                 {uncoveredGroups.map((group) => (
                   <UncoveredGroupCard key={group.reason + group.proNumbers[0]} group={group} />
                 ))}

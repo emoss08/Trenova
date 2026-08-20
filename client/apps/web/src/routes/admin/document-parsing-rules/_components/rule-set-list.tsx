@@ -59,7 +59,7 @@ export function RuleSetList({ selectedId, onSelect }: RuleSetListProps) {
     <div className="flex h-full flex-col">
       <div className="space-y-2 border-b p-3">
         <Input
-          leftElement={<SearchIcon className="size-4 text-muted-foreground" />}
+          leftElement={<SearchIcon className="text-muted-foreground size-4" />}
           placeholder="Search rule sets..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -127,7 +127,7 @@ function RuleSetCard({
       onClick={onSelect}
       className={cn(
         "w-full rounded-md border p-3 text-left transition-colors",
-        isSelected ? "border-border bg-muted" : "border-transparent hover:bg-muted/50",
+        isSelected ? "border-border bg-muted" : "hover:bg-muted/50 border-transparent",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -150,7 +150,7 @@ function RuleSetCard({
             )}
           </div>
           {ruleSet.description && (
-            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs">
               {ruleSet.description}
             </p>
           )}
@@ -184,12 +184,12 @@ function RuleSetListSkeleton() {
 function RuleSetEmptyState({ onCreateClick }: { onCreateClick?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
-      <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-        <FileTextIcon className="size-5 text-muted-foreground" />
+      <div className="bg-muted flex size-10 items-center justify-center rounded-full">
+        <FileTextIcon className="text-muted-foreground size-5" />
       </div>
       <div className="space-y-1">
         <p className="text-sm font-medium">No rule sets yet</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Create a rule set to define how documents are parsed.
         </p>
       </div>
@@ -206,7 +206,7 @@ function RuleSetEmptyState({ onCreateClick }: { onCreateClick?: () => void }) {
 function RuleSetNoResults({ search, onClear }: { search: string; onClear: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
-      <p className="text-sm text-muted-foreground">No results for &quot;{search}&quot;</p>
+      <p className="text-muted-foreground text-sm">No results for &quot;{search}&quot;</p>
       <Button variant="ghost" size="xs" onClick={onClear}>
         Clear search
       </Button>

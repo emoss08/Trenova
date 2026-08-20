@@ -38,7 +38,7 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
   const unresolvedCount = mappingRows.filter((row) => !row.resolved).length;
 
   return (
-    <div className="rounded-md border bg-muted/20">
+    <div className="bg-muted/20 rounded-md border">
       <div className="grid gap-4 p-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -49,7 +49,7 @@ export function TransferOverview({ transfer, mappingRows }: TenderReviewProps) {
           </div>
           <div>
             <div className="truncate text-base font-semibold">{payload.bol || "Load tender"}</div>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
               <span>Submitted {formatUnix(transfer.submittedAt)}</span>
               <span>
                 Target{" "}
@@ -123,15 +123,15 @@ export function TenderRouteReview({ transfer, mappingRows }: TenderReviewProps) 
           : undefined;
 
         return (
-          <div key={`move-${move.sequence}`} className="rounded-md border bg-background">
+          <div key={`move-${move.sequence}`} className="bg-background rounded-md border">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b px-3 py-2">
               <div className="flex min-w-0 items-start gap-2">
-                <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-muted">
-                  <RouteIcon className="size-3.5 text-muted-foreground" />
+                <div className="bg-muted mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md">
+                  <RouteIcon className="text-muted-foreground size-3.5" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-medium">Move {move.sequence + 1}</div>
-                  <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                  <div className="text-muted-foreground mt-1 flex min-w-0 items-center gap-1.5 text-xs">
                     <span className="truncate">{formatStopName(origin, originMapping)}</span>
                     <ArrowRightIcon className="size-3 shrink-0" />
                     <span className="truncate">
@@ -178,32 +178,32 @@ function TenderStopCard({
 
   return (
     <div className="relative grid grid-cols-[28px_1fr] gap-3">
-      {!isLast && <div className="absolute top-7 -bottom-3 left-[13.5px] w-px bg-border" />}
+      {!isLast && <div className="bg-border absolute top-7 -bottom-3 left-[13.5px] w-px" />}
       <div className="relative z-10 flex flex-col items-center">
-        <div className="flex size-7 items-center justify-center rounded-full border bg-muted">
+        <div className="bg-muted flex size-7 items-center justify-center rounded-full border">
           <MapPinIcon className="size-3.5" />
         </div>
       </div>
-      <div className="rounded-md border bg-muted/20 p-3">
+      <div className="bg-muted/20 rounded-md border p-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={stop.type === "Pickup" ? "active" : "secondary"}>{stop.type}</Badge>
-              <span className="text-xs text-muted-foreground">Stop {stop.sequence + 1}</span>
+              <span className="text-muted-foreground text-xs">Stop {stop.sequence + 1}</span>
               <Badge variant="outline">{stop.scheduleType}</Badge>
             </div>
             <div className="mt-2 truncate text-sm font-medium">{formatStopName(stop, mapping)}</div>
             {stopAddress && (
-              <div className="mt-1 truncate text-xs text-muted-foreground">{stopAddress}</div>
+              <div className="text-muted-foreground mt-1 truncate text-xs">{stopAddress}</div>
             )}
             {mapping?.targetLabel && (
-              <div className="mt-1 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mt-1 text-xs">
                 Local record: <span className="text-foreground">{mapping.targetLabel}</span>
               </div>
             )}
           </div>
           <div className="grid gap-1 text-right text-xs">
-            <span className="inline-flex items-center justify-end gap-1 text-muted-foreground">
+            <span className="text-muted-foreground inline-flex items-center justify-end gap-1">
               <CalendarClockIcon className="size-3" />
               {formatWindow(stop.scheduledWindowStart, stop.scheduledWindowEnd)}
             </span>
@@ -276,7 +276,7 @@ function ReviewSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-md border bg-background">
+    <div className="bg-background rounded-md border">
       <div className="flex items-center justify-between border-b px-3 py-2">
         <div className="flex items-center gap-2 text-sm font-medium">
           {icon}
@@ -301,12 +301,12 @@ function FreightLine({
   values: string[];
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-md border bg-muted/20 p-3">
+    <div className="bg-muted/20 flex items-start justify-between gap-3 rounded-md border p-3">
       <div className="min-w-0">
         <div className="truncate text-sm font-medium">{primary}</div>
-        <div className="truncate text-xs text-muted-foreground">{secondary}</div>
+        <div className="text-muted-foreground truncate text-xs">{secondary}</div>
       </div>
-      <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
+      <div className="text-muted-foreground flex flex-col items-end gap-1 text-xs">
         {values.map((value) => (
           <span key={value}>{value}</span>
         ))}

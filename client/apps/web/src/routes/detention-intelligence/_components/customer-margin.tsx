@@ -51,7 +51,7 @@ function CustomerRow({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.26, delay: Math.min(index, 10) * 0.03, ease: "easeOut" }}
-      className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40"
+      className="hover:bg-muted/40 flex items-center gap-3 px-3 py-2.5 transition-colors"
     >
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-1.5">
@@ -59,17 +59,17 @@ function CustomerRow({
             {row.customerName || row.customerId}
           </p>
           {losing ? (
-            <Badge variant="inactive" className="h-4 shrink-0 px-1 text-2xs">
+            <Badge variant="inactive" className="text-2xs h-4 shrink-0 px-1">
               Loss
             </Badge>
           ) : null}
           {row.disputeCount > 0 ? (
-            <Badge variant="outline" className="h-4 shrink-0 px-1 text-2xs">
+            <Badge variant="outline" className="text-2xs h-4 shrink-0 px-1">
               {row.disputeCount} disputed
             </Badge>
           ) : null}
         </div>
-        <p className="mt-0.5 truncate text-2xs text-muted-foreground tabular-nums">
+        <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
           {formatCurrency(row.billedAmount)} billed ·{" "}
           {formatCurrency(row.driverPayAmount)} paid out · {row.stopCount}{" "}
           {row.stopCount === 1 ? "stop" : "stops"}
@@ -170,7 +170,7 @@ export function CustomerMargin({
           message="No customer accrued settled detention in this window."
         />
       ) : (
-        <div key={sort} className="divide-y divide-border">
+        <div key={sort} className="divide-border divide-y">
           {visible.map((row, rowIndex) => (
             <CustomerRow
               key={row.customerId}

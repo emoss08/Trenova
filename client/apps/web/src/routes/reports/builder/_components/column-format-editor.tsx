@@ -58,7 +58,7 @@ function SelectField<T extends string>({
 
   return (
     <div className="flex flex-col gap-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-muted-foreground text-xs">{label}</Label>
       <Select
         value={value || NONE}
         onValueChange={(next) => {
@@ -126,12 +126,12 @@ export function ColumnFormatEditor({
     resolved.style === "number" || resolved.style === "currency" || resolved.style === "percent";
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-dashed border-border bg-muted/30 p-2">
+    <div className="border-border bg-muted/30 flex flex-col gap-2 rounded-md border border-dashed p-2">
       <div className="flex items-center gap-2">
-        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
           Formatting
         </span>
-        <span className="rounded-sm bg-background px-1.5 py-px font-mono text-2xs text-foreground/80 tabular-nums">
+        <span className="bg-background text-2xs text-foreground/80 rounded-sm px-1.5 py-px font-mono tabular-nums">
           {preview || "—"}
         </span>
         <div className="flex-1" />
@@ -158,7 +158,7 @@ export function ColumnFormatEditor({
 
         {numeric && (
           <div className="flex flex-col gap-1">
-            <Label className="text-xs text-muted-foreground">Decimal places</Label>
+            <Label className="text-muted-foreground text-xs">Decimal places</Label>
             <Input
               className="h-7"
               type="number"
@@ -239,7 +239,7 @@ export function ColumnFormatEditor({
         )}
 
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-muted-foreground">Prefix</Label>
+          <Label className="text-muted-foreground text-xs">Prefix</Label>
           <Input
             className="h-7"
             maxLength={12}
@@ -250,7 +250,7 @@ export function ColumnFormatEditor({
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-muted-foreground">Suffix</Label>
+          <Label className="text-muted-foreground text-xs">Suffix</Label>
           <Input
             className="h-7"
             maxLength={12}
@@ -261,7 +261,7 @@ export function ColumnFormatEditor({
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-muted-foreground">Empty values show</Label>
+          <Label className="text-muted-foreground text-xs">Empty values show</Label>
           <Input
             className="h-7"
             maxLength={24}
@@ -272,8 +272,8 @@ export function ColumnFormatEditor({
         </div>
 
         {numeric && (
-          <div className="flex items-center justify-between gap-2 self-end rounded-md border border-border bg-background px-2 py-1">
-            <Label className="text-xs text-muted-foreground">Thousands separator</Label>
+          <div className="border-border bg-background flex items-center justify-between gap-2 self-end rounded-md border px-2 py-1">
+            <Label className="text-muted-foreground text-xs">Thousands separator</Label>
             <Switch
               checked={display.grouping ?? resolved.grouping}
               onCheckedChange={(checked) => patchDisplay({ grouping: checked })}
@@ -290,7 +290,7 @@ export function ColumnFormatEditor({
       )}
 
       {transformChoices.length > 0 && !bandIsSet(column.band) && (
-        <div className="grid grid-cols-2 gap-2 border-t border-border/60 pt-2">
+        <div className="border-border/60 grid grid-cols-2 gap-2 border-t pt-2">
           <SelectField
             label="Transform value"
             value={transform?.op ?? ""}
@@ -301,7 +301,7 @@ export function ColumnFormatEditor({
 
           {transform && transformUsesPrecision(transform.op) && (
             <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">Decimal places</Label>
+              <Label className="text-muted-foreground text-xs">Decimal places</Label>
               <Input
                 className="h-7"
                 type="number"
@@ -320,7 +320,7 @@ export function ColumnFormatEditor({
 
           {transform?.op === "scale" && (
             <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">Multiplier</Label>
+              <Label className="text-muted-foreground text-xs">Multiplier</Label>
               <Input
                 className="h-7"
                 type="number"
@@ -336,7 +336,7 @@ export function ColumnFormatEditor({
             </div>
           )}
 
-          <p className="col-span-2 text-2xs text-muted-foreground">
+          <p className="text-2xs text-muted-foreground col-span-2">
             Transforms change the number this report returns — sorting and exported cells use the
             transformed value. Your records are never modified.
           </p>

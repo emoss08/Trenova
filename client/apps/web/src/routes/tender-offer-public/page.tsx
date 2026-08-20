@@ -41,7 +41,7 @@ function OfferSummary({
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle className="text-base">Load offer for {offer.carrierName}</CardTitle>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           PRO {offer.shipmentProNumber} · respond before the offer expires
         </p>
       </CardHeader>
@@ -58,19 +58,19 @@ function OfferSummary({
         <Separator />
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Rate</span>
+          <span className="text-muted-foreground text-xs">Rate</span>
           <span className="text-sm font-semibold tabular-nums">
             {offer.rateAmount}
-            <span className="ml-1 text-xs font-normal text-muted-foreground">
+            <span className="text-muted-foreground ml-1 text-xs font-normal">
               {offer.rateMethodLabel}
             </span>
           </span>
         </div>
 
         {offer.expiresAt > 0 && (
-          <div className="flex items-center gap-1.5 rounded-md border bg-muted/40 px-2 py-1.5">
-            <ClockIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-            <span className="text-xs text-muted-foreground">
+          <div className="bg-muted/40 flex items-center gap-1.5 rounded-md border px-2 py-1.5">
+            <ClockIcon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+            <span className="text-muted-foreground text-xs">
               Offer expires {formatUnixDateTime(offer.expiresAt)}
             </span>
           </div>
@@ -80,7 +80,7 @@ function OfferSummary({
           <div className="flex gap-2">
             <Button
               type="button"
-              className={cn("flex-1", intent === "accept" && "ring-2 ring-ring ring-offset-2")}
+              className={cn("flex-1", intent === "accept" && "ring-ring ring-2 ring-offset-2")}
               isLoading={isSubmitting && !declineOpen}
               loadingText="Accepting..."
               disabled={isSubmitting}
@@ -93,7 +93,7 @@ function OfferSummary({
               variant={declineOpen ? "destructive" : "outline"}
               className={cn(
                 "flex-1",
-                intent === "decline" && !declineOpen && "ring-2 ring-ring ring-offset-2",
+                intent === "decline" && !declineOpen && "ring-ring ring-2 ring-offset-2",
               )}
               disabled={isSubmitting}
               isLoading={isSubmitting && declineOpen}
@@ -112,7 +112,7 @@ function OfferSummary({
 
           {declineOpen && (
             <div className="flex flex-col gap-1">
-              <label htmlFor="decline-reason" className="text-xs text-muted-foreground">
+              <label htmlFor="decline-reason" className="text-muted-foreground text-xs">
                 Reason (optional)
               </label>
               <Textarea
@@ -182,7 +182,7 @@ export function TenderOfferPublicPage() {
   } else if (submitError === "throttled") {
     content = (
       <StatusCard
-        icon={<ClockIcon className="size-8 text-muted-foreground" aria-hidden />}
+        icon={<ClockIcon className="text-muted-foreground size-8" aria-hidden />}
         title="Too many attempts"
         body="Please wait a minute and try the link from your email again."
       />
@@ -190,7 +190,7 @@ export function TenderOfferPublicPage() {
   } else if (submitError === "unavailable") {
     content = (
       <StatusCard
-        icon={<TriangleAlertIcon className="size-8 text-muted-foreground" aria-hidden />}
+        icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
         title="Temporarily unavailable"
         body="Your response could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment."
         action={
@@ -215,7 +215,7 @@ export function TenderOfferPublicPage() {
   } else if (submitError === "invalid") {
     content = (
       <StatusCard
-        icon={<CircleSlashIcon className="size-8 text-muted-foreground" aria-hidden />}
+        icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
         title="This offer link is no longer valid"
         body="The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error."
       />
@@ -235,13 +235,13 @@ export function TenderOfferPublicPage() {
     content =
       kind === "throttled" ? (
         <StatusCard
-          icon={<ClockIcon className="size-8 text-muted-foreground" aria-hidden />}
+          icon={<ClockIcon className="text-muted-foreground size-8" aria-hidden />}
           title="Too many attempts"
           body="Please wait a minute and try the link from your email again."
         />
       ) : kind === "unavailable" ? (
         <StatusCard
-          icon={<TriangleAlertIcon className="size-8 text-muted-foreground" aria-hidden />}
+          icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
           title="Temporarily unavailable"
           body="The offer could not be loaded because of a temporary problem. Please try again in a moment."
           action={
@@ -260,7 +260,7 @@ export function TenderOfferPublicPage() {
         />
       ) : (
         <StatusCard
-          icon={<CircleSlashIcon className="size-8 text-muted-foreground" aria-hidden />}
+          icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
           title="This offer link is no longer valid"
           body="The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error."
         />
@@ -268,7 +268,7 @@ export function TenderOfferPublicPage() {
   } else if (previewQuery.data?.responded) {
     content = (
       <StatusCard
-        icon={<CheckCircle2Icon className="size-8 text-muted-foreground" aria-hidden />}
+        icon={<CheckCircle2Icon className="text-muted-foreground size-8" aria-hidden />}
         title="Already answered"
         body="A response has already been recorded for this offer. Contact the broker if anything changed."
       />
@@ -286,7 +286,7 @@ export function TenderOfferPublicPage() {
   } else {
     content = (
       <StatusCard
-        icon={<CircleSlashIcon className="size-8 text-muted-foreground" aria-hidden />}
+        icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
         title="This offer link is no longer valid"
         body="The offer may have expired, been withdrawn, or already been answered. Contact the broker if you believe this is an error."
       />

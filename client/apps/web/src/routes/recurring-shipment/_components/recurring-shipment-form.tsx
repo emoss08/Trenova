@@ -46,8 +46,8 @@ function SchedulePreview() {
       : "created the same day as pickup";
 
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 p-3">
-      <CalendarClockIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+    <div className="border-border bg-muted/30 flex items-start gap-2 rounded-lg border p-3">
+      <CalendarClockIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
       <div className="flex flex-col gap-0.5 text-sm">
         <span>
           {cadence ? (

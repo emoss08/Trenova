@@ -61,7 +61,7 @@ export function LocationForm() {
             />
           </FormControl>
           {googleMapsQuery.isLoading ? (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
               Loading Maps Configuration..
             </div>
           ) : googleMapsQuery.data?.config.apiKey ? (

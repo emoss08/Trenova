@@ -43,9 +43,9 @@ export function AutocompleteTrigger<TOption>({
       aria-expanded={open}
       aria-controls={listboxId}
       className={cn(
-        "h-7 w-full gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 text-xs font-normal",
-        "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/30 data-pressed:outline-hidden",
-        "cursor-default justify-between hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/30 [&_svg]:size-3",
+        "border-muted-foreground/20 bg-muted h-7 w-full gap-2 rounded px-1.5 text-xs font-normal",
+        "data-pressed:border-brand data-pressed:ring-brand/30 data-pressed:ring-4 data-pressed:outline-hidden",
+        "hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/30 cursor-default justify-between [&_svg]:size-3",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
         disabled && "cursor-not-allowed opacity-50",
         isInvalid &&
@@ -99,7 +99,7 @@ export function AutocompleteInputInner<TOption>({
   if (currentValue && isLoadingSelected) {
     return (
       <div className="truncate">
-        <span className="animate-pulse text-muted-foreground">Loading...</span>
+        <span className="text-muted-foreground animate-pulse">Loading...</span>
       </div>
     );
   }
@@ -141,7 +141,7 @@ export function AutocompleteInputActions({
             e.preventDefault();
             handleClear();
           }}
-          className="flex size-5 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-200 ease-in-out hover:bg-muted-foreground/30 hover:text-foreground [&>svg]:size-3"
+          className="text-muted-foreground hover:bg-muted-foreground/30 hover:text-foreground flex size-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-200 ease-in-out [&>svg]:size-3"
         >
           <span className="sr-only">Clear</span>
           <XIcon className="size-4" />

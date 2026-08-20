@@ -66,13 +66,13 @@ export function ExceptionStrip({
   const allClear = visibleChips.length === 0;
 
   return (
-    <div className="flex min-h-7 flex-wrap items-center gap-1.5 border-b border-border bg-muted/30 px-3 py-1">
-      <span className="text-[9.5px] font-semibold tracking-wide text-muted-foreground uppercase">
+    <div className="border-border bg-muted/30 flex min-h-7 flex-wrap items-center gap-1.5 border-b px-3 py-1">
+      <span className="text-muted-foreground text-[9.5px] font-semibold tracking-wide uppercase">
         Attention
       </span>
       {allClear ? (
-        <span className="inline-flex items-center gap-1 text-[10.5px] text-muted-foreground">
-          <CircleCheckIcon className="size-3 text-success" />
+        <span className="text-muted-foreground inline-flex items-center gap-1 text-[10.5px]">
+          <CircleCheckIcon className="text-success size-3" />
           All clear in this window
         </span>
       ) : (
@@ -100,7 +100,7 @@ export function ExceptionStrip({
       )}
       {focus && (
         <div className="ml-auto flex items-center gap-0.5">
-          <span className="mr-1 font-table text-[10px] text-muted-foreground tabular-nums">
+          <span className="font-table text-muted-foreground mr-1 text-[10px] tabular-nums">
             {matchCount === 0 ? "No matches" : `${matchIndex + 1} / ${matchCount}`}
           </span>
           <button
@@ -108,7 +108,7 @@ export function ExceptionStrip({
             aria-label="Previous match"
             disabled={matchCount === 0}
             onClick={() => onStep(-1)}
-            className="flex size-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 items-center justify-center rounded transition-colors disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronLeftIcon className="size-3.5" />
           </button>
@@ -117,7 +117,7 @@ export function ExceptionStrip({
             aria-label="Next match"
             disabled={matchCount === 0}
             onClick={() => onStep(1)}
-            className="flex size-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 items-center justify-center rounded transition-colors disabled:pointer-events-none disabled:opacity-40"
           >
             <ChevronRightIcon className="size-3.5" />
           </button>
@@ -125,7 +125,7 @@ export function ExceptionStrip({
             type="button"
             aria-label="Clear focus"
             onClick={() => onFocusChange(null)}
-            className="ml-0.5 flex size-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground ml-0.5 flex size-5 items-center justify-center rounded transition-colors"
           >
             <XIcon className="size-3.5" />
           </button>

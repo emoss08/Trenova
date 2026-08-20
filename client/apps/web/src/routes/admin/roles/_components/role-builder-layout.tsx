@@ -26,13 +26,13 @@ export function RolePageLayout({
   banner,
 }: RolePageLayoutProps) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-background">
-      <header className="sticky top-0 z-10 shrink-0 border-b bg-card/95 px-6 py-3 backdrop-blur-sm">
+    <div className="border-border bg-background flex flex-col overflow-hidden rounded-md border">
+      <header className="bg-card/95 sticky top-0 z-10 shrink-0 border-b px-6 py-3 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               to="/admin/roles"
-              className="flex size-8 items-center justify-center rounded-lg border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="bg-background text-muted-foreground hover:bg-muted hover:text-foreground flex size-8 items-center justify-center rounded-lg border transition-colors"
             >
               <ArrowLeftIcon className="size-4" />
             </Link>
@@ -82,7 +82,7 @@ export function RoleBuilderSection({
     <section className={cn("flex flex-col", className)}>
       <div className="mb-4">
         <h2 className="text-sm font-medium">{title}</h2>
-        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+        {description && <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>}
       </div>
       <div className="flex-1">{children}</div>
     </section>

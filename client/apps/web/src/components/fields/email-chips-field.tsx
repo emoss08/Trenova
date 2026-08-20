@@ -86,9 +86,9 @@ export function EmailChipsField<T extends FieldValues>({
             <label
               htmlFor={inputId}
               className={cn(
-                "flex min-h-7 flex-wrap items-center gap-1 rounded-md border border-input bg-muted px-1.5 py-1",
+                "border-input bg-muted flex min-h-7 flex-wrap items-center gap-1 rounded-md border px-1.5 py-1",
                 "cursor-text transition-[border-color,box-shadow] duration-200 ease-in-out",
-                "focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/30",
+                "focus-within:border-brand focus-within:ring-brand/30 focus-within:ring-4",
                 (invalidDraft || fieldState.invalid) &&
                   "border-destructive bg-destructive/20 focus-within:border-destructive focus-within:ring-destructive/20",
               )}
@@ -96,13 +96,13 @@ export function EmailChipsField<T extends FieldValues>({
               {emails.map((email) => (
                 <span
                   key={email}
-                  className="inline-flex max-w-full items-center gap-1 rounded-sm border border-border bg-background py-0.5 pr-1 pl-1.5 text-xs"
+                  className="border-border bg-background inline-flex max-w-full items-center gap-1 rounded-sm border py-0.5 pr-1 pl-1.5 text-xs"
                 >
                   <span className="truncate">{email}</span>
                   <button
                     type="button"
                     aria-label={`Remove ${email}`}
-                    className="rounded-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
                     onClick={(event) => {
                       event.stopPropagation();
                       remove(email);
@@ -120,7 +120,7 @@ export function EmailChipsField<T extends FieldValues>({
                 spellCheck={false}
                 value={draft}
                 placeholder={emails.length === 0 ? placeholder : undefined}
-                className="min-w-24 flex-1 bg-transparent py-0.5 text-xs outline-none placeholder:text-muted-foreground"
+                className="placeholder:text-muted-foreground min-w-24 flex-1 bg-transparent py-0.5 text-xs outline-none"
                 onChange={(event) => {
                   setDraft(event.target.value);
                   if (invalidDraft) setInvalidDraft(null);

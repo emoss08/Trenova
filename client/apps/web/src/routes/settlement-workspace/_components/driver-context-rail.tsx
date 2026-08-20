@@ -49,14 +49,14 @@ export function DriverContextRail({
 }) {
   if (!workerId) {
     return (
-      <div className="hidden items-center justify-center rounded-lg border bg-card p-6 text-center text-xs text-muted-foreground lg:flex">
+      <div className="bg-card text-muted-foreground hidden items-center justify-center rounded-lg border p-6 text-center text-xs lg:flex">
         Driver context appears here once a settlement is selected.
       </div>
     );
   }
 
   return (
-    <div className="hidden min-h-0 flex-col overflow-hidden rounded-lg border bg-card lg:flex">
+    <div className="bg-card hidden min-h-0 flex-col overflow-hidden rounded-lg border lg:flex">
       <ScrollArea
         className="min-h-0 flex-1"
         viewportClassName="min-h-0"
@@ -66,7 +66,7 @@ export function DriverContextRail({
         <div className="flex flex-col gap-3 p-3">
           <div>
             <h3 className="text-sm font-semibold">{workerName ?? "Driver"}</h3>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px]">
               Everything affecting this driver&apos;s pay — manage it without leaving the workspace.
             </p>
           </div>
@@ -100,10 +100,10 @@ function RailSection({
     <div className="border-t pt-3 first:border-t-0 first:pt-0">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <div>
-          <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
             {title}
           </h4>
-          <p className="text-[10px] text-muted-foreground">{hint}</p>
+          <p className="text-muted-foreground text-[10px]">{hint}</p>
         </div>
         {action}
       </div>
@@ -167,7 +167,7 @@ function UnsettledPaySection({
       hint="Accrued pay not yet on a settlement — attach it, or hold it for a later period."
     >
       {list.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground text-[11px]">
           Nothing waiting. New pay accrues automatically as moves complete.
         </p>
       ) : (
@@ -182,10 +182,10 @@ function UnsettledPaySection({
               )}
             >
               <div className="flex items-center gap-1.5">
-                <span className="font-mono text-[10px] text-muted-foreground">
+                <span className="text-muted-foreground font-mono text-[10px]">
                   {event.proNumber || "No PRO"}
                 </span>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-muted-foreground text-[10px]">
                   {formatSettlementMonthDay(event.eventDate)}
                 </span>
                 <span className="ml-auto text-xs font-semibold">
@@ -226,7 +226,7 @@ function UnsettledPaySection({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-6 px-2 text-[10px] text-muted-foreground"
+                    className="text-muted-foreground h-6 px-2 text-[10px]"
                     onClick={() => setHoldTarget(event)}
                     title="Defer this pay to a later settlement — it will skip generation until released"
                   >
@@ -359,14 +359,14 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
       }
     >
       {list.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground">No active earnings for this driver.</p>
+        <p className="text-muted-foreground text-[11px]">No active earnings for this driver.</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {list.map((earning) => (
             <li key={earning.id} className="flex items-center gap-2 rounded-md border p-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[11px] font-medium">{earning.description}</p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-muted-foreground text-[10px]">
                   <AmountDisplay value={earning.amountMinor} currency="USD" /> ·{" "}
                   {earning.frequency === "Monthly" ? "monthly" : "every settlement"}
                   {earning.status === "Paused" && " · paused"}
@@ -458,14 +458,14 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
       }
     >
       {list.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground">No active deductions for this driver.</p>
+        <p className="text-muted-foreground text-[11px]">No active deductions for this driver.</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {list.map((deduction) => (
             <li key={deduction.id} className="flex items-center gap-2 rounded-md border p-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[11px] font-medium">{deduction.description}</p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-muted-foreground text-[10px]">
                   <AmountDisplay value={deduction.amountMinor} currency="USD" /> ·{" "}
                   {deduction.frequency === "Monthly" ? "monthly" : "every settlement"}
                   {deduction.status === "Paused" && " · paused"}
@@ -532,7 +532,7 @@ function AdvancesSection({ workerId }: { workerId: string }) {
       }
     >
       {outstanding.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground">No outstanding advances.</p>
+        <p className="text-muted-foreground text-[11px]">No outstanding advances.</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {outstanding.map((advance) => (
@@ -541,7 +541,7 @@ function AdvancesSection({ workerId }: { workerId: string }) {
                 <p className="truncate text-[11px] font-medium">
                   {advance.reference || advance.source}
                 </p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-muted-foreground text-[10px]">
                   issued {formatSettlementMonthDay(advance.issuedDate)}
                 </p>
               </div>

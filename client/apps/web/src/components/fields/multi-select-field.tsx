@@ -562,9 +562,9 @@ export function MultiSelectAutocomplete<T>({
               aria-controls={listboxId}
               aria-readonly={readOnly || undefined}
               className={cn(
-                "h-auto min-h-7 w-full cursor-auto gap-2 rounded-md border-muted-foreground/20 bg-muted px-2 py-1 font-normal",
-                "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/20 data-pressed:outline-hidden",
-                "cursor-pointer justify-between hover:bg-muted-foreground/20 [&_svg]:size-3 [&_svg]:shrink-0",
+                "border-muted-foreground/20 bg-muted h-auto min-h-7 w-full cursor-auto gap-2 rounded-md px-2 py-1 font-normal",
+                "data-pressed:border-brand data-pressed:ring-brand/20 data-pressed:ring-4 data-pressed:outline-hidden",
+                "hover:bg-muted-foreground/20 cursor-pointer justify-between [&_svg]:size-3 [&_svg]:shrink-0",
                 "transition-all duration-200 ease-in-out",
                 "cursor-default whitespace-nowrap",
                 isLocked && "cursor-not-allowed opacity-50",
@@ -602,7 +602,7 @@ export function MultiSelectAutocomplete<T>({
                     {selectedOptions.length > maxCount && (
                       <Badge
                         className={cn(
-                          "h-auto max-h-5 shrink-0 border-foreground/10 bg-transparent text-foreground hover:bg-transparent",
+                          "border-foreground/10 text-foreground h-auto max-h-5 shrink-0 bg-transparent hover:bg-transparent",
                           multiSelectVariants({ variant: "default" }),
                         )}
                       >
@@ -616,7 +616,7 @@ export function MultiSelectAutocomplete<T>({
                       <div className="flex-rowitems-center flex justify-center gap-0.5">
                         <span
                           title="Clear all"
-                          className="mr-1 size-4 cursor-pointer items-center justify-center text-muted-foreground transition-all duration-200 ease-in-out hover:bg-muted-foreground/20 hover:text-foreground"
+                          className="text-muted-foreground hover:bg-muted-foreground/20 hover:text-foreground mr-1 size-4 cursor-pointer items-center justify-center transition-all duration-200 ease-in-out"
                           onClick={(event) => {
                             event.stopPropagation();
                             handleClearAll();
@@ -626,11 +626,11 @@ export function MultiSelectAutocomplete<T>({
                         </span>
                         <Separator
                           orientation="vertical"
-                          className="h-full min-h-4 bg-foreground/10"
+                          className="bg-foreground/10 h-full min-h-4"
                         />
                         <span
                           title="Toggle dropdown"
-                          className="mr-0.5 size-3 cursor-pointer items-center justify-center text-muted-foreground transition-all duration-200 ease-in-out"
+                          className="text-muted-foreground mr-0.5 size-3 cursor-pointer items-center justify-center transition-all duration-200 ease-in-out"
                           onClick={(event) => {
                             event.stopPropagation();
                             if (!isLocked) setOpen(!open);
@@ -638,7 +638,7 @@ export function MultiSelectAutocomplete<T>({
                         >
                           <ChevronDownIcon
                             className={cn(
-                              "ml-1 size-3 shrink-0 cursor-pointer text-muted-foreground transition-all duration-200 ease-in-out",
+                              "text-muted-foreground ml-1 size-3 shrink-0 cursor-pointer transition-all duration-200 ease-in-out",
                               open && "-rotate-180 transform",
                             )}
                           />
@@ -653,7 +653,7 @@ export function MultiSelectAutocomplete<T>({
                     {placeholder}
                   </p>
                   <span
-                    className="mr-0.5 size-3 cursor-pointer items-center justify-center text-muted-foreground transition-all duration-200 ease-in-out"
+                    className="text-muted-foreground mr-0.5 size-3 cursor-pointer items-center justify-center transition-all duration-200 ease-in-out"
                     onClick={(event) => {
                       event.stopPropagation();
                       if (!isLocked) setOpen(!open);
@@ -694,7 +694,7 @@ export function MultiSelectAutocomplete<T>({
               onWheel={handleWheel}
               className="max-h-[200px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent overflow-y-auto"
             >
-              {error && <div className="p-4 text-center text-destructive">{error}</div>}
+              {error && <div className="text-destructive p-4 text-center">{error}</div>}
               {!loading && !error && options.length === 0 && (
                 <CommandEmpty>
                   {noResultsMessage ?? `No ${label?.toLowerCase()} found.`}
@@ -709,7 +709,7 @@ export function MultiSelectAutocomplete<T>({
                   >
                     <div
                       className={cn(
-                        "flex size-4 items-center justify-center rounded-sm border border-primary",
+                        "border-primary flex size-4 items-center justify-center rounded-sm border",
                         selectedOptions.length === options.length && options.length > 0
                           ? "bg-primary text-primary-foreground"
                           : "opacity-50 [&_svg]:invisible",
@@ -746,7 +746,7 @@ export function MultiSelectAutocomplete<T>({
                   </div>
                 )}
                 {hasMore && !loading && (
-                  <div className="p-2 text-center text-xs text-muted-foreground">
+                  <div className="text-muted-foreground p-2 text-center text-xs">
                     Scroll for more
                   </div>
                 )}

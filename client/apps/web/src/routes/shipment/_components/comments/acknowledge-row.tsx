@@ -56,7 +56,7 @@ export function AcknowledgeRow({
                   <Tooltip>
                     <TooltipTrigger
                       render={
-                        <span className="block rounded-full ring-2 ring-background">
+                        <span className="ring-background block rounded-full ring-2">
                           <ResolvedUserAvatar
                             userId={ack.user?.id}
                             name={ack.user?.name}

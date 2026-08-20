@@ -65,7 +65,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
   const createDisabled = !directoryId || isCreatingToken;
 
   return (
-    <div className="rounded-lg border bg-background">
+    <div className="bg-background rounded-lg border">
       <PanelHeader
         icon={<KeyRoundIcon />}
         title="SCIM tokens"
@@ -93,7 +93,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
         {tokensQuery.isLoading ? (
           <RowSkeleton rows={2} />
         ) : tokens.length > 0 ? (
-          <div className="overflow-x-auto border-t border-border">
+          <div className="border-border overflow-x-auto border-t">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -109,7 +109,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
                   <TableRow key={token.id}>
                     <TableCell className="font-medium">{token.name}</TableCell>
                     <TableCell>
-                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{token.prefix}</code>
+                      <code className="bg-muted rounded px-1.5 py-0.5 text-xs">{token.prefix}</code>
                     </TableCell>
                     <TableCell>
                       <Badge variant={token.status === "active" ? "active" : "inactive"}>
@@ -166,7 +166,7 @@ function CopyableSecretBlock({ value }: { value: string }) {
           {isCopied ? "Copied" : "Copy"}
         </Button>
       </div>
-      <code className="block rounded-md border bg-background/80 p-2 font-mono text-xs break-all">
+      <code className="bg-background/80 block rounded-md border p-2 font-mono text-xs break-all">
         {value}
       </code>
     </div>

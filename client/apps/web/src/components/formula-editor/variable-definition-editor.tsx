@@ -58,14 +58,14 @@ export function VariableDefinitionEditor({
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-            <Variable className="size-4 text-primary" />
+          <div className="bg-primary/10 flex size-8 items-center justify-center rounded-lg">
+            <Variable className="text-primary size-4" />
           </div>
           <div>
             <CardTitle className="text-sm font-medium">
               Custom Variables
             </CardTitle>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Define additional variables for your formula
             </p>
           </div>
@@ -84,11 +84,11 @@ export function VariableDefinitionEditor({
       <CardContent className="p-4">
         {fields.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <Variable className="size-5 text-muted-foreground" />
+            <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+              <Variable className="text-muted-foreground size-5" />
             </div>
             <p className="mt-3 text-sm font-medium">No custom variables</p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-xs">
               Add custom variables to use in your formula expression
             </p>
             <Button
@@ -107,10 +107,10 @@ export function VariableDefinitionEditor({
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="group relative grid grid-cols-12 gap-3 rounded-lg border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
+                className="group bg-muted/30 hover:bg-muted/50 relative grid grid-cols-12 gap-3 rounded-lg border p-3 transition-colors"
               >
                 <div className="col-span-3">
-                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
                     Name
                   </label>
                   <Input
@@ -130,7 +130,7 @@ export function VariableDefinitionEditor({
                 </div>
 
                 <div className="col-span-2">
-                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
                     Default
                   </label>
                   <Input
@@ -141,7 +141,7 @@ export function VariableDefinitionEditor({
                 </div>
 
                 <div className="col-span-4">
-                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
                     Description
                   </label>
                   <Input
@@ -157,7 +157,7 @@ export function VariableDefinitionEditor({
                     variant="ghost"
                     size="sm"
                     onClick={() => remove(index)}
-                    className="size-8 p-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                   >
                     <Trash2 className="size-4" />
                   </Button>

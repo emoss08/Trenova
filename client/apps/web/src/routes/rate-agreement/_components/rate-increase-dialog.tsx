@@ -259,7 +259,7 @@ export function RateIncreaseDialog({
               )}
             >
               <p className="text-xs font-medium">{option.label}</p>
-              <p className="mt-0.5 text-2xs text-muted-foreground">{option.description}</p>
+              <p className="text-2xs text-muted-foreground mt-0.5">{option.description}</p>
             </button>
           ))}
         </div>
@@ -313,7 +313,7 @@ export function RateIncreaseDialog({
           </Form>
         </FormProvider>
 
-        <div className="rounded-lg border bg-muted/30 p-3">
+        <div className="bg-muted/30 rounded-lg border p-3">
           <div className="mb-3 grid grid-cols-2 gap-2">
             {ADJUSTMENT_OPTIONS.map((option) => (
               <button
@@ -331,14 +331,14 @@ export function RateIncreaseDialog({
                 )}
               >
                 <p className="text-xs font-medium">{option.label}</p>
-                <p className="mt-0.5 text-2xs text-muted-foreground">{option.description}</p>
+                <p className="text-2xs text-muted-foreground mt-0.5">{option.description}</p>
               </button>
             ))}
           </div>
 
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-36">
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
                 {kind === "percent" ? "Change (%)" : "Change ($)"}
               </label>
               <NumberFieldRoot

@@ -88,7 +88,7 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
   const dispute = detail.data;
   if (!dispute) {
     return (
-      <p className="p-6 text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground p-6 text-center text-sm">
         This dispute could not be loaded.
       </p>
     );
@@ -99,14 +99,14 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="rounded-lg border border-border bg-muted/40 p-3">
+      <div className="border-border bg-muted/40 rounded-lg border p-3">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold">
             {disputeCategoryLabels[dispute.category] ?? dispute.category}
           </p>
           <SettlementDisputeStatusBadge status={dispute.status} />
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-xs">
           Submitted {formatDate(dispute.createdAt)}
           {dispute.worker
             ? ` by ${`${dispute.worker.firstName} ${dispute.worker.lastName}`.trim()}`
@@ -116,8 +116,8 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
       </div>
 
       {dispute.settlement ? (
-        <div className="rounded-lg border border-border p-3">
-          <p className="text-xs font-medium text-muted-foreground uppercase">Settlement</p>
+        <div className="border-border rounded-lg border p-3">
+          <p className="text-muted-foreground text-xs font-medium uppercase">Settlement</p>
           <div className="mt-1 flex items-center justify-between text-sm">
             <span className="font-mono font-medium">{dispute.settlement.settlementNumber}</span>
             <span className="tabular-nums">
@@ -128,14 +128,14 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
               />
             </span>
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             {formatDate(dispute.settlement.periodStart)} –{" "}
             {formatDate(dispute.settlement.periodEnd)}
           </p>
           {dispute.settlementLine ? (
             <>
               <Separator className="my-2" />
-              <p className="text-xs font-medium text-muted-foreground uppercase">Disputed line</p>
+              <p className="text-muted-foreground text-xs font-medium uppercase">Disputed line</p>
               <div className="mt-1 flex items-center justify-between text-sm">
                 <span>{dispute.settlementLine.description}</span>
                 <AmountDisplay value={dispute.settlementLine.amountMinor} />
@@ -146,10 +146,10 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
       ) : null}
 
       {isTerminal ? (
-        <div className="rounded-lg border border-border p-3">
-          <p className="text-xs font-medium text-muted-foreground uppercase">Resolution</p>
+        <div className="border-border rounded-lg border p-3">
+          <p className="text-muted-foreground text-xs font-medium uppercase">Resolution</p>
           <p className="mt-1 text-sm whitespace-pre-wrap">{dispute.resolutionNote || "—"}</p>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-2 text-xs">
             {formatDate(dispute.resolvedAt)}
             {dispute.resolvedBy ? ` by ${dispute.resolvedBy.name}` : ""}
             {dispute.resolutionLineId ? " · correcting adjustment applied" : ""}
@@ -220,7 +220,7 @@ function ResolveForm({
   });
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-border p-3">
+    <div className="border-border flex flex-col gap-4 rounded-lg border p-3">
       <p className="text-sm font-semibold">Resolve this dispute</p>
 
       <div className="grid grid-cols-2 gap-2">
@@ -252,7 +252,7 @@ function ResolveForm({
           placeholder="Explain the outcome — the driver sees this in Dash."
           rows={3}
         />
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground text-[11px]">
           Shown to the driver verbatim; say what was checked and why the outcome is right.
         </p>
       </div>
@@ -261,7 +261,7 @@ function ResolveForm({
         <div className="flex items-center justify-between">
           <div>
             <Label htmlFor="dispute-with-adjustment">Apply a correcting adjustment</Label>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px]">
               Adds a line to the driver&apos;s open settlement (an off-cycle draft is created if
               none exists).
             </p>
@@ -282,7 +282,7 @@ function ResolveForm({
               onChange={(event) => setAdjustmentDescription(event.target.value)}
               placeholder="Description (e.g. Detention correction - PRO 12345)"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               Appears as the line item on the driver&apos;s statement.
             </p>
           </div>
@@ -293,7 +293,7 @@ function ResolveForm({
               placeholder="Amount (e.g. 150.00 or -75.00)"
               inputMode="decimal"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               Dollars, not cents; positive adds pay, negative deducts.
             </p>
           </div>
@@ -321,7 +321,7 @@ function ResolveForm({
                 ))}
               </SelectContent>
             </Select>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               Optional — routes the adjustment to that code&apos;s GL account when posting.
             </p>
           </div>

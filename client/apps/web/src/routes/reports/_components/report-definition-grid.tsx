@@ -120,7 +120,7 @@ function DefinitionCard({
             <StatusDot status={definition.status} />
             <h3 className="truncate text-sm font-medium">{definition.name}</h3>
           </div>
-          <p className="mt-0.5 line-clamp-2 min-h-8 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 line-clamp-2 min-h-8 text-xs">
             {definition.description || "No description"}
           </p>
         </div>
@@ -188,8 +188,8 @@ function DefinitionCard({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
-        <div className="flex items-center gap-2 text-2xs text-muted-foreground">
+      <div className="border-border/60 mt-3 flex items-center justify-between border-t pt-3">
+        <div className="text-2xs text-muted-foreground flex items-center gap-2">
           {definition.visibility === "shared" ? (
             <span className="flex items-center gap-1">
               <GlobeIcon className="size-3" /> Shared
@@ -210,7 +210,7 @@ function DefinitionCard({
           <Button
             size="sm"
             variant="outline"
-            className="h-6 gap-1 px-2 text-2xs opacity-0 transition-opacity group-hover:opacity-100"
+            className="text-2xs h-6 gap-1 px-2 opacity-0 transition-opacity group-hover:opacity-100"
             disabled={definition.status !== "active"}
             onClick={(event) => {
               event.stopPropagation();

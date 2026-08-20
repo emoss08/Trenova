@@ -21,7 +21,7 @@ export function EtaCell({ shipment }: { shipment: Shipment }) {
   const tone = getShipmentEtaTone(shipment);
 
   if (!etaTimestamp) {
-    return <span className="font-table text-[11.5px] text-muted-foreground">—</span>;
+    return <span className="font-table text-muted-foreground text-[11.5px]">—</span>;
   }
 
   const eta = formatToUserTimezone(etaTimestamp, {

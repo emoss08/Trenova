@@ -95,7 +95,7 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
       <CalendarSyncIcon className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm font-medium">A recurring shipment already covers this lane</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {`"${series.name}" runs ${(describeCron(series.cronExpression) ?? series.cronExpression).toLowerCase()}`}
           {series.nextOccurrenceAt
             ? ` — next pickup ${formatToUserTimezone(series.nextOccurrenceAt)}`
@@ -136,11 +136,11 @@ function PatternHint({
   onDismiss: () => void;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3">
-      <SparklesIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+    <div className="border-border bg-muted/40 flex items-start gap-3 rounded-lg border p-3">
+      <SparklesIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="text-sm font-medium">This looks like a repeating lane</p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {`This customer has shipped this lane ${shipmentCount} times in the last 90 days. Set it up as a recurring shipment and it will generate itself on schedule.`}
         </p>
         <div className="mt-1">

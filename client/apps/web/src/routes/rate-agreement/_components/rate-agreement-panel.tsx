@@ -119,7 +119,7 @@ function ReviewHeaderActions({ agreement, onReviewAction }: ReviewHeaderActionsP
               type="button"
               variant="outline"
               size="xs"
-              className="gap-1.5 text-destructive"
+              className="text-destructive gap-1.5"
               onClick={() => onReviewAction("reject")}
             >
               <XIcon className="size-3" />

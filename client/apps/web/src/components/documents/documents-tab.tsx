@@ -474,7 +474,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   if (!resourceId) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-sm text-muted-foreground">Save the record first to manage documents.</p>
+        <p className="text-muted-foreground text-sm">Save the record first to manage documents.</p>
       </div>
     );
   }
@@ -530,7 +530,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
             <div className="flex size-full flex-col items-start">
               <ColorOptionValue color={option.color ?? undefined} value={option.code} />
               {option?.name && (
-                <span className="w-full truncate text-2xs text-muted-foreground">
+                <span className="text-2xs text-muted-foreground w-full truncate">
                   {option.name}
                 </span>
               )}

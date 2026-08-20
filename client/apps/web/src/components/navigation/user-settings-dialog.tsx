@@ -47,12 +47,12 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-        <Icon className="size-4 text-muted-foreground" />
+      <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-lg">
+        <Icon className="text-muted-foreground size-4" />
       </div>
       <div>
         <h3 className="text-sm leading-none font-medium">{title}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <p className="text-muted-foreground mt-1 text-xs">{description}</p>
       </div>
     </div>
   );
@@ -216,7 +216,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
           <DialogDescription>Manage your preferences and security.</DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-4 rounded-md border bg-sidebar p-4">
+        <div className="bg-sidebar flex items-center gap-4 rounded-md border p-4">
           <ResolvedUserAvatar
             size="lg"
             userId={user?.id}
@@ -227,8 +227,8 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
           />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{user?.name}</p>
-            <p className="truncate text-xs text-muted-foreground">@{user?.username}</p>
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <p className="text-muted-foreground truncate text-xs">@{user?.username}</p>
+            <div className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
               <Mail className="size-3 shrink-0" />
               <span className="truncate">{user?.emailAddress}</span>
             </div>

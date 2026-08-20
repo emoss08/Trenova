@@ -61,7 +61,7 @@ export function CommentThread({
           type="button"
           variant="ghost"
           size="xs"
-          className="h-6 gap-1.5 px-1.5 text-2xs text-muted-foreground hover:text-foreground"
+          className="text-2xs text-muted-foreground hover:text-foreground h-6 gap-1.5 px-1.5"
           onClick={onToggleExpand}
           aria-expanded={isExpanded}
         >
@@ -84,14 +84,14 @@ export function CommentThread({
             <div className="space-y-0.5 pt-1">
               {isExpanded && isRepliesLoading && <ReplySkeleton />}
               {isExpanded && isRepliesError && (
-                <p className="px-2 py-1.5 text-2xs text-red-500">Failed to load replies</p>
+                <p className="text-2xs px-2 py-1.5 text-red-500">Failed to load replies</p>
               )}
               {isExpanded && hasMoreReplies && !isRepliesLoading && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="xs"
-                  className="h-6 px-1.5 text-2xs text-muted-foreground"
+                  className="text-2xs text-muted-foreground h-6 px-1.5"
                   disabled={isFetchingMoreReplies}
                   onClick={() => void fetchMoreReplies()}
                 >

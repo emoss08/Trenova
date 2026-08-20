@@ -49,7 +49,7 @@ export function AccessorialScheduleEditor() {
         const autoApplies = Boolean(row?.autoApply);
 
         return (
-          <div key={field.id} className="rounded-md border bg-card p-4">
+          <div key={field.id} className="bg-card rounded-md border p-4">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-medium">
                 Accessorial {index + 1}

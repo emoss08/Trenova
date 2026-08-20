@@ -54,12 +54,12 @@ export function PreviewGrid({
   if (!ready) {
     return (
       <CenteredState>
-        <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-          <Table2Icon className="size-5 text-muted-foreground" strokeWidth={1.75} />
+        <div className="bg-muted flex size-10 items-center justify-center rounded-lg">
+          <Table2Icon className="text-muted-foreground size-5" strokeWidth={1.75} />
         </div>
         <div className="text-center">
           <p className="text-sm font-medium">Live preview</p>
-          <p className="max-w-xs text-xs text-muted-foreground">
+          <p className="text-muted-foreground max-w-xs text-xs">
             Add fields from the catalog on the left — the preview updates as you build.
           </p>
         </div>
@@ -70,12 +70,12 @@ export function PreviewGrid({
   if (error) {
     return (
       <CenteredState>
-        <div className="flex size-10 items-center justify-center rounded-lg bg-destructive/10">
-          <CircleAlertIcon className="size-5 text-destructive" strokeWidth={1.75} />
+        <div className="bg-destructive/10 flex size-10 items-center justify-center rounded-lg">
+          <CircleAlertIcon className="text-destructive size-5" strokeWidth={1.75} />
         </div>
         <div className="text-center">
           <p className="text-sm font-medium">The preview couldn&apos;t be compiled</p>
-          <p className="max-w-lg text-xs whitespace-pre-wrap text-muted-foreground">{error}</p>
+          <p className="text-muted-foreground max-w-lg text-xs whitespace-pre-wrap">{error}</p>
         </div>
       </CenteredState>
     );
@@ -97,7 +97,7 @@ export function PreviewGrid({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-8 shrink-0 items-center gap-2 border-b border-border px-3">
+      <div className="border-border flex h-8 shrink-0 items-center gap-2 border-b px-3">
         <button
           type="button"
           onClick={() => setView("table")}
@@ -114,23 +114,23 @@ export function PreviewGrid({
             type="button"
             onClick={() => setView(chart.id)}
             className={cn(
-              "max-w-32 truncate text-2xs font-medium tracking-wide uppercase transition-colors",
+              "text-2xs max-w-32 truncate font-medium tracking-wide uppercase transition-colors",
               view === chart.id ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
             {chart.title || chart.type}
           </button>
         ))}
-        <span className="rounded-sm bg-muted px-1.5 py-px text-2xs text-muted-foreground tabular-nums">
+        <span className="bg-muted text-2xs text-muted-foreground rounded-sm px-1.5 py-px tabular-nums">
           {rows.length} row{rows.length === 1 ? "" : "s"}
         </span>
         {preview.truncated && (
-          <span className="rounded-sm bg-amber-500/10 px-1.5 py-px text-2xs text-amber-600 dark:text-amber-400">
+          <span className="text-2xs rounded-sm bg-amber-500/10 px-1.5 py-px text-amber-600 dark:text-amber-400">
             first 100 shown
           </span>
         )}
         <div className="flex-1" />
-        {loading && <Spinner className="size-3.5 text-muted-foreground" />}
+        {loading && <Spinner className="text-muted-foreground size-3.5" />}
       </div>
 
       {activeChart ? (

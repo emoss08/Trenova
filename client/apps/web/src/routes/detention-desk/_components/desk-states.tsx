@@ -17,9 +17,9 @@ function DeskNotice({
 }) {
   return (
     <div className="flex flex-col items-center gap-2 rounded-lg border px-6 py-20 text-center">
-      <Icon className="size-4 text-muted-foreground" />
+      <Icon className="text-muted-foreground size-4" />
       <p className="text-sm">{title}</p>
-      <p className="max-w-sm text-xs text-muted-foreground">{body}</p>
+      <p className="text-muted-foreground max-w-sm text-xs">{body}</p>
       {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );

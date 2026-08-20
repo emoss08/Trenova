@@ -53,18 +53,18 @@ function formatCompactRelativeTime(timestamp: number): string {
 function CommentRow({ comment }: { comment: ShipmentComment }) {
   return (
     <li className="min-w-0">
-      <p className="flex min-w-0 items-baseline gap-1.5 rounded px-1.5 py-1 text-[11px] leading-tight transition-colors hover:bg-muted/40">
-        <span className="shrink-0 font-table font-semibold text-foreground">
+      <p className="hover:bg-muted/40 flex min-w-0 items-baseline gap-1.5 rounded px-1.5 py-1 text-[11px] leading-tight transition-colors">
+        <span className="font-table text-foreground shrink-0 font-semibold">
           {formatUserHandle(comment)}
         </span>
         <time
           dateTime={new Date(comment.createdAt * 1000).toISOString()}
-          className="shrink-0 font-table text-[10px] text-muted-foreground tabular-nums"
+          className="font-table text-muted-foreground shrink-0 text-[10px] tabular-nums"
         >
           {formatCompactRelativeTime(comment.createdAt)}
         </time>
-        <span className="shrink-0 text-muted-foreground">·</span>
-        <span className="min-w-0 truncate text-muted-foreground">{comment.comment}</span>
+        <span className="text-muted-foreground shrink-0">·</span>
+        <span className="text-muted-foreground min-w-0 truncate">{comment.comment}</span>
       </p>
     </li>
   );
@@ -86,14 +86,14 @@ function LoadingRows() {
 
 function EmptyState({ onAddComment }: { onAddComment: () => void }) {
   return (
-    <div className="flex flex-col items-start px-1.5 py-1 text-xs leading-snug text-muted-foreground">
+    <div className="text-muted-foreground flex flex-col items-start px-1.5 py-1 text-xs leading-snug">
       <p>
         No comments yet. Use <span className="font-table text-foreground">@mentions</span> to ping a
         teammate.
       </p>
       <button
         type="button"
-        className="flex h-3 cursor-pointer flex-row px-0 py-0 text-xs text-brand hover:underline"
+        className="text-brand flex h-3 cursor-pointer flex-row px-0 py-0 text-xs hover:underline"
         onClick={onAddComment}
       >
         <PlusIcon className="size-3" />
@@ -172,17 +172,17 @@ export function CommentBlock({ shipmentId }: { shipmentId: Shipment["id"] }) {
     <div className="min-w-0">
       <div className="mb-1 flex items-center justify-between gap-2">
         <h5 className="cc-label">Comments</h5>
-        <span className="font-table text-[10px] text-muted-foreground tabular-nums">{total}</span>
+        <span className="font-table text-muted-foreground text-[10px] tabular-nums">{total}</span>
       </div>
       <ScrollArea
         ref={scrollAreaRef}
-        className="h-24 rounded-md border border-border/70 bg-muted/20"
+        className="border-border/70 bg-muted/20 h-24 rounded-md border"
         viewportClassName="px-1 py-1"
       >
         {query.isLoading ? (
           <LoadingRows />
         ) : query.isError ? (
-          <p className="px-1.5 py-1 text-xs text-muted-foreground">Comments unavailable.</p>
+          <p className="text-muted-foreground px-1.5 py-1 text-xs">Comments unavailable.</p>
         ) : allComments.length === 0 ? (
           <EmptyState onAddComment={handleAddComment} />
         ) : (
@@ -191,7 +191,7 @@ export function CommentBlock({ shipmentId }: { shipmentId: Shipment["id"] }) {
               <CommentRow key={comment.id} comment={comment} />
             ))}
             {isFetchingNextPage && (
-              <li className="px-1.5 py-1 text-[10px] text-muted-foreground">
+              <li className="text-muted-foreground px-1.5 py-1 text-[10px]">
                 Loading older comments...
               </li>
             )}

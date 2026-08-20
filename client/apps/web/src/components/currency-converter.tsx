@@ -65,7 +65,7 @@ function CurrencySelect({ value, onChange, label }: CurrencySelectProps) {
 
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-muted-foreground text-xs">{label}</Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger className="w-full">
           <Button
@@ -77,7 +77,7 @@ function CurrencySelect({ value, onChange, label }: CurrencySelectProps) {
             {value ? (
               <span>
                 <span className="font-semibold">{value}</span>
-                <span className="ml-2 text-muted-foreground">
+                <span className="text-muted-foreground ml-2">
                   {CURRENCIES.find((c) => c.code === value)?.name}
                 </span>
               </span>
@@ -109,7 +109,7 @@ function CurrencySelect({ value, onChange, label }: CurrencySelectProps) {
                       )}
                     />
                     <span className="font-mono font-medium">{currency.code}</span>
-                    <span className="ml-2 text-muted-foreground">{currency.name}</span>
+                    <span className="text-muted-foreground ml-2">{currency.name}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -166,7 +166,7 @@ export function CurrencyConverter() {
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Amount</Label>
+        <Label className="text-muted-foreground text-xs">Amount</Label>
         <Input
           type="number"
           step="0.01"
@@ -178,7 +178,7 @@ export function CurrencyConverter() {
         />
       </div>
 
-      <div className="rounded-lg border border-border bg-muted/30 p-4">
+      <div className="border-border bg-muted/30 rounded-lg border p-4">
         {convertQuery.isLoading ? (
           <div className="flex items-center justify-center py-4">
             <Spinner className="size-5" />
@@ -192,7 +192,7 @@ export function CurrencyConverter() {
               })}{" "}
               {toCurrency}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-muted-foreground text-xs">
               1 {fromCurrency} ={" "}
               {rate.toLocaleString(undefined, {
                 minimumFractionDigits: 6,
@@ -201,16 +201,16 @@ export function CurrencyConverter() {
               {toCurrency}
             </div>
             {result?.date && (
-              <div className="text-xs text-muted-foreground">Rate as of {result.date}</div>
+              <div className="text-muted-foreground text-xs">Rate as of {result.date}</div>
             )}
             {result?.provider && (
-              <div className="text-xs text-muted-foreground">
+              <div className="text-muted-foreground text-xs">
                 {result.provider} {result.rateType ?? "mid"} rate - not a settlement quote
               </div>
             )}
           </div>
         ) : (
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-center text-sm">
             Enter an amount to convert
           </div>
         )}

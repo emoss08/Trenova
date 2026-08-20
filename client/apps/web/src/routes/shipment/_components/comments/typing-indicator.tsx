@@ -17,13 +17,13 @@ export function TypingIndicator({ typingUsers }: { typingUsers: TypingUser[] }) 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 3 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="flex items-center gap-1.5 text-2xs text-muted-foreground"
+            className="text-2xs text-muted-foreground flex items-center gap-1.5"
           >
             <span className="flex items-center gap-0.5">
               {[0, 1, 2].map((dot) => (
                 <m.span
                   key={dot}
-                  className="size-1 rounded-full bg-muted-foreground"
+                  className="bg-muted-foreground size-1 rounded-full"
                   animate={{ opacity: [0.3, 1, 0.3] }}
                   transition={{
                     duration: 1.1,

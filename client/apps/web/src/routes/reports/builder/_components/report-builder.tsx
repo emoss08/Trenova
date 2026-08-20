@@ -83,7 +83,7 @@ function definitionToMeta(definition: ReportDefinition): ReportMeta {
 
 function SectionLabel({ children }: { children: string }) {
   return (
-    <p className="px-0.5 pt-1 pb-2 text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+    <p className="text-2xs text-muted-foreground px-0.5 pt-1 pb-2 font-medium tracking-wide uppercase">
       {children}
     </p>
   );
@@ -192,7 +192,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
+      <header className="border-border flex h-12 shrink-0 items-center gap-2 border-b px-3">
         <Button
           variant="ghost"
           size="icon"
@@ -207,7 +207,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
             value={meta.name}
             onChange={(event) => setMeta((prev) => ({ ...prev, name: event.target.value }))}
             placeholder="Untitled report"
-            className="max-w-80 min-w-0 flex-1 truncate rounded-md bg-transparent px-1.5 py-1 text-sm font-medium transition-colors outline-none placeholder:text-muted-foreground/60 hover:bg-muted/60 focus:bg-muted/60"
+            className="placeholder:text-muted-foreground/60 hover:bg-muted/60 focus:bg-muted/60 max-w-80 min-w-0 flex-1 truncate rounded-md bg-transparent px-1.5 py-1 text-sm font-medium transition-colors outline-none"
           />
           {definition?.status === "needs_attention" && (
             <Badge variant="warning" className="shrink-0">
@@ -239,7 +239,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
       </header>
 
       {definition && definition.diagnostics.length > 0 && (
-        <div className="flex items-start gap-2 border-b border-border bg-amber-500/5 px-4 py-2 text-xs">
+        <div className="border-border flex items-start gap-2 border-b bg-amber-500/5 px-4 py-2 text-xs">
           <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="flex flex-col gap-0.5">
             <p className="font-medium">This report needs attention</p>
@@ -256,9 +256,9 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
         <EntityPicker catalog={catalog} onSelect={(entityKey) => setIR(emptyIR(entityKey))} />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_360px]">
-          <aside className="flex min-h-0 flex-col border-r border-border">
-            <div className="flex h-8 shrink-0 items-center border-b border-border px-3">
-              <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+          <aside className="border-border flex min-h-0 flex-col border-r">
+            <div className="border-border flex h-8 shrink-0 items-center border-b px-3">
+              <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
                 {entity?.label ?? ir.entity} Fields
               </span>
             </div>
@@ -272,7 +272,7 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
             </div>
           </aside>
 
-          <main className="min-h-0 bg-muted/20">
+          <main className="bg-muted/20 min-h-0">
             <PreviewGrid
               ir={ir}
               previewInput={previewInput}
@@ -288,8 +288,8 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
             />
           </main>
 
-          <aside className="flex min-h-0 flex-col border-l border-border">
-            <div className="flex h-8 shrink-0 items-center gap-0.5 border-b border-border px-1.5">
+          <aside className="border-border flex min-h-0 flex-col border-l">
+            <div className="border-border flex h-8 shrink-0 items-center gap-0.5 border-b px-1.5">
               {INSPECTOR_TABS.map((tab) => (
                 <button
                   key={tab.key}
@@ -298,20 +298,20 @@ export function ReportBuilder({ catalog, definition }: ReportBuilderProps) {
                   className={cn(
                     "relative flex h-full items-center gap-1 px-2 text-xs transition-colors",
                     inspectorTab === tab.key
-                      ? "font-medium text-foreground"
+                      ? "text-foreground font-medium"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {tab.label}
                   {tabCounts[tab.key] > 0 && (
-                    <span className="rounded-sm bg-muted px-1 text-2xs text-muted-foreground tabular-nums">
+                    <span className="bg-muted text-2xs text-muted-foreground rounded-sm px-1 tabular-nums">
                       {tabCounts[tab.key]}
                     </span>
                   )}
                   {inspectorTab === tab.key && (
                     <m.span
                       layoutId="inspector-tab-indicator"
-                      className="absolute inset-x-1.5 bottom-0 h-0.5 rounded-full bg-primary"
+                      className="bg-primary absolute inset-x-1.5 bottom-0 h-0.5 rounded-full"
                     />
                   )}
                 </button>

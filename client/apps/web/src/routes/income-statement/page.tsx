@@ -27,8 +27,8 @@ export function IncomeStatementPage() {
         <FiscalPeriodSelector value={periodId} onChange={setPeriodId} />
 
         {!periodId ? (
-          <div className="flex h-64 items-center justify-center rounded-lg border bg-card">
-            <p className="text-sm text-muted-foreground">
+          <div className="bg-card flex h-64 items-center justify-center rounded-lg border">
+            <p className="text-muted-foreground text-sm">
               Select a fiscal period to view the income statement.
             </p>
           </div>
@@ -42,7 +42,7 @@ export function IncomeStatementPage() {
             <FinancialReportSection section={data.revenue} />
             <FinancialReportSection section={data.costOfRevenue} />
 
-            <div className="flex items-center justify-between rounded-md border bg-muted/30 px-4 py-3">
+            <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
               <span className="text-sm font-semibold">Gross Profit</span>
               <AmountDisplay
                 value={data.grossProfitMinor}
@@ -55,7 +55,7 @@ export function IncomeStatementPage() {
 
             <Separator />
 
-            <div className="flex items-center justify-between rounded-md border bg-primary/5 px-4 py-4">
+            <div className="bg-primary/5 flex items-center justify-between rounded-md border px-4 py-4">
               <span className="text-base font-bold">Net Income</span>
               <AmountDisplay
                 value={data.netIncomeMinor}

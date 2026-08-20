@@ -427,8 +427,8 @@ export function ShipmentRateConfirmationImportPanel({
                           isComplete
                             ? "flex size-6 items-center justify-center rounded-full bg-emerald-500 text-white"
                             : isActive
-                              ? "flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
-                              : "flex size-6 items-center justify-center rounded-full bg-muted text-muted-foreground"
+                              ? "bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-full"
+                              : "bg-muted text-muted-foreground flex size-6 items-center justify-center rounded-full"
                         }
                       >
                         {isComplete ? <CheckCircle2Icon className="size-4" /> : index + 1}
@@ -468,12 +468,12 @@ export function ShipmentRateConfirmationImportPanel({
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <div className="font-medium">{currentUpload.file.name}</div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-muted-foreground text-sm">
                           {uploadStatusLabel(currentUpload.status)}
                         </div>
                       </div>
                       {currentUpload.status === "uploading" ? (
-                        <LoaderCircleIcon className="size-4 animate-spin text-primary" />
+                        <LoaderCircleIcon className="text-primary size-4 animate-spin" />
                       ) : null}
                     </div>
                     <div className="mt-4 grid gap-3">
@@ -483,7 +483,7 @@ export function ShipmentRateConfirmationImportPanel({
                         showLabel
                       />
                       {currentUpload.error ? (
-                        <div className="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
+                        <div className="border-destructive/20 bg-destructive/5 text-destructive flex items-start gap-2 rounded-md border p-3 text-sm">
                           <AlertCircleIcon className="mt-0.5 size-4 shrink-0" />
                           <div>{currentUpload.error}</div>
                         </div>
@@ -534,7 +534,7 @@ export function ShipmentRateConfirmationImportPanel({
                 />
                 <div className="grid gap-3 md:grid-cols-3">
                   <div className="rounded-lg border p-3">
-                    <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                       Uploaded File
                     </div>
                     <div className="mt-1 text-sm">
@@ -542,7 +542,7 @@ export function ShipmentRateConfirmationImportPanel({
                     </div>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                       Content Status
                     </div>
                     <div className="mt-1 text-sm">
@@ -550,7 +550,7 @@ export function ShipmentRateConfirmationImportPanel({
                     </div>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                    <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                       Draft Status
                     </div>
                     <div className="mt-1 text-sm">
@@ -559,13 +559,13 @@ export function ShipmentRateConfirmationImportPanel({
                   </div>
                 </div>
                 {processingFailure ? (
-                  <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+                  <div className="border-destructive/20 bg-destructive/5 rounded-lg border p-4">
                     <div className="flex items-start gap-3">
-                      <AlertCircleIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
+                      <AlertCircleIcon className="text-destructive mt-0.5 size-4 shrink-0" />
                       <div className="grid gap-3">
                         <div>
-                          <div className="font-medium text-destructive">Import failed</div>
-                          <div className="text-sm text-destructive/80">{processingFailure}</div>
+                          <div className="text-destructive font-medium">Import failed</div>
+                          <div className="text-destructive/80 text-sm">{processingFailure}</div>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {uploadedDocumentId ? (
@@ -588,7 +588,7 @@ export function ShipmentRateConfirmationImportPanel({
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                  <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
                     Stay on this screen while we process the rate confirmation. The workflow will
                     advance automatically when the shipment draft is ready.
                   </div>
@@ -602,7 +602,7 @@ export function ShipmentRateConfirmationImportPanel({
           <div className="grid gap-4">
             <div className="border-b px-6 pt-6 pb-4">
               <div className="text-sm font-medium">Review shipment draft</div>
-              <div className="mt-1 text-sm text-muted-foreground">
+              <div className="text-muted-foreground mt-1 text-sm">
                 Confirm the extracted details, complete any missing shipment fields, and create the
                 shipment from this draft.
               </div>
@@ -636,8 +636,8 @@ export function ShipmentRateConfirmationImportPanel({
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <div className="rounded-lg border border-emerald-200 bg-background/80 p-4">
-                  <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <div className="bg-background/80 rounded-lg border border-emerald-200 p-4">
+                  <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                     Shipment ID
                   </div>
                   <div className="mt-1 text-sm font-medium">{createdShipmentId}</div>
@@ -648,7 +648,7 @@ export function ShipmentRateConfirmationImportPanel({
                     <div className="mt-1 text-amber-900/80">{attachErrorMessage}</div>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-emerald-200 bg-background/80 p-4 text-sm text-emerald-950">
+                  <div className="bg-background/80 rounded-lg border border-emerald-200 p-4 text-sm text-emerald-950">
                     The source document was attached to the new shipment successfully.
                   </div>
                 )}

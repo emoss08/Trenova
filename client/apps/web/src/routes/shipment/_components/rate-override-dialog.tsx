@@ -167,7 +167,7 @@ export function RateOverrideDialog() {
             <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
               <div>
                 <p className="text-xs font-medium">Lock the Rate</p>
-                <p className="mt-0.5 text-2xs text-muted-foreground">
+                <p className="text-2xs text-muted-foreground mt-0.5">
                   Freezes every charge against re-rating — for a shipment already invoiced.
                 </p>
               </div>
@@ -181,7 +181,7 @@ export function RateOverrideDialog() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="mr-auto text-destructive"
+                className="text-destructive mr-auto"
                 disabled={mutation.isPending}
                 onClick={() => mutation.mutate({ clear: true })}
               >

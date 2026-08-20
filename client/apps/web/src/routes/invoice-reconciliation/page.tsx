@@ -158,14 +158,14 @@ export function InvoiceReconciliationPage() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium">{row.originalInvoiceNumber}</p>
-                      <p className="text-xs text-muted-foreground">{row.customerName}</p>
+                      <p className="text-muted-foreground text-xs">{row.customerName}</p>
                     </div>
                     <span className="rounded-full border px-2 py-0.5 text-[10px] tracking-[0.16em] uppercase">
                       {row.status}
                     </span>
                   </div>
                   <p className="mt-3 text-sm">{row.reason}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">
+                  <p className="text-muted-foreground mt-2 text-xs">
                     Amount: {formatCurrency(Number(row.amount))}
                   </p>
                 </button>
@@ -259,7 +259,7 @@ export function InvoiceReconciliationPage() {
                 <CardContent className="pt-4">
                   <div className="overflow-hidden rounded-xl border">
                     <table className="w-full text-sm">
-                      <thead className="bg-muted/40 text-left text-muted-foreground">
+                      <thead className="bg-muted/40 text-muted-foreground text-left">
                         <tr>
                           <th className="px-4 py-3">Line</th>
                           <th className="px-4 py-3">Description</th>
@@ -297,7 +297,7 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <Card className="shadow-none">
       <CardContent className="px-4 py-3">
-        <p className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">{label}</p>
+        <p className="text-muted-foreground text-[11px] tracking-[0.16em] uppercase">{label}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
       </CardContent>
     </Card>
@@ -306,8 +306,8 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-background px-3 py-2">
-      <p className="text-[10px] tracking-[0.16em] text-muted-foreground uppercase">{label}</p>
+    <div className="bg-background rounded-lg border px-3 py-2">
+      <p className="text-muted-foreground text-[10px] tracking-[0.16em] uppercase">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
     </div>
   );
@@ -317,7 +317,7 @@ function LinkButton({ to, children }: { to: string; children: ReactNode }) {
   return (
     <Link
       to={to}
-      className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs hover:bg-muted"
+      className="hover:bg-muted inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs"
     >
       <ExternalLinkIcon className="size-3.5" />
       {children}

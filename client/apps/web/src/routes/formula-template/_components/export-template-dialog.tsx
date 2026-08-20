@@ -87,7 +87,7 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
             />
             <div className="flex flex-col">
               <span className="text-sm font-medium">Include version history</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 Export all versions with change messages and timestamps
               </span>
             </div>

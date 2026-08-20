@@ -133,7 +133,7 @@ export function AgingTable({
                       type="button"
                       onClick={header.column.getToggleSortingHandler()}
                       className={cn(
-                        "inline-flex items-center gap-1 font-medium hover:text-foreground",
+                        "hover:text-foreground inline-flex items-center gap-1 font-medium",
                         align === "right" && "flex-row-reverse",
                       )}
                     >
@@ -169,7 +169,7 @@ export function AgingTable({
             </TableRow>
           ))}
         </TableBody>
-        <TableFooter className="sticky bottom-0 bg-muted/40">
+        <TableFooter className="bg-muted/40 sticky bottom-0">
           <TableRow className="hover:bg-transparent">
             <TableCell className="py-2 text-xs font-medium">
               Totals · {rows.length} {rows.length === 1 ? "customer" : "customers"}

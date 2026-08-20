@@ -92,7 +92,7 @@ export function JurisdictionRuleVerifyDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           This records that someone checked these limits against the state, and does not change
           them. If the numbers are wrong, edit the rule instead — that clears the verification on
           its own.

@@ -25,7 +25,7 @@ export function UnassignedQueue({ enabled = true }: { enabled?: boolean }) {
       count={summary.totalCount}
       countTone="warning"
       rightSlot={
-        <span className="hidden font-table text-[9.5px] text-muted-foreground tabular-nums sm:inline">
+        <span className="font-table text-muted-foreground hidden text-[9.5px] tabular-nums sm:inline">
           {formatCurrency(summary.pendingRevenue)} waiting
         </span>
       }

@@ -138,7 +138,7 @@ function PresetRow({
     .filter((name): name is string => name != null);
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border/80 bg-card p-3 transition-colors hover:border-border">
+    <div className="border-border/80 bg-card hover:border-border flex flex-wrap items-center gap-3 rounded-lg border p-3 transition-colors">
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
           <Link
@@ -157,7 +157,7 @@ function PresetRow({
         </div>
 
         {preset.description && (
-          <p className="truncate text-2xs text-muted-foreground">{preset.description}</p>
+          <p className="text-2xs text-muted-foreground truncate">{preset.description}</p>
         )}
 
         <p className="text-2xs text-muted-foreground">
@@ -199,10 +199,10 @@ function PresetRow({
 
 function EmptyState({ canCreate }: { canCreate: boolean }) {
   return (
-    <div className="mt-2 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border py-16 text-center">
-      <LayoutGridIcon className="size-5 text-muted-foreground/40" />
+    <div className="border-border mt-2 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
+      <LayoutGridIcon className="text-muted-foreground/40 size-5" />
       <p className="text-sm font-medium">No home screens yet</p>
-      <p className="max-w-sm text-xs text-muted-foreground">
+      <p className="text-muted-foreground max-w-sm text-xs">
         Until you author one, everyone lands on the home screen Trenova ships for their role.
       </p>
       {canCreate && (

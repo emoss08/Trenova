@@ -37,7 +37,7 @@ export function ActionDock({
 }: ActionDockProps) {
   const containerClassName = cn("fixed bottom-6 z-50", POSITION_CLASSES[position], className);
   const pill = (
-    <div className="flex w-fit min-w-112.5 items-center gap-x-10 rounded-lg bg-foreground p-2 shadow-lg">
+    <div className="bg-foreground flex w-fit min-w-112.5 items-center gap-x-10 rounded-lg p-2 shadow-lg">
       {indicator}
       <div className="ml-auto flex items-center space-x-2">{children}</div>
     </div>
@@ -82,7 +82,7 @@ export function ActionDockIndicator({
     <div className="flex items-center gap-x-3">
       {icon ?? <CircleAlert className="rounded-full bg-amber-400/10 text-amber-400 dark:text-amber-600" />}
       <div className="flex flex-col">
-        <span className="text-sm font-medium text-background">{title}</span>
+        <span className="text-background text-sm font-medium">{title}</span>
         <span className="text-2xs text-background/80">{description}</span>
       </div>
     </div>

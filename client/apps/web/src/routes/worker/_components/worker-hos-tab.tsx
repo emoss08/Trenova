@@ -213,7 +213,7 @@ function HosClockCard({
   const clamped = Math.max(remainingMs, 0);
 
   return (
-    <div className="flex flex-col items-center gap-2.5 rounded-lg border border-border px-3 py-4">
+    <div className="border-border flex flex-col items-center gap-2.5 rounded-lg border px-3 py-4">
       <RingGauge
         value={clamped / limitMs}
         size={104}
@@ -227,8 +227,8 @@ function HosClockCard({
       </RingGauge>
       <div className="text-center">
         <p className="text-sm font-medium">{label}</p>
-        <p className="text-[11px] text-muted-foreground">{limitLabel}</p>
-        {extra ? <p className="mt-0.5 text-[11px] text-muted-foreground">{extra}</p> : null}
+        <p className="text-muted-foreground text-[11px]">{limitLabel}</p>
+        {extra ? <p className="text-muted-foreground mt-0.5 text-[11px]">{extra}</p> : null}
       </div>
     </div>
   );
@@ -249,7 +249,7 @@ function HosEmptyState({
     <div className="rounded-lg border border-dashed p-6 text-center">
       {icon}
       <p className="mt-2 text-sm font-medium">{title}</p>
-      <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">{description}</p>
+      <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">{description}</p>
       {action}
     </div>
   );
@@ -258,7 +258,7 @@ function HosEmptyState({
 function HosErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
-      <OctagonAlertIcon className="mx-auto size-5 text-destructive" />
+      <OctagonAlertIcon className="text-destructive mx-auto size-5" />
       <p className="mt-2 text-sm font-medium">{message}</p>
       <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
         Try again
@@ -312,11 +312,11 @@ function ViolationRow({ violation }: { violation: WorkerHosViolation }) {
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">{toTitleCase(violation.violationType)}</p>
         {violation.description ? (
-          <p className="truncate text-xs text-muted-foreground">{violation.description}</p>
+          <p className="text-muted-foreground truncate text-xs">{violation.description}</p>
         ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           {formatUnixDate(violation.violationStartAt)}
         </span>
         <Badge variant="inactive">{formatDurationMs(violation.durationMs)}</Badge>
@@ -336,7 +336,7 @@ function ViolationsSection({ workerId, since }: { workerId: string; since: numbe
     <div className="flex flex-col gap-2">
       <div>
         <h3 className="text-sm font-semibold">Violations</h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Hours-of-service violations detected in the last 30 days.
         </p>
       </div>
@@ -357,8 +357,8 @@ function ViolationsSection({ workerId, since }: { workerId: string; since: numbe
           description="This driver has a clean hours-of-service record for the past month."
         />
       ) : (
-        <div className="rounded-lg border border-border">
-          <ul className="divide-y divide-border">
+        <div className="border-border rounded-lg border">
+          <ul className="divide-border divide-y">
             {violationsQuery.data.map((violation) => (
               <ViolationRow
                 key={`${violation.violationType}-${violation.violationStartAt}-${violation.detectedAt}`}
@@ -389,7 +389,7 @@ function DayPillButton({
       className={cn(
         "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
         isSelected
-          ? "border-transparent bg-primary text-primary-foreground"
+          ? "bg-primary text-primary-foreground border-transparent"
           : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
       )}
     >
@@ -461,7 +461,7 @@ function EldGraph({
         {eldLaneLabels.map((label) => (
           <div
             key={label}
-            className="flex h-8 items-center justify-end text-[10px] font-medium text-muted-foreground"
+            className="text-muted-foreground flex h-8 items-center justify-end text-[10px] font-medium"
           >
             {label}
           </div>
@@ -473,7 +473,7 @@ function EldGraph({
             <span
               key={tick.key}
               className={cn(
-                "absolute top-0 -translate-x-1/2 text-[10px] tabular-nums text-muted-foreground",
+                "text-muted-foreground absolute top-0 -translate-x-1/2 text-[10px] tabular-nums",
                 !tick.isMajor && "max-sm:hidden",
               )}
               style={{ left: `${tick.fraction * 100}%` }}
@@ -567,11 +567,11 @@ function EldGraph({
           </svg>
           {hover && hovered && hoveredMeta ? (
             <div
-              className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md bg-foreground px-3 py-1.5 text-xs text-background shadow-md"
+              className="bg-foreground text-background pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md px-3 py-1.5 text-xs shadow-md"
               style={{ left: hover.x, top: hover.y - 8 }}
             >
               <p className="font-medium">{hoveredMeta.label}</p>
-              <p className="tabular-nums text-background/80">
+              <p className="text-background/80 tabular-nums">
                 {formatUnixTime(hovered.startSec)} –{" "}
                 {hovered.ongoing ? "Ongoing" : formatUnixTime(hovered.endSec)} ·{" "}
                 {formatDurationMs((hovered.endSec - hovered.startSec) * 1000)}
@@ -580,7 +580,7 @@ function EldGraph({
                 <p className="text-background/80">{hovered.entry.vehicleName}</p>
               ) : null}
               {hovered.entry.remark ? (
-                <p className="max-w-56 truncate text-background/80">{hovered.entry.remark}</p>
+                <p className="text-background/80 max-w-56 truncate">{hovered.entry.remark}</p>
               ) : null}
             </div>
           ) : null}
@@ -591,7 +591,7 @@ function EldGraph({
         {laneTotals.map((totalMs, lane) => (
           <div
             key={eldLaneLabels[lane]}
-            className="flex h-8 items-center justify-end text-[10px] tabular-nums text-muted-foreground"
+            className="text-muted-foreground flex h-8 items-center justify-end text-[10px] tabular-nums"
           >
             {formatDurationMs(totalMs)}
           </div>
@@ -630,9 +630,9 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
       {chips.map((chip) => (
         <div
           key={chip.label}
-          className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1"
+          className="border-border flex items-center gap-1.5 rounded-md border px-2 py-1"
         >
-          <span className="text-[11px] text-muted-foreground">{chip.label}</span>
+          <span className="text-muted-foreground text-[11px]">{chip.label}</span>
           <span className="text-xs font-medium tabular-nums">{chip.value}</span>
         </div>
       ))}
@@ -663,7 +663,7 @@ function HosLogEntryRow({ entry, nowCap }: { entry: WorkerHosLogEntry; nowCap: n
           {formatUnixTime(entry.logStartAt)} – {endAt ? formatUnixTime(endAt) : "Ongoing"}
         </p>
         {entry.vehicleName || entry.remark ? (
-          <div className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex min-w-0 items-center gap-1 text-xs">
             {entry.vehicleName ? <span className="shrink-0">{entry.vehicleName}</span> : null}
             {entry.vehicleName && entry.remark ? <span className="shrink-0">·</span> : null}
             {entry.remark ? (
@@ -735,7 +735,7 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
     <div className="flex flex-col gap-2">
       <div>
         <h3 className="text-sm font-semibold">Daily Logs</h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Duty status graph and log entries for the last 7 days.
         </p>
       </div>
@@ -748,7 +748,7 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
         />
       ) : !hasHistory ? (
         <HosEmptyState
-          icon={<CalendarRangeIcon className="mx-auto size-5 text-muted-foreground" />}
+          icon={<CalendarRangeIcon className="text-muted-foreground mx-auto size-5" />}
           title="No log history yet"
           description="Daily logs appear once Samsara reports driver activity."
         />
@@ -776,7 +776,7 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
             />
           ) : (
             <>
-              <div className="rounded-lg border border-border p-3">
+              <div className="border-border rounded-lg border p-3">
                 <EldGraph
                   segments={segments}
                   dayStart={selectedDay.startAt}
@@ -787,19 +787,19 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
               {selectedDay.dailyLog ? (
                 <DailySummaryRow dailyLog={selectedDay.dailyLog} />
               ) : (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   No daily summary reported for this day.
                 </p>
               )}
               {sortedEntries.length === 0 ? (
                 <HosEmptyState
-                  icon={<ListXIcon className="mx-auto size-5 text-muted-foreground" />}
+                  icon={<ListXIcon className="text-muted-foreground mx-auto size-5" />}
                   title="No duty status changes recorded for this day."
                   description="Entries appear here as Samsara logs duty status transitions."
                 />
               ) : (
-                <div className="rounded-lg border border-border">
-                  <ul className="divide-y divide-border">
+                <div className="border-border rounded-lg border">
+                  <ul className="divide-border divide-y">
                     {sortedEntries.map((entry) => (
                       <HosLogEntryRow
                         key={`${entry.hosStatusType}-${entry.logStartAt}`}
@@ -825,13 +825,13 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger
-        className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/50 disabled:cursor-default disabled:hover:bg-transparent"
+        className="hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors disabled:cursor-default disabled:hover:bg-transparent"
         disabled={!hasFields}
         aria-label={`Toggle fields for ${submission.templateName}`}
       >
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{submission.templateName}</p>
-          <p className="text-xs text-muted-foreground tabular-nums">
+          <p className="text-muted-foreground text-xs tabular-nums">
             {formatUnixDateTime(submission.submittedAt)}
           </p>
         </div>
@@ -842,7 +842,7 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
           {hasFields ? (
             <ChevronDownIcon
               className={cn(
-                "size-4 text-muted-foreground transition-transform duration-200",
+                "text-muted-foreground size-4 transition-transform duration-200",
                 open && "rotate-180",
               )}
             />
@@ -851,10 +851,10 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
       </CollapsibleTrigger>
       {hasFields ? (
         <CollapsibleContent>
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-2 border-t border-border bg-muted/20 px-4 py-3 sm:grid-cols-2">
+          <dl className="border-border bg-muted/20 grid grid-cols-1 gap-x-4 gap-y-2 border-t px-4 py-3 sm:grid-cols-2">
             {submission.fields.map((field, index) => (
               <div key={`${field.label}-${index}`} className="min-w-0">
-                <dt className="text-[11px] text-muted-foreground">{field.label}</dt>
+                <dt className="text-muted-foreground text-[11px]">{field.label}</dt>
                 <dd className="text-sm break-words">{field.value || "—"}</dd>
               </div>
             ))}
@@ -886,7 +886,7 @@ function FormsSection({ workerId }: { workerId: string }) {
     <div className="flex flex-col gap-2">
       <div>
         <h3 className="text-sm font-semibold">Driver forms</h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Form submissions reported by this driver in the last 30 days.
         </p>
       </div>
@@ -902,13 +902,13 @@ function FormsSection({ workerId }: { workerId: string }) {
         />
       ) : submissions.length === 0 ? (
         <HosEmptyState
-          icon={<ClipboardListIcon className="mx-auto size-5 text-muted-foreground" />}
+          icon={<ClipboardListIcon className="text-muted-foreground mx-auto size-5" />}
           title="No form submissions in the last 30 days."
           description="Driver form submissions appear here once Samsara reports them for this worker."
         />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border">
-          <div className="divide-y divide-border">
+        <div className="border-border overflow-hidden rounded-lg border">
+          <div className="divide-border divide-y">
             {submissions.map((submission) => (
               <FormSubmissionRow key={submission.id} submission={submission} />
             ))}
@@ -944,7 +944,7 @@ function HosLiveState({
             <span className="font-mono">{state.currentVehicleId}</span>
           </Badge>
         ) : null}
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           as of{" "}
           {formatDistanceToNowStrict(new Date(state.recordedAt * 1000), {
             addSuffix: true,
@@ -1022,7 +1022,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
   if (!telematicsEnabled) {
     return (
       <HosEmptyState
-        icon={<CableIcon className="mx-auto size-6 text-muted-foreground" />}
+        icon={<CableIcon className="text-muted-foreground mx-auto size-6" />}
         title="Samsara telematics is not connected"
         description="Connect your Samsara account to stream live hours-of-service clocks, duty status, and violation history for this driver."
         action={
@@ -1055,7 +1055,7 @@ export default function WorkerHosTab({ workerId }: { workerId: string }) {
   if (!hosQuery.data) {
     return (
       <HosEmptyState
-        icon={<UserRoundXIcon className="mx-auto size-6 text-muted-foreground" />}
+        icon={<UserRoundXIcon className="text-muted-foreground mx-auto size-6" />}
         title="Not linked to a Samsara driver"
         description="Hours-of-service data appears once this worker is matched to a Samsara driver. Run Worker Sync from the Samsara integration to link them."
         action={

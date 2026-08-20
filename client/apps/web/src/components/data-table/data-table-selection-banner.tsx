@@ -26,9 +26,9 @@ export function DataTableSelectionBanner({
   const target = Math.min(totalCount, maxSelectable);
 
   return (
-    <div className="flex items-center justify-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-1 text-xs">
+    <div className="border-border bg-muted/40 flex items-center justify-center gap-2 rounded-md border px-3 py-1 text-xs">
       <span className="text-muted-foreground">
-        All <span className="font-medium text-foreground">{selectedCount}</span> rows on this page
+        All <span className="text-foreground font-medium">{selectedCount}</span> rows on this page
         are selected.
       </span>
       {selectedCount < target && (
@@ -54,7 +54,7 @@ export function DataTableSelectionBanner({
         type="button"
         variant="link"
         size="xs"
-        className="h-auto p-0 text-xs text-muted-foreground"
+        className="text-muted-foreground h-auto p-0 text-xs"
         onClick={onClearSelection}
       >
         Clear selection

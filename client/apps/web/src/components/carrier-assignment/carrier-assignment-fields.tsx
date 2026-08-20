@@ -242,7 +242,7 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
           </Button>
         </div>
         {fields.length === 0 && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             No accessorials. Add lumper fees, detention, or other pass-through charges the carrier
             bills for this move.
           </p>

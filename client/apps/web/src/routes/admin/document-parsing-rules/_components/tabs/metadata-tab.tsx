@@ -69,8 +69,8 @@ function PublishedVersionInfo({ ruleSet }: { ruleSet: RuleSet }) {
         </div>
       ) : (
         <div className="flex items-center gap-3 rounded-lg border border-dashed p-4">
-          <PackageIcon className="size-5 shrink-0 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
+          <PackageIcon className="text-muted-foreground size-5 shrink-0" />
+          <p className="text-muted-foreground text-sm">
             No version has been published yet. Create and publish a version from the Versions tab to
             start parsing documents with this rule set.
           </p>

@@ -47,7 +47,7 @@ export function ConsoleCenterPane({
   useEffect(() => preloadCenterView(mode), [mode]);
 
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
+    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
       {mode === "board" ? (
         <div className="min-h-0 flex-1 p-2">
           <Suspense fallback={<CoverageKanbanSkeleton />}>

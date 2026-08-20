@@ -39,7 +39,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center bg-muted/20">
+      <div className="bg-muted/20 flex h-full items-center justify-center">
         <TextShimmer as="span" className="text-sm" duration={1.5}>
           Loading document preview
         </TextShimmer>
@@ -49,8 +49,8 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
 
   if (!viewUrl) {
     return (
-      <div className="flex h-full items-center justify-center bg-muted/20">
-        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+      <div className="bg-muted/20 flex h-full items-center justify-center">
+        <div className="text-muted-foreground flex flex-col items-center gap-2">
           <FileTextIcon className="size-6 opacity-40" />
           <span className="text-xs">Preview unavailable</span>
         </div>
@@ -60,7 +60,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
 
   if (!isPdf) {
     return (
-      <div className="flex h-full items-center justify-center bg-muted/20 p-4">
+      <div className="bg-muted/20 flex h-full items-center justify-center p-4">
         <img
           src={viewUrl}
           alt={fileName || "Rate Confirmation"}
@@ -73,13 +73,13 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
   const pageNumbers = Array.from({ length: numPages }, (_, i) => i + 1);
 
   return (
-    <div className="flex h-full flex-col bg-muted/20">
+    <div className="bg-muted/20 flex h-full flex-col">
       {/* Toolbar */}
-      <div className="flex shrink-0 items-center justify-between border-b bg-background/80 px-3 py-1.5">
-        <span className="truncate text-xs text-muted-foreground">
+      <div className="bg-background/80 flex shrink-0 items-center justify-between border-b px-3 py-1.5">
+        <span className="text-muted-foreground truncate text-xs">
           {fileName || "Document"}
           {numPages > 0 && (
-            <span className="ml-1.5 text-muted-foreground/50">{numPages} pages</span>
+            <span className="text-muted-foreground/50 ml-1.5">{numPages} pages</span>
           )}
         </span>
         <div className="flex items-center gap-1">
@@ -91,7 +91,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
           >
             <ZoomOutIcon className="size-3.5" />
           </Button>
-          <span className="w-10 text-center text-2xs text-muted-foreground tabular-nums">
+          <span className="text-2xs text-muted-foreground w-10 text-center tabular-nums">
             {Math.round(scale * 100)}%
           </span>
           <Button
@@ -119,7 +119,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
               </div>
             }
             error={
-              <div className="flex items-center justify-center py-20 text-xs text-muted-foreground">
+              <div className="text-muted-foreground flex items-center justify-center py-20 text-xs">
                 Failed to load PDF
               </div>
             }
@@ -127,7 +127,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
             {pageNumbers.map((pageNum) => (
               <div key={pageNum} className="relative mb-2">
                 {numPages > 1 && (
-                  <div className="mb-1 text-center text-2xs text-muted-foreground/40">
+                  <div className="text-2xs text-muted-foreground/40 mb-1 text-center">
                     Page {pageNum}
                   </div>
                 )}

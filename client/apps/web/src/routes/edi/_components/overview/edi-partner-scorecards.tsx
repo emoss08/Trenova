@@ -33,14 +33,14 @@ function attentionCellClass(count: number) {
 export function EDIPartnerScorecards({ scorecards }: { scorecards: EDIPartnerScorecard[] }) {
   if (scorecards.length === 0) {
     return (
-      <div className="rounded-md border bg-background p-6 text-sm text-muted-foreground">
+      <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
         No partner activity in the selected time range.
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border bg-background">
+    <div className="bg-background overflow-x-auto rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -70,7 +70,7 @@ export function EDIPartnerScorecards({ scorecards }: { scorecards: EDIPartnerSco
                     title={`Open messages filtered to ${card.partnerName}`}
                   >
                     <span className="text-sm font-medium">{card.partnerName}</span>
-                    <span className="text-xs text-muted-foreground">{card.partnerCode}</span>
+                    <span className="text-muted-foreground text-xs">{card.partnerCode}</span>
                   </Link>
                 </TableCell>
                 <TableCell className="text-right tabular-nums">{card.sentCount}</TableCell>

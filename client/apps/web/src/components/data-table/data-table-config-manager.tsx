@@ -84,15 +84,15 @@ export default function DataTableConfigManager({
           <Button
             variant="ghost"
             size="sm"
-            className="group flex flex-row gap-1 data-popup-open:bg-secondary"
+            className="group data-popup-open:bg-secondary flex flex-row gap-1"
           >
             <BookmarkIcon
               className={cn(
-                "mb-0.5 size-3.5 text-muted-foreground group-hover:text-foreground group-data-popup-open:text-foreground",
+                "text-muted-foreground group-hover:text-foreground group-data-popup-open:text-foreground mb-0.5 size-3.5",
                 activeViewName && "text-primary group-hover:text-primary",
               )}
             />
-            <span className="hidden max-w-32 truncate text-muted-foreground group-hover:text-foreground group-data-popup-open:text-foreground lg:inline">
+            <span className="text-muted-foreground group-hover:text-foreground group-data-popup-open:text-foreground hidden max-w-32 truncate lg:inline">
               {activeViewName ?? "Views"}
             </span>
             {activeViewName && isViewDirty && (
@@ -109,7 +109,7 @@ export default function DataTableConfigManager({
           <ScrollArea className="flex max-h-[calc(100vh-15rem)] flex-1 flex-col">
             {myViews.length > 0 && (
               <div className="flex flex-col px-1 pb-1">
-                <h3 className="flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium text-muted-foreground uppercase">
+                <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium uppercase">
                   <BookmarkIcon className="size-3" />
                   My Views
                 </h3>
@@ -120,10 +120,10 @@ export default function DataTableConfigManager({
               <div
                 className={cn(
                   "flex flex-col px-1 pb-1",
-                  myViews.length > 0 && "border-t border-border",
+                  myViews.length > 0 && "border-border border-t",
                 )}
               >
-                <h3 className="flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium text-muted-foreground uppercase">
+                <h3 className="text-muted-foreground flex items-center gap-1.5 px-1 py-1.5 text-xs font-medium uppercase">
                   <UsersIcon className="size-3" />
                   Team Views
                 </h3>
@@ -133,9 +133,9 @@ export default function DataTableConfigManager({
           </ScrollArea>
         ) : (
           <div className="flex flex-col items-center gap-1 px-2 py-6 text-center">
-            <BookmarkIcon className="size-4 text-muted-foreground" />
+            <BookmarkIcon className="text-muted-foreground size-4" />
             <p className="text-sm font-medium">No saved views</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Configure filters, sorting, and columns, then save them as a reusable view.
             </p>
           </div>
@@ -143,7 +143,7 @@ export default function DataTableConfigManager({
         <Button
           variant="ghost"
           size="sm"
-          className="rounded-t-none border-t border-border"
+          className="border-border rounded-t-none border-t"
           onClick={() => {
             setOpen(false);
             onSaveConfig();

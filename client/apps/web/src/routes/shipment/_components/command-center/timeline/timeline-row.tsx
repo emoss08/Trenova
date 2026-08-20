@@ -95,7 +95,7 @@ export function TimelineRowItem({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex border-b border-border/70 transition-colors",
+        "border-border/70 flex border-b transition-colors",
         isUnassigned && "bg-warning/[4%]",
         showDropHint && "bg-brand/10",
       )}
@@ -103,7 +103,7 @@ export function TimelineRowItem({
     >
       <div
         className={cn(
-          "sticky left-0 z-30 flex shrink-0 items-center gap-1.5 border-r border-border bg-card pr-2.5 pl-1",
+          "border-border bg-card sticky left-0 z-30 flex shrink-0 items-center gap-1.5 border-r pr-2.5 pl-1",
           isUnassigned && "bg-[color-mix(in_oklch,var(--warning)_5%,var(--card))]",
           showDropHint && "bg-[color-mix(in_oklch,var(--brand)_8%,var(--card))]",
         )}
@@ -114,7 +114,7 @@ export function TimelineRowItem({
           aria-expanded={!collapsed}
           aria-label={collapsed ? `Expand ${row.workerName}` : `Collapse ${row.workerName}`}
           onClick={() => onToggleCollapsed(row.key)}
-          className="flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-5 shrink-0 items-center justify-center rounded transition-colors"
         >
           {collapsed ? (
             <ChevronRightIcon className="size-3.5" />
@@ -124,11 +124,11 @@ export function TimelineRowItem({
         </button>
         {!collapsed &&
           (isUnassigned ? (
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning">
+            <span className="bg-warning/15 text-warning flex size-6 shrink-0 items-center justify-center rounded-full">
               <InboxIcon className="size-3.5" />
             </span>
           ) : row.isCarrier ? (
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <span className="bg-muted text-muted-foreground flex size-6 shrink-0 items-center justify-center rounded-full">
               <Building2Icon className="size-3.5" />
             </span>
           ) : (
@@ -153,18 +153,18 @@ export function TimelineRowItem({
                 title={alertTitle(row.stats)}
                 className={cn(
                   "size-1.5 shrink-0 rounded-full",
-                  row.alert === "late" ? "animate-pulse bg-destructive" : "bg-warning",
+                  row.alert === "late" ? "bg-destructive animate-pulse" : "bg-warning",
                 )}
               />
             )}
             {collapsed && (
-              <span className="shrink-0 font-table text-[9.5px] text-muted-foreground tabular-nums">
+              <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
                 {row.bars.length} {row.bars.length === 1 ? "load" : "loads"}
               </span>
             )}
           </span>
           {!collapsed && (
-            <span className="truncate font-table text-[9.5px] text-muted-foreground tabular-nums">
+            <span className="font-table text-muted-foreground truncate text-[9.5px] tabular-nums">
               {isUnassigned
                 ? "Drop here to unassign"
                 : row.isCarrier
@@ -248,11 +248,11 @@ function CollapsedBarStrip({
       onMouseEnter={() => bar.shipment.id && onHoverChange(bar.shipment.id)}
       onMouseLeave={() => onHoverChange(null)}
       className={cn(
-        "absolute cursor-pointer rounded-sm transition-[background-color,opacity] outline-none focus-visible:ring-2 focus-visible:ring-brand",
+        "focus-visible:ring-brand absolute cursor-pointer rounded-sm transition-[background-color,opacity] outline-none focus-visible:ring-2",
         STRIP_TONE_CLASS[bar.tone],
         bar.isCanceled && "opacity-40",
         dimmed && "opacity-20",
-        isHighlighted && "ring-1 ring-foreground/40",
+        isHighlighted && "ring-foreground/40 ring-1",
       )}
       style={{
         left: geometry.left,

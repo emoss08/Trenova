@@ -33,15 +33,15 @@ export function StatTile({
         tone === "danger" && "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/30",
         tone === "info" && "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/30",
         !tone && "bg-muted/30",
-        clickable && "cursor-pointer transition-colors hover:bg-muted/60",
-        active && "ring-1 ring-brand",
+        clickable && "hover:bg-muted/60 cursor-pointer transition-colors",
+        active && "ring-brand ring-1",
       )}
     >
-      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
         {label}
       </p>
       <div className="mt-1 text-sm font-semibold">{value}</div>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">{sub}</p>
+      <p className="text-muted-foreground mt-0.5 text-[11px]">{sub}</p>
     </Comp>
   );
 }

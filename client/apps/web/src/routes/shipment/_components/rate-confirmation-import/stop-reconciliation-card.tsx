@@ -51,7 +51,7 @@ function InlineField({
   return (
     <div className="flex items-center gap-2 py-px">
       <div className={cn("size-1 shrink-0 rounded-full", DOT_STYLE[status])} />
-      <span className="w-12 shrink-0 text-2xs text-muted-foreground">{label}</span>
+      <span className="text-2xs text-muted-foreground w-12 shrink-0">{label}</span>
       {editing ? (
         <Input
           value={editVal}
@@ -117,9 +117,9 @@ export function StopReconciliationCard({
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {isPickup ? (
-            <TruckIcon className="size-3.5 text-muted-foreground" />
+            <TruckIcon className="text-muted-foreground size-3.5" />
           ) : (
-            <MapPinIcon className="size-3.5 text-muted-foreground" />
+            <MapPinIcon className="text-muted-foreground size-3.5" />
           )}
           <span className="text-xs font-medium">
             {isPickup ? "Pickup" : "Delivery"} {stop.sequence + 1}
@@ -132,7 +132,7 @@ export function StopReconciliationCard({
         </div>
         <div className="flex items-center gap-1.5">
           {stop.appointmentRequired && (
-            <Badge variant="outline" className="h-4 px-1 text-2xs">Appt</Badge>
+            <Badge variant="outline" className="text-2xs h-4 px-1">Appt</Badge>
           )}
         </div>
       </div>
@@ -143,7 +143,7 @@ export function StopReconciliationCard({
           {nameVal && <div className="text-xs font-medium">{nameVal}</div>}
           {addr && <div className="text-2xs text-muted-foreground">{addr}</div>}
           {(dateVal || timeVal) && (
-            <div className="mt-0.5 text-2xs text-muted-foreground/60">
+            <div className="text-2xs text-muted-foreground/60 mt-0.5">
               {[dateVal, timeVal].filter(Boolean).join(" · ")}
             </div>
           )}
@@ -153,7 +153,7 @@ export function StopReconciliationCard({
       {/* Editable fields (only non-empty) */}
       {editableFields.length > 0 && (
         <details className="group">
-          <summary className="cursor-pointer text-2xs text-muted-foreground/40 transition-colors hover:text-muted-foreground">
+          <summary className="text-2xs text-muted-foreground/40 hover:text-muted-foreground cursor-pointer transition-colors">
             Edit fields
           </summary>
           <div className="mt-1.5 space-y-px">

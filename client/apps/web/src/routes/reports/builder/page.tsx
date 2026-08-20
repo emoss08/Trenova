@@ -21,8 +21,8 @@ function BuilderSkeleton() {
 function BuilderError({ error }: { error: unknown }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2">
-      <CircleAlertIcon className="size-8 text-destructive" />
-      <p className="text-sm text-muted-foreground">
+      <CircleAlertIcon className="text-destructive size-8" />
+      <p className="text-muted-foreground text-sm">
         {graphQLErrorMessage(error, "Failed to load the report builder")}
       </p>
     </div>

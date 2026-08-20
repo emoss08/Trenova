@@ -41,7 +41,7 @@ export function PayEventPanel({
               {(row.components ?? []).map((component, index) => (
                 <tr key={`${component.kind}-${index}`} className="border-t">
                   <td className="px-3 py-2 font-medium">{component.description}</td>
-                  <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">
+                  <td className="text-muted-foreground px-3 py-2 text-right tabular-nums">
                     {Number(component.quantity) > 0
                       ? `${Number(component.quantity).toLocaleString()} × ${Number(
                           component.rate,
@@ -53,7 +53,7 @@ export function PayEventPanel({
                   </td>
                 </tr>
               ))}
-              <tr className="border-t bg-muted/30">
+              <tr className="bg-muted/30 border-t">
                 <td className="px-3 py-2 font-semibold" colSpan={2}>
                   Total
                 </td>
@@ -68,7 +68,7 @@ export function PayEventPanel({
             </tbody>
           </table>
         </div>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground text-[11px]">
           Pay events accrue automatically when a shipment reaches your configured pay trigger and
           are locked once settled.
         </p>

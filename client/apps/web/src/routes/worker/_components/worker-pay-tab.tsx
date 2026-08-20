@@ -66,7 +66,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold">Pay Profile</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Pay accrues automatically from delivered shipments using the assignment in effect on the
             delivery date. Manage shared profiles under Payroll &rarr; Pay Profiles.
           </p>
@@ -81,9 +81,9 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
         <CurrentAssignmentCard assignment={assignment} onEnd={() => setEndOpen(true)} />
       ) : (
         <div className="rounded-lg border border-dashed p-6 text-center">
-          <CircleDollarSign className="mx-auto size-6 text-muted-foreground" />
+          <CircleDollarSign className="text-muted-foreground mx-auto size-6" />
           <p className="mt-2 text-sm font-medium">No pay profile assigned</p>
-          <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
+          <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
             This driver will not accrue pay for delivered shipments until a profile is assigned.
             Assign a shared profile and add driver-specific rate overrides if their rates differ
             from the template.
@@ -93,20 +93,20 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
 
       {earnings && (
         <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase">
+          <div className="bg-muted/30 rounded-lg border p-3">
+            <p className="text-muted-foreground text-[11px] font-medium uppercase">
               Unsettled Earnings
             </p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay value={earnings.accruedGrossMinor} variant="positive" />
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px]">
               {earnings.accruedEventCount} pay event
               {earnings.accruedEventCount === 1 ? "" : "s"} awaiting settlement
             </p>
           </div>
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase">
+          <div className="bg-muted/30 rounded-lg border p-3">
+            <p className="text-muted-foreground text-[11px] font-medium uppercase">
               Outstanding Advances
             </p>
             <p className="mt-1 text-sm font-semibold">
@@ -115,18 +115,18 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
                 variant={earnings.outstandingAdvances > 0 ? "negative" : "neutral"}
               />
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px]">
               Recovered automatically from the next settlement
             </p>
           </div>
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-[11px] font-medium text-muted-foreground uppercase">
+          <div className="bg-muted/30 rounded-lg border p-3">
+            <p className="text-muted-foreground text-[11px] font-medium uppercase">
               Escrow Balance
             </p>
             <p className="mt-1 text-sm font-semibold">
               <AmountDisplay value={earnings.escrowBalanceMinor} />
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px]">
               Ledger under Payroll &rarr; Escrow Accounts
             </p>
           </div>
@@ -135,7 +135,7 @@ export default function WorkerPayTab({ workerId }: { workerId: string }) {
 
       {(history ?? []).length > 0 && (
         <div>
-          <h4 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
             Assignment History
           </h4>
           <div className="overflow-hidden rounded-lg border">
@@ -210,7 +210,7 @@ function CurrentAssignmentCard({
             classification={profile.classification as PayeeClassification}
           />
         )}
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           since {formatDate(assignment.effectiveFrom)}
           {Number(assignment.splitPercent) !== 100 &&
             ` · ${Number(assignment.splitPercent)}% split`}
@@ -244,12 +244,12 @@ function CurrentAssignmentCard({
                     <td className="px-3 py-1.5">
                       {component.description || `${component.kind} (${component.method})`}
                       {(component.bands?.length ?? 0) > 0 && (
-                        <span className="ml-1 text-muted-foreground">
+                        <span className="text-muted-foreground ml-1">
                           ({component.bands?.length} bands)
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-1.5 text-right text-muted-foreground tabular-nums">
+                    <td className="text-muted-foreground px-3 py-1.5 text-right tabular-nums">
                       {Number(component.rate)}
                       {suffix}
                     </td>
@@ -274,12 +274,12 @@ function CurrentAssignmentCard({
         </div>
       )}
       {profile != null && profile.guaranteedPeriodMinimumMinor > 0 && (
-        <p className="mt-2 text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-[11px]">
           Guaranteed minimum <AmountDisplay value={profile.guaranteedPeriodMinimumMinor} /> per pay
           period — a top-up line is added automatically when period gross falls below the floor.
         </p>
       )}
-      <p className="mt-2 text-[11px] text-muted-foreground">
+      <p className="text-muted-foreground mt-2 text-[11px]">
         Need different rates for this driver? Use{" "}
         <Link to="/payroll/pay-profiles" className="underline">
           shared profiles

@@ -13,7 +13,7 @@ export function getTestCaseColumns(): ColumnDef<EDITestCaseRow>[] {
         <div className="min-w-0">
           <div className="truncate font-medium">{row.original.name}</div>
           {row.original.description ? (
-            <div className="truncate text-xs text-muted-foreground">{row.original.description}</div>
+            <div className="text-muted-foreground truncate text-xs">{row.original.description}</div>
           ) : null}
         </div>
       ),
@@ -34,7 +34,7 @@ export function getTestCaseColumns(): ColumnDef<EDITestCaseRow>[] {
         row.original.documentProfile?.partner ? (
           <div className="min-w-0">
             <div className="truncate font-medium">{row.original.documentProfile.partner.name}</div>
-            <div className="truncate text-xs text-muted-foreground">
+            <div className="text-muted-foreground truncate text-xs">
               {row.original.documentProfile.partner.code}
             </div>
           </div>

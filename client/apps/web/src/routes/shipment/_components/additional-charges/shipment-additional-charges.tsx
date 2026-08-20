@@ -128,7 +128,7 @@ export default function AdditionalChargesSection() {
       >
         {fields.length > 0 ? (
           <div className="rounded-lg border">
-            <div className="grid grid-cols-10 gap-2 border-b border-border px-4 py-2 text-2xs text-muted-foreground uppercase">
+            <div className="border-border text-2xs text-muted-foreground grid grid-cols-10 gap-2 border-b px-4 py-2 uppercase">
               <span className="col-span-4">Charge</span>
               <span className="col-span-2">Unit</span>
               <span className="col-span-2">Amount</span>
@@ -164,18 +164,18 @@ export default function AdditionalChargesSection() {
                     key={field.fieldId}
                     className={cn(
                       "grid grid-cols-10 items-center gap-2 px-4 py-2",
-                      hasErrors && "bg-destructive/10 ring-1 ring-destructive ring-inset",
+                      hasErrors && "bg-destructive/10 ring-destructive ring-1 ring-inset",
                     )}
                   >
                     <span className="col-span-4 flex items-center gap-1.5 truncate text-xs font-medium">
-                      {isFuelSurcharge && <FuelIcon className="size-3 shrink-0 text-primary" />}
+                      {isFuelSurcharge && <FuelIcon className="text-primary size-3 shrink-0" />}
                       {occurrenceId ? (
                         <DetentionChargeLabel code={displayName} occurrence={occurrence} />
                       ) : (
                         displayName
                       )}
                       {isFuelSurcharge && !fuelSurchargeLocked && (
-                        <span className="rounded bg-primary/10 px-1 py-0.5 text-2xs text-primary">
+                        <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">
                           Auto
                         </span>
                       )}
@@ -187,7 +187,7 @@ export default function AdditionalChargesSection() {
                               onClick={() =>
                                 setValue("fuelSurchargeLocked", false, { shouldDirty: true })
                               }
-                              className="flex items-center gap-1 rounded bg-amber-500/10 px-1 py-0.5 text-2xs text-amber-600 dark:text-amber-400"
+                              className="text-2xs flex items-center gap-1 rounded bg-amber-500/10 px-1 py-0.5 text-amber-600 dark:text-amber-400"
                             >
                               <LockIcon className="size-2.5" />
                               Locked
@@ -202,14 +202,14 @@ export default function AdditionalChargesSection() {
                         </Tooltip>
                       )}
                     </span>
-                    <span className="col-span-2 text-xs text-muted-foreground">
+                    <span className="text-muted-foreground col-span-2 text-xs">
                       {occurrenceId ? (
                         <DetentionChargeUnit unit={charge?.unit ?? 1} occurrence={occurrence} />
                       ) : (
                         (charge?.unit ?? 1)
                       )}
                     </span>
-                    <span className="col-span-2 text-xs text-muted-foreground">
+                    <span className="text-muted-foreground col-span-2 text-xs">
                       ${amt.toFixed(2)}
                     </span>
                     <div className="col-span-2 flex items-center justify-end gap-1">
@@ -229,7 +229,7 @@ export default function AdditionalChargesSection() {
                             className="size-7"
                             onClick={() => handleEdit(index)}
                           >
-                            <PencilIcon className="size-3.5 text-muted-foreground" />
+                            <PencilIcon className="text-muted-foreground size-3.5" />
                           </Button>
                           <Button
                             type="button"
@@ -238,14 +238,14 @@ export default function AdditionalChargesSection() {
                             className="size-7"
                             onClick={() => remove(index)}
                           >
-                            <TrashIcon className="size-3.5 text-muted-foreground" />
+                            <TrashIcon className="text-muted-foreground size-3.5" />
                           </Button>
                         </>
                       )}
                       {hasErrors && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <TriangleAlertIcon className="size-3.5 cursor-help text-destructive" />
+                            <TriangleAlertIcon className="text-destructive size-3.5 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" sideOffset={10}>
                             <div className="space-y-1">

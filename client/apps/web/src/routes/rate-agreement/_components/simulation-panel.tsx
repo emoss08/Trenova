@@ -133,10 +133,10 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="bg-muted/30 rounded-lg border p-3">
         <div className="mb-3">
           <p className="text-sm font-medium">Replay Historical Shipments</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             Every shipment is re-rated against its own facts — the weight it had, the lane it ran,
             the day it shipped — so the result is what would have been invoiced. Nothing it produces
             touches a shipment.
@@ -145,7 +145,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
 
         <div className="flex flex-wrap items-end gap-3">
           <div className="w-32">
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
               Window (Days)
             </label>
             <NumberFieldRoot
@@ -201,7 +201,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                 </Badge>
               </div>
               {run.startedAt ? (
-                <p className="mt-0.5 text-2xs text-muted-foreground">
+                <p className="text-2xs text-muted-foreground mt-0.5">
                   {formatUnixDateTimeShort(run.startedAt)}
                 </p>
               ) : null}
@@ -214,9 +214,9 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
         <SimulationReading simulation={simulation} />
       ) : (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-          <FlaskConicalIcon className="mb-3 size-8 text-muted-foreground" />
+          <FlaskConicalIcon className="text-muted-foreground mb-3 size-8" />
           <p className="text-sm font-medium">No simulation has run yet</p>
-          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 max-w-sm text-xs">
             Run one to see what this contract would have charged for the freight you already moved —
             before it prices a single live shipment.
           </p>
@@ -227,7 +227,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
         <div className="space-y-2">
           <div>
             <p className="text-sm font-medium">Lanes That Did Nothing</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-0.5 text-xs">
               These are invisible in the revenue total, and they are usually why a tariff prices
               differently from how it was written.
             </p>
@@ -249,7 +249,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                         {row.label || displayLaneKey(row.laneKey)}
                       </span>
                       {row.label ? (
-                        <p className="font-mono text-2xs text-muted-foreground">
+                        <p className="text-2xs text-muted-foreground font-mono">
                           {displayLaneKey(row.laneKey)}
                         </p>
                       ) : null}
@@ -257,7 +257,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                     <TableCell className="text-xs whitespace-nowrap">
                       {ruleOutcomeLabel(row.outcome)}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="text-muted-foreground text-xs">
                       {ruleCoverageNote(row)}
                     </TableCell>
                   </TableRow>
@@ -272,7 +272,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
         <div className="space-y-2">
           <div>
             <p className="text-sm font-medium">Shipments This Would Have Moved</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-0.5 text-xs">
               Largest increases first — the shipment that will produce the phone call is what this
               list is for.
             </p>
@@ -294,7 +294,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                     <TableCell className="font-mono text-xs">
                       {row.proNumber || row.shipmentId}
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
+                    <TableCell className="text-muted-foreground font-mono text-xs">
                       {row.laneKey ? displayLaneKey(row.laneKey) : "—"}
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs tabular-nums">
@@ -325,7 +325,7 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="bg-muted/30 rounded-lg border p-3">
         <div className="mb-1.5 flex items-center gap-2">
           <Badge variant={simulation.status === "Failed" ? "warning" : "secondary"}>
             {simulation.status}
@@ -338,7 +338,7 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
         {!finished && progress !== null && (
           <div className="mt-2 flex items-center gap-2">
             <Progress value={progress * 100} className="h-1.5 flex-1" />
-            <span className="text-xs text-muted-foreground tabular-nums">
+            <span className="text-muted-foreground text-xs tabular-nums">
               {Math.round(progress * 100)}%
             </span>
           </div>
@@ -367,17 +367,17 @@ function SimulationReading({ simulation }: { readonly simulation: RateSimulation
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm">
+          <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm">
             <span className="text-muted-foreground">Total</span>
             <span className="font-mono font-medium tabular-nums">
               {formatCurrency(summary.beforeTotal)}
             </span>
-            <ArrowRightIcon className="size-3.5 text-muted-foreground" />
+            <ArrowRightIcon className="text-muted-foreground size-3.5" />
             <span className="font-mono font-medium tabular-nums">
               {formatCurrency(summary.afterTotal)}
             </span>
             <DeltaValue delta={summary.totalDelta} deltaPct={summary.totalDeltaPct} />
-            <span className="ml-auto text-xs text-muted-foreground">
+            <span className="text-muted-foreground ml-auto text-xs">
               Max increase {formatCurrency(summary.maxIncrease)} · Max decrease{" "}
               {formatCurrency(summary.maxDecrease)}
             </span>

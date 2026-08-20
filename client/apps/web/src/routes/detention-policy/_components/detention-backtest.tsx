@@ -44,7 +44,7 @@ function StatCell({
 }) {
   return (
     <div className="px-3 py-2.5">
-      <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
+      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
       <p className={cn("mt-0.5 text-sm font-medium tabular-nums", className)}>{value}</p>
     </div>
   );
@@ -54,7 +54,7 @@ function RiskChip({ tone, children }: { tone: "warn" | "bad" | "neutral"; childr
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-medium",
+        "text-2xs inline-flex items-center rounded-md px-1.5 py-0.5 font-medium",
         tone === "neutral" && "bg-muted text-muted-foreground",
         tone === "warn" && "bg-amber-500/15 text-amber-700 dark:text-amber-400",
         tone === "bad" && "bg-red-500/15 text-red-700 dark:text-red-400",
@@ -92,8 +92,8 @@ function RevenueComparison({ result }: { result: BacktestResult }) {
     <div className="flex flex-col gap-2">
       {rows.map((row) => (
         <div key={row.key} className="flex items-center gap-3">
-          <span className="w-20 shrink-0 text-2xs text-muted-foreground">{row.label}</span>
-          <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+          <span className="text-2xs text-muted-foreground w-20 shrink-0">{row.label}</span>
+          <div className="bg-muted h-1.5 min-w-0 flex-1 overflow-hidden rounded-full">
             <m.div
               className={cn("h-full rounded-full", row.className)}
               initial={{ width: 0 }}
@@ -171,7 +171,7 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
         <div className="px-4 py-3.5">
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+              <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
                 Revenue change
               </p>
               <p
@@ -183,7 +183,7 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
                 {formatSignedCurrency(result.revenueDelta)}
               </p>
             </div>
-            <p className="shrink-0 text-right text-2xs text-muted-foreground tabular-nums">
+            <p className="text-2xs text-muted-foreground shrink-0 text-right tabular-nums">
               {result.stopsMatched} of {result.stopsEvaluated} stops matched
               <br />
               {result.stopsBillable} would bill
@@ -205,7 +205,7 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
           )}
         </div>
 
-        <div className="grid grid-cols-3 divide-x divide-border border-t border-border">
+        <div className="divide-border border-border grid grid-cols-3 divide-x border-t">
           <StatCell label="Driver pay" value={formatCurrency(result.proposedDriverPay)} />
           <StatCell
             label="Net margin"
@@ -222,7 +222,7 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
       </Card>
 
       <Card className="gap-0 overflow-hidden rounded-lg p-0">
-        <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2">
+        <div className="border-border flex items-center justify-between gap-3 border-b px-3 py-2">
           <p className="text-xs font-medium">Biggest movers</p>
           <SegmentedControl
             items={DIMENSIONS}
@@ -233,11 +233,11 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
         </div>
 
         {movers.length === 0 ? (
-          <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground px-3 py-6 text-center text-xs">
             No stops matched this policy in the selected window.
           </p>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-border divide-y">
             {movers.map((bucket) => (
               <MoverRow key={bucket.key} bucket={bucket} scale={scale} />
             ))}
@@ -299,10 +299,10 @@ export function DetentionBacktest() {
   return (
     <div className="flex flex-col gap-3">
       <div className="min-w-0">
-        <h3 className="text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
+        <h3 className="text-2xs text-muted-foreground font-semibold tracking-wide uppercase">
           Backtest
         </h3>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-xs">
           Re-price settled history under these terms. The engine is the same one that bills live
           shipments, so the projection is exact rather than estimated.
         </p>
@@ -326,12 +326,12 @@ export function DetentionBacktest() {
           </Button>
         </div>
 
-        <div className="flex items-start justify-between gap-3 border-t border-border px-3 py-2.5">
+        <div className="border-border flex items-start justify-between gap-3 border-t px-3 py-2.5">
           <div className="min-w-0">
             <Label htmlFor="assume-compliance" className="text-xs font-medium">
               Assume notices were sent on time
             </Label>
-            <p className="mt-0.5 text-2xs text-muted-foreground">
+            <p className="text-2xs text-muted-foreground mt-0.5">
               {assumeCompliance
                 ? "Measures what the terms are worth if the notice process works."
                 : "Replays the notices actually sent, showing what process failures cost."}
@@ -346,12 +346,12 @@ export function DetentionBacktest() {
       </Card>
 
       {!ready && (
-        <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2.5">
-          <span className="text-xs text-muted-foreground">Finish on the Terms tab first:</span>
+        <div className="border-border flex flex-wrap items-center gap-1.5 rounded-lg border border-dashed px-3 py-2.5">
+          <span className="text-muted-foreground text-xs">Finish on the Terms tab first:</span>
           {missing.map((label) => (
             <span
               key={label}
-              className="rounded-md bg-muted px-1.5 py-0.5 text-2xs font-medium text-muted-foreground"
+              className="bg-muted text-2xs text-muted-foreground rounded-md px-1.5 py-0.5 font-medium"
             >
               {label}
             </span>
@@ -380,11 +380,11 @@ export function DetentionBacktest() {
       )}
 
       {mutation.isError && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-border px-3 py-2.5">
+        <div className="border-border flex items-start gap-2.5 rounded-lg border px-3 py-2.5">
           <TriangleAlertIcon className="mt-px size-4 shrink-0 text-amber-500" />
           <div className="min-w-0">
             <p className="text-xs font-medium">The backtest could not run</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-0.5 text-xs">
               {mutation.error instanceof Error
                 ? mutation.error.message
                 : "Resolve the validation errors on the Terms tab and try again."}
@@ -396,9 +396,9 @@ export function DetentionBacktest() {
       {mutation.data && !mutation.isPending && <ResultView result={mutation.data} stale={stale} />}
 
       {!mutation.data && !mutation.isPending && !mutation.isError && ready && (
-        <div className="flex flex-col items-center gap-2.5 rounded-lg border border-dashed border-border py-10 text-center">
-          <HistoryIcon className="size-5 text-muted-foreground/60" />
-          <p className="max-w-[18rem] text-xs text-muted-foreground">
+        <div className="border-border flex flex-col items-center gap-2.5 rounded-lg border border-dashed py-10 text-center">
+          <HistoryIcon className="text-muted-foreground/60 size-5" />
+          <p className="text-muted-foreground max-w-[18rem] text-xs">
             Run the backtest to see what these terms would have billed over the last{" "}
             {WINDOW_OPTIONS.find((option) => option.value === windowValue)?.days} days.
           </p>

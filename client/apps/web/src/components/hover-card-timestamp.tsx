@@ -49,7 +49,7 @@ export function HoverCardTimestamp({
         render={
           <div
             className={cn(
-              "max-w-[150px] cursor-help truncate font-mono whitespace-nowrap underline decoration-muted-foreground decoration-dashed hover:decoration-primary",
+              "decoration-muted-foreground hover:decoration-primary max-w-[150px] cursor-help truncate font-mono whitespace-nowrap underline decoration-dashed",
               className,
             )}
           >

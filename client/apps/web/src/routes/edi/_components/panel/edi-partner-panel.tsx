@@ -160,7 +160,7 @@ function CreatePartnerPanel({
       }
     >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="min-h-0">
-        <TabsList variant="underline" className="w-full border-b border-border">
+        <TabsList variant="underline" className="border-border w-full border-b">
           <TabsTrigger value="external">
             <Building2Icon className="size-4" />
             External Partner
@@ -319,7 +319,7 @@ function PartnerEditPanel({
     >
       {partner && (
         <Tabs defaultValue="details" className="min-h-0">
-          <TabsList variant="underline" className="w-full border-b border-border">
+          <TabsList variant="underline" className="border-border w-full border-b">
             <TabsTrigger value="details">
               <ListChecksIcon className="size-4" />
               Details

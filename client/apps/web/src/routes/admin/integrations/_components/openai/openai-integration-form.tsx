@@ -139,16 +139,16 @@ function OpenAIFormHeader() {
       <div className="flex items-center justify-center gap-4">
         <LazyImage src={trenovaLogo} className="size-8" />
         <div className="flex items-center justify-center gap-1">
-          <div className="size-1 rounded-full bg-muted-foreground" />
-          <div className="size-1 rounded-full bg-muted-foreground" />
-          <div className="size-1 rounded-full bg-muted-foreground" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
         <LazyImage src={openAILogo} alt="OpenAI Logo" className="size-8" />
       </div>
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">Connect with OpenAI</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Create an API key in the
           </p>
           <ExternalLink

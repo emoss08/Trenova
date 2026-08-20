@@ -71,7 +71,7 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
       }}
       className={cn(
         "group flex cursor-pointer items-center gap-3 px-3 py-2.5 text-left transition-colors",
-        "focus-visible:ring-ring focus-visible:-outline-offset-2 focus-visible:ring-2 focus-visible:outline-none",
+        "focus-visible:ring-ring focus-visible:ring-2 focus-visible:-outline-offset-2 focus-visible:outline-none",
         isSelected ? "bg-muted" : "hover:bg-muted/50",
         isLost && "opacity-60",
       )}
@@ -80,12 +80,12 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm leading-tight">{facility}</p>
-        <p className="truncate text-xs leading-tight text-muted-foreground">{context}</p>
+        <p className="text-muted-foreground truncate text-xs leading-tight">{context}</p>
       </div>
 
       <div className="hidden w-44 shrink-0 md:block">
         <DeskClockTrack entry={entry} nowSeconds={nowSeconds} />
-        <p className="mt-1.5 truncate text-2xs leading-none text-muted-foreground tabular-nums">
+        <p className="text-2xs text-muted-foreground mt-1.5 truncate leading-none tabular-nums">
           {formatDetentionMinutes(onSiteMinutes)} on site · free{" "}
           {entry.minutesUntilFreeEnds > 0 ? "ends" : "ended"}{" "}
           {formatUnixTime(occurrence.freeTimeExpiresAt)}
@@ -94,7 +94,7 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
 
       <div className="hidden w-40 shrink-0 items-center gap-2 lg:flex">
         {occurrence.notificationStatus === "NotRequired" ? (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-muted-foreground text-xs">—</span>
         ) : noticePending ? (
           <>
             <span
@@ -120,7 +120,7 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
             )}
           </>
         ) : (
-          <span className="truncate text-xs text-muted-foreground">
+          <span className="text-muted-foreground truncate text-xs">
             {NOTIFICATION_STATUS_LABEL[occurrence.notificationStatus]}
           </span>
         )}
@@ -132,14 +132,14 @@ export const DetentionDeskRow = memo(function DetentionDeskRow({
           currency={occurrence.currency}
           className="text-sm leading-tight font-medium"
         />
-        <p className="text-2xs leading-tight text-muted-foreground tabular-nums">
+        <p className="text-2xs text-muted-foreground leading-tight tabular-nums">
           {occurrence.roundedMinutes > 0
             ? `${formatDetentionMinutes(occurrence.roundedMinutes)} billable`
             : "free time"}
         </p>
       </div>
 
-      <ChevronRightIcon className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+      <ChevronRightIcon className="text-muted-foreground size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
     </div>
   );
 });

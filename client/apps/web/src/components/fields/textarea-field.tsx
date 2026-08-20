@@ -89,7 +89,7 @@ export function TextareaField<T extends FieldValues>({
                         <Button
                           title="Select a preset"
                           variant="ghost"
-                          className="h-5 w-16 gap-1 text-2xs hover:bg-background"
+                          className="text-2xs hover:bg-background h-5 w-16 gap-1"
                         >
                           Preset <ChevronDownIcon />
                         </Button>

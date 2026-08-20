@@ -45,7 +45,7 @@ export function ConsoleOverlays({ actions }: { actions: DispatchActions }) {
     <>
       <DragOverlay dropAnimation={null}>
         {dragPreview && (
-          <div className="flex h-6.5 cursor-grabbing items-center rounded border border-brand/50 bg-brand/15 px-2 shadow-lg backdrop-blur-sm">
+          <div className="border-brand/50 bg-brand/15 flex h-6.5 cursor-grabbing items-center rounded border px-2 shadow-lg backdrop-blur-sm">
             <span className="font-table text-[10px] font-semibold tabular-nums">{dragPreview}</span>
           </div>
         )}

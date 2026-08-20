@@ -283,10 +283,10 @@ export function DocumentShipmentDraftReviewDialog({
   const content = (
     <>
       <div className="grid min-h-0 md:grid-cols-[320px_minmax(0,1fr)]">
-        <ScrollArea className="flex h-[400px] border-r bg-muted/10">
+        <ScrollArea className="bg-muted/10 flex h-[400px] border-r">
           <div className="grid gap-4 p-4">
             <div className="rounded-lg border p-3">
-              <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Source Document
               </div>
               <div className="mt-1 text-sm font-medium">
@@ -299,7 +299,7 @@ export function DocumentShipmentDraftReviewDialog({
               ) : null}
             </div>
             <div className="rounded-lg border p-3">
-              <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Draft Summary
               </div>
               <div className="mt-3 grid gap-2 text-sm">
@@ -343,7 +343,7 @@ export function DocumentShipmentDraftReviewDialog({
             ) : null}
             {signals.length > 0 ? (
               <div className="rounded-lg border p-3">
-                <div className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
                   <SparklesIcon className="size-3.5" />
                   Draft Signals
                 </div>
@@ -358,7 +358,7 @@ export function DocumentShipmentDraftReviewDialog({
             ) : null}
             {missingFields.length > 0 ? (
               <div className="rounded-lg border border-dashed p-3">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                <div className="text-foreground mb-2 flex items-center gap-2 text-sm font-medium">
                   <AlertCircleIcon className="size-4" />
                   Review needed
                 </div>
@@ -372,11 +372,11 @@ export function DocumentShipmentDraftReviewDialog({
               </div>
             ) : null}
             <div className="rounded-lg border p-3">
-              <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Extracted Stops
               </div>
               {stops.length === 0 ? (
-                <div className="mt-2 text-sm text-muted-foreground">
+                <div className="text-muted-foreground mt-2 text-sm">
                   No stops were extracted. You can still create the shipment manually.
                 </div>
               ) : (
@@ -394,11 +394,11 @@ export function DocumentShipmentDraftReviewDialog({
                           <Badge variant="outline">Page {stop.pageNumber}</Badge>
                         ) : null}
                       </div>
-                      <div className="mt-1 text-xs text-muted-foreground">
+                      <div className="text-muted-foreground mt-1 text-xs">
                         {addressLine(stop) || "Address not extracted"}
                       </div>
                       {stop.date || stop.timeWindow ? (
-                        <div className="mt-1 text-xs text-muted-foreground">
+                        <div className="text-muted-foreground mt-1 text-xs">
                           {[stop.date, stop.timeWindow].filter(Boolean).join(" · ")}
                         </div>
                       ) : null}
@@ -407,7 +407,7 @@ export function DocumentShipmentDraftReviewDialog({
                 </div>
               )}
             </div>
-            <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+            <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-xs">
               Location, customer, service type, shipment type, and formula template still need to
               be confirmed before the shipment can be created.
             </div>
@@ -425,7 +425,7 @@ export function DocumentShipmentDraftReviewDialog({
               <ScrollArea className="max-h-[calc(90vh-170px)]">
                 <div className="p-6">
                   {isAttached ? (
-                    <div className="mb-4 rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                    <div className="text-muted-foreground mb-4 rounded-lg border border-dashed p-3 text-sm">
                       Shipment creation from this draft is disabled because the source document
                       has already been linked to shipment {draft?.attachedShipmentId}.
                     </div>
@@ -437,7 +437,7 @@ export function DocumentShipmentDraftReviewDialog({
           </FormProvider>
         </div>
       </div>
-      <div className="flex flex-col-reverse gap-2 border-t bg-muted/50 p-4 sm:flex-row sm:justify-end">
+      <div className="bg-muted/50 flex flex-col-reverse gap-2 border-t p-4 sm:flex-row sm:justify-end">
         <Button
           type="submit"
           form="document-shipment-draft-form"

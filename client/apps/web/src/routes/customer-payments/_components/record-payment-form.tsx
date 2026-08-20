@@ -134,7 +134,7 @@ export function RecordPaymentForm({
           emptyMessage="This customer has no open invoices — the full amount will post as unapplied cash."
         />
       ) : (
-        <div className="flex h-24 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex h-24 items-center justify-center rounded-md border border-dashed text-sm">
           Select a customer to see their open invoices
         </div>
       )}

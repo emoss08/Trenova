@@ -20,11 +20,11 @@ export function SequenceConfigSidebar({ value, onChange, indexByType }: SidebarP
       aria-label="Sequence configuration sections"
       className="sticky top-4 hidden w-60 shrink-0 self-start md:block"
     >
-      <div className="rounded-md border border-border bg-card p-3">
+      <div className="border-border bg-card rounded-md border p-3">
         <ul className="flex flex-col gap-5">
         {sidebarGroups.map((group) => (
           <li key={group.label}>
-            <div className="mb-1.5 px-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            <div className="text-muted-foreground mb-1.5 px-2 text-[11px] font-medium tracking-wide uppercase">
               {group.label}
             </div>
             <ul className="flex flex-col gap-0.5">
@@ -74,7 +74,7 @@ const SidebarItem = memo(function SidebarItem({
         className={cn(
           "group relative flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
           active
-            ? "bg-muted font-medium text-foreground"
+            ? "bg-muted text-foreground font-medium"
             : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
         )}
       >

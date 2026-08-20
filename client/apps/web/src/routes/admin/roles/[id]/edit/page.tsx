@@ -95,8 +95,8 @@ export function RoleEditPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col overflow-hidden rounded-md border border-border bg-background">
-        <header className="shrink-0 border-b bg-card/95 px-6 py-3">
+      <div className="border-border bg-background flex flex-col overflow-hidden rounded-md border">
+        <header className="bg-card/95 shrink-0 border-b px-6 py-3">
           <Skeleton className="h-8 w-48" />
         </header>
         <div className="mx-auto w-full max-w-5xl space-y-6 px-6 py-8">
@@ -109,7 +109,7 @@ export function RoleEditPage() {
 
   if (!role) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="bg-background flex h-screen items-center justify-center">
         <p className="text-muted-foreground">Role not found</p>
       </div>
     );

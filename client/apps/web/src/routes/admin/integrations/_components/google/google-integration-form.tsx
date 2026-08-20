@@ -75,10 +75,10 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
       <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
         <FormGroup cols={1}>
           <FormControl cols="full">
-            <div className="flex items-center justify-between rounded-md border border-border bg-background p-3">
+            <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
               <div>
                 <Label htmlFor="google-enabled">Enable Google Maps</Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Toggle integration state for this business unit.
                 </p>
               </div>
@@ -130,16 +130,16 @@ export function GoogleMapsFormHeader() {
       <div className="flex items-center justify-center gap-4">
         <LazyImage src={trenovaLogo} className="size-8" />
         <div className="flex items-center justify-center gap-1">
-          <div className="size-1 rounded-full bg-muted-foreground" />
-          <div className="size-1 rounded-full bg-muted-foreground" />
-          <div className="size-1 rounded-full bg-muted-foreground" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
         <LazyImage src={googleMapsPinLogo} alt="Google Maps Logo" className="size-8" />
       </div>
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">Connect with Google Maps</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-xs text-muted-foreground">To get a Google Maps API key, visit the</p>
+          <p className="text-muted-foreground text-xs">To get a Google Maps API key, visit the</p>
           <ExternalLink
             href="https://console.cloud.google.com/google/maps-apis/overview"
             className="text-xs"

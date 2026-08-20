@@ -95,7 +95,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
             {formatPerMile(parseDecimal(data.profile.totalCpm))}
           </Badge>
         </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-0.5 text-xs">
           {data.totalMiles.toFixed(0)} mi total · {data.loadedMiles.toFixed(0)} loaded ·{" "}
           {data.deadheadMiles.toFixed(0)} empty
         </p>
@@ -120,14 +120,14 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
               className="flex items-center justify-between gap-2 text-xs"
             >
               <span className="flex min-w-0 items-center gap-1.5">
-                <span className="truncate text-muted-foreground">{line.name}</span>
+                <span className="text-muted-foreground truncate">{line.name}</span>
                 <Badge variant="outline" className={badge.className}>
                   {badge.label}
                 </Badge>
               </span>
               <span className="shrink-0 font-medium tabular-nums">
                 {formatCurrency(parseDecimal(line.amount))}
-                <span className="ml-1 text-muted-foreground">
+                <span className="text-muted-foreground ml-1">
                   ({formatPerMile(parseDecimal(line.ratePerMile))})
                 </span>
               </span>

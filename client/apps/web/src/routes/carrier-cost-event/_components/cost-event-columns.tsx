@@ -62,7 +62,7 @@ export function getColumns(): ColumnDef<CarrierCostEventRow>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">{row.original.description || "—"}</span>
+        <span className="text-muted-foreground text-xs">{row.original.description || "—"}</span>
       ),
       size: 260,
       meta: { apiField: "description", label: "Description" },

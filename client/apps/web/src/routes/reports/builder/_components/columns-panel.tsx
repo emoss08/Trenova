@@ -100,7 +100,7 @@ function ComputedOperandField({
 
   return (
     <div className="flex flex-col gap-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-muted-foreground text-xs">{label}</Label>
       <Select
         value={isTarget ? TARGET_OPTION : (operand.columnId ?? "")}
         onValueChange={(next) => {
@@ -181,7 +181,7 @@ function ComputedColumnBody({
         onChange={(operand) => setOperand("left", operand)}
       />
       <div className="flex flex-col gap-1">
-        <Label className="text-xs text-muted-foreground">Operation</Label>
+        <Label className="text-muted-foreground text-xs">Operation</Label>
         <Select
           value={computed.op}
           onValueChange={(op) => {
@@ -210,7 +210,7 @@ function ComputedColumnBody({
         onChange={(operand) => setOperand("right", operand)}
       />
       <div className="flex flex-col gap-1">
-        <Label className="text-xs text-muted-foreground">Format</Label>
+        <Label className="text-muted-foreground text-xs">Format</Label>
         <Select
           value={computed.format ?? "none"}
           onValueChange={(format) => {
@@ -231,7 +231,7 @@ function ComputedColumnBody({
         </Select>
       </div>
       <div className="col-span-2 flex flex-col gap-1">
-        <Label className="text-xs text-muted-foreground">Column name</Label>
+        <Label className="text-muted-foreground text-xs">Column name</Label>
         <Input
           className="h-7"
           value={column.label ?? ""}
@@ -278,14 +278,14 @@ function SortableColumnRow({
         transition: sortable.transition,
       }}
       className={cn(
-        "flex flex-col gap-2 rounded-md border border-border bg-background p-2",
+        "border-border bg-background flex flex-col gap-2 rounded-md border p-2",
         sortable.isDragging && "z-10 opacity-80 shadow-md",
       )}
     >
       <div className="flex items-center gap-1.5">
         <button
           type="button"
-          className="cursor-grab text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground cursor-grab"
           aria-label="Reorder column"
           {...sortable.attributes}
           {...sortable.listeners}
@@ -339,7 +339,7 @@ function SortableColumnRow({
       ) : (
         <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col gap-1">
-            <Label className="text-xs text-muted-foreground">Kind</Label>
+            <Label className="text-muted-foreground text-xs">Kind</Label>
             <Select
               value={column.kind}
               onValueChange={(kind) => {
@@ -363,7 +363,7 @@ function SortableColumnRow({
           </div>
           {column.kind === "measure" && (
             <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">Aggregation</Label>
+              <Label className="text-muted-foreground text-xs">Aggregation</Label>
               <Select
                 value={column.agg ?? ""}
                 onValueChange={(agg) => {
@@ -389,7 +389,7 @@ function SortableColumnRow({
           )}
           {column.kind === "dimension" && field?.type === "epoch" && (
             <div className="flex flex-col gap-1">
-              <Label className="text-xs text-muted-foreground">Bucket</Label>
+              <Label className="text-muted-foreground text-xs">Bucket</Label>
               <Select
                 value={column.bucket ?? "none"}
                 onValueChange={(bucket) => {
@@ -421,7 +421,7 @@ function SortableColumnRow({
               column.kind === "dimension" && field?.type !== "epoch" ? "" : "col-span-2",
             )}
           >
-            <Label className="text-xs text-muted-foreground">Column name</Label>
+            <Label className="text-muted-foreground text-xs">Column name</Label>
             <Input
               className="h-7"
               value={column.label ?? ""}
@@ -510,7 +510,7 @@ export function ColumnsPanel({ index, ir, onChange }: ColumnsPanelProps) {
 
   if (ir.columns.length === 0) {
     return (
-      <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground px-2 py-4 text-center text-sm">
         Add fields from the catalog to define the report&apos;s columns.
       </p>
     );
