@@ -60,6 +60,14 @@ func (r *repository) filterQuery(
 		q = q.Where(cols.Status.Eq(), req.Status)
 	}
 
+	if req.CustomerID != nil {
+		q = q.Where(cols.CustomerID.Eq(), *req.CustomerID)
+	}
+
+	if req.CarrierID != nil {
+		q = q.Where(cols.CarrierID.Eq(), *req.CarrierID)
+	}
+
 	return q.
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
@@ -238,13 +246,30 @@ func (r *repository) ListRules(
 				sq = sq.Where(cols.Status.Eq(), rateagreement.RuleStatusActive)
 			}
 
+			if req.LaneKey != "" {
+				sq = sq.Where(cols.LaneKey.Eq(), req.LaneKey)
+			}
+
 			return sq
 		}).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			// History keeps the closed-out rules — the lineage is the point —
+			// so the window filter only applies to a point-in-time read.
+			if req.IncludeSuperseded {
+				return sq
+			}
+
 			return applyRuleWindow(sq, req.AsOf)
 		}).
-		Order(cols.SpecificityScore.OrderDesc()).
-		Order(cols.ID.OrderAsc())
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			if req.IncludeSuperseded {
+				return sq.Order(cols.EffectiveFrom.OrderDesc())
+			}
+
+			return sq.
+				Order(cols.SpecificityScore.OrderDesc()).
+				Order(cols.ID.OrderAsc())
+		})
 
 	if err := q.Scan(ctx); err != nil {
 		log.Error("failed to list rate agreement rules", zap.Error(err))

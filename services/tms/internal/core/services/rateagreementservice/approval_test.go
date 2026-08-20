@@ -164,6 +164,15 @@ func TestCreate_AlwaysStartsInDraft(t *testing.T) {
 			return entity, nil
 		}).
 		Once()
+	repo.EXPECT().
+		CreateVersion(mock.Anything, mock.AnythingOfType("*rateagreement.RateAgreementVersion")).
+		RunAndReturn(func(
+			_ context.Context,
+			version *rateagreement.RateAgreementVersion,
+		) (*rateagreement.RateAgreementVersion, error) {
+			return version, nil
+		}).
+		Once()
 
 	audit := mocks.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()

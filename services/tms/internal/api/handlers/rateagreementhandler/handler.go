@@ -1,6 +1,8 @@
 package rateagreementhandler
 
 import (
+	"errors"
+	"io"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -61,6 +63,25 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:rateAgreementID/versions/",
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.listVersions,
+	)
+
+	// Registered before the parameterized routes so "rate-increase" is never
+	// read as an agreement ID.
+	api.POST(
+		"/rate-increase/preview/",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.previewRateIncrease,
+	)
+	api.POST(
+		"/rate-increase/apply/",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		h.applyRateIncrease,
+	)
+
+	api.POST(
+		"/:rateAgreementID/duplicate/",
+		h.pm.RequirePermission(resource, permission.OpDuplicate),
+		h.duplicate,
 	)
 
 	api.POST(
@@ -259,6 +280,8 @@ func (h *Handler) update(c *gin.Context) {
 // @Param rateAgreementID path string true "Rate agreement ID"
 // @Param asOf query int false "Only rules effective at this epoch second"
 // @Param includeInactive query bool false "Include rules that are not active"
+// @Param laneKey query string false "Only rules on this lane"
+// @Param includeSuperseded query bool false "Keep closed-out rules — the lane's full history, newest first"
 // @Success 200 {array} rateagreement.RateAgreementRule
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -277,10 +300,12 @@ func (h *Handler) listRules(c *gin.Context) {
 	rules, err := h.service.ListRules(
 		c.Request.Context(),
 		&repositories.ListRateAgreementRulesRequest{
-			TenantInfo:      tenantOf(authCtx),
-			RateAgreementID: agreementID,
-			AsOf:            helpers.QueryInt64(c, "asOf", 0),
-			IncludeInactive: helpers.QueryBool(c, "includeInactive", false),
+			TenantInfo:        tenantOf(authCtx),
+			RateAgreementID:   agreementID,
+			AsOf:              helpers.QueryInt64(c, "asOf", 0),
+			IncludeInactive:   helpers.QueryBool(c, "includeInactive", false),
+			LaneKey:           helpers.QueryString(c, "laneKey"),
+			IncludeSuperseded: helpers.QueryBool(c, "includeSuperseded", false),
 		},
 	)
 	if err != nil {
@@ -422,6 +447,116 @@ type reviewRequest struct {
 // Every one of them takes the same request and returns the same thing, so a
 // separate handler per action would be six copies of the same twelve lines
 // differing only in which method they call.
+// @Summary Preview a general rate increase
+// @Description Answers what a bulk rate change would do — every lane's before and after — without doing any of it.
+// @ID previewRateIncrease
+// @Tags Rate Agreements
+// @Accept json
+// @Produce json
+// @Param request body rateagreementservice.RateIncreaseRequest true "Scope, adjustment, and effective date"
+// @Success 200 {object} rateagreementservice.RateIncreasePlan
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-agreements/rate-increase/preview/ [post]
+func (h *Handler) previewRateIncrease(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	req := new(rateagreementservice.RateIncreaseRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = tenantOf(authCtx)
+
+	plan, err := h.service.PlanRateIncrease(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, plan)
+}
+
+// @Summary Apply a general rate increase
+// @Description Closes out every affected rule and inserts its successor at the new rate, effective the announced date. History is never mutated — the old rates stay readable forever.
+// @ID applyRateIncrease
+// @Tags Rate Agreements
+// @Accept json
+// @Produce json
+// @Param request body rateagreementservice.RateIncreaseRequest true "Scope, adjustment, and effective date"
+// @Success 200 {object} rateagreementservice.RateIncreasePlan
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-agreements/rate-increase/apply/ [post]
+func (h *Handler) applyRateIncrease(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	req := new(rateagreementservice.RateIncreaseRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = tenantOf(authCtx)
+
+	plan, err := h.service.ApplyRateIncrease(c.Request.Context(), req, authCtx.UserID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, plan)
+}
+
+// @Summary Duplicate a rate agreement
+// @Description Copies the whole contract — lanes, breaks, accessorials, fuel terms — as a fresh draft with none of the original's history or approvals. The renewal workflow starts here.
+// @ID duplicateRateAgreement
+// @Tags Rate Agreements
+// @Accept json
+// @Produce json
+// @Param rateAgreementID path string true "Rate agreement ID"
+// @Param request body rateagreementservice.DuplicateRateAgreementRequest false "Optional code and name for the copy"
+// @Success 201 {object} rateagreement.RateAgreement
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-agreements/{rateAgreementID}/duplicate/ [post]
+func (h *Handler) duplicate(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	agreementID, err := h.agreementID(c)
+	if err != nil {
+		return
+	}
+
+	req := new(rateagreementservice.DuplicateRateAgreementRequest)
+	if err = c.ShouldBindJSON(req); err != nil && !errors.Is(err, io.EOF) {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = tenantOf(authCtx)
+	req.RateAgreementID = agreementID
+
+	created, err := h.service.Duplicate(c.Request.Context(), req, authCtx.UserID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, created)
+}
+
 func (h *Handler) review(action rateagreementservice.ReviewAction) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authCtx := authctx.GetAuthContext(c)

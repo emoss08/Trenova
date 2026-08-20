@@ -43,6 +43,7 @@ import type {
   RateVarianceAutoResolutionMode,
   ReadyToBillAssignmentMode,
   TransferSchedule,
+  UnratedShipmentDisposition,
 } from "@/types/billing-control";
 import type { BillingQueueStatus, ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
 import type {
@@ -1255,6 +1256,12 @@ export const rateVarianceAutoResolutionModeChoices = [
     label: "Bypass Review Within Tolerance",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<RateVarianceAutoResolutionMode>>;
+
+export const unratedShipmentDispositionChoices = [
+  { value: "FallbackFormulaTemplate", label: "Fall Back to Formula Template" },
+  { value: "ZeroAndFlag", label: "Zero the Rate and Flag for Review" },
+  { value: "Block", label: "Block the Save" },
+] satisfies ReadonlyArray<GenericSelectOption<UnratedShipmentDisposition>>;
 
 export const paymentTermChoices = [
   { value: "Net10", label: "Net 10", color: "#0ea5e9" },

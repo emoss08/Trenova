@@ -10616,6 +10616,23 @@ components:
                 name:
                     type: string
             type: object
+        github_com_emoss08_trenova_internal_core_ports_services.SetRateOverrideRequest:
+            properties:
+                amount:
+                    allOf:
+                        - $ref: '#/components/schemas/decimal.NullDecimal'
+                    description: Amount is the hand-set linehaul. Ignored when Clear is set.
+                clear:
+                    description: Clear removes the override instead of setting one.
+                    type: boolean
+                rateLocked:
+                    description: |-
+                        RateLocked freezes the shipment's numbers against every re-rating path,
+                        for a shipment already invoiced whose numbers the customer has seen.
+                    type: boolean
+                reason:
+                    type: string
+            type: object
         github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadiness:
             properties:
                 canMarkReadyToInvoice:
@@ -11110,6 +11127,80 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_pagefavorite.PageFavorite'
                 favorited:
                     type: boolean
+            type: object
+        github_com_emoss08_trenova_internal_core_services_rateagreementservice.DuplicateRateAgreementRequest:
+            properties:
+                code:
+                    type: string
+                name:
+                    type: string
+            type: object
+        github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateAdjustment:
+            properties:
+                flatChange:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                percentChange:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+            type: object
+        github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreaseLine:
+            properties:
+                after:
+                    type: number
+                agreementCode:
+                    type: string
+                agreementName:
+                    type: string
+                before:
+                    type: number
+                breakCount:
+                    type: integer
+                label:
+                    type: string
+                laneKey:
+                    type: string
+                rateAgreementId:
+                    type: string
+                ruleId:
+                    type: string
+            type: object
+        github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreasePlan:
+            properties:
+                agreementCount:
+                    type: integer
+                effectiveFrom:
+                    type: integer
+                lines:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreaseLine'
+                    type: array
+                negativeCount:
+                    description: |-
+                        NegativeCount counts lanes a flat decrease would push below zero. A
+                        plan carrying any refuses to apply.
+                    type: integer
+                skippedNoRate:
+                    description: |-
+                        SkippedNoRate counts matrix-priced rules: their numbers live in the
+                        matrix cells, so a GRI cannot move them and says so instead of
+                        pretending it did.
+                    type: integer
+            type: object
+        github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreaseRequest:
+            properties:
+                adjustment:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateAdjustment'
+                agreementIds:
+                    items:
+                        type: string
+                    type: array
+                carrierId:
+                    type: string
+                customerId:
+                    type: string
+                effectiveFrom:
+                    type: integer
+                partyType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType'
             type: object
         github_com_emoss08_trenova_internal_core_services_tenderservice.CancelTenderRequest:
             properties:
@@ -12902,6 +12993,13 @@ components:
         internal_api_handlers_rateconfirmationhandler.voidRequest:
             properties:
                 reason:
+                    type: string
+            type: object
+        internal_api_handlers_rateimporthandler.TemplateResponse:
+            properties:
+                content:
+                    type: string
+                fileName:
                     type: string
             type: object
         internal_api_handlers_ratematrixhandler.replaceCellsRequest:
@@ -26960,6 +27058,72 @@ paths:
             summary: Update a rate agreement
             tags:
                 - Rate Agreements
+    /rate-agreements/{rateAgreementID}/duplicate/:
+        post:
+            description: Copies the whole contract — lanes, breaks, accessorials, fuel terms — as a fresh draft with none of the original's history or approvals. The renewal workflow starts here.
+            operationId: duplicateRateAgreement
+            parameters:
+                - description: Rate agreement ID
+                  in: path
+                  name: rateAgreementID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_services_rateagreementservice.DuplicateRateAgreementRequest'
+                description: Optional code and name for the copy
+                x-originalParamName: request
+            responses:
+                "201":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement'
+                    description: Created
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Duplicate a rate agreement
+            tags:
+                - Rate Agreements
     /rate-agreements/{rateAgreementID}/rules:
         get:
             operationId: listRateAgreementRules
@@ -26978,6 +27142,16 @@ paths:
                 - description: Include rules that are not active
                   in: query
                   name: includeInactive
+                  schema:
+                    type: boolean
+                - description: Only rules on this lane
+                  in: query
+                  name: laneKey
+                  schema:
+                    type: string
+                - description: Keep closed-out rules — the lane's full history, newest first
+                  in: query
+                  name: includeSuperseded
                   schema:
                     type: boolean
             responses:
@@ -27136,6 +27310,114 @@ paths:
             security:
                 - BearerAuth: []
             summary: List a rate agreement's versions
+            tags:
+                - Rate Agreements
+    /rate-agreements/rate-increase/apply/:
+        post:
+            description: Closes out every affected rule and inserts its successor at the new rate, effective the announced date. History is never mutated — the old rates stay readable forever.
+            operationId: applyRateIncrease
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreaseRequest'
+                description: Scope, adjustment, and effective date
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreasePlan'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Apply a general rate increase
+            tags:
+                - Rate Agreements
+    /rate-agreements/rate-increase/preview/:
+        post:
+            description: Answers what a bulk rate change would do — every lane's before and after — without doing any of it.
+            operationId: previewRateIncrease
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreaseRequest'
+                description: Scope, adjustment, and effective date
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreasePlan'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Preview a general rate increase
             tags:
                 - Rate Agreements
     /rate-agreements/select-options/:
@@ -27767,6 +28049,34 @@ paths:
             security:
                 - BearerAuth: []
             summary: List a rate import's rows
+            tags:
+                - Rate Imports
+    /rate-imports/template/:
+        get:
+            description: Returns a starter CSV whose columns the importer recognises, with two example rows showing how lanes are described.
+            operationId: rateSheetTemplate
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/internal_api_handlers_rateimporthandler.TemplateResponse'
+                    description: OK
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+            security:
+                - BearerAuth: []
+            summary: Download the rate sheet template
             tags:
                 - Rate Imports
     /rate-matrices/:
@@ -33838,6 +34148,73 @@ paths:
             summary: Update a recorded permit
             tags:
                 - Permits
+    /shipments/{shipmentID}/rate-override/:
+        post:
+            description: Replaces the contract's rate with a hand-set amount, or clears one so the contract prices the shipment again. The shipment is re-rated immediately, and the quote records what the contract would have charged instead.
+            operationId: setShipmentRateOverride
+            parameters:
+                - description: Shipment ID
+                  in: path
+                  name: shipmentID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.SetRateOverrideRequest'
+                description: The override, or clear=true to remove one
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "401":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+                "422":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Unprocessable Entity
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Internal Server Error
+            security:
+                - BearerAuth: []
+            summary: Set or clear a manual rate override
+            tags:
+                - Shipments
     /shipments/{shipmentID}/recalculate-distance/:
         post:
             operationId: recalculateShipmentDistance

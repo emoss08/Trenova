@@ -1,9 +1,23 @@
+import { DeltaValue, StatTile } from "@/components/metric-tiles";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Input } from "@trenova/shared/components/ui/input";
+import {
+  NumberFieldGroup,
+  NumberFieldInput,
+  NumberField as NumberFieldRoot,
+} from "@trenova/shared/components/ui/number-field";
+import { Progress } from "@trenova/shared/components/ui/progress";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@trenova/shared/components/ui/table";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import {
   isTerminal,
   measuredAnything,
@@ -14,9 +28,10 @@ import {
   shouldPoll,
   summaryHeadline,
 } from "@trenova/shared/lib/simulation";
+import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import type { RateAgreement, RateSimulation } from "@trenova/shared/types/rate";
-import { CircleAlertIcon, LoaderCircleIcon, PlayIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { ArrowRightIcon, FlaskConicalIcon, PlayIcon } from "lucide-react";
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -30,6 +45,9 @@ const DAY_SECONDS = 86_400;
  * is long enough that seasonality does not distort the answer.
  */
 const DEFAULT_WINDOW_DAYS = 365;
+
+/** Recent runs worth listing; older ones are noise in a side panel. */
+const RUN_HISTORY_LIMIT = 5;
 
 type SimulationPanelProps = {
   /** Absent while the agreement is being created — there is nothing to replay. */
@@ -49,6 +67,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
   const queryClient = useQueryClient();
 
   const [watching, setWatching] = useState<string | undefined>();
+  const [days, setDays] = useState(DEFAULT_WINDOW_DAYS);
 
   const { data: history } = useQuery({
     queryKey: ["rate-simulations", rateAgreementId],
@@ -66,8 +85,6 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
       shouldPoll(query.state.data as RateSimulation | undefined) ? POLL_INTERVAL_MS : false,
   });
 
-  const [days, setDays] = useState(DEFAULT_WINDOW_DAYS);
-
   const { mutate: startRun, isPending } = useMutation({
     mutationFn: () => {
       const now = Math.floor(Date.now() / 1000);
@@ -82,15 +99,12 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
     },
     onSuccess: async (created) => {
       setWatching(created.id);
-      toast.success("Simulation queued");
       await queryClient.invalidateQueries({
         queryKey: ["rate-simulations", rateAgreementId],
       });
     },
     onError: () => toast.error("Could not start the simulation"),
   });
-
-  const run = useCallback(() => startRun(), [startRun]);
 
   const { data: results } = useQuery({
     queryKey: ["rate-simulation-results", active],
@@ -108,134 +122,184 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
     );
   }
 
-  const progress = runProgress(simulation);
   const problems = problemRules(simulation?.ruleCoverage);
+  const recentRuns = (history ?? []).slice(0, RUN_HISTORY_LIMIT);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <span className="text-muted-foreground text-xs">Replay the last</span>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              className="h-8 w-24"
-              value={days}
-              onChange={(event) => setDays(Number(event.target.value) || DEFAULT_WINDOW_DAYS)}
-            />
-            <span className="text-muted-foreground text-xs">days of shipments</span>
-          </div>
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-muted/30 p-3">
+        <div className="mb-3">
+          <p className="text-sm font-medium">Replay Historical Shipments</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Every shipment is re-rated against its own facts — the weight it had, the lane it ran,
+            the day it shipped — so the result is what would have been invoiced. Nothing it produces
+            touches a shipment.
+          </p>
         </div>
-        <Button type="button" size="sm" disabled={isPending} onClick={run}>
-          {isPending ? (
-            <LoaderCircleIcon className="mr-1 size-3.5 animate-spin" />
-          ) : (
-            <PlayIcon className="mr-1 size-3.5" />
-          )}
-          Run simulation
-        </Button>
+
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="w-32">
+            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              Window (Days)
+            </label>
+            <NumberFieldRoot
+              value={days}
+              onValueChange={(value) =>
+                setDays(Math.min(Math.max(value ?? DEFAULT_WINDOW_DAYS, 1), 1095))
+              }
+              min={1}
+              max={1095}
+              step={30}
+              size="sm"
+            >
+              <NumberFieldGroup>
+                <NumberFieldInput className="text-right" />
+              </NumberFieldGroup>
+            </NumberFieldRoot>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => startRun()}
+            isLoading={isPending}
+            loadingText="Queueing..."
+            className="gap-1.5"
+          >
+            <PlayIcon className="size-3.5" />
+            Run Simulation
+          </Button>
+        </div>
       </div>
 
-      <p className="text-muted-foreground text-xs">
-        Every shipment is re-rated against its own facts — the weight it had, the lane it ran, the
-        day it shipped — so this is what would have been invoiced. Nothing it produces touches a
-        shipment.
-      </p>
-
-      {simulation && (
-        <div className="rounded-md border p-3">
-          <div className="mb-2 flex items-center gap-2">
-            <Badge variant={simulation.status === "Failed" ? "warning" : "secondary"}>
-              {simulation.status}
-            </Badge>
-            <span className="text-sm font-medium">{simulation.name}</span>
-          </div>
-
-          <p className="text-sm">{summaryHeadline(simulation)}</p>
-
-          {progress !== null && !isTerminal(simulation) && (
-            <p className="text-muted-foreground mt-1 text-xs">
-              {Math.round(progress * 100)}% of the window replayed
-            </p>
-          )}
-
-          {isTerminal(simulation) && measuredAnything(simulation) && simulation.summary && (
-            <dl className="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-              <SummaryStat label="Shipments" value={String(simulation.summary.evaluatedCount)} />
-              <SummaryStat label="Changed" value={String(simulation.summary.changedCount)} />
-              <SummaryStat
-                label="Revenue delta"
-                value={`${simulation.summary.totalDelta} (${simulation.summary.totalDeltaPct}%)`}
-              />
-              <SummaryStat
-                label="Largest single move"
-                value={`${simulation.summary.maxIncrease} / ${simulation.summary.maxDecrease}`}
-              />
-            </dl>
-          )}
-        </div>
-      )}
-
-      {problems.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h4 className="text-sm font-medium">Lanes that did nothing</h4>
-          <p className="text-muted-foreground text-xs">
-            These do not show up in the revenue total, and they are usually why a tariff prices
-            differently from how it was written.
-          </p>
-          {problems.map((row) => (
-            <Alert key={row.ruleId}>
-              <CircleAlertIcon className="size-4" />
-              <AlertDescription>
-                <span className="font-medium">{row.label || row.laneKey}</span>{" "}
-                <span className="text-muted-foreground">— {ruleOutcomeLabel(row.outcome)}</span>
-                <p className="text-muted-foreground mt-0.5 text-xs">{ruleCoverageNote(row)}</p>
-              </AlertDescription>
-            </Alert>
+      {recentRuns.length > 1 && (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {recentRuns.map((run) => (
+            <button
+              key={run.id}
+              type="button"
+              onClick={() => setWatching(run.id)}
+              className={cn(
+                "rounded-lg border p-2 text-left transition-colors",
+                run.id === active
+                  ? "border-primary bg-primary/5"
+                  : "border-border bg-background hover:bg-muted/50",
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="truncate text-xs font-medium">{run.name}</p>
+                <Badge
+                  variant={run.status === "Failed" ? "warning" : "secondary"}
+                  className="shrink-0"
+                >
+                  {run.status}
+                </Badge>
+              </div>
+              {run.startedAt ? (
+                <p className="mt-0.5 text-2xs text-muted-foreground">
+                  {formatUnixDateTimeShort(run.startedAt)}
+                </p>
+              ) : null}
+            </button>
           ))}
         </div>
       )}
 
-      {results && results.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h4 className="text-sm font-medium">Shipments this would have moved</h4>
-          <div className="overflow-x-auto rounded-md border">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="bg-muted/50 text-muted-foreground text-xs">
-                  <th className="border-b px-3 py-2 text-left font-medium">Shipment</th>
-                  <th className="border-b px-3 py-2 text-left font-medium">Lane</th>
-                  <th className="border-b px-3 py-2 text-right font-medium">Billed</th>
-                  <th className="border-b px-3 py-2 text-right font-medium">Would charge</th>
-                  <th className="border-b px-3 py-2 text-right font-medium">Change</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((row) => (
-                  <tr key={row.shipmentId}>
-                    <td className="border-b px-3 py-2 font-mono text-xs">
-                      {row.proNumber || row.shipmentId}
-                    </td>
-                    <td className="text-muted-foreground border-b px-3 py-2 font-mono text-xs">
-                      {row.laneKey || "—"}
-                    </td>
-                    <td className="border-b px-3 py-2 text-right font-mono text-xs">
-                      {row.beforeAmount}
-                    </td>
-                    <td className="border-b px-3 py-2 text-right font-mono text-xs">
-                      {row.afterAmount}
-                    </td>
-                    <td
-                      className={`border-b px-3 py-2 text-right font-mono text-xs ${
-                        row.delta > 0 ? "text-warning" : "text-foreground"
-                      }`}
-                    >
-                      {row.delta} ({row.deltaPercent}%)
-                    </td>
-                  </tr>
+      {simulation ? (
+        <SimulationReading simulation={simulation} />
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
+          <FlaskConicalIcon className="mb-3 size-8 text-muted-foreground" />
+          <p className="text-sm font-medium">No simulation has run yet</p>
+          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+            Run one to see what this contract would have charged for the freight you already moved —
+            before it prices a single live shipment.
+          </p>
+        </div>
+      )}
+
+      {problems.length > 0 && (
+        <div className="space-y-2">
+          <div>
+            <p className="text-sm font-medium">Lanes That Did Nothing</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              These are invisible in the revenue total, and they are usually why a tariff prices
+              differently from how it was written.
+            </p>
+          </div>
+          <div className="overflow-hidden rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Lane</TableHead>
+                  <TableHead className="text-xs">Outcome</TableHead>
+                  <TableHead className="text-xs">What That Means</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {problems.map((row) => (
+                  <TableRow key={row.ruleId}>
+                    <TableCell>
+                      <span className="text-xs font-medium">{row.label || row.laneKey}</span>
+                      {row.label ? (
+                        <p className="font-mono text-2xs text-muted-foreground">{row.laneKey}</p>
+                      ) : null}
+                    </TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {ruleOutcomeLabel(row.outcome)}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {ruleCoverageNote(row)}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
+      {results && results.length > 0 && (
+        <div className="space-y-2">
+          <div>
+            <p className="text-sm font-medium">Shipments This Would Have Moved</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Largest increases first — the shipment that will produce the phone call is what this
+              list is for.
+            </p>
+          </div>
+          <div className="overflow-hidden rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Pro #</TableHead>
+                  <TableHead className="text-xs">Lane</TableHead>
+                  <TableHead className="text-right text-xs">Billed</TableHead>
+                  <TableHead className="text-right text-xs">Would Charge</TableHead>
+                  <TableHead className="text-right text-xs">Delta</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {results.map((row) => (
+                  <TableRow key={row.shipmentId}>
+                    <TableCell className="font-mono text-xs">
+                      {row.proNumber || row.shipmentId}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {row.laneKey || "—"}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs tabular-nums">
+                      {formatCurrency(row.beforeAmount)}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs tabular-nums">
+                      {formatCurrency(row.afterAmount)}
+                    </TableCell>
+                    <TableCell className="text-right text-xs">
+                      <DeltaValue delta={row.delta} deltaPct={row.deltaPercent} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
@@ -243,11 +307,73 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
   );
 }
 
-function SummaryStat({ label, value }: { readonly label: string; readonly value: string }) {
+/** One run's answer, in the order somebody reads it: status, verdict, numbers. */
+function SimulationReading({ simulation }: { readonly simulation: RateSimulation }) {
+  const progress = runProgress(simulation);
+  const finished = isTerminal(simulation);
+  const summary = simulation.summary;
+
   return (
-    <div>
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-mono text-sm">{value}</dd>
+    <div className="space-y-3">
+      <div className="rounded-lg border bg-muted/30 p-3">
+        <div className="mb-1.5 flex items-center gap-2">
+          <Badge variant={simulation.status === "Failed" ? "warning" : "secondary"}>
+            {simulation.status}
+          </Badge>
+          <span className="truncate text-sm font-medium">{simulation.name}</span>
+        </div>
+
+        <p className="text-sm">{summaryHeadline(simulation)}</p>
+
+        {!finished && progress !== null && (
+          <div className="mt-2 flex items-center gap-2">
+            <Progress value={progress * 100} className="h-1.5 flex-1" />
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {Math.round(progress * 100)}%
+            </span>
+          </div>
+        )}
+      </div>
+
+      {finished && measuredAnything(simulation) && summary && (
+        <>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <StatTile label="Shipments" value={String(summary.evaluatedCount)} />
+            <StatTile label="Changed" value={String(summary.changedCount)} />
+            <StatTile
+              label="Increased"
+              value={String(summary.increasedCount)}
+              tone="text-emerald-600 dark:text-emerald-400"
+            />
+            <StatTile
+              label="Decreased"
+              value={String(summary.decreasedCount)}
+              tone="text-red-600 dark:text-red-400"
+            />
+            <StatTile
+              label="Errors"
+              value={String(summary.errorCount)}
+              tone={summary.errorCount > 0 ? "text-destructive" : undefined}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">Total</span>
+            <span className="font-mono font-medium tabular-nums">
+              {formatCurrency(summary.beforeTotal)}
+            </span>
+            <ArrowRightIcon className="size-3.5 text-muted-foreground" />
+            <span className="font-mono font-medium tabular-nums">
+              {formatCurrency(summary.afterTotal)}
+            </span>
+            <DeltaValue delta={summary.totalDelta} deltaPct={summary.totalDeltaPct} />
+            <span className="ml-auto text-xs text-muted-foreground">
+              Max increase {formatCurrency(summary.maxIncrease)} · Max decrease{" "}
+              {formatCurrency(summary.maxDecrease)}
+            </span>
+          </div>
+        </>
+      )}
     </div>
   );
 }
