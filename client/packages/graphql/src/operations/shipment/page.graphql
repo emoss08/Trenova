@@ -247,6 +247,27 @@ fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   resolvedVariables
   result
   ratedAt
+  versionNumber
+  breakdown {
+    name
+    label
+    amount
+    error
+  }
+  guardrail {
+    applied
+    bound
+    rawResult
+    minCharge
+    maxCharge
+  }
+  rateQuoteId
+  agreementId
+  agreementName
+  ruleId
+  ruleLabel
+  source
+  explanation
 }
 
 fragment ShipmentFields on Shipment {

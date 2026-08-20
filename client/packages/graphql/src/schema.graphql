@@ -8188,7 +8188,9 @@ enum SelectOptionResource {
   FUEL_INDEX
   FUEL_SURCHARGE_PROGRAM
   GL_ACCOUNT
+  LOCATION
   ORDER
+  RATE_ZONE
   SHIPMENT
   TRACTOR
   TRAILER
@@ -9342,7 +9344,6 @@ input ShipmentInput {
   ownerId: ID
   pieces: Int
   proNumber: String
-  ratingDetail: ShipmentRatingDetailInput
   ratingUnit: Int = 1
   serviceTypeId: ID!
   shipmentTypeId: ID!
@@ -9567,25 +9568,61 @@ type ShipmentProfitabilityEstimate {
   totalMiles: Float!
 }
 
+"""
+One line of the arithmetic that produced the rate, in the order it was applied.
+"""
+type ShipmentRatingBreakdownItem {
+  amount: Float!
+  """
+  Set when the line could not be evaluated, in which case the amount is zero.
+  """
+  error: String!
+  label: String!
+  name: String!
+}
+
+"""
+Why a shipment is priced the way it is.
+
+The contract fields are filled in when a rate agreement priced the load. They
+name the quote rather than repeating it: the quote holds the full explanation,
+and copying it here would let the two drift.
+"""
 type ShipmentRatingDetail {
+  agreementId: String!
+  agreementName: String!
+  breakdown: [ShipmentRatingBreakdownItem!]!
+  explanation: String!
   expression: String!
   formulaTemplateId: String!
   formulaTemplateName: String!
+  guardrail: ShipmentRatingGuardrail
+  rateQuoteId: String!
   ratedAt: Int!
   """
   Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended.
   """
   resolvedVariables: JSON!
   result: Float!
+  ruleId: String!
+  ruleLabel: String!
+  """
+  The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound.
+  """
+  source: String!
+  """Zero when the rate did not come from a versioned formula template."""
+  versionNumber: Int!
 }
 
-input ShipmentRatingDetailInput {
-  expression: String!
-  formulaTemplateId: String!
-  formulaTemplateName: String!
-  ratedAt: Int!
-  resolvedVariables: JSON!
-  result: Float!
+"""
+A bound that changed the answer — a minimum or maximum charge that took over from the computed rate.
+"""
+type ShipmentRatingGuardrail {
+  applied: Boolean!
+  bound: String!
+  maxCharge: Float
+  minCharge: Float
+  rawResult: Float!
 }
 
 type ShipmentReadyToDispatch {

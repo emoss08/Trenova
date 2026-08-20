@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { findCoverageIssues, laneKeyPreview, laneSpecificity } from "../rate";
-import type { RateAgreementRule } from "../../types/rate";
+import {
+  findCoverageIssues,
+  laneKeyDisplay,
+  laneKeyPreview,
+  laneKeyScopeIds,
+  laneKeyStringDisplay,
+  laneSpecificity,
+} from "../rate";
+import type { RateAgreementRule, RateScopeType } from "../../types/rate";
 
 /**
  * Builds a lane with only the fields the scoring reads, so a test states the
@@ -181,6 +188,144 @@ describe("laneKeyPreview", () => {
   it("has no key for a lane matched by radius", () => {
     expect(laneKeyPreview(lane({ originScopeType: "Radius" }))).toBeNull();
     expect(laneKeyPreview(lane({ destinationScopeType: "Radius" }))).toBeNull();
+  });
+});
+
+describe("laneKeyDisplay", () => {
+  const labels: Record<string, string> = {
+    "State:us_tx": "TX",
+    "State:us_il": "IL",
+    "CityState:us_tx": "TX",
+    "CityState:us_il": "IL",
+    "Zone:rzn_sw": "Southwest",
+    "Location:loc_dal": "Dallas DC",
+  };
+  const resolve = (type: RateScopeType, value: string) => labels[`${type}:${value}`];
+
+  it("shows the record's name where the key stores its id", () => {
+    const display = laneKeyDisplay(
+      lane({
+        originScopeType: "CityState",
+        originScopeValue: "us_tx",
+        originCity: "Dallas",
+        destinationScopeType: "CityState",
+        destinationScopeValue: "us_il",
+        destinationCity: "Chicago",
+      }),
+      resolve,
+    );
+
+    expect(display).toBe("CS:TX|DALLAS>CS:IL|CHICAGO");
+    expect(display).not.toContain("us_");
+  });
+
+  it("resolves every id-backed scope: state, zone and location", () => {
+    expect(
+      laneKeyDisplay(
+        lane({
+          originScopeType: "Zone",
+          originScopeValue: "rzn_sw",
+          destinationScopeType: "Location",
+          destinationScopeValue: "loc_dal",
+        }),
+        resolve,
+      ),
+    ).toBe("ZN:Southwest>LOC:Dallas DC");
+
+    expect(
+      laneKeyDisplay(lane({ originScopeType: "State", originScopeValue: "us_il" }), resolve),
+    ).toBe("ST:IL>ANY");
+  });
+
+  // Literal scopes carry the value itself, so the display reads exactly as the
+  // key does — including the postal folding.
+  it("renders literal scopes the way the key stores them", () => {
+    expect(
+      laneKeyDisplay(
+        lane({
+          originScopeType: "Zip3",
+          originScopeValue: "60601-1234",
+          destinationScopeType: "Country",
+          destinationScopeValue: "usa",
+        }),
+        resolve,
+      ),
+    ).toBe("Z3:606>CT:USA");
+  });
+
+  // A name that has not arrived yet must read as pending, never as the raw id
+  // — the id is exactly what this display exists to avoid.
+  it("shows a placeholder rather than the id while a name is unresolved", () => {
+    const display = laneKeyDisplay(
+      lane({ originScopeType: "Zone", originScopeValue: "rzn_unknown" }),
+      resolve,
+    );
+
+    expect(display).toBe("ZN:…>ANY");
+    expect(display).not.toContain("rzn_unknown");
+  });
+
+  it("has no display key for a lane matched by radius, exactly like the key", () => {
+    expect(laneKeyDisplay(lane({ originScopeType: "Radius" }), resolve)).toBeNull();
+  });
+});
+
+describe("laneKeyStringDisplay", () => {
+  const labels: Record<string, string> = {
+    "State:us_tx": "TX",
+    "State:us_il": "IL",
+    "CityState:us_tx": "TX",
+    "CityState:us_il": "IL",
+    "Zone:rzn_sw": "Southwest",
+    "Location:loc_dal": "Dallas DC",
+  };
+  const resolve = (type: RateScopeType, value: string) => labels[`${type}:${value}`];
+
+  // Stored keys arrive from the server already assembled — import diffs and
+  // simulation rows carry them as strings, with no rule object to read from.
+  it("substitutes names for the ids a stored key carries", () => {
+    const display = laneKeyStringDisplay("CS:us_tx|DALLAS>CS:us_il|CHICAGO", resolve);
+
+    expect(display).toBe("CS:TX|DALLAS>CS:IL|CHICAGO");
+    expect(display).not.toContain("us_");
+  });
+
+  it("resolves zone, state and location ids", () => {
+    expect(laneKeyStringDisplay("ZN:rzn_sw>LOC:loc_dal", resolve)).toBe(
+      "ZN:Southwest>LOC:Dallas DC",
+    );
+    expect(laneKeyStringDisplay("ST:us_il>ANY", resolve)).toBe("ST:IL>ANY");
+  });
+
+  it("leaves literal segments exactly as stored", () => {
+    expect(laneKeyStringDisplay("Z3:606>CT:USA", resolve)).toBe("Z3:606>CT:USA");
+  });
+
+  it("shows a placeholder rather than the id while a name is unresolved", () => {
+    const display = laneKeyStringDisplay("ZN:rzn_unknown>ANY", resolve);
+
+    expect(display).toBe("ZN:…>ANY");
+    expect(display).not.toContain("rzn_unknown");
+  });
+
+  it("passes the radius sentinel and empty keys through untouched", () => {
+    expect(laneKeyStringDisplay("RADIUS", resolve)).toBe("RADIUS");
+    expect(laneKeyStringDisplay("", resolve)).toBe("");
+  });
+});
+
+describe("laneKeyScopeIds", () => {
+  it("lists every id a stored key references, typed by scope", () => {
+    expect(laneKeyScopeIds("CS:us_tx|DALLAS>ZN:rzn_sw")).toEqual([
+      { type: "CityState", id: "us_tx" },
+      { type: "Zone", id: "rzn_sw" },
+    ]);
+  });
+
+  it("finds nothing in keys made only of literals", () => {
+    expect(laneKeyScopeIds("Z3:606>CT:USA")).toEqual([]);
+    expect(laneKeyScopeIds("ANY>ANY")).toEqual([]);
+    expect(laneKeyScopeIds("RADIUS")).toEqual([]);
   });
 });
 

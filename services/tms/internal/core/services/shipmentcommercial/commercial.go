@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -336,9 +337,14 @@ func (c *Calculator) applyQuote(
 func ratingDetailFromQuote(rated *services.RatedShipment) *shipment.RatingDetail {
 	result, _ := rated.Amount.Float64()
 
+	// The trace records what priced the load, not the variables that fed the
+	// arithmetic, so there are none to carry across. The map is still written
+	// empty rather than left nil: every reader of the detail treats it as
+	// always present, and a nil one fails the read rather than the field.
 	detail := &shipment.RatingDetail{
-		Result: result,
-		Source: string(rated.Outcome),
+		Result:            result,
+		Source:            string(rated.Outcome),
+		ResolvedVariables: map[string]any{},
 	}
 
 	quote := rated.Quote
@@ -363,6 +369,8 @@ func ratingDetailFromQuote(rated *services.RatedShipment) *shipment.RatingDetail
 
 	if trace := quote.Trace; trace != nil {
 		detail.Breakdown = breakdownFromTrace(trace)
+		applyFormulaComponent(detail, trace)
+		applyGuardrail(detail, trace)
 
 		if winner := trace.Winner(); winner != nil {
 			detail.AgreementName = winner.AgreementName
@@ -371,6 +379,62 @@ func ratingDetailFromQuote(rated *services.RatedShipment) *shipment.RatingDetail
 	}
 
 	return detail
+}
+
+// applyFormulaComponent lifts the template that produced the linehaul out of
+// the trace, for the two ways a formula can price a load: a rule that delegates
+// to one, and the fallback taken when no contract covers the lane.
+//
+// Without this the detail names a template id and nothing else, and the billing
+// panel shows a blank where the formula's name and expression belong.
+func applyFormulaComponent(detail *shipment.RatingDetail, trace *ratetypes.Trace) {
+	for i := range trace.Components {
+		component := &trace.Components[i]
+		if component.Source != ratetypes.ComponentSourceFormulaTemplate {
+			continue
+		}
+
+		if detail.FormulaTemplateID == "" {
+			detail.FormulaTemplateID = component.SourceID
+		}
+		detail.FormulaTemplateName = component.SourceName
+		detail.Expression = maputils.StringValue(component.Detail, "expression")
+		if version, ok := maputils.IntValue(component.Detail, "versionNumber"); ok {
+			detail.VersionNumber = version
+		}
+
+		return
+	}
+}
+
+// applyGuardrail records the bound that decided the final number.
+//
+// The trace can hold several — a weight break's minimum, then the rule's
+// absolute minimum — and the last one applied is the one that produced the
+// amount the customer sees, so that is the one carried onto the shipment.
+func applyGuardrail(detail *shipment.RatingDetail, trace *ratetypes.Trace) {
+	for i := len(trace.Guardrails) - 1; i >= 0; i-- {
+		guardrail := trace.Guardrails[i]
+		if !guardrail.Applied {
+			continue
+		}
+
+		rawResult, _ := guardrail.Raw.Float64()
+		clamped, _ := guardrail.Result.Float64()
+
+		applied := &shipment.RatingGuardrail{Applied: true, RawResult: rawResult}
+		if guardrail.Kind == ratetypes.ComponentKindMaximumCharge {
+			applied.Bound = "max"
+			applied.MaxCharge = &clamped
+		} else {
+			applied.Bound = "min"
+			applied.MinCharge = &clamped
+		}
+
+		detail.Guardrail = applied
+
+		return
+	}
 }
 
 // breakdownFromTrace renders the trace's components as the breakdown lines the

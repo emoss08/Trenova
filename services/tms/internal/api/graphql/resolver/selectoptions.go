@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/order"
+	"github.com/emoss08/trenova/internal/core/domain/ratezone"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
@@ -122,6 +124,12 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		},
 		gqlmodel.SelectOptionResourceGlAccount: {
 			resolve: r.resolveGLAccountSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceLocation: {
+			resolve: r.resolveLocationSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceRateZone: {
+			resolve: r.resolveRateZoneSelectOptions,
 		},
 	}
 }
@@ -386,6 +394,78 @@ func (r *Resolver) resolveUSStateSelectOptions(
 		result,
 		req.selectQuery.Pagination.SafeOffset(),
 		usStateSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveLocationSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		entities, err := r.locationService.GetByIDs(
+			ctx,
+			repositories.GetLocationsByIDsRequest{
+				TenantInfo:  req.tenantInfo,
+				LocationIDs: req.ids,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		items := orderedSelectOptionItems(req.ids, entities, locationID, locationSelectOptionItem)
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.locationService.SelectOptions(
+		ctx,
+		&repositories.LocationSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		locationSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveRateZoneSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.rateZoneService.GetByID(
+				ctx,
+				&repositories.GetRateZoneByIDRequest{
+					RateZoneID: id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, rateZoneSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.rateZoneService.SelectOptions(ctx, req.selectQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		rateZoneSelectOptionItem,
 	)
 }
 
@@ -805,6 +885,45 @@ func usStateSelectOption(entity *usstate.UsState) *gqlmodel.SelectOption {
 	}
 }
 
+func locationSelectOptionItem(entity *location.Location) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		locationSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func locationSelectOption(entity *location.Location) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Code),
+		Meta: map[string]any{
+			"code": entity.Code,
+		},
+	}
+}
+
+func rateZoneSelectOptionItem(entity *ratezone.RateZone) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		rateZoneSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func rateZoneSelectOption(entity *ratezone.RateZone) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Code),
+		Meta: map[string]any{
+			"code":   entity.Code,
+			"status": string(entity.Status),
+		},
+	}
+}
+
 func shipmentSelectOptionItem(entity *shipment.Shipment) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		shipmentSelectOption(entity),
@@ -882,6 +1001,10 @@ func tractorID(entity *tractor.Tractor) pulid.ID {
 }
 
 func equipmentManufacturerID(entity *equipmentmanufacturer.EquipmentManufacturer) pulid.ID {
+	return entity.ID
+}
+
+func locationID(entity *location.Location) pulid.ID {
 	return entity.ID
 }
 

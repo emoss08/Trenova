@@ -36,6 +36,14 @@ func CloneShallow(input map[string]any) map[string]any {
 	return output
 }
 
+func OrEmpty(input map[string]any) map[string]any {
+	if input == nil {
+		return map[string]any{}
+	}
+
+	return input
+}
+
 func WithoutFuncValues(input map[string]any) map[string]any {
 	if len(input) == 0 {
 		return nil

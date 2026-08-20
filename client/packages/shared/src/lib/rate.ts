@@ -101,11 +101,43 @@ export function laneSpecificity(rule: RateAgreementRule): number {
 
 /** The lane key the engine will store, or null for a lane matched by radius. */
 export function laneKeyPreview(rule: RateAgreementRule): string | null {
-  const origin = scopeKey(rule.originScopeType, rule.originScopeValue, rule.originCity);
+  return laneKeyText(rule, (_, value) => value);
+}
+
+/**
+ * Resolves an id-backed scope value — a state, zone or location id — to the
+ * record's name. Returning undefined means the name is not known yet, which the
+ * display renders as pending rather than falling back to the id.
+ */
+export type LaneScopeLabelResolver = (type: RateScopeType, value: string) => string | undefined;
+
+/**
+ * The lane key as a person should read it: the same shape the engine matches
+ * on, with every record id replaced by the record's name. Ids must never reach
+ * the screen — a value whose name has not resolved yet reads as an ellipsis.
+ */
+export function laneKeyDisplay(
+  rule: RateAgreementRule,
+  resolveScopeValue: LaneScopeLabelResolver,
+): string | null {
+  return laneKeyText(rule, (type, value) => resolveScopeValue(type, value) ?? "…");
+}
+
+function laneKeyText(
+  rule: RateAgreementRule,
+  renderValue: (type: RateScopeType, value: string) => string,
+): string | null {
+  const origin = scopeKey(
+    rule.originScopeType,
+    rule.originScopeValue,
+    rule.originCity,
+    renderValue,
+  );
   const destination = scopeKey(
     rule.destinationScopeType,
     rule.destinationScopeValue,
     rule.destinationCity,
+    renderValue,
   );
 
   if (origin === null || destination === null) {
@@ -115,22 +147,33 @@ export function laneKeyPreview(rule: RateAgreementRule): string | null {
   return `${origin}>${destination}`;
 }
 
-function scopeKey(type: RateScopeType, value: string, city: string): string | null {
+/**
+ * One end of a lane key. Scopes naming a record (state, zone, location) pass
+ * their value through renderValue, so the same shape serves both the stored key
+ * (the value verbatim) and the human reading of it (the record's name). Literal
+ * scopes — postal codes, countries, cities — are their own display.
+ */
+function scopeKey(
+  type: RateScopeType,
+  value: string,
+  city: string,
+  renderValue: (type: RateScopeType, value: string) => string,
+): string | null {
   switch (type) {
     case "Any":
       return "ANY";
     case "Location":
-      return value ? `LOC:${value}` : "";
+      return value ? `LOC:${renderValue(type, value)}` : "";
     case "Zip5":
       return value ? `Z5:${normalizePostal(value)}` : "";
     case "Zip3":
       return value ? `Z3:${normalizePostal(value).slice(0, 3)}` : "";
     case "CityState":
-      return value && city ? `CS:${value}|${city.trim().toUpperCase()}` : "";
+      return value && city ? `CS:${renderValue(type, value)}|${city.trim().toUpperCase()}` : "";
     case "Zone":
-      return value ? `ZN:${value}` : "";
+      return value ? `ZN:${renderValue(type, value)}` : "";
     case "State":
-      return value ? `ST:${value}` : "";
+      return value ? `ST:${renderValue(type, value)}` : "";
     case "Country":
       return value ? `CT:${value.trim().toUpperCase()}` : "";
     case "Radius":
@@ -140,6 +183,83 @@ function scopeKey(type: RateScopeType, value: string, city: string): string | nu
     default:
       return "";
   }
+}
+
+/**
+ * The stored key prefixes whose payload is a record id rather than a literal.
+ * Everything else in a key — postal digits, country codes, folded cities — is
+ * its own display.
+ */
+const KEY_PREFIX_SCOPE: Record<string, RateScopeType> = {
+  LOC: "Location",
+  ZN: "Zone",
+  ST: "State",
+  CS: "CityState",
+};
+
+export type LaneKeyScopeRef = {
+  type: RateScopeType;
+  id: string;
+};
+
+function parseKeySegment(segment: string): LaneKeyScopeRef | null {
+  const colon = segment.indexOf(":");
+  if (colon < 0) {
+    return null;
+  }
+
+  const type = KEY_PREFIX_SCOPE[segment.slice(0, colon)];
+  if (!type) {
+    return null;
+  }
+
+  const rest = segment.slice(colon + 1);
+  const id = type === "CityState" ? rest.split("|")[0] : rest;
+
+  return id ? { type, id } : null;
+}
+
+/**
+ * The record ids a stored lane key references, typed by the scope that stored
+ * them — what a caller has to look up before the key can be shown to a person.
+ */
+export function laneKeyScopeIds(key: string): LaneKeyScopeRef[] {
+  const refs: LaneKeyScopeRef[] = [];
+  for (const segment of key.split(">")) {
+    const ref = parseKeySegment(segment);
+    if (ref) {
+      refs.push(ref);
+    }
+  }
+
+  return refs;
+}
+
+/**
+ * A stored lane key as a person should read it, for the keys that arrive from
+ * the server already assembled — import diffs, simulation rows — where there is
+ * no rule object to rebuild the key from. Same contract as `laneKeyDisplay`:
+ * ids never reach the screen, an unresolved name reads as an ellipsis, and
+ * everything literal is left exactly as stored.
+ */
+export function laneKeyStringDisplay(
+  key: string,
+  resolveScopeValue: LaneScopeLabelResolver,
+): string {
+  return key
+    .split(">")
+    .map((segment) => {
+      const ref = parseKeySegment(segment);
+      if (!ref) {
+        return segment;
+      }
+
+      const label = resolveScopeValue(ref.type, ref.id) ?? "…";
+      const idStart = segment.indexOf(":") + 1;
+
+      return segment.slice(0, idStart) + label + segment.slice(idStart + ref.id.length);
+    })
+    .join(">");
 }
 
 /**

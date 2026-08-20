@@ -14,7 +14,7 @@ import {
   PlusIcon,
   Trash2Icon,
 } from "lucide-react";
-import { m } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import { useMemo, useState } from "react";
 import { AddWidgetDialog } from "./add-widget-dialog";
 import { HomeEditDock } from "./edit-dock";
@@ -193,11 +193,14 @@ export function HomeCanvas({
         )}
       </TileGrid>
 
-      {editing && dock && (
-        <>
-          {/* Keeps the last row of tiles reachable underneath the fixed dock. */}
-          <div className="h-16" aria-hidden />
+      {/* Keeps the last row of tiles reachable underneath the fixed dock. */}
+      {editing && dock && <div className="h-16" aria-hidden />}
+
+      {/* Holds the dock mounted while it slides back off the bottom edge. */}
+      <AnimatePresence>
+        {editing && dock && (
           <HomeEditDock
+            key="home-edit-dock"
             dirty={dock.dirty}
             saving={dock.saving}
             saveLabel={dock.saveLabel}
@@ -207,8 +210,8 @@ export function HomeCanvas({
             onDiscard={dock.onDiscard}
             onSave={dock.onSave}
           />
-        </>
-      )}
+        )}
+      </AnimatePresence>
 
       <AddWidgetDialog
         open={addOpen}

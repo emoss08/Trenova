@@ -18,6 +18,7 @@ import type { RateImportBatch } from "@trenova/shared/types/rate";
 import { CircleAlertIcon, LoaderCircleIcon, UploadIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useLaneKeyLabels } from "./use-lane-scope-labels";
 
 const TONE_CLASS: Record<ChangeTone, string> = {
   danger: "text-destructive",
@@ -90,6 +91,9 @@ export function ImportPanel({ rateAgreementId }: ImportPanelProps) {
 
   const chooseFile = useCallback(() => fileInput.current?.click(), []);
 
+  const changes = meaningfulChanges(batch?.changes);
+  const displayLaneKey = useLaneKeyLabels(changes.map((change) => change.laneKey));
+
   const onFileChosen = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -111,7 +115,6 @@ export function ImportPanel({ rateAgreementId }: ImportPanelProps) {
     );
   }
 
-  const changes = meaningfulChanges(batch?.changes);
   const warnings = commitWarnings(batch);
 
   return (
@@ -195,8 +198,12 @@ export function ImportPanel({ rateAgreementId }: ImportPanelProps) {
               {changes.map((change) => (
                 <tr key={`${change.kind}-${change.laneKey}`}>
                   <td className="border-b px-3 py-2">
-                    <span className="font-medium">{change.label || change.laneKey}</span>
-                    <p className="text-muted-foreground font-mono text-xs">{change.laneKey}</p>
+                    <span className="font-medium">
+                      {change.label || displayLaneKey(change.laneKey)}
+                    </span>
+                    <p className="text-muted-foreground font-mono text-xs">
+                      {displayLaneKey(change.laneKey)}
+                    </p>
                   </td>
                   <td
                     className={`border-b px-3 py-2 text-xs ${TONE_CLASS[changeTone(change.kind)]}`}

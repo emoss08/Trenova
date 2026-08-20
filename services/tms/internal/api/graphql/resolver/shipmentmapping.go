@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -153,16 +154,6 @@ func shipmentFromInput(
 	if input.TenderStatus != nil {
 		tenderStatus := shipmentdomain.TenderStatus(*input.TenderStatus)
 		entity.TenderStatus = &tenderStatus
-	}
-	if input.RatingDetail != nil {
-		entity.RatingDetail = &shipmentdomain.RatingDetail{
-			FormulaTemplateID:   input.RatingDetail.FormulaTemplateID,
-			FormulaTemplateName: input.RatingDetail.FormulaTemplateName,
-			Expression:          input.RatingDetail.Expression,
-			ResolvedVariables:   input.RatingDetail.ResolvedVariables,
-			Result:              input.RatingDetail.Result,
-			RatedAt:             int64(input.RatingDetail.RatedAt),
-		}
 	}
 	if input.Version != nil {
 		entity.Version = int64(*input.Version)
@@ -1115,9 +1106,51 @@ func ratingDetailToModel(detail *shipmentdomain.RatingDetail) *gqlmodel.Shipment
 		FormulaTemplateID:   detail.FormulaTemplateID,
 		FormulaTemplateName: detail.FormulaTemplateName,
 		Expression:          detail.Expression,
-		ResolvedVariables:   detail.ResolvedVariables,
+		ResolvedVariables:   maputils.OrEmpty(detail.ResolvedVariables),
 		Result:              detail.Result,
 		RatedAt:             int(detail.RatedAt),
+		VersionNumber:       int(detail.VersionNumber),
+		Breakdown:           ratingBreakdownToModel(detail.Breakdown),
+		Guardrail:           ratingGuardrailToModel(detail.Guardrail),
+		RateQuoteID:         detail.RateQuoteID,
+		AgreementID:         detail.AgreementID,
+		AgreementName:       detail.AgreementName,
+		RuleID:              detail.RuleID,
+		RuleLabel:           detail.RuleLabel,
+		Source:              detail.Source,
+		Explanation:         detail.Explanation,
+	}
+}
+
+func ratingBreakdownToModel(
+	items []shipmentdomain.RatingBreakdownItem,
+) []*gqlmodel.ShipmentRatingBreakdownItem {
+	models := make([]*gqlmodel.ShipmentRatingBreakdownItem, 0, len(items))
+	for i := range items {
+		models = append(models, &gqlmodel.ShipmentRatingBreakdownItem{
+			Name:   items[i].Name,
+			Label:  items[i].Label,
+			Amount: items[i].Amount,
+			Error:  items[i].Error,
+		})
+	}
+
+	return models
+}
+
+func ratingGuardrailToModel(
+	guardrail *shipmentdomain.RatingGuardrail,
+) *gqlmodel.ShipmentRatingGuardrail {
+	if guardrail == nil {
+		return nil
+	}
+
+	return &gqlmodel.ShipmentRatingGuardrail{
+		Applied:   guardrail.Applied,
+		Bound:     guardrail.Bound,
+		RawResult: guardrail.RawResult,
+		MinCharge: guardrail.MinCharge,
+		MaxCharge: guardrail.MaxCharge,
 	}
 }
 

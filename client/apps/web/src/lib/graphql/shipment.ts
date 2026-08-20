@@ -669,7 +669,6 @@ function toShipmentInput(
     billedAt: payload.billedAt,
     ratingUnit: payload.ratingUnit,
     fuelSurchargeLocked: payload.fuelSurchargeLocked ?? false,
-    ratingDetail: payload.ratingDetail,
     version: "version" in payload ? payload.version : undefined,
     moves: payload.moves?.map(toShipmentMoveInput) ?? [],
     additionalCharges: payload.additionalCharges?.map(toAdditionalChargeInput) ?? [],

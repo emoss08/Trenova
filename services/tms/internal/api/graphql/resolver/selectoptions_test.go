@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/ratezone"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
@@ -17,8 +19,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/locationservice"
+	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -153,10 +158,12 @@ func TestSelectOptions_EquipmentManufacturerUsesAuthContextOnly(t *testing.T) {
 
 	permissionEngine := &recordingPermissionEngine{}
 	resolver := &queryResolver{&Resolver{
-		equipmentManufacturerService: equipmentmanufacturerservice.New(equipmentmanufacturerservice.Params{
-			Logger: zap.NewNop(),
-			Repo:   repo,
-		}),
+		equipmentManufacturerService: equipmentmanufacturerservice.New(
+			equipmentmanufacturerservice.Params{
+				Logger: zap.NewNop(),
+				Repo:   repo,
+			},
+		),
 		permissionEngine: permissionEngine,
 	}}
 	ctx := gqlctx.WithAuthContext(
@@ -172,6 +179,96 @@ func TestSelectOptions_EquipmentManufacturerUsesAuthContextOnly(t *testing.T) {
 	require.Len(t, result.Edges, 1)
 	assert.Equal(t, "Great Dane", result.Edges[0].Node.Label)
 	assert.Nil(t, permissionEngine.request)
+}
+
+func TestSelectOptions_LocationByIDsResolvesNames(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	firstID := pulid.MustNew("loc_")
+	secondID := pulid.MustNew("loc_")
+	repo := mocks.NewMockLocationRepository(t)
+	repo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetLocationsByIDsRequest) bool {
+			return req.TenantInfo.OrgID == orgID &&
+				req.TenantInfo.BuID == buID &&
+				len(req.LocationIDs) == 2
+		})).
+		Return([]*location.Location{
+			// Returned out of order on purpose: the connection must follow the
+			// order the ids were asked in, not the order the database found them.
+			{ID: secondID, Code: "CHI01", Name: "Chicago DC", CreatedAt: 1780415884},
+			{ID: firstID, Code: "DAL01", Name: "Dallas DC", CreatedAt: 1780415883},
+		}, nil).
+		Once()
+
+	resolver := &queryResolver{&Resolver{
+		locationService: locationservice.New(locationservice.Params{
+			Logger: zap.NewNop(),
+			Repo:   repo,
+		}),
+	}}
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(orgID, buID, userID),
+	)
+
+	result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceLocation,
+		Ids:      []string{firstID.String(), secondID.String()},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Edges, 2)
+	assert.Equal(t, "Dallas DC", result.Edges[0].Node.Label)
+	assert.Equal(t, "DAL01", result.Edges[0].Node.Meta["code"])
+	assert.Equal(t, "Chicago DC", result.Edges[1].Node.Label)
+}
+
+func TestSelectOptions_RateZoneByIDsResolvesNames(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	zoneID := pulid.MustNew("rzn_")
+	repo := mocks.NewMockRateZoneRepository(t)
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetRateZoneByIDRequest) bool {
+			return req.RateZoneID == zoneID &&
+				req.TenantInfo.OrgID == orgID &&
+				req.TenantInfo.BuID == buID
+		})).
+		Return(&ratezone.RateZone{
+			ID:        zoneID,
+			Code:      "SW",
+			Name:      "Southwest",
+			CreatedAt: 1780415883,
+		}, nil).
+		Once()
+
+	resolver := &queryResolver{&Resolver{
+		rateZoneService: ratezoneservice.New(ratezoneservice.Params{
+			Logger: zap.NewNop(),
+			Repo:   repo,
+		}),
+	}}
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(orgID, buID, userID),
+	)
+
+	result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceRateZone,
+		Ids:      []string{zoneID.String()},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Edges, 1)
+	assert.Equal(t, "Southwest", result.Edges[0].Node.Label)
+	assert.Equal(t, "SW", result.Edges[0].Node.Meta["code"])
 }
 
 func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {
@@ -236,7 +333,11 @@ func TestSelectOptionMappers(t *testing.T) {
 	manufacturerOption := equipmentManufacturerSelectOption(manufacturer)
 	assert.Equal(t, "Great Dane", manufacturerOption.Label)
 	assert.Equal(t, "Trailer manufacturer", *manufacturerOption.Description)
-	assert.Equal(t, manufacturer.CreatedAt, equipmentManufacturerSelectOptionItem(manufacturer).cursor.CreatedAt)
+	assert.Equal(
+		t,
+		manufacturer.CreatedAt,
+		equipmentManufacturerSelectOptionItem(manufacturer).cursor.CreatedAt,
+	)
 
 	assert.Equal(t, "TRL-1", trailerSelectOption(&trailer.Trailer{
 		ID:   pulid.MustNew("tr_"),
@@ -264,6 +365,25 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(t, "Ada", workerOption.Meta["firstName"])
 	assert.Equal(t, "OTR", workerOption.Meta["fleetCode"])
 
+	locationOption := locationSelectOption(&location.Location{
+		ID:   pulid.MustNew("loc_"),
+		Code: "DAL01",
+		Name: "Dallas DC",
+	})
+	assert.Equal(t, "Dallas DC", locationOption.Label)
+	assert.Equal(t, "DAL01", *locationOption.Description)
+	assert.Equal(t, "DAL01", locationOption.Meta["code"])
+
+	zoneOption := rateZoneSelectOption(&ratezone.RateZone{
+		ID:     pulid.MustNew("rzn_"),
+		Code:   "SW",
+		Name:   "Southwest",
+		Status: domaintypes.StatusActive,
+	})
+	assert.Equal(t, "Southwest", zoneOption.Label)
+	assert.Equal(t, "SW", *zoneOption.Description)
+	assert.Equal(t, "Active", zoneOption.Meta["status"])
+
 	stateOption := usStateSelectOption(&usstate.UsState{
 		ID:           pulid.MustNew("us_"),
 		Name:         "Illinois",
@@ -286,7 +406,11 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(t, "BOL-2002", *shipmentOption.Description)
 	assert.Equal(t, string(shipment.StatusInTransit), shipmentOption.Meta["status"])
 	assert.Equal(t, "BOL-2002", shipmentOption.Meta["bol"])
-	assert.Equal(t, shipmentEntity.CreatedAt, shipmentSelectOptionItem(shipmentEntity).cursor.CreatedAt)
+	assert.Equal(
+		t,
+		shipmentEntity.CreatedAt,
+		shipmentSelectOptionItem(shipmentEntity).cursor.CreatedAt,
+	)
 
 	transferEntity := &edi.EDITransfer{
 		ID:        pulid.MustNew("edilt_"),
@@ -305,7 +429,11 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(t, string(edi.TransferStatusSubmitted), transferOption.Meta["status"])
 	assert.Equal(t, "Partner A", transferOption.Meta["sourcePartner"])
 	assert.Equal(t, "Partner B", transferOption.Meta["targetPartner"])
-	assert.Equal(t, transferEntity.CreatedAt, ediTransferSelectOptionItem(transferEntity).cursor.CreatedAt)
+	assert.Equal(
+		t,
+		transferEntity.CreatedAt,
+		ediTransferSelectOptionItem(transferEntity).cursor.CreatedAt,
+	)
 
 	fallbackTransfer := &edi.EDITransfer{
 		ID:        pulid.MustNew("edilt_"),

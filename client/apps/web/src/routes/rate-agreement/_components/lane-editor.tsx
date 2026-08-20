@@ -13,8 +13,10 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
   findCoverageIssues,
   laneDisplayLabel,
+  laneKeyDisplay,
   laneKeyPreview,
   laneSpecificity,
+  type LaneScopeLabelResolver,
 } from "@trenova/shared/lib/rate";
 import type { RateAgreement, RateAgreementRule } from "@trenova/shared/types/rate";
 import { PlusIcon, TriangleAlertIcon } from "lucide-react";
@@ -22,6 +24,7 @@ import { useMemo } from "react";
 import type { Control } from "react-hook-form";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { LaneScopeFields } from "./lane-scope-fields";
+import { useLaneScopeLabels } from "./use-lane-scope-labels";
 
 const NEW_LANE: RateAgreementRule = {
   label: "",
@@ -55,6 +58,7 @@ export function LaneEditor() {
   const { control } = useFormContext<RateAgreement>();
   const { fields, append, remove } = useFieldArray({ control, name: "rules" });
   const rules = (useWatch({ control, name: "rules" }) ?? []) as RateAgreementRule[];
+  const resolveScopeValue = useLaneScopeLabels(rules);
 
   // `rules` is a watched array and so is a fresh reference on every render.
   // Keying the memo on what coverage actually depends on means it recomputes
@@ -109,6 +113,7 @@ export function LaneEditor() {
           index={index}
           rule={rules[index]}
           issue={issueByIndex.get(index)?.message}
+          resolveScopeValue={resolveScopeValue}
           onRemove={() => remove(index)}
         />
       ))}
@@ -126,15 +131,19 @@ type LaneRowProps = {
   index: number;
   rule?: RateAgreementRule;
   issue?: string;
+  resolveScopeValue: LaneScopeLabelResolver;
   onRemove: () => void;
 };
 
-function LaneRow({ control, index, rule, issue, onRemove }: LaneRowProps) {
+function LaneRow({ control, index, rule, issue, resolveScopeValue, onRemove }: LaneRowProps) {
   // A lane prices through exactly one of the two, so whichever is chosen hides
   // the other — clearing the selection brings the alternative back.
   const usesMatrix = Boolean(rule?.rateMatrixId);
   const usesFormula = Boolean(rule?.formulaTemplateId);
-  const laneKey = rule ? laneKeyPreview(rule) : null;
+  // The key is shown with names in place of record ids — "CS:TX|DALLAS", never
+  // "CS:us_01M0…|DALLAS". A person debugging "why did the other rate apply"
+  // needs the key's shape, not its identifiers.
+  const laneKey = rule ? laneKeyDisplay(rule, resolveScopeValue) : null;
 
   return (
     <div className="rounded-md border bg-card p-4">

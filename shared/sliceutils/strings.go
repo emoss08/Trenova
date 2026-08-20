@@ -1,6 +1,9 @@
 package sliceutils
 
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 func DedupeStrings(items []string) []string {
 	if len(items) == 0 {
@@ -23,10 +26,8 @@ func DedupeStrings(items []string) []string {
 }
 
 func AppendIfMissing(items []string, value string) []string {
-	for _, item := range items {
-		if item == value {
-			return items
-		}
+	if slices.Contains(items, value) {
+		return items
 	}
 	return append(items, value)
 }

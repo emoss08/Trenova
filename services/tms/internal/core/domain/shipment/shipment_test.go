@@ -155,6 +155,41 @@ func TestRestoreRateOwnedFields_CallersCannotClearAnOverride(t *testing.T) {
 	require.Equal(t, ruleID, *updated.RateAgreementRuleID)
 }
 
+// The rating detail explains an invoice. A client echoing back the handful of
+// fields it renders must not thereby erase the contract, the breakdown and the
+// guardrail that priced a locked shipment, which is never re-rated.
+func TestRestoreRateOwnedFields_RatingDetailComesFromTheRaterNotThePayload(t *testing.T) {
+	t.Parallel()
+
+	original := &Shipment{
+		RateLocked: true,
+		RatingDetail: &RatingDetail{
+			FormulaTemplateID: "ft_01JT",
+			Result:            1400,
+			AgreementName:     "Acme Master Contract",
+			RuleLabel:         "DFW → LAX dry van",
+			Source:            "Rated",
+			Explanation:       "Priced from the Acme contract",
+			Breakdown: []RatingBreakdownItem{
+				{Name: "Linehaul", Amount: 1200},
+				{Name: "FuelSurcharge", Amount: 200},
+			},
+			Guardrail: &RatingGuardrail{Applied: true, Bound: "min", RawResult: 1100},
+		},
+	}
+
+	updated := &Shipment{
+		RatingDetail: &RatingDetail{FormulaTemplateID: "ft_01JT", Result: 1400},
+	}
+
+	RestoreRateOwnedFields(original, updated)
+
+	require.Equal(t, original.RatingDetail, updated.RatingDetail)
+	require.Len(t, updated.RatingDetail.Breakdown, 2)
+	require.NotNil(t, updated.RatingDetail.Guardrail)
+	require.Equal(t, "Acme Master Contract", updated.RatingDetail.AgreementName)
+}
+
 // A forged override on a create — where there is no original to compare
 // against — is left alone here; the create path never calls this.
 func TestRestoreRateOwnedFields_IgnoresAMissingSide(t *testing.T) {

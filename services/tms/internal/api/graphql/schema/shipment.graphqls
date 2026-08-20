@@ -190,6 +190,31 @@ type Shipment {
   formulaTemplate: ShipmentFormulaTemplate
 }
 
+"One line of the arithmetic that produced the rate, in the order it was applied."
+type ShipmentRatingBreakdownItem {
+  name: String!
+  label: String!
+  amount: Float!
+  "Set when the line could not be evaluated, in which case the amount is zero."
+  error: String!
+}
+
+"A bound that changed the answer — a minimum or maximum charge that took over from the computed rate."
+type ShipmentRatingGuardrail {
+  applied: Boolean!
+  bound: String!
+  rawResult: Float!
+  minCharge: Float
+  maxCharge: Float
+}
+
+"""
+Why a shipment is priced the way it is.
+
+The contract fields are filled in when a rate agreement priced the load. They
+name the quote rather than repeating it: the quote holds the full explanation,
+and copying it here would let the two drift.
+"""
 type ShipmentRatingDetail {
   formulaTemplateId: String!
   formulaTemplateName: String!
@@ -198,6 +223,18 @@ type ShipmentRatingDetail {
   resolvedVariables: JSON!
   result: Float!
   ratedAt: Int!
+  "Zero when the rate did not come from a versioned formula template."
+  versionNumber: Int!
+  breakdown: [ShipmentRatingBreakdownItem!]!
+  guardrail: ShipmentRatingGuardrail
+  rateQuoteId: String!
+  agreementId: String!
+  agreementName: String!
+  ruleId: String!
+  ruleLabel: String!
+  "The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound."
+  source: String!
+  explanation: String!
 }
 
 type ShipmentCustomer {
@@ -1060,15 +1097,6 @@ type ShipmentLoadingOptimizationResponse {
   aiAnalysis: String
 }
 
-input ShipmentRatingDetailInput {
-  formulaTemplateId: String!
-  formulaTemplateName: String!
-  expression: String!
-  resolvedVariables: JSON!
-  result: Float!
-  ratedAt: Int!
-}
-
 input ShipmentInput {
   sourceDocumentId: String
   serviceTypeId: ID!
@@ -1105,7 +1133,6 @@ input ShipmentInput {
   billedAt: Int
   ratingUnit: Int = 1
   fuelSurchargeLocked: Boolean = false
-  ratingDetail: ShipmentRatingDetailInput
   version: Int
   moves: [ShipmentMoveInput!] = []
   additionalCharges: [ShipmentAdditionalChargeInput!] = []

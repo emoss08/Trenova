@@ -4203,7 +4203,6 @@ type ShipmentInput struct {
 	BilledAt               *int                             `json:"billedAt,omitempty"`
 	RatingUnit             *int                             `json:"ratingUnit,omitempty"`
 	FuelSurchargeLocked    *bool                            `json:"fuelSurchargeLocked,omitempty"`
-	RatingDetail           *ShipmentRatingDetailInput       `json:"ratingDetail,omitempty"`
 	Version                *int                             `json:"version,omitempty"`
 	Moves                  []*ShipmentMoveInput             `json:"moves,omitempty"`
 	AdditionalCharges      []*ShipmentAdditionalChargeInput `json:"additionalCharges,omitempty"`
@@ -4416,6 +4415,20 @@ type ShipmentProfitabilityEstimate struct {
 	MissingDistance     bool    `json:"missingDistance"`
 }
 
+// One line of the arithmetic that produced the rate, in the order it was applied.
+type ShipmentRatingBreakdownItem struct {
+	Name   string  `json:"name"`
+	Label  string  `json:"label"`
+	Amount float64 `json:"amount"`
+	// Set when the line could not be evaluated, in which case the amount is zero.
+	Error string `json:"error"`
+}
+
+// Why a shipment is priced the way it is.
+//
+// The contract fields are filled in when a rate agreement priced the load. They
+// name the quote rather than repeating it: the quote holds the full explanation,
+// and copying it here would let the two drift.
 type ShipmentRatingDetail struct {
 	FormulaTemplateID   string `json:"formulaTemplateId"`
 	FormulaTemplateName string `json:"formulaTemplateName"`
@@ -4424,15 +4437,27 @@ type ShipmentRatingDetail struct {
 	ResolvedVariables map[string]any `json:"resolvedVariables"`
 	Result            float64        `json:"result"`
 	RatedAt           int            `json:"ratedAt"`
+	// Zero when the rate did not come from a versioned formula template.
+	VersionNumber int                            `json:"versionNumber"`
+	Breakdown     []*ShipmentRatingBreakdownItem `json:"breakdown"`
+	Guardrail     *ShipmentRatingGuardrail       `json:"guardrail,omitempty"`
+	RateQuoteID   string                         `json:"rateQuoteId"`
+	AgreementID   string                         `json:"agreementId"`
+	AgreementName string                         `json:"agreementName"`
+	RuleID        string                         `json:"ruleId"`
+	RuleLabel     string                         `json:"ruleLabel"`
+	// The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound.
+	Source      string `json:"source"`
+	Explanation string `json:"explanation"`
 }
 
-type ShipmentRatingDetailInput struct {
-	FormulaTemplateID   string         `json:"formulaTemplateId"`
-	FormulaTemplateName string         `json:"formulaTemplateName"`
-	Expression          string         `json:"expression"`
-	ResolvedVariables   map[string]any `json:"resolvedVariables"`
-	Result              float64        `json:"result"`
-	RatedAt             int            `json:"ratedAt"`
+// A bound that changed the answer — a minimum or maximum charge that took over from the computed rate.
+type ShipmentRatingGuardrail struct {
+	Applied   bool     `json:"applied"`
+	Bound     string   `json:"bound"`
+	RawResult float64  `json:"rawResult"`
+	MinCharge *float64 `json:"minCharge,omitempty"`
+	MaxCharge *float64 `json:"maxCharge,omitempty"`
 }
 
 type ShipmentReadyToDispatch struct {
@@ -6266,6 +6291,8 @@ const (
 	SelectOptionResourceFiscalYear            SelectOptionResource = "FISCAL_YEAR"
 	SelectOptionResourceFiscalPeriod          SelectOptionResource = "FISCAL_PERIOD"
 	SelectOptionResourceGlAccount             SelectOptionResource = "GL_ACCOUNT"
+	SelectOptionResourceLocation              SelectOptionResource = "LOCATION"
+	SelectOptionResourceRateZone              SelectOptionResource = "RATE_ZONE"
 )
 
 var AllSelectOptionResource = []SelectOptionResource{
@@ -6285,11 +6312,13 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceFiscalYear,
 	SelectOptionResourceFiscalPeriod,
 	SelectOptionResourceGlAccount,
+	SelectOptionResourceLocation,
+	SelectOptionResourceRateZone,
 }
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceCarrier, SelectOptionResourceCustomer, SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceFiscalYear, SelectOptionResourceFiscalPeriod, SelectOptionResourceGlAccount:
+	case SelectOptionResourceCarrier, SelectOptionResourceCustomer, SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceFiscalYear, SelectOptionResourceFiscalPeriod, SelectOptionResourceGlAccount, SelectOptionResourceLocation, SelectOptionResourceRateZone:
 		return true
 	}
 	return false

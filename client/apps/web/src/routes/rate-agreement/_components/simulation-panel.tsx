@@ -19,6 +19,7 @@ import { CircleAlertIcon, LoaderCircleIcon, PlayIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
+import { useLaneKeyLabels } from "./use-lane-scope-labels";
 
 /** How often a running simulation is asked how it is getting on. */
 const POLL_INTERVAL_MS = 5_000;
@@ -99,6 +100,12 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
     enabled: Boolean(active) && isTerminal(simulation),
   });
 
+  const problems = problemRules(simulation?.ruleCoverage);
+  const displayLaneKey = useLaneKeyLabels([
+    ...problems.map((row) => row.laneKey),
+    ...(results ?? []).map((row) => row.laneKey),
+  ]);
+
   if (!rateAgreementId) {
     return (
       <p className="text-muted-foreground text-sm">
@@ -109,7 +116,6 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
   }
 
   const progress = runProgress(simulation);
-  const problems = problemRules(simulation?.ruleCoverage);
 
   return (
     <div className="flex flex-col gap-4">
@@ -187,7 +193,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
             <Alert key={row.ruleId}>
               <CircleAlertIcon className="size-4" />
               <AlertDescription>
-                <span className="font-medium">{row.label || row.laneKey}</span>{" "}
+                <span className="font-medium">{row.label || displayLaneKey(row.laneKey)}</span>{" "}
                 <span className="text-muted-foreground">— {ruleOutcomeLabel(row.outcome)}</span>
                 <p className="text-muted-foreground mt-0.5 text-xs">{ruleCoverageNote(row)}</p>
               </AlertDescription>
@@ -217,7 +223,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                       {row.proNumber || row.shipmentId}
                     </td>
                     <td className="text-muted-foreground border-b px-3 py-2 font-mono text-xs">
-                      {row.laneKey || "—"}
+                      {row.laneKey ? displayLaneKey(row.laneKey) : "—"}
                     </td>
                     <td className="border-b px-3 py-2 text-right font-mono text-xs">
                       {row.beforeAmount}

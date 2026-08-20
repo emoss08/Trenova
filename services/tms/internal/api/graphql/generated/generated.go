@@ -6251,13 +6251,38 @@ type ComplexityRoot struct {
 		TotalMiles          func(childComplexity int) int
 	}
 
+	ShipmentRatingBreakdownItem struct {
+		Amount func(childComplexity int) int
+		Error  func(childComplexity int) int
+		Label  func(childComplexity int) int
+		Name   func(childComplexity int) int
+	}
+
 	ShipmentRatingDetail struct {
+		AgreementID         func(childComplexity int) int
+		AgreementName       func(childComplexity int) int
+		Breakdown           func(childComplexity int) int
+		Explanation         func(childComplexity int) int
 		Expression          func(childComplexity int) int
 		FormulaTemplateID   func(childComplexity int) int
 		FormulaTemplateName func(childComplexity int) int
+		Guardrail           func(childComplexity int) int
+		RateQuoteID         func(childComplexity int) int
 		RatedAt             func(childComplexity int) int
 		ResolvedVariables   func(childComplexity int) int
 		Result              func(childComplexity int) int
+		RuleID              func(childComplexity int) int
+		RuleLabel           func(childComplexity int) int
+		Source              func(childComplexity int) int
+		VersionNumber       func(childComplexity int) int
+	}
+
+	ShipmentRatingGuardrail struct {
+		Applied   func(childComplexity int) int
+		Bound     func(childComplexity int) int
+		MaxCharge func(childComplexity int) int
+		MinCharge func(childComplexity int) int
+		RawResult func(childComplexity int) int
 	}
 
 	ShipmentReadyToDispatch struct {
@@ -38811,6 +38836,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ShipmentProfitabilityEstimate.TotalMiles(childComplexity), true
 
+	case "ShipmentRatingBreakdownItem.amount":
+		if e.ComplexityRoot.ShipmentRatingBreakdownItem.Amount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingBreakdownItem.Amount(childComplexity), true
+	case "ShipmentRatingBreakdownItem.error":
+		if e.ComplexityRoot.ShipmentRatingBreakdownItem.Error == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingBreakdownItem.Error(childComplexity), true
+	case "ShipmentRatingBreakdownItem.label":
+		if e.ComplexityRoot.ShipmentRatingBreakdownItem.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingBreakdownItem.Label(childComplexity), true
+	case "ShipmentRatingBreakdownItem.name":
+		if e.ComplexityRoot.ShipmentRatingBreakdownItem.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingBreakdownItem.Name(childComplexity), true
+
+	case "ShipmentRatingDetail.agreementId":
+		if e.ComplexityRoot.ShipmentRatingDetail.AgreementID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingDetail.AgreementID(childComplexity), true
+	case "ShipmentRatingDetail.agreementName":
+		if e.ComplexityRoot.ShipmentRatingDetail.AgreementName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingDetail.AgreementName(childComplexity), true
+	case "ShipmentRatingDetail.breakdown":
+		if e.ComplexityRoot.ShipmentRatingDetail.Breakdown == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingDetail.Breakdown(childComplexity), true
+	case "ShipmentRatingDetail.explanation":
+		if e.ComplexityRoot.ShipmentRatingDetail.Explanation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingDetail.Explanation(childComplexity), true
 	case "ShipmentRatingDetail.expression":
 		if e.ComplexityRoot.ShipmentRatingDetail.Expression == nil {
 			break
@@ -38829,6 +38903,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentRatingDetail.FormulaTemplateName(childComplexity), true
+	case "ShipmentRatingDetail.guardrail":
+		if e.ComplexityRoot.ShipmentRatingDetail.Guardrail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingDetail.Guardrail(childComplexity), true
+	case "ShipmentRatingDetail.rateQuoteId":
+		if e.ComplexityRoot.ShipmentRatingDetail.RateQuoteID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingDetail.RateQuoteID(childComplexity), true
 	case "ShipmentRatingDetail.ratedAt":
 		if e.ComplexityRoot.ShipmentRatingDetail.RatedAt == nil {
 			break
@@ -38847,6 +38933,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ShipmentRatingDetail.Result(childComplexity), true
+	case "ShipmentRatingDetail.ruleId":
+		if e.ComplexityRoot.ShipmentRatingDetail.RuleID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingDetail.RuleID(childComplexity), true
+	case "ShipmentRatingDetail.ruleLabel":
+		if e.ComplexityRoot.ShipmentRatingDetail.RuleLabel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingDetail.RuleLabel(childComplexity), true
+	case "ShipmentRatingDetail.source":
+		if e.ComplexityRoot.ShipmentRatingDetail.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingDetail.Source(childComplexity), true
+	case "ShipmentRatingDetail.versionNumber":
+		if e.ComplexityRoot.ShipmentRatingDetail.VersionNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingDetail.VersionNumber(childComplexity), true
+
+	case "ShipmentRatingGuardrail.applied":
+		if e.ComplexityRoot.ShipmentRatingGuardrail.Applied == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingGuardrail.Applied(childComplexity), true
+	case "ShipmentRatingGuardrail.bound":
+		if e.ComplexityRoot.ShipmentRatingGuardrail.Bound == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingGuardrail.Bound(childComplexity), true
+	case "ShipmentRatingGuardrail.maxCharge":
+		if e.ComplexityRoot.ShipmentRatingGuardrail.MaxCharge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingGuardrail.MaxCharge(childComplexity), true
+	case "ShipmentRatingGuardrail.minCharge":
+		if e.ComplexityRoot.ShipmentRatingGuardrail.MinCharge == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingGuardrail.MinCharge(childComplexity), true
+	case "ShipmentRatingGuardrail.rawResult":
+		if e.ComplexityRoot.ShipmentRatingGuardrail.RawResult == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ShipmentRatingGuardrail.RawResult(childComplexity), true
 
 	case "ShipmentReadyToDispatch.count":
 		if e.ComplexityRoot.ShipmentReadyToDispatch.Count == nil {
@@ -42750,7 +42891,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputShipmentLoadingStopInput,
 		ec.unmarshalInputShipmentMoveInput,
 		ec.unmarshalInputShipmentPreviousRatesInput,
-		ec.unmarshalInputShipmentRatingDetailInput,
 		ec.unmarshalInputShipmentStopInput,
 		ec.unmarshalInputShipmentTransferOwnershipInput,
 		ec.unmarshalInputShipmentTransferToBillingInput,
@@ -51461,6 +51601,8 @@ extend type Query {
   FISCAL_YEAR
   FISCAL_PERIOD
   GL_ACCOUNT
+  LOCATION
+  RATE_ZONE
 }
 
 input SelectOptionsInput {
@@ -51906,6 +52048,31 @@ type Shipment {
   formulaTemplate: ShipmentFormulaTemplate
 }
 
+"One line of the arithmetic that produced the rate, in the order it was applied."
+type ShipmentRatingBreakdownItem {
+  name: String!
+  label: String!
+  amount: Float!
+  "Set when the line could not be evaluated, in which case the amount is zero."
+  error: String!
+}
+
+"A bound that changed the answer — a minimum or maximum charge that took over from the computed rate."
+type ShipmentRatingGuardrail {
+  applied: Boolean!
+  bound: String!
+  rawResult: Float!
+  minCharge: Float
+  maxCharge: Float
+}
+
+"""
+Why a shipment is priced the way it is.
+
+The contract fields are filled in when a rate agreement priced the load. They
+name the quote rather than repeating it: the quote holds the full explanation,
+and copying it here would let the two drift.
+"""
 type ShipmentRatingDetail {
   formulaTemplateId: String!
   formulaTemplateName: String!
@@ -51914,6 +52081,18 @@ type ShipmentRatingDetail {
   resolvedVariables: JSON!
   result: Float!
   ratedAt: Int!
+  "Zero when the rate did not come from a versioned formula template."
+  versionNumber: Int!
+  breakdown: [ShipmentRatingBreakdownItem!]!
+  guardrail: ShipmentRatingGuardrail
+  rateQuoteId: String!
+  agreementId: String!
+  agreementName: String!
+  ruleId: String!
+  ruleLabel: String!
+  "The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound."
+  source: String!
+  explanation: String!
 }
 
 type ShipmentCustomer {
@@ -52776,15 +52955,6 @@ type ShipmentLoadingOptimizationResponse {
   aiAnalysis: String
 }
 
-input ShipmentRatingDetailInput {
-  formulaTemplateId: String!
-  formulaTemplateName: String!
-  expression: String!
-  resolvedVariables: JSON!
-  result: Float!
-  ratedAt: Int!
-}
-
 input ShipmentInput {
   sourceDocumentId: String
   serviceTypeId: ID!
@@ -52821,7 +52991,6 @@ input ShipmentInput {
   billedAt: Int
   ratingUnit: Int = 1
   fuelSurchargeLocked: Boolean = false
-  ratingDetail: ShipmentRatingDetailInput
   version: Int
   moves: [ShipmentMoveInput!] = []
   additionalCharges: [ShipmentAdditionalChargeInput!] = []
@@ -65429,6 +65598,20 @@ func (ec *executionContext) childFields_ShipmentProfitabilityEstimate(ctx contex
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentProfitabilityEstimate", field.Name)
 }
 
+func (ec *executionContext) childFields_ShipmentRatingBreakdownItem(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_ShipmentRatingBreakdownItem_name(ctx, field)
+	case "label":
+		return ec.fieldContext_ShipmentRatingBreakdownItem_label(ctx, field)
+	case "amount":
+		return ec.fieldContext_ShipmentRatingBreakdownItem_amount(ctx, field)
+	case "error":
+		return ec.fieldContext_ShipmentRatingBreakdownItem_error(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ShipmentRatingBreakdownItem", field.Name)
+}
+
 func (ec *executionContext) childFields_ShipmentRatingDetail(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "formulaTemplateId":
@@ -65443,8 +65626,44 @@ func (ec *executionContext) childFields_ShipmentRatingDetail(ctx context.Context
 		return ec.fieldContext_ShipmentRatingDetail_result(ctx, field)
 	case "ratedAt":
 		return ec.fieldContext_ShipmentRatingDetail_ratedAt(ctx, field)
+	case "versionNumber":
+		return ec.fieldContext_ShipmentRatingDetail_versionNumber(ctx, field)
+	case "breakdown":
+		return ec.fieldContext_ShipmentRatingDetail_breakdown(ctx, field)
+	case "guardrail":
+		return ec.fieldContext_ShipmentRatingDetail_guardrail(ctx, field)
+	case "rateQuoteId":
+		return ec.fieldContext_ShipmentRatingDetail_rateQuoteId(ctx, field)
+	case "agreementId":
+		return ec.fieldContext_ShipmentRatingDetail_agreementId(ctx, field)
+	case "agreementName":
+		return ec.fieldContext_ShipmentRatingDetail_agreementName(ctx, field)
+	case "ruleId":
+		return ec.fieldContext_ShipmentRatingDetail_ruleId(ctx, field)
+	case "ruleLabel":
+		return ec.fieldContext_ShipmentRatingDetail_ruleLabel(ctx, field)
+	case "source":
+		return ec.fieldContext_ShipmentRatingDetail_source(ctx, field)
+	case "explanation":
+		return ec.fieldContext_ShipmentRatingDetail_explanation(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ShipmentRatingDetail", field.Name)
+}
+
+func (ec *executionContext) childFields_ShipmentRatingGuardrail(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "applied":
+		return ec.fieldContext_ShipmentRatingGuardrail_applied(ctx, field)
+	case "bound":
+		return ec.fieldContext_ShipmentRatingGuardrail_bound(ctx, field)
+	case "rawResult":
+		return ec.fieldContext_ShipmentRatingGuardrail_rawResult(ctx, field)
+	case "minCharge":
+		return ec.fieldContext_ShipmentRatingGuardrail_minCharge(ctx, field)
+	case "maxCharge":
+		return ec.fieldContext_ShipmentRatingGuardrail_maxCharge(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ShipmentRatingGuardrail", field.Name)
 }
 
 func (ec *executionContext) childFields_ShipmentReadyToDispatch(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -197632,6 +197851,98 @@ func (ec *executionContext) fieldContext_ShipmentProfitabilityEstimate_missingDi
 	return graphql.NewScalarFieldContext("ShipmentProfitabilityEstimate", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _ShipmentRatingBreakdownItem_name(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingBreakdownItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingBreakdownItem_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingBreakdownItem_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingBreakdownItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingBreakdownItem_label(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingBreakdownItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingBreakdownItem_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingBreakdownItem_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingBreakdownItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingBreakdownItem_amount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingBreakdownItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingBreakdownItem_amount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Amount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingBreakdownItem_amount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingBreakdownItem", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingBreakdownItem_error(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingBreakdownItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingBreakdownItem_error(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingBreakdownItem_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingBreakdownItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _ShipmentRatingDetail_formulaTemplateId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -197768,6 +198079,369 @@ func (ec *executionContext) _ShipmentRatingDetail_ratedAt(ctx context.Context, f
 }
 func (ec *executionContext) fieldContext_ShipmentRatingDetail_ratedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("ShipmentRatingDetail", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingDetail_versionNumber(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingDetail_versionNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.VersionNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingDetail_versionNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingDetail", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingDetail_breakdown(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingDetail_breakdown(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Breakdown, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.ShipmentRatingBreakdownItem) graphql.Marshaler {
+			return ec.marshalNShipmentRatingBreakdownItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingBreakdownItemᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingDetail_breakdown(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentRatingDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentRatingBreakdownItem(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ShipmentRatingDetail_guardrail(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingDetail_guardrail(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Guardrail, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.ShipmentRatingGuardrail) graphql.Marshaler {
+			return ec.marshalOShipmentRatingGuardrail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingGuardrail(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingDetail_guardrail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ShipmentRatingDetail",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ShipmentRatingGuardrail(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ShipmentRatingDetail_rateQuoteId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingDetail_rateQuoteId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RateQuoteID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingDetail_rateQuoteId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingDetail", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingDetail_agreementId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingDetail_agreementId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AgreementID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingDetail_agreementId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingDetail", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingDetail_agreementName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingDetail_agreementName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AgreementName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingDetail_agreementName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingDetail", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingDetail_ruleId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingDetail_ruleId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RuleID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingDetail_ruleId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingDetail", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingDetail_ruleLabel(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingDetail_ruleLabel(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RuleLabel, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingDetail_ruleLabel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingDetail", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingDetail_source(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingDetail_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingDetail_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingDetail", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingDetail_explanation(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingDetail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingDetail_explanation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Explanation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingDetail_explanation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingDetail", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingGuardrail_applied(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingGuardrail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingGuardrail_applied(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Applied, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingGuardrail_applied(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingGuardrail", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingGuardrail_bound(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingGuardrail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingGuardrail_bound(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Bound, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingGuardrail_bound(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingGuardrail", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingGuardrail_rawResult(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingGuardrail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingGuardrail_rawResult(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RawResult, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingGuardrail_rawResult(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingGuardrail", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingGuardrail_minCharge(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingGuardrail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingGuardrail_minCharge(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinCharge, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingGuardrail_minCharge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingGuardrail", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _ShipmentRatingGuardrail_maxCharge(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentRatingGuardrail) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ShipmentRatingGuardrail_maxCharge(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxCharge, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ShipmentRatingGuardrail_maxCharge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ShipmentRatingGuardrail", field, false, false, errors.New("field of type Float does not have child fields"))
 }
 
 func (ec *executionContext) _ShipmentReadyToDispatch_count(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.ShipmentReadyToDispatch) (ret graphql.Marshaler) {
@@ -222574,7 +223248,7 @@ func (ec *executionContext) unmarshalInputShipmentInput(ctx context.Context, obj
 		asMap["commodities"] = []any{}
 	}
 
-	fieldsInOrder := [...]string{"sourceDocumentId", "serviceTypeId", "shipmentTypeId", "customerId", "tractorTypeId", "trailerTypeId", "ownerId", "enteredById", "canceledById", "formulaTemplateId", "consolidationGroupId", "orderId", "status", "tenderStatus", "entryMethod", "proNumber", "bol", "cancelReason", "otherChargeAmount", "freightChargeAmount", "baseRate", "totalChargeAmount", "pieces", "weight", "temperatureMin", "temperatureMax", "actualDeliveryDate", "actualShipDate", "canceledAt", "billingTransferStatus", "transferredToBillingAt", "markedReadyToBillAt", "billedAt", "ratingUnit", "fuelSurchargeLocked", "ratingDetail", "version", "moves", "additionalCharges", "commodities"}
+	fieldsInOrder := [...]string{"sourceDocumentId", "serviceTypeId", "shipmentTypeId", "customerId", "tractorTypeId", "trailerTypeId", "ownerId", "enteredById", "canceledById", "formulaTemplateId", "consolidationGroupId", "orderId", "status", "tenderStatus", "entryMethod", "proNumber", "bol", "cancelReason", "otherChargeAmount", "freightChargeAmount", "baseRate", "totalChargeAmount", "pieces", "weight", "temperatureMin", "temperatureMax", "actualDeliveryDate", "actualShipDate", "canceledAt", "billingTransferStatus", "transferredToBillingAt", "markedReadyToBillAt", "billedAt", "ratingUnit", "fuelSurchargeLocked", "version", "moves", "additionalCharges", "commodities"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -222826,13 +223500,6 @@ func (ec *executionContext) unmarshalInputShipmentInput(ctx context.Context, obj
 				return it, err
 			}
 			it.FuelSurchargeLocked = data
-		case "ratingDetail":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ratingDetail"))
-			data, err := ec.unmarshalOShipmentRatingDetailInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingDetailInput(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RatingDetail = data
 		case "version":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
 			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
@@ -223206,71 +223873,6 @@ func (ec *executionContext) unmarshalInputShipmentPreviousRatesInput(ctx context
 				return it, err
 			}
 			it.ExcludeShipmentID = data
-		}
-	}
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputShipmentRatingDetailInput(ctx context.Context, obj any) (gqlmodel.ShipmentRatingDetailInput, error) {
-	var it gqlmodel.ShipmentRatingDetailInput
-	if obj == nil {
-		return it, nil
-	}
-
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"formulaTemplateId", "formulaTemplateName", "expression", "resolvedVariables", "result", "ratedAt"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "formulaTemplateId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("formulaTemplateId"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FormulaTemplateID = data
-		case "formulaTemplateName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("formulaTemplateName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FormulaTemplateName = data
-		case "expression":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expression"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Expression = data
-		case "resolvedVariables":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resolvedVariables"))
-			data, err := ec.unmarshalNJSON2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ResolvedVariables = data
-		case "result":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("result"))
-			data, err := ec.unmarshalNFloat2float64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Result = data
-		case "ratedAt":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ratedAt"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RatedAt = data
 		}
 	}
 	return it, nil
@@ -273541,6 +274143,59 @@ func (ec *executionContext) _ShipmentProfitabilityEstimate(ctx context.Context, 
 	return out
 }
 
+var shipmentRatingBreakdownItemImplementors = []string{"ShipmentRatingBreakdownItem"}
+
+func (ec *executionContext) _ShipmentRatingBreakdownItem(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.ShipmentRatingBreakdownItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentRatingBreakdownItemImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ShipmentRatingBreakdownItem")
+		case "name":
+			out.Values[i] = ec._ShipmentRatingBreakdownItem_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._ShipmentRatingBreakdownItem_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "amount":
+			out.Values[i] = ec._ShipmentRatingBreakdownItem_amount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "error":
+			out.Values[i] = ec._ShipmentRatingBreakdownItem_error(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var shipmentRatingDetailImplementors = []string{"ShipmentRatingDetail"}
 
 func (ec *executionContext) _ShipmentRatingDetail(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.ShipmentRatingDetail) graphql.Marshaler {
@@ -273581,6 +274236,114 @@ func (ec *executionContext) _ShipmentRatingDetail(ctx context.Context, sel ast.S
 		case "ratedAt":
 			out.Values[i] = ec._ShipmentRatingDetail_ratedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "versionNumber":
+			out.Values[i] = ec._ShipmentRatingDetail_versionNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "breakdown":
+			out.Values[i] = ec._ShipmentRatingDetail_breakdown(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "guardrail":
+			out.Values[i] = ec._ShipmentRatingDetail_guardrail(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "rateQuoteId":
+			out.Values[i] = ec._ShipmentRatingDetail_rateQuoteId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "agreementId":
+			out.Values[i] = ec._ShipmentRatingDetail_agreementId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "agreementName":
+			out.Values[i] = ec._ShipmentRatingDetail_agreementName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ruleId":
+			out.Values[i] = ec._ShipmentRatingDetail_ruleId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ruleLabel":
+			out.Values[i] = ec._ShipmentRatingDetail_ruleLabel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._ShipmentRatingDetail_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "explanation":
+			out.Values[i] = ec._ShipmentRatingDetail_explanation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var shipmentRatingGuardrailImplementors = []string{"ShipmentRatingGuardrail"}
+
+func (ec *executionContext) _ShipmentRatingGuardrail(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.ShipmentRatingGuardrail) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentRatingGuardrailImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ShipmentRatingGuardrail")
+		case "applied":
+			out.Values[i] = ec._ShipmentRatingGuardrail_applied(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bound":
+			out.Values[i] = ec._ShipmentRatingGuardrail_bound(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rawResult":
+			out.Values[i] = ec._ShipmentRatingGuardrail_rawResult(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minCharge":
+			out.Values[i] = ec._ShipmentRatingGuardrail_minCharge(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "maxCharge":
+			out.Values[i] = ec._ShipmentRatingGuardrail_maxCharge(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:
@@ -292150,6 +292913,32 @@ func (ec *executionContext) marshalNShipmentProfitability2ᚖgithubᚗcomᚋemos
 	return ec._ShipmentProfitability(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNShipmentRatingBreakdownItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingBreakdownItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.ShipmentRatingBreakdownItem) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNShipmentRatingBreakdownItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingBreakdownItem(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNShipmentRatingBreakdownItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingBreakdownItem(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.ShipmentRatingBreakdownItem) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ShipmentRatingBreakdownItem(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNShipmentServiceFailureBillingContext2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentServiceFailureBillingContext(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.ShipmentServiceFailureBillingContext) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -297161,12 +297950,11 @@ func (ec *executionContext) marshalOShipmentRatingDetail2ᚖgithubᚗcomᚋemoss
 	return ec._ShipmentRatingDetail(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOShipmentRatingDetailInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingDetailInput(ctx context.Context, v any) (*gqlmodel.ShipmentRatingDetailInput, error) {
+func (ec *executionContext) marshalOShipmentRatingGuardrail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingGuardrail(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.ShipmentRatingGuardrail) graphql.Marshaler {
 	if v == nil {
-		return nil, nil
+		return graphql.Null
 	}
-	res, err := ec.unmarshalInputShipmentRatingDetailInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+	return ec._ShipmentRatingGuardrail(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOShipmentReadyToDispatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentReadyToDispatch(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.ShipmentReadyToDispatch) graphql.Marshaler {

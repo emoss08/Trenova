@@ -235,6 +235,13 @@ func RestoreRateOwnedFields(original, updated *Shipment) {
 	updated.RateQuoteID = original.RateQuoteID
 	updated.RateAgreementID = original.RateAgreementID
 	updated.RateAgreementRuleID = original.RateAgreementRuleID
+
+	// The rating detail is written by the rater, never sent in. Re-rating
+	// replaces it a moment later on any shipment that is still open, so this
+	// matters for the ones that are not: a locked shipment keeps the
+	// explanation the customer was invoiced against rather than whatever
+	// subset of it a client happened to echo back.
+	updated.RatingDetail = original.RatingDetail
 }
 
 func (s *Shipment) ApplyEntryMethodDefault(original *Shipment) {
