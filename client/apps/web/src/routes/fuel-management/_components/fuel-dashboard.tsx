@@ -78,11 +78,11 @@ export default function FuelDashboard() {
   if (activeEntries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-          <Fuel className="size-5 text-muted-foreground" />
+        <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+          <Fuel className="text-muted-foreground size-5" />
         </div>
         <p className="mt-3 text-sm font-medium">No fuel indices yet</p>
-        <p className="mt-1 max-w-md text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 max-w-md text-xs">
           Enable the EIA Fuel Prices integration to auto-provision the DOE diesel indices and start
           ingesting weekly prices, or create a custom index from the Fuel Indices tab.
         </p>
@@ -93,9 +93,9 @@ export default function FuelDashboard() {
   return (
     <div className="space-y-4">
       {latestWeek && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Latest DOE price week:{" "}
-          <span className="font-medium text-foreground">Mon {formatWeekOf(latestWeek)}</span>
+          <span className="text-foreground font-medium">Mon {formatWeekOf(latestWeek)}</span>
           {" · "}surcharge rates roll forward on each program&apos;s effective day
         </p>
       )}
@@ -141,21 +141,21 @@ function IndexPriceCard({
       type="button"
       onClick={onSelect}
       className={cn(
-        "rounded-lg border bg-card p-3 text-left transition-colors hover:bg-muted/50",
-        selected && "border-primary/60 ring-1 ring-primary/30",
+        "bg-card hover:bg-muted/50 rounded-lg border p-3 text-left transition-colors",
+        selected && "border-primary/60 ring-primary/30 ring-1",
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-xs font-medium text-muted-foreground">
+        <span className="text-muted-foreground truncate text-xs font-medium">
           {entry.index.name}
         </span>
         {entry.index.source === "Custom" ? (
-          <span className="rounded bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground">
+          <span className="bg-muted text-2xs text-muted-foreground rounded px-1.5 py-0.5">
             {entry.index.region || "Custom"}
           </span>
         ) : (
           entry.index.region && (
-            <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-2xs text-primary">
+            <span className="bg-primary/10 text-2xs text-primary shrink-0 rounded px-1.5 py-0.5">
               {entry.index.region}
             </span>
           )
@@ -179,7 +179,7 @@ function IndexPriceCard({
           </span>
         )}
       </div>
-      <p className="mt-1 text-2xs text-muted-foreground">
+      <p className="text-2xs text-muted-foreground mt-1">
         {entry.latest ? `Week of ${shortDate(entry.latest.priceDate)}` : "No price data yet"}
       </p>
     </button>
@@ -234,7 +234,7 @@ function PriceTrendChart({
         {isLoading ? (
           <Skeleton className="h-64 w-full" />
         ) : chartData.length === 0 ? (
-          <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex h-64 items-center justify-center text-sm">
             No price history for this index yet
           </div>
         ) : (

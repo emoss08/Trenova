@@ -17,8 +17,8 @@ function ExploreSkeleton() {
 function ExploreError({ error }: { error: unknown }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2">
-      <CircleAlertIcon className="size-8 text-destructive" />
-      <p className="text-sm text-muted-foreground">
+      <CircleAlertIcon className="text-destructive size-8" />
+      <p className="text-muted-foreground text-sm">
         {graphQLErrorMessage(error, "Failed to load this report")}
       </p>
     </div>
@@ -28,8 +28,8 @@ function ExploreError({ error }: { error: unknown }) {
 function NotFound({ what }: { what: string }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2">
-      <CircleAlertIcon className="size-8 text-muted-foreground" />
-      <p className="text-sm text-muted-foreground">{what}</p>
+      <CircleAlertIcon className="text-muted-foreground size-8" />
+      <p className="text-muted-foreground text-sm">{what}</p>
     </div>
   );
 }

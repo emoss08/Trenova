@@ -100,10 +100,10 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
       accessorFn: (row) => row.proNumber ?? row.bol ?? "",
       cell: ({ row }) => (
         <div className="flex flex-col gap-0.5">
-          <span className="truncate font-table text-[11.5px] font-semibold tabular-nums">
+          <span className="font-table truncate text-[11.5px] font-semibold tabular-nums">
             {row.original.proNumber || "—"}
           </span>
-          <span className="truncate font-table text-[10px] text-muted-foreground tabular-nums">
+          <span className="font-table text-muted-foreground truncate text-[10px] tabular-nums">
             {row.original.bol || "—"}
           </span>
         </div>
@@ -130,7 +130,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
         return (
           <Link
             to={`/shipment-management/orders?panelType=edit&panelEntityId=${orderId}`}
-            className="truncate font-table text-[11.5px] tabular-nums hover:underline"
+            className="font-table truncate text-[11.5px] tabular-nums hover:underline"
             onClick={(event) => event.stopPropagation()}
           >
             {orderNumber || orderId.slice(0, 12)}
@@ -172,7 +172,7 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
               parent={row.original}
             />
             {typeof weight === "number" && weight > 0 && (
-              <span className="font-table text-[10px] text-muted-foreground tabular-nums">
+              <span className="font-table text-muted-foreground text-[10px] tabular-nums">
                 {weight.toLocaleString()} lb
               </span>
             )}

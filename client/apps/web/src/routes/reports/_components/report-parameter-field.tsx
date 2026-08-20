@@ -89,7 +89,7 @@ export function ParameterField({
   const controlHeight = compact ? "h-7" : undefined;
 
   const fieldLabel = (
-    <Label htmlFor={inputId} className={compact ? "text-xs text-muted-foreground" : undefined}>
+    <Label htmlFor={inputId} className={compact ? "text-muted-foreground text-xs" : undefined}>
       {label}
       {param.required && <span className="text-destructive"> *</span>}
     </Label>

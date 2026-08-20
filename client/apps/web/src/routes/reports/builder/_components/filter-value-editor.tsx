@@ -65,9 +65,9 @@ function EnumMultiSelect({
             variant="outline"
             role="combobox"
             className={cn(
-              "h-auto min-h-7 w-full cursor-pointer gap-2 rounded-md border-muted-foreground/20 bg-muted px-2 py-1 font-normal",
-              "justify-between whitespace-nowrap hover:bg-muted-foreground/20",
-              "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/20 data-pressed:outline-hidden",
+              "border-muted-foreground/20 bg-muted h-auto min-h-7 w-full cursor-pointer gap-2 rounded-md px-2 py-1 font-normal",
+              "hover:bg-muted-foreground/20 justify-between whitespace-nowrap",
+              "data-pressed:border-brand data-pressed:ring-brand/20 data-pressed:ring-4 data-pressed:outline-hidden",
               "transition-all duration-200 ease-in-out [&_svg]:size-3 [&_svg]:shrink-0",
             )}
           >
@@ -92,7 +92,7 @@ function EnumMultiSelect({
             ) : (
               <span className="text-muted-foreground">Select values...</span>
             )}
-            <ChevronDownIcon className="size-3.5 shrink-0 text-muted-foreground" />
+            <ChevronDownIcon className="text-muted-foreground size-3.5 shrink-0" />
           </Button>
         }
       />
@@ -145,7 +145,7 @@ export function FilterValueEditor({
     return (
       <div className="flex items-center gap-1">
         <EpochValue value={range[0]} onChange={(next) => onChange([next, range[1]])} />
-        <span className="text-xs text-muted-foreground">to</span>
+        <span className="text-muted-foreground text-xs">to</span>
         <EpochValue value={range[1]} onChange={(next) => onChange([range[0], next])} />
       </div>
     );

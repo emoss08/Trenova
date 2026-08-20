@@ -210,7 +210,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
     <div className="flex h-full flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <EscrowAccountStatusBadge status={account.status as EscrowAccountStatus} />
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           Opened {formatDate(account.openedDate)}
           {account.closedDate ? ` · Closed ${formatDate(account.closedDate)}` : ""}
         </span>
@@ -232,14 +232,14 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Balance</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Balance</p>
           <p className="mt-1 text-sm font-semibold">
             <AmountDisplay value={account.balanceMinor} currency={account.currencyCode} />
           </p>
         </div>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Target</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Target</p>
           <p className="mt-1 text-sm font-semibold">
             {account.targetAmountMinor > 0 ? (
               <AmountDisplay value={account.targetAmountMinor} currency={account.currencyCode} />
@@ -248,8 +248,8 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
             )}
           </p>
         </div>
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <p className="text-[11px] font-medium text-muted-foreground uppercase">Interest Rate</p>
+        <div className="bg-muted/30 rounded-lg border p-3">
+          <p className="text-muted-foreground text-[11px] font-medium uppercase">Interest Rate</p>
           <p className="mt-1 text-sm font-semibold tabular-nums">
             {Number(account.annualInterestRate) > 0
               ? `${Number(account.annualInterestRate).toFixed(2)}% / yr`
@@ -259,7 +259,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
       </div>
 
       <div>
-        <h4 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
           Transaction Ledger
         </h4>
         <div className="overflow-hidden rounded-lg border">
@@ -276,7 +276,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
             <tbody>
               {(account.transactions ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">
+                  <td colSpan={5} className="text-muted-foreground px-3 py-4 text-center">
                     No transactions yet
                   </td>
                 </tr>
@@ -285,7 +285,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
                 <tr key={tx.id} className="border-t">
                   <td className="px-3 py-2">{formatDate(tx.occurredDate)}</td>
                   <td className="px-3 py-2">{transactionTypeLabels[tx.type] ?? tx.type}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{tx.description || "—"}</td>
+                  <td className="text-muted-foreground px-3 py-2">{tx.description || "—"}</td>
                   <td className="px-3 py-2 text-right">
                     <AmountDisplay
                       value={tx.amountMinor}
@@ -301,7 +301,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-[11px]">
           This ledger satisfies the transaction-level accounting owed to lessors under 49 CFR
           376.12(k); interest accrues at least quarterly.
         </p>
@@ -324,7 +324,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
                 placeholder="Amount (e.g. 250.00 or -400.00)"
                 inputMode="decimal"
               />
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-[11px]">
                 Dollars, not cents; positive deposits into escrow, negative applies funds out.
               </p>
             </div>
@@ -334,7 +334,7 @@ function EscrowDetail({ accountId, onClose }: { accountId: string; onClose: () =
                 onChange={(e) => setAdjustDescription(e.target.value)}
                 placeholder="Description (required)"
               />
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-[11px]">
                 Recorded permanently on the ledger — 49 CFR 376.12(k) requires every escrow
                 transaction to be accounted for.
               </p>

@@ -73,7 +73,7 @@ export function HosClockGauge({
           aria-label={`${label} time remaining`}
         />
         <div className="flex min-w-0 flex-col">
-          <span className="text-[8.5px] leading-tight font-semibold tracking-wide text-muted-foreground uppercase">
+          <span className="text-muted-foreground text-[8.5px] leading-tight font-semibold tracking-wide uppercase">
             {label}
           </span>
           <span className={cn("text-[10.5px] leading-tight font-semibold tabular-nums", SEVERITY_TEXT[tone])}>
@@ -122,13 +122,13 @@ export function HosClockGauges({
 }) {
   if (!hasFeed) {
     return (
-      <p className={cn("text-[10px] text-muted-foreground", className)}>No hours-of-service feed</p>
+      <p className={cn("text-muted-foreground text-[10px]", className)}>No hours-of-service feed</p>
     );
   }
 
   if (isStale) {
     return (
-      <p className={cn("text-[10px] text-warning", className)}>Hours-of-service data is stale</p>
+      <p className={cn("text-warning text-[10px]", className)}>Hours-of-service data is stale</p>
     );
   }
 

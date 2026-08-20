@@ -139,9 +139,9 @@ export function SelectField<T extends FieldValues>({
                     variant="outline"
                     aria-invalid={fieldState.invalid}
                     className={cn(
-                      "group flex h-7 w-full items-center justify-between rounded-md border border-input bg-muted whitespace-nowrap hover:bg-muted/80",
-                      "px-1.5 py-1 text-xs ring-offset-background outline-hidden select-none placeholder:text-muted-foreground",
-                      "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/30",
+                      "group border-input bg-muted hover:bg-muted/80 flex h-7 w-full items-center justify-between rounded-md border whitespace-nowrap",
+                      "ring-offset-background placeholder:text-muted-foreground px-1.5 py-1 text-xs outline-hidden select-none",
+                      "data-pressed:border-brand data-pressed:ring-brand/30 data-pressed:ring-4",
                       "transition-[border-color,box-shadow] duration-200 ease-in-out",
                       "cursor-default disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
                       fieldState.invalid && "data-pressed:ring-destructive/20",
@@ -152,7 +152,7 @@ export function SelectField<T extends FieldValues>({
                   >
                     <div
                       className={cn(
-                        "flex min-w-0 flex-1 items-center gap-x-1.5 truncate font-normal text-foreground",
+                        "text-foreground flex min-w-0 flex-1 items-center gap-x-1.5 truncate font-normal",
                         !selectedOption?.value && "text-muted-foreground",
                         fieldState.invalid && "text-destructive",
                       )}
@@ -236,7 +236,7 @@ function SelectInputActions({
             e.preventDefault();
             handleClear();
           }}
-          className="flex size-5 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors duration-200 ease-in-out hover:bg-muted-foreground/30 hover:text-foreground [&>svg]:size-3"
+          className="text-muted-foreground hover:bg-muted-foreground/30 hover:text-foreground flex size-5 cursor-pointer items-center justify-center rounded-md transition-colors duration-200 ease-in-out [&>svg]:size-3"
         >
           <span className="sr-only">Clear</span>
           <XIcon className="size-4" />

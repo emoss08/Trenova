@@ -221,7 +221,7 @@ function WeekAndRoundingSection({ disabled, method }: { disabled?: boolean; meth
     <Card className="gap-0 p-0">
       <CardHeader className="gap-0 border-b pt-3">
         <CardTitle className="text-sm font-medium">Week Resolution & Rounding</CardTitle>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Pins exactly which week&apos;s price applies and how rates round — the two most common
           fuel surcharge dispute sources
         </p>
@@ -328,7 +328,7 @@ function ApplicabilitySection() {
     <Card className="gap-0">
       <CardHeader className="gap-0 border-b pb-3">
         <CardTitle className="gap-0 text-sm font-medium">Applicability</CardTitle>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Leave a filter empty to apply to all — the surcharge only generates when the shipment
           matches every non-empty filter
         </p>

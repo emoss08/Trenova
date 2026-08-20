@@ -126,12 +126,12 @@ function ColorFieldInput<T extends FieldValues>({
             variant="outline"
             type="button"
             className={cn(
-              "w-full items-center justify-start gap-2 rounded border-input bg-muted px-1.5 text-left font-normal [&_svg]:size-3 [&_svg]:shrink-0",
-              "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/20 data-pressed:outline-hidden",
+              "border-input bg-muted w-full items-center justify-start gap-2 rounded px-1.5 text-left font-normal [&_svg]:size-3 [&_svg]:shrink-0",
+              "data-pressed:border-brand data-pressed:ring-brand/20 data-pressed:ring-4 data-pressed:outline-hidden",
               "transition-[border-color,box-shadow] duration-200 ease-in-out",
               disabled && "cursor-not-allowed opacity-50",
               fieldState.invalid &&
-                "border-destructive bg-destructive/20 text-destructive ring-0 ring-destructive hover:border-destructive hover:bg-destructive/20 focus:outline-hidden focus-visible:border-destructive focus-visible:ring-4 focus-visible:ring-destructive/20 data-pressed:border-destructive data-pressed:bg-destructive/20 data-pressed:ring-destructive/20",
+                "border-destructive bg-destructive/20 text-destructive ring-destructive hover:border-destructive hover:bg-destructive/20 focus-visible:border-destructive focus-visible:ring-destructive/20 data-pressed:border-destructive data-pressed:bg-destructive/20 data-pressed:ring-destructive/20 ring-0 focus:outline-hidden focus-visible:ring-4",
               !value && "text-muted-foreground",
               className,
             )}
@@ -155,8 +155,8 @@ function ColorFieldInput<T extends FieldValues>({
       <PopoverContent className={cn("p-2", autoWidth ? "w-52" : "w-(--anchor-width)")}>
         <div className="flex flex-col gap-1">
           {!hideHeader && (
-            <div className="mb-2 flex items-center justify-between border-b border-border">
-              <p className="text-left text-2xs font-normal">Predefined Colors</p>
+            <div className="border-border mb-2 flex items-center justify-between border-b">
+              <p className="text-2xs text-left font-normal">Predefined Colors</p>
               <p className="text-2xs text-muted-foreground">Click to select a color</p>
             </div>
           )}

@@ -25,9 +25,9 @@ export function LinearFeetBar({
   const isOver = totalLinearFeet > trailerLengthFeet;
 
   return (
-    <div className="rounded-lg border border-border p-3">
+    <div className="border-border rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
+        <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
           Linear Feet
         </span>
         <span className={cn("text-xs font-semibold tabular-nums", isOver && "text-destructive")}>
@@ -36,7 +36,7 @@ export function LinearFeetBar({
       </div>
 
       {/* Stacked segmented bar */}
-      <div className="relative h-4 w-full overflow-hidden rounded-full bg-muted">
+      <div className="bg-muted relative h-4 w-full overflow-hidden rounded-full">
         {commodities && commodities.length > 0 ? (
           <div className="flex h-full">
             {commodities.map((c) => {
@@ -70,7 +70,7 @@ export function LinearFeetBar({
       {commodities && commodities.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
           {commodities.slice(0, 4).map((c) => (
-            <div key={c.name} className="flex items-center gap-1 text-2xs">
+            <div key={c.name} className="text-2xs flex items-center gap-1">
               <div className={cn("size-2 rounded-sm border", c.palette.dotBg, c.palette.dotBorder)} />
               <span className="text-foreground">{c.name}</span>
               <span className="text-muted-foreground">{c.lengthFeet.toFixed(1)}ft</span>

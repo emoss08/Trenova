@@ -91,9 +91,9 @@ export function RecordStopActualDialog({
             }}
           />
           {error ? (
-            <p className="text-xs text-destructive">{error}</p>
+            <p className="text-destructive text-xs">{error}</p>
           ) : (
-            <p className="text-xs text-muted-foreground">Leave empty to record the time as now.</p>
+            <p className="text-muted-foreground text-xs">Leave empty to record the time as now.</p>
           )}
         </div>
         <DialogFooter>

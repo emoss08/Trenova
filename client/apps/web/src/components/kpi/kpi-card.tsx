@@ -15,7 +15,7 @@ export function KpiCard({ span, density = "default", className, children }: KpiC
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-md border border-border/80 bg-card p-3 transition-colors hover:border-border",
+        "border-border/80 bg-card hover:border-border flex flex-col gap-2 rounded-md border p-3 transition-colors",
         density === "compact" ? "h-[var(--kpi-h-sm)]" : "h-[var(--kpi-h)]",
         span === 3 ? "col-span-3" : "col-span-2",
         className,
@@ -78,6 +78,6 @@ type KpiSubProps = {
 
 export function KpiSub({ children }: KpiSubProps) {
   return (
-    <div className="mt-auto text-[10.5px] leading-snug text-muted-foreground/80">{children}</div>
+    <div className="text-muted-foreground/80 mt-auto text-[10.5px] leading-snug">{children}</div>
   );
 }

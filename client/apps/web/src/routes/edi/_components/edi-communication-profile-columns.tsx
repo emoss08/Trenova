@@ -14,7 +14,7 @@ export function getCommunicationProfileColumns(): ColumnDef<EDICommunicationProf
       cell: ({ row }) => (
         <div>
           <div className="font-medium">{row.original.name}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             {row.original.description || "No description"}
           </div>
         </div>

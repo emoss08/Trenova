@@ -114,10 +114,10 @@ export function HomeCanvas({
 
   if (widgets.length === 0 && !editing) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border py-16 text-center">
-        <LayoutGridIcon className="size-5 text-muted-foreground/40" />
+      <div className="border-border flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
+        <LayoutGridIcon className="text-muted-foreground/40 size-5" />
         <p className="text-sm font-medium">Your home screen is empty</p>
-        <p className="max-w-xs text-xs text-muted-foreground">
+        <p className="text-muted-foreground max-w-xs text-xs">
           Choose Customize to add the queues and numbers you want to land on.
         </p>
       </div>
@@ -130,11 +130,11 @@ export function HomeCanvas({
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border py-12 text-center transition-colors hover:border-foreground/25 hover:bg-muted/30"
+          className="border-border hover:border-foreground/25 hover:bg-muted/30 flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-12 text-center transition-colors"
         >
-          <PlusIcon className="size-5 text-muted-foreground/50" />
+          <PlusIcon className="text-muted-foreground/50 size-5" />
           <span className="text-sm font-medium">Add your first widget</span>
-          <span className="max-w-xs text-xs text-muted-foreground">
+          <span className="text-muted-foreground max-w-xs text-xs">
             Pick the queues and numbers this home screen should open on.
           </span>
         </button>
@@ -144,7 +144,7 @@ export function HomeCanvas({
         items={widgets}
         columns={columns}
         onReorder={onChange}
-        className={editing ? "rounded-lg bg-muted/20 p-2" : undefined}
+        className={editing ? "bg-muted/20 rounded-lg p-2" : undefined}
       >
         {(widget, index) => (
           <SortableTile
@@ -153,7 +153,7 @@ export function HomeCanvas({
             w={widget.w}
             h={widget.h}
             editing={editing}
-            className={editing ? "ring-1 ring-border" : undefined}
+            className={editing ? "ring-border ring-1" : undefined}
           >
             {(drag) => (
               <m.div
@@ -163,12 +163,12 @@ export function HomeCanvas({
                 className="flex min-h-0 flex-1 flex-col"
               >
                 {editing && (
-                  <div className="flex h-8 shrink-0 items-center gap-1.5 border-b border-border/60 bg-muted/40 px-2">
+                  <div className="border-border/60 bg-muted/40 flex h-8 shrink-0 items-center gap-1.5 border-b px-2">
                     <TileDragHandle {...drag} />
-                    <span className="cc-label min-w-0 flex-1 truncate text-foreground">
+                    <span className="cc-label text-foreground min-w-0 flex-1 truncate">
                       {widget.title || optionsByKey.get(widget.key)?.label || widget.key}
                     </span>
-                    <span className="shrink-0 font-mono text-[9px] text-muted-foreground tabular-nums">
+                    <span className="text-muted-foreground shrink-0 font-mono text-[9px] tabular-nums">
                       {widget.w}×{widget.h}
                     </span>
                     <WidgetControls
@@ -300,7 +300,7 @@ function WidgetControls({
             max={option?.maxH ?? 12}
             onChange={(h) => onResize({ h })}
           />
-          <div className="flex flex-col gap-1 border-t border-border pt-2">
+          <div className="border-border flex flex-col gap-1 border-t pt-2">
             {configurable && (
               <Button variant="ghost" size="sm" className="h-7 justify-start" onClick={onEdit}>
                 <PencilIcon className="size-3.5" />
@@ -310,7 +310,7 @@ function WidgetControls({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 justify-start text-destructive"
+              className="text-destructive h-7 justify-start"
               onClick={onRemove}
             >
               <Trash2Icon className="size-3.5" />

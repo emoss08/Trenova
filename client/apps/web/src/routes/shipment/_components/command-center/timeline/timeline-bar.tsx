@@ -101,10 +101,10 @@ export function TimelineBarItem({
         onMouseLeave={() => onHoverChange(null)}
         aria-label={`Shipment ${shipment.proNumber ?? ""}, ${originCode} to ${destCode}`}
         className={cn(
-          "group/bar absolute flex cursor-pointer items-center overflow-hidden rounded border px-1.5 text-left transition-[background-color,box-shadow,opacity] outline-none focus-visible:ring-2 focus-visible:ring-brand",
+          "group/bar focus-visible:ring-brand absolute flex cursor-pointer items-center overflow-hidden rounded border px-1.5 text-left transition-[background-color,box-shadow,opacity] outline-none focus-visible:ring-2",
           BAR_TONE_CLASS[bar.tone],
           bar.isCanceled && "border-dashed opacity-60",
-          isHighlighted && "shadow-md ring-1 ring-foreground/25",
+          isHighlighted && "ring-foreground/25 shadow-md ring-1",
           dimmed && "opacity-25",
           isDragging && "opacity-40",
           draggable && "cursor-grab active:cursor-grabbing",
@@ -117,17 +117,17 @@ export function TimelineBarItem({
         }}
       >
         {geometry.clippedStart && (
-          <ChevronLeftIcon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+          <ChevronLeftIcon className="text-muted-foreground size-3 shrink-0" aria-hidden />
         )}
         {showLabel && (
           <span
             className={cn(
-              "min-w-0 truncate font-table text-[10px] font-semibold tabular-nums",
+              "font-table min-w-0 truncate text-[10px] font-semibold tabular-nums",
               bar.isCanceled && "line-through",
             )}
           >
             {shipment.proNumber ?? shipment.bol ?? "—"}
-            <span className="ml-1.5 font-normal text-muted-foreground">
+            <span className="text-muted-foreground ml-1.5 font-normal">
               {originCode} → {destCode}
             </span>
           </span>
@@ -136,7 +136,7 @@ export function TimelineBarItem({
           <span
             aria-hidden
             className={cn(
-              "ml-auto flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px font-table text-[8.5px] font-semibold tabular-nums",
+              "font-table ml-auto flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-[8.5px] font-semibold tabular-nums",
               bar.dwell.severity === "critical"
                 ? "bg-destructive/90 text-white"
                 : "bg-warning/90 text-white",
@@ -148,7 +148,7 @@ export function TimelineBarItem({
         )}
         {geometry.clippedEnd && (
           <ChevronRightIcon
-            className={cn("size-3 shrink-0 text-muted-foreground", !showDwellBadge && "ml-auto")}
+            className={cn("text-muted-foreground size-3 shrink-0", !showDwellBadge && "ml-auto")}
             aria-hidden
           />
         )}
@@ -161,7 +161,7 @@ export function TimelineBarItem({
               key={stop.id}
               aria-hidden
               className={cn(
-                "absolute bottom-0.5 size-1.5 -translate-x-1/2 rounded-full border border-background",
+                "border-background absolute bottom-0.5 size-1.5 -translate-x-1/2 rounded-full border",
                 stop.status === "Completed" ? BAR_PROGRESS_CLASS[bar.tone] : "bg-muted-foreground/40",
               )}
               style={{ left: `${offset}%` }}
@@ -197,7 +197,7 @@ export function TimelineBarItem({
             </p>
           )}
           {bar.hasOverlap && (
-            <p className="text-[10.5px] font-semibold text-warning">
+            <p className="text-warning text-[10.5px] font-semibold">
               Overlaps another load on this driver
             </p>
           )}

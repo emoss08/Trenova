@@ -92,7 +92,7 @@ export default function TemplateDesignerAside() {
   };
 
   return (
-    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-background">
+    <aside className="bg-background flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
       <PanelHeader
         icon={<FileCode2Icon />}
         title="Templates"
@@ -115,7 +115,7 @@ export default function TemplateDesignerAside() {
             onChange={(event) => setTemplateSearch(event.target.value)}
             placeholder="Search templates"
             inputContainerClassName="w-full"
-            leftElement={<SearchIcon className="size-3 text-muted-foreground" />}
+            leftElement={<SearchIcon className="text-muted-foreground size-3" />}
           />
           <TemplateFilterPopover
             activeFilterCount={activeFilterCount}
@@ -187,7 +187,7 @@ function TemplateFilterPopover({
       <PopoverContent align="start" className="dark w-72 p-0">
         <div className="border-b px-3 py-2">
           <div className="text-sm font-semibold">Template Filters</div>
-          <div className="text-xs text-muted-foreground">Narrow the template list.</div>
+          <div className="text-muted-foreground text-xs">Narrow the template list.</div>
         </div>
         <div className="flex flex-col gap-1 px-3">
           <ControlledSelectField

@@ -93,10 +93,10 @@ export function ConsoleToolbar({
 
       <Popover>
         <PopoverTrigger
-          className="flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] font-medium transition-colors hover:bg-muted"
+          className="hover:bg-muted flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] font-medium transition-colors"
           aria-label="Jump to date"
         >
-          <CalendarIcon className="size-3 text-muted-foreground" />
+          <CalendarIcon className="text-muted-foreground size-3" />
           {formatRangeLabelForDays(anchor, zoom)}
         </PopoverTrigger>
         <PopoverContent align="start" className="w-auto p-0">
@@ -112,7 +112,7 @@ export function ConsoleToolbar({
       <div
         role="group"
         aria-label="Window length"
-        className="inline-flex overflow-hidden rounded-md border border-border"
+        className="border-border inline-flex overflow-hidden rounded-md border"
       >
         {TIMELINE_ZOOM_OPTIONS.map((option, index) => (
           <button
@@ -122,7 +122,7 @@ export function ConsoleToolbar({
             aria-pressed={zoom === option.id}
             className={cn(
               "px-2 py-1 text-[11px] transition-colors",
-              index > 0 && "border-l border-border",
+              index > 0 && "border-border border-l",
               zoom === option.id
                 ? "bg-muted text-foreground"
                 : "bg-background text-muted-foreground hover:text-foreground",
@@ -139,7 +139,7 @@ export function ConsoleToolbar({
         <div
           role="group"
           aria-label="Center view"
-          className="inline-flex overflow-hidden rounded-md border border-border"
+          className="border-border inline-flex overflow-hidden rounded-md border"
         >
           {CENTER_MODE_OPTIONS.map((option, index) => (
             <button
@@ -152,7 +152,7 @@ export function ConsoleToolbar({
               aria-pressed={mode === option.id}
               className={cn(
                 "flex items-center gap-1 px-2 py-1 text-[11px] transition-colors",
-                index > 0 && "border-l border-border",
+                index > 0 && "border-border border-l",
                 mode === option.id
                   ? "bg-muted text-foreground"
                   : "bg-background text-muted-foreground hover:text-foreground",
@@ -165,7 +165,7 @@ export function ConsoleToolbar({
         </div>
       )}
 
-      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+      <label className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
         <Switch checked={includeCovered} onCheckedChange={setIncludeCovered} />
         Show covered
       </label>

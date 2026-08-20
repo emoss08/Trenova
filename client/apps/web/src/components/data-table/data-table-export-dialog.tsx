@@ -141,41 +141,41 @@ export default function DataTableExportDialog<TData extends Record<string, any>>
         </DialogHeader>
         <div className="flex flex-col gap-4 pb-2">
           <div className="flex flex-col gap-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase">Rows</Label>
+            <Label className="text-muted-foreground text-xs font-medium uppercase">Rows</Label>
             <div className="flex gap-2" role="radiogroup" aria-label="Export scope">
               <ChoiceButton selected={scope === "all"} onClick={() => setScope("all")}>
                 <span className="font-medium">All matching</span>
                 {cappedTotal != null && (
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-muted-foreground text-xs">
                     {cappedTotal.toLocaleString()} rows
                   </span>
                 )}
               </ChoiceButton>
               <ChoiceButton selected={scope === "page"} onClick={() => setScope("page")}>
                 <span className="font-medium">Current page</span>
-                <span className="text-xs text-muted-foreground">{currentPageRows.length} rows</span>
+                <span className="text-muted-foreground text-xs">{currentPageRows.length} rows</span>
               </ChoiceButton>
             </div>
             {totalCount != null && totalCount > EXPORT_MAX_ROWS && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Exports are capped at {EXPORT_MAX_ROWS.toLocaleString()} rows. Narrow your filters
                 to export a specific slice.
               </p>
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase">Columns</Label>
+            <Label className="text-muted-foreground text-xs font-medium uppercase">Columns</Label>
             <div className="flex gap-2" role="radiogroup" aria-label="Export columns">
               <ChoiceButton
                 selected={columnsMode === "visible"}
                 onClick={() => setColumnsMode("visible")}
               >
                 <span className="font-medium">Visible columns</span>
-                <span className="text-xs text-muted-foreground">Matches the table layout</span>
+                <span className="text-muted-foreground text-xs">Matches the table layout</span>
               </ChoiceButton>
               <ChoiceButton selected={columnsMode === "all"} onClick={() => setColumnsMode("all")}>
                 <span className="font-medium">All columns</span>
-                <span className="text-xs text-muted-foreground">Every exportable field</span>
+                <span className="text-muted-foreground text-xs">Every exportable field</span>
               </ChoiceButton>
             </div>
           </div>

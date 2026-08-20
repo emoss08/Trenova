@@ -23,7 +23,7 @@ export function UserSummaryBar({
     <div className="flex items-center justify-between px-6 py-3">
       <div className="flex items-center gap-5 text-sm">
         <div className="flex items-center gap-2">
-          <UserIcon className="size-4 text-muted-foreground" />
+          <UserIcon className="text-muted-foreground size-4" />
           <span className="text-muted-foreground">Status:</span>
           <Badge
             variant={status === "Active" ? "default" : "secondary"}
@@ -35,10 +35,10 @@ export function UserSummaryBar({
           </Badge>
         </div>
 
-        <div className="h-4 w-px bg-border" />
+        <div className="bg-border h-4 w-px" />
 
         <div className="flex items-center gap-2">
-          <ShieldIcon className="size-4 text-muted-foreground" />
+          <ShieldIcon className="text-muted-foreground size-4" />
           <span className="font-medium tabular-nums">{roleCount}</span>
           <span className="text-muted-foreground">
             role{roleCount !== 1 ? "s" : ""} assigned

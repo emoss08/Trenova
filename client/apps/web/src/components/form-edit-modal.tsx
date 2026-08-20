@@ -429,7 +429,7 @@ export function FormEditModal<T extends FieldValues>({
                 <ComponentLoader message={`Loading ${title}...`} />
               ) : fetchError ? (
                 <div className="flex flex-col items-center justify-center space-y-3 py-8">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {fetchError instanceof Error && fetchError.message.includes("404")
                       ? "Record not found. It may have been deleted."
                       : "Failed to load record. Please try again."}

@@ -250,8 +250,8 @@ function EditPanel({
     >
       {detailQuery.isLoading ? (
         <div className="space-y-3 p-4">
-          <div className="h-8 w-full animate-pulse rounded bg-muted" />
-          <div className="h-40 w-full animate-pulse rounded bg-muted" />
+          <div className="bg-muted h-8 w-full animate-pulse rounded" />
+          <div className="bg-muted h-40 w-full animate-pulse rounded" />
         </div>
       ) : journal ? (
         <div className="space-y-4">
@@ -294,7 +294,7 @@ function EditPanel({
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
                         placeholder="Rejection reason..."
-                        className="w-full rounded-md border bg-background px-3 py-2 text-xs"
+                        className="bg-background w-full rounded-md border px-3 py-2 text-xs"
                         rows={2}
                       />
                       <div className="flex gap-2">
@@ -361,7 +361,7 @@ function EditPanel({
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Cancel reason..."
-                  className="w-full rounded-md border bg-background px-3 py-2 text-xs"
+                  className="bg-background w-full rounded-md border px-3 py-2 text-xs"
                   rows={2}
                 />
                 <div className="flex gap-2">

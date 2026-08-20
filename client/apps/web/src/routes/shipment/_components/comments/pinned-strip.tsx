@@ -23,7 +23,7 @@ export function PinnedStrip({
 
   if (isLoading) {
     return (
-      <div className="border-b border-border px-4 py-2">
+      <div className="border-border border-b px-4 py-2">
         <Skeleton className="h-5 w-48" />
       </div>
     );
@@ -34,7 +34,7 @@ export function PinnedStrip({
   const first = pinnedComments[0];
 
   return (
-    <div className="border-b border-border bg-amber-500/[0.04]">
+    <div className="border-border border-b bg-amber-500/[0.04]">
       <button
         type="button"
         className="flex w-full items-center gap-2 px-4 py-2 text-left transition-colors hover:bg-amber-500/[0.08]"
@@ -46,13 +46,13 @@ export function PinnedStrip({
           {pinnedComments.length === 1 ? "1 pinned" : `${pinnedComments.length} pinned`}
         </span>
         {!isExpanded && (
-          <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
             {first.user?.name ? `${first.user.name}: ` : ""}
             {first.comment}
           </span>
         )}
         <ChevronDownIcon
-          className={`ml-auto size-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${
+          className={`text-muted-foreground ml-auto size-3.5 shrink-0 transition-transform duration-200 ${
             isExpanded ? "rotate-180" : ""
           }`}
         />
@@ -70,7 +70,7 @@ export function PinnedStrip({
               {pinnedComments.map((comment) => (
                 <div
                   key={comment.id}
-                  className="group/pinned flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/60"
+                  className="group/pinned hover:bg-muted/60 flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors"
                 >
                   <button
                     type="button"
@@ -87,7 +87,7 @@ export function PinnedStrip({
                       type="button"
                       variant="ghost"
                       size="icon-xs"
-                      className="size-5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/pinned:opacity-100"
+                      className="text-muted-foreground size-5 shrink-0 opacity-0 transition-opacity group-hover/pinned:opacity-100"
                       aria-label="Unpin comment"
                       onClick={() => onUnpin(comment)}
                     >

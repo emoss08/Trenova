@@ -12,7 +12,7 @@ export function getColumns(): ColumnDef<ApiKey>[] {
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col">
           <span className="truncate font-medium">{row.original.name}</span>
-          <span className="truncate font-mono text-xs text-muted-foreground">
+          <span className="text-muted-foreground truncate font-mono text-xs">
             {row.original.keyPrefix}
           </span>
         </div>
@@ -31,7 +31,7 @@ export function getColumns(): ColumnDef<ApiKey>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <span className="line-clamp-2 text-sm text-muted-foreground">
+        <span className="text-muted-foreground line-clamp-2 text-sm">
           {row.original.description || "No description"}
         </span>
       ),

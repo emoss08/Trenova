@@ -6,13 +6,13 @@ export function PlaceholderPage() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
       <div className="text-center">
-        <h1 className="text-2xl font-semibold text-foreground">
+        <h1 className="text-foreground text-2xl font-semibold">
           {formatPathToTitle(location.pathname)}
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="text-muted-foreground mt-2">
           This page is under construction
         </p>
-        <code className="mt-4 block rounded bg-muted px-3 py-1.5 text-sm">
+        <code className="bg-muted mt-4 block rounded px-3 py-1.5 text-sm">
           {location.pathname}
         </code>
       </div>

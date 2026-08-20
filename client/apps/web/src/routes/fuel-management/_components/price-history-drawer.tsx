@@ -98,7 +98,7 @@ export function PriceHistoryDrawer({
         </SheetHeader>
 
         {isCustom && (
-          <div className="flex items-end gap-2 rounded-lg border bg-muted/30 p-3">
+          <div className="bg-muted/30 flex items-end gap-2 rounded-lg border p-3">
             <div className="flex-1 space-y-1">
               <Label className="text-xs">Week (Monday)</Label>
               <Input
@@ -137,13 +137,13 @@ export function PriceHistoryDrawer({
               ))}
             </div>
           ) : !history || history.length === 0 ? (
-            <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
               No prices recorded yet
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-muted/80 backdrop-blur">
-                <tr className="text-left text-xs text-muted-foreground">
+              <thead className="bg-muted/80 sticky top-0 backdrop-blur">
+                <tr className="text-muted-foreground text-left text-xs">
                   <th className="px-3 py-2 font-medium">Week</th>
                   <th className="px-3 py-2 font-medium">Price</th>
                   <th className="px-3 py-2 font-medium">Source</th>
@@ -170,7 +170,7 @@ export function PriceHistoryDrawer({
                           variant="ghost"
                           size="sm"
                           onClick={() => removePrice(price.id)}
-                          className="size-6 p-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                          className="text-muted-foreground hover:text-destructive size-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                         >
                           <Trash2 className="size-3" />
                         </Button>

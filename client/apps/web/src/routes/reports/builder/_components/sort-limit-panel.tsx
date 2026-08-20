@@ -107,7 +107,7 @@ export function SortLimitPanel({
         </Button>
       </div>
       <div className="flex items-center gap-2">
-        <Label htmlFor="report-limit" className="text-xs text-muted-foreground">
+        <Label htmlFor="report-limit" className="text-muted-foreground text-xs">
           Row Limit
         </Label>
         <Input
@@ -123,9 +123,9 @@ export function SortLimitPanel({
           }}
         />
       </div>
-      <div className="flex flex-col gap-1 rounded-md border border-border p-2">
+      <div className="border-border flex flex-col gap-1 rounded-md border p-2">
         <div className="flex items-center justify-between gap-2">
-          <Label htmlFor="report-totals" className="text-xs text-muted-foreground">
+          <Label htmlFor="report-totals" className="text-muted-foreground text-xs">
             Total row
           </Label>
           <Switch

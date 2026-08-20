@@ -31,8 +31,8 @@ export function TrialBalancePage() {
         <FiscalPeriodSelector value={periodId} onChange={setPeriodId} />
 
         {!periodId ? (
-          <div className="flex h-64 items-center justify-center rounded-lg border bg-card">
-            <p className="text-sm text-muted-foreground">
+          <div className="bg-card flex h-64 items-center justify-center rounded-lg border">
+            <p className="text-muted-foreground text-sm">
               Select a fiscal period to view the trial balance.
             </p>
           </div>
@@ -45,7 +45,7 @@ export function TrialBalancePage() {
         ) : (
           <div className="overflow-hidden rounded-md border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-muted-foreground">
+              <thead className="bg-muted/50 text-muted-foreground text-left">
                 <tr>
                   <th className="px-3 py-2 text-xs font-medium">Account Code</th>
                   <th className="px-3 py-2 text-xs font-medium">Account Name</th>
@@ -59,11 +59,11 @@ export function TrialBalancePage() {
                 {balances.map((balance) => (
                   <tr
                     key={balance.glAccountId}
-                    className="border-t transition-colors hover:bg-muted/50"
+                    className="hover:bg-muted/50 border-t transition-colors"
                   >
                     <td className="px-3 py-2 font-mono text-xs">{balance.accountCode}</td>
                     <td className="px-3 py-2 text-xs">{balance.accountName}</td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground capitalize">
+                    <td className="text-muted-foreground px-3 py-2 text-xs capitalize">
                       {balance.accountCategory}
                     </td>
                     <td className="px-3 py-2 text-right">
@@ -82,7 +82,7 @@ export function TrialBalancePage() {
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="border-t bg-muted/30 font-medium">
+              <tfoot className="bg-muted/30 border-t font-medium">
                 <tr>
                   <td colSpan={3} className="px-3 py-2 text-right text-xs">
                     Totals

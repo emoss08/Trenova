@@ -58,7 +58,7 @@ function SelectedFilter({
   const operators = field ? operatorsForFieldType(field.type) : [];
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-border p-2">
+    <div className="border-border flex flex-col gap-2 rounded-md border p-2">
       <div className="flex items-center gap-1.5">
         <span className="min-w-0 flex-1 truncate text-xs font-medium">
           {refLabel(index, filter.entity, filter.ref)}
@@ -75,7 +75,7 @@ function SelectedFilter({
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-muted-foreground">Shown as</Label>
+          <Label className="text-muted-foreground text-xs">Shown as</Label>
           <Input
             className="h-7"
             value={filter.label ?? ""}
@@ -84,7 +84,7 @@ function SelectedFilter({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-muted-foreground">Comparison</Label>
+          <Label className="text-muted-foreground text-xs">Comparison</Label>
           <Select
             value={filter.operator}
             onValueChange={(operator) => {
@@ -227,7 +227,7 @@ export function DashboardFiltersEditor({
 
   if (entities.length === 0) {
     return (
-      <p className="px-2 py-2 text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground px-2 py-2 text-center text-sm">
         Add a tile first — filters are drawn from the reports on this dashboard.
       </p>
     );
@@ -256,7 +256,7 @@ export function DashboardFiltersEditor({
     <div className="flex flex-col gap-4">
       {filters.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+          <h3 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
             On this dashboard
           </h3>
           {filters.map((filter, filterIndex) => (
@@ -274,7 +274,7 @@ export function DashboardFiltersEditor({
       )}
 
       <section className="flex flex-col gap-2">
-        <h3 className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+        <h3 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
           Add from your reports
         </h3>
         <p className="text-2xs text-muted-foreground">
@@ -285,7 +285,7 @@ export function DashboardFiltersEditor({
         {groups.map((group) => (
           <div key={group.report} className="flex flex-col gap-0.5">
             <p
-              className="truncate px-1 pt-1.5 text-2xs font-medium text-foreground/70"
+              className="text-2xs text-foreground/70 truncate px-1 pt-1.5 font-medium"
               title={group.report}
             >
               {group.report}
@@ -293,7 +293,7 @@ export function DashboardFiltersEditor({
             {group.items.map((candidate) => (
               <label
                 key={`${group.report}::${candidate.key}`}
-                className="flex items-center gap-2 rounded-md px-1 py-1 text-xs hover:bg-accent/40"
+                className="hover:bg-accent/40 flex items-center gap-2 rounded-md px-1 py-1 text-xs"
               >
                 <Checkbox
                   checked={selected.has(candidate.key)}

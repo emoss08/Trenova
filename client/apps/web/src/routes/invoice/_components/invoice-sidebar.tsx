@@ -118,7 +118,7 @@ export function InvoiceSidebar({
       <div className="flex flex-col gap-1.5 border-b p-2">
         <Input
           placeholder="Search invoice, PRO, bill-to..."
-          leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           value={query}
           onChange={(event) => void setSearchParams({ query: event.target.value })}
           className="h-7 text-xs"

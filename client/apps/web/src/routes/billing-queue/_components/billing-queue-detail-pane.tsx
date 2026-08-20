@@ -49,7 +49,7 @@ export default function BillingQueueDetailPane({
 
   if (!selectedItemId) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 p-4 text-muted-foreground">
+      <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-3 p-4">
         <ClipboardListIcon className="size-12" />
         <div className="text-center">
           <p className="text-sm font-medium">No item selected</p>
@@ -99,7 +99,7 @@ export default function BillingQueueDetailPane({
 
         <div className="flex items-baseline gap-3">
           <span className="text-2xl font-bold tabular-nums">{formatCurrency(totalCharge)}</span>
-          <span className="text-sm text-muted-foreground">{customerName}</span>
+          <span className="text-muted-foreground text-sm">{customerName}</span>
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -154,7 +154,7 @@ export default function BillingQueueDetailPane({
         />
       ) : null}
       <Tabs defaultValue="charges" className="flex min-h-0 flex-1 flex-col">
-        <TabsList variant="underline" className="w-full border-b border-border">
+        <TabsList variant="underline" className="border-border w-full border-b">
           <TabsTrigger value="charges">Charges</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="comments">Comments</TabsTrigger>
@@ -198,7 +198,7 @@ export default function BillingQueueDetailPane({
 function MetadataCell({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-muted-foreground text-xs">{label}</p>
       <p className="text-sm font-medium">{value}</p>
     </div>
   );
@@ -236,12 +236,12 @@ function AdjustmentOriginBanner({
             Adjustment-Origin Rebill
           </span>
           {rebillStrategy ? (
-            <span className="rounded bg-blue-600/10 px-1.5 py-0.5 text-2xs font-medium text-blue-600 dark:text-blue-400">
+            <span className="text-2xs rounded bg-blue-600/10 px-1.5 py-0.5 font-medium text-blue-600 dark:text-blue-400">
               {rebillStrategy}
             </span>
           ) : null}
           {requiresReplacementReview ? (
-            <span className="rounded bg-yellow-600/10 px-1.5 py-0.5 text-2xs font-medium text-yellow-700 dark:text-yellow-400">
+            <span className="text-2xs rounded bg-yellow-600/10 px-1.5 py-0.5 font-medium text-yellow-700 dark:text-yellow-400">
               Review required
             </span>
           ) : null}
@@ -275,11 +275,11 @@ function AdjustmentOriginBanner({
       </button>
       {expanded ? (
         <div className="border-t border-blue-600/10 px-3 py-2">
-          <div className="flex flex-wrap gap-x-5 gap-y-1 text-2xs">
+          <div className="text-2xs flex flex-wrap gap-x-5 gap-y-1">
             {sourceInvoiceAdjustmentId ? (
               <span className="text-muted-foreground">
                 Adjustment{" "}
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {sourceInvoiceAdjustmentId.slice(0, 12)}
                 </span>
               </span>
@@ -287,7 +287,7 @@ function AdjustmentOriginBanner({
             {correctionGroupId ? (
               <span className="text-muted-foreground">
                 Group{" "}
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {correctionGroupId.slice(0, 12)}
                 </span>
               </span>
@@ -295,7 +295,7 @@ function AdjustmentOriginBanner({
             {rerateVariancePercent != null ? (
               <span className="text-muted-foreground">
                 Rerate variance{" "}
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {Number(rerateVariancePercent).toFixed(2)}%
                 </span>
               </span>
@@ -303,7 +303,7 @@ function AdjustmentOriginBanner({
             {requiresReplacementReview ? (
               <span className="text-muted-foreground">
                 Replacement review{" "}
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   Required before invoice creation
                 </span>
               </span>
@@ -333,7 +333,7 @@ function ReviewTimer({ startedAt }: { startedAt: number }) {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <span className="inline-flex items-center gap-1 text-muted-foreground tabular-nums">
+    <span className="text-muted-foreground inline-flex items-center gap-1 tabular-nums">
       <TimerIcon className="size-3" />
       {pad(hours)}:{pad(minutes)}:{pad(seconds)}
     </span>

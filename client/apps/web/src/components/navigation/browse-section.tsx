@@ -50,8 +50,8 @@ function NavGroupSection({ group, activePath }: { group: NavGroup; activePath: s
             {...props}
             className={cn(
               "flex h-6 w-full items-center justify-between rounded-md px-2 text-base",
-              "text-foreground/70 transition-colors hover:bg-muted hover:text-foreground",
-              hasActiveChild && "font-medium text-foreground",
+              "text-foreground/70 hover:bg-muted hover:text-foreground transition-colors",
+              hasActiveChild && "text-foreground font-medium",
             )}
           >
             <span className="truncate">{group.label}</span>
@@ -62,7 +62,7 @@ function NavGroupSection({ group, activePath }: { group: NavGroup; activePath: s
         )}
       />
       <CollapsibleContent>
-        <div className="mt-0.5 ml-2 flex flex-col gap-0.5 border-l border-border pl-2">
+        <div className="border-border mt-0.5 ml-2 flex flex-col gap-0.5 border-l pl-2">
           {group.items.map((item) => (
             <NavItemRow key={item.id} item={item} activePath={activePath} />
           ))}
@@ -91,7 +91,7 @@ function AdminLinkGroups({ links, activePath }: { links: SidebarLink[]; activePa
     <div className="flex flex-col gap-2">
       {Array.from(grouped.entries()).map(([groupName, groupLinks]) => (
         <div key={groupName} className="flex flex-col gap-0.5">
-          <span className="px-2 pt-1 text-2xs font-semibold tracking-wide text-foreground/50 uppercase select-none">
+          <span className="text-2xs text-foreground/50 px-2 pt-1 font-semibold tracking-wide uppercase select-none">
             {groupName}
           </span>
           {groupLinks.map((link) => (
@@ -136,14 +136,14 @@ function ModuleSection({
             className={cn(
               "flex h-7 w-full items-center gap-2 rounded-md px-2 text-base transition-colors",
               "text-foreground/80 hover:bg-muted hover:text-foreground",
-              (isActive || open) && "font-medium text-foreground",
+              (isActive || open) && "text-foreground font-medium",
             )}
           >
-            <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+            <Icon className="text-muted-foreground size-4 shrink-0" strokeWidth={1.75} />
             <span className="min-w-0 flex-1 truncate text-left">{module.label}</span>
             <ChevronRightIcon
               className={cn(
-                "size-3.5 shrink-0 text-muted-foreground transition-transform",
+                "text-muted-foreground size-3.5 shrink-0 transition-transform",
                 open && "rotate-90",
               )}
             />
@@ -151,7 +151,7 @@ function ModuleSection({
         )}
       />
       <CollapsibleContent>
-        <div className="mt-0.5 ml-3 flex flex-col gap-0.5 border-l border-border py-0.5 pl-2">
+        <div className="border-border mt-0.5 ml-3 flex flex-col gap-0.5 border-l py-0.5 pl-2">
           {children}
         </div>
       </CollapsibleContent>
@@ -206,7 +206,7 @@ export function BrowseSection() {
           const Icon = module.icon;
           return (
             <SidebarNavLink key={module.id} to={module.basePath} active={pathname === "/"} className="h-7">
-              <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+              <Icon className="text-muted-foreground size-4 shrink-0" strokeWidth={1.75} />
               <span className="truncate">{module.label}</span>
             </SidebarNavLink>
           );

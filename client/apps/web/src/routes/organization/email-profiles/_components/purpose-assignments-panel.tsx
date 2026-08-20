@@ -73,10 +73,10 @@ export function PurposeAssignmentsPanel() {
   });
 
   return (
-    <section className="rounded-md border border-border bg-background">
-      <div className="flex flex-col gap-1 border-b border-border px-4 py-3">
+    <section className="border-border bg-background rounded-md border">
+      <div className="border-border flex flex-col gap-1 border-b px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-medium">Purpose Assignments</div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Assign each email purpose to an active sender profile. Clearing a purpose removes its
           assignment on save.
         </p>

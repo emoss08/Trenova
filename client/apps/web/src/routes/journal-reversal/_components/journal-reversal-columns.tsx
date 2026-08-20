@@ -30,7 +30,7 @@ export function getColumns(): ColumnDef<JournalReversal>[] {
       cell: ({ row }) => (
         <Link
           to={`/accounting/journal-entries/${row.original.originalJournalEntryId}`}
-          className="font-mono text-xs text-muted-foreground hover:text-foreground hover:underline"
+          className="text-muted-foreground hover:text-foreground font-mono text-xs hover:underline"
         >
           {row.original.originalJournalEntryId}
         </Link>

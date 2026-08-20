@@ -103,7 +103,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
                               <span className="truncate leading-tight font-medium">
                                 {componentLabels[component]}
                               </span>
-                              <span className="truncate text-2xs text-muted-foreground">
+                              <span className="text-2xs text-muted-foreground truncate">
                                 {componentDescriptions[component]}
                               </span>
                             </span>

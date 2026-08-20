@@ -154,7 +154,7 @@ function DwellBar({ result, suppressed }: { result: PreviewResult; suppressed: b
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      <div className="bg-muted flex h-1.5 w-full overflow-hidden rounded-full">
         {segments.map((segment) => (
           <m.div
             key={segment.key}
@@ -171,7 +171,7 @@ function DwellBar({ result, suppressed }: { result: PreviewResult; suppressed: b
             <span className={cn("size-1.5 shrink-0 rounded-full", segment.className)} />
             <span className="text-2xs text-muted-foreground">
               {segment.legend}
-              <span className="ml-1 tabular-nums text-foreground/70">
+              <span className="text-foreground/70 ml-1 tabular-nums">
                 {formatDetentionMinutes(segment.minutes)}
               </span>
             </span>
@@ -193,7 +193,7 @@ function StatCell({
 }) {
   return (
     <div className="px-4 py-2.5">
-      <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
+      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
       <p className={cn("mt-0.5 text-sm font-medium tabular-nums", className)}>{value}</p>
     </div>
   );
@@ -203,7 +203,7 @@ function Signal({ tone, children }: { tone: "neutral" | "warn" | "bad"; children
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md px-1.5 py-0.5 text-2xs font-medium",
+        "text-2xs inline-flex items-center rounded-md px-1.5 py-0.5 font-medium",
         tone === "neutral" && "bg-muted text-muted-foreground",
         tone === "warn" && "bg-amber-500/15 text-amber-700 dark:text-amber-400",
         tone === "bad" && "bg-red-500/15 text-red-700 dark:text-red-400",
@@ -242,13 +242,13 @@ function ScenarioResult({
             >
               {formatCurrency(result.billableAmount, currency)}
             </m.p>
-            <p className="mt-1.5 text-xs text-muted-foreground tabular-nums">
+            <p className="text-muted-foreground mt-1.5 text-xs tabular-nums">
               {formatDetentionMinutes(result.roundedMinutes)} billed of{" "}
               {formatDetentionMinutes(result.rawDwellMinutes)} dwell
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+            <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
               Net margin
             </p>
             <p
@@ -289,18 +289,18 @@ function ScenarioResult({
         )}
       </div>
 
-      <div className="grid grid-cols-3 divide-x divide-border border-t border-border">
+      <div className="divide-border border-border grid grid-cols-3 divide-x border-t">
         <StatCell label="Gross" value={formatCurrency(result.grossAmount, currency)} />
         <StatCell label="Driver pay" value={formatCurrency(result.driverPayAmount, currency)} />
         <StatCell label="Status" value={OCCURRENCE_STATUS_LABEL[result.status]} />
       </div>
 
-      <div className="border-t border-border">
+      <div className="border-border border-t">
         <button
           type="button"
           aria-expanded={receiptOpen}
           onClick={() => setReceiptOpen((open) => !open)}
-          className="flex w-full items-center justify-between gap-2 px-4 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground flex w-full items-center justify-between gap-2 px-4 py-2 text-xs transition-colors"
         >
           <span>How this charge was calculated</span>
           <ChevronDownIcon
@@ -317,7 +317,7 @@ function ScenarioResult({
               transition={{ duration: 0.22, ease: "easeOut" }}
               className="overflow-hidden"
             >
-              <div className="border-t border-border px-4 py-3">
+              <div className="border-border border-t px-4 py-3">
                 <CalculationReceipt trace={result.calculationTrace} currency={currency} />
               </div>
             </m.div>
@@ -406,10 +406,10 @@ export function DetentionPolicyPreview() {
     <div ref={rootRef} className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
+          <h3 className="text-2xs text-muted-foreground font-semibold tracking-wide uppercase">
             Live preview
           </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs">
             Worked examples priced by the same engine that bills real shipments.
           </p>
         </div>
@@ -417,16 +417,16 @@ export function DetentionPolicyPreview() {
       </div>
 
       {!ready ? (
-        <div className="flex flex-col items-center gap-2.5 rounded-lg border border-dashed border-border py-10 text-center">
-          <FlaskConicalIcon className="size-5 text-muted-foreground/60" />
-          <p className="max-w-[16rem] text-xs text-muted-foreground">
+        <div className="border-border flex flex-col items-center gap-2.5 rounded-lg border border-dashed py-10 text-center">
+          <FlaskConicalIcon className="text-muted-foreground/60 size-5" />
+          <p className="text-muted-foreground max-w-[16rem] text-xs">
             Finish these fields on the Terms tab to price the worked examples.
           </p>
           <div className="flex flex-wrap justify-center gap-1.5">
             {missing.map((label) => (
               <span
                 key={label}
-                className="rounded-md bg-muted px-1.5 py-0.5 text-2xs font-medium text-muted-foreground"
+                className="bg-muted text-2xs text-muted-foreground rounded-md px-1.5 py-0.5 font-medium"
               >
                 {label}
               </span>
@@ -444,9 +444,9 @@ export function DetentionPolicyPreview() {
           />
 
           <Card className="gap-0 overflow-hidden rounded-lg p-0">
-            <div className="flex items-baseline justify-between gap-3 border-b border-border px-4 py-2.5">
+            <div className="border-border flex items-baseline justify-between gap-3 border-b px-4 py-2.5">
               <p className="truncate text-xs font-medium">{definition.headline}</p>
-              <p className="shrink-0 text-2xs text-muted-foreground">{definition.description}</p>
+              <p className="text-2xs text-muted-foreground shrink-0">{definition.description}</p>
             </div>
 
             {active.isError ? (
@@ -454,7 +454,7 @@ export function DetentionPolicyPreview() {
                 <TriangleAlertIcon className="mt-px size-4 shrink-0 text-amber-500" />
                 <div className="min-w-0">
                   <p className="text-xs font-medium">This scenario could not be priced</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
+                  <p className="text-muted-foreground mt-0.5 text-xs">
                     {active.error instanceof Error
                       ? active.error.message
                       : "Resolve the validation errors on the Terms tab to see this scenario."}

@@ -84,7 +84,7 @@ export function UserForm({
             <span className="flex w-full items-center justify-between gap-3">
               <span>{option.label}</span>
               {option.description && (
-                <span className="text-xs text-muted-foreground">{option.description}</span>
+                <span className="text-muted-foreground text-xs">{option.description}</span>
               )}
             </span>
           )}
@@ -207,29 +207,29 @@ function OrganizationMembershipSection({
 
   return (
     <FormControl>
-      <div className="space-y-3 rounded-lg border border-border p-4">
+      <div className="border-border space-y-3 rounded-lg border p-4">
         <div className="space-y-1">
           <h4 className="text-sm font-medium">Organization Access</h4>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Choose which organizations this user can access in the current business unit.
           </p>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <Loader2Icon className="size-4 animate-spin" />
             Loading organizations...
           </div>
         ) : availableOrganizations.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             No organizations are available for assignment.
           </p>
         ) : (
-          <ScrollArea className="flex max-h-42 flex-col gap-2 rounded-md border border-border/60 bg-muted p-1">
+          <ScrollArea className="border-border/60 bg-muted flex max-h-42 flex-col gap-2 rounded-md border p-1">
             {availableOrganizations.map((organization) => (
               <label
                 key={organization.id}
-                className="flex cursor-pointer items-start gap-2 rounded-md p-2 text-sm hover:bg-accent/40"
+                className="hover:bg-accent/40 flex cursor-pointer items-start gap-2 rounded-md p-2 text-sm"
               >
                 <Checkbox
                   checked={selectedOrgIDs.includes(organization.id)}
@@ -239,12 +239,12 @@ function OrganizationMembershipSection({
                 <span className="inline-flex flex-wrap items-center gap-2">
                   <span>{organization.name}</span>
                   {organization.id === defaultOrganizationID && (
-                    <span className="rounded bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground uppercase">
+                    <span className="bg-muted text-2xs text-muted-foreground rounded px-1.5 py-0.5 uppercase">
                       default
                     </span>
                   )}
                   {(organization.city || organization.state) && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {organization.city}
                       {organization.city && organization.state ? ", " : ""}
                       {organization.state}
@@ -257,13 +257,13 @@ function OrganizationMembershipSection({
         )}
 
         {selectedOrgIDs.length > 0 && defaultOrganizationID && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Default organization:{" "}
             {orgByID.get(defaultOrganizationID)?.name ?? defaultOrganizationID}
           </p>
         )}
 
-        {error && <p className="text-xs text-destructive">{error}</p>}
+        {error && <p className="text-destructive text-xs">{error}</p>}
 
         <div className="flex justify-end">
           <Button

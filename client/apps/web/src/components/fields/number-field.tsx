@@ -97,12 +97,12 @@ export function NumberField<T extends FieldValues>({
                   props["aria-describedby"],
                 )}
                 className={cn(
-                  "flex h-7 w-full min-w-0 rounded-md border border-input bg-muted px-2 py-0.5 outline-none md:text-xs",
+                  "border-input bg-muted flex h-7 w-full min-w-0 rounded-md border px-2 py-0.5 outline-none md:text-xs",
                   "file:border-0 file:bg-transparent file:text-sm file:font-medium",
                   "placeholder:text-muted-foreground",
                   "disabled:cursor-not-allowed disabled:opacity-50",
-                  "read-only:cursor-default read-only:text-muted-foreground",
-                  "focus-visible:border-brand focus-visible:ring-4 focus-visible:ring-brand/20 focus-visible:outline-hidden",
+                  "read-only:text-muted-foreground read-only:cursor-default",
+                  "focus-visible:border-brand focus-visible:ring-brand/20 focus-visible:ring-4 focus-visible:outline-hidden",
                   "transition-[border-color,box-shadow] duration-200 ease-in-out",
                   props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
                   fieldState.invalid &&
@@ -114,15 +114,15 @@ export function NumberField<T extends FieldValues>({
 
               <div className="absolute top-px right-px bottom-px flex items-center gap-1 pr-0">
                 {sideText && (
-                  <div className="pointer-events-none mr-2 text-xs text-muted-foreground select-none">
+                  <div className="text-muted-foreground pointer-events-none mr-2 text-xs select-none">
                     {sideText}
                   </div>
                 )}
-                <div className="flex h-full flex-col items-stretch rounded-r-md border-l border-muted-foreground/20 bg-transparent">
+                <div className="border-muted-foreground/20 flex h-full flex-col items-stretch rounded-r-md border-l bg-transparent">
                   <button
                     type="button"
                     aria-label="Increment"
-                    className="inline-flex h-7 w-6 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+                    className="border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center border-b disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
                     onClick={() => {
                       let next = currentValue + step;
@@ -135,7 +135,7 @@ export function NumberField<T extends FieldValues>({
                   <button
                     type="button"
                     aria-label="Decrement"
-                    className="inline-flex h-7 w-6 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+                    className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
                     onClick={() => {
                       let next = currentValue - step;

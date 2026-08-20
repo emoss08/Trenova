@@ -9,8 +9,8 @@ import type { RateAgreement } from "@trenova/shared/types/rate";
 import { CopyIcon, FileUpIcon, TrendingUpIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { getColumns } from "./rate-agreement-columns";
 import { ImportRateSheetDialog } from "./import-rate-sheet-dialog";
+import { getColumns } from "./rate-agreement-columns";
 import { RateAgreementPanel } from "./rate-agreement-panel";
 import { RateIncreaseDialog } from "./rate-increase-dialog";
 

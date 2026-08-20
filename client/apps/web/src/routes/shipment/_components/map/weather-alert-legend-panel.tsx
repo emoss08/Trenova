@@ -30,20 +30,20 @@ export function WeatherAlertLegendPanel({
 
   return (
     <MapControl position={ControlPosition.LEFT_BOTTOM}>
-      <div className="mx-3 my-4 rounded-lg border bg-background shadow-sm">
+      <div className="bg-background mx-3 my-4 rounded-lg border shadow-sm">
         <button
           type="button"
           onClick={() => onCollapsedChange(!collapsed)}
           className="flex w-full items-center justify-between gap-2 px-3 py-2"
         >
           <div className="flex items-center gap-1.5">
-            <TriangleAlertIcon className="size-3.5 text-muted-foreground" />
-            <span className="text-xs font-semibold text-foreground">Public Alerts</span>
+            <TriangleAlertIcon className="text-muted-foreground size-3.5" />
+            <span className="text-foreground text-xs font-semibold">Public Alerts</span>
             <span className="text-2xs text-muted-foreground tabular-nums">({totalCount})</span>
           </div>
           <ChevronDownIcon
             className={cn(
-              "size-3.5 text-muted-foreground transition-transform",
+              "text-muted-foreground size-3.5 transition-transform",
               collapsed && "-rotate-90",
             )}
           />
@@ -62,7 +62,7 @@ export function WeatherAlertLegendPanel({
                       className="inline-block size-3 shrink-0 rounded-sm"
                       style={{ backgroundColor: config.stroke }}
                     />
-                    <span className="text-xs text-foreground">{config.label}</span>
+                    <span className="text-foreground text-xs">{config.label}</span>
                   </div>
                   <span className="text-2xs text-muted-foreground tabular-nums">{count}</span>
                 </div>

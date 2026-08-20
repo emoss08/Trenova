@@ -327,7 +327,7 @@ function FieldAssertionsEditorInner({
       {label && <label className="text-sm leading-none font-medium">{label}</label>}
       <div className="space-y-3">
         {entries.length === 0 && (
-          <div className="rounded-md border border-dashed px-3 py-4 text-xs text-muted-foreground">
+          <div className="text-muted-foreground rounded-md border border-dashed px-3 py-4 text-xs">
             No field assertions yet. Add rules for things like “referenceNumber
             is not empty” or “rate matches a currency pattern.”
           </div>
@@ -438,11 +438,11 @@ function FieldAssertionRow({
   };
 
   return (
-    <div className="rounded-md border bg-muted/30 p-3">
+    <div className="bg-muted/30 rounded-md border p-3">
       <div className="flex items-start gap-2">
         <div className="grid flex-1 gap-2 md:grid-cols-[180px_minmax(0,1fr)]">
           <div className="space-y-1">
-            <label className="text-2xs font-medium text-muted-foreground uppercase">
+            <label className="text-2xs text-muted-foreground font-medium uppercase">
               Operator
             </label>
             <select
@@ -453,7 +453,7 @@ function FieldAssertionRow({
                 )
               }
               disabled={disabled}
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none"
+              className="border-input bg-background flex h-9 w-full rounded-md border px-3 text-sm outline-none"
             >
               {FIELD_ASSERTION_OPERATOR_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -464,7 +464,7 @@ function FieldAssertionRow({
           </div>
 
           <div className="space-y-1">
-            <label className="text-2xs font-medium text-muted-foreground uppercase">
+            <label className="text-2xs text-muted-foreground font-medium uppercase">
               {assertion.operator === "matches_regex"
                 ? "Pattern"
                 : assertion.operator === "one_of"
@@ -512,7 +512,7 @@ function FieldAssertionRow({
             )}
             {(assertion.operator === "exists" ||
               assertion.operator === "not_empty") && (
-              <div className="flex h-9 items-center rounded-md border border-dashed px-3 text-xs text-muted-foreground">
+              <div className="text-muted-foreground flex h-9 items-center rounded-md border border-dashed px-3 text-xs">
                 {operatorMeta?.description}
               </div>
             )}
@@ -533,7 +533,7 @@ function FieldAssertionRow({
       </div>
 
       {operatorMeta && (
-        <p className="mt-2 text-2xs text-muted-foreground">
+        <p className="text-2xs text-muted-foreground mt-2">
           {operatorMeta.description}
         </p>
       )}

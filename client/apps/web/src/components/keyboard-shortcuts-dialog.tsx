@@ -37,18 +37,18 @@ export function KeyboardShortcutsDialog() {
           <div className="flex flex-col gap-4">
             {keybindGroups.map((group) => (
               <div key={group.id} className="flex flex-col gap-2">
-                <h3 className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                <h3 className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
                   {group.label}
                 </h3>
                 <div className="flex flex-col">
                   {group.keybinds.map((keybind) => (
                     <div
                       key={keybind.id}
-                      className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-muted/50"
+                      className="hover:bg-muted/50 flex items-center justify-between rounded-md px-2 py-1.5"
                     >
                       <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-medium">{keybind.label}</span>
-                        <span className="text-xs text-muted-foreground">{keybind.description}</span>
+                        <span className="text-muted-foreground text-xs">{keybind.description}</span>
                       </div>
                       <KbdGroup>
                         {keybind.keys.map((key) => (

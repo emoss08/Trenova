@@ -38,7 +38,7 @@ export function BillingRecordCard({
           <span className="shrink-0 text-sm font-semibold tabular-nums">{amount}</span>
         ) : null}
       </div>
-      {subtitle ? <span className="truncate text-xs text-muted-foreground">{subtitle}</span> : null}
+      {subtitle ? <span className="text-muted-foreground truncate text-xs">{subtitle}</span> : null}
       {meta ? <div className="mt-0.5">{meta}</div> : null}
     </button>
   );

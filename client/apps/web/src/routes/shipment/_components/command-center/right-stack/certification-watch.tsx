@@ -27,12 +27,12 @@ function CertificationRow({
     <div
       className={
         withDivider
-          ? "flex items-center justify-between gap-2 border-t border-border px-0.5 py-1.5"
+          ? "border-border flex items-center justify-between gap-2 border-t px-0.5 py-1.5"
           : "flex items-center justify-between gap-2 px-0.5 py-1.5"
       }
     >
       <div className="flex min-w-0 items-center gap-1">
-        <AlertTriangleIcon className="size-3 shrink-0 text-warning" />
+        <AlertTriangleIcon className="text-warning size-3 shrink-0" />
         <Link
           to={`/dispatch/workers?panelType=edit&panelEntityId=${summary.workerId}&tab=hos`}
           className="truncate text-[11px] font-semibold hover:underline"
@@ -40,7 +40,7 @@ function CertificationRow({
           {summary.workerName}
         </Link>
       </div>
-      <span className="shrink-0 font-table text-[9.5px] text-muted-foreground tabular-nums">
+      <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
         {summary.uncertifiedDays} of {summary.totalDays} days
       </span>
     </div>
@@ -52,7 +52,7 @@ function CertificationSkeletonRow({ withDivider }: { withDivider: boolean }) {
     <div
       className={
         withDivider
-          ? "flex items-center justify-between gap-2 border-t border-border px-0.5 py-2"
+          ? "border-border flex items-center justify-between gap-2 border-t px-0.5 py-2"
           : "flex items-center justify-between gap-2 px-0.5 py-2"
       }
     >
@@ -65,11 +65,11 @@ function CertificationSkeletonRow({ withDivider }: { withDivider: boolean }) {
 function ConnectSamsaraState() {
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-6 text-center">
-      <span className="inline-flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+      <span className="bg-muted text-muted-foreground inline-flex size-8 items-center justify-center rounded-full">
         <PlugZapIcon className="size-4" />
       </span>
       <p className="text-[11.5px] font-medium">Connect Samsara to track log certification</p>
-      <p className="max-w-55 text-[10.5px] leading-snug text-muted-foreground">
+      <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
         Uncertified ELD log visibility turns on once the Samsara telematics integration is enabled
         for your organization.
       </p>
@@ -89,7 +89,7 @@ function ConnectSamsaraState() {
 function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-5 text-center">
-      <p className="text-[10.5px] text-muted-foreground">
+      <p className="text-muted-foreground text-[10.5px]">
         Certification data could not be loaded from Samsara.
       </p>
       <Button variant="outline" size="xs" onClick={onRetry}>
@@ -147,11 +147,11 @@ export function CertificationWatch({ enabled = true }: { enabled?: boolean }) {
   } else if (summaries.length === 0) {
     body = (
       <div className="cc-fade-in flex flex-col items-center gap-2 px-4 py-6 text-center">
-        <span className="inline-flex size-8 items-center justify-center rounded-full bg-success/15 text-success">
+        <span className="bg-success/15 text-success inline-flex size-8 items-center justify-center rounded-full">
           <ShieldCheckIcon className="size-4" />
         </span>
         <p className="text-[11.5px] font-medium">All drivers certified — no outstanding logs.</p>
-        <p className="max-w-55 text-[10.5px] leading-snug text-muted-foreground">
+        <p className="text-muted-foreground max-w-55 text-[10.5px] leading-snug">
           Every driver has certified their ELD logs for the last {CERTIFICATION_WINDOW_DAYS} days.
         </p>
       </div>

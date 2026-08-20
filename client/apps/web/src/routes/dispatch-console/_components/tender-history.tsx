@@ -27,7 +27,7 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
   const acceptedCarrier = acceptedCarrierName(tender);
 
   return (
-    <div className="flex flex-col rounded-md border bg-card">
+    <div className="bg-card flex flex-col rounded-md border">
       <button
         type="button"
         className="flex items-center gap-1.5 p-2 text-left"
@@ -35,27 +35,27 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
         aria-expanded={expanded}
       >
         {expanded ? (
-          <ChevronDownIcon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+          <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" aria-hidden />
         ) : (
-          <ChevronRightIcon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+          <ChevronRightIcon className="text-muted-foreground size-3 shrink-0" aria-hidden />
         )}
         <Badge variant="outline" className="h-4 shrink-0 rounded px-1 text-[9px]">
           {TENDER_MODE_LABEL[tender.mode]}
         </Badge>
         <TenderStatusBadge status={tender.status} className="shrink-0 text-[9px]" />
-        <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">
+        <span className="text-muted-foreground ml-auto shrink-0 text-[10px]">
           {formatUnixDateTime(tender.createdAt)}
         </span>
       </button>
 
       {acceptedCarrier && (
-        <span className="px-2 pb-1 text-[10px] text-muted-foreground">
-          Accepted by <span className="font-medium text-foreground">{acceptedCarrier}</span>
+        <span className="text-muted-foreground px-2 pb-1 text-[10px]">
+          Accepted by <span className="text-foreground font-medium">{acceptedCarrier}</span>
           {tender.acceptedAt != null ? ` · ${formatUnixDateTime(tender.acceptedAt)}` : ""}
         </span>
       )}
       {tender.status === "Canceled" && tender.cancellationReason && (
-        <span className="px-2 pb-1 text-[10px] text-muted-foreground italic">
+        <span className="text-muted-foreground px-2 pb-1 text-[10px] italic">
           “{tender.cancellationReason}”
         </span>
       )}
@@ -65,7 +65,7 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
           {offers.map((offer) => (
             <div
               key={offer.id}
-              className="flex flex-col gap-0.5 rounded border bg-muted/30 px-2 py-1"
+              className="bg-muted/30 flex flex-col gap-0.5 rounded border px-2 py-1"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-1.5">
@@ -81,7 +81,7 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
                 </div>
                 <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-[9px]" />
               </div>
-              <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground">
+              <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-[10px]">
                 <span className="tabular-nums">
                   {formatOfferRate(offer.rate, offer.rateMethod)}
                 </span>
@@ -97,14 +97,14 @@ function TenderHistoryRow({ tender }: { tender: ShipmentTender }) {
                 )}
               </div>
               {offer.status === "Declined" && offer.declineReason && (
-                <span className="text-[10px] text-muted-foreground italic">
+                <span className="text-muted-foreground text-[10px] italic">
                   “{offer.declineReason}”
                 </span>
               )}
             </div>
           ))}
           {offers.length === 0 && (
-            <p className="py-1 text-center text-[10px] text-muted-foreground">No offers.</p>
+            <p className="text-muted-foreground py-1 text-center text-[10px]">No offers.</p>
           )}
         </div>
       )}
@@ -135,7 +135,7 @@ export function TenderHistory({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <span className="text-[10px] tracking-wide text-muted-foreground uppercase">Tenders</span>
+      <span className="text-muted-foreground text-[10px] tracking-wide uppercase">Tenders</span>
       {isLoading ? (
         <Skeleton className="h-12 rounded-md" />
       ) : (

@@ -45,7 +45,7 @@ function RateConfirmationSummary({
         <CardTitle className="text-base">
           Rate confirmation for {rateConfirmation.carrierName}
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {[
             rateConfirmation.shipmentProNumber && `PRO ${rateConfirmation.shipmentProNumber}`,
             rateConfirmation.revisionLabel,
@@ -75,19 +75,19 @@ function RateConfirmationSummary({
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Total</span>
+          <span className="text-muted-foreground text-xs">Total</span>
           <span className="text-sm font-semibold tabular-nums">
             {rateConfirmation.totalCost}
-            <span className="ml-1 text-xs font-normal text-muted-foreground">
+            <span className="text-muted-foreground ml-1 text-xs font-normal">
               {rateConfirmation.currency}
             </span>
           </span>
         </div>
 
         {rateConfirmation.expiresAt > 0 && (
-          <div className="flex items-center gap-1.5 rounded-md border bg-muted/40 px-2 py-1.5">
-            <ClockIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-            <span className="text-xs text-muted-foreground">
+          <div className="bg-muted/40 flex items-center gap-1.5 rounded-md border px-2 py-1.5">
+            <ClockIcon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+            <span className="text-muted-foreground text-xs">
               Sign link expires {formatUnixDateTime(rateConfirmation.expiresAt)}
             </span>
           </div>
@@ -95,7 +95,7 @@ function RateConfirmationSummary({
 
         <div className="flex flex-col gap-2 pt-1">
           <div className="flex flex-col gap-1">
-            <label htmlFor="signer-name" className="text-xs text-muted-foreground">
+            <label htmlFor="signer-name" className="text-muted-foreground text-xs">
               Your name (required)
             </label>
             <Input
@@ -108,7 +108,7 @@ function RateConfirmationSummary({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="signer-title" className="text-xs text-muted-foreground">
+            <label htmlFor="signer-title" className="text-muted-foreground text-xs">
               Title (optional)
             </label>
             <Input
@@ -132,7 +132,7 @@ function RateConfirmationSummary({
           >
             Confirm rate
           </Button>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-muted-foreground text-[11px]">
             By confirming, you agree to the rate and terms shown above on behalf of{" "}
             {rateConfirmation.carrierName}.
           </p>
@@ -145,7 +145,7 @@ function RateConfirmationSummary({
 function InvalidLinkCard() {
   return (
     <StatusCard
-      icon={<CircleSlashIcon className="size-8 text-muted-foreground" aria-hidden />}
+      icon={<CircleSlashIcon className="text-muted-foreground size-8" aria-hidden />}
       title="This rate confirmation link is no longer valid"
       body="The link may have expired, been revoked, or the rate confirmation may have been updated. Contact the broker if you believe this is an error."
     />
@@ -155,7 +155,7 @@ function InvalidLinkCard() {
 function ThrottledCard() {
   return (
     <StatusCard
-      icon={<ClockIcon className="size-8 text-muted-foreground" aria-hidden />}
+      icon={<ClockIcon className="text-muted-foreground size-8" aria-hidden />}
       title="Too many attempts"
       body="Please wait a minute and try the link from your email again."
     />
@@ -205,7 +205,7 @@ export function RateConfirmationPublicPage() {
   } else if (submitError === "unavailable") {
     content = (
       <StatusCard
-        icon={<TriangleAlertIcon className="size-8 text-muted-foreground" aria-hidden />}
+        icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
         title="Temporarily unavailable"
         body="Your signature could not be recorded because of a temporary problem. Nothing has been submitted — please try again in a moment."
         action={
@@ -246,7 +246,7 @@ export function RateConfirmationPublicPage() {
         <ThrottledCard />
       ) : kind === "unavailable" ? (
         <StatusCard
-          icon={<TriangleAlertIcon className="size-8 text-muted-foreground" aria-hidden />}
+          icon={<TriangleAlertIcon className="text-muted-foreground size-8" aria-hidden />}
           title="Temporarily unavailable"
           body="The rate confirmation could not be loaded because of a temporary problem. Please try again in a moment."
           action={
@@ -269,7 +269,7 @@ export function RateConfirmationPublicPage() {
   } else if (previewQuery.data?.confirmed) {
     content = (
       <StatusCard
-        icon={<CheckCircle2Icon className="size-8 text-muted-foreground" aria-hidden />}
+        icon={<CheckCircle2Icon className="text-muted-foreground size-8" aria-hidden />}
         title="Already confirmed"
         body="This rate confirmation has already been signed. Contact the broker if anything changed."
       />

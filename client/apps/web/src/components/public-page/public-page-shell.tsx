@@ -9,11 +9,11 @@ export function PublicPageShell({
   footer: string;
 }) {
   return (
-    <div className="fixed inset-0 h-svh w-full overflow-y-auto bg-background">
+    <div className="bg-background fixed inset-0 h-svh w-full overflow-y-auto">
       <div className="flex min-h-full flex-col items-center justify-center gap-6 p-6 md:p-10">
         <LazyImage src={logoRainbow} alt="Trenova Logo" className="size-12 object-contain" />
         {children}
-        <p className="text-center text-[11px] text-muted-foreground">{footer}</p>
+        <p className="text-muted-foreground text-center text-[11px]">{footer}</p>
       </div>
     </div>
   );

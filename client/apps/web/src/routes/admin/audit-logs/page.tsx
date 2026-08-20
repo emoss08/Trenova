@@ -13,7 +13,7 @@ export function AuditLogsPage() {
         title="Audit Entries"
         description="Monitor and review system activity across your organization"
       />
-      <div className="p-4 flex flex-col gap-2">
+      <div className="flex flex-col gap-2 p-4">
         <AuditAlert />
         <DataTableLazyComponent>
           <AuditLogTable />

@@ -18,7 +18,7 @@ export default function InspectorState({
   return (
     <div
       aria-live={state === "loading" ? "polite" : undefined}
-      className="flex h-48 flex-col items-center justify-center gap-2 p-4 text-sm text-muted-foreground"
+      className="text-muted-foreground flex h-48 flex-col items-center justify-center gap-2 p-4 text-sm"
     >
       <DatabaseIcon className="size-5" />
       {displayMessage}

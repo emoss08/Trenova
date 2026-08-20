@@ -152,9 +152,9 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col border-b border-border p-4 leading-tight">
+      <div className="border-border flex flex-col border-b p-4 leading-tight">
         <p className="text-2xl font-semibold">Samsara Configuration</p>
-        <span className="text-sm text-muted-foreground">
+        <span className="text-muted-foreground text-sm">
           Configure your Samsara integration settings for this organization.
         </span>
       </div>
@@ -162,10 +162,10 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
         <Form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <FormGroup cols={1}>
             <FormControl cols="full">
-              <div className="flex items-center justify-between rounded-md border border-border bg-background p-3">
+              <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
                 <div>
                   <Label htmlFor="samsara-enabled">Enable Samsara</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Explicitly toggle integration state for this business unit.
                   </p>
                 </div>
@@ -209,9 +209,9 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
               </FormControl>
             )}
             <FormControl cols="full">
-              <div className="flex flex-col gap-0.5 border-t border-border pt-4">
+              <div className="border-border flex flex-col gap-0.5 border-t pt-4">
                 <p className="text-sm font-semibold">Webhooks</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Receive real-time vehicle and driver events from Samsara instead of waiting on
                   polling.
                 </p>
@@ -233,7 +233,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
               {webhookUrl ? (
                 <div className="flex flex-col gap-1.5">
                   <Label>Webhook Endpoint</Label>
-                  <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 p-2">
+                  <div className="border-border bg-muted/40 flex items-center gap-2 rounded-md border p-2">
                     <p className="min-w-0 flex-1 truncate font-mono text-xs">{webhookUrl}</p>
                     <Button
                       type="button"
@@ -250,12 +250,12 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
                       <span className="sr-only">Copy webhook URL</span>
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Point Samsara&apos;s webhook at this URL. It is unique to your organization.
                   </p>
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Save the configuration to generate your webhook endpoint.
                 </p>
               )}

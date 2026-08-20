@@ -42,7 +42,7 @@ export function BillingQueueItemCard({
           title={proNumber}
           auxiliary={
             item.number ? (
-              <span className="font-mono text-[10px] text-muted-foreground">{item.number}</span>
+              <span className="text-muted-foreground font-mono text-[10px]">{item.number}</span>
             ) : null
           }
           amount={totalCharges != null ? formatCurrency(Number(totalCharges)) : undefined}
@@ -60,7 +60,7 @@ export function BillingQueueItemCard({
               <Tooltip>
                 <TooltipTrigger
                   render={
-                    <span className="text-[11px] text-muted-foreground/70">{age}</span>
+                    <span className="text-muted-foreground/70 text-[11px]">{age}</span>
                   }
                 />
                 <TooltipContent side="left" sideOffset={10}>

@@ -308,7 +308,7 @@ export function RouteCommandPalette() {
               <button
                 type="button"
                 onClick={() => setRecordEntityFilter(null)}
-                className="inline-flex h-5 items-center gap-1 rounded-full border bg-muted px-2 py-0 text-2xs font-medium text-foreground transition-colors hover:bg-muted/80"
+                className="bg-muted text-2xs text-foreground hover:bg-muted/80 inline-flex h-5 items-center gap-1 rounded-full border px-2 py-0 font-medium transition-colors"
                 aria-label={`Clear ${activeEntityOption.label} record filter`}
               >
                 <span>{activeEntityOption.label}</span>
@@ -317,8 +317,8 @@ export function RouteCommandPalette() {
             </div>
           )}
           {mentionOpen && filteredEntityOptions.length > 0 && (
-            <div className="absolute top-11 left-2 z-50 w-52 rounded-lg border bg-popover p-2 shadow-lg">
-              <div className="px-2 pb-1 text-2xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
+            <div className="bg-popover absolute top-11 left-2 z-50 w-52 rounded-lg border p-2 shadow-lg">
+              <div className="text-2xs text-muted-foreground px-2 pb-1 font-medium tracking-[0.18em] uppercase">
                 Filter records
               </div>
               <div className="flex flex-col gap-1">
@@ -407,7 +407,7 @@ export function RouteCommandPalette() {
             {remoteStatusIndicator}
           </div>
           {showPreview && (
-            <div className="hidden max-h-[min(60vh,36rem)] overflow-hidden border-l border-border md:block">
+            <div className="border-border hidden max-h-[min(60vh,36rem)] overflow-hidden border-l md:block">
               <ShipmentSearchPreview shipmentId={effectivePreviewId} />
             </div>
           )}
@@ -415,7 +415,7 @@ export function RouteCommandPalette() {
 
         <div
           className={cn(
-            "flex items-center gap-6 border-t bg-muted/30 px-4 py-2 text-xs text-muted-foreground",
+            "bg-muted/30 text-muted-foreground flex items-center gap-6 border-t px-4 py-2 text-xs",
             (mentionOpen || (recordEntityFilter && remoteGroups.length === 0)) && "hidden",
           )}
         >

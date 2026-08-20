@@ -84,7 +84,7 @@ export function InvoicesPage() {
           side="right"
           className="w-[min(92vw,1100px)] p-0 sm:max-w-none"
         >
-          <SheetHeader className="border-b border-border pr-12">
+          <SheetHeader className="border-border border-b pr-12">
             <SheetTitle>
               {selectedDocumentName || "Document Preview"}
             </SheetTitle>

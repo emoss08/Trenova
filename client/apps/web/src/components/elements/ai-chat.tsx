@@ -31,7 +31,7 @@ function AiChat({ status = "ready", children, className }: AiChatProps) {
     <AiChatContext.Provider value={contextValue}>
       <div
         data-slot="ai-chat"
-        className={cn("flex h-dvh flex-col bg-background font-mono", className)}
+        className={cn("bg-background flex h-dvh flex-col font-mono", className)}
       >
         {children}
       </div>
@@ -83,7 +83,7 @@ function AiChatFooter({ children, className }: AiChatFooterProps) {
   return (
     <div
       data-slot="ai-chat-footer"
-      className={cn("border-t bg-background px-4 py-3", className)}
+      className={cn("bg-background border-t px-4 py-3", className)}
     >
       {children}
     </div>

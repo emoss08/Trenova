@@ -26,12 +26,12 @@ export function StatusTile({
   tone: "active" | "warning" | "info" | "muted";
 }) {
   return (
-    <div className="rounded-lg border bg-background p-3 shadow-xs">
+    <div className="bg-background rounded-lg border p-3 shadow-xs">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <div className="text-xs font-medium text-muted-foreground uppercase">{label}</div>
+          <div className="text-muted-foreground text-xs font-medium uppercase">{label}</div>
           <div className="truncate text-lg font-semibold tracking-tight">{value}</div>
-          <div className="truncate text-xs text-muted-foreground">{detail}</div>
+          <div className="text-muted-foreground truncate text-xs">{detail}</div>
         </div>
         <span
           className={cn(
@@ -65,11 +65,11 @@ export function ConsoleToolbar({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-sidebar p-3">
+    <div className="bg-sidebar rounded-lg border p-3">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight">{title}</h3>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-muted-foreground text-sm">{description}</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative min-w-0 sm:w-80">
@@ -77,7 +77,7 @@ export function ConsoleToolbar({
               value={search}
               placeholder={searchPlaceholder}
               onChange={(event) => onSearchChange(event.target.value)}
-              leftElement={<SearchIcon className="size-3 text-muted-foreground" />}
+              leftElement={<SearchIcon className="text-muted-foreground size-3" />}
             />
           </div>
           {action}
@@ -101,12 +101,12 @@ export function PanelHeader({
   return (
     <div className="flex flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-md border bg-muted/40 text-muted-foreground [&_svg]:size-4">
+        <span className="bg-muted/40 text-muted-foreground flex size-8 items-center justify-center rounded-md border [&_svg]:size-4">
           {icon}
         </span>
         <div>
           <div className="text-sm font-medium">{title}</div>
-          <div className="text-xs text-muted-foreground">{description}</div>
+          <div className="text-muted-foreground text-xs">{description}</div>
         </div>
       </div>
       {action}
@@ -129,11 +129,11 @@ export function ActivityItem({
     <div className="flex items-start justify-between gap-3 p-3">
       <div className="min-w-0">
         <div className="truncate text-sm font-medium">{title}</div>
-        <div className="truncate text-xs text-muted-foreground">{detail}</div>
+        <div className="text-muted-foreground truncate text-xs">{detail}</div>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
         <Badge variant={riskVariant(badge)}>{toTitleCase(badge)}</Badge>
-        <span className="text-xs text-muted-foreground">{when}</span>
+        <span className="text-muted-foreground text-xs">{when}</span>
       </div>
     </div>
   );
@@ -151,7 +151,7 @@ export function ProviderLogo({ name }: { name: string }) {
   if (lowerName.includes("okta")) {
     return <OktaLogo className="h-5 w-auto" />;
   }
-  return <KeyRoundIcon className="size-5 text-primary" />;
+  return <KeyRoundIcon className="text-primary size-5" />;
 }
 
 export function ToggleRow({
@@ -166,10 +166,10 @@ export function ToggleRow({
   onCheckedChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3 py-2 text-sm">
+    <label className="bg-background flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
       <span className="min-w-0">
         <span className="block font-medium">{label}</span>
-        {description && <span className="block text-xs text-muted-foreground">{description}</span>}
+        {description && <span className="text-muted-foreground block text-xs">{description}</span>}
       </span>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </label>
@@ -229,7 +229,7 @@ export function ChipArrayField({
               {chips.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {chips.map((chip) => (
-                    <span key={chip} className="rounded-full border bg-muted px-2 py-0.5 text-xs">
+                    <span key={chip} className="bg-muted rounded-full border px-2 py-0.5 text-xs">
                       {chip}
                     </span>
                   ))}
@@ -246,7 +246,7 @@ export function ChipArrayField({
 export function MetaLine({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0 truncate">
-      <span className="font-medium text-foreground">{label}:</span> {value}
+      <span className="text-foreground font-medium">{label}:</span> {value}
     </div>
   );
 }
@@ -270,13 +270,13 @@ export function EmptyState({
       )}
     >
       {icon && (
-        <span className="mb-2 flex size-9 items-center justify-center rounded-md bg-muted text-muted-foreground [&_svg]:size-4">
+        <span className="bg-muted text-muted-foreground mb-2 flex size-9 items-center justify-center rounded-md [&_svg]:size-4">
           {icon}
         </span>
       )}
       <div className="text-sm font-medium">{label}</div>
       {description && (
-        <div className="mt-1 max-w-md text-sm text-muted-foreground">{description}</div>
+        <div className="text-muted-foreground mt-1 max-w-md text-sm">{description}</div>
       )}
     </div>
   );
@@ -298,7 +298,7 @@ export function ErrorState({ label, compact }: { label: string; compact?: boolea
 
 export function RowSkeleton({ rows }: { rows: number }) {
   return (
-    <div className="space-y-2 rounded-lg border bg-background p-3">
+    <div className="bg-background space-y-2 rounded-lg border p-3">
       {Array.from({ length: rows }).map((_, index) => (
         <Skeleton key={index} className="h-16 w-full rounded-md" />
       ))}

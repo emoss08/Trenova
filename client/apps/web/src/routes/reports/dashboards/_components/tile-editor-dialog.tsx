@@ -211,7 +211,7 @@ export function TileEditorDialog({
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="tile-chart">Chart</Label>
               {charts.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   This report has no charts yet — add one in the report builder.
                 </p>
               ) : (
@@ -244,7 +244,7 @@ export function TileEditorDialog({
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="tile-column">Measure</Label>
               {measures.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   This report returns no measures to show as a KPI.
                 </p>
               ) : (
@@ -306,7 +306,7 @@ export function TileEditorDialog({
                 const autoMatch = dashboardParams.some((entry) => entry.name === param.name);
                 return (
                   <div key={param.name} className="flex items-center gap-2">
-                    <span className="w-28 shrink-0 truncate text-xs text-muted-foreground">
+                    <span className="text-muted-foreground w-28 shrink-0 truncate text-xs">
                       {param.label || param.name}
                     </span>
                     <Select

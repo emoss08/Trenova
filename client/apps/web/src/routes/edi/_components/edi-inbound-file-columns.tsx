@@ -29,7 +29,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFile>[] {
       cell: ({ row }) => (
         <div className="min-w-0">
           <div className="truncate font-medium">{row.original.fileName}</div>
-          <div className="truncate text-xs text-muted-foreground">{row.original.remotePath}</div>
+          <div className="text-muted-foreground truncate text-xs">{row.original.remotePath}</div>
         </div>
       ),
       size: 280,
@@ -49,7 +49,7 @@ export function getInboundFileColumns(): ColumnDef<EDIInboundFile>[] {
         row.original.partner?.name ? (
           <div className="min-w-0">
             <div className="truncate font-medium">{row.original.partner.name}</div>
-            <div className="truncate text-xs text-muted-foreground">
+            <div className="text-muted-foreground truncate text-xs">
               {row.original.partner.code}
             </div>
           </div>

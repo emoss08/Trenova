@@ -72,7 +72,7 @@ export default function LoadEnvelopePanel() {
     <FormSection
       title="Load Envelope"
       description="Dimensions, jurisdiction limits, and permits derived from the cargo on this shipment"
-      className="border-t border-border pt-4"
+      className="border-border border-t pt-4"
       action={assessment ? <EnvelopeStatusBadge assessment={assessment} /> : null}
     >
       {isPending ? (
@@ -165,7 +165,7 @@ function EnvelopeBody({
             title={`Permits required (${requirements.length})`}
             meta={
               openCount > 0 ? (
-                <span className="text-2xs font-medium text-destructive tabular-nums">
+                <span className="text-2xs text-destructive font-medium tabular-nums">
                   {openCount} open
                 </span>
               ) : (
@@ -213,7 +213,7 @@ function EnvelopeBody({
           >
             <ul className="space-y-0.5">
               {escorts.map((escort) => (
-                <li key={escort.role} className="text-xs text-muted-foreground">
+                <li key={escort.role} className="text-muted-foreground text-xs">
                   <span className="text-foreground">{escort.label}</span>
                   {escort.stateCodes.length > 0 && ` — required by ${escort.stateCodes.join(", ")}`}
                 </li>
@@ -230,7 +230,7 @@ function EnvelopeBody({
           >
             <ul className="space-y-0.5">
               {restrictions.map((restriction) => (
-                <li key={restriction.kind} className="text-xs text-muted-foreground">
+                <li key={restriction.kind} className="text-muted-foreground text-xs">
                   <span className="text-foreground">{restriction.label}</span> —{" "}
                   {restriction.stateCodes.join(", ")}
                 </li>
@@ -250,7 +250,7 @@ function EnvelopeBody({
             hint="Derived from the slowest jurisdiction's permit lead time."
             tone={pickupTooSoon ? "warning" : undefined}
           >
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {assessment.maxLeadTimeDays} day
               {assessment.maxLeadTimeDays === 1 ? "" : "s"} of permit lead time on this route.
             </p>
@@ -269,7 +269,7 @@ function EnvelopeBody({
             value={`$${(assessment.totalEstimatedFee ?? 0).toLocaleString()}`}
           >
             {assessment.feeIsBaseOnly && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Base fees only — per-mile charges are excluded because per-state mileage is not
                 available for this route, so the real cost will be higher where a jurisdiction
                 charges by distance.
@@ -286,7 +286,7 @@ function EnvelopeBody({
             <p className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
               Unconfirmed limits for {unverified.map((j) => j.stateCode).join(", ")}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               These thresholds came from Trenova&apos;s researched baseline and have not been
               confirmed against the issuing authority by your organization. Verify them in
               jurisdiction rules before relying on them for a permit filing.
@@ -331,7 +331,7 @@ function DimensionGrid({ rows }: { rows: DimensionRow[] }) {
   return (
     <div className="rounded-lg border p-3">
       <div className="mb-2.5 flex items-center justify-between gap-2">
-        <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
+        <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
           Dimensions vs tightest limit
         </span>
         {hasLimits && (
@@ -365,10 +365,10 @@ function DimensionTile({ row }: { row: DimensionRow }) {
       )}
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <span className="text-2xs font-medium text-muted-foreground">{row.label}</span>
+        <span className="text-2xs text-muted-foreground font-medium">{row.label}</span>
         {row.headroom !== null &&
           (row.exceeded ? (
-            <span className="rounded-full bg-destructive/15 px-1.5 py-px text-2xs font-semibold text-destructive tabular-nums">
+            <span className="bg-destructive/15 text-2xs text-destructive rounded-full px-1.5 py-px font-semibold tabular-nums">
               {formatMeasurement(Math.abs(row.headroom), row.unit)} over
             </span>
           ) : (
@@ -378,7 +378,7 @@ function DimensionTile({ row }: { row: DimensionRow }) {
           ))}
       </div>
       {meter && (
-        <div className="mb-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="bg-muted mb-1.5 h-1.5 w-full overflow-hidden rounded-full">
           <div
             className={cn("h-full rounded-full transition-all", METER_FILL[meter.tone])}
             style={{ width: `${meter.percentOfLimit}%` }}
@@ -443,14 +443,14 @@ function RequirementRow({
           {exceedances.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {requirement.isSuperload && (
-                <span className="rounded-sm bg-orange-600/15 px-1.5 py-px text-2xs font-medium text-orange-700 dark:text-orange-400">
+                <span className="text-2xs rounded-sm bg-orange-600/15 px-1.5 py-px font-medium text-orange-700 dark:text-orange-400">
                   superload
                 </span>
               )}
               {exceedances.map((exceedance) => (
                 <span
                   key={exceedance.trigger}
-                  className="rounded-sm bg-muted px-1.5 py-px text-2xs text-muted-foreground tabular-nums"
+                  className="bg-muted text-2xs text-muted-foreground rounded-sm px-1.5 py-px tabular-nums"
                 >
                   {describeExceedance(exceedance)}
                 </span>
@@ -523,7 +523,7 @@ function PermitRow({ permit, onEdit }: { permit: Permit; onEdit: () => void }) {
 
 function StateChip({ code }: { code: string }) {
   return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-md border bg-muted/60 text-2xs font-semibold uppercase">
+    <span className="bg-muted/60 text-2xs flex size-7 shrink-0 items-center justify-center rounded-md border font-semibold uppercase">
       {code || "—"}
     </span>
   );
@@ -531,8 +531,8 @@ function StateChip({ code }: { code: string }) {
 
 function CardHeader({ title, meta }: { title: string; meta?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-      <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
+    <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2">
+      <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
         {title}
       </span>
       {meta}
@@ -558,7 +558,7 @@ function SummaryCard({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-muted/40 px-3 py-2.5",
+        "bg-muted/40 rounded-lg border px-3 py-2.5",
         tone === "warning" && "border-yellow-600/30 bg-yellow-600/10",
       )}
     >
@@ -571,14 +571,14 @@ function SummaryCard({
         >
           {icon}
         </span>
-        <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
+        <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
           {label}
         </span>
         {hint && (
           <Tooltip>
             <TooltipTrigger
               render={
-                <span className="cursor-help text-muted-foreground">
+                <span className="text-muted-foreground cursor-help">
                   <InfoIcon className="size-3" />
                 </span>
               }
@@ -598,8 +598,8 @@ function SummaryCard({
 function EmptyNotice({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2.5 rounded-lg border border-dashed px-3 py-2.5">
-      <RulerIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-      <p className="text-xs text-muted-foreground">{children}</p>
+      <RulerIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+      <p className="text-muted-foreground text-xs">{children}</p>
     </div>
   );
 }

@@ -92,7 +92,7 @@ export function OrderLegsSection() {
         title="Legs"
         titleCount={legs.length}
         description="Shipments executing this order"
-        className="border-t border-border pt-4"
+        className="border-border border-t pt-4"
         action={
           legs.length > 0 &&
           !membershipLocked && (
@@ -105,7 +105,7 @@ export function OrderLegsSection() {
       >
         {legs.length > 0 ? (
           <div className="rounded-lg border">
-            <div className="grid grid-cols-12 gap-2 border-b border-border px-4 py-2 text-2xs text-muted-foreground uppercase">
+            <div className="border-border text-2xs text-muted-foreground grid grid-cols-12 gap-2 border-b px-4 py-2 uppercase">
               <span className="col-span-3">Pro Number</span>
               <span className="col-span-3">Status</span>
               <span className="col-span-2 text-right">Freight</span>
@@ -144,14 +144,14 @@ export function OrderLegsSection() {
                         }
                         aria-label="Detach leg"
                       >
-                        <Trash2Icon className="size-3.5 text-destructive" />
+                        <Trash2Icon className="text-destructive size-3.5" />
                       </Button>
                     )}
                   </span>
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-12 gap-2 border-t border-border px-4 py-2 text-sm font-medium">
+            <div className="border-border grid grid-cols-12 gap-2 border-t px-4 py-2 text-sm font-medium">
               <span className="col-span-8">Legs subtotal</span>
               <span className="col-span-3 text-right tabular-nums">
                 {formatCurrency(legsSubtotal, currency)}

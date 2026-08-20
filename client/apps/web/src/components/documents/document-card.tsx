@@ -66,9 +66,9 @@ export function DocumentCard({
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/50",
+        "group bg-card hover:bg-accent/50 relative flex items-center gap-3 rounded-lg border p-3 transition-colors",
         isDeleting && "pointer-events-none opacity-50",
-        isSelected && "ring-1 ring-primary/30",
+        isSelected && "ring-primary/30 ring-1",
         className,
       )}
     >
@@ -100,7 +100,7 @@ export function DocumentCard({
         <p className="truncate text-sm font-medium" title={document.originalName}>
           {document.originalName}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {formatFileSize(document.fileSize)} • {formatUnixDateMedium(document.createdAt)}
           {documentTypeName && <> • {documentTypeName}</>}
         </p>
@@ -120,7 +120,7 @@ export function DocumentCard({
             >
               <Badge
                 variant="secondary"
-                className="h-5 cursor-pointer px-1.5 py-0 text-[10px] hover:bg-secondary/80"
+                className="hover:bg-secondary/80 h-5 cursor-pointer px-1.5 py-0 text-[10px]"
               >
                 <HistoryIcon className="mr-0.5 size-3" />v{document.versionNumber}
               </Badge>
@@ -193,7 +193,7 @@ export function DocumentCard({
             disabled={isDeleting}
             aria-label="Delete document"
           >
-            <Trash2Icon className="size-4 text-destructive" />
+            <Trash2Icon className="text-destructive size-4" />
           </Button>
         )}
       </div>

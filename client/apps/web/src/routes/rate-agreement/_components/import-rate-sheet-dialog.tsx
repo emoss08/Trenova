@@ -229,11 +229,11 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                 isDragging ? "border-primary bg-primary/5" : "hover:bg-muted/50",
               )}
             >
-              <FileUpIcon className="mb-2 size-6 text-muted-foreground" />
+              <FileUpIcon className="text-muted-foreground mb-2 size-6" />
               <p className="text-sm font-medium">
                 {isUploading ? "Reading the sheet…" : "Drop a rate sheet here, or click to browse"}
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-xs">
                 CSV or XLSX. Columns are matched by name.
               </p>
             </button>
@@ -263,8 +263,8 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
               </Alert>
             )}
 
-            <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
-              <p className="text-xs text-muted-foreground">
+            <div className="bg-muted/30 flex items-center justify-between rounded-lg border px-3 py-2">
+              <p className="text-muted-foreground text-xs">
                 Not sure how to lay out the sheet? Start from the template.
               </p>
               <Button
@@ -284,13 +284,13 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
 
         {batch && (
           <div className="flex flex-col gap-3">
-            <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="bg-muted/30 rounded-lg border p-3">
               <div className="mb-1.5 flex items-center gap-2">
                 <Badge variant={batch.status === "Failed" ? "warning" : "secondary"}>
                   {batch.status}
                 </Badge>
                 <span className="font-mono text-xs">{batch.fileName}</span>
-                <span className="text-xs text-muted-foreground">{batch.rowCount} rows</span>
+                <span className="text-muted-foreground text-xs">{batch.rowCount} rows</span>
               </div>
               <p className="text-sm">{importHeadline(batch)}</p>
             </div>
@@ -323,7 +323,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                         <TableCell className="font-mono text-xs tabular-nums">
                           {row.rowNumber}
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{row.error}</TableCell>
+                        <TableCell className="text-muted-foreground text-xs">{row.error}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -348,14 +348,14 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                           <span className="text-xs font-medium">
                             {change.label || displayLaneKey(change.laneKey)}
                           </span>
-                          <p className="font-mono text-2xs text-muted-foreground">
+                          <p className="text-2xs text-muted-foreground font-mono">
                             {displayLaneKey(change.laneKey)}
                           </p>
                         </TableCell>
                         <TableCell className={cn("text-xs", TONE_CLASS[changeTone(change.kind)])}>
                           {changeKindLabel(change.kind)}
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
+                        <TableCell className="text-muted-foreground text-xs">
                           {(change.fields ?? []).map((field) => (
                             <p key={field.field}>{describeFieldChange(field)}</p>
                           ))}

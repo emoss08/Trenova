@@ -31,9 +31,9 @@ export function LastSuccessfulSyncCard() {
 
 function ContentSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-md border border-emerald-600/20 bg-background/70 p-3">
+    <div className="bg-background/70 rounded-md border border-emerald-600/20 p-3">
       <p className="text-muted-foreground">{title}</p>
-      <p className="mt-1 font-semibold text-foreground">{children}</p>
+      <p className="text-foreground mt-1 font-semibold">{children}</p>
     </div>
   );
 }

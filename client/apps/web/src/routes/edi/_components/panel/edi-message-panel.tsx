@@ -149,7 +149,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
             </DetailField>
             {detail.deliveryLastError && (
               <DetailField label="Last Error" fullWidth>
-                <span className="text-xs text-destructive">{detail.deliveryLastError}</span>
+                <span className="text-destructive text-xs">{detail.deliveryLastError}</span>
               </DetailField>
             )}
           </DetailSection>
@@ -163,7 +163,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
           </DetailField>
           {detail.ackLastError && (
             <DetailField label="Details" fullWidth>
-              <span className="text-xs text-destructive">{detail.ackLastError}</span>
+              <span className="text-destructive text-xs">{detail.ackLastError}</span>
             </DetailField>
           )}
         </DetailSection>

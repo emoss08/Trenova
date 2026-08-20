@@ -209,7 +209,7 @@ export default function Workspace() {
             onCheckedChange={setCheckedIds}
             onActionComplete={refresh}
           />
-          <div className="min-h-0 overflow-hidden rounded-lg border bg-card">
+          <div className="bg-card min-h-0 overflow-hidden rounded-lg border">
             {selected ? (
               <SettlementDetail
                 key={selected.id}
@@ -218,7 +218,7 @@ export default function Workspace() {
                 scrollMaskVariant="card"
               />
             ) : (
-              <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
+              <div className="text-muted-foreground flex h-full items-center justify-center p-8 text-center text-sm">
                 Select a settlement from the queue to work it here.
               </div>
             )}
@@ -259,10 +259,10 @@ function EmptyPeriodState({
 }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-10 text-center">
-      <Sparkles className="size-8 text-muted-foreground" />
+      <Sparkles className="text-muted-foreground size-8" />
       <div>
         <h3 className="text-sm font-semibold">No settlements for this pay period yet</h3>
-        <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
+        <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
           {unsettledEventCount > 0
             ? `${unsettledEventCount} pay event${unsettledEventCount === 1 ? "" : "s"} across ${unsettledWorkerCount} driver${unsettledWorkerCount === 1 ? "" : "s"} are waiting to be settled. Generating builds one draft settlement per driver — earnings, deductions, advance recoveries, and escrow are pulled in automatically.`
             : "Pay events accrue automatically as drivers complete moves. Once there is unsettled pay, generate the period's settlements from here."}

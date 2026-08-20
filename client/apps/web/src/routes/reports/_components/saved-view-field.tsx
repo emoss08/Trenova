@@ -198,7 +198,7 @@ export function SavedViewField({
               />
               <div className="flex items-center justify-between gap-2">
                 <Label
-                  className="text-xs font-normal text-muted-foreground"
+                  className="text-muted-foreground text-xs font-normal"
                   htmlFor="report-view-shared"
                 >
                   Share with everyone who can read this report

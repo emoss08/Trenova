@@ -38,14 +38,14 @@ export function LoadingRecommendations({
         return (
           <div
             key={idx}
-            className="flex gap-2.5 rounded-md border border-border bg-card px-3 py-2"
+            className="border-border bg-card flex gap-2.5 rounded-md border px-3 py-2"
           >
             <Icon
               className={cn("mt-0.5 size-3.5 shrink-0", config.iconColor)}
             />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-foreground">
+                <span className="text-foreground text-xs font-semibold">
                   {rec.title}
                 </span>
                 <span
@@ -57,11 +57,11 @@ export function LoadingRecommendations({
                   {config.label}
                 </span>
               </div>
-              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+              <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
                 {rec.description}
               </p>
               {rec.impact && (
-                <p className="mt-0.5 text-2xs font-medium text-foreground/60">
+                <p className="text-2xs text-foreground/60 mt-0.5 font-medium">
                   {rec.impact}
                 </p>
               )}

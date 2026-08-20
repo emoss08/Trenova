@@ -16,7 +16,7 @@ export function ColorOptionValue({
   return isColor ? (
     <div
       className={cn(
-        "flex h-5 items-center text-sm font-normal text-foreground",
+        "text-foreground flex h-5 items-center text-sm font-normal",
         isColor && "gap-x-1.5",
         className,
       )}

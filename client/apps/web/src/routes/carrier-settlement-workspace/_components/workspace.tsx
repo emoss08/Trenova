@@ -167,7 +167,7 @@ export default function Workspace() {
             onCheckedChange={setCheckedIds}
             onActionComplete={refresh}
           />
-          <div className="min-h-0 overflow-hidden rounded-lg border bg-card">
+          <div className="bg-card min-h-0 overflow-hidden rounded-lg border">
             {selected ? (
               <CarrierSettlementDetail
                 key={selected.id}
@@ -176,7 +176,7 @@ export default function Workspace() {
                 scrollMaskVariant="card"
               />
             ) : (
-              <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
+              <div className="text-muted-foreground flex h-full items-center justify-center p-8 text-center text-sm">
                 Select a settlement from the queue to work it here.
               </div>
             )}
@@ -212,10 +212,10 @@ function EmptyPeriodState({
 }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-10 text-center">
-      <Sparkles className="size-8 text-muted-foreground" />
+      <Sparkles className="text-muted-foreground size-8" />
       <div>
         <h3 className="text-sm font-semibold">No carrier settlements for this pay period yet</h3>
-        <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
+        <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
           {pendingEventCount > 0
             ? `${pendingEventCount} cost event${pendingEventCount === 1 ? "" : "s"} across ${pendingCarrierCount} carrier${pendingCarrierCount === 1 ? "" : "s"} are waiting to be settled. Generating builds one draft statement per carrier — linehaul, fuel, and accessorial cost lines are pulled in automatically.`
             : "Cost events accrue automatically as carrier-covered moves complete. Once there is pending cost, generate the period's settlements from here."}

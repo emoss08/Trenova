@@ -43,7 +43,7 @@ export function getMessageColumns(): ColumnDef<EDIMessage>[] {
         row.original.partner?.name ? (
           <div className="min-w-0">
             <div className="truncate font-medium">{row.original.partner.name}</div>
-            <div className="truncate text-xs text-muted-foreground">
+            <div className="text-muted-foreground truncate text-xs">
               {row.original.partner.code}
             </div>
           </div>
@@ -87,7 +87,7 @@ export function getMessageColumns(): ColumnDef<EDIMessage>[] {
           <div className="flex items-center gap-1.5">
             <EDIMessageDeliveryStatusBadge status={row.original.deliveryStatus} />
             {row.original.deliveryAttempts > 0 && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 ×{row.original.deliveryAttempts}
               </span>
             )}

@@ -137,12 +137,12 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
             <div className="space-y-1 pr-20">
               <CardTitle className="text-base">{item.name}</CardTitle>
               <CardDescription className="text-xs">
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-3 text-xs">
                   {item.links.map((link) => (
                     <ExternalLink
                       key={`${item.type}-${link.kind}-${link.url}`}
                       href={link.url}
-                      className="inline-flex items-center gap-1 hover:text-foreground"
+                      className="hover:text-foreground inline-flex items-center gap-1"
                     >
                       {link.label}
                     </ExternalLink>
@@ -163,7 +163,7 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
                   className={cn("size-24 object-contain", logoSize?.imageClassName)}
                 />
               ) : (
-                <span className="text-xs font-semibold text-foreground/80">
+                <span className="text-foreground/80 text-xs font-semibold">
                   {getProviderMonogram(item.name)}
                 </span>
               )}
@@ -172,7 +172,7 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
           <CatalogItemDescription description={item.description} />
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
-          <div className="flex items-center justify-between gap-2 border-t border-border/80 pt-3">
+          <div className="border-border/80 flex items-center justify-between gap-2 border-t pt-3">
             <Button
               size="sm"
               variant="outline"
@@ -263,12 +263,12 @@ export function IntegrationCatalogCard() {
 
   return (
     <>
-      <section className="relative overflow-hidden bg-background">
-        <div className="relative border-b border-border/80 bg-sidebar px-5 py-5 sm:px-6">
+      <section className="bg-background relative overflow-hidden">
+        <div className="border-border/80 bg-sidebar relative border-b px-5 py-5 sm:px-6">
           <IntegrationMarketplaceHeader />
           <div className="mt-4 flex flex-row items-center gap-1.5">
             <div className="flex shrink-0 flex-row items-center gap-0 text-center text-sm">
-              <div className="flex h-7 items-center gap-1 rounded-s-lg rounded-e-none border border-r-0 border-input bg-muted px-1 font-medium text-muted-foreground focus:z-10">
+              <div className="border-input bg-muted text-muted-foreground flex h-7 items-center gap-1 rounded-s-lg rounded-e-none border border-r-0 px-1 font-medium focus:z-10">
                 Sort By
               </div>
               <Select
@@ -276,7 +276,7 @@ export function IntegrationCatalogCard() {
                 value={searchParams.sortBy}
                 onValueChange={(value) => setSearchParams({ sortBy: value })}
               >
-                <SelectTrigger className="h-9 rounded-s-none rounded-e-lg bg-background text-xs">
+                <SelectTrigger className="bg-background h-9 rounded-s-none rounded-e-lg text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -296,7 +296,7 @@ export function IntegrationCatalogCard() {
                 value={searchParams.category}
                 onValueChange={(value) => setSearchParams({ category: value })}
               >
-                <SelectTrigger className="h-9 bg-background text-xs">
+                <SelectTrigger className="bg-background h-9 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -316,7 +316,7 @@ export function IntegrationCatalogCard() {
                 value={searchParams.status}
                 onValueChange={(value) => setSearchParams({ status: value })}
               >
-                <SelectTrigger className="h-9 bg-background text-xs">
+                <SelectTrigger className="bg-background h-9 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -334,13 +334,13 @@ export function IntegrationCatalogCard() {
         </div>
         <div className="relative space-y-4 p-5 sm:p-6">
           {catalogQuery.isLoading && (
-            <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="text-muted-foreground inline-flex items-center gap-2 text-sm">
               <Spinner className="size-4" />
               Loading integration catalog...
             </div>
           )}
           {!catalogQuery.isLoading && filteredAndSortedItems.length === 0 && (
-            <div className="rounded-md border border-border bg-muted/20 p-4 text-sm text-muted-foreground">
+            <div className="border-border bg-muted/20 text-muted-foreground rounded-md border p-4 text-sm">
               No integrations match your current search and filter.
             </div>
           )}
@@ -349,10 +349,10 @@ export function IntegrationCatalogCard() {
               {categoryGroups.map((group) => (
                 <section key={group.key} className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                       {group.label}
                     </h2>
-                    <span className="text-xs text-muted-foreground/70">
+                    <span className="text-muted-foreground/70 text-xs">
                       {group.items.length} {group.items.length === 1 ? "integration" : "integrations"}
                     </span>
                   </div>
@@ -425,7 +425,7 @@ export function CatalogItemDescription({ description }: { description: string })
     <Tooltip>
       <TooltipTrigger
         render={
-          <p className="line-clamp-2 min-h-8 w-87.5 text-sm text-pretty text-muted-foreground">
+          <p className="text-muted-foreground line-clamp-2 min-h-8 w-87.5 text-sm text-pretty">
             {description}
           </p>
         }

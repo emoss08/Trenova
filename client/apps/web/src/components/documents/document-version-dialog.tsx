@@ -110,7 +110,7 @@ function VersionCompare({ selected, current }: { selected: Document; current: Do
 
   if (fields.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground italic">
+      <p className="text-muted-foreground text-xs italic">
         No metadata differences from the current version.
       </p>
     );
@@ -125,12 +125,12 @@ function VersionCompare({ selected, current }: { selected: Document; current: Do
           <th className="pb-1.5 text-left font-medium">Current</th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-border">
+      <tbody className="divide-border divide-y">
         {fields.map((f) => (
           <tr key={f.label}>
-            <td className="py-1 pr-3 text-muted-foreground">{f.label}</td>
+            <td className="text-muted-foreground py-1 pr-3">{f.label}</td>
             <td className="py-1 pr-3">{f.selected}</td>
-            <td className="py-1 text-muted-foreground">{f.current}</td>
+            <td className="text-muted-foreground py-1">{f.current}</td>
           </tr>
         ))}
       </tbody>
@@ -198,24 +198,24 @@ export function DocumentVersionDialog({
 
           <div className="space-y-3">
             {isLoading ? (
-              <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+              <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
                 Loading versions...
               </div>
             ) : versions.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+              <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
                 No versions found for this document.
               </div>
             ) : (
               <>
                 {currentVersion && (
-                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                  <div className="border-primary/20 bg-primary/5 rounded-lg border p-4">
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{currentVersion.originalName}</span>
                         <Badge variant="teal">v{currentVersion.versionNumber}</Badge>
                         <Badge variant="info">Current</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {formatToUserTimezone(currentVersion.createdAt)} &middot;{" "}
                         {formatFileSize(currentVersion.fileSize)}
                       </p>
@@ -228,7 +228,7 @@ export function DocumentVersionDialog({
                   <>
                     <div className="flex items-center gap-3">
                       <Separator className="flex-1" />
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className="text-muted-foreground text-xs font-medium">
                         Previous Versions
                       </span>
                       <Separator className="flex-1" />
@@ -248,10 +248,10 @@ export function DocumentVersionDialog({
                                 <span className="font-medium">{version.originalName}</span>
                                 <Badge variant="secondary">v{version.versionNumber}</Badge>
                                 <ChevronDownIcon
-                                  className={`size-3.5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                                  className={`text-muted-foreground size-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                                 />
                               </div>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-muted-foreground text-sm">
                                 {formatToUserTimezone(version.createdAt)} &middot;{" "}
                                 {formatFileSize(version.fileSize)}
                               </p>
@@ -270,7 +270,7 @@ export function DocumentVersionDialog({
                           </div>
 
                           {isExpanded && currentVersion && (
-                            <div className="border-t bg-muted/30 px-4 py-3">
+                            <div className="bg-muted/30 border-t px-4 py-3">
                               <VersionCompare selected={version} current={currentVersion} />
                             </div>
                           )}

@@ -12,7 +12,7 @@ export function getColumns(): ColumnDef<JurisdictionRuleOverride>[] {
       cell: ({ row }) => (
         <span className="text-sm font-medium">
           {row.original.state?.abbreviation ?? "—"}
-          <span className="ml-2 text-muted-foreground">{row.original.state?.name}</span>
+          <span className="text-muted-foreground ml-2">{row.original.state?.name}</span>
         </span>
       ),
       size: 200,
@@ -43,7 +43,7 @@ export function getColumns(): ColumnDef<JurisdictionRuleOverride>[] {
       accessorKey: "reason",
       header: "Reason",
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-muted-foreground text-sm">
           {truncateText(row.original.reason, 80)}
         </span>
       ),

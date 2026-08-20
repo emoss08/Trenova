@@ -95,7 +95,7 @@ export function InboundFilePanel({
           </DetailField>
           {detail.failureReason && (
             <DetailField label="Processing Notes" fullWidth>
-              <span className="text-xs text-destructive">{detail.failureReason}</span>
+              <span className="text-destructive text-xs">{detail.failureReason}</span>
             </DetailField>
           )}
         </DetailSection>
@@ -132,11 +132,11 @@ export function InboundFilePanel({
               {detail.messages.map((message) => (
                 <div
                   key={message.id}
-                  className="flex items-center justify-between rounded-md border bg-background px-3 py-2"
+                  className="bg-background flex items-center justify-between rounded-md border px-3 py-2"
                 >
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">{message.transactionSet}</Badge>
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="text-muted-foreground font-mono text-xs">
                       ST {message.transactionControlNumber || "—"}
                     </span>
                   </div>

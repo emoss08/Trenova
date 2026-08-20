@@ -40,7 +40,7 @@ function NotificationRow({
           <p
             className={cn(
               "text-sm leading-snug",
-              isUnread ? "font-medium text-foreground" : "text-muted-foreground",
+              isUnread ? "text-foreground font-medium" : "text-muted-foreground",
             )}
           >
             {notification.title}
@@ -49,15 +49,15 @@ function NotificationRow({
         </div>
 
         {notification.message && notification.message !== notification.title && (
-          <p className="text-2xs leading-relaxed text-muted-foreground">{notification.message}</p>
+          <p className="text-2xs text-muted-foreground leading-relaxed">{notification.message}</p>
         )}
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant={config.badge} className="h-5 text-2xs">
+          <Badge variant={config.badge} className="text-2xs h-5">
             {sourceLabel}
           </Badge>
           {operation && (
-            <Badge variant="outline" className="h-5 text-2xs">
+            <Badge variant="outline" className="text-2xs h-5">
               {operation}
             </Badge>
           )}
@@ -120,8 +120,8 @@ export default function NotificationList() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-16">
-        <InboxIcon className="size-6 animate-pulse text-muted-foreground/40" />
-        <p className="text-sm text-muted-foreground">Loading notifications...</p>
+        <InboxIcon className="text-muted-foreground/40 size-6 animate-pulse" />
+        <p className="text-muted-foreground text-sm">Loading notifications...</p>
       </div>
     );
   }
@@ -129,12 +129,12 @@ export default function NotificationList() {
   if (notifications.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16">
-        <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-          <InboxIcon className="size-7 text-muted-foreground/60" />
+        <div className="bg-muted flex size-14 items-center justify-center rounded-full">
+          <InboxIcon className="text-muted-foreground/60 size-7" />
         </div>
         <div className="text-center">
-          <p className="text-sm font-medium text-foreground">No notifications yet</p>
-          <p className="mt-1 max-w-sm text-2xs text-muted-foreground">
+          <p className="text-foreground text-sm font-medium">No notifications yet</p>
+          <p className="text-2xs text-muted-foreground mt-1 max-w-sm">
             When your subscriptions match database changes, notifications will appear here.
           </p>
         </div>
@@ -147,7 +147,7 @@ export default function NotificationList() {
       {unreadCount > 0 && (
         <>
           <div className="flex items-center justify-between py-2">
-            <p className="text-2xs font-medium text-muted-foreground">
+            <p className="text-2xs text-muted-foreground font-medium">
               {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
             </p>
             <Button

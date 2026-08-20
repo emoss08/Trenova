@@ -75,7 +75,7 @@ export function DistanceOverrideForm() {
           }
         >
           {fields.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No intermediate stops configured.</p>
+            <p className="text-muted-foreground text-xs">No intermediate stops configured.</p>
           ) : (
             <div className="space-y-2">
               {fields.map((field, index) => (
@@ -88,7 +88,7 @@ export function DistanceOverrideForm() {
                     placeholder="Select stop location"
                   />
                   <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                    <TrashIcon className="size-4 text-destructive" />
+                    <TrashIcon className="text-destructive size-4" />
                   </Button>
                 </div>
               ))}

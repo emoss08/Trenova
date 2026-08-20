@@ -83,7 +83,7 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
         <span className="text-xs">
           {row.original.name}
           {row.original.isSystem && (
-            <span className="ml-1.5 rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
+            <span className="bg-muted text-muted-foreground ml-1.5 rounded px-1 py-0.5 text-[10px]">
               System
             </span>
           )}
@@ -98,7 +98,7 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
       cell: ({ row }) => {
         if (row.original.direction !== "Earning") return null;
         return (
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-muted-foreground text-[11px]">
             {row.original.taxable ? "Taxable" : "Reimbursement"}
             {!row.original.countsTowardGuarantee && " · excl. guarantee"}
           </span>
@@ -116,7 +116,7 @@ export function getColumns(): ColumnDef<PayCodeRow>[] {
             <span className="text-muted-foreground">{row.original.glAccount.name}</span>
           </span>
         ) : (
-          <span className="text-[11px] text-muted-foreground">Default</span>
+          <span className="text-muted-foreground text-[11px]">Default</span>
         ),
       size: 200,
     },

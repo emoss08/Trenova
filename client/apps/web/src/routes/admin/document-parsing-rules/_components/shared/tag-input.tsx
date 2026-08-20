@@ -107,8 +107,8 @@ function TagInputInner({
       )}
       <div
         className={cn(
-          "flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border border-input bg-muted px-2.5 py-1.5 text-sm transition-[border-color,box-shadow] duration-200 ease-in-out",
-          "focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/30",
+          "border-input bg-muted flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-[border-color,box-shadow] duration-200 ease-in-out",
+          "focus-within:border-brand focus-within:ring-brand/30 focus-within:ring-4",
           error && "border-destructive",
           disabled && "pointer-events-none opacity-50",
         )}
@@ -124,7 +124,7 @@ function TagInputInner({
                   e.stopPropagation();
                   removeTag(i);
                 }}
-                className="rounded-full hover:bg-muted-foreground/20"
+                className="hover:bg-muted-foreground/20 rounded-full"
               >
                 <XIcon className="size-3" />
               </button>
@@ -139,7 +139,7 @@ function TagInputInner({
           onBlur={() => input && addTag(input)}
           placeholder={value.length === 0 ? placeholder : ""}
           disabled={disabled}
-          className="min-w-[80px] flex-1 border-0 bg-transparent p-0 text-sm outline-none placeholder:text-muted-foreground"
+          className="placeholder:text-muted-foreground min-w-[80px] flex-1 border-0 bg-transparent p-0 text-sm outline-none"
         />
       </div>
       {(error || description) && (

@@ -121,7 +121,7 @@ function SuggestionButton({
             <Button
               variant="outline"
               size="sm"
-              className="h-7 flex-1 px-2 text-2xs"
+              className="text-2xs h-7 flex-1 px-2"
               onClick={() => {
                 if (selectedDate) {
                   const isoDate = selectedDate.toISOString();
@@ -137,7 +137,7 @@ function SuggestionButton({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-2xs"
+              className="text-2xs h-7 px-2"
               onClick={() => {
                 setIsInputOpen(false);
                 setSelectedDate(undefined);
@@ -154,7 +154,7 @@ function SuggestionButton({
       <button
         type="button"
         onClick={() => setIsInputOpen(true)}
-        className="rounded-md border border-dashed bg-background px-2.5 py-1.5 text-left text-2xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border border-dashed px-2.5 py-1.5 text-left transition-colors"
       >
         {suggestion.label}
       </button>
@@ -166,7 +166,7 @@ function SuggestionButton({
       <button
         type="button"
         onClick={() => onAction?.(suggestion.action!)}
-        className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-left text-2xs font-medium text-emerald-600 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
+        className="text-2xs rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-left font-medium text-emerald-600 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
       >
         {suggestion.label}
       </button>
@@ -193,13 +193,13 @@ function SuggestionButton({
               }
             }}
             placeholder={suggestion.placeholder || "Type here..."}
-            className="h-7 flex-1 text-2xs"
+            className="text-2xs h-7 flex-1"
             autoFocus
           />
           <Button
             variant="outline"
             size="sm"
-            className="h-7 shrink-0 px-2 text-2xs"
+            className="text-2xs h-7 shrink-0 px-2"
             onClick={() => {
               if (inputVal.trim()) {
                 void onSend(suggestion.prompt + inputVal.trim());
@@ -222,7 +222,7 @@ function SuggestionButton({
           setIsInputOpen(true);
           requestAnimationFrame(() => localInputRef.current?.focus());
         }}
-        className="rounded-md border border-dashed bg-background px-2.5 py-1.5 text-left text-2xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border border-dashed px-2.5 py-1.5 text-left transition-colors"
       >
         {suggestion.label}
       </button>
@@ -233,7 +233,7 @@ function SuggestionButton({
     <button
       type="button"
       onClick={() => void onSend(suggestion.prompt)}
-      className="rounded-md border bg-background px-2.5 py-1.5 text-left text-2xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border px-2.5 py-1.5 text-left transition-colors"
     >
       {suggestion.label}
     </button>
@@ -809,14 +809,14 @@ export default function AIActivityPanel({
       {/* Header */}
       <div className="shrink-0 border-b px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <SparklesIcon className="size-3.5 text-muted-foreground" />
+          <SparklesIcon className="text-muted-foreground size-3.5" />
           <span className="text-xs font-medium">AI Assistant</span>
         </div>
         <div className="mt-2">
-          <div className="mb-1 flex items-center justify-between text-2xs text-muted-foreground">
+          <div className="text-2xs text-muted-foreground mb-1 flex items-center justify-between">
             <span>{isReady ? "Ready to create" : `${4 - filledRequired} fields remaining`}</span>
           </div>
-          <div className="h-0.5 overflow-hidden rounded-full bg-muted">
+          <div className="bg-muted h-0.5 overflow-hidden rounded-full">
             <m.div
               className={cn("h-full rounded-full", isReady ? "bg-emerald-500" : "bg-foreground/40")}
               animate={{ width: `${(filledRequired / 4) * 100}%` }}
@@ -830,8 +830,8 @@ export default function AIActivityPanel({
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="flex flex-col gap-2 p-2.5">
           {isConversationClosed && (
-            <div className="flex items-center gap-2 rounded-md bg-muted px-2.5 py-1.5">
-              <InfoIcon className="size-3 text-muted-foreground" />
+            <div className="bg-muted flex items-center gap-2 rounded-md px-2.5 py-1.5">
+              <InfoIcon className="text-muted-foreground size-3" />
               <span className="text-2xs text-muted-foreground">
                 {conversationStatus === "Completed" && statusReason === "shipment_created"
                   ? "This import has been completed."
@@ -864,7 +864,7 @@ export default function AIActivityPanel({
             >
               {msg.role === "user" ? (
                 <div className="flex justify-end">
-                  <div className="max-w-[85%] rounded-lg bg-foreground/[0.06] px-2.5 py-1 text-xs text-muted-foreground">
+                  <div className="bg-foreground/[0.06] text-muted-foreground max-w-[85%] rounded-lg px-2.5 py-1 text-xs">
                     {msg.text}
                   </div>
                 </div>
@@ -880,10 +880,10 @@ export default function AIActivityPanel({
                           state={tc.status}
                           className="text-2xs"
                         >
-                          <AiToolCallHeader className="px-2 py-1 text-2xs [&_span.font-mono]:text-2xs [&_svg]:size-3 [&>div:first-child]:size-4 [&>div:first-child]:rounded [&>span]:py-0 [&>span]:text-2xs" />
+                          <AiToolCallHeader className="text-2xs [&_span.font-mono]:text-2xs [&>span]:text-2xs px-2 py-1 [&_svg]:size-3 [&>div:first-child]:size-4 [&>div:first-child]:rounded [&>span]:py-0" />
                           {tc.result && tc.status === "completed" && (
                             <AiToolCallContent className="[&>div]:space-y-1 [&>div]:p-1.5">
-                              <AiToolCallOutput className="[&>div]:p-1.5 [&>div]:text-2xs [&>span]:text-2xs">
+                              <AiToolCallOutput className="[&>div]:text-2xs [&>span]:text-2xs [&>div]:p-1.5">
                                 <ToolResultSummary result={tc.result} name={tc.name} />
                               </AiToolCallOutput>
                             </AiToolCallContent>
@@ -894,10 +894,10 @@ export default function AIActivityPanel({
                   )}
 
                   {/* Message text — streams in real-time */}
-                  <div className="text-[13px] leading-relaxed text-foreground">
+                  <div className="text-foreground text-[13px] leading-relaxed">
                     {msg.text}
                     {isStreaming && msg.id === streamingMsgId.current && msg.text.length > 0 && (
-                      <span className="ml-0.5 inline-block h-[13px] w-[1.5px] animate-pulse bg-foreground/40 align-text-bottom" />
+                      <span className="bg-foreground/40 ml-0.5 inline-block h-[13px] w-[1.5px] animate-pulse align-text-bottom" />
                     )}
                   </div>
 
@@ -948,7 +948,7 @@ export default function AIActivityPanel({
 
       {/* Input */}
       <div className="shrink-0 border-t p-2">
-        <div className="flex items-end gap-1.5 rounded-lg border bg-background px-3 py-1.5 focus-within:ring-1 focus-within:ring-ring">
+        <div className="bg-background focus-within:ring-ring flex items-end gap-1.5 rounded-lg border px-3 py-1.5 focus-within:ring-1">
           <textarea
             ref={inputRef}
             value={inputValue}
@@ -957,7 +957,7 @@ export default function AIActivityPanel({
             placeholder={isConversationClosed ? "Conversation closed" : "Ask the assistant..."}
             disabled={isStreaming || isConversationClosed}
             rows={1}
-            className="flex-1 resize-none bg-transparent text-xs leading-relaxed outline-none placeholder:text-muted-foreground/40 disabled:opacity-50"
+            className="placeholder:text-muted-foreground/40 flex-1 resize-none bg-transparent text-xs leading-relaxed outline-none disabled:opacity-50"
             style={{ minHeight: 22, maxHeight: 100 }}
           />
           <Button

@@ -26,7 +26,7 @@ export function DetentionIntelligence({
   return (
     <div className="flex flex-col gap-4">
       {facilities.isError ? (
-        <div className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="border-border bg-card overflow-hidden rounded-lg border">
           <PanelError onRetry={() => void facilities.refetch()} />
         </div>
       ) : facilities.isLoading ? (

@@ -20,7 +20,7 @@ type BreakdownDefinitionEditorProps = {
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
 
-  return <p className="mt-1 text-2xs text-destructive">{message}</p>;
+  return <p className="text-2xs text-destructive mt-1">{message}</p>;
 }
 
 export function BreakdownDefinitionEditor({
@@ -48,12 +48,12 @@ export function BreakdownDefinitionEditor({
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-            <ListTreeIcon className="size-4 text-primary" />
+          <div className="bg-primary/10 flex size-8 items-center justify-center rounded-lg">
+            <ListTreeIcon className="text-primary size-4" />
           </div>
           <div>
             <CardTitle className="text-sm font-medium">Charge Breakdown</CardTitle>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Itemize the total into named components for invoices and audit
             </p>
           </div>
@@ -73,11 +73,11 @@ export function BreakdownDefinitionEditor({
       <CardContent className="p-4">
         {fields.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <ListTreeIcon className="size-5 text-muted-foreground" />
+            <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+              <ListTreeIcon className="text-muted-foreground size-5" />
             </div>
             <p className="mt-3 text-sm font-medium">No breakdown items</p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-xs">
               Add items to break the calculated charge into labeled amounts
             </p>
             <Button
@@ -99,10 +99,10 @@ export function BreakdownDefinitionEditor({
               return (
                 <div
                   key={field.id}
-                  className="group relative grid grid-cols-12 gap-3 rounded-lg border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
+                  className="group bg-muted/30 hover:bg-muted/50 relative grid grid-cols-12 gap-3 rounded-lg border p-3 transition-colors"
                 >
                   <div className="col-span-3">
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
                       Name
                     </label>
                     <Input
@@ -114,7 +114,7 @@ export function BreakdownDefinitionEditor({
                   </div>
 
                   <div className="col-span-3">
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
                       Label
                     </label>
                     <Input
@@ -126,7 +126,7 @@ export function BreakdownDefinitionEditor({
                   </div>
 
                   <div className="col-span-5">
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
                       Expression
                     </label>
                     <Textarea
@@ -145,7 +145,7 @@ export function BreakdownDefinitionEditor({
                       variant="ghost"
                       size="sm"
                       onClick={() => remove(index)}
-                      className="size-8 p-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-8 p-0 opacity-0 transition-opacity group-hover:opacity-100"
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -154,7 +154,7 @@ export function BreakdownDefinitionEditor({
               );
             })}
             {atLimit && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Maximum of {MAX_BREAKDOWN_DEFINITIONS} breakdown items reached.
               </p>
             )}

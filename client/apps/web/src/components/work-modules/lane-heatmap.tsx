@@ -15,14 +15,14 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
 
   return (
     <section className="cc-module-card flex min-h-65 flex-col">
-      <header className="flex items-center justify-between border-b border-border px-3 py-2">
+      <header className="border-border flex items-center justify-between border-b px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <h3 className="cc-label text-foreground">Lane heatmap</h3>
-          <span className="font-mono text-[10px] text-muted-foreground">
+          <span className="text-muted-foreground font-mono text-[10px]">
             origin → destination · {total} loads
           </span>
         </div>
-        <span className="font-mono text-[10px] text-muted-foreground">{data.windowDays}d</span>
+        <span className="text-muted-foreground font-mono text-[10px]">{data.windowDays}d</span>
       </header>
 
       <div className="flex flex-1 flex-col gap-1 px-3 py-3">
@@ -31,7 +31,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
           {REGIONS.map((r) => (
             <span
               key={r}
-              className="text-center font-mono text-[9.5px] tracking-wider text-muted-foreground uppercase"
+              className="text-muted-foreground text-center font-mono text-[9.5px] tracking-wider uppercase"
             >
               {r}
             </span>
@@ -39,7 +39,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
         </div>
         {REGIONS.map((origin, rowIdx) => (
           <div key={origin} className="grid grid-cols-[60px_repeat(4,minmax(0,1fr))] gap-1">
-            <span className="flex items-center font-mono text-[9.5px] tracking-wider text-muted-foreground uppercase">
+            <span className="text-muted-foreground flex items-center font-mono text-[9.5px] tracking-wider uppercase">
               {origin}
             </span>
             {REGIONS.map((destination, colIdx) => (
@@ -56,7 +56,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
         ))}
       </div>
 
-      <footer className="flex items-center justify-between border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
+      <footer className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-2 text-[10px]">
         <span className="font-mono">
           {top ? `Top: ${top.origin} → ${top.destination} (${top.count})` : "No lane activity"}
         </span>
@@ -79,7 +79,7 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
     return (
       <div
         aria-hidden
-        className="border-border-2 flex h-[26px] items-center justify-center rounded-[3px] border font-mono text-[11px] text-muted-foreground tabular-nums"
+        className="border-border-2 text-muted-foreground flex h-[26px] items-center justify-center rounded-[3px] border font-mono text-[11px] tabular-nums"
       >
         ·
       </div>

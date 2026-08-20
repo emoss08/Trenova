@@ -67,7 +67,7 @@ export function LedgerTable({ entries }: { entries: ARLedgerEntry[] }) {
               <TableCell className="py-2 font-mono text-xs">
                 {entry.documentNumber || "—"}
               </TableCell>
-              <TableCell className="py-2 text-xs text-muted-foreground">
+              <TableCell className="text-muted-foreground py-2 text-xs">
                 {eventLabel(entry.eventType)}
               </TableCell>
               <TableCell className="py-2">
@@ -80,7 +80,7 @@ export function LedgerTable({ entries }: { entries: ARLedgerEntry[] }) {
                 {entry.amountMinor > 0 ? (
                   <AmountDisplay value={entry.amountMinor} className="text-xs" />
                 ) : (
-                  <span className="text-xs text-muted-foreground">—</span>
+                  <span className="text-muted-foreground text-xs">—</span>
                 )}
               </TableCell>
               <TableCell className="py-2 text-right">
@@ -90,7 +90,7 @@ export function LedgerTable({ entries }: { entries: ARLedgerEntry[] }) {
                     className="text-xs text-green-600 dark:text-green-400"
                   />
                 ) : (
-                  <span className="text-xs text-muted-foreground">—</span>
+                  <span className="text-muted-foreground text-xs">—</span>
                 )}
               </TableCell>
               <TableCell className="py-2 text-right">

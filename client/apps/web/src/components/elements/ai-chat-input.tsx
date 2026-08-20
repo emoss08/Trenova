@@ -96,16 +96,16 @@ export function AiChatInput({
           {attachments.map((file, index) => (
             <div
               key={`${file.name}-${index}`}
-              className="flex items-center gap-1.5 border bg-muted px-2 py-1 text-xs"
+              className="bg-muted flex items-center gap-1.5 border px-2 py-1 text-xs"
             >
-              <Paperclip className="size-3 text-muted-foreground" />
+              <Paperclip className="text-muted-foreground size-3" />
               <span className="max-w-[150px] truncate tracking-wider uppercase">
                 {file.name}
               </span>
               <button
                 type="button"
                 onClick={() => removeAttachment(index)}
-                className="ml-1 text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground ml-1"
                 disabled={isDisabled}
                 aria-label={`Remove ${file.name}`}
               >
@@ -116,7 +116,7 @@ export function AiChatInput({
         </div>
       )}
 
-      <div className="flex items-end gap-0 border bg-background focus-within:ring-1 focus-within:ring-ring">
+      <div className="bg-background focus-within:ring-ring flex items-end gap-0 border focus-within:ring-1">
         {allowAttachments && (
           <>
             <input
@@ -129,7 +129,7 @@ export function AiChatInput({
             />
             <button
               type="button"
-              className="flex size-10 shrink-0 items-center justify-center border-r text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+              className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-10 shrink-0 items-center justify-center border-r transition-colors disabled:opacity-50"
               onClick={() => fileInputRef.current?.click()}
               disabled={isDisabled}
             >
@@ -149,14 +149,14 @@ export function AiChatInput({
           rows={3}
           aria-label="Chat message input"
           className={cn(
-            "flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50",
+            "placeholder:text-muted-foreground/50 flex-1 resize-none bg-transparent text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50",
             "min-h-[72px] px-3 py-2.5"
           )}
         />
 
         <button
           type="button"
-          className="shrink-0 border-l px-4 py-2.5 text-xs tracking-wider uppercase transition-colors hover:bg-muted disabled:opacity-30"
+          className="hover:bg-muted shrink-0 border-l px-4 py-2.5 text-xs tracking-wider uppercase transition-colors disabled:opacity-30"
           onClick={handleSubmit}
           disabled={!canSubmit}
         >

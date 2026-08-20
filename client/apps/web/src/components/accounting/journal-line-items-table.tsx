@@ -11,7 +11,7 @@ export function JournalLineItemsTable({ lines, totalDebit, totalCredit }: Journa
   return (
     <div className="overflow-hidden rounded-md border">
       <table className="w-full text-sm">
-        <thead className="bg-muted/50 text-left text-muted-foreground">
+        <thead className="bg-muted/50 text-muted-foreground text-left">
           <tr>
             <th className="px-3 py-2 text-xs font-medium">Line</th>
             <th className="px-3 py-2 text-xs font-medium">Account</th>
@@ -22,8 +22,8 @@ export function JournalLineItemsTable({ lines, totalDebit, totalCredit }: Journa
         </thead>
         <tbody>
           {lines.map((line) => (
-            <tr key={line.id} className="border-t transition-colors hover:bg-muted/50">
-              <td className="px-3 py-2 font-mono text-2xs">{line.lineNumber}</td>
+            <tr key={line.id} className="hover:bg-muted/50 border-t transition-colors">
+              <td className="text-2xs px-3 py-2 font-mono">{line.lineNumber}</td>
               <td className="px-3 py-2 text-xs">
                 {line.glAccount ? (
                   <span className="flex flex-col">
@@ -48,7 +48,7 @@ export function JournalLineItemsTable({ lines, totalDebit, totalCredit }: Journa
             </tr>
           ))}
         </tbody>
-        <tfoot className="border-t bg-muted/30 font-medium">
+        <tfoot className="bg-muted/30 border-t font-medium">
           <tr>
             <td colSpan={3} className="px-3 py-2 text-right text-xs">
               Totals

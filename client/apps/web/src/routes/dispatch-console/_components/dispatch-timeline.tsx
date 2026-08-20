@@ -182,7 +182,7 @@ function UncoveredBar({
       title={`${span.move.proNumber} · ${span.move.originCity} → ${span.move.destinationCity}`}
       onClick={() => onSelect(span.move.moveId)}
       className={cn(
-        "absolute flex cursor-grab items-center overflow-hidden rounded px-1.5 outline-none transition-[opacity,box-shadow] focus-visible:ring-2 focus-visible:ring-brand active:cursor-grabbing",
+        "focus-visible:ring-brand absolute flex cursor-grab items-center overflow-hidden rounded px-1.5 transition-[opacity,box-shadow] outline-none focus-visible:ring-2 active:cursor-grabbing",
         tone,
         isDragging && "opacity-40",
         isSelected && "shadow-[0_0_0_2px_var(--brand)]",
@@ -223,7 +223,7 @@ function CommitmentBar({
       title={`${span.commitment.proNumber} → ${span.commitment.destinationCity}, ${span.commitment.destinationState}`}
       onClick={() => onSelect(span.commitment.moveId)}
       className={cn(
-        "absolute flex cursor-pointer items-center overflow-hidden rounded px-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand",
+        "focus-visible:ring-brand absolute flex cursor-pointer items-center overflow-hidden rounded px-1.5 transition-colors outline-none focus-visible:ring-2",
         inTransit
           ? "bg-brand text-brand-foreground hover:bg-brand/85"
           : "bg-brand/60 text-brand-foreground hover:bg-brand/75",
@@ -280,7 +280,7 @@ function DriverLaneRow({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex border-b border-border/70 transition-colors",
+        "border-border/70 flex border-b transition-colors",
         showDropHint && "bg-brand/10",
       )}
       style={{ height }}
@@ -289,7 +289,7 @@ function DriverLaneRow({
         type="button"
         onClick={() => onSelectDriver(driver.workerId)}
         className={cn(
-          "sticky left-0 z-30 flex shrink-0 items-center gap-1.5 border-r border-border bg-card px-2 text-left transition-colors hover:bg-muted/60",
+          "border-border bg-card hover:bg-muted/60 sticky left-0 z-30 flex shrink-0 items-center gap-1.5 border-r px-2 text-left transition-colors",
           isSelected && "bg-muted",
           showDropHint && "bg-[color-mix(in_oklch,var(--brand)_8%,var(--card))]",
         )}
@@ -310,7 +310,7 @@ function DriverLaneRow({
           <span className="truncate text-[11.5px] font-medium">
             {driver.firstName} {driver.lastName}
           </span>
-          <span className="truncate text-[9.5px] text-muted-foreground tabular-nums">
+          <span className="text-muted-foreground truncate text-[9.5px] tabular-nums">
             {driver.tractorCode || "No tractor"} · {availability.label}
           </span>
         </div>
@@ -320,7 +320,7 @@ function DriverLaneRow({
         {availableGeometry && (
           <div
             aria-hidden
-            className="absolute inset-y-0 bg-success/[7%]"
+            className="bg-success/[7%] absolute inset-y-0"
             style={{ left: availableGeometry.left, width: availableGeometry.width }}
           />
         )}
@@ -370,17 +370,17 @@ function UnassignedLaneRow({
   const height = rowHeight(row);
 
   return (
-    <div className="flex border-b border-border/70 bg-warning/[4%]" style={{ height }}>
+    <div className="border-border/70 bg-warning/[4%] flex border-b" style={{ height }}>
       <div
-        className="sticky left-0 z-30 flex shrink-0 items-center gap-1.5 border-r border-border bg-[color-mix(in_oklch,var(--warning)_5%,var(--card))] px-2"
+        className="border-border sticky left-0 z-30 flex shrink-0 items-center gap-1.5 border-r bg-[color-mix(in_oklch,var(--warning)_5%,var(--card))] px-2"
         style={{ width: RAIL_WIDTH_PX }}
       >
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning">
+        <span className="bg-warning/15 text-warning flex size-6 shrink-0 items-center justify-center rounded-full">
           <InboxIcon className="size-3.5" />
         </span>
         <div className="flex min-w-0 flex-col">
-          <span className="truncate text-[11.5px] font-medium text-warning">Uncovered</span>
-          <span className="truncate text-[9.5px] text-muted-foreground tabular-nums">
+          <span className="text-warning truncate text-[11.5px] font-medium">Uncovered</span>
+          <span className="text-muted-foreground truncate text-[9.5px] tabular-nums">
             {row.spans.length} {row.spans.length === 1 ? "move" : "moves"} · drag onto a driver
           </span>
         </div>
@@ -477,9 +477,9 @@ export function DispatchTimeline({
   if (drivers.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-        <CalendarClockIcon className="size-6 text-muted-foreground" />
+        <CalendarClockIcon className="text-muted-foreground size-6" />
         <p className="text-sm font-semibold">No drivers to plan</p>
-        <p className="max-w-sm text-xs text-muted-foreground">
+        <p className="text-muted-foreground max-w-sm text-xs">
           No active, assignable drivers match the current filters.
         </p>
       </div>
@@ -490,23 +490,23 @@ export function DispatchTimeline({
     <div ref={scrollRef} className="relative h-full overflow-auto overscroll-x-contain">
       <div style={{ width: RAIL_WIDTH_PX + canvasWidth }}>
         <div
-          className="sticky top-0 z-40 flex border-b border-border"
+          className="border-border sticky top-0 z-40 flex border-b"
           style={{ height: headerHeight }}
         >
           <div
-            className="sticky left-0 z-50 flex shrink-0 items-center border-r border-border bg-muted px-2.5"
+            className="border-border bg-muted sticky left-0 z-50 flex shrink-0 items-center border-r px-2.5"
             style={{ width: RAIL_WIDTH_PX }}
           >
-            <span className="text-[9.5px] font-semibold tracking-wide text-muted-foreground uppercase">
+            <span className="text-muted-foreground text-[9.5px] font-semibold tracking-wide uppercase">
               Drivers · {drivers.length}
             </span>
           </div>
-          <div className="relative shrink-0 bg-muted" style={{ width: canvasWidth }}>
+          <div className="bg-muted relative shrink-0" style={{ width: canvasWidth }}>
             {dayColumns.map((day) => (
               <div
                 key={day.start}
                 className={cn(
-                  "absolute top-0 flex items-center border-l border-border/70 px-1.5 first:border-l-0",
+                  "border-border/70 absolute top-0 flex items-center border-l px-1.5 first:border-l-0",
                   day.isToday && "text-brand",
                 )}
                 style={{ left: day.x, width: day.width, height: DAY_LABEL_HEIGHT_PX }}
@@ -520,7 +520,7 @@ export function DispatchTimeline({
               hourTicks.map((tick) => (
                 <span
                   key={tick.time}
-                  className="absolute -translate-x-1/2 font-table text-[9px] text-muted-foreground tabular-nums"
+                  className="font-table text-muted-foreground absolute -translate-x-1/2 text-[9px] tabular-nums"
                   style={{ left: tick.x, top: DAY_LABEL_HEIGHT_PX + 3 }}
                 >
                   {tick.label}
@@ -528,7 +528,7 @@ export function DispatchTimeline({
               ))}
             {nowInRange && (
               <span
-                className="absolute bottom-0 z-10 -translate-x-1/2 rounded-t bg-brand px-1 py-px font-table text-[8.5px] font-semibold text-brand-foreground tabular-nums"
+                className="bg-brand font-table text-brand-foreground absolute bottom-0 z-10 -translate-x-1/2 rounded-t px-1 py-px text-[8.5px] font-semibold tabular-nums"
                 style={{ left: nowX }}
               >
                 {formatUnixInUserTimezone(now, { hour: "2-digit", minute: "2-digit", hour12: false })}
@@ -547,7 +547,7 @@ export function DispatchTimeline({
               <div
                 key={day.start}
                 className={cn(
-                  "absolute inset-y-0 border-l border-border/60 first:border-l-0",
+                  "border-border/60 absolute inset-y-0 border-l first:border-l-0",
                   day.isWeekend && "bg-muted/40",
                   day.isToday && "bg-brand/[3%]",
                 )}
@@ -557,7 +557,7 @@ export function DispatchTimeline({
             {hourTicks.map((tick) => (
               <div
                 key={tick.time}
-                className="absolute inset-y-0 border-l border-border/25"
+                className="border-border/25 absolute inset-y-0 border-l"
                 style={{ left: tick.x }}
               />
             ))}
@@ -600,10 +600,10 @@ export function DispatchTimeline({
           {nowInRange && (
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-y-0 z-20 w-px bg-brand"
+              className="bg-brand pointer-events-none absolute inset-y-0 z-20 w-px"
               style={{ left: RAIL_WIDTH_PX + nowX }}
             >
-              <span className="absolute -top-0 -left-[3px] size-[7px] rounded-full bg-brand" />
+              <span className="bg-brand absolute -top-0 -left-[3px] size-[7px] rounded-full" />
             </div>
           )}
         </div>

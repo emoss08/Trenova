@@ -12,7 +12,7 @@ export function OrganizationSettingsPage() {
         description="Manage your organization profile, compliance, and security settings"
       />
       <Suspense
-        fallback={<div className="px-1 py-8 text-sm text-muted-foreground">Loading...</div>}
+        fallback={<div className="text-muted-foreground px-1 py-8 text-sm">Loading...</div>}
       >
         <OrganizationSettingsForm />
       </Suspense>

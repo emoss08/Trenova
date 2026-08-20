@@ -19,7 +19,7 @@ const STALE_TIME_MS = 60_000;
 function FormsErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
-      <OctagonAlertIcon className="mx-auto size-5 text-destructive" />
+      <OctagonAlertIcon className="text-destructive mx-auto size-5" />
       <p className="mt-2 text-sm font-medium">Telematics forms could not be loaded</p>
       <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
         Try again
@@ -31,9 +31,9 @@ function FormsErrorState({ onRetry }: { onRetry: () => void }) {
 function FormsEmptyState() {
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
-      <ClipboardListIcon className="mx-auto size-5 text-muted-foreground" />
+      <ClipboardListIcon className="text-muted-foreground mx-auto size-5" />
       <p className="mt-2 text-sm font-medium">No telematics forms for this shipment yet.</p>
-      <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
+      <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">
         Driver form submissions mapped to this shipment appear here once your telematics provider
         reports them.
       </p>
@@ -57,7 +57,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger
-        className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/50 disabled:cursor-default disabled:hover:bg-transparent"
+        className="hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors disabled:cursor-default disabled:hover:bg-transparent"
         disabled={!hasFields}
         aria-label={`Toggle fields for ${submission.templateName}`}
       >
@@ -67,9 +67,9 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
               {submission.templateName}
             </Badge>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs">
             {submission.workerName ? (
-              <span className="font-medium text-foreground">{submission.workerName}</span>
+              <span className="text-foreground font-medium">{submission.workerName}</span>
             ) : null}
             {submission.workerName ? " · " : null}
             <span className="tabular-nums">{formatUnixDateTime(submission.submittedAt)}</span>
@@ -86,7 +86,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
           {hasFields ? (
             <ChevronDownIcon
               className={cn(
-                "size-4 text-muted-foreground transition-transform duration-200",
+                "text-muted-foreground size-4 transition-transform duration-200",
                 open && "rotate-180",
               )}
             />
@@ -95,13 +95,13 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
       </CollapsibleTrigger>
       {hasFields ? (
         <CollapsibleContent>
-          <dl className="grid grid-cols-1 gap-x-4 gap-y-2.5 border-t border-border bg-muted/20 px-4 py-3 sm:grid-cols-2">
+          <dl className="border-border bg-muted/20 grid grid-cols-1 gap-x-4 gap-y-2.5 border-t px-4 py-3 sm:grid-cols-2">
             {submission.fields.map((field, index) => (
               <div key={`${field.label}-${index}`} className="min-w-0">
                 <dt className="flex items-center gap-1.5">
-                  <span className="text-[11px] text-muted-foreground">{field.label}</span>
+                  <span className="text-muted-foreground text-[11px]">{field.label}</span>
                   {field.type ? (
-                    <span className="rounded bg-muted px-1 py-px text-[9.5px] font-medium text-muted-foreground">
+                    <span className="bg-muted text-muted-foreground rounded px-1 py-px text-[9.5px] font-medium">
                       {field.type}
                     </span>
                   ) : null}
@@ -149,8 +149,8 @@ export function TelematicsFormsBlock({ shipmentId }: { shipmentId: string }) {
       ) : submissions.length === 0 ? (
         <FormsEmptyState />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border">
-          <div className="divide-y divide-border">
+        <div className="border-border overflow-hidden rounded-lg border">
+          <div className="divide-border divide-y">
             {submissions.map((submission) => (
               <SubmissionRow key={submission.id} submission={submission} />
             ))}

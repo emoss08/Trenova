@@ -321,7 +321,7 @@ function CategoryRow({ index, isLast }: { index: number; isLast: boolean }) {
             {rateSourceBadge[category.rateSource]}
           </Badge>
         </div>
-        <span className="text-sm text-muted-foreground tabular-nums">
+        <span className="text-muted-foreground text-sm tabular-nums">
           Benchmark {formatPerMile(Number(category.benchmarkRatePerMile))}
         </span>
       </div>
@@ -402,7 +402,7 @@ function DerivedSwitchRow({
         <Label htmlFor={id} className="text-sm font-medium">
           {label}
         </Label>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="text-muted-foreground text-sm">{description}</p>
       </div>
     </div>
   );

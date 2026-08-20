@@ -82,7 +82,7 @@ export function DataRetentionPage() {
         {isLoading ? (
           <ComponentLoader message="Loading data retention settings" />
         ) : isError ? (
-          <div className="rounded-md border bg-background p-6 text-sm text-muted-foreground">
+          <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
             The data retention settings could not be loaded.
           </div>
         ) : (
@@ -94,7 +94,7 @@ export function DataRetentionPage() {
           >
             <FormSection
               title="Retention Windows"
-              className="rounded-md border bg-muted/20 p-3"
+              className="bg-muted/20 rounded-md border p-3"
             >
               <FormGroup cols={1}>
                 <FormControl>

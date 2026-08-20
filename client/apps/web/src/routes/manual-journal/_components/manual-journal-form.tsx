@@ -44,15 +44,15 @@ function BalanceSummary({
   const isBalanced = difference === 0 && totalDebit > 0;
 
   return (
-    <div className="grid grid-cols-3 divide-x divide-border overflow-hidden rounded-lg border bg-muted/30">
+    <div className="divide-border bg-muted/30 grid grid-cols-3 divide-x overflow-hidden rounded-lg border">
       <div className="flex flex-col gap-1 px-4 py-3">
-        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
           Total Debits
         </span>
         <AmountDisplay value={totalDebit} className="text-sm font-semibold" />
       </div>
       <div className="flex flex-col gap-1 px-4 py-3">
-        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
           Total Credits
         </span>
         <AmountDisplay value={totalCredit} className="text-sm font-semibold" />
@@ -192,7 +192,7 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
         title="Line Items"
         titleCount={lines.length}
         description="Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted."
-        className="border-t border-border pt-4"
+        className="border-border border-t pt-4"
       >
         {isDraft ? (
           <JournalLineItemsEditor />

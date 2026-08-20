@@ -53,18 +53,18 @@ export function LaneCell({ shipment }: { shipment: Shipment }) {
         >
           {originCode}
         </span>
-        <ArrowRight className="size-3 shrink-0 text-muted-foreground" />
-        <span className="truncate font-table text-[11.5px] font-semibold tabular-nums">
+        <ArrowRight className="text-muted-foreground size-3 shrink-0" />
+        <span className="font-table truncate text-[11.5px] font-semibold tabular-nums">
           {destinationCode}
         </span>
         <div className={cn("lane-bar ml-1 max-w-20 flex-1", toneClass(shipment.status))}>
           <span style={{ width: `${progress.value}%` }} />
         </div>
-        <span className="font-table text-[9.5px] text-muted-foreground tabular-nums">
+        <span className="font-table text-muted-foreground text-[9.5px] tabular-nums">
           {progress.value}%
         </span>
       </div>
-      <div className="font-table text-[9.5px] text-muted-foreground tabular-nums">
+      <div className="font-table text-muted-foreground text-[9.5px] tabular-nums">
         {miles}mi{commodityName ? ` · ${commodityName}` : ""}
       </div>
     </div>

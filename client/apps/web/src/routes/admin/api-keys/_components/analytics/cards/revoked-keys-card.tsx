@@ -16,13 +16,13 @@ export function RevokedKeysCard({ data }: Props) {
       icon={ShieldOff}
     >
       <div className="mt-1.5 space-y-1">
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
           <div
             className="h-full rounded-full bg-red-500 transition-all"
             style={{ width: `${Math.min(percentOfTotal, 100)}%` }}
           />
         </div>
-        <div className="flex justify-between text-[10px] text-muted-foreground">
+        <div className="text-muted-foreground flex justify-between text-[10px]">
           <span>{percentOfTotal}% of total</span>
         </div>
       </div>

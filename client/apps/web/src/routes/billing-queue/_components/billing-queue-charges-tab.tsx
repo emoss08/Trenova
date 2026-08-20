@@ -164,7 +164,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
 
   if (!shipment) {
     return (
-      <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex items-center justify-center py-12 text-sm">
         Shipment details not available
       </div>
     );
@@ -198,14 +198,14 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       )}
 
       {formulaTemplate && (
-        <div className="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2">
+        <div className="border-border bg-muted flex items-center justify-between rounded-md border px-3 py-2">
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground">Rating:</span>
             <span className="font-medium">{formulaTemplate.name}</span>
             {formulaTemplate.expression && (
               <>
                 <span className="text-muted-foreground/50">&middot;</span>
-                <code className="font-mono text-muted-foreground">
+                <code className="text-muted-foreground font-mono">
                   {formulaTemplate.expression}
                 </code>
               </>
@@ -234,10 +234,10 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       )}
 
       <div className="flex flex-col">
-        <div className="group flex items-center justify-between gap-2 rounded-md p-2 hover:bg-muted">
+        <div className="group hover:bg-muted flex items-center justify-between gap-2 rounded-md p-2">
           <div className="flex min-w-0 flex-col">
             <span className="text-sm">Base Rate</span>
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-muted-foreground text-[11px]">
               Per-unit rate before formula
             </span>
           </div>
@@ -288,7 +288,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                 variant="ghostInvert"
                 onClick={() => setEditingFreight(false)}
               >
-                <XIcon className="size-3 text-muted-foreground" />
+                <XIcon className="text-muted-foreground size-3" />
               </Button>
             </div>
           ) : (
@@ -337,7 +337,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         </div>
         <Separator className="my-1" />
         <div className="flex items-center justify-between p-2">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Accessorials
           </span>
           {isEditable && (
@@ -362,7 +362,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         </div>
 
         {additionalCharges.length === 0 && (
-          <p className="px-2 pb-2 text-xs text-muted-foreground">
+          <p className="text-muted-foreground px-2 pb-2 text-xs">
             No accessorial charges
           </p>
         )}
@@ -378,11 +378,11 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           return (
             <div
               key={charge.id ?? index}
-              className="group flex items-center justify-between gap-2 rounded-md p-2 hover:bg-muted"
+              className="group hover:bg-muted flex items-center justify-between gap-2 rounded-md p-2"
             >
               <div className="flex min-w-0 flex-col">
                 <span className="truncate text-sm">{name}</span>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-muted-foreground text-[11px]">
                   {breakdown}
                 </span>
               </div>
@@ -449,7 +449,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         })}
 
         {additionalCharges.length > 0 && (
-          <div className="flex items-center justify-between p-2 text-muted-foreground">
+          <div className="text-muted-foreground flex items-center justify-between p-2">
             <span className="text-xs">Subtotal</span>
             <span className="text-xs font-medium tabular-nums">
               {formatCurrency(otherCharge)}
@@ -458,7 +458,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         )}
       </div>
 
-      <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2.5">
+      <div className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2.5">
         <span className="text-sm font-semibold">Total</span>
         <span className="text-base font-bold tabular-nums">
           {formatCurrency(totalCharge)}

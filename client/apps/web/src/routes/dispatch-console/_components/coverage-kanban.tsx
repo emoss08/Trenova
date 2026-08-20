@@ -72,7 +72,7 @@ function MoveCard({
         }
       }}
       className={cn(
-        "flex cursor-pointer flex-col gap-1.5 rounded-md border bg-card p-2 transition-[border-color,box-shadow]",
+        "bg-card flex cursor-pointer flex-col gap-1.5 rounded-md border p-2 transition-[border-color,box-shadow]",
         isSelected ? "border-brand shadow-[0_0_0_1px_var(--brand)]" : "hover:border-brand/40",
         isOver && isDriverDrag && "border-brand bg-brand/5 shadow-[0_0_0_2px_var(--brand)]",
       )}
@@ -111,7 +111,7 @@ function MoveCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-muted-foreground text-[10px]">
           {move.originWindowStart > 0
             ? formatUnixDateTime(move.originWindowStart)
             : "No appointment"}
@@ -148,7 +148,7 @@ function MoveCard({
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-[10px] text-muted-foreground">{move.customerName}</span>
+        <span className="text-muted-foreground truncate text-[10px]">{move.customerName}</span>
         {move.isCovered &&
           (move.coverageType === "carrier" ? (
             <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
@@ -183,11 +183,11 @@ function UrgencyColumn({
   const meta = urgencyMeta(bucket);
 
   return (
-    <div className="flex min-h-0 w-60 shrink-0 flex-col rounded-md border bg-muted/30 xl:w-auto xl:flex-1">
+    <div className="bg-muted/30 flex min-h-0 w-60 shrink-0 flex-col rounded-md border xl:w-auto xl:flex-1">
       <header className="flex items-center gap-1.5 border-b px-2 py-1.5" title={meta.description}>
         <span className={cn("size-1.5 rounded-full", meta.dotClass)} aria-hidden />
         <span className="text-[10.5px] font-semibold tracking-wide uppercase">{meta.label}</span>
-        <span className="ml-auto text-[10.5px] text-muted-foreground tabular-nums">
+        <span className="text-muted-foreground ml-auto text-[10.5px] tabular-nums">
           {moves.length}
         </span>
       </header>
@@ -202,7 +202,7 @@ function UrgencyColumn({
             />
           ))}
           {moves.length === 0 && (
-            <p className="py-6 text-center text-[11px] text-muted-foreground">Nothing here.</p>
+            <p className="text-muted-foreground py-6 text-center text-[11px]">Nothing here.</p>
           )}
         </div>
       </ScrollArea>

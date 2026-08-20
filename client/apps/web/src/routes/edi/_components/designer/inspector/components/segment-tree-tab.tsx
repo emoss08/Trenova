@@ -39,19 +39,19 @@ export default function SegmentTreeTab({
               type="button"
               onClick={() => onSelectSegment(segment.index)}
               className={cn(
-                "flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-left hover:bg-muted",
+                "hover:bg-muted flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-left",
                 selectedSegment?.index === segment.index && "bg-muted",
               )}
             >
               <span className="min-w-0">
                 <span className="flex items-center gap-2">
-                  <span className="w-8 font-mono text-xs text-muted-foreground">
+                  <span className="text-muted-foreground w-8 font-mono text-xs">
                     {segment.index}
                   </span>
                   <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
                   {isControlSegment(segment) ? <Badge variant="outline">Control</Badge> : null}
                 </span>
-                <span className="block truncate pl-10 text-xs text-muted-foreground">
+                <span className="text-muted-foreground block truncate pl-10 text-xs">
                   {segment.name}
                 </span>
               </span>
@@ -73,7 +73,7 @@ export default function SegmentTreeTab({
       {selectedSegment ? (
         <SegmentDetail segment={selectedSegment} diagnostics={diagnostics} />
       ) : (
-        <div className="rounded-md border p-4 text-sm text-muted-foreground">Select a segment.</div>
+        <div className="text-muted-foreground rounded-md border p-4 text-sm">Select a segment.</div>
       )}
     </div>
   );
@@ -100,7 +100,7 @@ function SegmentDetail({
           {segment.malformed ? <Badge variant="inactive">Malformed</Badge> : null}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <code className="rounded-sm bg-muted px-2 py-1 text-xs wrap-break-word">
+          <code className="bg-muted rounded-sm px-2 py-1 text-xs wrap-break-word">
             {segment.raw}
           </code>
           <Button
@@ -142,7 +142,7 @@ function SegmentDetail({
                   <TableCell className="font-mono text-xs wrap-break-word">
                     <div>{element.empty ? "[empty]" : element.value}</div>
                     {element.components.length > 1 ? (
-                      <div className="mt-1 text-muted-foreground">
+                      <div className="text-muted-foreground mt-1">
                         {element.components
                           .map(
                             (component) =>

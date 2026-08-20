@@ -150,7 +150,7 @@ export default function OrganizationSettingsForm() {
 
   if (!organizationId) {
     return (
-      <div className="py-8 text-sm text-muted-foreground">
+      <div className="text-muted-foreground py-8 text-sm">
         No active organization found for this session.
       </div>
     );
@@ -158,7 +158,7 @@ export default function OrganizationSettingsForm() {
 
   if (organizationQuery.isLoading) {
     return (
-      <div className="py-8 text-sm text-muted-foreground">Loading organization settings...</div>
+      <div className="text-muted-foreground py-8 text-sm">Loading organization settings...</div>
     );
   }
 
@@ -301,7 +301,7 @@ function LogoForm({
       </CardHeader>
       <CardContent className="max-w-prose">
         <div className="space-y-4">
-          <div className="relative flex h-24 w-24 items-center justify-center rounded-md border bg-muted/40">
+          <div className="bg-muted/40 relative flex h-24 w-24 items-center justify-center rounded-md border">
             {displayLogoURL ? (
               <img
                 src={displayLogoURL}
@@ -309,14 +309,14 @@ function LogoForm({
                 className="h-full w-full rounded-md object-cover"
               />
             ) : (
-              <span className="text-xs text-muted-foreground">No logo</span>
+              <span className="text-muted-foreground text-xs">No logo</span>
             )}
             {displayLogoURL ? (
               <button
                 type="button"
                 onClick={handleRemoveLogo}
                 disabled={isRemovingLogo}
-                className="absolute top-0 right-0 z-10 inline-flex size-6 translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background/95 text-foreground shadow-xs transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                className="bg-background/95 text-foreground hover:bg-muted absolute top-0 right-0 z-10 inline-flex size-6 translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full shadow-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Remove logo"
                 title="Remove logo"
               >
@@ -397,7 +397,7 @@ function GeneralForm() {
                 <span className="flex w-full items-center justify-between gap-3">
                   <span>{option.label}</span>
                   {option.description && (
-                    <span className="text-xs text-muted-foreground">{option.description}</span>
+                    <span className="text-muted-foreground text-xs">{option.description}</span>
                   )}
                 </span>
               )}

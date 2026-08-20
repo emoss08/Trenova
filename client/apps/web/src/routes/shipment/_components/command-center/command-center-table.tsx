@@ -112,7 +112,7 @@ function TableBodySkeleton({ columnCount, rowCount }: { columnCount: number; row
         <tr
           key={rowIndex}
           data-testid="command-center-skeleton-row"
-          className="h-9 border-b border-border/70"
+          className="border-border/70 h-9 border-b"
         >
           {Array.from({ length: columnCount }).map((_, columnIndex) => (
             <td key={columnIndex} className="px-2.5 py-1.5 align-middle">
@@ -434,7 +434,7 @@ export function CommandCenterTable({
           </TableBody>
         </Table>
         {dataQuery.isFetching && !isInitialLoading && (
-          <div className="pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1 rounded bg-background/70 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm">
+          <div className="bg-background/70 text-muted-foreground pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] backdrop-blur-sm">
             <Spinner className="size-3" />
             Refreshing
           </div>
@@ -456,9 +456,9 @@ export function CommandCenterTable({
   );
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
+    <section className="border-border bg-card flex flex-col overflow-hidden rounded-md border">
       <SavedViewsBar rightSlot={rightSlot} countsEnabled={countsEnabled} />
-      <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
+      <div className="border-border flex items-center gap-2 border-b px-3 py-1.5">
         <Suspense fallback={<SearchSkeleton />}>
           <DataTableSearch value={query} onChange={setQuery} placeholder="Search shipments..." />
         </Suspense>
@@ -469,14 +469,14 @@ export function CommandCenterTable({
             onFiltersChange={setFilterItems}
           />
         </Suspense>
-        <div className="mx-1 h-4 w-px bg-border" />
+        <div className="bg-border mx-1 h-4 w-px" />
         <FilterChipRow />
         {viewMode === "table" && (
           <>
             {isInitialLoading ? (
               <Skeleton className="ml-auto h-3.5 w-24 shrink-0" />
             ) : (
-              <p className="ml-auto shrink-0 font-table text-[10.5px] text-muted-foreground tabular-nums">
+              <p className="font-table text-muted-foreground ml-auto shrink-0 text-[10.5px] tabular-nums">
                 {rows.length} of {totalCount} results
               </p>
             )}
@@ -523,7 +523,7 @@ function ViewModeToggle({
     <div
       role="group"
       aria-label="View mode"
-      className="inline-flex overflow-hidden rounded-md border border-border"
+      className="border-border inline-flex overflow-hidden rounded-md border"
     >
       <button
         type="button"
@@ -544,7 +544,7 @@ function ViewModeToggle({
         onClick={() => setViewMode("timeline")}
         aria-pressed={viewMode === "timeline"}
         className={cn(
-          "flex items-center gap-1 border-l border-border px-2 py-1 text-[11px] transition-colors",
+          "border-border flex items-center gap-1 border-l px-2 py-1 text-[11px] transition-colors",
           viewMode === "timeline"
             ? "bg-muted text-foreground"
             : "bg-background text-muted-foreground hover:text-foreground",
@@ -580,8 +580,8 @@ function RowFragment({
     <>
       <tr
         className={cn(
-          "group/row h-9 cursor-pointer border-b border-border/70 transition-colors hover:bg-muted/30",
-          isExpanded && "bg-brand/10 outline-1 -outline-offset-1 outline-brand hover:bg-brand/20",
+          "group/row border-border/70 hover:bg-muted/30 h-9 cursor-pointer border-b transition-colors",
+          isExpanded && "bg-brand/10 outline-brand hover:bg-brand/20 outline-1 -outline-offset-1",
           isHighlighted && "bg-muted/50",
         )}
         onClick={onClick}
@@ -595,7 +595,7 @@ function RowFragment({
         ))}
       </tr>
       {isExpanded && (
-        <tr className="border-b border-border bg-background">
+        <tr className="border-border bg-background border-b">
           <td colSpan={row.getVisibleCells().length} className="p-0">
             <div className="cc-fade-in">
               <Suspense fallback={<ExpandedRowLoadingFallback />}>
@@ -636,7 +636,7 @@ function CommandCenterFooter({
   onNext: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between border-t border-border px-3 py-1.5 text-[11px] text-muted-foreground">
+    <div className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-1.5 text-[11px]">
       {isLoading ? (
         <Skeleton className="h-3.5 w-44" />
       ) : (

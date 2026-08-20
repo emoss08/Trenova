@@ -188,7 +188,7 @@ function BandCell({
             "placeholder:text-muted-foreground/50",
             "transition-[border-color,box-shadow,background-color] duration-150 ease-in-out",
             "hover:bg-muted/70",
-            "focus-visible:border-brand focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-brand/20",
+            "focus-visible:border-brand focus-visible:bg-background focus-visible:ring-brand/20 focus-visible:ring-4",
             "disabled:cursor-not-allowed disabled:opacity-50",
             fieldState.invalid &&
               "border-red-500/60 bg-red-500/10 focus-visible:border-red-500 focus-visible:ring-red-400/20",
@@ -225,14 +225,14 @@ const BandRow = memo(function BandRow({
     <tr
       style={{ height: ROW_HEIGHT }}
       className={cn(
-        "group border-t transition-colors hover:bg-muted/40",
+        "group hover:bg-muted/40 border-t transition-colors",
         isCurrent && "bg-primary/5",
       )}
     >
-      <td className="px-3 text-center text-xs text-muted-foreground tabular-nums">
+      <td className="text-muted-foreground px-3 text-center text-xs tabular-nums">
         {isCurrent ? (
           <span
-            className="inline-block size-2 rounded-full bg-primary"
+            className="bg-primary inline-block size-2 rounded-full"
             title="This week's price falls in this band"
           />
         ) : (
@@ -282,7 +282,7 @@ const BandRow = memo(function BandRow({
             onClick={() => onInsertAfter(index)}
             disabled={disabled}
             title="Insert a band below this one"
-            className="size-7 p-0 text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground size-7 p-0"
           >
             <Plus className="size-3.5" />
           </Button>
@@ -293,7 +293,7 @@ const BandRow = memo(function BandRow({
             onClick={() => onRemove(index)}
             disabled={disabled}
             title="Delete this band"
-            className="size-7 p-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-7 p-0"
           >
             <Trash2 className="size-3.5" />
           </Button>
@@ -439,7 +439,7 @@ function FooterSummary({
   }, [rows, currentPrice]);
 
   return (
-    <div className="flex items-center justify-between border-t px-4 py-2 text-xs text-muted-foreground">
+    <div className="text-muted-foreground flex items-center justify-between border-t px-4 py-2 text-xs">
       <span>
         {rows.length} {rows.length === 1 ? "band" : "bands"}
         {coverage ? ` · ${coverage}` : ""}
@@ -606,12 +606,12 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
     <Card className="gap-0 p-0">
       <CardHeader className="flex flex-row items-center justify-between border-b py-3">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-            <Table2 className="size-4 text-primary" />
+          <div className="bg-primary/10 flex size-8 items-center justify-center rounded-lg">
+            <Table2 className="text-primary size-4" />
           </div>
           <div>
             <CardTitle className="text-sm font-medium">Price Band Table</CardTitle>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Read each row as: when fuel costs at least &ldquo;from&rdquo; and less than &ldquo;up
               to&rdquo;, {meta.readingHint}.
             </p>
@@ -649,11 +649,11 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
         <RowsErrorBanner control={control} />
         {fields.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <Table2 className="size-5 text-muted-foreground" />
+            <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+              <Table2 className="text-muted-foreground size-5" />
             </div>
             <p className="mt-3 text-sm font-medium">Build your price band table</p>
-            <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 max-w-sm text-xs">
               The fastest way is the generator — set a price range and increments, and the full
               table is built for you. Every row stays editable afterward, so uneven bands are fine.
             </p>
@@ -685,8 +685,8 @@ export function BandTableEditor({ method, disabled }: { method: string; disabled
           <>
             <div ref={scrollRef} className="max-h-96 overflow-y-auto">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
-                  <tr className="text-left text-xs text-muted-foreground">
+                <thead className="bg-muted/80 sticky top-0 z-10 backdrop-blur">
+                  <tr className="text-muted-foreground text-left text-xs">
                     <th className="w-10 px-3 py-2 text-center font-medium">#</th>
                     <th className="px-2 py-2 font-medium">Fuel Price From</th>
                     <th className="px-2 py-2 font-medium">Up To (not incl.)</th>

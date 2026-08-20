@@ -80,7 +80,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
         <div className="text-right">
           <AmountDisplay
             value={row.original.appliedAmountMinor}
-            className="text-xs text-muted-foreground"
+            className="text-muted-foreground text-xs"
           />
         </div>
       ),
@@ -97,7 +97,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
             className={
               row.original.unappliedAmountMinor > 0
                 ? "text-xs font-medium text-amber-600 dark:text-amber-400"
-                : "text-xs text-muted-foreground/60"
+                : "text-muted-foreground/60 text-xs"
             }
           />
         </div>
@@ -109,7 +109,7 @@ export function getColumns(): ColumnDef<CustomerPaymentRow>[] {
       id: "applications",
       header: "Invoices",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground tabular-nums">
+        <span className="text-muted-foreground text-xs tabular-nums">
           {row.original.applications?.length ?? 0}
         </span>
       ),

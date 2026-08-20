@@ -169,10 +169,10 @@ export function BillingQueueDocumentsTab({
       {billingReadiness && billingReadiness.requirements.length > 0 && (
         <div className="shrink-0 border-b px-3 py-2">
           <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            <span className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
               {requirementTitle}
             </span>
-            <span className="text-[11px] text-muted-foreground tabular-nums">
+            <span className="text-muted-foreground text-[11px] tabular-nums">
               {billingReadiness.requirements.length -
                 billingReadiness.missingRequirements.length}
               /{billingReadiness.requirements.length}
@@ -188,7 +188,7 @@ export function BillingQueueDocumentsTab({
                   {req.satisfied ? (
                     <CheckCircle2Icon className="size-3.5 shrink-0 text-green-500" />
                   ) : (
-                    <CircleDashedIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                    <CircleDashedIcon className="text-muted-foreground size-3.5 shrink-0" />
                   )}
                   <span
                     className={cn(
@@ -235,11 +235,11 @@ export function BillingQueueDocumentsTab({
       )}
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center justify-center py-8 text-sm">
           {loadingLabel}
         </div>
       ) : documents.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
+        <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-12">
           <FileIcon className="size-8" />
           <p className="text-sm">{emptyLabel}</p>
         </div>
@@ -256,7 +256,7 @@ export function BillingQueueDocumentsTab({
                   className={cn(
                     "group flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left transition-colors",
                     "hover:bg-accent/50",
-                    isSelected && "border border-primary/20 bg-accent",
+                    isSelected && "border-primary/20 bg-accent border",
                   )}
                   onClick={() => onDocumentSelect(doc.id, doc.originalName)}
                   role="button"
@@ -266,10 +266,10 @@ export function BillingQueueDocumentsTab({
                       onDocumentSelect(doc.id, doc.originalName);
                   }}
                 >
-                  <Icon className="size-4 shrink-0 text-muted-foreground" />
+                  <Icon className="text-muted-foreground size-4 shrink-0" />
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm">{doc.originalName}</span>
-                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <div className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
                       <span>{formatSize(doc.fileSize)}</span>
                       <span>&middot;</span>
                       <span>

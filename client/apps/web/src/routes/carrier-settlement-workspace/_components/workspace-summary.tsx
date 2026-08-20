@@ -25,12 +25,12 @@ export function WorkspaceSummaryStrip({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Pay period{" "}
-          <span className="font-medium text-foreground">
+          <span className="text-foreground font-medium">
             {formatDate(summary.periodStart)} – {formatDate(summary.periodEnd - 86400)}
           </span>{" "}
-          · pays <span className="font-medium text-foreground">{formatDate(summary.payDate)}</span>
+          · pays <span className="text-foreground font-medium">{formatDate(summary.payDate)}</span>
         </p>
         {actions}
       </div>

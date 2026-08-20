@@ -89,7 +89,7 @@ export function PayProfileForm() {
       <div className="flex items-center justify-between border-t pt-4">
         <div>
           <h3 className="text-sm font-semibold">Pay Components</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Each component computes pay per completed move; team splits apply on top.
           </p>
         </div>
@@ -250,7 +250,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
             type="button"
             size="icon"
             variant="ghost"
-            className="shrink-0 text-muted-foreground"
+            className="text-muted-foreground shrink-0"
             onClick={onRemove}
             aria-label="Remove component"
           >
@@ -264,7 +264,7 @@ function ComponentEditor({ index, onRemove }: { index: number; onRemove?: () => 
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs font-medium">
               Mileage Bands
-              <span className="ml-1 font-normal text-muted-foreground">
+              <span className="text-muted-foreground ml-1 font-normal">
                 (optional; sliding scale by length of haul)
               </span>
             </p>

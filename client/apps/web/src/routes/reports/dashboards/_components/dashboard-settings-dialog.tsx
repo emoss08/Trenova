@@ -74,7 +74,7 @@ export function DashboardSettingsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center gap-1 border-b border-border">
+        <div className="border-border flex items-center gap-1 border-b">
           {TABS.map((entry) => (
             <button
               key={entry.key}
@@ -83,13 +83,13 @@ export function DashboardSettingsDialog({
               className={cn(
                 "relative px-2 pb-2 text-xs transition-colors",
                 tab === entry.key
-                  ? "font-medium text-foreground"
+                  ? "text-foreground font-medium"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
               {entry.label}
               {tab === entry.key && (
-                <span className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-primary" />
+                <span className="bg-primary absolute inset-x-1 -bottom-px h-0.5 rounded-full" />
               )}
             </button>
           ))}
@@ -106,7 +106,7 @@ export function DashboardSettingsDialog({
                 onChange={setFilters}
               />
             ) : (
-              <p className="px-2 py-4 text-center text-sm text-muted-foreground">Loading fields…</p>
+              <p className="text-muted-foreground px-2 py-4 text-center text-sm">Loading fields…</p>
             )
           ) : (
             <ParametersPanel

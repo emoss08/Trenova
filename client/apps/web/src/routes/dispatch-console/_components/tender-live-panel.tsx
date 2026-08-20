@@ -227,7 +227,7 @@ function OfferRow({
         <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-[9px]" />
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px]">
         <span className="tabular-nums">{formatOfferRate(offer.rate, offer.rateMethod)}</span>
         <span>· {TENDER_CHANNEL_LABEL[offer.channel]}</span>
         {countdown && (
@@ -251,7 +251,7 @@ function OfferRow({
       </div>
 
       {offer.status === "Declined" && offer.declineReason && (
-        <span className="text-[10px] text-muted-foreground italic">“{offer.declineReason}”</span>
+        <span className="text-muted-foreground text-[10px] italic">“{offer.declineReason}”</span>
       )}
       {offer.status === "DeliveryFailed" && offer.deliveryError && (
         <span className="text-[10px] text-red-600 dark:text-red-400">{offer.deliveryError}</span>
@@ -343,7 +343,7 @@ export function TenderLivePanel({
           {TENDER_MODE_LABEL[tender.mode]}
         </Badge>
         {tender.routingGuide && (
-          <span className="text-[10px] text-muted-foreground">via {tender.routingGuide.name}</span>
+          <span className="text-muted-foreground text-[10px]">via {tender.routingGuide.name}</span>
         )}
       </div>
 
@@ -380,7 +380,7 @@ export function TenderLivePanel({
           />
         ))}
         {offers.length === 0 && (
-          <p className="py-3 text-center text-[11px] text-muted-foreground">
+          <p className="text-muted-foreground py-3 text-center text-[11px]">
             No offers on this tender.
           </p>
         )}
@@ -391,7 +391,7 @@ export function TenderLivePanel({
           <Button
             size="sm"
             variant="outline"
-            className="h-6 px-2 text-[10px] text-destructive hover:text-destructive"
+            className="text-destructive hover:text-destructive h-6 px-2 text-[10px]"
             disabled={isTendering}
             onClick={() => setCancelOpen(true)}
           >

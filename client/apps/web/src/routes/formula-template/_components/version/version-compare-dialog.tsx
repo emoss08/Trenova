@@ -67,7 +67,7 @@ export function VersionCompareDialog({
             </div>
           ) : data?.changeCount === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <RefreshCwIcon className="mb-4 size-12 text-muted-foreground" />
+              <RefreshCwIcon className="text-muted-foreground mb-4 size-12" />
               <p className="text-muted-foreground">
                 No changes between versions
               </p>
@@ -139,7 +139,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
 
   return (
     <div className="overflow-hidden rounded-lg border">
-      <div className="flex items-center gap-2 border-b bg-muted/50 px-3 py-2">
+      <div className="bg-muted/50 flex items-center gap-2 border-b px-3 py-2">
         {getChangeIcon()}
         <span className="font-mono text-sm font-medium">{formattedPath}</span>
         <Badge className={cn("ml-auto text-xs", getChangeBadgeVariant())}>
@@ -151,7 +151,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
         {change.type === "updated" ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="mb-1 block text-xs font-medium text-muted-foreground">
+              <span className="text-muted-foreground mb-1 block text-xs font-medium">
                 Before
               </span>
               <pre className="overflow-x-auto rounded bg-red-50 p-2 font-mono text-xs whitespace-pre-wrap text-red-800 dark:bg-red-900/20 dark:text-red-200">
@@ -159,7 +159,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
               </pre>
             </div>
             <div>
-              <span className="mb-1 block text-xs font-medium text-muted-foreground">
+              <span className="text-muted-foreground mb-1 block text-xs font-medium">
                 After
               </span>
               <pre className="overflow-x-auto rounded bg-green-50 p-2 font-mono text-xs whitespace-pre-wrap text-green-800 dark:bg-green-900/20 dark:text-green-200">
@@ -169,7 +169,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
           </div>
         ) : change.type === "created" ? (
           <div>
-            <span className="mb-1 block text-xs font-medium text-muted-foreground">
+            <span className="text-muted-foreground mb-1 block text-xs font-medium">
               Added
             </span>
             <pre className="overflow-x-auto rounded bg-green-50 p-2 font-mono text-xs whitespace-pre-wrap text-green-800 dark:bg-green-900/20 dark:text-green-200">
@@ -178,7 +178,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
           </div>
         ) : (
           <div>
-            <span className="mb-1 block text-xs font-medium text-muted-foreground">
+            <span className="text-muted-foreground mb-1 block text-xs font-medium">
               Removed
             </span>
             <pre className="overflow-x-auto rounded bg-red-50 p-2 font-mono text-xs whitespace-pre-wrap text-red-800 dark:bg-red-900/20 dark:text-red-200">
@@ -196,7 +196,7 @@ function ComparisonSkeleton() {
     <div className="space-y-3">
       {[...Array(3)].map((_, i) => (
         <div key={i} className="overflow-hidden rounded-lg border">
-          <div className="flex items-center gap-2 border-b bg-muted/50 px-3 py-2">
+          <div className="bg-muted/50 flex items-center gap-2 border-b px-3 py-2">
             <Skeleton className="size-4 rounded" />
             <Skeleton className="h-4 w-32" />
             <Skeleton className="ml-auto h-5 w-16" />

@@ -110,7 +110,7 @@ function PaymentDetailView({
           </div>
           <Link
             to={`/accounting/ar/customer-ledger?customerId=${payment.customerId}`}
-            className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+            className="text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1 text-xs hover:underline"
           >
             {payment.customer
               ? `${payment.customer.code} — ${payment.customer.name}`
@@ -151,7 +151,7 @@ function PaymentDetailView({
         shortPayMinor={shortPayMinor}
       />
 
-      <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 rounded-md border bg-muted/30 p-3 text-xs md:grid-cols-3">
+      <div className="bg-muted/30 grid grid-cols-2 gap-x-6 gap-y-2.5 rounded-md border p-3 text-xs md:grid-cols-3">
         <DetailItem label="Payment date" value={formatAccountingDate(payment.paymentDate)} />
         <DetailItem
           label="Accounting date"
@@ -192,7 +192,7 @@ function CashAllocationBar({
 
   return (
     <div>
-      <div className="flex h-2.5 w-full gap-px overflow-hidden rounded-full bg-muted">
+      <div className="bg-muted flex h-2.5 w-full gap-px overflow-hidden rounded-full">
         {appliedMinor > 0 ? (
           <m.div
             className="h-full bg-emerald-500"
@@ -211,16 +211,16 @@ function CashAllocationBar({
         ) : null}
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-        <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
           <span className="size-2 rounded-full bg-emerald-500" />
           Applied · {formatCurrency(appliedMinor / 100)}
         </span>
-        <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
           <span className="size-2 rounded-full bg-sky-500" />
           Unapplied · {formatCurrency(unappliedMinor / 100)}
         </span>
         {shortPayMinor > 0 ? (
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
             <span className="size-2 rounded-full bg-amber-500" />
             Short-pay written off · {formatCurrency(shortPayMinor / 100)}
           </span>
@@ -243,12 +243,12 @@ function ApplicationsSection({
     <div>
       <p className="mb-2 text-sm font-medium">
         Applications
-        <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+        <span className="text-muted-foreground ml-1.5 text-xs font-normal">
           {applications.length} {applications.length === 1 ? "invoice" : "invoices"}
         </span>
       </p>
       {applications.length === 0 ? (
-        <div className="flex h-24 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex h-24 items-center justify-center rounded-md border border-dashed text-sm">
           Nothing applied — the full amount is unapplied cash
         </div>
       ) : (
@@ -282,7 +282,7 @@ function ApplicationsSection({
                         </span>
                       )}
                       {application.invoice ? (
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-muted-foreground text-[11px]">
                           {application.invoice.billToName}
                         </span>
                       ) : null}
@@ -297,7 +297,7 @@ function ApplicationsSection({
                         {formatCurrency(Number(application.invoice.totalAmount))}
                       </span>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </TableCell>
                   <TableCell className="py-2 text-right">
@@ -313,7 +313,7 @@ function ApplicationsSection({
                         className="text-xs text-amber-600 dark:text-amber-400"
                       />
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </TableCell>
                   <TableCell className="py-2">
@@ -322,12 +322,12 @@ function ApplicationsSection({
                         status={application.invoice.settlementStatus as SettlementStatus}
                       />
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-muted-foreground text-xs">—</span>
                     )}
                   </TableCell>
                 </TableRow>
               ))}
-              <TableRow className="border-t bg-muted/30 font-medium hover:bg-muted/30">
+              <TableRow className="bg-muted/30 hover:bg-muted/30 border-t font-medium">
                 <TableCell colSpan={3} className="py-2 text-right text-xs">
                   Totals
                 </TableCell>
@@ -344,7 +344,7 @@ function ApplicationsSection({
                       className="text-xs font-semibold text-amber-600 dark:text-amber-400"
                     />
                   ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
+                    <span className="text-muted-foreground text-xs">—</span>
                   )}
                 </TableCell>
                 <TableCell />
@@ -369,14 +369,14 @@ function GLActivitySection({ paymentId }: { paymentId: string }) {
         <p className="text-sm font-medium">
           GL Postings
           {postings.length > 0 ? (
-            <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+            <span className="text-muted-foreground ml-1.5 text-xs font-normal">
               {postings.length} {postings.length === 1 ? "entry" : "entries"}
             </span>
           ) : null}
         </p>
         <Link
           to={`/accounting/journal-entries/source/CustomerPayment/${paymentId}`}
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs hover:underline"
         >
           Open full view
           <ExternalLinkIcon className="size-3" />
@@ -385,7 +385,7 @@ function GLActivitySection({ paymentId }: { paymentId: string }) {
       {isLoading ? (
         <Skeleton className="h-24 w-full rounded-md" />
       ) : postings.length === 0 ? (
-        <div className="flex h-20 items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex h-20 items-center justify-center rounded-md border border-dashed text-sm">
           Nothing has been posted to the ledger yet
         </div>
       ) : (

@@ -117,7 +117,7 @@ function DriverRow({
     >
       <span className="flex h-full items-center justify-center" aria-hidden>
         {!isBlocked && (
-          <GripVerticalIcon className="size-3 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground/60" />
+          <GripVerticalIcon className="text-muted-foreground/0 group-hover:text-muted-foreground/60 size-3 transition-colors" />
         )}
       </span>
 
@@ -150,7 +150,7 @@ function DriverRow({
                 {statusLabel}
               </span>
             </div>
-            <p className="truncate text-[10.5px] leading-none text-muted-foreground">
+            <p className="text-muted-foreground truncate text-[10.5px] leading-none">
               {context.join(" · ")}
             </p>
           </div>
@@ -165,7 +165,7 @@ function DriverRow({
         />
 
         {blockingReason && (
-          <p className="text-[10px] leading-tight text-destructive">{blockingReason}</p>
+          <p className="text-destructive text-[10px] leading-tight">{blockingReason}</p>
         )}
       </div>
     </div>
@@ -227,13 +227,13 @@ export function CapacityRail({
   }, [drivers]);
 
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
+    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
       <header className="flex flex-col gap-2 border-b p-2">
         <Input
           value={search}
           onChange={(event) => setDriverSearch(event.target.value)}
           placeholder="Search driver, tractor, fleet"
-          leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           className="h-8 pl-7 text-xs"
           aria-label="Search drivers by name, tractor code, or fleet"
         />
@@ -260,10 +260,10 @@ export function CapacityRail({
       </header>
 
       <div className="flex items-center justify-between border-b px-2.5 py-1.5">
-        <span className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
+        <span className="text-muted-foreground text-[10.5px] font-semibold tracking-wide uppercase">
           Capacity
         </span>
-        <span className="text-[10.5px] text-muted-foreground tabular-nums">
+        <span className="text-muted-foreground text-[10.5px] tabular-nums">
           {visible.length} of {drivers.length}
         </span>
       </div>
@@ -277,7 +277,7 @@ export function CapacityRail({
         {isLoading ? (
           <CapacityRailRowsSkeleton />
         ) : visible.length === 0 ? (
-          <p className="p-4 text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground p-4 text-center text-xs">
             No drivers match this view.
           </p>
         ) : (

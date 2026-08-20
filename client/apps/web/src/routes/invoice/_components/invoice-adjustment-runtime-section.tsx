@@ -67,8 +67,8 @@ export function InvoiceAdjustmentRuntimeSection({
   if (!latestAdjustment && !correctionSummary?.adjustments.length) {
     return (
       <div className="rounded-lg border border-dashed p-3">
-        <p className="text-xs font-medium text-muted-foreground">Invoice Adjustments</p>
-        <p className="mt-0.5 text-2xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs font-medium">Invoice Adjustments</p>
+        <p className="text-2xs text-muted-foreground mt-0.5">
           No invoice adjustments have been created for this invoice yet.
         </p>
       </div>
@@ -79,7 +79,7 @@ export function InvoiceAdjustmentRuntimeSection({
     <div className="space-y-4">
       {latestAdjustment ? (
         <div className="space-y-1.5">
-          <p className="text-xs font-medium text-muted-foreground">Latest Adjustment</p>
+          <p className="text-muted-foreground text-xs font-medium">Latest Adjustment</p>
           <InvoiceAdjustmentLatestCard
             invoice={invoice}
             latestAdjustment={latestAdjustment}
@@ -90,7 +90,7 @@ export function InvoiceAdjustmentRuntimeSection({
       {correctionSummary ? (
         <div className="grid gap-5 xl:grid-cols-2">
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Invoice Lineage</p>
+            <p className="text-muted-foreground text-xs font-medium">Invoice Lineage</p>
             <ScrollArea className="h-[260px]">
               <div className="space-y-1.5">
                 {sortedInvoices.map((lineageInvoice) => {
@@ -99,7 +99,7 @@ export function InvoiceAdjustmentRuntimeSection({
                   return (
                     <div
                       key={lineageInvoice.id}
-                      className="flex items-center justify-between gap-2 rounded-md border bg-background px-3 py-2"
+                      className="bg-background flex items-center justify-between gap-2 rounded-md border px-3 py-2"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-xs font-medium">{lineageInvoice.number}</p>
@@ -117,11 +117,11 @@ export function InvoiceAdjustmentRuntimeSection({
             </ScrollArea>
           </div>
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Adjustment History</p>
+            <p className="text-muted-foreground text-xs font-medium">Adjustment History</p>
             <ScrollArea className="h-[260px]">
               <div className="space-y-1.5">
                 {sortedAdjustments.map((adjustment) => (
-                  <div key={adjustment.id} className="rounded-md border bg-background px-3 py-2">
+                  <div key={adjustment.id} className="bg-background rounded-md border px-3 py-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
@@ -141,11 +141,11 @@ export function InvoiceAdjustmentRuntimeSection({
                             {formatStatus(adjustment.status)}
                           </Badge>
                         </div>
-                        <p className="mt-0.5 truncate text-2xs text-muted-foreground">
+                        <p className="text-2xs text-muted-foreground mt-0.5 truncate">
                           {adjustment.reason || adjustment.policyReason || "No note"}
                         </p>
                       </div>
-                      <p className="shrink-0 text-2xs text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground shrink-0">
                         {formatUnixDate(adjustment.createdAt)}
                       </p>
                     </div>
@@ -227,7 +227,7 @@ function InvoiceAdjustmentLatestCard({
   const allDocs = [...evidenceDocs, ...adjustmentDocs];
 
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <div className="bg-card rounded-lg border p-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <p className="text-sm font-medium">{formatKind(latestAdjustment.kind)}</p>
@@ -247,13 +247,13 @@ function InvoiceAdjustmentLatestCard({
         <p className="text-sm font-semibold tabular-nums">{formatCurrency(netDelta)}</p>
       </div>
 
-      <p className="mt-1.5 text-2xs text-muted-foreground">
+      <p className="text-2xs text-muted-foreground mt-1.5">
         Credit {formatCurrency(Number(latestAdjustment.creditTotalAmount))} · Rebill{" "}
         {formatCurrency(Number(latestAdjustment.rebillTotalAmount))}
       </p>
 
       {reason ? (
-        <p className="mt-2 border-l-2 border-muted-foreground/20 pl-2.5 text-xs text-muted-foreground italic">
+        <p className="border-muted-foreground/20 text-muted-foreground mt-2 border-l-2 pl-2.5 text-xs italic">
           {reason}
         </p>
       ) : null}
@@ -264,7 +264,7 @@ function InvoiceAdjustmentLatestCard({
         </div>
       ) : null}
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs">
+      <div className="text-2xs mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
         <ArtifactLink to={`/billing/invoices?item=${invoice.id}`} label="Current Invoice" />
         {latestAdjustment.creditMemoInvoiceId ? (
           <ArtifactLink
@@ -294,14 +294,14 @@ function InvoiceAdjustmentLatestCard({
 
       {allDocs.length > 0 ? (
         <Collapsible className="mt-2.5">
-          <CollapsibleTrigger className="group flex items-center gap-1 text-2xs font-medium text-muted-foreground hover:text-foreground">
+          <CollapsibleTrigger className="group text-2xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium">
             <span>Documents ({allDocs.length})</span>
             <ChevronDownIcon className="size-3 transition-transform group-data-panel-open:rotate-180" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="mt-1.5 flex flex-wrap gap-1">
               {allDocs.map((name) => (
-                <span key={name} className="rounded border bg-background px-1.5 py-0.5 text-2xs">
+                <span key={name} className="bg-background text-2xs rounded border px-1.5 py-0.5">
                   {name}
                 </span>
               ))}
@@ -378,7 +378,7 @@ function ArtifactLink({ to, label }: { to: string; label: string }) {
   return (
     <Link
       to={to}
-      className="inline-flex items-center gap-0.5 text-muted-foreground hover:text-foreground hover:underline"
+      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 hover:underline"
     >
       {label}
       <ExternalLinkIcon className="size-2.5" />
@@ -397,13 +397,13 @@ function ExecutionFailureCollapsible({
 
   return (
     <Collapsible>
-      <CollapsibleTrigger className="group flex items-center gap-1 text-2xs font-medium text-destructive hover:underline">
+      <CollapsibleTrigger className="group text-2xs text-destructive flex items-center gap-1 font-medium hover:underline">
         <AlertTriangleIcon className="size-3" />
         <span>Execution failed</span>
         <ChevronDownIcon className="size-3 transition-transform group-data-[panel-open]:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <p className="mt-1.5 rounded border border-destructive/20 bg-destructive/5 px-2.5 py-1.5 text-2xs text-destructive">
+        <p className="border-destructive/20 bg-destructive/5 text-2xs text-destructive mt-1.5 rounded border px-2.5 py-1.5">
           {errorText}
         </p>
       </CollapsibleContent>

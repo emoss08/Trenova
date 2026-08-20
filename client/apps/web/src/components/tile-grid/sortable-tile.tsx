@@ -42,7 +42,7 @@ export function SortableTile({ id, w, h, editing, className, children }: Sortabl
         transition: sortable.transition,
       }}
       className={cn(
-        "group/tile flex min-h-0 flex-col overflow-hidden rounded-lg border border-border/80 bg-card transition-[border-color,box-shadow] duration-200 hover:border-border dark:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.04)]",
+        "group/tile border-border/80 bg-card hover:border-border flex min-h-0 flex-col overflow-hidden rounded-lg border transition-[border-color,box-shadow] duration-200 dark:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.04)]",
         sortable.isDragging && "z-10 opacity-80 shadow-lg",
         className,
       )}
@@ -57,7 +57,7 @@ export function TileDragHandle({ attributes, listeners }: TileDragHandleProps) {
   return (
     <button
       type="button"
-      className="shrink-0 cursor-grab text-muted-foreground hover:text-foreground"
+      className="text-muted-foreground hover:text-foreground shrink-0 cursor-grab"
       aria-label="Move tile"
       {...attributes}
       {...listeners}

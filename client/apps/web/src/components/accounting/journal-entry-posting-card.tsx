@@ -37,7 +37,7 @@ export function JournalEntryPostingCard({
   const isBalanced = entry.totalDebit === entry.totalCredit;
 
   return (
-    <div className="overflow-hidden rounded-md border bg-card">
+    <div className="bg-card overflow-hidden rounded-md border">
       <div
         role="button"
         tabIndex={0}
@@ -49,11 +49,11 @@ export function JournalEntryPostingCard({
             setOpen((prev) => !prev);
           }
         }}
-        className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5 transition-colors select-none hover:bg-muted/40"
+        className="hover:bg-muted/40 flex cursor-pointer items-center gap-2.5 px-3 py-2.5 transition-colors select-none"
       >
         <ChevronRightIcon
           className={cn(
-            "size-3.5 shrink-0 text-muted-foreground transition-transform duration-200",
+            "text-muted-foreground size-3.5 shrink-0 transition-transform duration-200",
             open && "rotate-90",
           )}
         />
@@ -73,15 +73,15 @@ export function JournalEntryPostingCard({
             Out of balance
           </span>
         ) : null}
-        <span className="ml-auto flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
-          <AmountDisplay value={entry.totalDebit} className="font-medium text-foreground" />
+        <span className="text-muted-foreground ml-auto flex items-center gap-3 text-xs tabular-nums">
+          <AmountDisplay value={entry.totalDebit} className="text-foreground font-medium" />
           <span>{formatAccountingDate(entry.accountingDate)}</span>
         </span>
       </div>
       {open ? (
         <div className="border-t px-3 pt-2.5 pb-3">
           {entry.description ? (
-            <p className="mb-2 text-xs text-muted-foreground">{entry.description}</p>
+            <p className="text-muted-foreground mb-2 text-xs">{entry.description}</p>
           ) : null}
           {entry.lines?.length ? (
             <JournalLineItemsTable
@@ -90,7 +90,7 @@ export function JournalEntryPostingCard({
               totalCredit={entry.totalCredit}
             />
           ) : (
-            <p className="text-xs text-muted-foreground">No line detail available.</p>
+            <p className="text-muted-foreground text-xs">No line detail available.</p>
           )}
         </div>
       ) : null}

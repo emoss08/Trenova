@@ -90,7 +90,7 @@ export function CustomerSnapshotHeader({
           <p className="text-2xl font-semibold tracking-tight tabular-nums">
             {formatCurrency(snapshot.totalOpenMinor / 100)}
           </p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">
+          <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">
             {formatCurrency(snapshot.overdueMinor / 100)} overdue ·{" "}
             {snapshot.openInvoiceCount} open
           </p>
@@ -101,7 +101,7 @@ export function CustomerSnapshotHeader({
               <p className="text-2xl font-semibold tracking-tight tabular-nums">
                 {(utilization * 100).toFixed(0)}%
               </p>
-              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+              <div className="bg-muted mt-1.5 h-1 w-full overflow-hidden rounded-full">
                 <m.div
                   className={cn("h-full rounded-full", utilizationBarClass)}
                   initial={{ width: 0 }}
@@ -109,31 +109,31 @@ export function CustomerSnapshotHeader({
                   transition={{ duration: 0.6, ease: "easeOut" }}
                 />
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground tabular-nums">
+              <p className="text-muted-foreground mt-1 text-[11px] tabular-nums">
                 of {formatCurrency(snapshot.creditLimitMinor / 100)} limit
               </p>
             </>
           ) : (
             <>
-              <p className="text-2xl font-semibold tracking-tight text-muted-foreground">—</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">no credit limit set</p>
+              <p className="text-muted-foreground text-2xl font-semibold tracking-tight">—</p>
+              <p className="text-muted-foreground mt-0.5 text-[11px]">no credit limit set</p>
             </>
           )}
         </SnapshotTile>
         <SnapshotTile index={2} label="DSO / Days to Pay">
           <p className="text-2xl font-semibold tracking-tight tabular-nums">
             {profile.dsoDays.toFixed(0)}d
-            <span className="ml-2 text-sm font-medium text-muted-foreground tabular-nums">
+            <span className="text-muted-foreground ml-2 text-sm font-medium tabular-nums">
               / {snapshot.avgDaysToPay.toFixed(0)}d avg
             </span>
           </p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">trailing 91d / 12mo</p>
+          <p className="text-muted-foreground mt-0.5 text-[11px]">trailing 91d / 12mo</p>
         </SnapshotTile>
         <SnapshotTile index={3} label="Delinquency Score">
           <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", scoreClass)}>
             {score.toFixed(0)}
           </p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">0 low risk · 100 high risk</p>
+          <p className="text-muted-foreground mt-0.5 text-[11px]">0 low risk · 100 high risk</p>
         </SnapshotTile>
       </div>
 
@@ -144,7 +144,7 @@ export function CustomerSnapshotHeader({
           </CardHeader>
           <CardContent className="p-3">
             {chartData.length === 0 ? (
-              <div className="flex h-28 items-center justify-center text-xs text-muted-foreground">
+              <div className="text-muted-foreground flex h-28 items-center justify-center text-xs">
                 No payments received yet
               </div>
             ) : (
@@ -227,7 +227,7 @@ function SnapshotTile({
     >
       <Card className="h-full gap-0 rounded-md py-3">
         <CardContent className="px-4">
-          <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+          <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
             {label}
           </p>
           <div className="mt-1">{children}</div>

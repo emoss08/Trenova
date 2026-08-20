@@ -62,7 +62,7 @@ function InspectionsEmptyState({
     <div className="rounded-lg border border-dashed p-6 text-center">
       {icon}
       <p className="mt-2 text-sm font-medium">{title}</p>
-      <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">{description}</p>
+      <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs">{description}</p>
       {action}
     </div>
   );
@@ -71,7 +71,7 @@ function InspectionsEmptyState({
 function InspectionsErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="rounded-lg border border-dashed p-6 text-center">
-      <OctagonAlertIcon className="mx-auto size-5 text-destructive" />
+      <OctagonAlertIcon className="text-destructive mx-auto size-5" />
       <p className="mt-2 text-sm font-medium">{message}</p>
       <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onRetry}>
         Try again
@@ -98,12 +98,12 @@ function DefectRow({ defect }: { defect: InspectionDefect }) {
           {defect.defectType ? toTitleCase(defect.defectType) : "Defect"}
         </p>
         {defect.comment ? (
-          <p className="mt-0.5 text-xs text-muted-foreground">{defect.comment}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs">{defect.comment}</p>
         ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {defect.resolved && defect.resolvedAt ? (
-          <span className="text-xs text-muted-foreground">{formatUnixDate(defect.resolvedAt)}</span>
+          <span className="text-muted-foreground text-xs">{formatUnixDate(defect.resolvedAt)}</span>
         ) : null}
         <Badge variant={defect.resolved ? "active" : "inactive"}>
           {defect.resolved ? "Resolved" : "Open"}
@@ -143,7 +143,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
             </span>
           ) : null}
         </div>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
           <span className="tabular-nums">{formatUnixDateTime(inspection.startedAt)}</span>
           {metaParts.map((part) => (
             <span key={part.key} className="flex items-center gap-1">
@@ -163,7 +163,7 @@ function InspectionHeader({ inspection }: { inspection: VehicleInspection }) {
             {hasUnresolved ? ` · ${inspection.unresolvedDefectCount} unresolved` : ""}
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">No defects</span>
+          <span className="text-muted-foreground text-xs">No defects</span>
         )}
       </div>
     </>
@@ -185,19 +185,19 @@ function InspectionRow({ inspection }: { inspection: VehicleInspection }) {
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger
-        className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+        className="hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-3 text-left transition-colors"
         aria-label={`Toggle defects for ${toTitleCase(inspection.inspectionType)} inspection`}
       >
         <InspectionHeader inspection={inspection} />
         <ChevronDownIcon
           className={cn(
-            "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+            "text-muted-foreground size-4 shrink-0 transition-transform duration-200",
             open && "rotate-180",
           )}
         />
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <ul className="divide-y divide-border border-t border-border bg-muted/20">
+        <ul className="divide-border border-border bg-muted/20 divide-y border-t">
           {defects.map((defect, index) => (
             <DefectRow key={defect.id ?? `${defect.defectType}-${index}`} defect={defect} />
           ))}
@@ -237,7 +237,7 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
   if (!telematicsEnabled) {
     return (
       <InspectionsEmptyState
-        icon={<CableIcon className="mx-auto size-6 text-muted-foreground" />}
+        icon={<CableIcon className="text-muted-foreground mx-auto size-6" />}
         title="Telematics not connected"
         description="Connect your Samsara account to stream driver vehicle inspection reports (DVIR) and defect history for this tractor."
         action={
@@ -270,7 +270,7 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
   if (inspectionsQuery.data.length === 0) {
     return (
       <InspectionsEmptyState
-        icon={<ClipboardCheckIcon className="mx-auto size-6 text-muted-foreground" />}
+        icon={<ClipboardCheckIcon className="text-muted-foreground mx-auto size-6" />}
         title="No inspections reported for this tractor."
         description="Driver vehicle inspection reports appear here once Samsara reports pre-trip and post-trip inspections."
       />
@@ -281,11 +281,11 @@ export default function TractorInspectionsTab({ tractorId }: { tractorId?: strin
     <div className="flex flex-col gap-2">
       <div>
         <h3 className="text-sm font-semibold">Inspections</h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Driver vehicle inspection reports (DVIR) and defect history for this tractor.
         </p>
       </div>
-      <div className="overflow-hidden rounded-lg border border-border">
+      <div className="border-border overflow-hidden rounded-lg border">
         {inspectionsQuery.data.map((inspection) => (
           <InspectionRow key={inspection.id} inspection={inspection} />
         ))}

@@ -79,7 +79,7 @@ export function DocumentToolbar({
           placeholder="Search..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          leftElement={<SearchIcon className="size-4 text-muted-foreground" />}
+          leftElement={<SearchIcon className="text-muted-foreground size-4" />}
           className="max-w-[200px]"
         />
       </div>

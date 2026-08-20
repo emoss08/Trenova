@@ -240,9 +240,9 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
   });
 
   return (
-    <div className={cn("relative h-full w-full overflow-hidden bg-background", className)}>
+    <div className={cn("bg-background relative h-full w-full overflow-hidden", className)}>
       {googleMapsQuery.isLoading ? (
-        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
           Loading map editor...
         </div>
       ) : !googleMapsQuery.data?.config.apiKey ? (
@@ -252,7 +252,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
             alt="Google Maps Empty State"
             className="pointer-events-none absolute inset-0 size-full object-cover opacity-50 blur-sm select-none"
           />
-          <div className="relative z-10 flex flex-col items-center gap-4 text-center text-sm text-foreground">
+          <div className="text-foreground relative z-10 flex flex-col items-center gap-4 text-center text-sm">
             <span>
               Google Maps is not configured for this environment, so the geofence editor cannot be
               displayed.

@@ -48,7 +48,7 @@ export function WhyThisRate({ shipmentId }: WhyThisRateProps) {
 }
 
 function LoadingState() {
-  return <p className="p-3 text-2xs text-muted-foreground">Reading the rate quote…</p>;
+  return <p className="text-2xs text-muted-foreground p-3">Reading the rate quote…</p>;
 }
 
 function QuoteExplanation({ quote }: { quote: RateQuote }) {
@@ -69,16 +69,16 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
           </Badge>
         </div>
         {winner?.ruleLabel && (
-          <p className="mt-0.5 text-2xs text-muted-foreground">{winner.ruleLabel}</p>
+          <p className="text-2xs text-muted-foreground mt-0.5">{winner.ruleLabel}</p>
         )}
         {trace?.tieBreak && (
-          <p className="mt-1 text-2xs text-muted-foreground">Chosen on {trace.tieBreak}.</p>
+          <p className="text-2xs text-muted-foreground mt-1">Chosen on {trace.tieBreak}.</p>
         )}
       </div>
 
       {(trace?.components?.length ?? 0) > 0 && (
         <div className="border-b p-3">
-          <p className="mb-2 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-2xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
             What made up the rate
           </p>
           <div className="space-y-1.5">
@@ -104,7 +104,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
 
       {(trace?.guardrails?.length ?? 0) > 0 && (
         <div className="border-b p-3">
-          <p className="mb-2 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-2xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
             Guardrails
           </p>
           {trace?.guardrails?.map((guardrail) => (
@@ -131,7 +131,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
 
       {losers.length > 0 && (
         <div className="p-3">
-          <p className="mb-2 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-2xs text-muted-foreground mb-2 font-medium tracking-wide uppercase">
             Considered but not applied
           </p>
           <div className="space-y-1.5">
@@ -143,7 +143,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
       )}
 
       {(trace?.warnings?.length ?? 0) > 0 && (
-        <div className="border-t bg-muted/40 p-3">
+        <div className="bg-muted/40 border-t p-3">
           {trace?.warnings?.map((warning) => (
             <p key={warning} className="text-2xs text-muted-foreground">
               {warning}

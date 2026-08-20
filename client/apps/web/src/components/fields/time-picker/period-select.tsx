@@ -63,7 +63,7 @@ export function TimePeriodSelect({
       >
         <SelectTrigger
           id="period"
-          className="w-[65px] focus:bg-muted focus:text-accent-foreground"
+          className="focus:bg-muted focus:text-accent-foreground w-[65px]"
           onKeyDown={handleKeyDown}
         >
           <SelectValue />

@@ -38,14 +38,14 @@ export function InvoiceOverviewTab({
         />
         <div className="grid gap-5 xl:grid-cols-2">
           <div className="flex flex-col gap-5">
-            <div className="rounded-lg border bg-card p-3">
+            <div className="bg-card rounded-lg border p-3">
               <SectionLabel>Bill-To</SectionLabel>
               <div className="mt-1.5">
                 <p className="text-sm font-medium">{invoice.billToName}</p>
                 {invoice.billToCode ? (
-                  <p className="mt-0.5 text-2xs text-muted-foreground">{invoice.billToCode}</p>
+                  <p className="text-2xs text-muted-foreground mt-0.5">{invoice.billToCode}</p>
                 ) : null}
-                <div className="mt-1 text-xs text-muted-foreground">
+                <div className="text-muted-foreground mt-1 text-xs">
                   {invoice.billToAddressLine1 ? <p>{invoice.billToAddressLine1}</p> : null}
                   {invoice.billToAddressLine2 ? <p>{invoice.billToAddressLine2}</p> : null}
                   <p>
@@ -58,7 +58,7 @@ export function InvoiceOverviewTab({
               </div>
             </div>
 
-            <div className="rounded-lg border bg-card p-3">
+            <div className="bg-card rounded-lg border p-3">
               <SectionLabel>Charge Summary</SectionLabel>
               <div className="mt-2 space-y-2">
                 <ChargeSummaryRow
@@ -78,7 +78,7 @@ export function InvoiceOverviewTab({
               </div>
             </div>
 
-            <div className="rounded-lg border bg-card p-3">
+            <div className="bg-card rounded-lg border p-3">
               <SectionLabel>References</SectionLabel>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
                 {invoice.shipmentId ? (
@@ -130,7 +130,7 @@ export function InvoiceOverviewTab({
           </div>
 
           <div className="flex flex-col gap-5">
-            <div className="rounded-lg border bg-card p-3">
+            <div className="bg-card rounded-lg border p-3">
               <SectionLabel>Invoice Details</SectionLabel>
               <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
                 <PropertyCell label="Service Date">
@@ -156,7 +156,7 @@ export function InvoiceOverviewTab({
               </div>
             </div>
 
-            <div className="rounded-lg border bg-card p-3">
+            <div className="bg-card rounded-lg border p-3">
               <SectionLabel>Lifecycle</SectionLabel>
               <div className="mt-2">
                 <LifecycleStep
@@ -179,7 +179,7 @@ export function InvoiceOverviewTab({
             </div>
 
             {correctionSummary?.invoices.length ? (
-              <div className="rounded-lg border bg-card p-3">
+              <div className="bg-card rounded-lg border p-3">
                 <SectionLabel>Correction Group</SectionLabel>
                 <div className="mt-2 flex flex-col gap-1.5">
                   {correctionSummary.invoices.map((lineageInvoice) => {
@@ -188,7 +188,7 @@ export function InvoiceOverviewTab({
                     return (
                       <div
                         key={lineageInvoice.id}
-                        className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2"
+                        className="bg-background flex items-center justify-between gap-3 rounded-md border px-3 py-2"
                       >
                         <div className="min-w-0">
                           <p className="truncate text-xs font-medium">{lineageInvoice.number}</p>
@@ -213,7 +213,7 @@ export function InvoiceOverviewTab({
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs font-medium text-muted-foreground">{children}</p>;
+  return <p className="text-muted-foreground text-xs font-medium">{children}</p>;
 }
 
 function PropertyCell({ label, children }: { label: string; children: React.ReactNode }) {
@@ -237,14 +237,14 @@ function ChargeSummaryRow({
   return (
     <div className="flex items-center justify-between">
       <span
-        className={cn("text-sm", bold ? "font-medium text-foreground" : "text-muted-foreground")}
+        className={cn("text-sm", bold ? "text-foreground font-medium" : "text-muted-foreground")}
       >
         {label}
       </span>
       <span
         className={cn(
           "tracking-tight tabular-nums",
-          bold ? "text-base font-semibold text-foreground" : "text-sm text-muted-foreground",
+          bold ? "text-foreground text-base font-semibold" : "text-muted-foreground text-sm",
         )}
       >
         {value}

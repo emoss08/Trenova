@@ -87,7 +87,7 @@ export function RateConfirmationActions({
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-2xs font-medium text-muted-foreground uppercase">Rate Con</span>
+        <span className="text-2xs text-muted-foreground font-medium uppercase">Rate Con</span>
         {latest ? (
           <>
             <RateConfirmationStatusBadge status={latest.status} />
@@ -187,7 +187,7 @@ export function RateConfirmationActions({
             href={documentContentUrl(latest.documentId, "view")}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-6 items-center gap-1 rounded-md border px-2 text-[10px] font-medium hover:bg-muted"
+            className="hover:bg-muted inline-flex h-6 items-center gap-1 rounded-md border px-2 text-[10px] font-medium"
             title="Open the filed rate confirmation document"
           >
             <FileTextIcon className="size-3" aria-hidden />

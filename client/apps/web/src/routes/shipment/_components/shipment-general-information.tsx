@@ -19,7 +19,7 @@ function Inner({ children }: { children: React.ReactNode }) {
     <FormSection
       title="General Information"
       description="Basic information about the shipment"
-      className="border-t border-border pt-4"
+      className="border-border border-t pt-4"
     >
       {children}
     </FormSection>

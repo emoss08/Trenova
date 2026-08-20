@@ -182,13 +182,13 @@ export function MoveCard({
   });
 
   return (
-    <div className="rounded-lg border bg-card">
+    <div className="bg-card rounded-lg border">
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
           {move?.loaded && <Badge variant="secondary">Loaded</Badge>}
           {move?.distance ? (
-            <span className="text-xs text-muted-foreground">{move.distance} mi</span>
+            <span className="text-muted-foreground text-xs">{move.distance} mi</span>
           ) : null}
           {move?.distanceSource ? <Badge variant="outline">{move.distanceSource}</Badge> : null}
         </div>
@@ -196,7 +196,7 @@ export function MoveCard({
           <DropdownMenuTrigger
             render={
               <Button type="button" variant="ghost" size="icon" className="size-7">
-                <EllipsisVerticalIcon className="size-3.5 text-muted-foreground" />
+                <EllipsisVerticalIcon className="text-muted-foreground size-3.5" />
               </Button>
             }
           />
@@ -212,7 +212,7 @@ export function MoveCard({
               <Tooltip>
                 <TooltipTrigger
                   render={
-                    <div className="flex cursor-not-allowed items-center px-1.5 py-1 text-sm text-muted-foreground">
+                    <div className="text-muted-foreground flex cursor-not-allowed items-center px-1.5 py-1 text-sm">
                       <UserIcon className="mr-2 size-3.5" />
                       {hasAssignment ? "Reassign" : "Assign"}
                     </div>
@@ -497,11 +497,11 @@ function LocationDisplay({ locationId, stopType }: { locationId: string; stopTyp
     <>
       <div className="flex items-center gap-1.5">
         {location.addressLine1 && <span className="truncate text-xs">{location.addressLine1}</span>}
-        <span className="text-xs whitespace-nowrap text-muted-foreground">
+        <span className="text-muted-foreground text-xs whitespace-nowrap">
           ({stopTypeLabels[stopType]})
         </span>
       </div>
-      <p className="truncate text-xs text-muted-foreground">
+      <p className="text-muted-foreground truncate text-xs">
         {location.city}
         {location.state?.abbreviation && `, ${location.state.abbreviation}`} {location.postalCode}
       </p>
@@ -574,7 +574,7 @@ function StopTimelineItem({
     <div
       className={cn(
         "relative flex h-15 items-start gap-4 rounded-lg px-3 pt-2",
-        hasErrors ? "border border-destructive bg-destructive/10" : "bg-muted",
+        hasErrors ? "border-destructive bg-destructive/10 border" : "bg-muted",
       )}
     >
       {showConnector && (
@@ -587,11 +587,11 @@ function StopTimelineItem({
       <div className="flex w-24 shrink-0 flex-col items-end pt-0.5">
         {scheduled ? (
           <>
-            <span className="text-xs font-medium text-primary">{scheduled.date}</span>
-            <span className="text-xs text-muted-foreground">{scheduled.time}</span>
+            <span className="text-primary text-xs font-medium">{scheduled.date}</span>
+            <span className="text-muted-foreground text-xs">{scheduled.time}</span>
           </>
         ) : (
-          <span className="text-xs text-muted-foreground">--</span>
+          <span className="text-muted-foreground text-xs">--</span>
         )}
       </div>
 
@@ -605,7 +605,7 @@ function StopTimelineItem({
           <Tooltip>
             <TooltipTrigger
               render={
-                <div className="absolute -top-1 -right-1 flex size-3 cursor-help items-center justify-center rounded-full bg-destructive">
+                <div className="bg-destructive absolute -top-1 -right-1 flex size-3 cursor-help items-center justify-center rounded-full">
                   <span className="text-[8px] font-bold text-red-200">!</span>
                 </div>
               }
@@ -633,26 +633,26 @@ function StopTimelineItem({
               <>
                 <div className="flex items-center gap-1.5">
                   <span className="truncate text-xs">{stop.addressLine}</span>
-                  <span className="text-xs whitespace-nowrap text-muted-foreground">
+                  <span className="text-muted-foreground text-xs whitespace-nowrap">
                     ({stopTypeLabels[stop.type]})
                   </span>
                 </div>
               </>
             ) : (
-              <span className="text-xs whitespace-nowrap text-muted-foreground">
+              <span className="text-muted-foreground text-xs whitespace-nowrap">
                 ({stopTypeLabels[stop.type]})
               </span>
             )}
           </>
         ) : hasErrors ? (
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-destructive">
+            <span className="text-destructive text-xs">
               Error in {stopTypeLabels[stop.type]} stop
             </span>
-            <span className="text-xs text-muted-foreground">Click to edit and fix errors</span>
+            <span className="text-muted-foreground text-xs">Click to edit and fix errors</span>
           </div>
         ) : (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             Enter {stopTypeLabels[stop.type]} Information
           </span>
         )}
@@ -697,10 +697,10 @@ function CarrierAssignmentDetails({
   const currency = carrierAssignment.currencyCode;
 
   return (
-    <div className="rounded-b-md border-t bg-muted p-3">
+    <div className="bg-muted rounded-b-md border-t p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
-          <Building2Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          <Building2Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
           <span className="truncate text-xs font-medium">
             {carrierName}
             {scac ? ` (${scac})` : ""}
@@ -749,14 +749,14 @@ function CarrierAssignmentDetails({
         )}
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 border-t pt-2 text-2xs text-muted-foreground tabular-nums">
+      <div className="text-2xs text-muted-foreground mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 border-t pt-2 tabular-nums">
         <span>Base {formatCarrierMoney(carrierAssignment.baseAmount, currency)}</span>
         <span aria-hidden>+</span>
         <span>Fuel {formatCarrierMoney(carrierAssignment.fuelSurcharge, currency)}</span>
         <span aria-hidden>+</span>
         <span>Accessorials {formatCarrierMoney(carrierAssignment.accessorialTotal, currency)}</span>
         <span aria-hidden>=</span>
-        <span className="font-medium text-foreground">
+        <span className="text-foreground font-medium">
           {formatCarrierMoney(carrierAssignment.totalCost, currency)}
         </span>
       </div>
@@ -782,7 +782,7 @@ function AssignmentDetails({ assignmentId }: { assignmentId?: string }) {
 
   if (isLoading) {
     return (
-      <div className="rounded-b-md border-t bg-muted p-3">
+      <div className="bg-muted rounded-b-md border-t p-3">
         <p className="text-2xs text-muted-foreground">Loading assignment…</p>
       </div>
     );
@@ -795,7 +795,7 @@ function AssignmentDetails({ assignmentId }: { assignmentId?: string }) {
   if (!tractor && !trailer && !primaryWorker && !secondaryWorker) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-b-md border-t bg-muted p-3">
+    <div className="bg-muted grid grid-cols-2 gap-x-6 gap-y-2 rounded-b-md border-t p-3">
       {tractor && (
         <div>
           <p className="text-2xs text-muted-foreground">Tractor</p>

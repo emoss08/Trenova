@@ -34,13 +34,13 @@ function SummaryCard({
   amount?: number;
 }) {
   return (
-    <div className="rounded-lg border bg-card px-3 py-2.5">
-      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+    <div className="bg-card rounded-lg border px-3 py-2.5">
+      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
       {amount !== undefined ? (
-        <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+        <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
           {formatCurrency(amount / 100)}
         </p>
       ) : null}
@@ -124,7 +124,7 @@ export function BankReceiptBatchPage() {
         {!isLoading && !isError && batches && batches.length > 0 ? (
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-muted-foreground">
+              <thead className="bg-muted/50 text-muted-foreground text-left">
                 <tr>
                   <th className="px-3 py-2.5 text-xs font-medium">Reference</th>
                   <th className="px-3 py-2.5 text-xs font-medium">Source</th>
@@ -141,7 +141,7 @@ export function BankReceiptBatchPage() {
                 {batches.map((batch: BankReceiptBatch) => (
                   <tr
                     key={batch.id}
-                    className="cursor-pointer border-t transition-colors hover:bg-muted/40"
+                    className="hover:bg-muted/40 cursor-pointer border-t transition-colors"
                     onClick={() =>
                       void navigate(`/accounting/reconciliation/import-batches/${batch.id}`)
                     }
@@ -174,11 +174,11 @@ export function BankReceiptBatchPage() {
                         className="text-xs font-medium"
                       />
                     </td>
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground">
+                    <td className="text-muted-foreground px-3 py-2.5 text-xs">
                       {formatTimestamp(batch.createdAt ?? 0)}
                     </td>
                     <td className="px-3 py-2.5">
-                      <ArrowRightIcon className="size-3.5 text-muted-foreground" />
+                      <ArrowRightIcon className="text-muted-foreground size-3.5" />
                     </td>
                   </tr>
                 ))}

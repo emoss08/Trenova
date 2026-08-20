@@ -93,7 +93,7 @@ function HistoryPopover({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
-        render={<Button size="sm" variant="outline" className="gap-1.5 text-muted-foreground" />}
+        render={<Button size="sm" variant="outline" className="text-muted-foreground gap-1.5" />}
       >
         <HistoryIcon className="size-3.5" />
         History
@@ -103,14 +103,14 @@ function HistoryPopover({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-88 p-0">
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <span className="text-2xs font-medium tracking-wider text-muted-foreground/70 uppercase">
+          <span className="text-2xs text-muted-foreground/70 font-medium tracking-wider uppercase">
             Run history
           </span>
           {entries.length > 0 && (
             <button
               type="button"
               onClick={onClear}
-              className="flex items-center gap-1 text-2xs font-medium text-muted-foreground transition-colors hover:text-destructive"
+              className="text-2xs text-muted-foreground hover:text-destructive flex items-center gap-1 font-medium transition-colors"
             >
               <Trash2Icon className="size-3" />
               Clear
@@ -118,7 +118,7 @@ function HistoryPopover({
           )}
         </div>
         {entries.length === 0 ? (
-          <p className="px-3 py-6 text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground px-3 py-6 text-center text-xs">
             No runs yet for this operation.
           </p>
         ) : (
@@ -133,7 +133,7 @@ function HistoryPopover({
                       setOpen(false);
                     }}
                     title={entry.variables}
-                    className="flex w-full flex-col gap-0.5 px-3 py-1.5 text-left transition-colors hover:bg-muted/60"
+                    className="hover:bg-muted/60 flex w-full flex-col gap-0.5 px-3 py-1.5 text-left transition-colors"
                   >
                     <span className="flex w-full items-center gap-2 text-xs">
                       <span
@@ -159,11 +159,11 @@ function HistoryPopover({
                           {formatFileSize(entry.bytes)}
                         </span>
                       )}
-                      <span className="ml-auto shrink-0 text-2xs text-muted-foreground/60">
+                      <span className="text-2xs text-muted-foreground/60 ml-auto shrink-0">
                         {formatTimeAgo(entry.at)}
                       </span>
                     </span>
-                    <span className="w-full truncate font-mono text-2xs text-muted-foreground">
+                    <span className="text-2xs text-muted-foreground w-full truncate font-mono">
                       {historyPreview(entry.variables)}
                     </span>
                   </button>
@@ -198,7 +198,7 @@ function InputTypesReference({ typeNames }: { typeNames: string[] }) {
         render={
           <button
             type="button"
-            className="flex items-center gap-1 text-2xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-2xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium transition-colors"
           />
         }
       >
@@ -209,7 +209,7 @@ function InputTypesReference({ typeNames }: { typeNames: string[] }) {
       <CollapsibleContent>
         <ScrollArea
           maskVariant="muted"
-          className="mt-1.5 flex max-h-56 flex-col rounded-md border bg-muted/30 [&_[data-slot=scroll-area-viewport]>div]:block!"
+          className="bg-muted/30 mt-1.5 flex max-h-56 flex-col rounded-md border [&_[data-slot=scroll-area-viewport]>div]:block!"
         >
           <ShikiCodeBlock code={sdl} lang="graphql" darkTheme="vitesse-dark" />
         </ScrollArea>
@@ -394,8 +394,8 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
         )}
         {runState.status === "error" && (
           <div className="flex items-center gap-2 text-xs">
-            <span className="flex items-center gap-1.5 text-destructive">
-              <span className="size-1.5 rounded-full bg-destructive" />
+            <span className="text-destructive flex items-center gap-1.5">
+              <span className="bg-destructive size-1.5 rounded-full" />
               {runState.httpStatus ?? "Error"}
             </span>
             {runState.elapsedMs !== undefined && (
@@ -407,7 +407,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
 
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-2xs font-medium tracking-wider text-muted-foreground/70 uppercase">
+          <span className="text-2xs text-muted-foreground/70 font-medium tracking-wider uppercase">
             Variables
           </span>
           {isDirty && (
@@ -417,7 +417,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
                 setVariables(scaffold);
                 setParseError(null);
               }}
-              className="flex items-center gap-1 text-2xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-2xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium transition-colors"
             >
               <RotateCcwIcon className="size-3" />
               Reset
@@ -426,7 +426,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
         </div>
         <div
           className={cn(
-            "overflow-hidden rounded-md border transition-colors focus-within:border-primary/40",
+            "focus-within:border-primary/40 overflow-hidden rounded-md border transition-colors",
             parseError && "border-destructive",
           )}
         >
@@ -440,7 +440,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
           />
         </div>
         {parseError && (
-          <p className="flex items-center gap-1.5 text-xs text-destructive">
+          <p className="text-destructive flex items-center gap-1.5 text-xs">
             <AlertTriangleIcon className="size-3.5 shrink-0" />
             {parseError}
           </p>
@@ -450,19 +450,19 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
 
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-2xs font-medium tracking-wider text-muted-foreground/70 uppercase">
+          <span className="text-2xs text-muted-foreground/70 font-medium tracking-wider uppercase">
             Response
           </span>
           {runState.status === "success" && (
             <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-0.5 rounded-md bg-muted/60 p-0.5">
+              <div className="bg-muted/60 flex items-center gap-0.5 rounded-md p-0.5">
                 {(["tree", "raw"] as const).map((view) => (
                   <button
                     key={view}
                     type="button"
                     onClick={() => setResponseView(view)}
                     className={cn(
-                      "rounded-sm px-1.5 py-0.5 text-2xs font-medium capitalize transition-colors",
+                      "text-2xs rounded-sm px-1.5 py-0.5 font-medium capitalize transition-colors",
                       responseView === view
                         ? "bg-background text-foreground shadow-sm"
                         : "text-muted-foreground hover:text-foreground",
@@ -478,7 +478,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
         </div>
         <ScrollArea
           maskVariant="muted"
-          className="min-h-0 flex-1 rounded-md border bg-muted/30 [&_[data-slot=scroll-area-viewport]>div]:block!"
+          className="bg-muted/30 min-h-0 flex-1 rounded-md border [&_[data-slot=scroll-area-viewport]>div]:block!"
         >
           <AnimatePresence mode="wait" initial={false}>
             {runState.status === "idle" && (
@@ -490,8 +490,8 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
                 transition={{ duration: 0.15 }}
                 className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center"
               >
-                <PlayIcon className="size-5 text-muted-foreground/50" />
-                <p className="text-xs text-muted-foreground">
+                <PlayIcon className="text-muted-foreground/50 size-5" />
+                <p className="text-muted-foreground text-xs">
                   Run the operation to see the response
                 </p>
               </m.div>
@@ -505,8 +505,8 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
                 transition={{ duration: 0.15 }}
                 className="flex flex-col items-center justify-center gap-2 px-6 py-12"
               >
-                <Spinner className="size-4 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">Executing…</p>
+                <Spinner className="text-muted-foreground size-4" />
+                <p className="text-muted-foreground text-xs">Executing…</p>
               </m.div>
             )}
             {runState.status === "success" && (
@@ -529,7 +529,7 @@ export function RunPanel({ operation }: { operation: CatalogOperation }) {
                 transition={{ duration: 0.15 }}
                 className="flex flex-col gap-2 p-3"
               >
-                <p className="flex items-center gap-1.5 text-xs font-medium text-destructive">
+                <p className="text-destructive flex items-center gap-1.5 text-xs font-medium">
                   <AlertTriangleIcon className="size-3.5 shrink-0" />
                   {runState.message}
                 </p>

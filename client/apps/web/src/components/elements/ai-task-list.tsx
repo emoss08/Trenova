@@ -99,28 +99,28 @@ function AiTaskList({
         open={isOpen}
         onOpenChange={handleOpenChange}
         className={cn(
-          "overflow-hidden rounded-lg border border-border bg-card text-card-foreground",
+          "border-border bg-card text-card-foreground overflow-hidden rounded-lg border",
           className,
         )}
       >
         <CollapsiblePrimitive.Trigger
           data-slot="ai-task-list-trigger"
-          className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="hover:bg-muted/50 focus-visible:ring-ring flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
         >
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-            <ListTodo className="size-4 text-muted-foreground" />
+          <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-md">
+            <ListTodo className="text-muted-foreground size-4" />
           </div>
           <div className="flex flex-1 items-center gap-2 text-left">
             <span className="font-medium">{title}</span>
             {tasks.length > 0 && (
-              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              <span className="bg-muted text-muted-foreground inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
                 {completedCount}/{tasks.length}
               </span>
             )}
           </div>
           <ChevronDown
             className={cn(
-              "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+              "text-muted-foreground size-4 shrink-0 transition-transform duration-200",
               isOpen && "rotate-180",
             )}
           />
@@ -128,7 +128,7 @@ function AiTaskList({
 
         <CollapsiblePrimitive.Content
           data-slot="ai-task-list-content"
-          className="border-t border-border data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
+          className="border-border data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down border-t"
         >
           <div className="space-y-1 p-3">
             {hasChildren
@@ -211,7 +211,7 @@ function AiTaskListItem({
           {children}
         </div>
         {description && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>
         )}
       </div>
     </div>
@@ -233,11 +233,11 @@ function AiTaskListFile({
     <div
       data-slot="ai-task-list-file"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded bg-muted px-2 py-1 font-mono text-xs",
+        "bg-muted inline-flex items-center gap-1.5 rounded px-2 py-1 font-mono text-xs",
         className,
       )}
     >
-      <FileCode className="size-3 text-muted-foreground" />
+      <FileCode className="text-muted-foreground size-3" />
       <span className="text-foreground">{filename}</span>
       {language && <span className="text-muted-foreground">({language})</span>}
     </div>
@@ -267,9 +267,9 @@ function AiTaskListProgress({ className }: AiTaskListProgressProps) {
           {completedCount} of {totalCount} ({percentage}%)
         </span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+      <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
         <div
-          className="h-full bg-primary transition-all duration-300"
+          className="bg-primary h-full transition-all duration-300"
           style={{ width: `${percentage}%` }}
         />
       </div>

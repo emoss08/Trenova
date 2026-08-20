@@ -277,7 +277,7 @@ export function CommentComposer({
     <div
       className={cn(
         "relative rounded-md transition-shadow",
-        isDragging && "ring-2 ring-brand ring-offset-2 ring-offset-background",
+        isDragging && "ring-brand ring-offset-background ring-2 ring-offset-2",
       )}
       onDragOver={handleDragOver}
       onDragLeave={() => setIsDragging(false)}
@@ -308,7 +308,7 @@ export function CommentComposer({
         toolbar={editorToolbar}
       />
       {!parentCommentId && priority === "Urgent" && (
-        <p className="mt-1 text-2xs text-muted-foreground">
+        <p className="text-2xs text-muted-foreground mt-1">
           Urgent comments request acknowledgment from viewers.
         </p>
       )}

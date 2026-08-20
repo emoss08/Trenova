@@ -123,14 +123,14 @@ export function SettlementQueue({
   };
 
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
+    <div className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
       <div className="flex flex-col gap-2 border-b p-2">
         <div className="relative">
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search carrier or number"
-            leftElement={<Search className="size-3.5 text-muted-foreground" />}
+            leftElement={<Search className="text-muted-foreground size-3.5" />}
             className="h-8 pl-7 text-xs"
             aria-label="Search settlements by carrier name or settlement number"
           />
@@ -162,7 +162,7 @@ export function SettlementQueue({
           onCheckedChange={toggleAllVisible}
           aria-label="Select all visible settlements"
         />
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-muted-foreground text-[11px]">
           {checkedIds.size > 0
             ? `${checkedIds.size} selected`
             : "Select settlements to act on several at once"}
@@ -181,7 +181,7 @@ export function SettlementQueue({
             <Skeleton className="h-14 w-full" />
           </div>
         ) : visible.length === 0 ? (
-          <p className="p-4 text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground p-4 text-center text-xs">
             No settlements match this view.
           </p>
         ) : (
@@ -217,7 +217,7 @@ export function SettlementQueue({
                       </span>
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5">
-                      <span className="font-mono text-[10px] text-muted-foreground">
+                      <span className="text-muted-foreground font-mono text-[10px]">
                         {settlement.settlementNumber}
                       </span>
                       <CarrierSettlementStatusBadge
@@ -315,7 +315,7 @@ function BulkActionBar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 border-t bg-muted/40 p-2">
+    <div className="bg-muted/40 flex flex-wrap items-center gap-1.5 border-t p-2">
       {actionButton("Submit", "Submit", <Send className="size-3" />)}
       {actionButton("Approve", "Approve", <CheckCheck className="size-3" />)}
       {actionButton("Post", "Post", <CheckCheck className="size-3" />)}
@@ -325,7 +325,7 @@ function BulkActionBar({
       <Button
         size="sm"
         variant="ghost"
-        className="ml-auto h-7 text-xs text-muted-foreground"
+        className="text-muted-foreground ml-auto h-7 text-xs"
         onClick={onClear}
       >
         Clear

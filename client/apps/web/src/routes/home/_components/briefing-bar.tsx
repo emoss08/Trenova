@@ -147,10 +147,10 @@ export function BriefingBar({
   const firstName = user?.name?.split(" ")[0] ?? "there";
 
   return (
-    <div className="relative isolate overflow-hidden border-b border-border">
+    <div className="border-border relative isolate overflow-hidden border-b">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand/[0.05] via-transparent to-transparent"
+        className="from-brand/[0.05] pointer-events-none absolute inset-0 bg-gradient-to-b via-transparent to-transparent"
       />
 
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4">
@@ -171,10 +171,10 @@ export function BriefingBar({
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                className="text-muted-foreground flex items-center gap-1.5 text-xs"
               >
-                <span className="flex size-4 items-center justify-center rounded-full bg-success/15">
-                  <CheckIcon className="size-2.5 text-success" />
+                <span className="bg-success/15 flex size-4 items-center justify-center rounded-full">
+                  <CheckIcon className="text-success size-2.5" />
                 </span>
                 {analyticsReady
                   ? `You're clear — ${analytics.activeShipments.count} ${
@@ -201,10 +201,10 @@ export function BriefingBar({
                   >
                     <Link
                       to={chip.href}
-                      className="group flex h-5.5 items-center gap-1.5 rounded-full border border-border/70 bg-card px-2 text-2xs text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+                      className="group border-border/70 bg-card text-2xs text-muted-foreground hover:border-border hover:text-foreground flex h-5.5 items-center gap-1.5 rounded-full border px-2 transition-colors"
                     >
                       <span className={cn("size-1.5 rounded-full", CHIP_DOT[chip.tone])} />
-                      <span className="font-table font-medium text-foreground tabular-nums">
+                      <span className="font-table text-foreground font-medium tabular-nums">
                         {chip.count}
                       </span>
                       <span>{chip.label}</span>
@@ -221,15 +221,15 @@ export function BriefingBar({
           <div className="flex flex-col items-end gap-1">
             <span className="flex items-center gap-1.5 font-mono text-sm leading-none font-medium tabular-nums">
               <span className="relative flex size-1.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-success/60" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-success" />
+                <span className="bg-success/60 absolute inline-flex size-full animate-ping rounded-full" />
+                <span className="bg-success relative inline-flex size-1.5 rounded-full" />
               </span>
               {clock.time}
             </span>
-            <span className="text-2xs leading-none text-muted-foreground">{clock.date}</span>
+            <span className="text-2xs text-muted-foreground leading-none">{clock.date}</span>
           </div>
 
-          <div className="h-7 w-px bg-border" aria-hidden />
+          <div className="bg-border h-7 w-px" aria-hidden />
 
           {locked ? (
             <Tooltip>

@@ -16,7 +16,7 @@ export function StatusCard({
       <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
         {icon}
         <p className="text-sm font-semibold">{title}</p>
-        <p className="text-xs text-muted-foreground">{body}</p>
+        <p className="text-muted-foreground text-xs">{body}</p>
         {action}
       </CardContent>
     </Card>

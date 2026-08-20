@@ -202,7 +202,7 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             type="button"
             variant="ghost"
             size="icon"
-            className="size-3.5 p-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground size-3.5 p-0 hover:bg-transparent"
             aria-label="Postmark webhook setup instructions"
           >
             <InfoIcon className="size-3" />
@@ -220,7 +220,7 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
           <p className="text-muted-foreground">
             In Postmark, create a server webhook endpoint over HTTPS and use this URL:
           </p>
-          <code className="block max-w-full overflow-x-auto rounded-md bg-muted px-2 py-1.5 text-foreground">
+          <code className="bg-muted text-foreground block max-w-full overflow-x-auto rounded-md px-2 py-1.5">
             {webhookURL || "Save once to generate the webhook URL."}
           </code>
           <div className="space-y-1">
@@ -229,7 +229,7 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
               {postmarkWebhookEvents.map((event) => (
                 <code
                   key={event}
-                  className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-foreground"
+                  className="bg-muted text-foreground rounded px-1.5 py-0.5 text-[11px]"
                 >
                   {event}
                 </code>
@@ -259,16 +259,16 @@ function PostmarkFormHeader() {
       <div className="flex items-center justify-center gap-4">
         <LazyImage src={trenovaLogo} className="size-8" />
         <div className="flex items-center justify-center gap-1">
-          <div className="size-1 rounded-full bg-muted-foreground" />
-          <div className="size-1 rounded-full bg-muted-foreground" />
-          <div className="size-1 rounded-full bg-muted-foreground" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
         <LazyImage src={postmarkLogo} alt="Postmark" className="h-8 w-28 object-contain" />
       </div>
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">Connect with Postmark</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-xs text-muted-foreground">Create a server token and webhook in</p>
+          <p className="text-muted-foreground text-xs">Create a server token and webhook in</p>
           <ExternalLink href="https://account.postmarkapp.com/servers" className="text-xs">
             Postmark.
           </ExternalLink>

@@ -59,9 +59,9 @@ export default function DataTableDisplayMenu({
         <div className="flex flex-col gap-3 p-3">
           {onDensityChange && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-muted-foreground">Density</span>
+              <span className="text-muted-foreground text-xs font-medium">Density</span>
               <div
-                className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+                className="bg-muted grid grid-cols-2 gap-1 rounded-lg p-1"
                 role="radiogroup"
                 aria-label="Row density"
               >
@@ -92,11 +92,11 @@ export default function DataTableDisplayMenu({
           {columns.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">Columns</span>
+                <span className="text-muted-foreground text-xs font-medium">Columns</span>
                 {hiddenCount > 0 && (
                   <button
                     type="button"
-                    className="cursor-pointer text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground cursor-pointer text-xs transition-colors"
                     onClick={() => table.toggleAllColumnsVisible(true)}
                   >
                     Show all
@@ -117,7 +117,7 @@ export default function DataTableDisplayMenu({
                         "h-6 cursor-pointer rounded-md border px-2 text-xs transition-colors",
                         isVisible
                           ? "border-border bg-muted text-foreground hover:bg-muted/70"
-                          : "border-dashed border-border/70 text-muted-foreground hover:border-border hover:text-foreground",
+                          : "border-border/70 text-muted-foreground hover:border-border hover:text-foreground border-dashed",
                       )}
                     >
                       {label}
@@ -132,17 +132,17 @@ export default function DataTableDisplayMenu({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start rounded-t-none border-t border-border font-normal"
+            className="border-border w-full justify-start rounded-t-none border-t font-normal"
             onClick={() => {
               setOpen(false);
               onEditFormatRules();
             }}
           >
-            <PaintbrushIcon className="size-3.5 text-muted-foreground" />
+            <PaintbrushIcon className="text-muted-foreground size-3.5" />
             Conditional formatting
-            <span className="ml-auto flex items-center gap-1 text-muted-foreground">
+            <span className="text-muted-foreground ml-auto flex items-center gap-1">
               {formatRuleCount > 0 && (
-                <span className="flex size-5 items-center justify-center rounded-md bg-muted font-mono text-xs">
+                <span className="bg-muted flex size-5 items-center justify-center rounded-md font-mono text-xs">
                   {formatRuleCount}
                 </span>
               )}

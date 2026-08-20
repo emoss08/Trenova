@@ -236,7 +236,7 @@ function MetricPicker({
           return (
             <label
               key={metric.key}
-              className="flex items-center gap-2 rounded border border-border px-2 py-1.5 text-xs has-[:disabled]:opacity-50"
+              className="border-border flex items-center gap-2 rounded border px-2 py-1.5 text-xs has-[:disabled]:opacity-50"
             >
               <Checkbox
                 checked={checked}
@@ -281,7 +281,7 @@ function ReportPicker({
             className={pickerRowClass(cannedKey === entry.key)}
           >
             <span className="truncate">{entry.name}</span>
-            <span className="shrink-0 text-[9px] text-muted-foreground">{entry.category}</span>
+            <span className="text-muted-foreground shrink-0 text-[9px]">{entry.category}</span>
           </button>
         ))}
         {(definitions.data ?? []).map((entry) => (
@@ -292,7 +292,7 @@ function ReportPicker({
             className={pickerRowClass(definitionId === entry.id)}
           >
             <span className="truncate">{entry.name}</span>
-            <span className="shrink-0 text-[9px] text-muted-foreground">Saved</span>
+            <span className="text-muted-foreground shrink-0 text-[9px]">Saved</span>
           </button>
         ))}
       </div>

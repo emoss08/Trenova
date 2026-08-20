@@ -134,7 +134,7 @@ export function CustomerLedgerPage() {
     >
       <div className="mx-4 mt-3 mb-4 space-y-4">
         <div className="w-[300px]">
-          <label className="mb-1 block text-2xs font-medium text-muted-foreground">
+          <label className="text-2xs text-muted-foreground mb-1 block font-medium">
             Customer
           </label>
           <CustomerAutocompleteField

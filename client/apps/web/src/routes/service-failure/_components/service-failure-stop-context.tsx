@@ -71,7 +71,7 @@ export function ServiceFailureStopContext({
     <div
       className={cn(
         "min-w-0 text-xs",
-        variant === "panel" && "rounded-md border bg-muted/25 px-3 py-2",
+        variant === "panel" && "bg-muted/25 rounded-md border px-3 py-2",
         variant === "row" && "px-3 py-2",
         className,
       )}
@@ -79,10 +79,10 @@ export function ServiceFailureStopContext({
       <div className="flex min-w-0 items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="font-medium text-foreground">{formatStopTitle(normalized)}</span>
-            <span className="truncate text-muted-foreground">{formatLocation(normalized)}</span>
+            <span className="text-foreground font-medium">{formatStopTitle(normalized)}</span>
+            <span className="text-muted-foreground truncate">{formatLocation(normalized)}</span>
           </div>
-          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
+          <div className="text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
             {renderTimestamp("Cutoff", normalized.scheduledCutoff)}
             {renderTimestamp("Arrived", normalized.actualArrival)}
             {renderMinutes("Grace", normalized.gracePeriodMinutes)}
@@ -90,7 +90,7 @@ export function ServiceFailureStopContext({
           </div>
         </div>
         {trailing && (
-          <div className="max-w-[45%] shrink-0 text-right leading-snug break-words text-muted-foreground">
+          <div className="text-muted-foreground max-w-[45%] shrink-0 text-right leading-snug break-words">
             {trailing}
           </div>
         )}

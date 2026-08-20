@@ -34,7 +34,7 @@ export function DataTableHeaderCell<TData extends RowData>({
     <TableHead
       ref={setNodeRef}
       className={cn(
-        "group/head relative border-b border-border",
+        "group/head border-border relative border-b",
         pinnedCellClass(column) ?? undefined,
         isPinned && "bg-sidebar",
         isDragging && "z-20 opacity-80",
@@ -71,7 +71,7 @@ export function DataTableHeaderCell<TData extends RowData>({
           onDoubleClick={() => column.resetSize()}
           onPointerDown={(e) => e.stopPropagation()}
           className={cn(
-            "absolute inset-y-0 right-0 z-10 w-1 cursor-col-resize touch-none transition-colors select-none hover:bg-border",
+            "hover:bg-border absolute inset-y-0 right-0 z-10 w-1 cursor-col-resize touch-none transition-colors select-none",
             column.getIsResizing() && "bg-primary hover:bg-primary",
           )}
         />

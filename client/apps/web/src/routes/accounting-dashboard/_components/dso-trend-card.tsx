@@ -45,7 +45,7 @@ export function DsoTrendCard() {
         {isLoading ? (
           <Skeleton className="h-56 w-full" />
         ) : chartData.length === 0 ? (
-          <div className="flex h-56 items-center justify-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
             No billing activity yet
           </div>
         ) : (

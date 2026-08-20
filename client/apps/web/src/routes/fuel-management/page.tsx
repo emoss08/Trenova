@@ -25,7 +25,7 @@ export function FuelManagementPage() {
         onValueChange={(value) => setActiveTab(value as string)}
         className="flex flex-1 flex-col"
       >
-        <div className="border-b border-border">
+        <div className="border-border border-b">
           <TabsList variant="underline">
             <TabsTab value="dashboard">
               <Gauge className="size-4" />

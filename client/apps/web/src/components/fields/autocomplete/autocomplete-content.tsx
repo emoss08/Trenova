@@ -246,7 +246,7 @@ export function AutocompleteCommandContent<TOption>({
       >
         {isError && (
           <div className="flex flex-col items-center gap-2 p-4">
-            <p className="text-center text-xs text-destructive">Failed to load options.</p>
+            <p className="text-destructive text-center text-xs">Failed to load options.</p>
             <Button size="sm" variant="outline" onClick={() => refetch()}>
               Retry
             </Button>
@@ -258,7 +258,7 @@ export function AutocompleteCommandContent<TOption>({
               {noResultsMessage ??
                 `No ${pluralize(toTitleCase(label ?? ""), options.length)} found.`}
             </CommandEmpty>
-            <span className="text-center text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground text-center">
               We can&apos;t find any {label ? label.toLowerCase() : "results"} in your organization.
             </span>
             {popoutLink && (
@@ -290,7 +290,7 @@ export function AutocompleteCommandContent<TOption>({
             </div>
           )}
           {hasNextPage && !isFetchingNextPage && (
-            <div className="p-2 text-center text-xs text-muted-foreground">Scroll for more</div>
+            <div className="text-muted-foreground p-2 text-center text-xs">Scroll for more</div>
           )}
         </CommandGroup>
       </CommandList>

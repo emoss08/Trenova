@@ -87,7 +87,7 @@ function Section({
       {(title || action) && (
         <div className="mb-2.5 flex items-center justify-between gap-2">
           {title ? (
-            <h3 className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+            <h3 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
               {title}
             </h3>
           ) : (
@@ -105,7 +105,7 @@ function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
   const marginNegative = occurrence.netMargin < 0;
 
   return (
-    <dl className="grid grid-cols-3 divide-x divide-border">
+    <dl className="divide-border grid grid-cols-3 divide-x">
       <DeskMetric
         size="md"
         label="Billable"
@@ -139,7 +139,7 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
 
   return (
     <>
-      <div className="h-1 w-full rounded-full bg-border">
+      <div className="bg-border h-1 w-full rounded-full">
         <m.div
           className={cn("h-1 rounded-full", isWeak ? "bg-amber-500" : "bg-foreground/70")}
           initial={{ width: 0 }}
@@ -149,12 +149,12 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
       </div>
 
       {collectability.summary && (
-        <p className="mt-2 text-xs text-muted-foreground">{collectability.summary}</p>
+        <p className="text-muted-foreground mt-2 text-xs">{collectability.summary}</p>
       )}
 
       <p
         className={cn(
-          "mt-1 text-2xs",
+          "text-2xs mt-1",
           collectability.chainValid ? "text-muted-foreground/70" : "text-red-600 dark:text-red-400",
         )}
       >
@@ -163,7 +163,7 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
           : "Evidence chain broken — the record no longer hashes clean"}
       </p>
 
-      <ul className="mt-2 divide-y divide-border/60">
+      <ul className="divide-border/60 mt-2 divide-y">
         {collectability.factors.map((factor) => {
           const full = factor.earned >= factor.possible;
 
@@ -173,7 +173,7 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
                 <p className="text-xs">{factor.label}</p>
                 {factor.detail && <p className="text-2xs text-muted-foreground">{factor.detail}</p>}
                 {!full && factor.remedy && (
-                  <p className="mt-0.5 text-2xs text-amber-700 dark:text-amber-500">
+                  <p className="text-2xs mt-0.5 text-amber-700 dark:text-amber-500">
                     {factor.remedy}
                   </p>
                 )}
@@ -196,7 +196,7 @@ function CollectabilityPanel({ collectability }: { collectability: Collectabilit
 
 function EvidenceChain({ evidence }: { evidence: DetentionEvidence[] }) {
   if (evidence.length === 0) {
-    return <p className="text-xs text-muted-foreground">No evidence has been recorded yet.</p>;
+    return <p className="text-muted-foreground text-xs">No evidence has been recorded yet.</p>;
   }
 
   return (
@@ -207,16 +207,16 @@ function EvidenceChain({ evidence }: { evidence: DetentionEvidence[] }) {
               one, which sits 6px (the dot's own top margin) into the row below —
               so it has to overhang this row's padding by exactly that much. */}
           {index < evidence.length - 1 && (
-            <span className="absolute top-3 -bottom-1.5 left-[3px] w-px -translate-x-1/2 bg-border" />
+            <span className="bg-border absolute top-3 -bottom-1.5 left-[3px] w-px -translate-x-1/2" />
           )}
-          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground/50" />
+          <span className="bg-muted-foreground/50 mt-1.5 size-1.5 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
               <p className="truncate text-xs">
                 {toTitleCase(item.kind)}
                 <span className="text-muted-foreground"> · {toTitleCase(item.source)}</span>
               </p>
-              <span className="shrink-0 text-2xs text-muted-foreground tabular-nums">
+              <span className="text-2xs text-muted-foreground shrink-0 tabular-nums">
                 {formatToUserTimezone(item.observedAt)}
               </span>
             </div>
@@ -231,12 +231,12 @@ function EvidenceChain({ evidence }: { evidence: DetentionEvidence[] }) {
 function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
   if (notices.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground">No notices have been sent for this stop.</p>
+      <p className="text-muted-foreground text-xs">No notices have been sent for this stop.</p>
     );
   }
 
   return (
-    <ul className="divide-y divide-border/60">
+    <ul className="divide-border/60 divide-y">
       {notices.map((notice) => (
         <li key={notice.id} className="flex flex-col gap-0.5 py-2 first:pt-0 last:pb-0">
           <div className="flex items-baseline justify-between gap-2">
@@ -248,19 +248,19 @@ function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
                 )}
               />
               <span className="truncate">{toTitleCase(notice.kind)} notice</span>
-              <span className="shrink-0 text-muted-foreground">
+              <span className="text-muted-foreground shrink-0">
                 {toTitleCase(notice.deliveryStatus)}
                 {notice.satisfiesRequirement ? " · in window" : ""}
               </span>
             </span>
-            <span className="shrink-0 text-2xs text-muted-foreground tabular-nums">
+            <span className="text-2xs text-muted-foreground shrink-0 tabular-nums">
               {notice.sentAt
                 ? formatToUserTimezone(notice.sentAt)
                 : formatToUserTimezone(notice.scheduledFor)}
             </span>
           </div>
           {notice.recipients && notice.recipients.length > 0 && (
-            <p className="truncate text-2xs text-muted-foreground">
+            <p className="text-2xs text-muted-foreground truncate">
               To {notice.recipients.join(", ")}
             </p>
           )}
@@ -592,7 +592,7 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
                     OCCURRENCE_STATUS_DOT[occurrence.status],
                   )}
                 />
-                <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+                <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
                   {OCCURRENCE_STATUS_LABEL[occurrence.status]}
                 </span>
               </div>

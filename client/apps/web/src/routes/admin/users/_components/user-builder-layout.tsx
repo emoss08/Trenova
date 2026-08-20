@@ -18,26 +18,26 @@ export function UserBuilderLayout({
   footer,
 }: UserBuilderLayoutProps) {
   return (
-    <div className="flex h-screen flex-col bg-background">
-      <header className="shrink-0 border-b bg-card px-6 py-4">
+    <div className="bg-background flex h-screen flex-col">
+      <header className="bg-card shrink-0 border-b px-6 py-4">
         <div className="flex items-center gap-4">
           <Link
             to="/admin/users"
-            className="flex size-8 items-center justify-center rounded-lg border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="bg-background text-muted-foreground hover:bg-muted hover:text-foreground flex size-8 items-center justify-center rounded-lg border transition-colors"
           >
             <ArrowLeftIcon className="size-4" />
           </Link>
           <div>
             <h1 className="text-lg font-semibold">{title}</h1>
             {subtitle && (
-              <p className="text-sm text-muted-foreground">{subtitle}</p>
+              <p className="text-muted-foreground text-sm">{subtitle}</p>
             )}
           </div>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <aside className="w-[420px] shrink-0 overflow-y-auto border-r bg-card p-6">
+        <aside className="bg-card w-[420px] shrink-0 overflow-y-auto border-r p-6">
           {leftPanel}
         </aside>
 
@@ -46,7 +46,7 @@ export function UserBuilderLayout({
         </main>
       </div>
 
-      <footer className="shrink-0 border-t bg-card">{footer}</footer>
+      <footer className="bg-card shrink-0 border-t">{footer}</footer>
     </div>
   );
 }
@@ -69,7 +69,7 @@ export function UserBuilderSection({
       <div className="mb-4">
         <h2 className="text-sm font-medium">{title}</h2>
         {description && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>
         )}
       </div>
       <div className="flex-1">{children}</div>

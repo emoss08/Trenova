@@ -22,12 +22,12 @@ export default function VersionAndSegmentRail() {
   return (
     <div className="grid min-h-0 grid-rows-[180px_minmax(0,1fr)] overflow-hidden border-r">
       <ScrollArea className="min-h-0 border-b" viewportClassName="min-h-0">
-        <div className="sticky top-0 z-10 border-b bg-sidebar px-3 py-2">
+        <div className="bg-sidebar sticky top-0 z-10 border-b px-3 py-2">
           <div className="text-sm font-semibold">Versions</div>
-          <div className="text-xs text-muted-foreground">{versions.length} available</div>
+          <div className="text-muted-foreground text-xs">{versions.length} available</div>
         </div>
         {versions.length === 0 ? (
-          <div className="p-3 text-sm text-muted-foreground">No versions.</div>
+          <div className="text-muted-foreground p-3 text-sm">No versions.</div>
         ) : (
           versions.map((version) => (
             <button
@@ -43,7 +43,7 @@ export default function VersionAndSegmentRail() {
                 });
               }}
               className={cn(
-                "flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-left hover:bg-muted",
+                "hover:bg-muted flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-left",
                 selectedVersionId === version.id && "bg-muted",
               )}
             >
@@ -54,13 +54,13 @@ export default function VersionAndSegmentRail() {
         )}
       </ScrollArea>
       <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-        <div className="sticky top-0 z-10 border-b bg-background px-3 py-2">
+        <div className="bg-background sticky top-0 z-10 border-b px-3 py-2">
           <div className="text-xs font-semibold">Segment Outline</div>
-          <div className="text-xs text-muted-foreground">{segments.length} segments</div>
+          <div className="text-muted-foreground text-xs">{segments.length} segments</div>
         </div>
         <ScrollArea className="min-h-0" viewportClassName="min-h-0">
           {segments.length === 0 ? (
-            <div className="p-3 text-sm text-muted-foreground">No segments in this version.</div>
+            <div className="text-muted-foreground p-3 text-sm">No segments in this version.</div>
           ) : (
             segments.map((segment) => {
               const segmentDiagnostics = diagnosticsForSegment(diagnostics, segment);
@@ -82,8 +82,8 @@ export default function VersionAndSegmentRail() {
                     });
                   }}
                   className={cn(
-                    "flex w-full cursor-pointer items-center justify-between gap-2 border-b px-3 py-2 text-left hover:bg-muted",
-                    selectedSegmentId === segment.id && "bg-muted ring-1 ring-border ring-inset",
+                    "hover:bg-muted flex w-full cursor-pointer items-center justify-between gap-2 border-b px-3 py-2 text-left",
+                    selectedSegmentId === segment.id && "bg-muted ring-border ring-1 ring-inset",
                   )}
                 >
                   <span className="min-w-0">
@@ -93,7 +93,7 @@ export default function VersionAndSegmentRail() {
                         {segment.required ? "Req" : "Opt"}
                       </Badge>
                     </span>
-                    <span className="block truncate text-xs text-muted-foreground">
+                    <span className="text-muted-foreground block truncate text-xs">
                       {segment.name}
                     </span>
                   </span>

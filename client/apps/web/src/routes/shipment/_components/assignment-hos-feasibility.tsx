@@ -64,7 +64,7 @@ function FeasibilityRow({
           >
             {driver.workerName}
           </span>
-          {selected && <CheckIcon className="size-3 shrink-0 text-brand" />}
+          {selected && <CheckIcon className="text-brand size-3 shrink-0" />}
           {duty && (
             <Badge variant={duty.variant} className="h-4 shrink-0 rounded px-1 text-[9px]">
               {duty.label}
@@ -73,7 +73,7 @@ function FeasibilityRow({
           {driver.tractorCode && (
             <Badge
               variant="outline"
-              className="h-4 shrink-0 rounded border-border px-1 font-mono text-[9px]"
+              className="border-border h-4 shrink-0 rounded px-1 font-mono text-[9px]"
             >
               {driver.tractorCode}
             </Badge>
@@ -83,7 +83,7 @@ function FeasibilityRow({
           {verdict.label}
         </Badge>
       </div>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-table text-[10px] text-muted-foreground tabular-nums">
+      <div className="font-table text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] tabular-nums">
         <span>Drive {formatClockDurationMs(driver.driveRemainingMs)}</span>
         <span aria-hidden>·</span>
         <span>Shift {formatClockDurationMs(driver.shiftRemainingMs)}</span>
@@ -97,7 +97,7 @@ function FeasibilityRow({
         )}
       </div>
       {driver.verdict !== "feasible" && driver.reasons.length > 0 && (
-        <p className="line-clamp-2 text-[10px] leading-snug text-muted-foreground">
+        <p className="text-muted-foreground line-clamp-2 text-[10px] leading-snug">
           {driver.reasons.join(" · ")}
         </p>
       )}
@@ -111,7 +111,7 @@ function FeasibilityRow({
         onClick={() => onSelect(driver.workerId)}
         className={cn(
           "flex w-full flex-col gap-0.5 rounded-md px-2 py-1.5 text-left transition-colors",
-          "hover:bg-muted/60 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
+          "hover:bg-muted/60 focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
           selected && "bg-muted/40",
         )}
       >
@@ -121,7 +121,7 @@ function FeasibilityRow({
   }
 
   return (
-    <div className={cn("flex flex-col gap-0.5 px-2 py-1.5", selected && "rounded-md bg-muted/40")}>
+    <div className={cn("flex flex-col gap-0.5 px-2 py-1.5", selected && "bg-muted/40 rounded-md")}>
       {content}
     </div>
   );
@@ -189,7 +189,7 @@ export function AssignmentHosFeasibility({
   let body: React.ReactNode;
   if (feasibilityQuery.isLoading) {
     body = (
-      <div className="divide-y divide-border">
+      <div className="divide-border divide-y">
         <FeasibilitySkeletonRow />
         <FeasibilitySkeletonRow />
         <FeasibilitySkeletonRow />
@@ -198,7 +198,7 @@ export function AssignmentHosFeasibility({
   } else if (feasibilityQuery.isError) {
     body = (
       <div className="flex flex-col items-center gap-2 px-3 py-4 text-center">
-        <p className="text-[10.5px] text-muted-foreground">
+        <p className="text-muted-foreground text-[10.5px]">
           Driver feasibility could not be loaded from Samsara.
         </p>
         <Button
@@ -213,13 +213,13 @@ export function AssignmentHosFeasibility({
     );
   } else if (drivers.length === 0) {
     body = (
-      <p className="px-3 py-4 text-center text-[10.5px] text-muted-foreground">
+      <p className="text-muted-foreground px-3 py-4 text-center text-[10.5px]">
         No HOS data for any drivers yet.
       </p>
     );
   } else {
     body = (
-      <div className="max-h-56 divide-y divide-border overflow-y-auto">
+      <div className="divide-border max-h-56 divide-y overflow-y-auto">
         {drivers.map((driver) => (
           <FeasibilityRow
             key={driver.workerId}
@@ -235,7 +235,7 @@ export function AssignmentHosFeasibility({
   return (
     <div className="flex flex-col gap-2 pb-4">
       {selectedDriver?.verdict === "infeasible" && (
-        <p className="flex items-start gap-1.5 text-xs text-destructive">
+        <p className="text-destructive flex items-start gap-1.5 text-xs">
           <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
           <span>
             Selected driver has insufficient hours
@@ -246,7 +246,7 @@ export function AssignmentHosFeasibility({
       <Collapsible
         open={expanded}
         onOpenChange={setExpanded}
-        className="rounded-md border border-border"
+        className="border-border rounded-md border"
       >
         <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-2 px-3 py-2 text-left">
           <div className="flex items-center gap-1.5">
@@ -262,13 +262,13 @@ export function AssignmentHosFeasibility({
           </div>
           <ChevronDownIcon
             className={cn(
-              "size-3.5 shrink-0 text-muted-foreground transition-transform",
+              "text-muted-foreground size-3.5 shrink-0 transition-transform",
               expanded && "rotate-180",
             )}
           />
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="border-t border-border">{body}</div>
+          <div className="border-border border-t">{body}</div>
         </CollapsibleContent>
       </Collapsible>
     </div>

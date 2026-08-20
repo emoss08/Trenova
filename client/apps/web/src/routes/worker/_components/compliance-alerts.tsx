@@ -254,7 +254,7 @@ function AlertCard({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium">{config.label}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 {alert.message}
               </span>
             </div>
@@ -273,7 +273,7 @@ function EmptyState() {
       </div>
       <div className="text-center">
         <p className="font-medium">All Clear</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           No compliance issues at this time
         </p>
       </div>
@@ -289,11 +289,11 @@ function LoadingSkeleton() {
           key={i}
           className="flex animate-pulse items-start gap-3 rounded-lg border p-3"
         >
-          <div className="size-10 rounded-full bg-muted" />
+          <div className="bg-muted size-10 rounded-full" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 rounded bg-muted" />
-            <div className="h-6 w-full rounded bg-muted" />
-            <div className="h-3 w-24 rounded bg-muted" />
+            <div className="bg-muted h-4 w-32 rounded" />
+            <div className="bg-muted h-6 w-full rounded" />
+            <div className="bg-muted h-3 w-24 rounded" />
           </div>
         </div>
       ))}
@@ -416,9 +416,9 @@ export function ComplianceAlerts() {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-md border border-border">
+    <div className="border-border flex h-full flex-col overflow-hidden rounded-md border">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
+      <div className="border-border bg-muted/30 flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <AlertTriangle className="size-4 text-amber-500" />
           <h3 className="font-semibold">Compliance Alerts</h3>

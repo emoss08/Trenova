@@ -70,14 +70,14 @@ export function ShipmentsPage() {
                   minute: "2-digit",
                   second: "2-digit",
                 })}`}
-                className="inline-flex h-5 items-center gap-1 rounded border border-success/25 bg-success/10 px-1.5 font-table text-[10px] text-success tabular-nums"
+                className="border-success/25 bg-success/10 font-table text-success inline-flex h-5 items-center gap-1 rounded border px-1.5 text-[10px] tabular-nums"
               >
-                <span className="size-1 rounded-full bg-success" />
+                <span className="bg-success size-1 rounded-full" />
                 Live · {formattedCount}
               </div>
             )}
             {currentOrg && (
-              <span className="font-table text-[10px] text-muted-foreground tabular-nums">
+              <span className="font-table text-muted-foreground text-[10px] tabular-nums">
                 org · {currentOrg.name}
               </span>
             )}

@@ -38,7 +38,7 @@ function ScriptPresetPicker({
 }) {
   if (presets.length === 0) return null;
   return (
-    <div className="space-y-2 rounded-md border bg-muted/20 p-2">
+    <div className="bg-muted/20 space-y-2 rounded-md border p-2">
       <div className="text-xs font-semibold">{title}</div>
       <div className="space-y-1">
         {presets.map((preset) => (
@@ -47,12 +47,12 @@ function ScriptPresetPicker({
             type="button"
             disabled={disabled}
             onClick={() => onApply(preset)}
-            className="flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
+            className="hover:bg-background flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-left disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <CopyPlusIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+            <CopyPlusIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
             <span className="min-w-0">
               <span className="block text-xs font-medium">{preset.label}</span>
-              <span className="block text-xs leading-snug text-muted-foreground">
+              <span className="text-muted-foreground block text-xs leading-snug">
                 {preset.description}
               </span>
             </span>
@@ -75,8 +75,8 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
   return (
     <>
       <div className="grid h-full flex-1 grid-cols-[minmax(0,1fr)_300px] gap-2 p-3">
-        <div className="grid grid-rows-[auto_minmax(0,1fr)] rounded-md bg-foreground">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-background/10 px-3 py-2 text-xs text-background">
+        <div className="bg-foreground grid grid-rows-[auto_minmax(0,1fr)] rounded-md">
+          <div className="border-background/10 text-background flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2 text-xs">
             <span>Preview render</span>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
               {preview ? (
@@ -93,7 +93,7 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
                 size="sm"
                 disabled={!preview}
                 onClick={() => setInspectorOpen(true)}
-                className="h-7 border-background/10 bg-foreground text-xs text-background hover:bg-background/20"
+                className="border-background/10 bg-foreground text-background hover:bg-background/20 h-7 text-xs"
               >
                 <SearchIcon className="size-3.5" />
                 Inspect
@@ -101,7 +101,7 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
             </div>
           </div>
           <ScrollArea className="min-h-0" viewportClassName="min-h-0">
-            <pre className="p-3 font-mono text-xs text-background">
+            <pre className="text-background p-3 font-mono text-xs">
               {isLoading ? "Rendering preview..." : previewContent}
             </pre>
           </ScrollArea>
@@ -142,7 +142,7 @@ function DiagnosticsList({
   return (
     <div className="h-full p-3">
       {diagnostics.length === 0 ? (
-        <div className="text-sm text-muted-foreground">No diagnostics.</div>
+        <div className="text-muted-foreground text-sm">No diagnostics.</div>
       ) : (
         (Object.keys(grouped) as Array<keyof typeof grouped>).map((severity) =>
           grouped[severity].length > 0 ? (
@@ -153,7 +153,7 @@ function DiagnosticsList({
                   key={diagnosticKey(diagnostic)}
                   type="button"
                   onClick={() => onSelect?.(diagnostic)}
-                  className="block w-full rounded-md border p-2 text-left hover:bg-muted"
+                  className="hover:bg-muted block w-full rounded-md border p-2 text-left"
                 >
                   <div className="flex items-center gap-2">
                     <Badge variant={diagnostic.severity === "Error" ? "inactive" : "warning"}>
@@ -165,7 +165,7 @@ function DiagnosticsList({
                   </div>
                   <div className="mt-1 text-xs">{diagnostic.message}</div>
                   {diagnostic.suggestedFix ? (
-                    <div className="mt-1 text-xs text-muted-foreground">
+                    <div className="text-muted-foreground mt-1 text-xs">
                       {diagnostic.suggestedFix}
                     </div>
                   ) : null}
@@ -191,7 +191,7 @@ function PanelHeader({
   return (
     <div className="flex h-11 items-center justify-between gap-2 border-b px-3">
       <div className="flex min-w-0 items-center gap-2">
-        <span className="shrink-0 text-muted-foreground [&_svg]:size-4">{icon}</span>
+        <span className="text-muted-foreground shrink-0 [&_svg]:size-4">{icon}</span>
         <span className="truncate text-sm font-semibold">{title}</span>
       </div>
       {actions ? <div className="shrink-0">{actions}</div> : null}
@@ -201,7 +201,7 @@ function PanelHeader({
 
 function ReadOnlyBanner({ reason }: { reason: string }) {
   return (
-    <div className="flex items-center gap-2 border-b bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+    <div className="bg-muted/50 text-muted-foreground flex items-center gap-2 border-b px-3 py-2 text-xs">
       <AlertTriangleIcon className="size-4" />
       {reason}
     </div>
@@ -229,7 +229,7 @@ function InputBlock({
 }) {
   return (
     <div className="space-y-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-muted-foreground text-xs">{label}</Label>
       <Input
         value={value}
         disabled={disabled}
@@ -255,8 +255,8 @@ function TextareaBlock({
 }) {
   return (
     <div className="space-y-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      <Label className="text-muted-foreground text-xs">{label}</Label>
+      {description && <p className="text-muted-foreground text-xs">{description}</p>}
       <Textarea
         value={value}
         disabled={disabled}

@@ -108,7 +108,7 @@ export function OrderForm({ mode }: OrderFormProps) {
       <FormSection
         title="Commercial"
         description="The quoted price and currency the order is billed in"
-        className="border-t border-border pt-4"
+        className="border-border border-t pt-4"
       >
         <FormGroup cols={2}>
           <FormControl>

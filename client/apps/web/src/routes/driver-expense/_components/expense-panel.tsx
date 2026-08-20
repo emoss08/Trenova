@@ -71,7 +71,7 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
   const expense = detail.data;
   if (!expense) {
     return (
-      <p className="p-6 text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground p-6 text-center text-sm">
         This expense could not be loaded.
       </p>
     );
@@ -81,14 +81,14 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-lg border border-border bg-muted/40 p-3">
+      <div className="border-border bg-muted/40 rounded-lg border p-3">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold tabular-nums">
             <AmountDisplay value={expense.amountMinor} currency={expense.currencyCode} />
           </p>
           <DriverExpenseStatusBadge status={expense.status} />
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-xs">
           Incurred {formatUnixDate(expense.incurredDate)} · Submitted{" "}
           {formatUnixDate(expense.createdAt)}
           {expense.worker
@@ -97,7 +97,7 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
         </p>
         <p className="mt-3 text-sm whitespace-pre-wrap">{expense.description}</p>
         {expense.payCode ? (
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-2 text-xs">
             Pay code: <span className="font-mono">{expense.payCode.code}</span>
             {expense.payCode.description ? ` — ${expense.payCode.description}` : ""}
           </p>
@@ -113,16 +113,16 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
           View receipt
         </Button>
       ) : (
-        <p className="rounded-lg border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
+        <p className="border-border text-muted-foreground rounded-lg border border-dashed p-3 text-center text-xs">
           No receipt attached — consider asking the driver for one before approving.
         </p>
       )}
 
       {isTerminal ? (
-        <div className="rounded-lg border border-border p-3">
-          <p className="text-xs font-medium text-muted-foreground uppercase">Review</p>
+        <div className="border-border rounded-lg border p-3">
+          <p className="text-muted-foreground text-xs font-medium uppercase">Review</p>
           <p className="mt-1 text-sm whitespace-pre-wrap">{expense.reviewNote || "—"}</p>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-2 text-xs">
             {formatUnixDate(expense.reviewedAt ?? 0) || "—"}
             {expense.reviewedBy ? ` by ${expense.reviewedBy.name}` : ""}
             {expense.settlementLineId ? " · reimbursement applied to open settlement" : ""}
@@ -165,7 +165,7 @@ function ReviewForm({
   });
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-border p-3">
+    <div className="border-border flex flex-col gap-4 rounded-lg border p-3">
       <p className="text-sm font-semibold">Review this expense</p>
 
       <div className="grid grid-cols-2 gap-2">
@@ -200,7 +200,7 @@ function ReviewForm({
           }
           rows={3}
         />
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground text-[11px]">
           {approve
             ? "Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists)."
             : "Required — shown to the driver verbatim."}

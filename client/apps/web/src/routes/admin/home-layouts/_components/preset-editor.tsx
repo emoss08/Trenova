@@ -185,7 +185,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-lg border border-border/80 bg-card p-3">
+          <div className="border-border/80 bg-card flex flex-col gap-3 rounded-lg border p-3">
             <Toggle
               id="preset-org-default"
               label="Organization default"
@@ -213,16 +213,16 @@ export function PresetEditor({ preset }: PresetEditorProps) {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="flex flex-col gap-2 rounded-lg border border-border/80 bg-card p-3">
+          <div className="border-border/80 bg-card flex flex-col gap-2 rounded-lg border p-3">
             <Label>Assign to roles</Label>
             {roles.isLoading ? (
-              <p className="text-xs text-muted-foreground">Loading roles…</p>
+              <p className="text-muted-foreground text-xs">Loading roles…</p>
             ) : (
               <div className="grid max-h-48 gap-1 overflow-y-auto sm:grid-cols-2">
                 {(roles.data ?? []).map((role) => (
                   <label
                     key={role.id}
-                    className="flex items-center gap-2 rounded border border-border px-2 py-1.5 text-xs transition-colors hover:bg-muted/40"
+                    className="border-border hover:bg-muted/40 flex items-center gap-2 rounded border px-2 py-1.5 text-xs transition-colors"
                   >
                     <Checkbox
                       checked={draft.roleIds.includes(role.id)}
@@ -235,7 +235,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
             )}
           </div>
 
-          <div className="flex flex-col gap-2 rounded-lg border border-border/80 bg-card p-3">
+          <div className="border-border/80 bg-card flex flex-col gap-2 rounded-lg border p-3">
             <Label htmlFor="preset-responsibility">Or assign by job function</Label>
             <Select
               value={draft.coreResponsibility || NO_RESPONSIBILITY}
@@ -261,7 +261,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
               Reaches every role tagged with that function, including ones added later.
             </p>
 
-            <div className="mt-1 flex flex-col gap-1.5 border-t border-border pt-2">
+            <div className="border-border mt-1 flex flex-col gap-1.5 border-t pt-2">
               <Label htmlFor="preview-role">Preview as</Label>
               <div className="flex items-center gap-2">
                 <Select
@@ -298,7 +298,7 @@ export function PresetEditor({ preset }: PresetEditorProps) {
 
         {previewing ? (
           <div className="flex flex-col gap-2">
-            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
               <EyeIcon className="size-3.5" />
               Previewing — widgets are read-only and drawn against your own permissions.
             </p>

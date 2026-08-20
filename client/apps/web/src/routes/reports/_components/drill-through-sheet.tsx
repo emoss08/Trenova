@@ -75,8 +75,8 @@ export function DrillThroughSheet({
         <div className="flex min-h-0 flex-1 flex-col px-4 pb-4">
           {drill.isError ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-              <CircleAlertIcon className="size-5 text-destructive" />
-              <p className="max-w-md text-xs whitespace-pre-wrap text-muted-foreground">
+              <CircleAlertIcon className="text-destructive size-5" />
+              <p className="text-muted-foreground max-w-md text-xs whitespace-pre-wrap">
                 {graphQLErrorMessage(drill.error, "These records could not be loaded")}
               </p>
             </div>
@@ -98,7 +98,7 @@ export function DrillThroughSheet({
                   </span>
                 )}
               </div>
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
+              <div className="border-border flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border">
                 <ResultGrid
                   columns={drill.data?.columns ?? []}
                   rows={rows}

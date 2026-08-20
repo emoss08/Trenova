@@ -256,7 +256,7 @@ function EarningForm({ isEdit }: { isEdit: boolean }) {
         </FormControl>
       </FormGroup>
       {selectedCode != null && !selectedCode.taxable && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           This code is non-taxable — amounts post to the settlement as reimbursements, are excluded
           from guaranteed-minimum checks, and post to the code&apos;s GL account (or the driver
           reimbursement account) instead of wages expense.

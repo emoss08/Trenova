@@ -261,7 +261,7 @@ export function DocumentPreviewArchiveTab() {
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[360px_minmax(0,1fr)] gap-3 overflow-hidden">
-      <aside className="flex min-h-0 flex-col overflow-hidden rounded-md border bg-background">
+      <aside className="bg-background flex min-h-0 flex-col overflow-hidden rounded-md border">
         <PanelHeader icon={<ShieldCheckIcon />} title="Document Profile" />
         <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0">
           <div className="flex flex-col gap-3 p-3">
@@ -417,16 +417,16 @@ export function DocumentPreviewArchiveTab() {
           </div>
         </ScrollArea>
       </aside>
-      <main className="min-h-0 overflow-hidden rounded-md border bg-background">
+      <main className="bg-background min-h-0 overflow-hidden rounded-md border">
         <Tabs
           defaultValue="preview"
           className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-0"
         >
           <div className="grid gap-2 border-b py-2">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border">
+            <div className="border-border flex flex-wrap items-center justify-between gap-3 border-b">
               <TabsList
                 variant="underline"
-                className="grid w-fit grid-cols-2 border-b border-border px-2"
+                className="border-border grid w-fit grid-cols-2 border-b px-2"
               >
                 <TabsTrigger value="preview">
                   <FileCode2Icon data-icon="inline-start" />
@@ -437,7 +437,7 @@ export function DocumentPreviewArchiveTab() {
                   Archive
                 </TabsTrigger>
               </TabsList>
-              <div className="min-w-0 truncate text-xs text-muted-foreground">
+              <div className="text-muted-foreground min-w-0 truncate text-xs">
                 {documentContextLabel}
               </div>
             </div>
@@ -591,7 +591,7 @@ function ServiceFailure214SettingsEditor({
 
   return (
     <div className="space-y-3 rounded-md border p-3">
-      <div className="text-xs font-medium text-muted-foreground">Service Failure 214</div>
+      <div className="text-muted-foreground text-xs font-medium">Service Failure 214</div>
       <div className="grid grid-cols-2 gap-2">
         {serviceFailure214BooleanFields.map((field) => (
           <label
@@ -777,13 +777,13 @@ function MessageArchive({
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={11} className="text-muted-foreground h-24 text-center">
                   Loading archive messages.
                 </TableCell>
               </TableRow>
             ) : messages.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={11} className="text-muted-foreground h-24 text-center">
                   No archived generated messages match the current filters.
                 </TableCell>
               </TableRow>
@@ -799,7 +799,7 @@ function MessageArchive({
                         message.partnerDocumentProfile?.partner?.name ??
                         "-"}
                     </div>
-                    <div className="font-mono text-xs text-muted-foreground">
+                    <div className="text-muted-foreground font-mono text-xs">
                       {message.partner?.code ?? message.partnerDocumentProfile?.partner?.code ?? ""}
                     </div>
                   </TableCell>
@@ -810,7 +810,7 @@ function MessageArchive({
                       {message.status === "Generated" ? "Archived" : message.status}
                     </Badge>
                     {message.deliveryStatus && (
-                      <div className="mt-1 text-2xs text-muted-foreground">
+                      <div className="text-2xs text-muted-foreground mt-1">
                         Delivery {message.deliveryStatus}
                       </div>
                     )}

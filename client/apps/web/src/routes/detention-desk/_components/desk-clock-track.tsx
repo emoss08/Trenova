@@ -28,9 +28,9 @@ export const DeskClockTrack = memo(function DeskClockTrack({
   const consumedPercent = Math.min(track.elapsedPercent, track.freePercent);
 
   return (
-    <div aria-hidden className={cn("relative h-1 w-full rounded-full bg-border", className)}>
+    <div aria-hidden className={cn("bg-border relative h-1 w-full rounded-full", className)}>
       <m.div
-        className="absolute inset-y-0 left-0 rounded-full bg-foreground/15"
+        className="bg-foreground/15 absolute inset-y-0 left-0 rounded-full"
         initial={false}
         animate={{ width: `${consumedPercent}%` }}
         transition={WIDTH_TRANSITION}

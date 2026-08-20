@@ -106,7 +106,7 @@ function DsoKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
           </span>
         )}
       </div>
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-muted-foreground text-[11px]">
         target &lt; {AR_DSO_TARGET_DAYS}d · vs 4 weeks ago
       </p>
     </KpiShell>
@@ -125,7 +125,7 @@ function CeiKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
   return (
     <KpiShell index={2} icon={GaugeIcon} label="Collection Effectiveness">
       <p className="text-2xl font-semibold tracking-tight tabular-nums">{cei.toFixed(0)}%</p>
-      <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+      <div className="bg-muted mt-1.5 h-1 w-full overflow-hidden rounded-full">
         <m.div
           className={cn("h-full rounded-full", barClass)}
           initial={{ width: 0 }}
@@ -154,14 +154,14 @@ function KpiShell({
     <Card
       className={cn(
         "h-full gap-0 overflow-hidden rounded-md",
-        to && "transition-colors hover:bg-muted/40",
+        to && "hover:bg-muted/40 transition-colors",
       )}
     >
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+        <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
           {label}
         </CardTitle>
-        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-muted">
+        <span className="bg-muted inline-flex size-7 shrink-0 items-center justify-center rounded-md">
           <Icon className="size-4" />
         </span>
       </CardHeader>
@@ -207,7 +207,7 @@ function KpiCard({
       >
         {value}
       </p>
-      {detail ? <p className="text-[11px] text-muted-foreground">{detail}</p> : null}
+      {detail ? <p className="text-muted-foreground text-[11px]">{detail}</p> : null}
     </KpiShell>
   );
 }

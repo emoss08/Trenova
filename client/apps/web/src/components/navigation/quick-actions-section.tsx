@@ -55,9 +55,9 @@ export function QuickActionsSection() {
             key={definition.id}
             to={href}
             title={definition.description}
-            className="flex h-7 items-center gap-1.5 truncate rounded-md border border-border bg-background px-2 text-xs font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+            className="border-border bg-background text-foreground/80 hover:bg-muted hover:text-foreground flex h-7 items-center gap-1.5 truncate rounded-md border px-2 text-xs font-medium transition-colors"
           >
-            <Icon className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+            <Icon className="text-muted-foreground size-3.5 shrink-0" strokeWidth={1.75} />
             <span className="truncate">{definition.label.replace(/^Create /, "New ")}</span>
           </Link>
         ))}

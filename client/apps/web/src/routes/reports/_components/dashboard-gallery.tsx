@@ -93,12 +93,12 @@ export function DashboardGallery({ search, sortBy }: DashboardGalleryProps) {
                   <CategoryTile category={dashboard.category || "dashboard"} />
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate text-sm font-medium">{dashboard.name}</h3>
-                    <p className="mt-0.5 line-clamp-2 min-h-8 text-xs text-muted-foreground">
+                    <p className="text-muted-foreground mt-0.5 line-clamp-2 min-h-8 text-xs">
                       {dashboard.description || "No description"}
                     </p>
                   </div>
                 </div>
-                <div className="mt-3 flex items-center gap-2 border-t border-border/60 pt-3 text-2xs text-muted-foreground">
+                <div className="border-border/60 text-2xs text-muted-foreground mt-3 flex items-center gap-2 border-t pt-3">
                   <LayoutDashboardIcon className="size-3.5" />
                   <span className="tabular-nums">
                     {layout.tiles.length} tile{layout.tiles.length === 1 ? "" : "s"}

@@ -50,5 +50,5 @@ function OverviewOuter({ children }: { children: React.ReactNode }) {
 }
 
 function OverviewInner({ children }: { children: React.ReactNode }) {
-  return <div className="flex-1 rounded-md border border-border p-3">{children}</div>;
+  return <div className="border-border flex-1 rounded-md border p-3">{children}</div>;
 }

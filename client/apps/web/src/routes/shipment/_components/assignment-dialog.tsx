@@ -262,7 +262,7 @@ export function AssignmentDialog({
           <Tabs value={mode} onValueChange={(value) => setMode(value as CoverageMode)}>
             <TabsList
               variant="underline"
-              className="w-full border-b border-border"
+              className="border-border w-full border-b"
               aria-label="Coverage type"
             >
               <TabsTab value="driver">

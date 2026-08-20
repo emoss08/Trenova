@@ -31,8 +31,8 @@ export function BalanceSheetPage() {
         <FiscalPeriodSelector value={periodId} onChange={setPeriodId} />
 
         {!periodId ? (
-          <div className="flex h-64 items-center justify-center rounded-lg border bg-card">
-            <p className="text-sm text-muted-foreground">
+          <div className="bg-card flex h-64 items-center justify-center rounded-lg border">
+            <p className="text-muted-foreground text-sm">
               Select a fiscal period to view the balance sheet.
             </p>
           </div>
@@ -46,7 +46,7 @@ export function BalanceSheetPage() {
           <div className="space-y-6">
             <FinancialReportSection section={data.assets} />
 
-            <div className="flex items-center justify-between rounded-md border bg-muted/30 px-4 py-3">
+            <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
               <span className="text-sm font-semibold">Total Assets</span>
               <AmountDisplay
                 value={data.totalAssetsMinor}
@@ -58,7 +58,7 @@ export function BalanceSheetPage() {
 
             <FinancialReportSection section={data.liabilities} />
 
-            <div className="flex items-center justify-between rounded-md border bg-muted/30 px-4 py-3">
+            <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
               <span className="text-sm font-semibold">Total Liabilities</span>
               <AmountDisplay
                 value={data.totalLiabilitiesMinor}
@@ -79,7 +79,7 @@ export function BalanceSheetPage() {
               </div>
             ) : null}
 
-            <div className="flex items-center justify-between rounded-md border bg-muted/30 px-4 py-3">
+            <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
               <span className="text-sm font-semibold">Total Equity</span>
               <AmountDisplay
                 value={data.totalEquityMinor}

@@ -64,16 +64,16 @@ function MiniLocationDisplay({
   });
 
   if (!location) {
-    return <span className="text-xs text-muted-foreground">{fallbackLabel ?? "Loading..."}</span>;
+    return <span className="text-muted-foreground text-xs">{fallbackLabel ?? "Loading..."}</span>;
   }
 
   return (
     <div className="min-w-0">
       <p className="truncate text-xs font-medium">{location.name}</p>
       {location.addressLine1 && (
-        <p className="truncate text-xs text-muted-foreground">{location.addressLine1}</p>
+        <p className="text-muted-foreground truncate text-xs">{location.addressLine1}</p>
       )}
-      <p className="truncate text-xs text-muted-foreground">
+      <p className="text-muted-foreground truncate text-xs">
         {location.city}
         {location.state?.abbreviation && `, ${location.state.abbreviation}`} {location.postalCode}
       </p>
@@ -109,7 +109,7 @@ function MiniStopRow({
             <MiniLocationDisplay locationId={locationId} />
           ) : placeholder ? (
             <div className="flex h-10 items-center rounded border border-dashed px-2">
-              <span className="text-xs text-muted-foreground">{placeholder}</span>
+              <span className="text-muted-foreground text-xs">{placeholder}</span>
             </div>
           ) : null}
         </div>
@@ -144,10 +144,10 @@ function CurrentMovePreview({ move }: { move: ShipmentMove }) {
 
   return (
     <div>
-      <h4 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
         Current Move
       </h4>
-      <div className="rounded-lg border bg-muted/50 p-3">
+      <div className="bg-muted/50 rounded-lg border p-3">
         <MiniStopRow
           locationId={pickup.locationId}
           stopType={pickup.type}
@@ -194,11 +194,11 @@ function AfterSplitPreview({
 
   return (
     <div>
-      <h4 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
         After Split
       </h4>
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-lg border bg-muted/50 p-3">
+        <div className="bg-muted/50 rounded-lg border p-3">
           <div className="mb-2 flex items-center gap-2">
             <Badge variant="secondary">Original</Badge>
             {hasAssignment && (
@@ -214,7 +214,7 @@ function AfterSplitPreview({
           <MiniStopRow locationId={delivery.locationId} stopType="SplitDelivery" />
         </div>
 
-        <div className="rounded-lg border bg-muted/50 p-3">
+        <div className="bg-muted/50 rounded-lg border p-3">
           <div className="mb-2 flex items-center gap-2">
             <Badge variant="info">New</Badge>
             <span className="text-2xs text-muted-foreground">unassigned</span>
@@ -319,7 +319,7 @@ export function SplitMoveDialog({
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && handleClose()}>
       <DialogContent className="gap-2 overflow-hidden p-0 sm:max-w-3xl">
-        <DialogHeader className="gap-0 border-b border-border p-4">
+        <DialogHeader className="border-border gap-0 border-b p-4">
           <DialogTitle>Split Move</DialogTitle>
           <DialogDescription>
             The original delivery becomes the handoff point. A new move continues from there to a
@@ -348,7 +348,7 @@ export function SplitMoveDialog({
               <Separator />
 
               <div>
-                <h4 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
                   New Destination
                 </h4>
                 <FormGroup cols={1}>
@@ -460,8 +460,8 @@ function Section({
 }) {
   return (
     <div>
-      <h4 className="text-xs font-semibold tracking-wide text-foreground uppercase">{label}</h4>
-      {description && <p className="mb-2 text-2xs text-muted-foreground">{description}</p>}
+      <h4 className="text-foreground text-xs font-semibold tracking-wide uppercase">{label}</h4>
+      {description && <p className="text-2xs text-muted-foreground mb-2">{description}</p>}
       {children}
     </div>
   );

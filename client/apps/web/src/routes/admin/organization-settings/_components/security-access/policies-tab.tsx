@@ -154,7 +154,7 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
       ) : policiesQuery.isError ? (
         <ErrorState label="Access policies could not be loaded." />
       ) : filteredPolicies.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border bg-background">
+        <div className="bg-background overflow-hidden rounded-lg border">
           {filteredPolicies.map((policy) => (
             <PolicyRow
               key={policy.id}
@@ -213,14 +213,14 @@ const PolicyRow = memo(function PolicyRow({
   return (
     <div
       className={cn(
-        "group grid gap-3 border-b bg-background px-3 py-2.5 transition-colors last:border-b-0 hover:bg-muted/30 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center",
+        "group bg-background hover:bg-muted/30 grid gap-3 border-b px-3 py-2.5 transition-colors last:border-b-0 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center",
         !policy.enabled && "bg-muted/20 text-muted-foreground",
       )}
     >
       <div className="flex min-w-0 gap-3">
         <span
           className={cn(
-            "mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md border bg-muted/35 text-foreground/70",
+            "bg-muted/35 text-foreground/70 mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md border",
             !policy.enabled && "text-muted-foreground",
           )}
         >
@@ -234,12 +234,12 @@ const PolicyRow = memo(function PolicyRow({
         </span>
         <div className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="truncate text-sm font-medium text-foreground">{policy.name}</span>
+            <span className="text-foreground truncate text-sm font-medium">{policy.name}</span>
             {!policy.enabled && (
-              <span className="text-xs font-medium text-muted-foreground">Disabled</span>
+              <span className="text-muted-foreground text-xs font-medium">Disabled</span>
             )}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
             <span
               className={cn(
                 "font-medium",
@@ -254,7 +254,7 @@ const PolicyRow = memo(function PolicyRow({
             <span aria-hidden="true">/</span>
             <span>Priority {policy.priority}</span>
             <span aria-hidden="true">/</span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {conditionCount === 0
                 ? "No conditions"
                 : `${conditionCount} condition${conditionCount === 1 ? "" : "s"}`}
@@ -262,13 +262,13 @@ const PolicyRow = memo(function PolicyRow({
           </div>
           <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
             <span className="text-muted-foreground">Scope</span>
-            <span className="max-w-full truncate font-mono text-[11px] text-foreground/80">
+            <span className="text-foreground/80 max-w-full truncate font-mono text-[11px]">
               {resourceLabel}
             </span>
             <span className="text-muted-foreground" aria-hidden="true">
               /
             </span>
-            <span className="font-mono text-[11px] text-foreground/80">{policy.operation}</span>
+            <span className="text-foreground/80 font-mono text-[11px]">{policy.operation}</span>
           </div>
         </div>
       </div>

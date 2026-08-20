@@ -136,7 +136,7 @@ function StopsList({ moveIndex }: { moveIndex: number }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground">Stops ({fields.length})</span>
+        <span className="text-muted-foreground text-xs font-medium">Stops ({fields.length})</span>
         <Button type="button" variant="outline" size="xxs" onClick={() => addStop(fields.length)}>
           <PlusIcon className="size-3" />
           Add Stop
@@ -156,9 +156,9 @@ function StopsList({ moveIndex }: { moveIndex: number }) {
 
         {fields.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-md border border-dashed py-8 text-center">
-            <MapPinIcon className="mb-2 size-4 text-muted-foreground/40" />
-            <p className="text-xs text-muted-foreground">No stops configured</p>
-            <p className="mb-3 text-xs text-muted-foreground/60">
+            <MapPinIcon className="text-muted-foreground/40 mb-2 size-4" />
+            <p className="text-muted-foreground text-xs">No stops configured</p>
+            <p className="text-muted-foreground/60 mb-3 text-xs">
               Add at least one pickup and delivery stop.
             </p>
             <Button type="button" variant="outline" size="xxs" onClick={() => addStop(0)}>
@@ -224,17 +224,17 @@ function StopCard({
     <div className="rounded-md border">
       <div className="flex items-center justify-between border-b px-3 py-1.5">
         <div className="flex items-center gap-2">
-          <MapPinIcon className="size-3 text-muted-foreground" />
+          <MapPinIcon className="text-muted-foreground size-3" />
           <span className="text-xs font-medium">
             Stop {stopIndex + 1}
             <span className="text-muted-foreground"> / {totalStops}</span>
           </span>
-          <Badge variant={stopStatusBadgeVariant[status]} className="h-5 text-2xs">
+          <Badge variant={stopStatusBadgeVariant[status]} className="text-2xs h-5">
             {statusLabel}
           </Badge>
         </div>
         <Button type="button" variant="ghost" size="icon" className="size-6" onClick={onRemove}>
-          <XIcon className="size-3 text-muted-foreground" />
+          <XIcon className="text-muted-foreground size-3" />
         </Button>
       </div>
 
@@ -285,8 +285,8 @@ function StopCard({
 
         <div>
           <div className="mb-1.5 flex items-center gap-1">
-            <CalendarIcon className="size-3 text-muted-foreground" />
-            <span className="text-2xs font-medium text-muted-foreground">Scheduling</span>
+            <CalendarIcon className="text-muted-foreground size-3" />
+            <span className="text-2xs text-muted-foreground font-medium">Scheduling</span>
           </div>
           <div className="space-y-1">
             <FormGroup cols={1} dense>

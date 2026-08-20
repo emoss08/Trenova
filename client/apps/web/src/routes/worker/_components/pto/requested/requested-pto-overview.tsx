@@ -101,7 +101,7 @@ export function RequestedPTOOverview() {
     return (
       <ScrollArea
         ref={scrollAreaRef}
-        className="flex-1 rounded-md border border-border"
+        className="border-border flex-1 rounded-md border"
         viewportClassName="px-1.5 py-1"
       >
         <div

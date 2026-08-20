@@ -52,9 +52,9 @@ export function KpiGoalBar({
         <span className="font-mono text-[22px] leading-none font-semibold tracking-tight tabular-nums">
           {value}
         </span>
-        {unit && <span className="font-mono text-[11px] text-muted-foreground">{unit}</span>}
+        {unit && <span className="text-muted-foreground font-mono text-[11px]">{unit}</span>}
       </div>
-      <div className="relative mt-0.5 h-1.5 rounded-sm bg-muted">
+      <div className="bg-muted relative mt-0.5 h-1.5 rounded-sm">
         <div
           className="absolute inset-y-0 left-0 rounded-sm"
           style={{
@@ -64,7 +64,7 @@ export function KpiGoalBar({
         />
         <div
           title={`Target ${target}${unit ?? ""}`}
-          className="absolute -top-0.5 -bottom-0.5 w-0.5 rounded-[1px] bg-foreground/55"
+          className="bg-foreground/55 absolute -top-0.5 -bottom-0.5 w-0.5 rounded-[1px]"
           style={{ left: `calc(${targetPct}% - 1px)` }}
         />
       </div>

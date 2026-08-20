@@ -87,7 +87,7 @@ function useVerticalDndSensors() {
 function GroupLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
     <div className="flex items-baseline justify-between">
-      <span className="text-2xs font-semibold tracking-wider text-muted-foreground uppercase select-none">
+      <span className="text-2xs text-muted-foreground font-semibold tracking-wider uppercase select-none">
         {children}
       </span>
       {hint && <span className="text-2xs text-muted-foreground/70 tabular-nums">{hint}</span>}
@@ -114,7 +114,7 @@ function SortableRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "flex h-8 items-center gap-2 rounded-md border border-border bg-background px-2",
+        "border-border bg-background flex h-8 items-center gap-2 rounded-md border px-2",
         isDragging && "z-10 opacity-60",
       )}
     >
@@ -123,7 +123,7 @@ function SortableRow({
         type="button"
         aria-label="Reorder"
         className={cn(
-          "ml-auto flex size-6 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground/60 transition-colors hover:text-foreground",
+          "text-muted-foreground/60 hover:text-foreground ml-auto flex size-6 shrink-0 cursor-grab touch-none items-center justify-center rounded transition-colors",
           disabled && "invisible",
         )}
         {...attributes}
@@ -294,7 +294,7 @@ function ChecklistEditor({
             <div
               key={item.id}
               className={cn(
-                "flex h-8 items-center gap-2 rounded-md border border-dashed border-border/70 px-2",
+                "border-border/70 flex h-8 items-center gap-2 rounded-md border border-dashed px-2",
                 atLimit && "opacity-50",
               )}
             >
@@ -319,7 +319,7 @@ function ActivityEditor({
   return (
     <div className="flex flex-col gap-1.5">
       <GroupLabel>Recent Activity</GroupLabel>
-      <div className="flex h-8 items-center justify-between rounded-md border border-border bg-background px-2">
+      <div className="border-border bg-background flex h-8 items-center justify-between rounded-md border px-2">
         <span className="text-xs font-medium">Entries per page</span>
         <Select
           value={String(activity.pageSize)}
@@ -344,7 +344,7 @@ function ActivityEditor({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex h-8 items-center justify-between rounded-md border border-border bg-background px-2">
+      <div className="border-border bg-background flex h-8 items-center justify-between rounded-md border px-2">
         <span className="text-xs font-medium">Expanded by default</span>
         <Switch
           size="sm"
@@ -438,7 +438,7 @@ function CustomizeSidebarForm({
           renderIcon={(id) => {
             const Icon = QUICK_ACTION_ICONS[id];
             return Icon ? (
-              <Icon className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+              <Icon className="text-muted-foreground size-3.5 shrink-0" strokeWidth={1.75} />
             ) : null;
           }}
         />
@@ -490,7 +490,7 @@ export function CustomizeSidebarDialog() {
             type="button"
             aria-label="Customize sidebar"
             title="Customize sidebar"
-            className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:border-ring/40 hover:text-foreground"
+            className="border-border bg-background text-muted-foreground hover:border-ring/40 hover:text-foreground flex size-7 shrink-0 items-center justify-center rounded-md border transition-colors"
           />
         }
       >

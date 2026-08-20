@@ -154,19 +154,19 @@ export function WorkerCreatePanel({
       <Dialog.Portal>
         <Dialog.Popup
           className={cn(
-            "fixed top-4 right-4 bottom-4 z-50 flex flex-col rounded-lg border border-border bg-background shadow-lg outline-none",
+            "border-border bg-background fixed top-4 right-4 bottom-4 z-50 flex flex-col rounded-lg border shadow-lg outline-none",
             "data-[open]:animate-in data-[open]:slide-in-from-right",
             "data-[closed]:animate-out data-[closed]:slide-out-to-right",
             "duration-200",
           )}
           style={{ width: 650 }}
         >
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div className="border-border flex items-center justify-between border-b px-4 py-3">
             <div className="flex flex-col gap-0.5">
               <Dialog.Title className="text-sm leading-none font-medium">
                 Create Worker
               </Dialog.Title>
-              <Dialog.Description className="text-xs text-muted-foreground">
+              <Dialog.Description className="text-muted-foreground text-xs">
                 Add a new worker to your organization
               </Dialog.Description>
             </div>
@@ -195,7 +195,7 @@ export function WorkerCreatePanel({
                 onValueChange={(value) => void setActiveTab(value as string)}
                 className="flex flex-1 flex-col overflow-hidden"
               >
-                <div className="border-b border-border px-4">
+                <div className="border-border border-b px-4">
                   <TabsList variant="underline">
                     <TabsTab
                       value="general"
@@ -235,7 +235,7 @@ export function WorkerCreatePanel({
             </Form>
           </FormProvider>
 
-          <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/30 px-4 py-3">
+          <div className="border-border bg-muted/30 flex items-center justify-end gap-2 border-t px-4 py-3">
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>

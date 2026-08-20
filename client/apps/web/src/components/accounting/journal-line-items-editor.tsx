@@ -67,7 +67,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
     <div className={cn("space-y-2", className)}>
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full table-fixed text-sm">
-          <thead className="bg-muted/50 text-left text-muted-foreground">
+          <thead className="bg-muted/50 text-muted-foreground text-left">
             <tr>
               <th className="w-8 px-2 py-2 text-center text-xs font-medium">#</th>
               <th className="px-2 py-2 text-xs font-medium">GL Account</th>
@@ -80,7 +80,7 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
           <tbody>
             {fields.map((field, index) => (
               <tr key={field.id} className="group border-t align-top">
-                <td className="px-2 py-1.5 pt-3 text-center font-mono text-2xs text-muted-foreground">
+                <td className="text-2xs text-muted-foreground px-2 py-1.5 pt-3 text-center font-mono">
                   {index + 1}
                 </td>
                 <td className="px-1 py-1.5">
@@ -128,13 +128,13 @@ export function JournalLineItemsEditor({ className }: JournalLineItemsEditorProp
                     disabled={fields.length <= 2}
                     className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 disabled:opacity-0"
                   >
-                    <Trash2Icon className="size-3.5 text-muted-foreground hover:text-red-600" />
+                    <Trash2Icon className="text-muted-foreground size-3.5 hover:text-red-600" />
                   </Button>
                 </td>
               </tr>
             ))}
           </tbody>
-          <tfoot className="border-t bg-muted/30">
+          <tfoot className="bg-muted/30 border-t">
             <tr>
               <td colSpan={3} className="px-3 py-2 text-right text-xs font-medium">
                 Totals

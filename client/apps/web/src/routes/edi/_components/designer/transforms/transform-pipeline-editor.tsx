@@ -179,13 +179,13 @@ function TransformStepEditor({
   const setArg = (key: string, value: unknown) =>
     onChange({ ...step, arguments: { ...step.arguments, [key]: value } });
   return (
-    <div className="space-y-2 rounded-md border bg-muted/20 p-2">
+    <div className="bg-muted/20 space-y-2 rounded-md border p-2">
       <div className="flex items-center justify-between gap-2">
         <div>
           <div className="text-xs font-semibold">
             {index + 1}. {definition?.label ?? step.operation}
           </div>
-          <div className="text-xs text-muted-foreground">{definition?.description}</div>
+          <div className="text-muted-foreground text-xs">{definition?.description}</div>
         </div>
         <div className="flex items-center gap-1">
           <Button

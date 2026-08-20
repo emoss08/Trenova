@@ -121,7 +121,7 @@ export function CommentStream({
 
   if (isError) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 py-12 text-muted-foreground">
+      <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-3 py-12">
         <MessageSquareIcon className="size-8 opacity-40" />
         <p className="text-sm font-medium">Comments could not be loaded</p>
         <Button type="button" variant="outline" size="xs" onClick={onRetry}>
@@ -134,7 +134,7 @@ export function CommentStream({
 
   if (comments.length === 0) {
     return isFiltered ? (
-      <div className="flex h-full flex-col items-center justify-center py-12 text-muted-foreground">
+      <div className="text-muted-foreground flex h-full flex-col items-center justify-center py-12">
         <SearchXIcon className="mb-3 size-8 opacity-40" />
         <p className="text-sm font-medium">No comments match your filters</p>
         <Button
@@ -148,7 +148,7 @@ export function CommentStream({
         </Button>
       </div>
     ) : (
-      <div className="flex h-full flex-col items-center justify-center py-12 text-muted-foreground">
+      <div className="text-muted-foreground flex h-full flex-col items-center justify-center py-12">
         <MessageSquareIcon className="mb-3 size-8 opacity-40" />
         <p className="text-sm font-medium">No comments yet</p>
         <p className="mt-1 max-w-[260px] text-center text-xs">
@@ -204,11 +204,11 @@ export function CommentStream({
 function DayDivider({ timestamp }: { timestamp: number }) {
   return (
     <div className="flex items-center gap-3 px-2 py-2">
-      <span className="h-px flex-1 bg-border" />
-      <span className="shrink-0 text-2xs font-medium text-muted-foreground">
+      <span className="bg-border h-px flex-1" />
+      <span className="text-2xs text-muted-foreground shrink-0 font-medium">
         {formatUnixMonthDay(timestamp)}
       </span>
-      <span className="h-px flex-1 bg-border" />
+      <span className="bg-border h-px flex-1" />
     </div>
   );
 }

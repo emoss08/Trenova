@@ -93,7 +93,7 @@ export function OrderSummarySection() {
     <FormSection
       title="Accounts Receivable"
       description="The commercial rollup across every leg and order-level charge"
-      className="border-t border-border pt-4"
+      className="border-border border-t pt-4"
       action={
         <div className="flex gap-2">
           {canClose && (
@@ -116,7 +116,7 @@ export function OrderSummarySection() {
               size="xxs"
               onClick={() => setCancelOpen(true)}
             >
-              <BanIcon className="size-3 text-destructive" />
+              <BanIcon className="text-destructive size-3" />
               Cancel Order
             </Button>
           )}

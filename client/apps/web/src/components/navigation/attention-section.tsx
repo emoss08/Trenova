@@ -42,7 +42,7 @@ function AttentionRow({
       <span className="text-2xs text-muted-foreground/70">{row.module}</span>
       <Badge
         variant={hasWork ? TONE_BADGE_VARIANTS[row.tone] : "secondary"}
-        className="max-h-4 min-w-5 justify-center px-1.5 text-2xs tabular-nums"
+        className="text-2xs max-h-4 min-w-5 justify-center px-1.5 tabular-nums"
       >
         {count > 99 ? "99+" : count}
       </Badge>

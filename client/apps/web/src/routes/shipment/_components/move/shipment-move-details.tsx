@@ -86,7 +86,7 @@ export default function ShipmentMoveDetails() {
       <FormSection
         title="Move Details"
         description="Execution legs and stop sequences for this shipment"
-        className="border-t border-border pt-4"
+        className="border-border border-t pt-4"
         action={
           <div className="flex items-center gap-1.5">
             {/* Three rules name `moves` — move removal, permit lead time and curfew
@@ -117,9 +117,9 @@ export default function ShipmentMoveDetails() {
         ))}
         {moveFields.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center">
-            <TruckIcon className="mb-2 size-6 text-muted-foreground/40" />
-            <p className="text-sm font-medium text-muted-foreground">No moves yet</p>
-            <p className="mt-0.5 text-xs text-muted-foreground/70">
+            <TruckIcon className="text-muted-foreground/40 mb-2 size-6" />
+            <p className="text-muted-foreground text-sm font-medium">No moves yet</p>
+            <p className="text-muted-foreground/70 mt-0.5 text-xs">
               Add a move to define the route for this shipment
             </p>
             <Button

@@ -44,7 +44,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
   }
   if (isError || !data) {
     return (
-      <div className="rounded-md border bg-background p-6 text-sm text-muted-foreground">
+      <div className="bg-background text-muted-foreground rounded-md border p-6 text-sm">
         The readiness checklist could not be loaded.
       </div>
     );
@@ -54,14 +54,14 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between rounded-md border bg-muted/20 p-3">
+      <div className="bg-muted/20 flex items-center justify-between rounded-md border p-3">
         <div className="flex items-center gap-3">
           <EDIPartnerReadinessBadge
             ready={data.ready}
             completedCount={data.completedCount}
             totalCount={data.totalCount}
           />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {data.ready
               ? "This partner has completed every onboarding step."
               : `${data.totalCount - data.completedCount} onboarding step(s) remaining before this partner is production-ready.`}
@@ -80,7 +80,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
           </p>
         </div>
       )}
-      <div className="flex flex-col divide-y rounded-md border bg-background">
+      <div className="bg-background flex flex-col divide-y rounded-md border">
         {data.items.map((item) => {
           const link = item.complete ? undefined : READINESS_LINKS[item.key];
           const hint = item.complete ? undefined : READINESS_HINTS[item.key];
@@ -89,11 +89,11 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
               {item.complete ? (
                 <CheckCircle2Icon className="size-4 shrink-0 text-green-600 dark:text-green-400" />
               ) : (
-                <CircleIcon className="size-4 shrink-0 text-muted-foreground" />
+                <CircleIcon className="text-muted-foreground size-4 shrink-0" />
               )}
               <div className="min-w-0 flex-1">
                 <p className="text-sm">{item.label}</p>
-                {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+                {hint && <p className="text-muted-foreground text-xs">{hint}</p>}
               </div>
               {link && (
                 <Button

@@ -42,9 +42,9 @@ export function DisplayRulesEditor({ rules, onChange }: DisplayRulesEditorProps)
   };
 
   return (
-    <div className="flex flex-col gap-2 border-t border-border/60 pt-2">
+    <div className="border-border/60 flex flex-col gap-2 border-t pt-2">
       <div className="flex items-center gap-2">
-        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
           Highlight when
         </span>
         <div className="flex-1" />

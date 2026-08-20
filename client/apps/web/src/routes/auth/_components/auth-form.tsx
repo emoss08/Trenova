@@ -38,7 +38,7 @@ function AudienceToggle({
     <Tabs
       value={audience}
       onValueChange={(value) => onChange(value as AuthAudience)}
-      className="border-b border-border"
+      className="border-border border-b"
     >
       <TabsList variant="underline" className="w-full justify-start py-0">
         {audienceOptions.map((option) => (
@@ -55,15 +55,15 @@ function AudienceToggle({
 function DriverGateway() {
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted-foreground">
-        Drivers sign in to <span className="font-medium text-foreground">Dash</span> — your loads,
+      <p className="text-muted-foreground text-sm">
+        Drivers sign in to <span className="text-foreground font-medium">Dash</span> — your loads,
         settlement statements, and pay, built for your phone.
       </p>
       <Button className="h-11 w-full" render={<a href="/dash/login" />}>
         Continue to Dash
         <ArrowRightIcon className="size-4" />
       </Button>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-xs">
         First time here? Use the invitation link your carrier sent you to set up your account.
       </p>
     </div>
@@ -152,7 +152,7 @@ export function AuthForm({
     <>
       <Metadata title="Sign In" description="Sign in to your Trenova account" />
       <div className="flex max-w-[400px] flex-col gap-6">
-        <Card className="rounded-2xl border-border bg-background backdrop-blur-md gap-0">
+        <Card className="border-border bg-background gap-0 rounded-2xl backdrop-blur-md">
           <CardHeader className="text-left">
             <m.div
               key={`${authStep}-${formType}-${audience}`}
@@ -177,9 +177,9 @@ export function AuthForm({
               <AudienceToggle audience={audience} onChange={setAudience} />
             ) : null}
             {tenantQuery?.isLoading ? (
-              <div className="text-sm text-muted-foreground">Loading organization sign-in...</div>
+              <div className="text-muted-foreground text-sm">Loading organization sign-in...</div>
             ) : tenantQuery?.isError ? (
-              <div className="text-sm text-destructive">
+              <div className="text-destructive text-sm">
                 We couldn&apos;t load this tenant login page.
               </div>
             ) : (
@@ -208,7 +208,7 @@ export function AuthForm({
             )}
           </CardContent>
         </Card>
-        <div className="text-center text-xs text-balance text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
+        <div className="text-muted-foreground [&_a]:hover:text-primary text-center text-xs text-balance [&_a]:underline [&_a]:underline-offset-4">
           By clicking continue, you agree to our{" "}
           <a href={TERMS_URL} target="_blank" rel="noreferrer">
             Terms of Service

@@ -34,7 +34,7 @@ export function InvoiceItemCard({
         <BillingRecordCard
           title={invoice.number}
           auxiliary={
-            <span className="font-mono text-[10px] text-muted-foreground">{invoice.billType}</span>
+            <span className="text-muted-foreground font-mono text-[10px]">{invoice.billType}</span>
           }
           amount={formatCurrency(totalAmount, invoice.currencyCode)}
           subtitle={customerName || "Unknown bill-to"}
@@ -47,7 +47,7 @@ export function InvoiceItemCard({
               <Tooltip>
                 <TooltipTrigger
                   render={
-                    <span className="text-[11px] text-muted-foreground/70">{age}</span>
+                    <span className="text-muted-foreground/70 text-[11px]">{age}</span>
                   }
                 />
                 <TooltipContent side="left" sideOffset={10}>

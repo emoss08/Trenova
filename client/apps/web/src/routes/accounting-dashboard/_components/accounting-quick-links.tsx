@@ -30,7 +30,7 @@ export function AccountingQuickLinks() {
         <Link
           key={link.to}
           to={link.to}
-          className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="bg-card text-muted-foreground hover:bg-muted hover:text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors"
         >
           <link.icon className="size-3.5" />
           {link.label}

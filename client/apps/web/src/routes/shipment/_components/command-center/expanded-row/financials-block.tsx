@@ -14,7 +14,7 @@ function RowList({ rows }: { rows: FinancialRow[] }) {
           key={row.label}
           className={cn(
             "flex items-center justify-between py-0.75",
-            row.bold ? "mt-1 border-t border-border pt-2" : "",
+            row.bold ? "border-border mt-1 border-t pt-2" : "",
           )}
         >
           <dt className="text-muted-foreground">{row.label}</dt>
@@ -92,9 +92,9 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
     <div className="flex flex-col gap-2">
       <RowList rows={revenueRows} />
       {estimate && hasEstimate && (
-        <div className="border-t border-border pt-2">
+        <div className="border-border border-t pt-2">
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+            <span className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
               Cost estimate
             </span>
             <ProfitabilityBreakdownPopover
@@ -103,7 +103,7 @@ export function FinancialsBlock({ shipment }: { shipment: Shipment }) {
               trigger={
                 <button
                   type="button"
-                  className="cursor-pointer text-[10px] font-medium text-primary hover:underline"
+                  className="text-primary cursor-pointer text-[10px] font-medium hover:underline"
                 >
                   View breakdown
                 </button>

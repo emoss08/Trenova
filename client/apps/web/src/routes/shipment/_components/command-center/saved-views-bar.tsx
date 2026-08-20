@@ -25,14 +25,14 @@ function ViewTab({
       className={cn(
         "-mb-px flex items-center gap-1.5 border-b-2 px-2.5 py-1.5 text-[11.5px] transition-colors",
         isActive
-          ? "border-brand font-semibold text-foreground"
-          : "border-transparent font-medium text-muted-foreground hover:text-foreground",
+          ? "border-brand text-foreground font-semibold"
+          : "text-muted-foreground hover:text-foreground border-transparent font-medium",
       )}
     >
       <span>{label}</span>
       <span
         className={cn(
-          "inline-flex min-w-[20px] justify-center rounded-full px-1.5 py-px font-table text-[10px] tabular-nums",
+          "font-table inline-flex min-w-[20px] justify-center rounded-full px-1.5 py-px text-[10px] tabular-nums",
           isActive
             ? "bg-brand/15 text-brand"
             : "bg-muted text-muted-foreground",
@@ -61,7 +61,7 @@ export function SavedViewsBar({
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-1">
+    <div className="border-border flex items-center justify-between gap-3 border-b px-3 py-1">
       <div
         className="no-scrollbar flex flex-1 items-center gap-1 overflow-x-auto"
         role="tablist"

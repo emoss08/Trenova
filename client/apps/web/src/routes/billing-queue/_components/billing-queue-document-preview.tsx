@@ -20,7 +20,7 @@ export default function BillingQueueDocumentPreview({
 
   if (!documentId) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/20 p-4 text-muted-foreground">
+      <div className="bg-muted/20 text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-4">
         <FileSearchIcon className="size-10" />
         <p className="text-center text-sm">
           Select a document to preview it here
@@ -31,7 +31,7 @@ export default function BillingQueueDocumentPreview({
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center bg-muted/20">
+      <div className="bg-muted/20 flex h-full items-center justify-center">
         <TextShimmer as="span" className="text-sm" duration={1.5}>
           Loading document preview
         </TextShimmer>
@@ -41,8 +41,8 @@ export default function BillingQueueDocumentPreview({
 
   if (!viewUrl) {
     return (
-      <div className="flex h-full items-center justify-center bg-muted/20">
-        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+      <div className="bg-muted/20 flex h-full items-center justify-center">
+        <div className="text-muted-foreground flex flex-col items-center gap-2">
           <FileTextIcon className="size-6 opacity-40" />
           <span className="text-xs">Preview unavailable</span>
         </div>
@@ -54,7 +54,7 @@ export default function BillingQueueDocumentPreview({
 
   if (!isPdf) {
     return (
-      <div className="flex h-full items-center justify-center bg-muted/20 p-4">
+      <div className="bg-muted/20 flex h-full items-center justify-center p-4">
         <img
           src={viewUrl}
           alt={fileName || "Document"}

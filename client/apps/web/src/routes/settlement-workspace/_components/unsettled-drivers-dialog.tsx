@@ -137,7 +137,7 @@ export function UnsettledDriversDialog({
               <Skeleton className="h-12 w-full" />
             </div>
           ) : list.length === 0 ? (
-            <p className="py-4 text-center text-xs text-muted-foreground">
+            <p className="text-muted-foreground py-4 text-center text-xs">
               No drivers have unsettled pay for this period.
             </p>
           ) : (
@@ -150,7 +150,7 @@ export function UnsettledDriversDialog({
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium">{worker.workerName}</p>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-muted-foreground text-[11px]">
                         {worker.eventCount} event{worker.eventCount === 1 ? "" : "s"} ·{" "}
                         <AmountDisplay value={worker.grossAmountMinor} currency="USD" />
                         {worker.heldCount > 0 && (
@@ -164,14 +164,14 @@ export function UnsettledDriversDialog({
                     </div>
                     {worker.hasSettlement ? (
                       <span
-                        className="text-[10px] text-muted-foreground"
+                        className="text-muted-foreground text-[10px]"
                         title="This driver already has a settlement for the period; accrued pay attaches to their open draft automatically"
                       >
                         Has settlement
                       </span>
                     ) : worker.eventCount === 0 ? (
                       <span
-                        className="text-[10px] text-muted-foreground"
+                        className="text-muted-foreground text-[10px]"
                         title="All of this driver's pay is on hold — release it before settling"
                       >
                         All held

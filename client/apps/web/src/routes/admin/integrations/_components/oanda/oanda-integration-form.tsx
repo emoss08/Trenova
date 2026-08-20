@@ -118,10 +118,10 @@ export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClo
       <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
         <FormGroup cols={1}>
           <FormControl cols="full">
-            <div className="flex items-center justify-between rounded-md border border-border bg-background p-3">
+            <div className="border-border bg-background flex items-center justify-between rounded-md border p-3">
               <div>
                 <Label htmlFor="oanda-enabled">Enable OANDA FX</Label>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Toggle settlement-grade FX data for this business unit.
                 </p>
               </div>
@@ -207,16 +207,16 @@ function OANDAExchangeRatesFormHeader() {
       <div className="flex items-center justify-center gap-4">
         <LazyImage src={trenovaLogo} className="size-8" />
         <div className="flex items-center justify-center gap-1">
-          <div className="size-1 rounded-full bg-muted-foreground" />
-          <div className="size-1 rounded-full bg-muted-foreground" />
-          <div className="size-1 rounded-full bg-muted-foreground" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
+          <div className="bg-muted-foreground size-1 rounded-full" />
         </div>
         <LazyImage src={logo} alt="OANDA Logo" className="h-8 max-w-24 object-contain" />
       </div>
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">Connect with OANDA Exchange Rates</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-xs text-muted-foreground">Midpoint is used by default for quotes.</p>
+          <p className="text-muted-foreground text-xs">Midpoint is used by default for quotes.</p>
           <ExternalLink
             href="https://www.oanda.com/foreign-exchange-data-services/en/exchange-rates-api/"
             className="text-xs"

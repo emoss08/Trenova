@@ -59,15 +59,15 @@ function BlackoutDateRow({ date, holidayName, isPast, onRemove }: BlackoutDateRo
   const label = parsed ? format(parsed, "MMM d") : date;
 
   return (
-    <li className="group/row flex items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-muted">
-      <span className="w-8 shrink-0 text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+    <li className="group/row hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1 transition-colors">
+      <span className="text-2xs text-muted-foreground w-8 shrink-0 font-medium tracking-wide uppercase">
         {parsed ? format(parsed, "EEE") : "—"}
       </span>
       <span className={cn("text-sm tabular-nums", isPast && "text-muted-foreground")}>{label}</span>
       {holidayName && (
         <Badge
           variant="outline"
-          className="h-4 border-none bg-blue-600/10 px-1.5 text-2xs font-normal text-blue-600 dark:text-blue-400"
+          className="text-2xs h-4 border-none bg-blue-600/10 px-1.5 font-normal text-blue-600 dark:text-blue-400"
         >
           {holidayName}
         </Badge>
@@ -79,7 +79,7 @@ function BlackoutDateRow({ date, holidayName, isPast, onRemove }: BlackoutDateRo
         size="icon"
         aria-label={`Remove ${label}`}
         onClick={() => onRemove(date)}
-        className="ml-auto size-5 text-muted-foreground opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100 hover:text-foreground focus-visible:opacity-100"
+        className="text-muted-foreground hover:text-foreground ml-auto size-5 opacity-0 transition-opacity group-focus-within/row:opacity-100 group-hover/row:opacity-100 focus-visible:opacity-100"
       >
         <XIcon className="size-3.5" />
       </Button>
@@ -167,8 +167,8 @@ export function BlackoutDatesField() {
       description="Days your facilities are closed. An occurrence landing on one of these follows the exception policy instead of generating a shipment."
       error={fieldState.error?.message}
     >
-      <div className="overflow-hidden rounded-lg border border-input bg-muted/30">
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-input bg-muted/50 p-1.5">
+      <div className="border-input bg-muted/30 overflow-hidden rounded-lg border">
+        <div className="border-input bg-muted/50 flex flex-wrap items-center gap-1.5 border-b p-1.5">
           <Popover>
             <PopoverTrigger
               render={
@@ -191,7 +191,7 @@ export function BlackoutDatesField() {
                 endMonth={new Date(currentYear + CALENDAR_YEARS_AHEAD, 11)}
                 showOutsideDays={false}
               />
-              <p className="border-t border-border px-3 py-2 text-2xs text-muted-foreground">
+              <p className="border-border text-2xs text-muted-foreground border-t px-3 py-2">
                 Click a day to block it, click it again to unblock.
               </p>
             </PopoverContent>
@@ -209,7 +209,7 @@ export function BlackoutDatesField() {
                 >
                   <SparklesIcon className="size-3.5" />
                   Holidays
-                  <ChevronDownIcon className="size-3.5 text-muted-foreground" />
+                  <ChevronDownIcon className="text-muted-foreground size-3.5" />
                 </Button>
               }
             />
@@ -229,7 +229,7 @@ export function BlackoutDatesField() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <span className="ml-auto pr-1 text-2xs tabular-nums text-muted-foreground">
+          <span className="text-2xs text-muted-foreground ml-auto pr-1 tabular-nums">
             {atCapacity ? `Limit ${MAX_BLACKOUT_DATES} reached` : `${dates.length} blocked`}
           </span>
           {dates.length > 0 && (
@@ -237,7 +237,7 @@ export function BlackoutDatesField() {
               type="button"
               variant="ghost"
               size="sm"
-              className="h-7 text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground h-7"
               onClick={() => commit([])}
             >
               Clear
@@ -255,7 +255,7 @@ export function BlackoutDatesField() {
         ) : (
           <ScrollArea className="max-h-56" maskVariant="muted">
             {pastDates.length > 0 && (
-              <div className="flex items-center gap-2 border-b border-border px-2.5 py-1.5">
+              <div className="border-border flex items-center gap-2 border-b px-2.5 py-1.5">
                 <span className="text-2xs text-muted-foreground">
                   {pastDates.length} {pastDates.length === 1 ? "day has" : "days have"} already
                   passed and no longer affect the schedule.
@@ -264,7 +264,7 @@ export function BlackoutDatesField() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="ml-auto h-6 text-2xs"
+                  className="text-2xs ml-auto h-6"
                   onClick={() => commit(dates.filter((date) => date >= todayISO))}
                 >
                   Remove
@@ -274,7 +274,7 @@ export function BlackoutDatesField() {
             <div className="p-1.5">
               {groups.map((group) => (
                 <div key={group.year} className="not-first:mt-2">
-                  <div className="px-2 pb-1 text-2xs font-medium tracking-wide text-muted-foreground">
+                  <div className="text-2xs text-muted-foreground px-2 pb-1 font-medium tracking-wide">
                     {group.year}
                   </div>
                   <ul className="flex flex-col">

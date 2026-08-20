@@ -67,7 +67,7 @@ function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
   return (
     <>
       <Metadata title="Select roles" description="Choose the roles to activate for this session" />
-      <div className="fixed inset-0 h-svh w-full overflow-hidden bg-background">
+      <div className="bg-background fixed inset-0 h-svh w-full overflow-hidden">
         <div className="relative flex h-full flex-col items-center justify-center gap-6 p-6 md:p-10">
           <LazyImage
             src={logoRainbow}
@@ -80,7 +80,7 @@ function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
-            <Card className="rounded-2xl border-border bg-background backdrop-blur-md">
+            <Card className="border-border bg-background rounded-2xl backdrop-blur-md">
               <CardHeader className="text-left">
                 <CardTitle>Select active roles</CardTitle>
                 <CardDescription className="mt-1">
@@ -103,7 +103,7 @@ function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.2, ease: "easeOut", delay: 0.04 * index }}
                           className={cn(
-                            "flex min-h-13 w-full cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors hover:bg-muted",
+                            "hover:bg-muted flex min-h-13 w-full cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors",
                             isSelected ? "border-primary bg-primary/5" : "border-border bg-background",
                           )}
                           disabled={isActivating}
@@ -122,7 +122,7 @@ function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-medium">{role.name}</span>
                             {role.description && (
-                              <span className="block truncate text-xs text-muted-foreground">
+                              <span className="text-muted-foreground block truncate text-xs">
                                 {role.description}
                               </span>
                             )}

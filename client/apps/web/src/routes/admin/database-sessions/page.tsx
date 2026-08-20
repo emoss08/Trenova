@@ -88,8 +88,8 @@ function SessionSide({
         PID {pid}
       </Badge>
       <span className="text-sm font-medium">{appName || "Unknown app"}</span>
-      <span className="text-xs text-muted-foreground">{user || "Unknown user"}</span>
-      <span className="text-xs text-muted-foreground">{state}</span>
+      <span className="text-muted-foreground text-xs">{user || "Unknown user"}</span>
+      <span className="text-muted-foreground text-xs">{state}</span>
       <div
         className={`mt-1 flex flex-col gap-0.5 ${align === "end" ? "items-end" : "items-start"}`}
       >
@@ -103,14 +103,14 @@ function SessionSide({
 function QueryBlock({ label, query }: { label: string; query: string }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1">
-      <span className="text-[10px] tracking-wider text-muted-foreground uppercase">{label}</span>
+      <span className="text-muted-foreground text-[10px] tracking-wider uppercase">{label}</span>
       {query ? (
         <div className="max-h-32 overflow-auto">
           <ShikiCodeBlock code={query} lang="plsql" darkTheme="vitesse-dark" />
         </div>
       ) : (
-        <div className="rounded-md bg-muted/50 p-2">
-          <span className="text-xs text-muted-foreground">No query text</span>
+        <div className="bg-muted/50 rounded-md p-2">
+          <span className="text-muted-foreground text-xs">No query text</span>
         </div>
       )}
     </div>
@@ -190,7 +190,7 @@ function SessionCard({ row }: { row: DatabaseSessionChain }) {
               queryAge={row.blockedQueryAgeSeconds}
               align="end"
             />
-            <ArrowLeftIcon className="mt-1 size-4 text-muted-foreground" />
+            <ArrowLeftIcon className="text-muted-foreground mt-1 size-4" />
             <SessionSide
               pid={row.blockingPid}
               appName={row.blockingApplicationName}
@@ -204,7 +204,7 @@ function SessionCard({ row }: { row: DatabaseSessionChain }) {
         </CardContent>
 
         <div className="border-t px-3 py-2">
-          <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md py-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
+          <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md py-1 text-xs transition-colors">
             <CodeIcon className="size-3" />
             <span>Queries</span>
             <ChevronDownIcon className="size-3 transition-transform [[data-panel-open]_&]:rotate-180" />
@@ -250,11 +250,11 @@ function SkeletonCard() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20">
-      <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-        <ShieldCheckIcon className="size-7 text-muted-foreground" />
+      <div className="bg-muted flex size-14 items-center justify-center rounded-full">
+        <ShieldCheckIcon className="text-muted-foreground size-7" />
       </div>
       <h3 className="mt-4 text-sm font-medium">No blocked sessions</h3>
-      <p className="mt-1 text-xs text-muted-foreground">All database sessions are running clean</p>
+      <p className="text-muted-foreground mt-1 text-xs">All database sessions are running clean</p>
     </div>
   );
 }
@@ -270,7 +270,7 @@ function StatusBar({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm text-muted-foreground">
+      <span className="text-muted-foreground text-sm">
         {count} blocked {count === 1 ? "session" : "sessions"}
       </span>
       <div className="flex items-center gap-3">
@@ -279,7 +279,7 @@ function StatusBar({
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
           </span>
-          <span className="text-xs text-muted-foreground">Live</span>
+          <span className="text-muted-foreground text-xs">Live</span>
         </div>
         <Tooltip>
           <TooltipTrigger

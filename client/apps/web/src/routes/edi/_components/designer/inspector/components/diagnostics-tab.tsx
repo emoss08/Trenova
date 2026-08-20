@@ -20,7 +20,7 @@ export default function DiagnosticsTab({
   };
 
   if (diagnostics.length === 0) {
-    return <div className="text-sm text-muted-foreground">No diagnostics.</div>;
+    return <div className="text-muted-foreground text-sm">No diagnostics.</div>;
   }
 
   return (
@@ -41,7 +41,7 @@ export default function DiagnosticsTab({
               key={group.key}
               type="button"
               onClick={() => segment && onSelectSegment(segment.index)}
-              className="block w-full rounded-md border p-3 text-left hover:bg-muted"
+              className="hover:bg-muted block w-full rounded-md border p-3 text-left"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={group.severity === "Error" ? "inactive" : "warning"}>
@@ -52,9 +52,9 @@ export default function DiagnosticsTab({
                   {group.segmentId || "Payload"}
                   {group.elementPosition ? `:${group.elementPosition}` : ""}
                 </span>
-                <span className="font-mono text-xs text-muted-foreground">{group.code}</span>
+                <span className="text-muted-foreground font-mono text-xs">{group.code}</span>
                 {group.path ? (
-                  <span className="font-mono text-xs text-muted-foreground">{group.path}</span>
+                  <span className="text-muted-foreground font-mono text-xs">{group.path}</span>
                 ) : null}
               </div>
               <div className="mt-2 space-y-2">
@@ -62,7 +62,7 @@ export default function DiagnosticsTab({
                   <div key={diagnosticKey(diagnostic)} className="text-sm">
                     <div>{diagnostic.message}</div>
                     {diagnostic.suggestedFix ? (
-                      <div className="text-xs text-muted-foreground">{diagnostic.suggestedFix}</div>
+                      <div className="text-muted-foreground text-xs">{diagnostic.suggestedFix}</div>
                     ) : null}
                   </div>
                 ))}
@@ -86,7 +86,7 @@ function SummaryCard({
 }) {
   return (
     <div className="rounded-md border p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-muted-foreground text-xs">{label}</div>
       <Badge variant={variant} className="mt-2">
         {value}
       </Badge>

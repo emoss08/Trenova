@@ -44,7 +44,7 @@ export function DesignerPanelSkeleton() {
 
 export function DesignerAsideSkeleton() {
   return (
-    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-background">
+    <aside className="bg-background flex h-full min-h-0 flex-col overflow-hidden rounded-md border">
       <div className="flex h-11 items-center gap-2 border-b px-3">
         <Skeleton className="size-4 rounded-sm" />
         <SkeletonLine className="w-24" />
@@ -80,13 +80,13 @@ export function DesignerWorkspaceSkeleton() {
       className="grid h-[calc(100vh-11rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden"
       aria-label="Loading EDI designer workspace"
     >
-      <div className="flex w-fit gap-1 rounded-md bg-muted p-1">
+      <div className="bg-muted flex w-fit gap-1 rounded-md p-1">
         <Skeleton className="h-8 w-28 rounded-sm" />
         <Skeleton className="h-8 w-52 rounded-sm" />
       </div>
       <div className="grid min-h-0 grid-cols-[310px_minmax(0,1fr)_380px] gap-3 overflow-hidden max-xl:grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
         <DesignerAsideSkeleton />
-        <main className="flex min-h-0 flex-col overflow-hidden rounded-md border bg-background">
+        <main className="bg-background flex min-h-0 flex-col overflow-hidden rounded-md border">
           <SkeletonToolbar count={4} />
           <div className="grid min-h-0 flex-1 grid-cols-[280px_minmax(0,1fr)] max-md:grid-cols-1">
             <div className="min-h-0 border-r max-md:hidden">
@@ -108,7 +108,7 @@ export function DesignerWorkspaceSkeleton() {
             <Skeleton className="h-8 w-32 rounded-md" />
           </div>
         </main>
-        <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-background max-xl:hidden">
+        <aside className="bg-background flex h-full min-h-0 flex-col overflow-hidden rounded-md border max-xl:hidden">
           <div className="flex h-11 items-center gap-2 border-b px-3">
             <Skeleton className="size-4 rounded-sm" />
             <SkeletonLine className="w-24" />

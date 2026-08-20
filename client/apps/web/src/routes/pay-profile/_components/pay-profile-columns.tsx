@@ -117,7 +117,7 @@ export function getColumns(): ColumnDef<PayProfileRow>[] {
       id: "components",
       header: "Pay Components",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">{componentSummary(row.original)}</span>
+        <span className="text-muted-foreground text-xs">{componentSummary(row.original)}</span>
       ),
       size: 340,
     },
@@ -133,7 +133,7 @@ export function getColumns(): ColumnDef<PayProfileRow>[] {
             />
           </div>
         ) : (
-          <div className="text-right text-xs text-muted-foreground">—</div>
+          <div className="text-muted-foreground text-right text-xs">—</div>
         ),
       size: 110,
       meta: { apiField: "guaranteedPeriodMinimumMinor" },
