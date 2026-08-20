@@ -11,7 +11,10 @@ import { useState } from "react";
 
 type LaneHistoryPopoverProps = {
   readonly rateAgreementId?: string;
+  /** The stored key, ids and all — what the history endpoint matches on. */
   readonly laneKey: string;
+  /** The key as a person reads it, names in place of ids. */
+  readonly displayLaneKey?: string;
 };
 
 /**
@@ -21,7 +24,11 @@ type LaneHistoryPopoverProps = {
  * rule out and inserts a successor, so the lineage is already in the table.
  * This is the answer to "what was the rate in March", read straight from it.
  */
-export function LaneHistoryPopover({ rateAgreementId, laneKey }: LaneHistoryPopoverProps) {
+export function LaneHistoryPopover({
+  rateAgreementId,
+  laneKey,
+  displayLaneKey,
+}: LaneHistoryPopoverProps) {
   const [open, setOpen] = useState(false);
 
   const { data: history, isLoading } = useQuery({
@@ -48,7 +55,9 @@ export function LaneHistoryPopover({ rateAgreementId, laneKey }: LaneHistoryPopo
       <PopoverContent align="end" className="w-96 p-0">
         <div className="border-b p-3">
           <p className="text-xs font-medium">Rate History</p>
-          <p className="mt-0.5 font-mono text-2xs text-muted-foreground">{laneKey}</p>
+          <p className="mt-0.5 font-mono text-2xs text-muted-foreground">
+            {displayLaneKey ?? laneKey}
+          </p>
         </div>
         <div className="max-h-72 overflow-y-auto p-3">
           {isLoading && <p className="text-2xs text-muted-foreground">Reading the lineage…</p>}

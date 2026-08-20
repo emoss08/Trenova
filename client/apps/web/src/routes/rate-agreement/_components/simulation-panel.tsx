@@ -129,12 +129,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
     );
   }
 
-<<<<<<< HEAD
-  const progress = runProgress(simulation);
-=======
-  const problems = problemRules(simulation?.ruleCoverage);
   const recentRuns = (history ?? []).slice(0, RUN_HISTORY_LIMIT);
->>>>>>> ce76438870b873518c5eb874b8b3070379a56927
 
   return (
     <div className="space-y-4">
@@ -182,64 +177,6 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
         </div>
       </div>
 
-<<<<<<< HEAD
-      <p className="text-muted-foreground text-xs">
-        Every shipment is re-rated against its own facts — the weight it had, the lane it ran, the
-        day it shipped — so this is what would have been invoiced. Nothing it produces touches a
-        shipment.
-      </p>
-
-      {simulation && (
-        <div className="rounded-md border p-3">
-          <div className="mb-2 flex items-center gap-2">
-            <Badge variant={simulation.status === "Failed" ? "warning" : "secondary"}>
-              {simulation.status}
-            </Badge>
-            <span className="text-sm font-medium">{simulation.name}</span>
-          </div>
-
-          <p className="text-sm">{summaryHeadline(simulation)}</p>
-
-          {progress !== null && !isTerminal(simulation) && (
-            <p className="text-muted-foreground mt-1 text-xs">
-              {Math.round(progress * 100)}% of the window replayed
-            </p>
-          )}
-
-          {isTerminal(simulation) && measuredAnything(simulation) && simulation.summary && (
-            <dl className="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-              <SummaryStat label="Shipments" value={String(simulation.summary.evaluatedCount)} />
-              <SummaryStat label="Changed" value={String(simulation.summary.changedCount)} />
-              <SummaryStat
-                label="Revenue delta"
-                value={`${simulation.summary.totalDelta} (${simulation.summary.totalDeltaPct}%)`}
-              />
-              <SummaryStat
-                label="Largest single move"
-                value={`${simulation.summary.maxIncrease} / ${simulation.summary.maxDecrease}`}
-              />
-            </dl>
-          )}
-        </div>
-      )}
-
-      {problems.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h4 className="text-sm font-medium">Lanes that did nothing</h4>
-          <p className="text-muted-foreground text-xs">
-            These do not show up in the revenue total, and they are usually why a tariff prices
-            differently from how it was written.
-          </p>
-          {problems.map((row) => (
-            <Alert key={row.ruleId}>
-              <CircleAlertIcon className="size-4" />
-              <AlertDescription>
-                <span className="font-medium">{row.label || displayLaneKey(row.laneKey)}</span>{" "}
-                <span className="text-muted-foreground">— {ruleOutcomeLabel(row.outcome)}</span>
-                <p className="text-muted-foreground mt-0.5 text-xs">{ruleCoverageNote(row)}</p>
-              </AlertDescription>
-            </Alert>
-=======
       {recentRuns.length > 1 && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {recentRuns.map((run) => (
@@ -269,50 +206,10 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                 </p>
               ) : null}
             </button>
->>>>>>> ce76438870b873518c5eb874b8b3070379a56927
           ))}
         </div>
       )}
 
-<<<<<<< HEAD
-      {results && results.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h4 className="text-sm font-medium">Shipments this would have moved</h4>
-          <div className="overflow-x-auto rounded-md border">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="bg-muted/50 text-muted-foreground text-xs">
-                  <th className="border-b px-3 py-2 text-left font-medium">Shipment</th>
-                  <th className="border-b px-3 py-2 text-left font-medium">Lane</th>
-                  <th className="border-b px-3 py-2 text-right font-medium">Billed</th>
-                  <th className="border-b px-3 py-2 text-right font-medium">Would charge</th>
-                  <th className="border-b px-3 py-2 text-right font-medium">Change</th>
-                </tr>
-              </thead>
-              <tbody>
-                {results.map((row) => (
-                  <tr key={row.shipmentId}>
-                    <td className="border-b px-3 py-2 font-mono text-xs">
-                      {row.proNumber || row.shipmentId}
-                    </td>
-                    <td className="text-muted-foreground border-b px-3 py-2 font-mono text-xs">
-                      {row.laneKey ? displayLaneKey(row.laneKey) : "—"}
-                    </td>
-                    <td className="border-b px-3 py-2 text-right font-mono text-xs">
-                      {row.beforeAmount}
-                    </td>
-                    <td className="border-b px-3 py-2 text-right font-mono text-xs">
-                      {row.afterAmount}
-                    </td>
-                    <td
-                      className={`border-b px-3 py-2 text-right font-mono text-xs ${
-                        row.delta > 0 ? "text-warning" : "text-foreground"
-                      }`}
-                    >
-                      {row.delta} ({row.deltaPercent}%)
-                    </td>
-                  </tr>
-=======
       {simulation ? (
         <SimulationReading simulation={simulation} />
       ) : (
@@ -348,9 +245,13 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                 {problems.map((row) => (
                   <TableRow key={row.ruleId}>
                     <TableCell>
-                      <span className="text-xs font-medium">{row.label || row.laneKey}</span>
+                      <span className="text-xs font-medium">
+                        {row.label || displayLaneKey(row.laneKey)}
+                      </span>
                       {row.label ? (
-                        <p className="font-mono text-2xs text-muted-foreground">{row.laneKey}</p>
+                        <p className="font-mono text-2xs text-muted-foreground">
+                          {displayLaneKey(row.laneKey)}
+                        </p>
                       ) : null}
                     </TableCell>
                     <TableCell className="text-xs whitespace-nowrap">
@@ -360,7 +261,6 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                       {ruleCoverageNote(row)}
                     </TableCell>
                   </TableRow>
->>>>>>> ce76438870b873518c5eb874b8b3070379a56927
                 ))}
               </TableBody>
             </Table>
@@ -395,7 +295,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
                       {row.proNumber || row.shipmentId}
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      {row.laneKey || "—"}
+                      {row.laneKey ? displayLaneKey(row.laneKey) : "—"}
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs tabular-nums">
                       {formatCurrency(row.beforeAmount)}

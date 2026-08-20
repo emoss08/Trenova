@@ -47,6 +47,7 @@ import { CircleAlertIcon, DownloadIcon, FileUpIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { useLaneKeyLabels } from "./use-lane-scope-labels";
 
 const TONE_CLASS: Record<ChangeTone, string> = {
   danger: "text-destructive",
@@ -170,6 +171,9 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
   const changes = meaningfulChanges(batch?.changes);
   const warnings = commitWarnings(batch);
   const reviewing = Boolean(batch);
+  // Lane keys arrive as stored strings, ids and all; a person reviewing the
+  // diff should read names.
+  const displayLaneKey = useLaneKeyLabels(changes.map((change) => change.laneKey));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -342,10 +346,10 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
                       <TableRow key={`${change.kind}-${change.laneKey}`}>
                         <TableCell>
                           <span className="text-xs font-medium">
-                            {change.label || change.laneKey}
+                            {change.label || displayLaneKey(change.laneKey)}
                           </span>
                           <p className="font-mono text-2xs text-muted-foreground">
-                            {change.laneKey}
+                            {displayLaneKey(change.laneKey)}
                           </p>
                         </TableCell>
                         <TableCell className={cn("text-xs", TONE_CLASS[changeTone(change.kind)])}>

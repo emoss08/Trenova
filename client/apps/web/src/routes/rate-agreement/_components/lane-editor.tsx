@@ -59,11 +59,8 @@ export function LaneEditor() {
   const { control, getValues } = useFormContext<RateAgreement>();
   const { fields, append, remove } = useFieldArray({ control, name: "rules" });
   const rules = (useWatch({ control, name: "rules" }) ?? []) as RateAgreementRule[];
-<<<<<<< HEAD
   const resolveScopeValue = useLaneScopeLabels(rules);
-=======
   const agreementId = getValues("id") ?? undefined;
->>>>>>> ce76438870b873518c5eb874b8b3070379a56927
 
   // `rules` is a watched array and so is a fresh reference on every render.
   // Keying the memo on what coverage actually depends on means it recomputes
@@ -118,11 +115,8 @@ export function LaneEditor() {
           index={index}
           rule={rules[index]}
           issue={issueByIndex.get(index)?.message}
-<<<<<<< HEAD
           resolveScopeValue={resolveScopeValue}
-=======
           rateAgreementId={agreementId}
->>>>>>> ce76438870b873518c5eb874b8b3070379a56927
           onRemove={() => remove(index)}
         />
       ))}
@@ -140,19 +134,20 @@ type LaneRowProps = {
   index: number;
   rule?: RateAgreementRule;
   issue?: string;
-<<<<<<< HEAD
   resolveScopeValue: LaneScopeLabelResolver;
-  onRemove: () => void;
-};
-
-function LaneRow({ control, index, rule, issue, resolveScopeValue, onRemove }: LaneRowProps) {
-=======
   rateAgreementId?: string;
   onRemove: () => void;
 };
 
-function LaneRow({ control, index, rule, issue, rateAgreementId, onRemove }: LaneRowProps) {
->>>>>>> ce76438870b873518c5eb874b8b3070379a56927
+function LaneRow({
+  control,
+  index,
+  rule,
+  issue,
+  resolveScopeValue,
+  rateAgreementId,
+  onRemove,
+}: LaneRowProps) {
   // A lane prices through exactly one of the two, so whichever is chosen hides
   // the other — clearing the selection brings the alternative back.
   const usesMatrix = Boolean(rule?.rateMatrixId);
@@ -161,6 +156,9 @@ function LaneRow({ control, index, rule, issue, rateAgreementId, onRemove }: Lan
   // "CS:us_01M0…|DALLAS". A person debugging "why did the other rate apply"
   // needs the key's shape, not its identifiers.
   const laneKey = rule ? laneKeyDisplay(rule, resolveScopeValue) : null;
+  // History is queried by the stored key, ids and all — the display key exists
+  // only for people, and the database has never heard of it.
+  const storedLaneKey = rule ? laneKeyPreview(rule) : null;
 
   return (
     <div className="rounded-md border bg-card p-4">
@@ -181,7 +179,13 @@ function LaneRow({ control, index, rule, issue, rateAgreementId, onRemove }: Lan
           </div>
         </div>
         <div className="flex items-center gap-1">
-          {laneKey && <LaneHistoryPopover rateAgreementId={rateAgreementId} laneKey={laneKey} />}
+          {storedLaneKey && (
+            <LaneHistoryPopover
+              rateAgreementId={rateAgreementId}
+              laneKey={storedLaneKey}
+              displayLaneKey={laneKey ?? storedLaneKey}
+            />
+          )}
           <Button
             type="button"
             variant="ghost"
