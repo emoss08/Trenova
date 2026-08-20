@@ -1740,53 +1740,79 @@ var RateAgreementVersionTable = TableInfo{
 //	q.Where(RateAgreementVersionColumns.ID.Eq(), id)           // WHERE ragv.id = ?
 //	q.Order(RateAgreementVersionColumns.CreatedAt.OrderDesc())  // ORDER BY ragv.created_at DESC
 var RateAgreementVersionColumns = struct {
-	ID                  Column // "id" → qualified: "ragv.id"
-	BusinessUnitID      Column // "business_unit_id" → qualified: "ragv.business_unit_id"
-	OrganizationID      Column // "organization_id" → qualified: "ragv.organization_id"
-	RateAgreementID     Column // "rate_agreement_id" → qualified: "ragv.rate_agreement_id"
-	VersionNumber       Column // "version_number" → qualified: "ragv.version_number"
-	EffectiveFrom       Column // "effective_from" → qualified: "ragv.effective_from"
-	EffectiveTo         Column // "effective_to" → qualified: "ragv.effective_to"
-	Name                Column // "name" → qualified: "ragv.name"
-	Description         Column // "description" → qualified: "ragv.description"
-	AgreementType       Column // "agreement_type" → qualified: "ragv.agreement_type"
-	Status              Column // "status" → qualified: "ragv.status"
-	ContractRef         Column // "contract_ref" → qualified: "ragv.contract_ref"
-	Currency            Column // "currency" → qualified: "ragv.currency"
-	DefaultMinCharge    Column // "default_min_charge" → qualified: "ragv.default_min_charge"
-	DefaultMaxCharge    Column // "default_max_charge" → qualified: "ragv.default_max_charge"
-	RoundingMode        Column // "rounding_mode" → qualified: "ragv.rounding_mode"
-	RoundingPrecision   Column // "rounding_precision" → qualified: "ragv.rounding_precision"
-	MarginFloorPercent  Column // "margin_floor_percent" → qualified: "ragv.margin_floor_percent"
-	MaxPayPercentOfSell Column // "max_pay_percent_of_sell" → qualified: "ragv.max_pay_percent_of_sell"
-	ChangeMessage       Column // "change_message" → qualified: "ragv.change_message"
-	ChangeSummary       Column // "change_summary" → qualified: "ragv.change_summary"
-	CreatedByID         Column // "created_by_id" → qualified: "ragv.created_by_id"
-	CreatedAt           Column // "created_at" → qualified: "ragv.created_at"
+	ID                     Column // "id" → qualified: "ragv.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "ragv.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "ragv.organization_id"
+	RateAgreementID        Column // "rate_agreement_id" → qualified: "ragv.rate_agreement_id"
+	VersionNumber          Column // "version_number" → qualified: "ragv.version_number"
+	EffectiveFrom          Column // "effective_from" → qualified: "ragv.effective_from"
+	EffectiveTo            Column // "effective_to" → qualified: "ragv.effective_to"
+	PartyType              Column // "party_type" → qualified: "ragv.party_type"
+	CustomerID             Column // "customer_id" → qualified: "ragv.customer_id"
+	CarrierID              Column // "carrier_id" → qualified: "ragv.carrier_id"
+	Code                   Column // "code" → qualified: "ragv.code"
+	Name                   Column // "name" → qualified: "ragv.name"
+	Description            Column // "description" → qualified: "ragv.description"
+	AgreementType          Column // "agreement_type" → qualified: "ragv.agreement_type"
+	Status                 Column // "status" → qualified: "ragv.status"
+	ContractRef            Column // "contract_ref" → qualified: "ragv.contract_ref"
+	DocumentID             Column // "document_id" → qualified: "ragv.document_id"
+	Priority               Column // "priority" → qualified: "ragv.priority"
+	AgreementEffectiveFrom Column // "agreement_effective_from" → qualified: "ragv.agreement_effective_from"
+	AgreementEffectiveTo   Column // "agreement_effective_to" → qualified: "ragv.agreement_effective_to"
+	AutoRenew              Column // "auto_renew" → qualified: "ragv.auto_renew"
+	RenewalNoticeDays      Column // "renewal_notice_days" → qualified: "ragv.renewal_notice_days"
+	BillToCustomerID       Column // "bill_to_customer_id" → qualified: "ragv.bill_to_customer_id"
+	Currency               Column // "currency" → qualified: "ragv.currency"
+	DefaultMinCharge       Column // "default_min_charge" → qualified: "ragv.default_min_charge"
+	DefaultMaxCharge       Column // "default_max_charge" → qualified: "ragv.default_max_charge"
+	RoundingMode           Column // "rounding_mode" → qualified: "ragv.rounding_mode"
+	RoundingPrecision      Column // "rounding_precision" → qualified: "ragv.rounding_precision"
+	MarginFloorPercent     Column // "margin_floor_percent" → qualified: "ragv.margin_floor_percent"
+	MaxPayPercentOfSell    Column // "max_pay_percent_of_sell" → qualified: "ragv.max_pay_percent_of_sell"
+	AccessorialTerms       Column // "accessorial_terms" → qualified: "ragv.accessorial_terms"
+	FuelTerms              Column // "fuel_terms" → qualified: "ragv.fuel_terms"
+	ChangeMessage          Column // "change_message" → qualified: "ragv.change_message"
+	ChangeSummary          Column // "change_summary" → qualified: "ragv.change_summary"
+	CreatedByID            Column // "created_by_id" → qualified: "ragv.created_by_id"
+	CreatedAt              Column // "created_at" → qualified: "ragv.created_at"
 }{
-	ID:                  NewColumn("id", "ragv"),
-	BusinessUnitID:      NewColumn("business_unit_id", "ragv"),
-	OrganizationID:      NewColumn("organization_id", "ragv"),
-	RateAgreementID:     NewColumn("rate_agreement_id", "ragv"),
-	VersionNumber:       NewColumn("version_number", "ragv"),
-	EffectiveFrom:       NewColumn("effective_from", "ragv"),
-	EffectiveTo:         NewColumn("effective_to", "ragv"),
-	Name:                NewColumn("name", "ragv"),
-	Description:         NewColumn("description", "ragv"),
-	AgreementType:       NewColumn("agreement_type", "ragv"),
-	Status:              NewColumn("status", "ragv"),
-	ContractRef:         NewColumn("contract_ref", "ragv"),
-	Currency:            NewColumn("currency", "ragv"),
-	DefaultMinCharge:    NewColumn("default_min_charge", "ragv"),
-	DefaultMaxCharge:    NewColumn("default_max_charge", "ragv"),
-	RoundingMode:        NewColumn("rounding_mode", "ragv"),
-	RoundingPrecision:   NewColumn("rounding_precision", "ragv"),
-	MarginFloorPercent:  NewColumn("margin_floor_percent", "ragv"),
-	MaxPayPercentOfSell: NewColumn("max_pay_percent_of_sell", "ragv"),
-	ChangeMessage:       NewColumn("change_message", "ragv"),
-	ChangeSummary:       NewColumn("change_summary", "ragv"),
-	CreatedByID:         NewColumn("created_by_id", "ragv"),
-	CreatedAt:           NewColumn("created_at", "ragv"),
+	ID:                     NewColumn("id", "ragv"),
+	BusinessUnitID:         NewColumn("business_unit_id", "ragv"),
+	OrganizationID:         NewColumn("organization_id", "ragv"),
+	RateAgreementID:        NewColumn("rate_agreement_id", "ragv"),
+	VersionNumber:          NewColumn("version_number", "ragv"),
+	EffectiveFrom:          NewColumn("effective_from", "ragv"),
+	EffectiveTo:            NewColumn("effective_to", "ragv"),
+	PartyType:              NewColumn("party_type", "ragv"),
+	CustomerID:             NewColumn("customer_id", "ragv"),
+	CarrierID:              NewColumn("carrier_id", "ragv"),
+	Code:                   NewColumn("code", "ragv"),
+	Name:                   NewColumn("name", "ragv"),
+	Description:            NewColumn("description", "ragv"),
+	AgreementType:          NewColumn("agreement_type", "ragv"),
+	Status:                 NewColumn("status", "ragv"),
+	ContractRef:            NewColumn("contract_ref", "ragv"),
+	DocumentID:             NewColumn("document_id", "ragv"),
+	Priority:               NewColumn("priority", "ragv"),
+	AgreementEffectiveFrom: NewColumn("agreement_effective_from", "ragv"),
+	AgreementEffectiveTo:   NewColumn("agreement_effective_to", "ragv"),
+	AutoRenew:              NewColumn("auto_renew", "ragv"),
+	RenewalNoticeDays:      NewColumn("renewal_notice_days", "ragv"),
+	BillToCustomerID:       NewColumn("bill_to_customer_id", "ragv"),
+	Currency:               NewColumn("currency", "ragv"),
+	DefaultMinCharge:       NewColumn("default_min_charge", "ragv"),
+	DefaultMaxCharge:       NewColumn("default_max_charge", "ragv"),
+	RoundingMode:           NewColumn("rounding_mode", "ragv"),
+	RoundingPrecision:      NewColumn("rounding_precision", "ragv"),
+	MarginFloorPercent:     NewColumn("margin_floor_percent", "ragv"),
+	MaxPayPercentOfSell:    NewColumn("max_pay_percent_of_sell", "ragv"),
+	AccessorialTerms:       NewColumn("accessorial_terms", "ragv"),
+	FuelTerms:              NewColumn("fuel_terms", "ragv"),
+	ChangeMessage:          NewColumn("change_message", "ragv"),
+	ChangeSummary:          NewColumn("change_summary", "ragv"),
+	CreatedByID:            NewColumn("created_by_id", "ragv"),
+	CreatedAt:              NewColumn("created_at", "ragv"),
 }
 
 // RateAgreementVersionFieldMap maps JSON API field names to database column names.
@@ -1794,29 +1820,42 @@ var RateAgreementVersionColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by RateAgreementVersion.GetStaticFieldMap().
 var RateAgreementVersionFieldMap = map[string]string{
-	"id":                  "id",
-	"businessUnitId":      "business_unit_id",
-	"organizationId":      "organization_id",
-	"rateAgreementId":     "rate_agreement_id",
-	"versionNumber":       "version_number",
-	"effectiveFrom":       "effective_from",
-	"effectiveTo":         "effective_to",
-	"name":                "name",
-	"description":         "description",
-	"agreementType":       "agreement_type",
-	"status":              "status",
-	"contractRef":         "contract_ref",
-	"currency":            "currency",
-	"defaultMinCharge":    "default_min_charge",
-	"defaultMaxCharge":    "default_max_charge",
-	"roundingMode":        "rounding_mode",
-	"roundingPrecision":   "rounding_precision",
-	"marginFloorPercent":  "margin_floor_percent",
-	"maxPayPercentOfSell": "max_pay_percent_of_sell",
-	"changeMessage":       "change_message",
-	"changeSummary":       "change_summary",
-	"createdById":         "created_by_id",
-	"createdAt":           "created_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"rateAgreementId":        "rate_agreement_id",
+	"versionNumber":          "version_number",
+	"effectiveFrom":          "effective_from",
+	"effectiveTo":            "effective_to",
+	"partyType":              "party_type",
+	"customerId":             "customer_id",
+	"carrierId":              "carrier_id",
+	"code":                   "code",
+	"name":                   "name",
+	"description":            "description",
+	"agreementType":          "agreement_type",
+	"status":                 "status",
+	"contractRef":            "contract_ref",
+	"documentId":             "document_id",
+	"priority":               "priority",
+	"agreementEffectiveFrom": "agreement_effective_from",
+	"agreementEffectiveTo":   "agreement_effective_to",
+	"autoRenew":              "auto_renew",
+	"renewalNoticeDays":      "renewal_notice_days",
+	"billToCustomerId":       "bill_to_customer_id",
+	"currency":               "currency",
+	"defaultMinCharge":       "default_min_charge",
+	"defaultMaxCharge":       "default_max_charge",
+	"roundingMode":           "rounding_mode",
+	"roundingPrecision":      "rounding_precision",
+	"marginFloorPercent":     "margin_floor_percent",
+	"maxPayPercentOfSell":    "max_pay_percent_of_sell",
+	"accessorialTerms":       "accessorial_terms",
+	"fuelTerms":              "fuel_terms",
+	"changeMessage":          "change_message",
+	"changeSummary":          "change_summary",
+	"createdById":            "created_by_id",
+	"createdAt":              "created_at",
 }
 
 // RateAgreementVersionInsertableColumns lists column names suitable for INSERT statements on the "rate_agreement_versions" table.
@@ -1829,11 +1868,22 @@ var RateAgreementVersionInsertableColumns = []string{
 	"version_number",
 	"effective_from",
 	"effective_to",
+	"party_type",
+	"customer_id",
+	"carrier_id",
+	"code",
 	"name",
 	"description",
 	"agreement_type",
 	"status",
 	"contract_ref",
+	"document_id",
+	"priority",
+	"agreement_effective_from",
+	"agreement_effective_to",
+	"auto_renew",
+	"renewal_notice_days",
+	"bill_to_customer_id",
 	"currency",
 	"default_min_charge",
 	"default_max_charge",
@@ -1841,6 +1891,8 @@ var RateAgreementVersionInsertableColumns = []string{
 	"rounding_precision",
 	"margin_floor_percent",
 	"max_pay_percent_of_sell",
+	"accessorial_terms",
+	"fuel_terms",
 	"change_message",
 	"change_summary",
 	"created_by_id",
@@ -1910,29 +1962,42 @@ func RateAgreementVersionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQ
 //	RateAgreementVersionFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var RateAgreementVersionFilter = struct {
-	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	RateAgreementID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementId" → DB: "rate_agreement_id"
-	VersionNumber       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
-	EffectiveFrom       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
-	EffectiveTo         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveTo" → DB: "effective_to"
-	Name                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	AgreementType       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agreementType" → DB: "agreement_type"
-	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	ContractRef         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contractRef" → DB: "contract_ref"
-	Currency            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currency" → DB: "currency"
-	DefaultMinCharge    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMinCharge" → DB: "default_min_charge"
-	DefaultMaxCharge    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMaxCharge" → DB: "default_max_charge"
-	RoundingMode        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
-	RoundingPrecision   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
-	MarginFloorPercent  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "marginFloorPercent" → DB: "margin_floor_percent"
-	MaxPayPercentOfSell func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxPayPercentOfSell" → DB: "max_pay_percent_of_sell"
-	ChangeMessage       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeMessage" → DB: "change_message"
-	ChangeSummary       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeSummary" → DB: "change_summary"
-	CreatedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
-	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RateAgreementID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementId" → DB: "rate_agreement_id"
+	VersionNumber          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
+	EffectiveFrom          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
+	EffectiveTo            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveTo" → DB: "effective_to"
+	PartyType              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partyType" → DB: "party_type"
+	CustomerID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	CarrierID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carrierId" → DB: "carrier_id"
+	Code                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	AgreementType          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agreementType" → DB: "agreement_type"
+	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	ContractRef            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contractRef" → DB: "contract_ref"
+	DocumentID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
+	Priority               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
+	AgreementEffectiveFrom func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agreementEffectiveFrom" → DB: "agreement_effective_from"
+	AgreementEffectiveTo   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agreementEffectiveTo" → DB: "agreement_effective_to"
+	AutoRenew              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoRenew" → DB: "auto_renew"
+	RenewalNoticeDays      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "renewalNoticeDays" → DB: "renewal_notice_days"
+	BillToCustomerID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCustomerId" → DB: "bill_to_customer_id"
+	Currency               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currency" → DB: "currency"
+	DefaultMinCharge       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMinCharge" → DB: "default_min_charge"
+	DefaultMaxCharge       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMaxCharge" → DB: "default_max_charge"
+	RoundingMode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
+	RoundingPrecision      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
+	MarginFloorPercent     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "marginFloorPercent" → DB: "margin_floor_percent"
+	MaxPayPercentOfSell    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxPayPercentOfSell" → DB: "max_pay_percent_of_sell"
+	AccessorialTerms       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialTerms" → DB: "accessorial_terms"
+	FuelTerms              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelTerms" → DB: "fuel_terms"
+	ChangeMessage          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeMessage" → DB: "change_message"
+	ChangeSummary          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeSummary" → DB: "change_summary"
+	CreatedByID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1955,6 +2020,18 @@ var RateAgreementVersionFilter = struct {
 	EffectiveTo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("effectiveTo", op, value)
 	},
+	PartyType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partyType", op, value)
+	},
+	CustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("customerId", op, value)
+	},
+	CarrierID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("carrierId", op, value)
+	},
+	Code: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("code", op, value)
+	},
 	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("name", op, value)
 	},
@@ -1969,6 +2046,27 @@ var RateAgreementVersionFilter = struct {
 	},
 	ContractRef: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("contractRef", op, value)
+	},
+	DocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("documentId", op, value)
+	},
+	Priority: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("priority", op, value)
+	},
+	AgreementEffectiveFrom: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agreementEffectiveFrom", op, value)
+	},
+	AgreementEffectiveTo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agreementEffectiveTo", op, value)
+	},
+	AutoRenew: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoRenew", op, value)
+	},
+	RenewalNoticeDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("renewalNoticeDays", op, value)
+	},
+	BillToCustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("billToCustomerId", op, value)
 	},
 	Currency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("currency", op, value)
@@ -1990,6 +2088,12 @@ var RateAgreementVersionFilter = struct {
 	},
 	MaxPayPercentOfSell: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxPayPercentOfSell", op, value)
+	},
+	AccessorialTerms: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("accessorialTerms", op, value)
+	},
+	FuelTerms: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fuelTerms", op, value)
 	},
 	ChangeMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("changeMessage", op, value)
