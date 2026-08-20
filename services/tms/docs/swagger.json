@@ -7700,6 +7700,56 @@
                 "StatusVoid"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_rateagreement.AccessorialTermSnapshot": {
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "appliesFrom": {
+                    "type": "integer"
+                },
+                "appliesTo": {
+                    "type": "integer"
+                },
+                "applyCondition": {
+                    "type": "string"
+                },
+                "autoApply": {
+                    "type": "boolean"
+                },
+                "formulaTemplateId": {
+                    "type": "string"
+                },
+                "freeUnits": {
+                    "type": "integer"
+                },
+                "maxAmount": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "method": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.Method"
+                },
+                "rateUnit": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.RateUnit"
+                },
+                "serviceTypeIds": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "shipmentTypeIds": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "waived": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
         "github_com_emoss08_trenova_internal_core_domain_rateagreement.AgreementType": {
             "enum": [
                 "Contract",
@@ -7740,6 +7790,26 @@
                 "FreightClassSourceDensity",
                 "FreightClassSourceFixed"
             ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_rateagreement.FuelTermSnapshot": {
+            "properties": {
+                "capAmount": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "fuelSurchargeProgramId": {
+                    "type": "string"
+                },
+                "incrementRateOverride": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "pegPriceOverride": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "waived": {
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
         },
         "github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType": {
             "enum": [
@@ -8297,10 +8367,39 @@
         },
         "github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementVersion": {
             "properties": {
+                "accessorialNames": {
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "description": "Read-time only: accessorial charge id → code, resolved by the repository\nfor every id the snapshot and change summary mention. Never persisted.",
+                    "type": "object"
+                },
+                "accessorialTerms": {
+                    "additionalProperties": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.AccessorialTermSnapshot"
+                    },
+                    "description": "The negotiated schedule keyed by accessorial charge id, and the fuel\nbinding's terms. Stored as ids only — names are patched on at read time\ninto AccessorialNames, so a later rename of the charge cannot rewrite\nwhat the contract said.",
+                    "type": "object"
+                },
+                "agreementEffectiveFrom": {
+                    "type": "integer"
+                },
+                "agreementEffectiveTo": {
+                    "type": "integer"
+                },
                 "agreementType": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.AgreementType"
                 },
+                "autoRenew": {
+                    "type": "boolean"
+                },
+                "billToCustomerId": {
+                    "type": "string"
+                },
                 "businessUnitId": {
+                    "type": "string"
+                },
+                "carrierId": {
                     "type": "string"
                 },
                 "changeMessage": {
@@ -8311,6 +8410,9 @@
                         "$ref": "#/definitions/jsonutils.FieldChange"
                     },
                     "type": "object"
+                },
+                "code": {
+                    "type": "string"
                 },
                 "contractRef": {
                     "type": "string"
@@ -8327,6 +8429,9 @@
                 "currency": {
                     "type": "string"
                 },
+                "customerId": {
+                    "type": "string"
+                },
                 "defaultMaxCharge": {
                     "$ref": "#/definitions/decimal.NullDecimal"
                 },
@@ -8336,11 +8441,17 @@
                 "description": {
                     "type": "string"
                 },
+                "documentId": {
+                    "type": "string"
+                },
                 "effectiveFrom": {
                     "type": "integer"
                 },
                 "effectiveTo": {
                     "type": "integer"
+                },
+                "fuelTerms": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.FuelTermSnapshot"
                 },
                 "id": {
                     "type": "string"
@@ -8357,8 +8468,18 @@
                 "organizationId": {
                     "type": "string"
                 },
+                "partyType": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType"
+                },
+                "priority": {
+                    "description": "The agreement's own window, distinct from EffectiveFrom/EffectiveTo above,\nwhich say when this *version* of the terms governed. Moving the contract's\ndates is a renegotiation like any other and diffs under these names.",
+                    "type": "integer"
+                },
                 "rateAgreementId": {
                     "type": "string"
+                },
+                "renewalNoticeDays": {
+                    "type": "integer"
                 },
                 "roundingMode": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode"

@@ -10,8 +10,8 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import type { RateAgreementVersion } from "@trenova/shared/types/rate";
 import { ClockIcon } from "lucide-react";
+import { describeVersion } from "./version-summary";
 
 type VersionsTabProps = {
   /** Absent while the agreement is being created — there is no history yet. */
@@ -87,13 +87,4 @@ export function VersionsTab({ rateAgreementId }: VersionsTabProps) {
       </Table>
     </div>
   );
-}
-
-function describeVersion(version: RateAgreementVersion): string {
-  if (version.changeMessage) return version.changeMessage;
-
-  const changedFields = Object.keys(version.changeSummary ?? {});
-  if (changedFields.length === 0) return "—";
-
-  return changedFields.join(", ");
 }

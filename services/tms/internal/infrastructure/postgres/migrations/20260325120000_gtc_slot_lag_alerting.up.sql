@@ -36,5 +36,5 @@
 --         $job$);
 --     END IF;
 -- END $$;
-CREATE TABLE
-    wat (id bigint PRIMARY KEY);
+SELECT
+    1;

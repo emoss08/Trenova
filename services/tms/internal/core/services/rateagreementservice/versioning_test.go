@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -124,6 +125,183 @@ func TestUpdate_UnchangedHeaderTermsWriteNoVersion(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.EqualValues(t, 3, updated.CurrentVersionNumber)
+}
+
+// The contract's window, priority, renewal terms and billing routing are
+// negotiated exactly the way its currency is — moving any of them has to read
+// as a renegotiation, not vanish because the field lives outside the old
+// snapshot.
+func TestHeaderTermsChanged_WidenedHeaderFieldsAreTerms(t *testing.T) {
+	t.Parallel()
+
+	billTo := pulid.MustNew("cus_")
+
+	cases := []struct {
+		name string
+		edit func(a *rateagreement.RateAgreement)
+		path string
+	}{
+		{
+			name: "agreement window",
+			edit: func(a *rateagreement.RateAgreement) { a.EffectiveFrom = 500 },
+			path: "agreementEffectiveFrom",
+		},
+		{
+			name: "priority",
+			edit: func(a *rateagreement.RateAgreement) { a.Priority = 7 },
+			path: "priority",
+		},
+		{
+			name: "auto renew",
+			edit: func(a *rateagreement.RateAgreement) { a.AutoRenew = true },
+			path: "autoRenew",
+		},
+		{
+			name: "renewal notice",
+			edit: func(a *rateagreement.RateAgreement) { a.RenewalNoticeDays = 60 },
+			path: "renewalNoticeDays",
+		},
+		{
+			name: "bill-to customer",
+			edit: func(a *rateagreement.RateAgreement) { a.BillToCustomerID = &billTo },
+			path: "billToCustomerId",
+		},
+		{
+			name: "code",
+			edit: func(a *rateagreement.RateAgreement) { a.Code = "ACME-2027" },
+			path: "code",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			original := draftAgreement(rateagreement.StatusDraft)
+			edited := *original
+			tc.edit(&edited)
+
+			summary, changed := headerTermsChanged(original, &edited)
+
+			require.True(t, changed)
+			assert.Contains(t, summary, tc.path)
+		})
+	}
+}
+
+// The accessorial schedule is a negotiated term: a price change, an added or
+// dropped accessorial, or a moved window all mint a version, and the summary
+// names the exact term keyed by the charge it prices.
+func TestHeaderTermsChanged_AccessorialScheduleIsATerm(t *testing.T) {
+	t.Parallel()
+
+	chargeID := pulid.MustNew("acc_")
+	seed := draftAgreement(rateagreement.StatusDraft)
+
+	// Every reading is the same contract — identity included — so the only
+	// differences the diff can see are the ones each case introduces.
+	base := func() *rateagreement.RateAgreement {
+		agreement := *seed
+		agreement.Accessorials = []*rateagreement.RateAgreementAccessorial{{
+			AccessorialChargeID: chargeID,
+			Method:              "Flat",
+			Amount:              decimal.NewFromInt(25),
+		}}
+		return &agreement
+	}
+
+	t.Run("a price change is named", func(t *testing.T) {
+		t.Parallel()
+
+		original := base()
+		edited := base()
+		edited.Accessorials[0].Amount = decimal.NewFromInt(40)
+
+		summary, changed := headerTermsChanged(original, edited)
+
+		require.True(t, changed)
+		assert.Contains(t, summary, "accessorialTerms."+chargeID.String()+".amount")
+	})
+
+	t.Run("a moved window is named", func(t *testing.T) {
+		t.Parallel()
+
+		original := base()
+		edited := base()
+		from := int64(900)
+		edited.Accessorials[0].EffectiveFrom = &from
+
+		summary, changed := headerTermsChanged(original, edited)
+
+		require.True(t, changed)
+		assert.Contains(t, summary, "accessorialTerms."+chargeID.String()+".appliesFrom")
+	})
+
+	t.Run("an added accessorial is a change", func(t *testing.T) {
+		t.Parallel()
+
+		original := base()
+		edited := base()
+		added := pulid.MustNew("acc_")
+		edited.Accessorials = append(edited.Accessorials, &rateagreement.RateAgreementAccessorial{
+			AccessorialChargeID: added,
+			Method:              "Flat",
+			Amount:              decimal.NewFromInt(75),
+		})
+
+		summary, changed := headerTermsChanged(original, edited)
+
+		require.True(t, changed)
+		assert.Contains(t, summary, "accessorialTerms."+added.String())
+	})
+
+	t.Run("a dropped accessorial is a change", func(t *testing.T) {
+		t.Parallel()
+
+		original := base()
+		edited := base()
+		edited.Accessorials = nil
+
+		_, changed := headerTermsChanged(original, edited)
+
+		require.True(t, changed)
+	})
+
+	t.Run("a reordered applicability set is not a renegotiation", func(t *testing.T) {
+		t.Parallel()
+
+		first, second := pulid.MustNew("st_"), pulid.MustNew("st_")
+
+		original := base()
+		original.Accessorials[0].ServiceTypeIDs = []pulid.ID{first, second}
+		edited := base()
+		edited.Accessorials[0].ServiceTypeIDs = []pulid.ID{second, first}
+
+		_, changed := headerTermsChanged(original, edited)
+
+		assert.False(t, changed)
+	})
+}
+
+// The fuel binding prices every gallon the contract moves; binding a program,
+// waiving it, or overriding its peg is a renegotiation.
+func TestHeaderTermsChanged_FuelBindingIsATerm(t *testing.T) {
+	t.Parallel()
+
+	original := draftAgreement(rateagreement.StatusDraft)
+	edited := draftAgreement(rateagreement.StatusDraft)
+	edited.ID = original.ID
+	edited.OrganizationID = original.OrganizationID
+	edited.BusinessUnitID = original.BusinessUnitID
+	edited.CustomerID = original.CustomerID
+	edited.FuelBinding = &rateagreement.RateAgreementFuelBinding{
+		FuelSurchargeProgramID: pulid.MustNew("fsp_"),
+	}
+
+	summary, changed := headerTermsChanged(original, edited)
+
+	require.True(t, changed)
+	assert.Contains(t, summary, "fuelTerms")
 }
 
 // updateHarness wires the reads and writes an update makes, leaving version
