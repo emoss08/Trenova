@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { ClockIcon } from "lucide-react";
-import { describeVersion } from "./version-summary";
+import { describeVersion } from "@/lib/version-summary";
 
 type VersionsTabProps = {
   /** Absent while the agreement is being created — there is no history yet. */

@@ -50,6 +50,10 @@ ALTER TABLE "rate_agreement_versions"
     ADD COLUMN IF NOT EXISTS "fuel_terms" jsonb;
 
 --bun:split
+-- Backfill copies the agreement's CURRENT header values onto pre-existing
+-- version rows: the historical values were never recorded, so this is the only
+-- available reading. Rows backfilled here are not audit-grade history for the
+-- new columns; versions written after this migration are.
 UPDATE
     "rate_agreement_versions" AS v
 SET

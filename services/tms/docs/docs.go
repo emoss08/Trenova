@@ -39561,13 +39561,14 @@ const docTemplate = `{
                     }
                 },
                 "accessorialTerms": {
-                    "description": "The negotiated schedule keyed by accessorial charge id, and the fuel\nbinding's terms. Stored as ids only — names are patched on at read time\ninto AccessorialNames, so a later rename of the charge cannot rewrite\nwhat the contract said.",
+                    "description": "The negotiated accessorial schedule keyed by accessorial charge id.\nStored as ids only — names are patched on at read time into\nAccessorialNames, so a later rename of the charge cannot rewrite what\nthe contract said.",
                     "type": "object",
                     "additionalProperties": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.AccessorialTermSnapshot"
                     }
                 },
                 "agreementEffectiveFrom": {
+                    "description": "The agreement's own window, distinct from EffectiveFrom/EffectiveTo above,\nwhich say when this *version* of the terms governed. Moving the contract's\ndates is a renegotiation like any other and diffs under these names.",
                     "type": "integer"
                 },
                 "agreementEffectiveTo": {
@@ -39637,7 +39638,12 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "fuelTerms": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.FuelTermSnapshot"
+                    "description": "The fuel binding's negotiated terms as they stood.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.FuelTermSnapshot"
+                        }
+                    ]
                 },
                 "id": {
                     "type": "string"
@@ -39658,7 +39664,6 @@ const docTemplate = `{
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType"
                 },
                 "priority": {
-                    "description": "The agreement's own window, distinct from EffectiveFrom/EffectiveTo above,\nwhich say when this *version* of the terms governed. Moving the contract's\ndates is a renegotiation like any other and diffs under these names.",
                     "type": "integer"
                 },
                 "rateAgreementId": {
