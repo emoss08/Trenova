@@ -9,9 +9,11 @@ import (
 )
 
 type ListRateAgreementRequest struct {
-	Filter    *pagination.QueryOptions `json:"filter"`
-	PartyType rateagreement.PartyType  `json:"partyType"`
-	Status    rateagreement.Status     `json:"status"`
+	Filter     *pagination.QueryOptions `json:"filter"`
+	PartyType  rateagreement.PartyType  `json:"partyType"`
+	Status     rateagreement.Status     `json:"status"`
+	CustomerID *pulid.ID                `json:"customerId"`
+	CarrierID  *pulid.ID                `json:"carrierId"`
 }
 
 type ListRateAgreementConnectionRequest struct {
@@ -82,6 +84,12 @@ type ListRateAgreementRulesRequest struct {
 	RateAgreementID pulid.ID              `json:"rateAgreementId"`
 	AsOf            int64                 `json:"asOf"`
 	IncludeInactive bool                  `json:"includeInactive"`
+
+	// LaneKey narrows to one lane, which is how its history is read.
+	LaneKey string `json:"laneKey"`
+	// IncludeSuperseded keeps the closed-out rules: the full lineage, newest
+	// first, instead of only what is effective now.
+	IncludeSuperseded bool `json:"includeSuperseded"`
 }
 
 type GetRateAgreementRuleByIDRequest struct {

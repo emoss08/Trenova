@@ -864,6 +864,34 @@ export const rateImportBatchSchema = z.object({
 });
 export type RateImportBatch = z.infer<typeof rateImportBatchSchema>;
 
+/* -------------------------------------------------------------------------- */
+/*                          General rate increase                              */
+/* -------------------------------------------------------------------------- */
+
+/** One lane's before and after — what somebody reviews before applying a GRI. */
+export const rateIncreaseLineSchema = z.object({
+  rateAgreementId: z.string(),
+  agreementCode: z.string().default(""),
+  agreementName: z.string().default(""),
+  ruleId: z.string(),
+  laneKey: z.string().default(""),
+  label: z.string().default(""),
+  before: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  after: decimalStringSchema.nullish().transform((value) => value ?? 0),
+  breakCount: z.number().int().default(0),
+});
+export type RateIncreaseLine = z.infer<typeof rateIncreaseLineSchema>;
+
+/** Everything a GRI would do, stated before it does it. */
+export const rateIncreasePlanSchema = z.object({
+  effectiveFrom: z.number().int(),
+  agreementCount: z.number().int().default(0),
+  lines: z.array(rateIncreaseLineSchema).nullish(),
+  skippedNoRate: z.number().int().default(0),
+  negativeCount: z.number().int().default(0),
+});
+export type RateIncreasePlan = z.infer<typeof rateIncreasePlanSchema>;
+
 /** What an upload needs before a file means anything: where, and from when. */
 export const rateImportUploadSchema = z.object({
   rateAgreementId: z

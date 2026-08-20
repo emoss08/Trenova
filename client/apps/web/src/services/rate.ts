@@ -7,12 +7,16 @@ import {
   rateQuoteSchema,
   ratedShipmentSchema,
   rateImportBatchSchema,
+  rateIncreasePlanSchema,
   rateSimulationSchema,
   shopResultSchema,
   rateZoneSchema,
   type RateAgreement,
+  type RateAgreementRule,
   type RateAgreementVersion,
+  type RateIncreasePlan,
   type RateMatrix,
+  type RatePartyType,
   type RateMatrixCell,
   type RateQuote,
   type RatedShipment,
@@ -24,6 +28,19 @@ import {
   type ShopResult,
   type ShopStrategy,
 } from "@trenova/shared/types/rate";
+
+/** The scope and size of a general rate increase, as the server takes it. */
+export type RateIncreaseRequestPayload = {
+  agreementIds?: string[];
+  customerId?: string | null;
+  carrierId?: string | null;
+  partyType?: RatePartyType;
+  adjustment: {
+    percentChange?: number | null;
+    flatChange?: number | null;
+  };
+  effectiveFrom: number;
+};
 
 /** One of the review steps an agreement moves through. */
 export type RateAgreementReviewAction =
@@ -60,6 +77,56 @@ export class RateAgreementService {
     );
 
     return response?.results ?? [];
+  }
+
+  /**
+   * One lane's full rate history — every rule that ever priced it, newest
+   * first, closed-out windows included. This is the answer to "what did this
+   * lane cost in March".
+   */
+  public async listRuleHistory(id: string, laneKey: string): Promise<RateAgreementRule[]> {
+    const query = new URLSearchParams({ laneKey, includeSuperseded: "true" });
+    const response = await api.get<RateAgreementRule[]>(
+      `/rate-agreements/${id}/rules/?${query.toString()}`,
+    );
+
+    return response ?? [];
+  }
+
+  /**
+   * Copies the whole contract — lanes, breaks, accessorials, fuel terms — as a
+   * fresh draft. The renewal workflow starts here.
+   */
+  public async duplicate(
+    id: string,
+    payload: { code?: string; name?: string } = {},
+  ): Promise<RateAgreement> {
+    const response = await api.post<RateAgreement>(`/rate-agreements/${id}/duplicate/`, payload);
+
+    return safeParse(rateAgreementSchema, response, "Rate Agreement");
+  }
+
+  /** What a bulk rate change would do — before it does any of it. */
+  public async previewRateIncrease(payload: RateIncreaseRequestPayload): Promise<RateIncreasePlan> {
+    const response = await api.post<RateIncreasePlan>(
+      "/rate-agreements/rate-increase/preview/",
+      payload,
+    );
+
+    return safeParse(rateIncreasePlanSchema, response, "Rate Increase Plan");
+  }
+
+  /**
+   * Applies the increase: every affected rule is closed out and succeeded at
+   * the new rate from the effective date. The old rates stay in history.
+   */
+  public async applyRateIncrease(payload: RateIncreaseRequestPayload): Promise<RateIncreasePlan> {
+    const response = await api.post<RateIncreasePlan>(
+      "/rate-agreements/rate-increase/apply/",
+      payload,
+    );
+
+    return safeParse(rateIncreasePlanSchema, response, "Rate Increase Plan");
   }
 
   /**
