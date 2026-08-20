@@ -17464,6 +17464,146 @@ const docTemplate = `{
                 }
             }
         },
+        "/rate-agreements/rate-increase/apply/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Closes out every affected rule and inserts its successor at the new rate, effective the announced date. History is never mutated — the old rates stay readable forever.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Agreements"
+                ],
+                "summary": "Apply a general rate increase",
+                "operationId": "applyRateIncrease",
+                "parameters": [
+                    {
+                        "description": "Scope, adjustment, and effective date",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreaseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreasePlan"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/rate-agreements/rate-increase/preview/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Answers what a bulk rate change would do — every lane's before and after — without doing any of it.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Agreements"
+                ],
+                "summary": "Preview a general rate increase",
+                "operationId": "previewRateIncrease",
+                "parameters": [
+                    {
+                        "description": "Scope, adjustment, and effective date",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreaseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreasePlan"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/rate-agreements/select-options/": {
             "get": {
                 "security": [
@@ -17674,6 +17814,88 @@ const docTemplate = `{
                 }
             }
         },
+        "/rate-agreements/{rateAgreementID}/duplicate/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Copies the whole contract — lanes, breaks, accessorials, fuel terms — as a fresh draft with none of the original's history or approvals. The renewal workflow starts here.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Agreements"
+                ],
+                "summary": "Duplicate a rate agreement",
+                "operationId": "duplicateRateAgreement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rate agreement ID",
+                        "name": "rateAgreementID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Optional code and name for the copy",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_rateagreementservice.DuplicateRateAgreementRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreement"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/rate-agreements/{rateAgreementID}/rules": {
             "get": {
                 "security": [
@@ -17707,6 +17929,18 @@ const docTemplate = `{
                         "type": "boolean",
                         "description": "Include rules that are not active",
                         "name": "includeInactive",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Only rules on this lane",
+                        "name": "laneKey",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Keep closed-out rules — the lane's full history, newest first",
+                        "name": "includeSuperseded",
                         "in": "query"
                     }
                 ],
@@ -18322,6 +18556,44 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/rate-imports/template/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a starter CSV whose columns the importer recognises, with two example rows showing how lanes are described.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Rate Imports"
+                ],
+                "summary": "Download the rate sheet template",
+                "operationId": "rateSheetTemplate",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_rateimporthandler.TemplateResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                         }
@@ -26788,6 +27060,89 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/shipments/{shipmentID}/rate-override/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Replaces the contract's rate with a hand-set amount, or clears one so the contract prices the shipment again. The shipment is re-rated immediately, and the quote records what the contract would have charged instead.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shipments"
+                ],
+                "summary": "Set or clear a manual rate override",
+                "operationId": "setShipmentRateOverride",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Shipment ID",
+                        "name": "shipmentID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "The override, or clear=true to remove one",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SetRateOverrideRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                         }
@@ -45802,6 +46157,30 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_internal_core_ports_services.SetRateOverrideRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "Amount is the hand-set linehaul. Ignored when Clear is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/decimal.NullDecimal"
+                        }
+                    ]
+                },
+                "clear": {
+                    "description": "Clear removes the override instead of setting one.",
+                    "type": "boolean"
+                },
+                "rateLocked": {
+                    "description": "RateLocked freezes the shipment's numbers against every re-rating path,\nfor a shipment already invoiced whose numbers the customer has seen.",
+                    "type": "boolean"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadiness": {
             "type": "object",
             "properties": {
@@ -46536,6 +46915,111 @@ const docTemplate = `{
                 },
                 "favorited": {
                     "type": "boolean"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_services_rateagreementservice.DuplicateRateAgreementRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateAdjustment": {
+            "type": "object",
+            "properties": {
+                "flatChange": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "percentChange": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreaseLine": {
+            "type": "object",
+            "properties": {
+                "after": {
+                    "type": "number"
+                },
+                "agreementCode": {
+                    "type": "string"
+                },
+                "agreementName": {
+                    "type": "string"
+                },
+                "before": {
+                    "type": "number"
+                },
+                "breakCount": {
+                    "type": "integer"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "laneKey": {
+                    "type": "string"
+                },
+                "rateAgreementId": {
+                    "type": "string"
+                },
+                "ruleId": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreasePlan": {
+            "type": "object",
+            "properties": {
+                "agreementCount": {
+                    "type": "integer"
+                },
+                "effectiveFrom": {
+                    "type": "integer"
+                },
+                "lines": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreaseLine"
+                    }
+                },
+                "negativeCount": {
+                    "description": "NegativeCount counts lanes a flat decrease would push below zero. A\nplan carrying any refuses to apply.",
+                    "type": "integer"
+                },
+                "skippedNoRate": {
+                    "description": "SkippedNoRate counts matrix-priced rules: their numbers live in the\nmatrix cells, so a GRI cannot move them and says so instead of\npretending it did.",
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateIncreaseRequest": {
+            "type": "object",
+            "properties": {
+                "adjustment": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_rateagreementservice.RateAdjustment"
+                },
+                "agreementIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "carrierId": {
+                    "type": "string"
+                },
+                "customerId": {
+                    "type": "string"
+                },
+                "effectiveFrom": {
+                    "type": "integer"
+                },
+                "partyType": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType"
                 }
             }
         },
@@ -49159,6 +49643,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_api_handlers_rateimporthandler.TemplateResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "fileName": {
                     "type": "string"
                 }
             }

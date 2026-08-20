@@ -6,6 +6,7 @@ import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { rateDirectionChoices } from "@/lib/choices";
+import { LaneHistoryPopover } from "./lane-history-popover";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -55,10 +56,14 @@ const NEW_LANE: RateAgreementRule = {
  * out as they are typed rather than discovered from an invoice weeks later.
  */
 export function LaneEditor() {
-  const { control } = useFormContext<RateAgreement>();
+  const { control, getValues } = useFormContext<RateAgreement>();
   const { fields, append, remove } = useFieldArray({ control, name: "rules" });
   const rules = (useWatch({ control, name: "rules" }) ?? []) as RateAgreementRule[];
+<<<<<<< HEAD
   const resolveScopeValue = useLaneScopeLabels(rules);
+=======
+  const agreementId = getValues("id") ?? undefined;
+>>>>>>> ce76438870b873518c5eb874b8b3070379a56927
 
   // `rules` is a watched array and so is a fresh reference on every render.
   // Keying the memo on what coverage actually depends on means it recomputes
@@ -113,7 +118,11 @@ export function LaneEditor() {
           index={index}
           rule={rules[index]}
           issue={issueByIndex.get(index)?.message}
+<<<<<<< HEAD
           resolveScopeValue={resolveScopeValue}
+=======
+          rateAgreementId={agreementId}
+>>>>>>> ce76438870b873518c5eb874b8b3070379a56927
           onRemove={() => remove(index)}
         />
       ))}
@@ -131,11 +140,19 @@ type LaneRowProps = {
   index: number;
   rule?: RateAgreementRule;
   issue?: string;
+<<<<<<< HEAD
   resolveScopeValue: LaneScopeLabelResolver;
   onRemove: () => void;
 };
 
 function LaneRow({ control, index, rule, issue, resolveScopeValue, onRemove }: LaneRowProps) {
+=======
+  rateAgreementId?: string;
+  onRemove: () => void;
+};
+
+function LaneRow({ control, index, rule, issue, rateAgreementId, onRemove }: LaneRowProps) {
+>>>>>>> ce76438870b873518c5eb874b8b3070379a56927
   // A lane prices through exactly one of the two, so whichever is chosen hides
   // the other — clearing the selection brings the alternative back.
   const usesMatrix = Boolean(rule?.rateMatrixId);
@@ -163,9 +180,18 @@ function LaneRow({ control, index, rule, issue, resolveScopeValue, onRemove }: L
             )}
           </div>
         </div>
-        <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={onRemove}>
-          Remove
-        </Button>
+        <div className="flex items-center gap-1">
+          {laneKey && <LaneHistoryPopover rateAgreementId={rateAgreementId} laneKey={laneKey} />}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 text-xs"
+            onClick={onRemove}
+          >
+            Remove
+          </Button>
+        </div>
       </div>
 
       {issue && (

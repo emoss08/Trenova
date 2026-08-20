@@ -137,7 +137,7 @@ func (s *Service) Upload(
 
 	staged, err := stage(sheet, existing, templates)
 	if err != nil {
-		return nil, errortypes.NewValidationError("file", errortypes.ErrInvalid, err.Error())
+		return nil, templateProblems(err)
 	}
 
 	batch := s.buildBatch(req, format, staged)
@@ -150,6 +150,29 @@ func (s *Service) Upload(
 	}
 
 	return s.repo.Create(ctx, batch, s.stampRows(req, staged))
+}
+
+// templateProblems turns a refused mapping into one field error per problem,
+// so somebody fixing a template is told everything wrong with it at once
+// rather than one round trip at a time.
+func templateProblems(err error) error {
+	joined, ok := err.(interface{ Unwrap() []error })
+	if !ok {
+		return errortypes.NewValidationError("file", errortypes.ErrInvalid, err.Error())
+	}
+
+	multiErr := errortypes.NewMultiError()
+	for _, problem := range joined.Unwrap() {
+		multiErr.Add("file", errortypes.ErrInvalid, problem.Error())
+	}
+
+	return multiErr
+}
+
+// Template is the starter sheet a person fills in instead of guessing at
+// column names.
+func (s *Service) Template() (fileName, content string) {
+	return pkgrateimport.TemplateFileName, pkgrateimport.TemplateCSV()
 }
 
 func (s *Service) buildBatch(

@@ -15,6 +15,7 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
 import { queries } from "@/lib/queries";
+import { RateOverrideDialog } from "./rate-override-dialog";
 import { WhyThisRate } from "./why-this-rate";
 import { getProfile } from "@trenova/shared/lib/capability";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
@@ -212,6 +213,7 @@ function RatingBreakdownCard() {
           </p>
         </div>
         <div className="flex items-center gap-1">
+          <RateOverrideDialog />
           <WhyThisRate shipmentId={shipmentId} />
           {ratingDetail.versionNumber ? (
             <Badge variant="outline" className="font-mono text-2xs">

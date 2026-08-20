@@ -46,6 +46,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 	api := rg.Group("/rate-imports")
 	api.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.list)
+	api.GET("/template/", h.pm.RequirePermission(resource, permission.OpRead), h.template)
 	api.GET("/:rateImportID/", h.pm.RequirePermission(resource, permission.OpRead), h.get)
 	api.GET("/:rateImportID/rows/", h.pm.RequirePermission(resource, permission.OpRead), h.rows)
 
@@ -103,6 +104,28 @@ func (h *Handler) list(c *gin.Context) {
 			})
 		},
 	)
+}
+
+// TemplateResponse is the starter sheet, ready to be saved as a file.
+type TemplateResponse struct {
+	FileName string `json:"fileName"`
+	Content  string `json:"content"`
+}
+
+// @Summary Download the rate sheet template
+// @Description Returns a starter CSV whose columns the importer recognises, with two example rows showing how lanes are described.
+// @ID rateSheetTemplate
+// @Tags Rate Imports
+// @Produce json
+// @Success 200 {object} rateimporthandler.TemplateResponse
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-imports/template/ [get]
+func (h *Handler) template(c *gin.Context) {
+	fileName, content := h.service.Template()
+
+	c.JSON(http.StatusOK, TemplateResponse{FileName: fileName, Content: content})
 }
 
 // @Summary Get a rate import
