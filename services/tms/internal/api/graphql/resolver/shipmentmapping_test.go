@@ -1,6 +1,7 @@
 package resolver
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -165,6 +167,78 @@ func TestShipmentFromInput_RejectsOutOfRangeTemperature(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "temperatureMin")
+}
+
+// The contract preview prices a shipment that is still being typed, and what a
+// rater is waiting for it to tell them is the rating method. Refusing the
+// mapping because none has been chosen refuses the question before it can be
+// asked, and no shipment created through the panel is ever auto-rated.
+func TestShipmentFromInput_AllowsANewShipmentWithNoRatingMethod(t *testing.T) {
+	t.Parallel()
+
+	entity, err := shipmentFromInput(gqlmodel.ShipmentInput{
+		ServiceTypeID:     pulid.MustNew("svc_").String(),
+		ShipmentTypeID:    pulid.MustNew("sht_").String(),
+		CustomerID:        pulid.MustNew("cus_").String(),
+		FormulaTemplateID: "",
+	}, pulid.Nil, &authctx.AuthContext{
+		BusinessUnitID: pulid.MustNew("bu_"),
+		OrganizationID: pulid.MustNew("org_"),
+	})
+
+	require.NoError(t, err)
+	assert.True(t, entity.FormulaTemplateID.IsNil())
+}
+
+// An existing shipment's rating method is a field the rater owns and nothing
+// restores on save, so a payload arriving without one would unprice a load
+// somebody had already rated.
+func TestShipmentFromInput_RequiresARatingMethodOnAnExistingShipment(t *testing.T) {
+	t.Parallel()
+
+	_, err := shipmentFromInput(gqlmodel.ShipmentInput{
+		ServiceTypeID:     pulid.MustNew("svc_").String(),
+		ShipmentTypeID:    pulid.MustNew("sht_").String(),
+		CustomerID:        pulid.MustNew("cus_").String(),
+		FormulaTemplateID: "",
+	}, pulid.MustNew("shp_"), &authctx.AuthContext{
+		BusinessUnitID: pulid.MustNew("bu_"),
+		OrganizationID: pulid.MustNew("org_"),
+	})
+
+	require.Error(t, err)
+	assertRatingMethodError(t, err, errortypes.ErrRequired)
+}
+
+// A value that is present but not an identifier is a client bug either way, and
+// the field has to be named or the form has nothing to attach the error to.
+func TestShipmentFromInput_RejectsAMalformedRatingMethodOnANewShipment(t *testing.T) {
+	t.Parallel()
+
+	_, err := shipmentFromInput(gqlmodel.ShipmentInput{
+		ServiceTypeID:     pulid.MustNew("svc_").String(),
+		ShipmentTypeID:    pulid.MustNew("sht_").String(),
+		CustomerID:        pulid.MustNew("cus_").String(),
+		FormulaTemplateID: "not-an-id",
+	}, pulid.Nil, &authctx.AuthContext{
+		BusinessUnitID: pulid.MustNew("bu_"),
+		OrganizationID: pulid.MustNew("org_"),
+	})
+
+	require.Error(t, err)
+	assertRatingMethodError(t, err, errortypes.ErrInvalid)
+}
+
+// The message a validation error carries names the problem, not the control it
+// belongs to, so the field has to be read off the error itself — it is what the
+// form attaches the message to.
+func assertRatingMethodError(t *testing.T, err error, code errortypes.ErrorCode) {
+	t.Helper()
+
+	var typed *errortypes.Error
+	require.True(t, errors.As(err, &typed))
+	assert.Equal(t, "formulaTemplateId", typed.Field)
+	assert.Equal(t, code, typed.Code)
 }
 
 func TestShipmentEventToModel_MapsOptionalFieldsAndRelations(t *testing.T) {

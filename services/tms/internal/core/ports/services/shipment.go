@@ -3,8 +3,10 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -146,24 +148,65 @@ type MoveStatusObserver interface {
 	) error
 }
 
-// SetRateOverrideRequest replaces the contract's answer with a hand-set rate,
-// or removes one so the contract prices the shipment again.
+// AutoRateShipmentRequest asks the rate agreements to price a shipment again,
+// replacing whatever it currently charges.
 //
-// The override fields are system-owned on every other write path — a plain
-// save cannot set or clear them — so this request is the only way a rate gets
-// overridden, which is what makes the audit trail complete.
-type SetRateOverrideRequest struct {
+// It is always somebody's deliberate act. A contract prices a shipment once,
+// when it is created; after that its rating method, base rate and accessorials
+// are ordinary fields, and this is the one thing that overwrites them.
+type AutoRateShipmentRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	ShipmentID pulid.ID              `json:"-"`
+}
 
-	// Amount is the hand-set linehaul. Ignored when Clear is set.
-	Amount decimal.NullDecimal `json:"amount"`
-	Reason string              `json:"reason"`
-	// RateLocked freezes the shipment's numbers against every re-rating path,
-	// for a shipment already invoiced whose numbers the customer has seen.
-	RateLocked bool `json:"rateLocked"`
-	// Clear removes the override instead of setting one.
-	Clear bool `json:"clear"`
+// ContractRateApplication describes what the rate agreements would charge, or
+// did charge, for a shipment.
+//
+// It is the answer to both questions the billing panel asks: what would this
+// load rate at, and what happened when I asked for it to be rated. The same
+// shape serves both because a preview and an application differ only in whether
+// the numbers were kept.
+type ContractRateApplication struct {
+	// Applied is false when no contract covered the lane, in which case nothing
+	// was changed and the outcome says why.
+	Applied bool              `json:"applied"`
+	Outcome ratequote.Outcome `json:"outcome"`
+
+	AgreementID   *pulid.ID `json:"agreementId,omitempty"`
+	AgreementName string    `json:"agreementName,omitempty"`
+	RuleID        *pulid.ID `json:"ruleId,omitempty"`
+	RuleLabel     string    `json:"ruleLabel,omitempty"`
+
+	// FormulaTemplateID and BaseRate are what the contract seats on the
+	// shipment: its rating method, and the rate that method prices with.
+	FormulaTemplateID   *pulid.ID           `json:"formulaTemplateId,omitempty"`
+	FormulaTemplateName string              `json:"formulaTemplateName,omitempty"`
+	BaseRate            decimal.NullDecimal `json:"baseRate,omitempty"`
+
+	LinehaulAmount    decimal.Decimal `json:"linehaulAmount"`
+	OtherChargeAmount decimal.Decimal `json:"otherChargeAmount"`
+	TotalChargeAmount decimal.Decimal `json:"totalChargeAmount"`
+
+	// Accessorials are the charges the contract's own schedule applies. They
+	// are listed rather than counted because a rater accepting a re-rate is
+	// agreeing to each of them, and a total hides which ones appeared.
+	Accessorials []ContractRateAccessorial `json:"accessorials,omitempty"`
+
+	// PreviousLinehaulAmount is what the shipment charged before, so the dialog
+	// can state the change rather than only the result.
+	PreviousLinehaulAmount decimal.Decimal `json:"previousLinehaulAmount"`
+
+	Explanation string `json:"explanation,omitempty"`
+}
+
+// ContractRateAccessorial is one charge a contract's accessorial schedule
+// applies automatically.
+type ContractRateAccessorial struct {
+	AccessorialChargeID pulid.ID                 `json:"accessorialChargeId"`
+	Description         string                   `json:"description,omitempty"`
+	Method              accessorialcharge.Method `json:"method"`
+	Amount              decimal.Decimal          `json:"amount"`
+	Unit                int16                    `json:"unit"`
 }
 
 type ShipmentService interface {
@@ -215,11 +258,21 @@ type ShipmentService interface {
 		req *repositories.CancelShipmentRequest,
 		actor *RequestActor,
 	) (*shipment.Shipment, error)
-	SetRateOverride(
+	// PreviewContractRate answers what the agreements would charge for a
+	// shipment that has not been saved, which is what the billing panel offers
+	// before anyone commits to it. Nothing is written.
+	PreviewContractRate(
 		ctx context.Context,
-		req *SetRateOverrideRequest,
+		entity *shipment.Shipment,
 		actor *RequestActor,
-	) (*shipment.Shipment, error)
+	) (*ContractRateApplication, error)
+	// AutoRate prices a saved shipment from its contract again, overwriting its
+	// rating method, base rate and contract accessorials.
+	AutoRate(
+		ctx context.Context,
+		req *AutoRateShipmentRequest,
+		actor *RequestActor,
+	) (*shipment.Shipment, *ContractRateApplication, error)
 	Uncancel(
 		ctx context.Context,
 		req *repositories.UncancelShipmentRequest,

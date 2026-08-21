@@ -289,7 +289,7 @@ func (s *service) Create(
 		return nil, multiErr
 	}
 
-	s.normalizeAdditionalChargeSystemGenerationForCreate(entity)
+	s.dropSystemGeneratedAdditionalChargesForCreate(entity)
 
 	if err = s.hydrateShipmentCommodityDetails(ctx, entity); err != nil {
 		return nil, err
@@ -303,7 +303,8 @@ func (s *service) Create(
 		}
 	}
 
-	if err = s.commercial.Recalculate(ctx, entity, control, auditActor.UserID); err != nil {
+	rating, err := s.commercial.RateAndAdoptContract(ctx, entity, control, auditActor.UserID)
+	if err != nil {
 		return nil, err
 	}
 
@@ -321,10 +322,29 @@ func (s *service) Create(
 		return nil, err
 	}
 
+	// Generate the shipment ID before the insert so nested rows can point at it.
+	if entity.ID.IsNil() {
+		entity.ID = pulid.MustNew("shp_")
+	}
+
 	createdEntity, err := s.repo.Create(ctx, entity)
 	if err != nil {
 		log.Error("failed to create shipment", zap.Error(err))
 		return nil, err
+	}
+
+	if err = s.commercial.CommitContractRating(
+		ctx, createdEntity, rating, auditActor.UserID,
+	); err != nil {
+		return nil, err
+	}
+
+	if createdEntity.RateQuoteID != nil {
+		createdEntity, err = s.repo.Update(ctx, createdEntity)
+		if err != nil {
+			log.Error("failed to link shipment to its rate quote", zap.Error(err))
+			return nil, err
+		}
 	}
 
 	s.recordCapabilityDeviations(ctx, createdEntity, advisories)
@@ -393,7 +413,8 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	}
 
 	if multiErr := validateShipmentNotLockedForBilling(original); multiErr != nil {
-		log.Warn("shipment update blocked — locked for billing",
+		log.Warn(
+			"shipment update blocked — locked for billing",
 			zap.String("shipmentId", original.ID.String()),
 			zap.String("billingTransferStatus", string(original.BillingTransferStatus)),
 		)
@@ -412,6 +433,7 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	s.restoreAssignmentsForExistingMoves(original, entity)
 	s.restoreSystemOwnedAdditionalChargeFields(original, entity)
 	shipment.RestoreRateOwnedFields(original, entity)
+	departed := disengageAutoRating(original, entity)
 	if err = s.syncOrderMembershipForUpdate(ctx, original, entity); err != nil {
 		return nil, err
 	}
@@ -437,6 +459,12 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	}
 
 	if err = s.commercial.Recalculate(ctx, entity, control, auditActor.UserID); err != nil {
+		return nil, err
+	}
+
+	if err = s.commercial.RecordRateDeparture(
+		ctx, entity, auditActor.UserID, departed,
+	); err != nil {
 		return nil, err
 	}
 
@@ -576,7 +604,8 @@ func (s *service) evaluateServiceFailuresAfterShipmentUpdate(
 		actor,
 	)
 	if err != nil {
-		s.l.Warn("failed to evaluate service failures after shipment update",
+		s.l.Warn(
+			"failed to evaluate service failures after shipment update",
 			zap.String("shipmentID", entity.ID.String()),
 			zap.Error(err),
 		)

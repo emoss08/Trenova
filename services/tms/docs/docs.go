@@ -25779,6 +25779,77 @@ const docTemplate = `{
                 }
             }
         },
+        "/shipments/{shipmentID}/auto-rate/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Prices the shipment from the rate agreement covering its lane, overwriting its rating method, base rate and contract accessorials. Returns the shipment together with an account of what the contract applied.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shipments"
+                ],
+                "summary": "Re-rate a shipment from its contract",
+                "operationId": "autoRateShipment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Shipment ID",
+                        "name": "shipmentID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ContractRateApplication"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/shipments/{shipmentID}/billing-readiness/": {
             "get": {
                 "security": [
@@ -27060,89 +27131,6 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/shipments/{shipmentID}/rate-override/": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Replaces the contract's rate with a hand-set amount, or clears one so the contract prices the shipment again. The shipment is re-rated immediately, and the quote records what the contract would have charged instead.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Shipments"
-                ],
-                "summary": "Set or clear a manual rate override",
-                "operationId": "setShipmentRateOverride",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Shipment ID",
-                        "name": "shipmentID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "The override, or clear=true to remove one",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SetRateOverrideRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                         }
@@ -41696,6 +41684,13 @@ const docTemplate = `{
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.AdditionalCharge"
                     }
                 },
+                "autoRated": {
+                    "description": "AutoRated marks a shipment whose rating method, base rate and contract\naccessorials are the ones a rate agreement put there, untouched since.\n\nA contract prices a shipment once. What it produced then lives in the\nshipment's ordinary fields, where anyone can see and edit it, and this\nsays whether anyone has. It is the only durable answer to how often the\ncontracts are actually being used, which is why it is a column rather\nthan something inferred from the quote at read time.",
+                    "type": "boolean"
+                },
+                "autoRatedAt": {
+                    "type": "integer"
+                },
                 "baseRate": {
                     "$ref": "#/definitions/decimal.NullDecimal"
                 },
@@ -45691,6 +45686,83 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_internal_core_ports_services.ContractRateAccessorial": {
+            "type": "object",
+            "properties": {
+                "accessorialChargeId": {
+                    "type": "string"
+                },
+                "amount": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "method": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.Method"
+                },
+                "unit": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.ContractRateApplication": {
+            "type": "object",
+            "properties": {
+                "accessorials": {
+                    "description": "Accessorials are the charges the contract's own schedule applies. They\nare listed rather than counted because a rater accepting a re-rate is\nagreeing to each of them, and a total hides which ones appeared.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ContractRateAccessorial"
+                    }
+                },
+                "agreementId": {
+                    "type": "string"
+                },
+                "agreementName": {
+                    "type": "string"
+                },
+                "applied": {
+                    "description": "Applied is false when no contract covered the lane, in which case nothing\nwas changed and the outcome says why.",
+                    "type": "boolean"
+                },
+                "baseRate": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "explanation": {
+                    "type": "string"
+                },
+                "formulaTemplateId": {
+                    "description": "FormulaTemplateID and BaseRate are what the contract seats on the\nshipment: its rating method, and the rate that method prices with.",
+                    "type": "string"
+                },
+                "formulaTemplateName": {
+                    "type": "string"
+                },
+                "linehaulAmount": {
+                    "type": "number"
+                },
+                "otherChargeAmount": {
+                    "type": "number"
+                },
+                "outcome": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_ratequote.Outcome"
+                },
+                "previousLinehaulAmount": {
+                    "description": "PreviousLinehaulAmount is what the shipment charged before, so the dialog\ncan state the change rather than only the result.",
+                    "type": "number"
+                },
+                "ruleId": {
+                    "type": "string"
+                },
+                "ruleLabel": {
+                    "type": "string"
+                },
+                "totalChargeAmount": {
+                    "type": "number"
+                }
+            }
+        },
         "github_com_emoss08_trenova_internal_core_ports_services.CreateAPIKeyRequest": {
             "type": "object",
             "properties": {
@@ -46153,30 +46225,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.SetRateOverrideRequest": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "description": "Amount is the hand-set linehaul. Ignored when Clear is set.",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/decimal.NullDecimal"
-                        }
-                    ]
-                },
-                "clear": {
-                    "description": "Clear removes the override instead of setting one.",
-                    "type": "boolean"
-                },
-                "rateLocked": {
-                    "description": "RateLocked freezes the shipment's numbers against every re-rating path,\nfor a shipment already invoiced whose numbers the customer has seen.",
-                    "type": "boolean"
-                },
-                "reason": {
                     "type": "string"
                 }
             }
@@ -49718,6 +49766,14 @@ const docTemplate = `{
                 "amount": {
                     "description": "Amount is the linehaul, in the organization's billing currency. Fuel and\naccessorials are added by the caller that owns them.",
                     "type": "number"
+                },
+                "baseRate": {
+                    "description": "BaseRate is the per-unit rate the template was priced with — the lane\nrate on the rule, or the value in the matrix cell that matched.\n\nIt is what lets a contract's answer be seated on a shipment as its own\nrating method plus its own base rate, rather than as a total nobody can\nre-derive. A rule that binds no rate leaves this unset, and the\nshipment's existing base rate stands.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/decimal.NullDecimal"
+                        }
+                    ]
                 },
                 "currency": {
                     "type": "string"

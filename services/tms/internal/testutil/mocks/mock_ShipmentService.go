@@ -555,56 +555,56 @@ func (_c *MockShipmentService_Cancel_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
-// SetRateOverride provides a mock function for the type MockShipmentService
-func (_mock *MockShipmentService) SetRateOverride(ctx context.Context, req *services.SetRateOverrideRequest, actor *services.RequestActor) (*shipment.Shipment, error) {
-	ret := _mock.Called(ctx, req, actor)
+// PreviewContractRate provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) PreviewContractRate(ctx context.Context, entity *shipment.Shipment, actor *services.RequestActor) (*services.ContractRateApplication, error) {
+	ret := _mock.Called(ctx, entity, actor)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SetRateOverride")
+		panic("no return value specified for PreviewContractRate")
 	}
 
-	var r0 *shipment.Shipment
+	var r0 *services.ContractRateApplication
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.SetRateOverrideRequest, *services.RequestActor) (*shipment.Shipment, error)); ok {
-		return returnFunc(ctx, req, actor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment, *services.RequestActor) (*services.ContractRateApplication, error)); ok {
+		return returnFunc(ctx, entity, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.SetRateOverrideRequest, *services.RequestActor) *shipment.Shipment); ok {
-		r0 = returnFunc(ctx, req, actor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment, *services.RequestActor) *services.ContractRateApplication); ok {
+		r0 = returnFunc(ctx, entity, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.Shipment)
+			r0 = ret.Get(0).(*services.ContractRateApplication)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.SetRateOverrideRequest, *services.RequestActor) error); ok {
-		r1 = returnFunc(ctx, req, actor)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.Shipment, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, entity, actor)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockShipmentService_SetRateOverride_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetRateOverride'
-type MockShipmentService_SetRateOverride_Call struct {
+// MockShipmentService_PreviewContractRate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewContractRate'
+type MockShipmentService_PreviewContractRate_Call struct {
 	*mock.Call
 }
 
-// SetRateOverride is a helper method to define mock.On call
+// PreviewContractRate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.SetRateOverrideRequest
+//   - entity *shipment.Shipment
 //   - actor *services.RequestActor
-func (_e *MockShipmentService_Expecter) SetRateOverride(ctx any, req any, actor any) *MockShipmentService_SetRateOverride_Call {
-	return &MockShipmentService_SetRateOverride_Call{Call: _e.mock.On("SetRateOverride", ctx, req, actor)}
+func (_e *MockShipmentService_Expecter) PreviewContractRate(ctx any, entity any, actor any) *MockShipmentService_PreviewContractRate_Call {
+	return &MockShipmentService_PreviewContractRate_Call{Call: _e.mock.On("PreviewContractRate", ctx, entity, actor)}
 }
 
-func (_c *MockShipmentService_SetRateOverride_Call) Run(run func(ctx context.Context, req *services.SetRateOverrideRequest, actor *services.RequestActor)) *MockShipmentService_SetRateOverride_Call {
+func (_c *MockShipmentService_PreviewContractRate_Call) Run(run func(ctx context.Context, entity *shipment.Shipment, actor *services.RequestActor)) *MockShipmentService_PreviewContractRate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *services.SetRateOverrideRequest
+		var arg1 *shipment.Shipment
 		if args[1] != nil {
-			arg1 = args[1].(*services.SetRateOverrideRequest)
+			arg1 = args[1].(*shipment.Shipment)
 		}
 		var arg2 *services.RequestActor
 		if args[2] != nil {
@@ -619,12 +619,94 @@ func (_c *MockShipmentService_SetRateOverride_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockShipmentService_SetRateOverride_Call) Return(shipment1 *shipment.Shipment, err error) *MockShipmentService_SetRateOverride_Call {
-	_c.Call.Return(shipment1, err)
+func (_c *MockShipmentService_PreviewContractRate_Call) Return(contractRateApplication *services.ContractRateApplication, err error) *MockShipmentService_PreviewContractRate_Call {
+	_c.Call.Return(contractRateApplication, err)
 	return _c
 }
 
-func (_c *MockShipmentService_SetRateOverride_Call) RunAndReturn(run func(ctx context.Context, req *services.SetRateOverrideRequest, actor *services.RequestActor) (*shipment.Shipment, error)) *MockShipmentService_SetRateOverride_Call {
+func (_c *MockShipmentService_PreviewContractRate_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.Shipment, actor *services.RequestActor) (*services.ContractRateApplication, error)) *MockShipmentService_PreviewContractRate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AutoRate provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) AutoRate(ctx context.Context, req *services.AutoRateShipmentRequest, actor *services.RequestActor) (*shipment.Shipment, *services.ContractRateApplication, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AutoRate")
+	}
+
+	var r0 *shipment.Shipment
+	var r1 *services.ContractRateApplication
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.AutoRateShipmentRequest, *services.RequestActor) (*shipment.Shipment, *services.ContractRateApplication, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.AutoRateShipmentRequest, *services.RequestActor) *shipment.Shipment); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.Shipment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.AutoRateShipmentRequest, *services.RequestActor) *services.ContractRateApplication); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*services.ContractRateApplication)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, *services.AutoRateShipmentRequest, *services.RequestActor) error); ok {
+		r2 = returnFunc(ctx, req, actor)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockShipmentService_AutoRate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AutoRate'
+type MockShipmentService_AutoRate_Call struct {
+	*mock.Call
+}
+
+// AutoRate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.AutoRateShipmentRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentService_Expecter) AutoRate(ctx any, req any, actor any) *MockShipmentService_AutoRate_Call {
+	return &MockShipmentService_AutoRate_Call{Call: _e.mock.On("AutoRate", ctx, req, actor)}
+}
+
+func (_c *MockShipmentService_AutoRate_Call) Run(run func(ctx context.Context, req *services.AutoRateShipmentRequest, actor *services.RequestActor)) *MockShipmentService_AutoRate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.AutoRateShipmentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.AutoRateShipmentRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_AutoRate_Call) Return(shipment1 *shipment.Shipment, contractRateApplication *services.ContractRateApplication, err error) *MockShipmentService_AutoRate_Call {
+	_c.Call.Return(shipment1, contractRateApplication, err)
+	return _c
+}
+
+func (_c *MockShipmentService_AutoRate_Call) RunAndReturn(run func(ctx context.Context, req *services.AutoRateShipmentRequest, actor *services.RequestActor) (*shipment.Shipment, *services.ContractRateApplication, error)) *MockShipmentService_AutoRate_Call {
 	_c.Call.Return(run)
 	return _c
 }

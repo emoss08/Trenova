@@ -179,6 +179,23 @@ type Shipment {
   ratingUnit: Int!
   fuelSurchargeLocked: Boolean!
   ratingDetail: ShipmentRatingDetail
+  """
+  Whether this shipment still carries the rate its contract applied. It goes
+  false the moment somebody edits the rating method, the base rate, or one of
+  the contract's own accessorial charges.
+  """
+  autoRated: Boolean!
+  "When the contract priced this shipment. Null if none ever did."
+  autoRatedAt: Int
+  rateAgreementId: ID
+  rateAgreementRuleId: ID
+  rateQuoteId: ID
+  "Set once a shipment has been priced at something other than its contract."
+  rateOverrideAmount: String
+  rateOverrideReason: String
+  rateOverrideAt: Int
+  "Freezes the numbers of a shipment that has already been invoiced."
+  rateLocked: Boolean!
   version: Int!
   createdAt: Int!
   updatedAt: Int!
@@ -235,6 +252,48 @@ type ShipmentRatingDetail {
   "The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound."
   source: String!
   explanation: String!
+}
+
+"""
+What the rate agreements charge for a shipment, either as a preview of what
+they would charge or as an account of what was just applied.
+"""
+type ShipmentContractRate {
+  "False when no contract covered the lane, in which case nothing was changed."
+  applied: Boolean!
+  "Rated, FormulaFallback, ManualOverride, NoRateFound or Error."
+  outcome: String!
+  agreementId: ID
+  agreementName: String!
+  ruleId: ID
+  ruleLabel: String!
+  "The rating method the contract seats on the shipment."
+  formulaTemplateId: ID
+  formulaTemplateName: String!
+  "The rate that method prices with. Null when the rule defers to the shipment."
+  baseRate: String
+  linehaulAmount: String!
+  otherChargeAmount: String!
+  totalChargeAmount: String!
+  "What the shipment charged before, so a dialog can state the change."
+  previousLinehaulAmount: String!
+  accessorials: [ShipmentContractRateAccessorial!]!
+  explanation: String!
+}
+
+"One charge a contract applies automatically to every shipment it prices."
+type ShipmentContractRateAccessorial {
+  accessorialChargeId: ID!
+  description: String!
+  method: AccessorialMethod!
+  amount: String!
+  unit: Int!
+}
+
+"The result of re-rating a saved shipment from its contract."
+type ShipmentAutoRateResponse {
+  shipment: Shipment!
+  contractRate: ShipmentContractRate!
 }
 
 type ShipmentCustomer {
@@ -1133,6 +1192,12 @@ input ShipmentInput {
   billedAt: Int
   ratingUnit: Int = 1
   fuelSurchargeLocked: Boolean = false
+  """
+  Why this shipment is billed at something other than its contract rate. It is
+  the only rating field a caller may write: everything else the rater owns is
+  an ordinary field, and everything else the system owns is restored on save.
+  """
+  rateOverrideReason: String
   version: Int
   moves: [ShipmentMoveInput!] = []
   additionalCharges: [ShipmentAdditionalChargeInput!] = []
@@ -1356,6 +1421,17 @@ extend type Mutation {
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
   calculateShipmentTotals(input: ShipmentInput!): ShipmentTotalsResponse!
+  """
+  Asks the rate agreements what they would charge for a shipment, without
+  writing anything. This is what the billing panel offers before anyone commits
+  to a contract rate.
+  """
+  previewShipmentContractRate(input: ShipmentInput!): ShipmentContractRate!
+  """
+  Prices a saved shipment from its contract again, overwriting its rating
+  method, base rate and contract accessorials.
+  """
+  autoRateShipment(id: ID!): ShipmentAutoRateResponse!
   calculateShipmentDistance(input: ShipmentInput!): ShipmentDistanceResponse!
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!

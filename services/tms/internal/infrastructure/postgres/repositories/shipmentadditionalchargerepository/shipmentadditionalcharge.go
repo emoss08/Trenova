@@ -166,6 +166,8 @@ func (r *repository) updateCharge(
 			cols.Unit.Bare(),
 			cols.FuelSurchargeProgramID.Bare(),
 			cols.FuelSurchargeDetail.Bare(),
+			cols.RateAgreementAccessorialID.Bare(),
+			cols.RateQuoteID.Bare(),
 			cols.Version.Bare(),
 			cols.UpdatedAt.Bare(),
 		).

@@ -327,6 +327,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -991,6 +1000,47 @@ mutation CalculateShipmentTotals($input: ShipmentInput!) {
       unit
       fuelSurchargeProgramId
       fuelSurchargeDetail
+    }
+  }
+}
+
+fragment ShipmentContractRateFields on ShipmentContractRate {
+  applied
+  outcome
+  agreementId
+  agreementName
+  ruleId
+  ruleLabel
+  formulaTemplateId
+  formulaTemplateName
+  baseRate
+  linehaulAmount
+  otherChargeAmount
+  totalChargeAmount
+  previousLinehaulAmount
+  explanation
+  accessorials {
+    accessorialChargeId
+    description
+    method
+    amount
+    unit
+  }
+}
+
+mutation PreviewShipmentContractRate($input: ShipmentInput!) {
+  previewShipmentContractRate(input: $input) {
+    ...ShipmentContractRateFields
+  }
+}
+
+mutation AutoRateShipment($id: ID!) {
+  autoRateShipment(id: $id) {
+    shipment {
+      ...ShipmentFields
+    }
+    contractRate {
+      ...ShipmentContractRateFields
     }
   }
 }

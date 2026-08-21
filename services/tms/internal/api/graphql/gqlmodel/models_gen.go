@@ -3571,15 +3571,30 @@ type Shipment struct {
 	RatingUnit             int                            `json:"ratingUnit"`
 	FuelSurchargeLocked    bool                           `json:"fuelSurchargeLocked"`
 	RatingDetail           *ShipmentRatingDetail          `json:"ratingDetail,omitempty"`
-	Version                int                            `json:"version"`
-	CreatedAt              int                            `json:"createdAt"`
-	UpdatedAt              int                            `json:"updatedAt"`
-	Moves                  []*ShipmentMove                `json:"moves"`
-	AdditionalCharges      []*ShipmentAdditionalCharge    `json:"additionalCharges"`
-	Commodities            []*ShipmentCommodity           `json:"commodities"`
-	Customer               *ShipmentCustomer              `json:"customer,omitempty"`
-	Owner                  *tenant.User                   `json:"owner,omitempty"`
-	FormulaTemplate        *ShipmentFormulaTemplate       `json:"formulaTemplate,omitempty"`
+	// Whether this shipment still carries the rate its contract applied. It goes
+	// false the moment somebody edits the rating method, the base rate, or one of
+	// the contract's own accessorial charges.
+	AutoRated bool `json:"autoRated"`
+	// When the contract priced this shipment. Null if none ever did.
+	AutoRatedAt         *int    `json:"autoRatedAt,omitempty"`
+	RateAgreementID     *string `json:"rateAgreementId,omitempty"`
+	RateAgreementRuleID *string `json:"rateAgreementRuleId,omitempty"`
+	RateQuoteID         *string `json:"rateQuoteId,omitempty"`
+	// Set once a shipment has been priced at something other than its contract.
+	RateOverrideAmount *string `json:"rateOverrideAmount,omitempty"`
+	RateOverrideReason *string `json:"rateOverrideReason,omitempty"`
+	RateOverrideAt     *int    `json:"rateOverrideAt,omitempty"`
+	// Freezes the numbers of a shipment that has already been invoiced.
+	RateLocked        bool                        `json:"rateLocked"`
+	Version           int                         `json:"version"`
+	CreatedAt         int                         `json:"createdAt"`
+	UpdatedAt         int                         `json:"updatedAt"`
+	Moves             []*ShipmentMove             `json:"moves"`
+	AdditionalCharges []*ShipmentAdditionalCharge `json:"additionalCharges"`
+	Commodities       []*ShipmentCommodity        `json:"commodities"`
+	Customer          *ShipmentCustomer           `json:"customer,omitempty"`
+	Owner             *tenant.User                `json:"owner,omitempty"`
+	FormulaTemplate   *ShipmentFormulaTemplate    `json:"formulaTemplate,omitempty"`
 }
 
 type ShipmentAccessorialCharge struct {
@@ -3696,6 +3711,12 @@ type ShipmentAtRisk struct {
 	EtaSlip int `json:"etaSlip"`
 	Weather int `json:"weather"`
 	Reefer  int `json:"reefer"`
+}
+
+// The result of re-rating a saved shipment from its contract.
+type ShipmentAutoRateResponse struct {
+	Shipment     *Shipment             `json:"shipment"`
+	ContractRate *ShipmentContractRate `json:"contractRate"`
 }
 
 type ShipmentAxleWeight struct {
@@ -3960,6 +3981,40 @@ type ShipmentConnection struct {
 	TotalCount *int            `json:"totalCount,omitempty"`
 }
 
+// What the rate agreements charge for a shipment, either as a preview of what
+// they would charge or as an account of what was just applied.
+type ShipmentContractRate struct {
+	// False when no contract covered the lane, in which case nothing was changed.
+	Applied bool `json:"applied"`
+	// Rated, FormulaFallback, ManualOverride, NoRateFound or Error.
+	Outcome       string  `json:"outcome"`
+	AgreementID   *string `json:"agreementId,omitempty"`
+	AgreementName string  `json:"agreementName"`
+	RuleID        *string `json:"ruleId,omitempty"`
+	RuleLabel     string  `json:"ruleLabel"`
+	// The rating method the contract seats on the shipment.
+	FormulaTemplateID   *string `json:"formulaTemplateId,omitempty"`
+	FormulaTemplateName string  `json:"formulaTemplateName"`
+	// The rate that method prices with. Null when the rule defers to the shipment.
+	BaseRate          *string `json:"baseRate,omitempty"`
+	LinehaulAmount    string  `json:"linehaulAmount"`
+	OtherChargeAmount string  `json:"otherChargeAmount"`
+	TotalChargeAmount string  `json:"totalChargeAmount"`
+	// What the shipment charged before, so a dialog can state the change.
+	PreviousLinehaulAmount string                             `json:"previousLinehaulAmount"`
+	Accessorials           []*ShipmentContractRateAccessorial `json:"accessorials"`
+	Explanation            string                             `json:"explanation"`
+}
+
+// One charge a contract applies automatically to every shipment it prices.
+type ShipmentContractRateAccessorial struct {
+	AccessorialChargeID string                   `json:"accessorialChargeId"`
+	Description         string                   `json:"description"`
+	Method              accessorialcharge.Method `json:"method"`
+	Amount              string                   `json:"amount"`
+	Unit                int                      `json:"unit"`
+}
+
 type ShipmentCustomer struct {
 	ID                     string             `json:"id"`
 	BusinessUnitID         string             `json:"businessUnitId"`
@@ -4168,45 +4223,49 @@ type ShipmentHazmatZone struct {
 }
 
 type ShipmentInput struct {
-	SourceDocumentID       *string                          `json:"sourceDocumentId,omitempty"`
-	ServiceTypeID          string                           `json:"serviceTypeId"`
-	ShipmentTypeID         string                           `json:"shipmentTypeId"`
-	CustomerID             string                           `json:"customerId"`
-	TractorTypeID          *string                          `json:"tractorTypeId,omitempty"`
-	TrailerTypeID          *string                          `json:"trailerTypeId,omitempty"`
-	OwnerID                *string                          `json:"ownerId,omitempty"`
-	EnteredByID            *string                          `json:"enteredById,omitempty"`
-	CanceledByID           *string                          `json:"canceledById,omitempty"`
-	FormulaTemplateID      string                           `json:"formulaTemplateId"`
-	ConsolidationGroupID   *string                          `json:"consolidationGroupId,omitempty"`
-	OrderID                *string                          `json:"orderId,omitempty"`
-	Status                 *ShipmentStatus                  `json:"status,omitempty"`
-	TenderStatus           *ShipmentTenderStatus            `json:"tenderStatus,omitempty"`
-	EntryMethod            *ShipmentEntryMethod             `json:"entryMethod,omitempty"`
-	ProNumber              *string                          `json:"proNumber,omitempty"`
-	Bol                    *string                          `json:"bol,omitempty"`
-	CancelReason           *string                          `json:"cancelReason,omitempty"`
-	OtherChargeAmount      *string                          `json:"otherChargeAmount,omitempty"`
-	FreightChargeAmount    *string                          `json:"freightChargeAmount,omitempty"`
-	BaseRate               *string                          `json:"baseRate,omitempty"`
-	TotalChargeAmount      *string                          `json:"totalChargeAmount,omitempty"`
-	Pieces                 *int                             `json:"pieces,omitempty"`
-	Weight                 *int                             `json:"weight,omitempty"`
-	TemperatureMin         *int                             `json:"temperatureMin,omitempty"`
-	TemperatureMax         *int                             `json:"temperatureMax,omitempty"`
-	ActualDeliveryDate     *int                             `json:"actualDeliveryDate,omitempty"`
-	ActualShipDate         *int                             `json:"actualShipDate,omitempty"`
-	CanceledAt             *int                             `json:"canceledAt,omitempty"`
-	BillingTransferStatus  *string                          `json:"billingTransferStatus,omitempty"`
-	TransferredToBillingAt *int                             `json:"transferredToBillingAt,omitempty"`
-	MarkedReadyToBillAt    *int                             `json:"markedReadyToBillAt,omitempty"`
-	BilledAt               *int                             `json:"billedAt,omitempty"`
-	RatingUnit             *int                             `json:"ratingUnit,omitempty"`
-	FuelSurchargeLocked    *bool                            `json:"fuelSurchargeLocked,omitempty"`
-	Version                *int                             `json:"version,omitempty"`
-	Moves                  []*ShipmentMoveInput             `json:"moves,omitempty"`
-	AdditionalCharges      []*ShipmentAdditionalChargeInput `json:"additionalCharges,omitempty"`
-	Commodities            []*ShipmentCommodityInput        `json:"commodities,omitempty"`
+	SourceDocumentID       *string               `json:"sourceDocumentId,omitempty"`
+	ServiceTypeID          string                `json:"serviceTypeId"`
+	ShipmentTypeID         string                `json:"shipmentTypeId"`
+	CustomerID             string                `json:"customerId"`
+	TractorTypeID          *string               `json:"tractorTypeId,omitempty"`
+	TrailerTypeID          *string               `json:"trailerTypeId,omitempty"`
+	OwnerID                *string               `json:"ownerId,omitempty"`
+	EnteredByID            *string               `json:"enteredById,omitempty"`
+	CanceledByID           *string               `json:"canceledById,omitempty"`
+	FormulaTemplateID      string                `json:"formulaTemplateId"`
+	ConsolidationGroupID   *string               `json:"consolidationGroupId,omitempty"`
+	OrderID                *string               `json:"orderId,omitempty"`
+	Status                 *ShipmentStatus       `json:"status,omitempty"`
+	TenderStatus           *ShipmentTenderStatus `json:"tenderStatus,omitempty"`
+	EntryMethod            *ShipmentEntryMethod  `json:"entryMethod,omitempty"`
+	ProNumber              *string               `json:"proNumber,omitempty"`
+	Bol                    *string               `json:"bol,omitempty"`
+	CancelReason           *string               `json:"cancelReason,omitempty"`
+	OtherChargeAmount      *string               `json:"otherChargeAmount,omitempty"`
+	FreightChargeAmount    *string               `json:"freightChargeAmount,omitempty"`
+	BaseRate               *string               `json:"baseRate,omitempty"`
+	TotalChargeAmount      *string               `json:"totalChargeAmount,omitempty"`
+	Pieces                 *int                  `json:"pieces,omitempty"`
+	Weight                 *int                  `json:"weight,omitempty"`
+	TemperatureMin         *int                  `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int                  `json:"temperatureMax,omitempty"`
+	ActualDeliveryDate     *int                  `json:"actualDeliveryDate,omitempty"`
+	ActualShipDate         *int                  `json:"actualShipDate,omitempty"`
+	CanceledAt             *int                  `json:"canceledAt,omitempty"`
+	BillingTransferStatus  *string               `json:"billingTransferStatus,omitempty"`
+	TransferredToBillingAt *int                  `json:"transferredToBillingAt,omitempty"`
+	MarkedReadyToBillAt    *int                  `json:"markedReadyToBillAt,omitempty"`
+	BilledAt               *int                  `json:"billedAt,omitempty"`
+	RatingUnit             *int                  `json:"ratingUnit,omitempty"`
+	FuelSurchargeLocked    *bool                 `json:"fuelSurchargeLocked,omitempty"`
+	// Why this shipment is billed at something other than its contract rate. It is
+	// the only rating field a caller may write: everything else the rater owns is
+	// an ordinary field, and everything else the system owns is restored on save.
+	RateOverrideReason *string                          `json:"rateOverrideReason,omitempty"`
+	Version            *int                             `json:"version,omitempty"`
+	Moves              []*ShipmentMoveInput             `json:"moves,omitempty"`
+	AdditionalCharges  []*ShipmentAdditionalChargeInput `json:"additionalCharges,omitempty"`
+	Commodities        []*ShipmentCommodityInput        `json:"commodities,omitempty"`
 }
 
 type ShipmentLaneHeatmap struct {

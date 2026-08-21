@@ -532,6 +532,11 @@ const shipmentBaseSchema = z.object({
   rateOverrideById: nullableStringSchema,
   rateOverrideAt: z.number().nullish(),
   rateLocked: z.boolean().nullish(),
+  // True while the shipment still carries the rate its contract applied. It
+  // goes false the moment somebody edits the rating method, the base rate or
+  // one of the contract's own accessorial charges.
+  autoRated: z.boolean().nullish(),
+  autoRatedAt: z.number().nullish(),
 
   status: shipmentStatusSchema.default("New"),
   tenderStatus: shipmentTenderStatusSchema.nullable().optional(),
@@ -562,6 +567,42 @@ const shipmentBaseSchema = z.object({
   fuelSurchargeLocked: z.boolean().default(false),
   ratingDetail: ratingDetailSchema.nullable().optional(),
 });
+
+/** One charge a contract applies automatically to every shipment it prices. */
+export const contractRateAccessorialSchema = z.object({
+  accessorialChargeId: z.string(),
+  description: z.string(),
+  method: accessorialChargeMethodSchema.default("Flat"),
+  amount: decimalStringSchema,
+  unit: z.number(),
+});
+export type ContractRateAccessorial = z.infer<typeof contractRateAccessorialSchema>;
+
+/**
+ * What the rate agreements charge for a shipment.
+ *
+ * The same shape answers both questions the billing panel asks — what would
+ * this rate at, and what did the re-rate just apply — because a preview and an
+ * application differ only in whether the numbers were kept.
+ */
+export const contractRateSchema = z.object({
+  applied: z.boolean(),
+  outcome: z.string(),
+  agreementId: nullableStringSchema,
+  agreementName: z.string(),
+  ruleId: nullableStringSchema,
+  ruleLabel: z.string(),
+  formulaTemplateId: nullableStringSchema,
+  formulaTemplateName: z.string(),
+  baseRate: decimalStringSchema,
+  linehaulAmount: decimalStringSchema,
+  otherChargeAmount: decimalStringSchema,
+  totalChargeAmount: decimalStringSchema,
+  previousLinehaulAmount: decimalStringSchema,
+  accessorials: z.array(contractRateAccessorialSchema).default([]),
+  explanation: z.string(),
+});
+export type ContractRate = z.infer<typeof contractRateSchema>;
 
 export const shipmentProfitabilityEstimateSchema = z.object({
   shipmentId: z.string(),

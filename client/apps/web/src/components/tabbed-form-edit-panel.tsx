@@ -69,6 +69,16 @@ type TabbedFormEditPanelProps<T extends FieldValues, TData extends Record<string
   formTabs?: FormTabConfig[];
   size?: PanelSize;
   useDock?: boolean;
+  /**
+   * Whether the form still holds only the bare table row.
+   *
+   * A panel whose record has children fetches them separately, and until they
+   * land the form has none. Saving in that window tells the server the record
+   * has no children, which it reads as the user having deleted them — so the
+   * panel refuses to submit rather than writing that emptiness back.
+   */
+  isRecordLoading?: boolean;
+  recordFailed?: boolean;
   mutationFn?: (values: T, row: TData) => Promise<T>;
 };
 
@@ -102,6 +112,8 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   formTabs = [],
   size = "md",
   useDock = false,
+  isRecordLoading = false,
+  recordFailed = false,
   mutationFn,
 }: TabbedFormEditPanelProps<T, TData>) {
   const user = useAuthStore((s) => s.user);
@@ -174,13 +186,20 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
     [mutateAsync],
   );
 
+  // The record has to be in the form before any of it can be written back.
+  const saveBlocked = isRecordLoading || recordFailed;
+
   const handleOptionSelect = (action: EditPanelSaveAction) => {
+    if (saveBlocked) return;
+
     pendingActionRef.current = action;
     setDefaultAction(action);
     void handleSubmit(onSubmit)();
   };
 
   const handleFormSubmit = (values: T) => {
+    if (saveBlocked) return;
+
     pendingActionRef.current = defaultAction;
     return onSubmit(values);
   };
@@ -189,6 +208,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
     options: SAVE_OPTIONS,
     selectedOption: defaultAction,
     onOptionSelect: handleOptionSelect,
+    disabled: saveBlocked,
     loadingText: "Saving...",
   };
 
@@ -202,6 +222,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
       if (
         open &&
         !activeTabHidesFooter &&
+        !saveBlocked &&
         (event.ctrlKey || event.metaKey) &&
         event.key === "Enter" &&
         !isSubmitting
@@ -214,7 +235,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, isSubmitting, handleSubmit, defaultAction, onSubmit, activeTabHidesFooter]);
+  }, [open, isSubmitting, handleSubmit, defaultAction, onSubmit, activeTabHidesFooter, saveBlocked]);
 
   const panelTitle = titleComponent
     ? row
@@ -284,9 +305,16 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
             )}
           </div>
 
-          {!row ? (
+          {!row || isRecordLoading ? (
             <div className="flex-1 p-4">
               <ComponentLoader message={`Loading ${title}...`} />
+            </div>
+          ) : recordFailed ? (
+            <div className="flex-1 p-4">
+              <p className="text-destructive text-sm">
+                This {title.toLowerCase()} could not be loaded, so it cannot be edited safely.
+                Close the panel and try again.
+              </p>
             </div>
           ) : hasFormTabs ? (
             <Tabs
@@ -423,6 +451,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
               selectedOption={defaultAction}
               onOptionSelect={handleOptionSelect}
               isLoading={isSubmitting}
+              disabled={saveBlocked}
               loadingText="Saving..."
               formId="panel-edit-form"
             />

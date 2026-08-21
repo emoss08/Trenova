@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -300,6 +301,62 @@ func (r *mutationResolver) CalculateShipmentTotals(ctx context.Context, input gq
 	}
 
 	return shipmentTotalsToModel(response), nil
+}
+
+// PreviewShipmentContractRate is the resolver for the previewShipmentContractRate field.
+func (r *mutationResolver) PreviewShipmentContractRate(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.ShipmentContractRate, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := shipmentFromInput(input, pulid.Nil, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	application, err := r.shipmentService.PreviewContractRate(
+		ctx, entity, actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return contractRateToModel(application), nil
+}
+
+// AutoRateShipment is the resolver for the autoRateShipment field.
+func (r *mutationResolver) AutoRateShipment(ctx context.Context, id string) (*gqlmodel.ShipmentAutoRateResponse, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	shipmentID, err := requiredID("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, application, err := r.shipmentService.AutoRate(ctx, &services.AutoRateShipmentRequest{
+		ShipmentID: shipmentID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	model, err := shipmentToModel(entity)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.ShipmentAutoRateResponse{
+		Shipment:     model,
+		ContractRate: contractRateToModel(application),
+	}, nil
 }
 
 // CalculateShipmentDistance is the resolver for the calculateShipmentDistance field.

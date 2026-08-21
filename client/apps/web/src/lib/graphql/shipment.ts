@@ -1,5 +1,6 @@
 import {
   AcknowledgeShipmentCommentDocument,
+  AutoRateShipmentDocument,
   BulkTransferShipmentsToBillingDocument,
   CalculateShipmentDistanceDocument,
   CalculateShipmentLoadingOptimizationDocument,
@@ -14,6 +15,7 @@ import {
   ExceptionShipmentsDocument,
   MapShipmentsDocument,
   PinShipmentCommentDocument,
+  PreviewShipmentContractRateDocument,
   RecalculateShipmentDistanceDocument,
   ResolveShipmentCommentDocument,
   ShipmentBillingReadinessDocument,
@@ -398,6 +400,35 @@ export async function calculateShipmentTotalsGraphQL(payload: Shipment) {
   return data.calculateShipmentTotals;
 }
 
+/**
+ * Asks the rate agreements what they would charge for a shipment that has not
+ * been saved. Nothing is written, so the panel can offer the contract's rate
+ * before anyone commits to it.
+ */
+export async function previewShipmentContractRateGraphQL(payload: Shipment) {
+  const data = await requestShipmentGraphQL({
+    document: PreviewShipmentContractRateDocument,
+    operationName: "PreviewShipmentContractRate",
+    variables: {
+      input: toShipmentInput(payload),
+    },
+  });
+  return data.previewShipmentContractRate;
+}
+
+/**
+ * Prices a saved shipment from its contract again, overwriting its rating
+ * method, base rate and contract accessorials.
+ */
+export async function autoRateShipmentGraphQL(shipmentId: Shipment["id"]) {
+  const data = await requestShipmentGraphQL({
+    document: AutoRateShipmentDocument,
+    operationName: "AutoRateShipment",
+    variables: { id: shipmentId },
+  });
+  return data.autoRateShipment;
+}
+
 export async function calculateShipmentDistanceGraphQL(payload: Shipment) {
   const data = await requestShipmentGraphQL({
     document: CalculateShipmentDistanceDocument,
@@ -669,6 +700,9 @@ function toShipmentInput(
     billedAt: payload.billedAt,
     ratingUnit: payload.ratingUnit,
     fuelSurchargeLocked: payload.fuelSurchargeLocked ?? false,
+    // The one rating field a caller may write. Everything else the system owns
+    // is restored from the stored shipment on save.
+    rateOverrideReason: payload.rateOverrideReason ?? undefined,
     version: "version" in payload ? payload.version : undefined,
     moves: payload.moves?.map(toShipmentMoveInput) ?? [],
     additionalCharges: payload.additionalCharges?.map(toAdditionalChargeInput) ?? [],

@@ -7536,6 +7536,19 @@ definitions:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.AdditionalCharge'
                 type: array
+            autoRated:
+                description: |-
+                    AutoRated marks a shipment whose rating method, base rate and contract
+                    accessorials are the ones a rate agreement put there, untouched since.
+
+                    A contract prices a shipment once. What it produced then lives in the
+                    shipment's ordinary fields, where anyone can see and edit it, and this
+                    says whether anyone has. It is the only durable answer to how often the
+                    contracts are actually being used, which is why it is a column rather
+                    than something inferred from the quote at read time.
+                type: boolean
+            autoRatedAt:
+                type: integer
             baseRate:
                 $ref: '#/definitions/decimal.NullDecimal'
             billedAt:
@@ -10301,6 +10314,67 @@ definitions:
             total:
                 type: integer
         type: object
+    github_com_emoss08_trenova_internal_core_ports_services.ContractRateAccessorial:
+        properties:
+            accessorialChargeId:
+                type: string
+            amount:
+                type: number
+            description:
+                type: string
+            method:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.Method'
+            unit:
+                type: integer
+        type: object
+    github_com_emoss08_trenova_internal_core_ports_services.ContractRateApplication:
+        properties:
+            accessorials:
+                description: |-
+                    Accessorials are the charges the contract's own schedule applies. They
+                    are listed rather than counted because a rater accepting a re-rate is
+                    agreeing to each of them, and a total hides which ones appeared.
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ContractRateAccessorial'
+                type: array
+            agreementId:
+                type: string
+            agreementName:
+                type: string
+            applied:
+                description: |-
+                    Applied is false when no contract covered the lane, in which case nothing
+                    was changed and the outcome says why.
+                type: boolean
+            baseRate:
+                $ref: '#/definitions/decimal.NullDecimal'
+            explanation:
+                type: string
+            formulaTemplateId:
+                description: |-
+                    FormulaTemplateID and BaseRate are what the contract seats on the
+                    shipment: its rating method, and the rate that method prices with.
+                type: string
+            formulaTemplateName:
+                type: string
+            linehaulAmount:
+                type: number
+            otherChargeAmount:
+                type: number
+            outcome:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_ratequote.Outcome'
+            previousLinehaulAmount:
+                description: |-
+                    PreviousLinehaulAmount is what the shipment charged before, so the dialog
+                    can state the change rather than only the result.
+                type: number
+            ruleId:
+                type: string
+            ruleLabel:
+                type: string
+            totalChargeAmount:
+                type: number
+        type: object
     github_com_emoss08_trenova_internal_core_ports_services.CreateAPIKeyRequest:
         properties:
             description:
@@ -10614,23 +10688,6 @@ definitions:
             isSystem:
                 type: boolean
             name:
-                type: string
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_services.SetRateOverrideRequest:
-        properties:
-            amount:
-                allOf:
-                    - $ref: '#/definitions/decimal.NullDecimal'
-                description: Amount is the hand-set linehaul. Ignored when Clear is set.
-            clear:
-                description: Clear removes the override instead of setting one.
-                type: boolean
-            rateLocked:
-                description: |-
-                    RateLocked freezes the shipment's numbers against every re-rating path,
-                    for a shipment already invoiced whose numbers the customer has seen.
-                type: boolean
-            reason:
                 type: string
         type: object
     github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadiness:
@@ -13051,6 +13108,17 @@ definitions:
                     Amount is the linehaul, in the organization's billing currency. Fuel and
                     accessorials are added by the caller that owns them.
                 type: number
+            baseRate:
+                allOf:
+                    - $ref: '#/definitions/decimal.NullDecimal'
+                description: |-
+                    BaseRate is the per-unit rate the template was priced with — the lane
+                    rate on the rule, or the value in the matrix cell that matched.
+
+                    It is what lets a contract's answer be seated on a shipment as its own
+                    rating method plus its own base rate, rather than as a total nobody can
+                    re-derive. A rule that binds no rate leaves this unset, and the
+                    shipment's existing base rate stands.
             currency:
                 type: string
             formulaTemplateId:
@@ -29621,6 +29689,52 @@ paths:
             summary: Update a shipment
             tags:
                 - Shipments
+    /shipments/{shipmentID}/auto-rate/:
+        post:
+            description: Prices the shipment from the rate agreement covering its lane, overwriting its rating method, base rate and contract accessorials. Returns the shipment together with an account of what the contract applied.
+            operationId: autoRateShipment
+            parameters:
+                - description: Shipment ID
+                  in: path
+                  name: shipmentID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ContractRateApplication'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Re-rate a shipment from its contract
+            tags:
+                - Shipments
     /shipments/{shipmentID}/billing-readiness/:
         get:
             description: Returns billing-readiness details for a shipment, including required customer documents and resolved billing policy.
@@ -30464,60 +30578,6 @@ paths:
             summary: Update a recorded permit
             tags:
                 - Permits
-    /shipments/{shipmentID}/rate-override/:
-        post:
-            consumes:
-                - application/json
-            description: Replaces the contract's rate with a hand-set amount, or clears one so the contract prices the shipment again. The shipment is re-rated immediately, and the quote records what the contract would have charged instead.
-            operationId: setShipmentRateOverride
-            parameters:
-                - description: Shipment ID
-                  in: path
-                  name: shipmentID
-                  required: true
-                  type: string
-                - description: The override, or clear=true to remove one
-                  in: body
-                  name: request
-                  required: true
-                  schema:
-                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SetRateOverrideRequest'
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment'
-                "400":
-                    description: Bad Request
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "404":
-                    description: Not Found
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "422":
-                    description: Unprocessable Entity
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Set or clear a manual rate override
-            tags:
-                - Shipments
     /shipments/{shipmentID}/recalculate-distance/:
         post:
             operationId: recalculateShipmentDistance

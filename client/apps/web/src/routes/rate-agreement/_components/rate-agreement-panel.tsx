@@ -189,8 +189,9 @@ export function RateAgreementPanel({
 
   // The table row carries only the header; without the full record every child
   // editor opens empty, and saving that emptiness would erase the contract's
-  // lanes, accessorials and fuel terms.
-  useEditRecordReset(form, {
+  // lanes, accessorials and fuel terms — the server reads a lane it was not
+  // sent as a lane the user deleted, and closes it out.
+  const { isSeated, isLoading, isError } = useEditRecordReset(form, {
     open,
     mode,
     queryKey: "rate-agreement",
@@ -254,6 +255,8 @@ export function RateAgreementPanel({
           title="Rate Agreement"
           fieldKey="name"
           formTabs={formTabs}
+          isRecordLoading={isLoading || !isSeated}
+          recordFailed={isError}
           headerActions={
             row ? <ReviewHeaderActions agreement={row} onReviewAction={setReviewAction} /> : null
           }

@@ -1,9 +1,12 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
+import { apiService } from "@/services/api";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { apiService } from "@/services/api";
+import { getTodayDate } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   shipmentCreateSchema,
@@ -12,8 +15,6 @@ import {
   type ShipmentCreateInput,
   type ShipmentUpdateInput,
 } from "@trenova/shared/types/shipment";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   ContainerIcon,
@@ -53,65 +54,70 @@ function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
   return <span className="text-2xs text-foreground">No owner assigned</span>;
 }
 
-const defaultValues: ShipmentCreateInput = {
-  status: "New",
-  bol: "",
-  serviceTypeId: "",
-  shipmentTypeId: "",
-  customerId: "",
-  tractorTypeId: undefined,
-  trailerTypeId: undefined,
-  ownerId: undefined,
-  enteredById: undefined,
-  canceledById: undefined,
-  formulaTemplateId: "",
-  consolidationGroupId: undefined,
-  otherChargeAmount: 0,
-  freightChargeAmount: 0,
-  baseRate: 0,
-  totalChargeAmount: 0,
-  pieces: undefined,
-  weight: undefined,
-  temperatureMin: undefined,
-  temperatureMax: undefined,
-  actualDeliveryDate: undefined,
-  actualShipDate: undefined,
-  canceledAt: undefined,
-  ratingUnit: 1,
-  fuelSurchargeLocked: false,
-  additionalCharges: [],
-  commodities: [],
-  moves: [
-    {
-      status: "New",
-      loaded: true,
-      sequence: 0,
-      distance: 0,
-      stops: [
-        {
-          status: "New",
-          type: "Pickup",
-          scheduleType: "Open",
-          locationId: "",
-          sequence: 0,
-          scheduledWindowStart: 0,
-          scheduledWindowEnd: null,
-        },
-        {
-          status: "New",
-          type: "Delivery",
-          scheduleType: "Open",
-          locationId: "",
-          sequence: 1,
-          scheduledWindowStart: 0,
-          scheduledWindowEnd: null,
-        },
-      ],
-    },
-  ],
+const getDefaultValues = (): ShipmentCreateInput => {
+  const today = getTodayDate();
+
+  return {
+    status: "New",
+    bol: "",
+    serviceTypeId: "",
+    shipmentTypeId: "",
+    customerId: "",
+    tractorTypeId: undefined,
+    trailerTypeId: undefined,
+    ownerId: undefined,
+    enteredById: undefined,
+    canceledById: undefined,
+    formulaTemplateId: "",
+    consolidationGroupId: undefined,
+    otherChargeAmount: 0,
+    freightChargeAmount: 0,
+    baseRate: 0,
+    totalChargeAmount: 0,
+    pieces: undefined,
+    weight: undefined,
+    temperatureMin: undefined,
+    temperatureMax: undefined,
+    actualDeliveryDate: undefined,
+    actualShipDate: undefined,
+    canceledAt: undefined,
+    ratingUnit: 1,
+    fuelSurchargeLocked: false,
+    additionalCharges: [],
+    commodities: [],
+    moves: [
+      {
+        status: "New",
+        loaded: true,
+        sequence: 0,
+        distance: 0,
+        stops: [
+          {
+            status: "New",
+            type: "Pickup",
+            scheduleType: "Open",
+            locationId: "",
+            sequence: 0,
+            scheduledWindowStart: today,
+            scheduledWindowEnd: null,
+          },
+          {
+            status: "New",
+            type: "Delivery",
+            scheduleType: "Open",
+            locationId: "",
+            sequence: 1,
+            scheduledWindowStart: today,
+            scheduledWindowEnd: null,
+          },
+        ],
+      },
+    ],
+  };
 };
 
 export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Shipment>) {
+  const defaultValues = getDefaultValues();
   const createForm = useForm({
     resolver: zodResolver(shipmentCreateSchema),
     defaultValues,

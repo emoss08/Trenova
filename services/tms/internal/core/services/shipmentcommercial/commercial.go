@@ -34,6 +34,7 @@ type Params struct {
 	Predicate          services.FormulaPredicateEvaluator
 	AccessorialRepo    repositories.AccessorialChargeRepository
 	AgreementRepo      repositories.RateAgreementRepository
+	QuoteRepo          repositories.RateQuoteRepository
 	BillingControlRepo repositories.BillingControlRepository
 	FuelSurcharge      services.FuelSurchargeResolver
 	DetentionEngine    *detentionservice.Service
@@ -45,6 +46,7 @@ type Calculator struct {
 	predicate          services.FormulaPredicateEvaluator
 	accessorialRepo    repositories.AccessorialChargeRepository
 	agreementRepo      repositories.RateAgreementRepository
+	quoteRepo          repositories.RateQuoteRepository
 	billingControlRepo repositories.BillingControlRepository
 	fuelSurcharge      services.FuelSurchargeResolver
 	detentionEngine    *detentionservice.Service
@@ -58,6 +60,7 @@ func New(p Params) *Calculator {
 		predicate:          p.Predicate,
 		accessorialRepo:    p.AccessorialRepo,
 		agreementRepo:      p.AgreementRepo,
+		quoteRepo:          p.QuoteRepo,
 		billingControlRepo: p.BillingControlRepo,
 		fuelSurcharge:      p.FuelSurcharge,
 		detentionEngine:    p.DetentionEngine,
@@ -170,16 +173,12 @@ func (c *Calculator) calculateCommercialTotals(
 		return decimal.Zero, decimal.Zero, nil, err
 	}
 
-	// The contract is read once and used twice: it prices its own accessorials,
-	// and it may point fuel at a different program than the customer default.
+	// The contract is read for one thing only: it may point fuel at a different
+	// program than the customer default. Its accessorials are not reconciled
+	// here — they were written into the shipment's own charge rows when the
+	// contract was applied, and rebuilding them on every save would undo any
+	// figure a rater has since agreed with the customer.
 	agreement := c.loadAgreement(ctx, entity)
-
-	// Contract accessorials are applied before fuel, because a fuel program
-	// taking a percentage of linehaul plus accessorials has to see them first.
-	// A locked shipment is left entirely alone.
-	if !entity.RateLocked {
-		c.syncAgreementAccessorials(ctx, entity, agreement)
-	}
 
 	if sync.fuel {
 		if err = c.syncFuelSurcharge(ctx, entity, baseCharge, agreement); err != nil {
@@ -217,15 +216,19 @@ func CalculateAdditionalCharge(
 	}
 }
 
-// calculateBaseCharge produces the linehaul.
+// calculateBaseCharge produces the linehaul from the shipment's own rating
+// fields.
 //
-// There are three ways to arrive at one, in strict order of authority. A rate
-// somebody set by hand wins outright — re-rating is triggered by a stop edit,
-// an assignment, a fuel price job, and any of those silently replacing a
-// negotiated spot rate is exactly what makes people switch auto-rating off. A
-// locked shipment keeps what it already had, because the customer has seen it.
-// Otherwise the rate engine resolves the contract covering the lane, falling
-// back to the shipment's own formula template when none does.
+// A contract is applied to a shipment once, writing its rating method and base
+// rate into the shipment, and from that moment those fields are what price it.
+// So this evaluates the formula template the shipment carries and nothing else:
+// no contract is resolved, and no quote is written. Recalculation is triggered
+// by a stop edit, an assignment, a fuel price job, and any of those quietly
+// replacing a figure a rater has since agreed with the customer is exactly what
+// makes people switch auto-rating off.
+//
+// A locked shipment keeps what it already had, because the customer has been
+// invoiced against it.
 func (c *Calculator) calculateBaseCharge(
 	ctx context.Context,
 	entity *shipment.Shipment,
@@ -245,20 +248,41 @@ func (c *Calculator) calculateBaseCharge(
 			UserID: userID,
 		},
 		BillingControl: c.billingControl(ctx, entity),
-		Persist:        true,
+		FormulaOnly:    true,
+		Persist:        false,
 		UserID:         userID,
 	})
 	if err != nil {
 		return decimal.Zero, nil, err
 	}
 
-	c.applyQuote(entity, rated)
+	detail := ratingDetailFromQuote(rated)
+	carryContractProvenance(entity, detail)
 
-	if entity.HasRateOverride() {
-		return c.overriddenCharge(entity, rated), entity.RatingDetail, nil
+	return rated.Amount, detail, nil
+}
+
+// carryContractProvenance keeps the contract's name on a rating detail the
+// formula produced.
+//
+// The arithmetic is the formula's, and the breakdown has to describe it — but
+// the shipment was priced by a contract, and the billing panel naming a formula
+// where a rater expects to see the agreement is how somebody concludes the
+// contract stopped applying. The link is carried across from the shipment's own
+// stamped fields rather than re-resolved, which is the whole point.
+func carryContractProvenance(entity *shipment.Shipment, detail *shipment.RatingDetail) {
+	previous := entity.RatingDetail
+	if detail == nil || previous == nil || !entity.AutoRated {
+		return
 	}
 
-	return rated.Amount, entity.RatingDetail, nil
+	detail.RateQuoteID = previous.RateQuoteID
+	detail.AgreementID = previous.AgreementID
+	detail.AgreementName = previous.AgreementName
+	detail.RuleID = previous.RuleID
+	detail.RuleLabel = previous.RuleLabel
+	detail.Source = previous.Source
+	detail.Explanation = previous.Explanation
 }
 
 // lockedCharge keeps an invoiced shipment exactly as it was. Nothing is
@@ -269,45 +293,6 @@ func (c *Calculator) lockedCharge(entity *shipment.Shipment) decimal.Decimal {
 	}
 
 	return decimal.Zero
-}
-
-// overriddenCharge returns the hand-set linehaul, and records on the quote what
-// the contract would have charged instead.
-//
-// That difference is the rate leakage report. Storing it on the row that caused
-// it, rather than recomputing it later, is the only way it stays true after the
-// contract has been amended.
-func (c *Calculator) overriddenCharge(
-	entity *shipment.Shipment,
-	rated *services.RatedShipment,
-) decimal.Decimal {
-	override := entity.RateOverrideAmount.Decimal
-
-	if rated.Quote != nil {
-		rated.Quote.Outcome = ratequote.OutcomeManualOverride
-		rated.Quote.OverrideReason = entity.RateOverrideReason
-		rated.Quote.ForegoneAmount = decimal.NewNullDecimal(rated.Amount.Sub(override))
-		rated.Quote.LinehaulAmount = override
-		rated.Quote.TotalAmount = override
-		rated.Quote.BillingAmount = override
-	}
-
-	if entity.RatingDetail != nil {
-		result, _ := override.Float64()
-		entity.RatingDetail.Result = result
-		entity.RatingDetail.Source = string(ratequote.OutcomeManualOverride)
-		entity.RatingDetail.Explanation = overrideExplanation(entity)
-	}
-
-	return override
-}
-
-func overrideExplanation(entity *shipment.Shipment) string {
-	if entity.RateOverrideReason == "" {
-		return "Rate set by hand"
-	}
-
-	return "Rate set by hand: " + entity.RateOverrideReason
 }
 
 // applyQuote stamps the rating decision back onto the shipment, so the record

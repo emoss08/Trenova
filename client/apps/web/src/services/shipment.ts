@@ -1,4 +1,5 @@
 import {
+  autoRateShipmentGraphQL,
   bulkTransferShipmentsToBillingGraphQL,
   calculateShipmentDistanceGraphQL,
   calculateShipmentLoadingOptimizationGraphQL,
@@ -15,6 +16,7 @@ import {
   listShipmentCommentsGraphQL,
   listShipmentsGraphQL,
   listUnassignedShipmentsGraphQL,
+  previewShipmentContractRateGraphQL,
   recalculateShipmentDistanceGraphQL,
   transferShipmentOwnershipGraphQL,
   transferShipmentToBillingGraphQL,
@@ -40,6 +42,7 @@ import {
 } from "@trenova/shared/types/permit";
 import {
   bulkTransferToBillingResponseSchema,
+  contractRateSchema,
   duplicateShipmentResponseSchema,
   previousRatesResponseSchema,
   shipmentBillingReadinessSchema,
@@ -121,18 +124,31 @@ export class ShipmentService {
   }
 
   /**
-   * Sets or clears the manual rate override.
+   * Asks the rate agreements what they would charge for what is on screen.
    *
-   * This is the only path that writes the override — a plain save cannot set
-   * or clear one — and the shipment is re-rated immediately, recording what
-   * the contract would have charged instead.
+   * Nothing is written. The panel offers the answer, and the shipment only
+   * carries a contract rate once somebody saves the fields it filled in.
    */
-  public async setRateOverride(
-    shipmentId: string,
-    payload: { amount?: number; reason?: string; rateLocked?: boolean; clear?: boolean },
-  ) {
-    const response = await api.post<Shipment>(`/shipments/${shipmentId}/rate-override/`, payload);
-    return safeParse(shipmentSchema, response, "Shipment");
+  public async previewContractRate(payload: Shipment) {
+    const response = await previewShipmentContractRateGraphQL(payload);
+    return safeParse(contractRateSchema, response, "Contract Rate");
+  }
+
+  /**
+   * Prices a saved shipment from its contract again.
+   *
+   * This overwrites: the rating method, the base rate and every contract
+   * accessorial go back to what the agreement says. It is the one action that
+   * discards a hand-priced rate, which is why nothing else calls it.
+   */
+  public async autoRate(shipmentId: string) {
+    const response = await autoRateShipmentGraphQL(shipmentId);
+    const [shipment, contractRate] = await Promise.all([
+      safeParse(shipmentSchema, response.shipment, "Shipment"),
+      safeParse(contractRateSchema, response.contractRate, "Contract Rate"),
+    ]);
+
+    return { shipment, contractRate };
   }
 
   public async calculateTotals(payload: Shipment, _signal?: AbortSignal) {

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -48,18 +49,13 @@ type RatingDetail struct {
 	VersionNumber       int64                 `json:"versionNumber,omitempty"`
 	Breakdown           []RatingBreakdownItem `json:"breakdown,omitempty"`
 	Guardrail           *RatingGuardrail      `json:"guardrail,omitempty"`
-
-	// The fields below name the contract that priced the shipment, when one
-	// did. They point at the quote rather than duplicating it: the quote is
-	// where the full explanation lives, and copying any of it here would let
-	// the two drift.
-	RateQuoteID   string `json:"rateQuoteId,omitempty"`
-	AgreementID   string `json:"agreementId,omitempty"`
-	AgreementName string `json:"agreementName,omitempty"`
-	RuleID        string `json:"ruleId,omitempty"`
-	RuleLabel     string `json:"ruleLabel,omitempty"`
-	Source        string `json:"source,omitempty"`
-	Explanation   string `json:"explanation,omitempty"`
+	RateQuoteID         string                `json:"rateQuoteId,omitempty"`
+	AgreementID         string                `json:"agreementId,omitempty"`
+	AgreementName       string                `json:"agreementName,omitempty"`
+	RuleID              string                `json:"ruleId,omitempty"`
+	RuleLabel           string                `json:"ruleLabel,omitempty"`
+	Source              string                `json:"source,omitempty"`
+	Explanation         string                `json:"explanation,omitempty"`
 }
 
 type Shipment struct {
@@ -108,17 +104,17 @@ type Shipment struct {
 	RatingUnit                int64                 `json:"ratingUnit"                bun:"rating_unit,type:INTEGER,notnull,default:1"`
 	FuelSurchargeLocked       bool                  `json:"fuelSurchargeLocked"       bun:"fuel_surcharge_locked,type:BOOLEAN,notnull"`
 	RatingDetail              *RatingDetail         `json:"ratingDetail"              bun:"rating_detail,type:JSONB,nullzero"`
+	RateQuoteID               *pulid.ID             `json:"rateQuoteId"               bun:"rate_quote_id,type:VARCHAR(100),nullzero"`
+	RateAgreementID           *pulid.ID             `json:"rateAgreementId"           bun:"rate_agreement_id,type:VARCHAR(100),nullzero"`
+	RateAgreementRuleID       *pulid.ID             `json:"rateAgreementRuleId"       bun:"rate_agreement_rule_id,type:VARCHAR(100),nullzero"`
+	RateOverrideAmount        decimal.NullDecimal   `json:"rateOverrideAmount"        bun:"rate_override_amount,type:NUMERIC(19,4),nullzero"`
+	RateOverrideReason        string                `json:"rateOverrideReason"        bun:"rate_override_reason,type:TEXT,nullzero"`
+	RateOverrideByID          *pulid.ID             `json:"rateOverrideById"          bun:"rate_override_by_id,type:VARCHAR(100),nullzero"`
+	RateOverrideAt            *int64                `json:"rateOverrideAt"            bun:"rate_override_at,type:BIGINT,nullzero"`
+	RateLocked                bool                  `json:"rateLocked"                bun:"rate_locked,type:BOOLEAN,notnull"`
+	AutoRated                 bool                  `json:"autoRated"                 bun:"auto_rated,type:BOOLEAN,notnull"`
+	AutoRatedAt               *int64                `json:"autoRatedAt"               bun:"auto_rated_at,type:BIGINT,nullzero"`
 
-	RateQuoteID         *pulid.ID           `json:"rateQuoteId"         bun:"rate_quote_id,type:VARCHAR(100),nullzero"`
-	RateAgreementID     *pulid.ID           `json:"rateAgreementId"     bun:"rate_agreement_id,type:VARCHAR(100),nullzero"`
-	RateAgreementRuleID *pulid.ID           `json:"rateAgreementRuleId" bun:"rate_agreement_rule_id,type:VARCHAR(100),nullzero"`
-	RateOverrideAmount  decimal.NullDecimal `json:"rateOverrideAmount"  bun:"rate_override_amount,type:NUMERIC(19,4),nullzero"`
-	RateOverrideReason  string              `json:"rateOverrideReason"  bun:"rate_override_reason,type:TEXT,nullzero"`
-	RateOverrideByID    *pulid.ID           `json:"rateOverrideById"    bun:"rate_override_by_id,type:VARCHAR(100),nullzero"`
-	RateOverrideAt      *int64              `json:"rateOverrideAt"      bun:"rate_override_at,type:BIGINT,nullzero"`
-	// RateLocked suppresses re-rating outright, for a shipment already invoiced
-	// whose numbers the customer has seen.
-	RateLocked       bool   `json:"rateLocked"                 bun:"rate_locked,type:BOOLEAN,notnull"`
 	SourceDocumentID string `json:"sourceDocumentId,omitempty" bun:"-"`
 	SearchVector     string `json:"-"                          bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank             string `json:"-"                          bun:"rank,type:VARCHAR(100),scanonly"`
@@ -184,12 +180,6 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 
-	// The formula template is deliberately not required here. A shipment now
-	// needs either a resolved rate quote or a formula template, and which of
-	// those it has depends on whether a rate agreement covered its lane —
-	// something only the service layer can find out, because it takes a query.
-	// The rule lives in the shipment validator, which runs after rating.
-
 	s.validateRateOverride(multiErr)
 }
 
@@ -207,41 +197,84 @@ func (s *Shipment) validateRateOverride(multiErr *errortypes.MultiError) {
 	}
 }
 
-// HasRateOverride reports whether somebody set this shipment's linehaul by
-// hand.
 func (s *Shipment) HasRateOverride() bool {
 	return s.RateOverrideAmount.Valid
 }
 
-// RestoreRateOwnedFields re-seats the rating fields that belong to the system
-// rather than to whoever sent the payload.
-//
-// A client that round-trips a shipment without these — an older version, an
-// integration, any editor that rebuilds the object from the fields it cares
-// about — must not thereby clear a rater's override or unlock an invoiced
-// shipment. Clearing an override is its own deliberate action, not a side
-// effect of saving something else. This mirrors RestoreSystemOwnedCharges,
-// which protects machine-owned charges for the same reason.
 func RestoreRateOwnedFields(original, updated *Shipment) {
 	if original == nil || updated == nil {
 		return
 	}
 
 	updated.RateOverrideAmount = original.RateOverrideAmount
-	updated.RateOverrideReason = original.RateOverrideReason
 	updated.RateOverrideByID = original.RateOverrideByID
 	updated.RateOverrideAt = original.RateOverrideAt
 	updated.RateLocked = original.RateLocked
 	updated.RateQuoteID = original.RateQuoteID
 	updated.RateAgreementID = original.RateAgreementID
 	updated.RateAgreementRuleID = original.RateAgreementRuleID
+	updated.AutoRated = original.AutoRated
+	updated.AutoRatedAt = original.AutoRatedAt
 
-	// The rating detail is written by the rater, never sent in. Re-rating
-	// replaces it a moment later on any shipment that is still open, so this
-	// matters for the ones that are not: a locked shipment keeps the
-	// explanation the customer was invoiced against rather than whatever
-	// subset of it a client happened to echo back.
+	if updated.RateOverrideReason == "" {
+		updated.RateOverrideReason = original.RateOverrideReason
+	}
+
 	updated.RatingDetail = original.RatingDetail
+}
+
+func (s *Shipment) ClearAutoRating() {
+	s.AutoRated = false
+	s.AutoRatedAt = nil
+}
+
+func (s *Shipment) MarkAutoRated(at int64) {
+	s.AutoRated = true
+	s.AutoRatedAt = &at
+}
+
+func RatedFieldsEdited(original, updated *Shipment) bool {
+	if original == nil || updated == nil {
+		return false
+	}
+
+	if original.FormulaTemplateID != updated.FormulaTemplateID {
+		return true
+	}
+
+	if !decimalutils.NullEqual(original.BaseRate, updated.BaseRate) {
+		return true
+	}
+
+	return agreementChargesEdited(original.AdditionalCharges, updated.AdditionalCharges)
+}
+
+func agreementChargesEdited(original, updated []*AdditionalCharge) bool {
+	remaining := make(map[pulid.ID]*AdditionalCharge, len(updated))
+	for _, charge := range updated {
+		if charge == nil || charge.ID.IsNil() {
+			continue
+		}
+		remaining[charge.ID] = charge
+	}
+
+	for _, charge := range original {
+		if charge == nil || charge.Owner() != SystemOwnerAgreement {
+			continue
+		}
+
+		current, kept := remaining[charge.ID]
+		if !kept {
+			return true
+		}
+
+		if current.Method != charge.Method || current.Unit != charge.Unit ||
+			!current.Amount.Equal(charge.Amount) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *Shipment) ApplyEntryMethodDefault(original *Shipment) {

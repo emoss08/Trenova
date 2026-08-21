@@ -1,11 +1,11 @@
-import { queries } from "@/lib/queries";
 import { rateQuoteOutcomeChoices } from "@/lib/choices";
+import { queries } from "@/lib/queries";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { RateQuote, RateTraceCandidate } from "@trenova/shared/types/rate";
-import { useQuery } from "@tanstack/react-query";
 import { InfoIcon } from "lucide-react";
 
 type WhyThisRateProps = {
@@ -34,13 +34,13 @@ export function WhyThisRate({ shipmentId }: WhyThisRateProps) {
     <Popover>
       <PopoverTrigger
         render={
-          <Button type="button" variant="ghost" size="sm" className="h-6 gap-1 px-1.5">
+          <Button type="button" variant="ghost" size="xxxs">
             <InfoIcon className="size-3" />
             <span className="text-2xs">Why this rate</span>
           </Button>
         }
       />
-      <PopoverContent align="end" className="w-[26rem] p-0">
+      <PopoverContent align="end" className="w-104 p-0">
         {quote ? <QuoteExplanation quote={quote} /> : <LoadingState />}
       </PopoverContent>
     </Popover>

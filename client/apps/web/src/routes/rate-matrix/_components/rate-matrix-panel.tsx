@@ -38,7 +38,7 @@ export function RateMatrixPanel({
 
   // The table row carries no dimensions; without the full record the axes tab
   // opens empty, and saving that emptiness would strip the grid of its axes.
-  useEditRecordReset(form, {
+  const { isSeated, isLoading, isError } = useEditRecordReset(form, {
     open,
     mode,
     queryKey: "rate-matrix",
@@ -83,6 +83,8 @@ export function RateMatrixPanel({
         title="Rate Matrix"
         fieldKey="name"
         formTabs={formTabs}
+        isRecordLoading={isLoading || !isSeated}
+        recordFailed={isError}
         mutationFn={(values, currentRow) => {
           if (!currentRow.id) {
             throw new Error("No Rate Matrix ID selected");

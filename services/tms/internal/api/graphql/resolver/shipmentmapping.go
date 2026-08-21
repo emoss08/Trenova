@@ -24,24 +24,46 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// shipmentFormulaTemplateID parses the rating method, which a shipment being
+// written for the first time is allowed not to have yet.
+//
+// A shipment carries either a rate agreement or a formula template, and which
+// one it gets is settled by the rate engine after this mapping runs: the
+// contract preview asks what an agreement would charge precisely because
+// nothing has been chosen yet, and requiring one here refused that question
+// before it could be asked. Whether the shipment ends up priced at all is the
+// rate coverage rule's to answer, once the engine has spoken.
+//
+// An existing shipment is held to the stricter reading. Its rating method is a
+// field a rater owns and nothing restores on save, so a payload that arrives
+// without one — an older client, an integration echoing back the fields it
+// cares about — would otherwise silently unprice a load somebody had rated.
+func shipmentFormulaTemplateID(shipmentID pulid.ID, value string) (pulid.ID, error) {
+	if shipmentID.IsNil() {
+		return optionalScopedID("formulaTemplateId", &value)
+	}
+
+	return requiredID("formulaTemplateId", value)
+}
+
 func shipmentFromInput(
 	input gqlmodel.ShipmentInput,
 	id pulid.ID,
 	authCtx *authctx.AuthContext,
 ) (*shipmentdomain.Shipment, error) {
-	serviceTypeID, err := pulid.MustParse(input.ServiceTypeID)
+	serviceTypeID, err := requiredID("serviceTypeId", input.ServiceTypeID)
 	if err != nil {
 		return nil, err
 	}
-	shipmentTypeID, err := pulid.MustParse(input.ShipmentTypeID)
+	shipmentTypeID, err := requiredID("shipmentTypeId", input.ShipmentTypeID)
 	if err != nil {
 		return nil, err
 	}
-	customerID, err := pulid.MustParse(input.CustomerID)
+	customerID, err := requiredID("customerId", input.CustomerID)
 	if err != nil {
 		return nil, err
 	}
-	formulaTemplateID, err := pulid.MustParse(input.FormulaTemplateID)
+	formulaTemplateID, err := shipmentFormulaTemplateID(id, input.FormulaTemplateID)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +168,7 @@ func shipmentFromInput(
 		BilledAt:               int64Ptr(input.BilledAt),
 		RatingUnit:             int64Value(input.RatingUnit),
 		FuelSurchargeLocked:    boolValue(input.FuelSurchargeLocked),
+		RateOverrideReason:     stringValue(input.RateOverrideReason),
 		SourceDocumentID:       stringValue(input.SourceDocumentID),
 	}
 	if entity.RatingUnit == 0 {
@@ -183,15 +206,16 @@ func shipmentMovesFromInput(
 	authCtx *authctx.AuthContext,
 ) ([]*shipmentdomain.ShipmentMove, error) {
 	moves := make([]*shipmentdomain.ShipmentMove, 0, len(inputs))
-	for _, input := range inputs {
+	for idx, input := range inputs {
 		if input == nil {
 			continue
 		}
-		id, err := optionalID(input.ID)
+		path := fmt.Sprintf("moves[%d]", idx)
+		id, err := optionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentID, err := optionalID(input.ShipmentID)
+		shipmentID, err := optionalScopedID(path+".shipmentId", input.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
@@ -224,7 +248,7 @@ func shipmentMovesFromInput(
 		if input.Version != nil {
 			move.Version = int64(*input.Version)
 		}
-		stops, err := shipmentStopsFromInput(input.Stops, authCtx)
+		stops, err := shipmentStopsFromInput(input.Stops, path, authCtx)
 		if err != nil {
 			return nil, err
 		}
@@ -236,22 +260,24 @@ func shipmentMovesFromInput(
 
 func shipmentStopsFromInput(
 	inputs []*gqlmodel.ShipmentStopInput,
+	movePath string,
 	authCtx *authctx.AuthContext,
 ) ([]*shipmentdomain.Stop, error) {
 	stops := make([]*shipmentdomain.Stop, 0, len(inputs))
-	for _, input := range inputs {
+	for idx, input := range inputs {
 		if input == nil {
 			continue
 		}
-		id, err := optionalID(input.ID)
+		path := fmt.Sprintf("%s.stops[%d]", movePath, idx)
+		id, err := optionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentMoveID, err := optionalID(input.ShipmentMoveID)
+		shipmentMoveID, err := optionalScopedID(path+".shipmentMoveId", input.ShipmentMoveID)
 		if err != nil {
 			return nil, err
 		}
-		locationID, err := pulid.MustParse(input.LocationID)
+		locationID, err := requiredID(path+".locationId", input.LocationID)
 		if err != nil {
 			return nil, err
 		}
@@ -300,19 +326,20 @@ func shipmentAdditionalChargesFromInput(
 	authCtx *authctx.AuthContext,
 ) ([]*shipmentdomain.AdditionalCharge, error) {
 	charges := make([]*shipmentdomain.AdditionalCharge, 0, len(inputs))
-	for _, input := range inputs {
+	for idx, input := range inputs {
 		if input == nil {
 			continue
 		}
-		id, err := optionalID(input.ID)
+		path := fmt.Sprintf("additionalCharges[%d]", idx)
+		id, err := optionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentID, err := optionalID(input.ShipmentID)
+		shipmentID, err := optionalScopedID(path+".shipmentId", input.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
-		accessorialChargeID, err := pulid.MustParse(input.AccessorialChargeID)
+		accessorialChargeID, err := requiredID(path+".accessorialChargeId", input.AccessorialChargeID)
 		if err != nil {
 			return nil, err
 		}
@@ -336,11 +363,17 @@ func shipmentAdditionalChargesFromInput(
 		if input.Method != nil {
 			method = accessorialcharge.Method(*input.Method)
 		}
-		fuelSurchargeProgramID, err := optionalID(input.FuelSurchargeProgramID)
+		fuelSurchargeProgramID, err := optionalScopedID(
+			path+".fuelSurchargeProgramId",
+			input.FuelSurchargeProgramID,
+		)
 		if err != nil {
 			return nil, err
 		}
-		detentionOccurrenceID, err := optionalID(input.DetentionOccurrenceID)
+		detentionOccurrenceID, err := optionalScopedID(
+			path+".detentionOccurrenceId",
+			input.DetentionOccurrenceID,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -374,19 +407,20 @@ func shipmentCommoditiesFromInput(
 	authCtx *authctx.AuthContext,
 ) ([]*shipmentdomain.ShipmentCommodity, error) {
 	commodities := make([]*shipmentdomain.ShipmentCommodity, 0, len(inputs))
-	for _, input := range inputs {
+	for idx, input := range inputs {
 		if input == nil {
 			continue
 		}
-		id, err := optionalID(input.ID)
+		path := fmt.Sprintf("commodities[%d]", idx)
+		id, err := optionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentID, err := optionalID(input.ShipmentID)
+		shipmentID, err := optionalScopedID(path+".shipmentId", input.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
-		commodityID, err := pulid.MustParse(input.CommodityID)
+		commodityID, err := requiredID(path+".commodityId", input.CommodityID)
 		if err != nil {
 			return nil, err
 		}
@@ -411,6 +445,49 @@ func shipmentCommoditiesFromInput(
 		commodities = append(commodities, commodity)
 	}
 	return commodities, nil
+}
+
+// contractRateToModel renders what the rate agreements charged, for both the
+// preview the billing panel shows and the account the re-rate dialog reads out.
+func contractRateToModel(
+	application *services.ContractRateApplication,
+) *gqlmodel.ShipmentContractRate {
+	if application == nil {
+		return nil
+	}
+
+	accessorials := make(
+		[]*gqlmodel.ShipmentContractRateAccessorial,
+		0,
+		len(application.Accessorials),
+	)
+	for _, accessorial := range application.Accessorials {
+		accessorials = append(accessorials, &gqlmodel.ShipmentContractRateAccessorial{
+			AccessorialChargeID: accessorial.AccessorialChargeID.String(),
+			Description:         accessorial.Description,
+			Method:              accessorial.Method,
+			Amount:              accessorial.Amount.String(),
+			Unit:                int(accessorial.Unit),
+		})
+	}
+
+	return &gqlmodel.ShipmentContractRate{
+		Applied:                application.Applied,
+		Outcome:                string(application.Outcome),
+		AgreementID:            idPtrFromPtr(application.AgreementID),
+		AgreementName:          application.AgreementName,
+		RuleID:                 idPtrFromPtr(application.RuleID),
+		RuleLabel:              application.RuleLabel,
+		FormulaTemplateID:      idPtrFromPtr(application.FormulaTemplateID),
+		FormulaTemplateName:    application.FormulaTemplateName,
+		BaseRate:               nullDecimalStringPtr(application.BaseRate),
+		LinehaulAmount:         application.LinehaulAmount.String(),
+		OtherChargeAmount:      application.OtherChargeAmount.String(),
+		TotalChargeAmount:      application.TotalChargeAmount.String(),
+		PreviousLinehaulAmount: application.PreviousLinehaulAmount.String(),
+		Accessorials:           accessorials,
+		Explanation:            application.Explanation,
+	}
 }
 
 func shipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error) {
@@ -469,6 +546,15 @@ func shipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error
 		RatingUnit:             int(entity.RatingUnit),
 		FuelSurchargeLocked:    entity.FuelSurchargeLocked,
 		RatingDetail:           ratingDetailToModel(entity.RatingDetail),
+		AutoRated:              entity.AutoRated,
+		AutoRatedAt:            intPtr(entity.AutoRatedAt),
+		RateAgreementID:        idPtrFromPtr(entity.RateAgreementID),
+		RateAgreementRuleID:    idPtrFromPtr(entity.RateAgreementRuleID),
+		RateQuoteID:            idPtrFromPtr(entity.RateQuoteID),
+		RateOverrideAmount:     nullDecimalStringPtr(entity.RateOverrideAmount),
+		RateOverrideReason:     stringPtrFromValue(entity.RateOverrideReason),
+		RateOverrideAt:         intPtr(entity.RateOverrideAt),
+		RateLocked:             entity.RateLocked,
 		Version:                int(entity.Version),
 		CreatedAt:              int(entity.CreatedAt),
 		UpdatedAt:              int(entity.UpdatedAt),

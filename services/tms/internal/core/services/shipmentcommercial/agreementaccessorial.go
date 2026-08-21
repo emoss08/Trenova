@@ -28,13 +28,23 @@ func (c *Calculator) loadAgreement(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) *rateagreement.RateAgreement {
-	if c.agreementRepo == nil || entity.RateAgreementID == nil ||
-		entity.RateAgreementID.IsNil() {
+	return c.loadAgreementByID(ctx, entity, entity.RateAgreementID)
+}
+
+// loadAgreementByID reads a named contract, for the callers that know which one
+// applies before the shipment has been stamped with it — a preview being the
+// whole reason that distinction exists.
+func (c *Calculator) loadAgreementByID(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	agreementID *pulid.ID,
+) *rateagreement.RateAgreement {
+	if c.agreementRepo == nil || agreementID == nil || agreementID.IsNil() {
 		return nil
 	}
 
 	agreement, err := c.agreementRepo.GetByID(ctx, &repositories.GetRateAgreementByIDRequest{
-		RateAgreementID: *entity.RateAgreementID,
+		RateAgreementID: *agreementID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -44,7 +54,7 @@ func (c *Calculator) loadAgreement(
 	if err != nil {
 		c.logger.Warn("failed to load rate agreement for shipment",
 			zap.String("shipmentId", entity.ID.String()),
-			zap.String("agreementId", entity.RateAgreementID.String()),
+			zap.String("agreementId", agreementID.String()),
 			zap.Error(err),
 		)
 

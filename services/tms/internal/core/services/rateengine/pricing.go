@@ -215,6 +215,10 @@ func recordFormulaResponse(
 	trace *ratetypes.Trace,
 ) {
 	detail["expression"] = resp.Expression
+	// The template is recorded by id as well as by name, because reproducing a
+	// rating — or seating it on a shipment as its own rating method — needs the
+	// id, and a matrix-priced rule names its template nowhere else.
+	detail["formulaTemplateId"] = resp.FormulaTemplateID
 	if resp.VersionNumber > 0 {
 		detail["versionNumber"] = resp.VersionNumber
 	}

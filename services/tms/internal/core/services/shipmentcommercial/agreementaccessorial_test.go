@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestRecalculate_AppliesAgreementAccessorials(t *testing.T) {
+func TestAdoptContractRate_AppliesAgreementAccessorials(t *testing.T) {
 	t.Parallel()
 
 	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
@@ -28,6 +27,7 @@ func TestRecalculate_AppliesAgreementAccessorials(t *testing.T) {
 
 	calculator := agreementCalculator(t, agreement, nil)
 
+	adoptContract(t, calculator, entity)
 	require.NoError(t, calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")))
 
 	require.Len(t, entity.AdditionalCharges, 1)
@@ -39,34 +39,61 @@ func TestRecalculate_AppliesAgreementAccessorials(t *testing.T) {
 	assert.True(t, decimal.NewFromInt(175).Equal(entity.TotalChargeAmount.Decimal))
 }
 
-// A shipment is recalculated from seven different call sites, so the same
-// contract must not add its accessorial again on every one of them.
-func TestRecalculate_AgreementAccessorialsAreIdempotent(t *testing.T) {
+// Auto-rating can be asked for again, so the same contract must not add its
+// accessorial a second time when it does.
+func TestAdoptContractRate_AgreementAccessorialsAreIdempotent(t *testing.T) {
 	t.Parallel()
 
 	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
 	entity := ratedShipment(agreement.ID)
 
 	calculator := agreementCalculator(t, agreement, nil)
-	control := &tenant.ShipmentControl{}
-	userID := pulid.MustNew("usr_")
 
-	require.NoError(t, calculator.Recalculate(t.Context(), entity, control, userID))
+	adoptContract(t, calculator, entity)
 	require.Len(t, entity.AdditionalCharges, 1)
 
 	first := entity.AdditionalCharges[0]
 	first.ID = pulid.MustNew("ac_")
 
-	require.NoError(t, calculator.Recalculate(t.Context(), entity, control, userID))
+	adoptContract(t, calculator, entity)
 
 	require.Len(t, entity.AdditionalCharges, 1)
 	assert.Equal(t, first.ID, entity.AdditionalCharges[0].ID,
 		"the existing charge should be reused so its audit trail survives")
 }
 
+// The whole point of applying a contract once is that the shipment's own
+// charge rows are then the truth. A recalculation runs from seven call sites —
+// a stop edit, an assignment, a fuel price job — and any of them rebuilding the
+// contract's rows would silently undo a figure a rater has since agreed.
+func TestRecalculate_LeavesContractAccessorialsAlone(t *testing.T) {
+	t.Parallel()
+
+	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
+	entity := ratedShipment(agreement.ID)
+	entity.AutoRated = true
+
+	calculator := agreementCalculator(t, agreement, nil)
+	adoptContract(t, calculator, entity)
+	require.Len(t, entity.AdditionalCharges, 1)
+
+	// A rater renegotiates the contract's charge downwards.
+	entity.AdditionalCharges[0].ID = pulid.MustNew("ac_")
+	entity.AdditionalCharges[0].Amount = decimal.NewFromInt(25)
+
+	require.NoError(
+		t,
+		calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")),
+	)
+
+	require.Len(t, entity.AdditionalCharges, 1)
+	assert.True(t, decimal.NewFromInt(25).Equal(entity.AdditionalCharges[0].Amount),
+		"a recalculation must not reprice a charge somebody has since agreed")
+}
+
 // A charge whose contract row no longer applies has to disappear, otherwise a
 // waived accessorial keeps billing forever.
-func TestRecalculate_RemovesAgreementChargeWhenNoLongerApplicable(t *testing.T) {
+func TestAdoptContractRate_RemovesAgreementChargeWhenNoLongerApplicable(t *testing.T) {
 	t.Parallel()
 
 	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
@@ -87,12 +114,12 @@ func TestRecalculate_RemovesAgreementChargeWhenNoLongerApplicable(t *testing.T) 
 
 	calculator := agreementCalculator(t, agreement, nil)
 
-	require.NoError(t, calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")))
+	adoptContract(t, calculator, entity)
 
 	assert.Empty(t, entity.AdditionalCharges)
 }
 
-func TestRecalculate_SkipsAccessorialWhoseConditionIsFalse(t *testing.T) {
+func TestAdoptContractRate_SkipsAccessorialWhoseConditionIsFalse(t *testing.T) {
 	t.Parallel()
 
 	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
@@ -107,7 +134,7 @@ func TestRecalculate_SkipsAccessorialWhoseConditionIsFalse(t *testing.T) {
 
 	calculator := agreementCalculator(t, agreement, predicate)
 
-	require.NoError(t, calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")))
+	adoptContract(t, calculator, entity)
 
 	assert.Empty(t, entity.AdditionalCharges)
 }
@@ -115,7 +142,7 @@ func TestRecalculate_SkipsAccessorialWhoseConditionIsFalse(t *testing.T) {
 // Charging a customer for something the contract may not entitle us to is the
 // more expensive of the two mistakes, so an unevaluable condition withholds the
 // charge rather than applying it.
-func TestRecalculate_WithholdsAccessorialWhenConditionErrors(t *testing.T) {
+func TestAdoptContractRate_WithholdsAccessorialWhenConditionErrors(t *testing.T) {
 	t.Parallel()
 
 	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
@@ -130,7 +157,7 @@ func TestRecalculate_WithholdsAccessorialWhenConditionErrors(t *testing.T) {
 
 	calculator := agreementCalculator(t, agreement, predicate)
 
-	require.NoError(t, calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_")))
+	adoptContract(t, calculator, entity)
 
 	assert.Empty(t, entity.AdditionalCharges)
 }
@@ -185,6 +212,17 @@ func TestFuelOverride_IsNilWithoutABinding(t *testing.T) {
 	assert.Nil(t, fuelOverride(&rateagreement.RateAgreement{}))
 }
 
+// adoptContract runs the one step that seats a contract on a shipment, which is
+// where the accessorial reconciliation lives.
+func adoptContract(t *testing.T, calculator *Calculator, entity *shipment.Shipment) {
+	t.Helper()
+
+	rated, err := calculator.RateAgainstContract(t.Context(), entity, pulid.MustNew("usr_"), false)
+	require.NoError(t, err)
+
+	calculator.AdoptContractRate(t.Context(), entity, rated)
+}
+
 func agreementWithAccessorial(t *testing.T, amount decimal.Decimal) *rateagreement.RateAgreement {
 	t.Helper()
 
@@ -220,25 +258,11 @@ func agreementCalculator(
 ) *Calculator {
 	t.Helper()
 
-	agreementRepo := mocks.NewMockRateAgreementRepository(t)
-	agreementRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
-		RunAndReturn(func(
-			_ context.Context,
-			req *repositories.GetRateAgreementByIDRequest,
-		) (*rateagreement.RateAgreement, error) {
-			if req.RateAgreementID != agreement.ID {
-				return nil, errors.New("unexpected agreement id")
-			}
-			return agreement, nil
-		}).
-		Maybe()
-
 	calculator := New(Params{
 		Logger:        zap.NewNop(),
 		RateEngine:    StubRateEngineForAgreement(t, 100, &agreement.ID),
 		Predicate:     predicate,
-		AgreementRepo: agreementRepo,
+		AgreementRepo: agreementRepoFor(t, agreement),
 	})
 	calculator.now = func() int64 { return ratedAt }
 

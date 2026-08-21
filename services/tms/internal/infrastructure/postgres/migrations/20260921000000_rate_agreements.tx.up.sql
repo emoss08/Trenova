@@ -138,9 +138,6 @@ CREATE TABLE IF NOT EXISTS "rate_agreements"(
     CONSTRAINT "fk_rate_agreements_customer" FOREIGN KEY ("customer_id", "organization_id", "business_unit_id") REFERENCES "customers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_rate_agreements_bill_to" FOREIGN KEY ("bill_to_customer_id", "organization_id", "business_unit_id") REFERENCES "customers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_rate_agreements_carrier" FOREIGN KEY ("carrier_id", "organization_id", "business_unit_id") REFERENCES "carriers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
-    -- The discriminator and the two party keys have to agree. An agreement
-    -- naming the wrong side would resolve against neither party and price
-    -- nothing, which is far harder to diagnose later than a rejected write.
     CONSTRAINT "chk_rate_agreements_party" CHECK (("party_type" = 'Customer' AND "customer_id" IS NOT NULL AND "carrier_id" IS NULL) OR ("party_type" = 'Carrier' AND "carrier_id" IS NOT NULL AND "customer_id" IS NULL)),
     CONSTRAINT "chk_rate_agreements_sell_side_fields" CHECK ("party_type" = 'Customer' OR "bill_to_customer_id" IS NULL),
     CONSTRAINT "chk_rate_agreements_buy_side_fields" CHECK ("party_type" = 'Carrier' OR ("margin_floor_percent" IS NULL AND "max_pay_percent_of_sell" IS NULL)),
@@ -292,8 +289,6 @@ CREATE TABLE IF NOT EXISTS "rate_agreement_rules"(
     CONSTRAINT "fk_rate_agreement_rules_matrix" FOREIGN KEY ("rate_matrix_id", "organization_id", "business_unit_id") REFERENCES "rate_matrices"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_rate_agreement_rules_density_scale" FOREIGN KEY ("density_scale_id", "organization_id", "business_unit_id") REFERENCES "rate_density_scales"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_rate_agreement_rules_formula_template" FOREIGN KEY ("formula_template_id", "organization_id", "business_unit_id") REFERENCES "formula_templates"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
-    -- Exactly the one pricing input the basis reads. Two would leave the engine
-    -- to guess which the contract meant; none would price at nothing.
     CONSTRAINT "chk_rate_agreement_rules_matrix_basis" CHECK (("rating_basis" = 'Matrix') = ("rate_matrix_id" IS NOT NULL)),
     CONSTRAINT "chk_rate_agreement_rules_formula_basis" CHECK (("rating_basis" = 'Formula') = ("formula_template_id" IS NOT NULL)),
     CONSTRAINT "chk_rate_agreement_rules_percent_basis" CHECK ("rating_basis" <> 'Percent' OR "percent_basis" IS NOT NULL),
@@ -314,8 +309,6 @@ CREATE TABLE IF NOT EXISTS "rate_agreement_rules"(
 );
 
 --bun:split
--- The centres are generated rather than written so the geometry can never
--- disagree with the coordinates a user edited.
 ALTER TABLE "rate_agreement_rules"
     ADD COLUMN IF NOT EXISTS "origin_center" geography(point, 4326) GENERATED ALWAYS AS (CASE WHEN "origin_latitude" IS NOT NULL AND "origin_longitude" IS NOT NULL THEN
         ST_SetSRID(ST_MakePoint("origin_longitude", "origin_latitude"), 4326)::geography
@@ -332,21 +325,11 @@ ALTER TABLE "rate_agreement_rules"
     END) STORED;
 
 --bun:split
--- The resolution index. Leading with the party narrows to one customer or
--- carrier before the lane is even considered, which is the difference between
--- reading a handful of rows and reading every rule in the organization that
--- happens to share the lane. A shipment then produces at most a few dozen
--- candidate lane keys and the planner runs a bitmap OR of that many selective
--- probes, so the cost tracks matching rules rather than table size. The
--- included columns let the ordering and the effective window filter be answered
--- without visiting the heap.
 CREATE INDEX IF NOT EXISTS "idx_rate_agreement_rules_resolve" ON "rate_agreement_rules"("organization_id", "business_unit_id", "party_type", "party_id", "lane_key", "effective_from" DESC) INCLUDE ("effective_to", "rate_agreement_id", "specificity_score", "priority")
 WHERE
     "status" = 'Active';
 
 --bun:split
--- Radius lanes cannot be reduced to a key, so they are found geospatially by a
--- second, much smaller query and unioned with the keyed results.
 CREATE INDEX IF NOT EXISTS "idx_rate_agreement_rules_origin_center" ON "rate_agreement_rules" USING GIST("origin_center")
 WHERE
     "origin_scope_type" = 'Radius' AND "status" = 'Active';
@@ -516,8 +499,6 @@ CREATE TABLE IF NOT EXISTS "rate_quotes"(
     CONSTRAINT "fk_rate_quotes_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_rate_quotes_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_rate_quotes_shipment" FOREIGN KEY ("shipment_id", "organization_id", "business_unit_id") REFERENCES "shipments"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    -- Agreements are archived rather than deleted precisely because quotes
-    -- point at them, so the reference is restricted rather than cascading.
     CONSTRAINT "fk_rate_quotes_agreement" FOREIGN KEY ("rate_agreement_id", "organization_id", "business_unit_id") REFERENCES "rate_agreements"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "chk_rate_quotes_rated_names_agreement" CHECK ("outcome" <> 'Rated' OR "rate_agreement_id" IS NOT NULL),
     CONSTRAINT "chk_rate_quotes_fallback_names_template" CHECK ("outcome" <> 'FormulaFallback' OR "formula_template_id" IS NOT NULL)
@@ -537,8 +518,6 @@ CREATE INDEX IF NOT EXISTS "idx_rate_quotes_shipment" ON "rate_quotes"("organiza
 CREATE INDEX IF NOT EXISTS "idx_rate_quotes_party" ON "rate_quotes"("organization_id", "business_unit_id", "party_type", "party_id", "rated_at" DESC);
 
 --bun:split
--- Answers "which rules have never won" and "what does margin look like on this
--- contract", which a blob on the shipment could not.
 CREATE INDEX IF NOT EXISTS "idx_rate_quotes_rule" ON "rate_quotes"("organization_id", "business_unit_id", "rate_agreement_rule_id", "rated_at" DESC)
 WHERE
     "rate_agreement_rule_id" IS NOT NULL;
@@ -577,9 +556,6 @@ WHERE
     "rate_agreement_id" IS NOT NULL;
 
 --bun:split
--- The formula template stops being mandatory: a shipment now needs either a
--- resolved quote or a template, and only the service layer can tell which,
--- because it depends on whether an agreement matched.
 ALTER TABLE "shipments"
     ALTER COLUMN "formula_template_id" DROP NOT NULL;
 
@@ -589,9 +565,6 @@ ALTER TABLE "additional_charges"
     ADD COLUMN IF NOT EXISTS "rate_quote_id" varchar(100);
 
 --bun:split
--- Three engines now write system charges. Keying each to its own owner column
--- and insisting on exactly one is what makes double billing impossible rather
--- than merely unlikely.
 ALTER TABLE "additional_charges"
     ADD CONSTRAINT "chk_additional_charges_single_owner" CHECK (NOT "is_system_generated" OR (("fuel_surcharge_program_id" IS NOT NULL)::int + ("detention_occurrence_id" IS NOT NULL)::int + ("rate_agreement_accessorial_id" IS NOT NULL)::int) = 1);
 
@@ -601,9 +574,6 @@ WHERE
     "rate_agreement_accessorial_id" IS NOT NULL;
 
 --bun:split
--- Billing control already owns rate validation enforcement and the variance
--- tolerance, so the unrated disposition belongs beside them rather than in a
--- new control table.
 ALTER TABLE "billing_controls"
     ADD COLUMN IF NOT EXISTS "unrated_shipment_disposition" unrated_shipment_disposition_enum NOT NULL DEFAULT 'FallbackFormulaTemplate',
     ADD COLUMN IF NOT EXISTS "fallback_formula_template_id" varchar(100),
