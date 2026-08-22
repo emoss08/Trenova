@@ -60,6 +60,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@tanstack/table-core": "9.1.0",
     "@testing-library/jest-dom": "^7.0.0",
     "@trenova/config": "workspace:*",
     "@types/react": "^19.2.18",
