@@ -137,7 +137,7 @@ export function BillingUsageTab() {
                 {summary.features.map((feature) => (
                   <div
                     key={feature.featureKey}
-                    className="flex min-h-9 items-center justify-between gap-3 rounded-md border border-border bg-background px-2.5"
+                    className="border-border bg-background flex min-h-9 items-center justify-between gap-3 rounded-md border px-2.5"
                   >
                     <span className="truncate text-sm font-medium">
                       {formatCatalogKey(feature.featureKey)}
@@ -178,16 +178,16 @@ function SummaryCard({
   return (
     <Card className="rounded-md">
       <CardContent className="flex min-h-24 items-center gap-3 p-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted">
-          <Icon className="size-4 text-muted-foreground" />
+        <div className="border-border bg-muted flex size-9 shrink-0 items-center justify-center rounded-md border">
+          <Icon className="text-muted-foreground size-4" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-xs font-medium text-muted-foreground">{label}</p>
+            <p className="text-muted-foreground text-xs font-medium">{label}</p>
             <Badge variant={tone}>{tone === "inactive" ? "Needs action" : "Current"}</Badge>
           </div>
           <p className="mt-1 truncate text-lg font-semibold">{value}</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{detail}</p>
+          <p className="text-muted-foreground mt-0.5 truncate text-xs">{detail}</p>
         </div>
       </CardContent>
     </Card>
@@ -199,11 +199,11 @@ function UsageMeter({ usage }: { usage: BillingUsageSummary }) {
   const percent = limited ? Math.min(Math.round((usage.used / usage.limit) * 100), 100) : 0;
 
   return (
-    <div className="rounded-md border border-border bg-background p-3">
+    <div className="border-border bg-background rounded-md border p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{formatCatalogKey(usage.meterKey)}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             {formatPeriod(usage.windowStart, usage.windowEnd)}
           </p>
         </div>
@@ -219,7 +219,7 @@ function UsageMeter({ usage }: { usage: BillingUsageSummary }) {
             variant={progressVariant(percent)}
           />
         ) : (
-          <div className="h-1 rounded-full bg-primary/30" />
+          <div className="bg-primary/30 h-1 rounded-full" />
         )}
       </div>
 
@@ -240,7 +240,7 @@ function UsageMeter({ usage }: { usage: BillingUsageSummary }) {
 
 function UsageStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-md bg-muted px-2 py-1.5">
+    <div className="bg-muted min-w-0 rounded-md px-2 py-1.5">
       <p className="text-muted-foreground">{label}</p>
       <p className="truncate font-medium">{value}</p>
     </div>
@@ -257,10 +257,10 @@ function EmptyState({
   description: string;
 }) {
   return (
-    <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed border-border bg-muted/30 p-6 text-center">
-      <Icon className="size-5 text-muted-foreground" />
+    <div className="border-border bg-muted/30 flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed p-6 text-center">
+      <Icon className="text-muted-foreground size-5" />
       <p className="mt-3 text-sm font-semibold">{title}</p>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
+      <p className="text-muted-foreground mt-1 max-w-sm text-sm">{description}</p>
     </div>
   );
 }

@@ -35,7 +35,7 @@ export function EntityRefLinkInner({ className, children, ...props }: EntityRefL
 
 export function EntityRefLinkDisplayText({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-sm font-normal text-nowrap underline hover:text-foreground/70">
+    <span className="hover:text-foreground/70 text-sm font-normal text-nowrap underline">
       {children}
     </span>
   );
@@ -61,7 +61,7 @@ const EntityRefLinkColorInner = memo(function EntityRefLinkColorInner({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-x-1.5 text-sm font-normal text-foreground underline hover:text-foreground/70">
+    <div className="text-foreground hover:text-foreground/70 flex items-center gap-x-1.5 text-sm font-normal underline">
       {children}
     </div>
   );
@@ -138,7 +138,7 @@ const SecondaryInfoLink = memo(
       <Link
         to={to}
         target="_blank"
-        className="cursor-pointer text-2xs text-foreground underline hover:text-foreground/70"
+        className="text-2xs text-foreground hover:text-foreground/70 cursor-pointer underline"
         title={`Click to view ${displayText}`}
       >
         {displayText}
@@ -175,7 +175,7 @@ export function EntityRefCell<TEntity, TParent extends Record<string, any>>(
         basePath={basePath}
       />
       {secondaryInfo && (
-        <div className="flex items-center gap-1 text-2xs text-muted-foreground">
+        <div className="text-2xs text-muted-foreground flex items-center gap-1">
           {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
           <SecondaryInfoLink
             id={config.getId(secondaryInfo.entity)}
@@ -229,7 +229,7 @@ export function NestedEntityRefCell<TEntity, TParent extends Record<string, any>
       />
 
       {secondaryInfo && (
-        <div className="flex items-center gap-1 text-2xs text-muted-foreground">
+        <div className="text-2xs text-muted-foreground flex items-center gap-1">
           {secondaryInfo.label && <span>{secondaryInfo.label}:</span>}
           {clickable ? (
             <SecondaryInfoLink

@@ -26,6 +26,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierservice"
+	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
@@ -87,10 +90,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
+	"github.com/emoss08/trenova/internal/core/services/jurisdictionruleservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
+	"github.com/emoss08/trenova/internal/core/services/modeprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/openaidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/orderderivation"
@@ -98,14 +103,22 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
 	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/core/services/permission"
+	"github.com/emoss08/trenova/internal/core/services/permitservice"
 	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
-	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
+	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
+	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
+	"github.com/emoss08/trenova/internal/core/services/rateimportservice"
+	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
+	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
+	"github.com/emoss08/trenova/internal/core/services/ratesimulationservice"
+	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	reportingcompiler "github.com/emoss08/trenova/internal/core/services/reporting/compiler"
 	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
+	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
 	"github.com/emoss08/trenova/internal/core/services/sequenceconfigservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailurereasoncodeservice"
 	"github.com/emoss08/trenova/internal/core/services/servicefailureservice"
@@ -125,6 +138,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/tenantprovisioningservice"
+	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
@@ -304,6 +318,28 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		func(s *driversettlementservice.Service) services.MoveStatusObserver { return s },
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
+	carriersettlementservice.New,
+	fx.Annotate(
+		func(s *carriersettlementservice.Service) services.ShipmentMutationObserver { return s },
+		fx.ResultTags(`group:"shipment_mutation_observers"`),
+	),
+	fx.Annotate(
+		func(s *carriersettlementservice.Service) services.MoveStatusObserver { return s },
+		fx.ResultTags(`group:"move_status_observers"`),
+	),
+	func(s *carriersettlementservice.Service) services.CarrierCostAccrual { return s },
+	func(s *carriersettlementservice.Service) services.CarrierInvoiceAutoMatcher { return s },
+	carrierassignmentservice.New,
+	func(s *carrierassignmentservice.Service) services.CarrierMoveAssigner { return s },
+	carrierservice.New,
+	rateconfirmationservice.New,
+	func(s *rateconfirmationservice.Service) services.RateConfirmationIssuer { return s },
+	routingguideservice.NewValidator,
+	routingguideservice.New,
+	tenderservice.New,
+	func(s *tenderservice.Service) services.TenderGuard { return s },
+	func(s *tenderservice.Service) services.TenderResponseRecorder { return s },
+	func(s *tenderservice.Service) services.TenderLifecycle { return s },
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,
 	fx.Annotate(
@@ -324,8 +360,17 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	documenttypeservice.New,
 	holdreasonservice.New,
 	recurringshipmentservice.New,
-	ratetableservice.New,
 	detentionpolicyservice.New,
+	rateagreementservice.New,
+	ratezoneservice.New,
+	ratematrixservice.New,
+	ratequoteservice.New,
+	ratesimulationservice.New,
+	rateimportservice.New,
+	func(s *ratesimulationservice.Service) services.RateSimulationRunner { return s },
+	modeprofileservice.NewService,
+	permitservice.NewService,
+	jurisdictionruleservice.NewService,
 	detentionservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(
@@ -381,6 +426,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	distanceprofileservice.New,
 	storedmileageservice.New,
 	exchangerateservice.New,
+	func(s *exchangerateservice.Service) services.ExchangeRateService { return s },
 	fuelsurchargeservice.New,
 	func(s *fuelsurchargeservice.Service) services.FuelSurchargeResolver { return s },
 	apikeyservice.New,
@@ -396,6 +442,15 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 ), fx.Invoke(
 	func(setter servicefailureservice.EDIServiceSetter, service services.EDIService) {
 		setter.SetEDIService(service)
+	},
+	func(s *tenderservice.Service, assigner services.CarrierMoveAssigner) {
+		s.SetCarrierMoveAssigner(assigner)
+	},
+	// Providing services.EDITenderChannel would close the constructor cycle
+	// ediservice -> ShipmentService -> TenderGuard -> tenderservice ->
+	// EDITenderChannel, so the channel arrives after both services are built.
+	func(s *tenderservice.Service, ediSvc *ediservice.Service) {
+		s.SetEDITenderChannel(ediSvc)
 	},
 	fx.Annotate(
 		func(

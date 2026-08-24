@@ -206,13 +206,25 @@ func (s *Service) UpsertAssignments(
 			continue
 		}
 		if !email.IsValidPurpose(assignment.Purpose) {
-			return nil, errortypes.NewValidationError("purpose", errortypes.ErrInvalid, "Invalid email purpose")
+			return nil, errortypes.NewValidationError(
+				"purpose",
+				errortypes.ErrInvalid,
+				"Invalid email purpose",
+			)
 		}
 		if assignment.ProfileID.IsNil() {
-			return nil, errortypes.NewValidationError("profileId", errortypes.ErrRequired, "Email profile is required")
+			return nil, errortypes.NewValidationError(
+				"profileId",
+				errortypes.ErrRequired,
+				"Email profile is required",
+			)
 		}
 		if _, ok := seen[assignment.Purpose]; ok {
-			return nil, errortypes.NewValidationError("purpose", errortypes.ErrDuplicate, "Email purpose is duplicated")
+			return nil, errortypes.NewValidationError(
+				"purpose",
+				errortypes.ErrDuplicate,
+				"Email purpose is duplicated",
+			)
 		}
 		seen[assignment.Purpose] = struct{}{}
 
@@ -224,7 +236,11 @@ func (s *Service) UpsertAssignments(
 			return nil, err
 		}
 		if profile.Status != email.ProfileStatusActive {
-			return nil, errortypes.NewValidationError("profileId", errortypes.ErrInvalid, "Email profile must be active")
+			return nil, errortypes.NewValidationError(
+				"profileId",
+				errortypes.ErrInvalid,
+				"Email profile must be active",
+			)
 		}
 	}
 	updated, err := s.repo.UpsertAssignments(ctx, tenantInfo, assignments)
@@ -301,7 +317,14 @@ func (s *Service) Send(
 		}
 		return nil, err
 	}
-	if err = s.startSendWorkflow(ctx, msg, req.HTML, req.Text, req.Headers, req.OpenTracking); err != nil {
+	if err = s.startSendWorkflow(
+		ctx,
+		msg,
+		req.HTML,
+		req.Text,
+		req.Headers,
+		req.OpenTracking,
+	); err != nil {
 		if _, updateErr := s.markFailed(ctx, msg, err); updateErr != nil {
 			return nil, updateErr
 		}
@@ -333,7 +356,11 @@ func (s *Service) SendPersisted(
 	req *services.SendPersistedEmailRequest,
 ) (*email.Message, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Email send request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Email send request is required",
+		)
 	}
 	msg, err := s.repo.GetMessage(ctx, repositories.GetEmailEntityRequest{
 		ID:         req.MessageID,
@@ -353,7 +380,11 @@ func (s *Service) SendPersisted(
 		return s.markFailed(
 			ctx,
 			msg,
-			fmt.Errorf("%w: no sender registered for email provider %s", ErrNonRetryableSend, msg.Provider),
+			fmt.Errorf(
+				"%w: no sender registered for email provider %s",
+				ErrNonRetryableSend,
+				msg.Provider,
+			),
 		)
 	}
 
@@ -433,7 +464,11 @@ func (s *Service) persistAttachment(
 ) (*email.Attachment, error) {
 	fileName := fileutils.SafeFilename(attachment.FileName)
 	if fileName == "" || fileName == "." || fileName == "/" {
-		return nil, errortypes.NewValidationError("attachments.fileName", errortypes.ErrRequired, "Attachment file name is required")
+		return nil, errortypes.NewValidationError(
+			"attachments.fileName",
+			errortypes.ErrRequired,
+			"Attachment file name is required",
+		)
 	}
 	contentType := strings.TrimSpace(attachment.ContentType)
 	if contentType == "" {
@@ -463,7 +498,11 @@ func (s *Service) persistAttachment(
 		sizeBytes = info.Size
 	}
 	if objectKey == "" {
-		return nil, errortypes.NewValidationError("attachments.objectKey", errortypes.ErrRequired, "Attachment content or object key is required")
+		return nil, errortypes.NewValidationError(
+			"attachments.objectKey",
+			errortypes.ErrRequired,
+			"Attachment content or object key is required",
+		)
 	}
 
 	return &email.Attachment{
@@ -654,7 +693,11 @@ func (s *Service) CreateSuppression(
 	suppression *email.Suppression,
 ) (*email.Suppression, error) {
 	if !strings.Contains(suppression.EmailAddress, "@") {
-		return nil, errortypes.NewValidationError("emailAddress", errortypes.ErrInvalid, "Email address is invalid")
+		return nil, errortypes.NewValidationError(
+			"emailAddress",
+			errortypes.ErrInvalid,
+			"Email address is invalid",
+		)
 	}
 	if suppression.Reason == "" {
 		suppression.Reason = email.SuppressionReasonManual
@@ -762,7 +805,11 @@ func (s *Service) syncInvoiceAttempts(ctx context.Context, msg *email.Message) {
 		OrgID: msg.OrganizationID,
 		BuID:  msg.BusinessUnitID,
 	}); err != nil && s.l != nil {
-		s.l.Error("failed to sync invoice email attempts", zap.Error(err), zap.String("messageId", msg.ID.String()))
+		s.l.Error(
+			"failed to sync invoice email attempts",
+			zap.Error(err),
+			zap.String("messageId", msg.ID.String()),
+		)
 	}
 }
 

@@ -33,7 +33,7 @@ export function PayFlowExplainer() {
   if (dismissed) return null;
 
   return (
-    <div className="relative rounded-lg border bg-muted/30 p-4">
+    <div className="bg-muted/30 relative rounded-lg border p-4">
       <Button
         size="icon"
         variant="ghost"
@@ -50,10 +50,10 @@ export function PayFlowExplainer() {
         {steps.map((step) => (
           <div key={step.title} className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5 text-xs font-semibold">
-              <step.icon className="size-3.5 text-muted-foreground" />
+              <step.icon className="text-muted-foreground size-3.5" />
               {step.title}
             </div>
-            <p className="text-[11px] leading-relaxed text-muted-foreground">{step.body}</p>
+            <p className="text-muted-foreground text-[11px] leading-relaxed">{step.body}</p>
           </div>
         ))}
       </div>

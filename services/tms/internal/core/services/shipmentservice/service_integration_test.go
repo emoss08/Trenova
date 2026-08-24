@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -1041,7 +1040,7 @@ func newIntegrationShipmentService(
 		Resolver:      res,
 		Repo:          formulaRepo,
 		VersionRepo:   shipIntgStubVersionRepo{},
-		RateTableRepo: shipIntgStubRateTableRepo{},
+		RateMatrixRepo: shipIntgStubMatrixRepo{},
 	})
 
 	validator := NewValidator(ValidatorParams{
@@ -1055,7 +1054,7 @@ func newIntegrationShipmentService(
 
 	audit := &mocks.NoopAuditService{}
 	realtime := &mocks.NoopRealtimeService{}
-	commercial := newTestCommercialCalculator(formulaSvc, accessorialRepo)
+	commercial := newTestCommercialCalculator(t, formulaSvc, accessorialRepo)
 
 	svc := New(Params{
 		Logger:          zap.NewNop(),
@@ -1221,13 +1220,13 @@ func (shipIntgStubVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-type shipIntgStubRateTableRepo struct {
-	repositories.RateTableRepository
+type shipIntgStubMatrixRepo struct {
+	repositories.RateMatrixRepository
 }
 
-func (shipIntgStubRateTableRepo) GetLookupData(
+func (shipIntgStubMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateTableLookupDataRequest,
-) ([]*ratetable.RateTable, error) {
+	_ *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
 	return nil, nil
 }

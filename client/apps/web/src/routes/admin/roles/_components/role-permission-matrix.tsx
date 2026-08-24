@@ -209,7 +209,7 @@ export function RolePermissionMatrix({
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Input
-            leftElement={<SearchIcon className="size-4 text-muted-foreground" />}
+            leftElement={<SearchIcon className="text-muted-foreground size-4" />}
             placeholder="Search resources..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -220,7 +220,7 @@ export function RolePermissionMatrix({
                   variant="ghostInvert"
                   size="icon-xs"
                   onClick={() => setSearchQuery("")}
-                  className="cursor-pointer text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   <XIcon className="size-3.5" />
                 </Button>
@@ -237,9 +237,9 @@ export function RolePermissionMatrix({
       <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
         {filteredCategories.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <SearchXIcon className="size-8 text-muted-foreground/50" />
+            <SearchXIcon className="text-muted-foreground/50 size-8" />
             <p className="mt-3 text-sm font-medium">No resources found</p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-xs">
               No resources match &ldquo;{searchQuery}&rdquo;. Try a different search term.
             </p>
             <Button
@@ -304,14 +304,14 @@ function CategorySection({
     <div className={cn(!isLast && "border-b")}>
       <span
         onClick={onToggle}
-        className="flex w-full items-center justify-between bg-card px-4 py-3 text-left transition-colors hover:bg-muted/50"
+        className="bg-card hover:bg-muted/50 flex w-full items-center justify-between px-4 py-3 text-left transition-colors"
       >
         <div className="flex items-center gap-2">
           <m.div animate={{ rotate: isExpanded ? 0 : -90 }} transition={{ duration: 0.15 }}>
-            <ChevronDownIcon className="size-4 text-muted-foreground" />
+            <ChevronDownIcon className="text-muted-foreground size-4" />
           </m.div>
           <span className="text-sm font-medium">{category.category}</span>
-          <span className="text-xs text-muted-foreground">{category.resources.length}</span>
+          <span className="text-muted-foreground text-xs">{category.resources.length}</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -350,7 +350,7 @@ function CategorySection({
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="border-t bg-muted/30">
+            <div className="bg-muted/30 border-t">
               {category.resources.map((resource, idx) => (
                 <ResourceRow
                   key={resource.resource}
@@ -396,9 +396,9 @@ function ResourceRow({
   return (
     <div
       className={cn(
-        "flex items-center gap-4 bg-background px-4 py-2.5 transition-colors",
+        "bg-background flex items-center gap-4 px-4 py-2.5 transition-colors",
         isGranted && "bg-primary/5",
-        !isLast && "border-b border-border/50",
+        !isLast && "border-border/50 border-b",
       )}
     >
       <Tooltip>
@@ -417,7 +417,7 @@ function ResourceRow({
               )}
             >
               {isFullAccess && <CheckIcon className="size-3" />}
-              {isPartial && <MinusIcon className="size-3 text-primary" />}
+              {isPartial && <MinusIcon className="text-primary size-3" />}
             </button>
           }
         />

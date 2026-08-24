@@ -50,6 +50,8 @@ type Params struct {
 	AssignmentRepo      repositories.AssignmentRepository
 	UserRepo            repositories.UserRepository
 	ControlRepo         repositories.ShipmentControlRepository
+	ModeProfileService  services.ModeProfileService
+	PermitService       services.PermitService
 	ContinuityRepo      repositories.EquipmentContinuityRepository
 	CommodityRepo       repositories.CommodityRepository
 	HazmatRuleRepo      repositories.HazmatSegregationRuleRepository
@@ -72,6 +74,7 @@ type Params struct {
 	Commercial          *shipmentcommercial.Calculator
 	OrderDerivation     services.OrderDerivationService
 	DistanceCalculation services.DistanceCalculationService `optional:"true"`
+	TenderGuard         services.TenderGuard                `optional:"true"`
 }
 
 type service struct {
@@ -82,6 +85,8 @@ type service struct {
 	assignmentRepo      repositories.AssignmentRepository
 	userRepo            repositories.UserRepository
 	controlRepo         repositories.ShipmentControlRepository
+	modeProfileService  services.ModeProfileService
+	permitService       services.PermitService
 	continuityRepo      repositories.EquipmentContinuityRepository
 	commodityRepo       repositories.CommodityRepository
 	hazmatRuleRepo      repositories.HazmatSegregationRuleRepository
@@ -104,6 +109,7 @@ type service struct {
 	commercial          *shipmentcommercial.Calculator
 	orderDerivation     services.OrderDerivationService
 	distanceCalculation services.DistanceCalculationService
+	tenderGuard         services.TenderGuard
 	mutationObservers   []services.ShipmentMutationObserver
 }
 
@@ -116,6 +122,8 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		assignmentRepo:      p.AssignmentRepo,
 		userRepo:            p.UserRepo,
 		controlRepo:         p.ControlRepo,
+		modeProfileService:  p.ModeProfileService,
+		permitService:       p.PermitService,
 		continuityRepo:      p.ContinuityRepo,
 		commodityRepo:       p.CommodityRepo,
 		hazmatRuleRepo:      p.HazmatRuleRepo,
@@ -138,6 +146,7 @@ func New(p Params) *service { //nolint:gocritic // stable API shape
 		commercial:          p.Commercial,
 		orderDerivation:     p.OrderDerivation,
 		distanceCalculation: p.DistanceCalculation,
+		tenderGuard:         p.TenderGuard,
 	}
 }
 
@@ -214,12 +223,28 @@ func (s *service) GetUIPolicy(
 		return nil, err
 	}
 
-	return &services.ShipmentUIPolicy{
+	policy := &services.ShipmentUIPolicy{
 		AllowMoveRemovals:      control.AllowMoveRemovals,
 		CheckForDuplicateBOLs:  control.CheckForDuplicateBOLs,
 		CheckHazmatSegregation: control.CheckHazmatSegregation,
 		MaxShipmentWeightLimit: control.MaxShipmentWeightLimit,
-	}, nil
+	}
+
+	if s.modeProfileService == nil {
+		return policy, nil
+	}
+
+	resolved, err := s.modeProfileService.Resolve(ctx, &services.ResolveModeProfileRequest{
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		s.l.Warn("failed to resolve mode profile for ui policy", zap.Error(err))
+		return policy, nil
+	}
+
+	policy.Profile = resolved
+
+	return policy, nil
 }
 
 func (s *service) GetPreviousRates(
@@ -264,11 +289,13 @@ func (s *service) Create(
 		return nil, multiErr
 	}
 
-	s.normalizeAdditionalChargeSystemGenerationForCreate(entity)
+	s.dropSystemGeneratedAdditionalChargesForCreate(entity)
 
 	if err = s.hydrateShipmentCommodityDetails(ctx, entity); err != nil {
 		return nil, err
 	}
+
+	s.applyShipmentEnvelope(ctx, entity)
 
 	if s.distanceCalculation != nil {
 		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
@@ -276,7 +303,8 @@ func (s *service) Create(
 		}
 	}
 
-	if err = s.commercial.Recalculate(ctx, entity, control, auditActor.UserID); err != nil {
+	rating, err := s.commercial.RateAndAdoptContract(ctx, entity, control, auditActor.UserID)
+	if err != nil {
 		return nil, err
 	}
 
@@ -284,7 +312,8 @@ func (s *service) Create(
 		return nil, err
 	}
 
-	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
+	multiErr, advisories := s.validator.ValidateCreateWithAdvisories(ctx, entity)
+	if multiErr != nil {
 		return nil, multiErr
 	}
 
@@ -293,11 +322,33 @@ func (s *service) Create(
 		return nil, err
 	}
 
+	// Generate the shipment ID before the insert so nested rows can point at it.
+	if entity.ID.IsNil() {
+		entity.ID = pulid.MustNew("shp_")
+	}
+
 	createdEntity, err := s.repo.Create(ctx, entity)
 	if err != nil {
 		log.Error("failed to create shipment", zap.Error(err))
 		return nil, err
 	}
+
+	if err = s.commercial.CommitContractRating(
+		ctx, createdEntity, rating, auditActor.UserID,
+	); err != nil {
+		return nil, err
+	}
+
+	if createdEntity.RateQuoteID != nil {
+		createdEntity, err = s.repo.Update(ctx, createdEntity)
+		if err != nil {
+			log.Error("failed to link shipment to its rate quote", zap.Error(err))
+			return nil, err
+		}
+	}
+
+	s.recordCapabilityDeviations(ctx, createdEntity, advisories)
+	s.syncPermits(ctx, createdEntity, actor)
 
 	if err = s.logShipmentAction(
 		createdEntity,
@@ -362,7 +413,8 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	}
 
 	if multiErr := validateShipmentNotLockedForBilling(original); multiErr != nil {
-		log.Warn("shipment update blocked — locked for billing",
+		log.Warn(
+			"shipment update blocked — locked for billing",
 			zap.String("shipmentId", original.ID.String()),
 			zap.String("billingTransferStatus", string(original.BillingTransferStatus)),
 		)
@@ -380,6 +432,8 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	entity.ApplyEntryMethodDefault(original)
 	s.restoreAssignmentsForExistingMoves(original, entity)
 	s.restoreSystemOwnedAdditionalChargeFields(original, entity)
+	shipment.RestoreRateOwnedFields(original, entity)
+	departed := disengageAutoRating(original, entity)
 	if err = s.syncOrderMembershipForUpdate(ctx, original, entity); err != nil {
 		return nil, err
 	}
@@ -396,6 +450,8 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
+	s.applyShipmentEnvelope(ctx, entity)
+
 	if s.distanceCalculation != nil {
 		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
 			return nil, err
@@ -406,7 +462,16 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
-	if multiErr := s.validator.ValidateUpdateWithOriginal(ctx, original, entity); multiErr != nil {
+	if err = s.commercial.RecordRateDeparture(
+		ctx, entity, auditActor.UserID, departed,
+	); err != nil {
+		return nil, err
+	}
+
+	multiErr, advisories := s.validator.ValidateUpdateWithOriginalAndAdvisories(
+		ctx, original, entity,
+	)
+	if multiErr != nil {
 		return nil, multiErr
 	}
 	if multiErr := s.validateBillingReadinessForStatusChange(ctx, entity); multiErr != nil {
@@ -426,6 +491,10 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		s.l.Error("failed to update shipment", zap.Error(err))
 		return nil, err
 	}
+
+	s.recordCapabilityDeviations(ctx, updatedEntity, advisories)
+	s.syncPermits(ctx, updatedEntity, actor)
+
 	if err = s.advanceContinuityForCompletedMoves(ctx, original, updatedEntity); err != nil {
 		return nil, err
 	}
@@ -535,7 +604,8 @@ func (s *service) evaluateServiceFailuresAfterShipmentUpdate(
 		actor,
 	)
 	if err != nil {
-		s.l.Warn("failed to evaluate service failures after shipment update",
+		s.l.Warn(
+			"failed to evaluate service failures after shipment update",
 			zap.String("shipmentID", entity.ID.String()),
 			zap.Error(err),
 		)
@@ -1038,6 +1108,14 @@ func (s *service) Cancel(
 		auditActor,
 	))
 
+	if s.tenderGuard != nil {
+		if err = s.tenderGuard.CancelLiveTendersForShipment(
+			ctx, req.TenantInfo, req.ShipmentID, "Shipment was canceled",
+		); err != nil {
+			log.Error("failed to withdraw live tenders for canceled shipment", zap.Error(err))
+		}
+	}
+
 	return updatedEntity, nil
 }
 
@@ -1208,6 +1286,8 @@ func (s *service) CalculateTotals(
 	if err = s.hydrateShipmentCommodityDetails(ctx, entity); err != nil {
 		return nil, err
 	}
+
+	s.applyShipmentEnvelope(ctx, entity)
 
 	if s.distanceCalculation != nil {
 		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {

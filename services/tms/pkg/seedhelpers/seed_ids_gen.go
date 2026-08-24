@@ -11,6 +11,7 @@ func (s SeedID) String() string {
 
 const (
 	SeedAdminAccount SeedID = "AdminAccount" // from 01_adminaccount.go
+	SeedCarrier SeedID = "Carrier" // from 14_carrier.go
 	SeedDetention SeedID = "Detention" // from 13_detention.go
 	SeedDocumentParsingRuleExample SeedID = "DocumentParsingRuleExample" // from 08_documentparsingruleexample.go
 	SeedDocumentTemplateStarters SeedID = "DocumentTemplateStarters" // from 10_document_template_starters.go
@@ -21,12 +22,15 @@ const (
 	SeedFormulaTemplate SeedID = "FormulaTemplate" // from 01_formulatemplate.go
 	SeedFuelSurcharge SeedID = "FuelSurcharge" // from 10_fuelsurcharge.go
 	SeedGLAccount SeedID = "GLAccount" // from 04_gl_account.go
+	SeedJurisdictionRulesBaseline SeedID = "JurisdictionRulesBaseline" // from 11_jurisdiction_rules_baseline.go
 	SeedLocation SeedID = "Location" // from 05_location.go
 	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
+	SeedLookupMatrix SeedID = "LookupMatrix" // from 09_lookup_matrix.go
 	SeedNormalAccount SeedID = "NormalAccount" // from 02_normalaccount.go
 	SeedOrganizationRolePermissionsSync SeedID = "OrganizationRolePermissionsSync" // from 08_organization_role_permissions_sync.go
 	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
-	SeedRateTable SeedID = "RateTable" // from 09_ratetable.go
+	SeedRateAgreement SeedID = "RateAgreement" // from 16_rate_agreement.go
+	SeedRoutingGuide SeedID = "RoutingGuide" // from 15_routing_guide.go
 	SeedServiceFailureReasonCode SeedID = "ServiceFailureReasonCode" // from 09_service_failure_reason_code.go
 	SeedShipment SeedID = "Shipment" // from 07_shipment.go
 	SeedSystemAccount SeedID = "SystemAccount" // from 05_system_account.go
@@ -39,6 +43,7 @@ const (
 
 var AllSeedIDs = []SeedID{
 	SeedAdminAccount,
+	SeedCarrier,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
 	SeedDocumentTemplateStarters,
@@ -49,12 +54,15 @@ var AllSeedIDs = []SeedID{
 	SeedFormulaTemplate,
 	SeedFuelSurcharge,
 	SeedGLAccount,
+	SeedJurisdictionRulesBaseline,
 	SeedLocation,
 	SeedLocationCategory,
+	SeedLookupMatrix,
 	SeedNormalAccount,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
-	SeedRateTable,
+	SeedRateAgreement,
+	SeedRoutingGuide,
 	SeedServiceFailureReasonCode,
 	SeedShipment,
 	SeedSystemAccount,
@@ -71,6 +79,7 @@ var BaseSeedIDs = []SeedID{
 	SeedDocumentType,
 	SeedDotHazmatReferences,
 	SeedGLAccount,
+	SeedJurisdictionRulesBaseline,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
 	SeedServiceFailureReasonCode,
@@ -80,6 +89,7 @@ var BaseSeedIDs = []SeedID{
 }
 
 var DevelopmentSeedIDs = []SeedID{
+	SeedCarrier,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
 	SeedDriverPay,
@@ -88,8 +98,10 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedFuelSurcharge,
 	SeedLocation,
 	SeedLocationCategory,
+	SeedLookupMatrix,
 	SeedNormalAccount,
-	SeedRateTable,
+	SeedRateAgreement,
+	SeedRoutingGuide,
 	SeedShipment,
 	SeedTestData,
 	SeedTestOrganizations,

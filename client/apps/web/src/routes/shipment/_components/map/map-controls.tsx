@@ -50,7 +50,7 @@ export function MapControls({
             <Button
               variant="outline"
               size="icon"
-              className="size-7 bg-background shadow-sm"
+              className="bg-background size-7 shadow-sm"
               onClick={onToggleFullscreen}
             />
           }
@@ -71,7 +71,7 @@ export function MapControls({
             <Button
               variant="outline"
               size="icon"
-              className="size-7 bg-background shadow-sm"
+              className="bg-background size-7 shadow-sm"
               onClick={handleZoomToFit}
               disabled={boundsPoints.length === 0}
             />

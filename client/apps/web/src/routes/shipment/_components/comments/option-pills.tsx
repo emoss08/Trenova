@@ -41,14 +41,14 @@ export function CommentOptionPill<T extends string>({
           {label}: {selected?.label ?? value}
         </TooltipContent>
       </Tooltip>
-      <PopoverContent align="start" className="max-h-60 w-44 gap-1 overflow-y-auto p-1 dark">
-        <div className="px-2 py-1 text-2xs font-medium text-muted-foreground">{label}</div>
+      <PopoverContent align="start" className="dark max-h-60 w-44 gap-1 overflow-y-auto p-1">
+        <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">{label}</div>
         {options.map((option) => (
           <button
             key={String(option.value)}
             type="button"
             className={cn(
-              "flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent",
+              "hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs",
               option.value === value && "bg-accent",
             )}
             onClick={() => {

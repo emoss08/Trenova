@@ -76,8 +76,8 @@ export default function LoadPlannerDialog({
       <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
         <DialogHeader className="px-5 pt-5 pb-3">
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
-              <ContainerIcon className="size-4 text-primary" />
+            <div className="bg-primary/10 flex size-7 items-center justify-center rounded-md">
+              <ContainerIcon className="text-primary size-4" />
             </div>
             <div className="flex-1">
               <DialogTitle className="text-sm">Load Planner</DialogTitle>
@@ -100,7 +100,7 @@ export default function LoadPlannerDialog({
                   scoreBadge={
                     <span
                       className={cn(
-                        "rounded-full px-2 py-0.5 text-2xs font-semibold tabular-nums",
+                        "text-2xs rounded-full px-2 py-0.5 font-semibold tabular-nums",
                         gradeColors[data.utilizationGrade] ?? gradeColors.Poor,
                       )}
                     >
@@ -131,7 +131,7 @@ export default function LoadPlannerDialog({
 
                 {data.recommendations.length > 0 && (
                   <div>
-                    <span className="mb-1.5 block text-2xs font-medium tracking-wider text-muted-foreground uppercase">
+                    <span className="text-2xs text-muted-foreground mb-1.5 block font-medium tracking-wider uppercase">
                       Recommendations
                     </span>
                     <LoadingRecommendations
@@ -142,7 +142,7 @@ export default function LoadPlannerDialog({
 
                 {data.warnings.length > 0 && (
                   <div>
-                    <span className="mb-1.5 block text-2xs font-medium tracking-wider text-muted-foreground uppercase">
+                    <span className="text-2xs text-muted-foreground mb-1.5 block font-medium tracking-wider uppercase">
                       Alerts
                     </span>
                     <LoadingWarnings warnings={data.warnings} />
@@ -151,14 +151,14 @@ export default function LoadPlannerDialog({
               </>
             ) : (
               <div className="flex flex-col items-center justify-center gap-4 py-20">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-muted">
-                  <ContainerIcon className="size-7 text-muted-foreground/40" />
+                <div className="bg-muted flex size-14 items-center justify-center rounded-2xl">
+                  <ContainerIcon className="text-muted-foreground/40 size-7" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-foreground text-sm font-medium">
                     No loading plan yet
                   </p>
-                  <p className="mt-1 text-2xs text-muted-foreground">
+                  <p className="text-2xs text-muted-foreground mt-1">
                     Click below to calculate optimal placement
                   </p>
                 </div>

@@ -150,7 +150,7 @@ export function DataTableConfigItem({
   return (
     <div
       className={cn(
-        "group flex w-full items-center justify-between gap-2 rounded-md p-1 hover:bg-accent",
+        "group hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md p-1",
         isActive && "bg-accent/50",
       )}
     >
@@ -161,26 +161,26 @@ export function DataTableConfigItem({
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
       >
         {config.visibility === "Private" ? (
-          <LockIcon className="size-3.5 shrink-0 text-muted-foreground" />
+          <LockIcon className="text-muted-foreground size-3.5 shrink-0" />
         ) : (
-          <GlobeIcon className="size-3.5 shrink-0 text-muted-foreground" />
+          <GlobeIcon className="text-muted-foreground size-3.5 shrink-0" />
         )}
         <span className="flex min-w-0 flex-col">
           <span className="truncate">{config.name}</span>
           {!isOwn && config.user?.name && (
-            <span className="truncate text-[10px] text-muted-foreground">
+            <span className="text-muted-foreground truncate text-[10px]">
               by {config.user.name}
             </span>
           )}
         </span>
         {config.isDefault && isOwn && (
-          <span className="flex shrink-0 items-center gap-0.5 rounded-sm bg-muted px-1 py-px text-[10px] font-medium text-muted-foreground">
+          <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-[10px] font-medium">
             <StarIcon className="size-2.5" />
             Default
           </span>
         )}
         {config.isOrgDefault && (
-          <span className="flex shrink-0 items-center gap-0.5 rounded-sm bg-muted px-1 py-px text-[10px] font-medium text-muted-foreground">
+          <span className="bg-muted text-muted-foreground flex shrink-0 items-center gap-0.5 rounded-sm px-1 py-px text-[10px] font-medium">
             <Building2Icon className="size-2.5" />
             Org default
           </span>
@@ -195,7 +195,7 @@ export function DataTableConfigItem({
             {isViewDirty ? (
               <span className="size-1.5 rounded-full bg-amber-500" />
             ) : (
-              <CheckIcon className="size-3.5 text-primary" />
+              <CheckIcon className="text-primary size-3.5" />
             )}
           </span>
         )}
@@ -214,7 +214,7 @@ export function DataTableConfigItem({
                 aria-label={`${config.name} view options`}
                 aria-expanded={dropdownOpen}
               >
-                <MoreHorizontalIcon className="size-4 text-muted-foreground" />
+                <MoreHorizontalIcon className="text-muted-foreground size-4" />
                 <span className="sr-only">Open menu</span>
               </Button>
             }

@@ -36,13 +36,13 @@ function formatFilterValue(filter: SingleFilterItem): string {
 
 function FilterChip({ label, onRemove }: { label: React.ReactNode; onRemove: () => void }) {
   return (
-    <span className="flex h-6 items-center gap-1 rounded-md border border-border bg-muted/50 pr-1 pl-2 text-xs">
+    <span className="border-border bg-muted/50 flex h-6 items-center gap-1 rounded-md border pr-1 pl-2 text-xs">
       {label}
       <Button
         type="button"
         variant="ghost"
         size="icon-xs"
-        className="size-4 rounded-sm text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground size-4 rounded-sm"
         onClick={onRemove}
         aria-label="Remove filter"
       >
@@ -76,7 +76,7 @@ export default function DataTableFilterChips({
         <FilterChip
           label={
             <span className="flex items-center gap-1">
-              <SearchIcon className="size-3 text-muted-foreground" />
+              <SearchIcon className="text-muted-foreground size-3" />
               <span className="max-w-40 truncate font-medium">{query}</span>
             </span>
           }
@@ -121,7 +121,7 @@ export default function DataTableFilterChips({
           type="button"
           variant="ghost"
           size="xs"
-          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground h-6 px-2 text-xs"
           onClick={clearAll}
         >
           Clear all

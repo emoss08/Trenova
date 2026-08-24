@@ -13,6 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierservice"
+	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
@@ -48,10 +51,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
-	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
+	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
+	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
+	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
+	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
+	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
@@ -60,6 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
+	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
@@ -92,15 +100,22 @@ type Params struct {
 	AccountsReceivableService    *accountsreceivableservice.Service
 	CustomerPaymentService       services.CustomerPaymentService
 	CustomerPaymentRepo          repositories.CustomerPaymentRepository
+	CarrierRepo                  repositories.CarrierRepository
 	CustomerRepo                 repositories.CustomerRepository
 	GLAccountRepo                repositories.GLAccountRepository
 	CommodityService             *commodityservice.Service
+	CarrierAssignmentService     *carrierassignmentservice.Service
+	RoutingGuideService          *routingguideservice.Service
+	TenderService                *tenderservice.Service
+	CarrierService               *carrierservice.Service
 	CustomerService              *customerservice.Service
 	CustomFieldService           *customfieldservice.Service
 	FleetCodeService             *fleetcodeservice.Service
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HazmatSegregationRuleService *hazmatsegregationruleservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	JurisdictionRuleService      services.JurisdictionRuleService
+	JurisdictionRuleRepo         repositories.JurisdictionRuleRepository
 	RecurringShipmentService     *recurringshipmentservice.Service
 	LocationService              *locationservice.Service
 	LocationCategoryService      *locationcategoryservice.Service
@@ -115,11 +130,14 @@ type Params struct {
 	WorkerPTOService             *workerptoservice.Service
 	FiscalYearService            *fiscalyearservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
-	RateTableService             *ratetableservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
 	DetentionService             *detentionservice.Service
 	DetentionPolicyService       *detentionpolicyservice.Service
+	RateAgreementService         *rateagreementservice.Service
+	RateZoneService              *ratezoneservice.Service
+	RateMatrixService            *ratematrixservice.Service
+	RateQuoteService             *ratequoteservice.Service
 	FuelIndexRepo                repositories.FuelIndexRepository
 	FuelIndexPriceRepo           repositories.FuelIndexPriceRepository
 	FuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
@@ -173,6 +191,10 @@ type Params struct {
 	DriverSettlementRepo         repositories.DriverSettlementRepository
 	SettlementBatchRepo          repositories.SettlementBatchRepository
 	PayEventRepo                 repositories.PayEventRepository
+	CarrierSettlementService     *carriersettlementservice.Service
+	CarrierSettlementRepo        repositories.CarrierSettlementRepository
+	CarrierSettlementBatchRepo   repositories.CarrierSettlementBatchRepository
+	CarrierCostEventRepo         repositories.CarrierCostEventRepository
 }
 
 type Resolver struct {
@@ -191,15 +213,22 @@ type Resolver struct {
 	accountsReceivableService    *accountsreceivableservice.Service
 	customerPaymentService       services.CustomerPaymentService
 	customerPaymentRepo          repositories.CustomerPaymentRepository
+	carrierRepo                  repositories.CarrierRepository
 	customerRepo                 repositories.CustomerRepository
 	glAccountRepo                repositories.GLAccountRepository
 	commodityService             *commodityservice.Service
+	carrierAssignmentService     *carrierassignmentservice.Service
+	routingGuideService          *routingguideservice.Service
+	tenderService                *tenderservice.Service
+	carrierService               *carrierservice.Service
 	customerService              *customerservice.Service
 	customFieldService           *customfieldservice.Service
 	fleetCodeService             *fleetcodeservice.Service
 	hazardousMaterialService     *hazardousmaterialservice.Service
 	hazmatSegregationRuleService *hazmatsegregationruleservice.Service
 	holdReasonService            *holdreasonservice.Service
+	jurisdictionRuleService      services.JurisdictionRuleService
+	jurisdictionRuleRepo         repositories.JurisdictionRuleRepository
 	recurringShipmentService     *recurringshipmentservice.Service
 	locationService              *locationservice.Service
 	locationCategoryService      *locationcategoryservice.Service
@@ -215,11 +244,14 @@ type Resolver struct {
 	workerPTOService             *workerptoservice.Service
 	fiscalYearService            *fiscalyearservice.Service
 	formulaTemplateService       *formulatemplateservice.Service
-	rateTableService             *ratetableservice.Service
 	fuelSurchargeService         *fuelsurchargeservice.Service
 	costingService               *costingservice.Service
 	detentionService             *detentionservice.Service
 	detentionPolicyService       *detentionpolicyservice.Service
+	rateAgreementService         *rateagreementservice.Service
+	rateZoneService              *ratezoneservice.Service
+	rateMatrixService            *ratematrixservice.Service
+	rateQuoteService             *ratequoteservice.Service
 	fuelIndexRepo                repositories.FuelIndexRepository
 	fuelIndexPriceRepo           repositories.FuelIndexPriceRepository
 	fuelSurchargeProgramRepo     repositories.FuelSurchargeProgramRepository
@@ -271,6 +303,10 @@ type Resolver struct {
 	driverSettlementRepo         repositories.DriverSettlementRepository
 	settlementBatchRepo          repositories.SettlementBatchRepository
 	payEventRepo                 repositories.PayEventRepository
+	carrierSettlementService     *carriersettlementservice.Service
+	carrierSettlementRepo        repositories.CarrierSettlementRepository
+	carrierSettlementBatchRepo   repositories.CarrierSettlementBatchRepository
+	carrierCostEventRepo         repositories.CarrierCostEventRepository
 	reportingService             *reportingservice.Service
 	permissionEngine             services.PermissionEngine
 }
@@ -292,15 +328,22 @@ func New(p Params) *Resolver {
 		accountsReceivableService:    p.AccountsReceivableService,
 		customerPaymentService:       p.CustomerPaymentService,
 		customerPaymentRepo:          p.CustomerPaymentRepo,
+		carrierRepo:                  p.CarrierRepo,
 		customerRepo:                 p.CustomerRepo,
 		glAccountRepo:                p.GLAccountRepo,
 		commodityService:             p.CommodityService,
+		carrierAssignmentService:     p.CarrierAssignmentService,
+		routingGuideService:          p.RoutingGuideService,
+		tenderService:                p.TenderService,
+		carrierService:               p.CarrierService,
 		customerService:              p.CustomerService,
 		customFieldService:           p.CustomFieldService,
 		fleetCodeService:             p.FleetCodeService,
 		hazardousMaterialService:     p.HazardousMaterialService,
 		hazmatSegregationRuleService: p.HazmatSegregationRuleService,
 		holdReasonService:            p.HoldReasonService,
+		jurisdictionRuleService:      p.JurisdictionRuleService,
+		jurisdictionRuleRepo:         p.JurisdictionRuleRepo,
 		recurringShipmentService:     p.RecurringShipmentService,
 		locationService:              p.LocationService,
 		locationCategoryService:      p.LocationCategoryService,
@@ -316,11 +359,14 @@ func New(p Params) *Resolver {
 		workerPTOService:             p.WorkerPTOService,
 		fiscalYearService:            p.FiscalYearService,
 		formulaTemplateService:       p.FormulaTemplateService,
-		rateTableService:             p.RateTableService,
 		fuelSurchargeService:         p.FuelSurchargeService,
 		costingService:               p.CostingService,
 		detentionService:             p.DetentionService,
 		detentionPolicyService:       p.DetentionPolicyService,
+		rateAgreementService:         p.RateAgreementService,
+		rateZoneService:              p.RateZoneService,
+		rateMatrixService:            p.RateMatrixService,
+		rateQuoteService:             p.RateQuoteService,
 		fuelIndexRepo:                p.FuelIndexRepo,
 		fuelIndexPriceRepo:           p.FuelIndexPriceRepo,
 		fuelSurchargeProgramRepo:     p.FuelSurchargeProgramRepo,
@@ -374,6 +420,10 @@ func New(p Params) *Resolver {
 		driverSettlementRepo:         p.DriverSettlementRepo,
 		settlementBatchRepo:          p.SettlementBatchRepo,
 		payEventRepo:                 p.PayEventRepo,
+		carrierSettlementService:     p.CarrierSettlementService,
+		carrierSettlementRepo:        p.CarrierSettlementRepo,
+		carrierSettlementBatchRepo:   p.CarrierSettlementBatchRepo,
+		carrierCostEventRepo:         p.CarrierCostEventRepo,
 	}
 }
 

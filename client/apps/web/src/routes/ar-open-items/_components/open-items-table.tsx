@@ -94,7 +94,7 @@ export function OpenItemsTable({
         header: "Type",
         accessorFn: (row) => row.billType,
         cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground capitalize">{row.original.billType}</span>
+          <span className="text-muted-foreground text-xs capitalize">{row.original.billType}</span>
         ),
       },
       {
@@ -102,7 +102,7 @@ export function OpenItemsTable({
         header: "PRO / BOL",
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="text-muted-foreground font-mono text-xs">
             {row.original.shipmentProNumber || row.original.shipmentBol || "—"}
           </span>
         ),
@@ -152,7 +152,7 @@ export function OpenItemsTable({
         cell: ({ row }) => (
           <AmountDisplay
             value={row.original.appliedAmountMinor}
-            className="text-xs text-muted-foreground"
+            className="text-muted-foreground text-xs"
           />
         ),
         meta: { align: "right" },
@@ -215,7 +215,7 @@ export function OpenItemsTable({
                           type="button"
                           onClick={header.column.getToggleSortingHandler()}
                           className={cn(
-                            "inline-flex items-center gap-1 font-medium hover:text-foreground",
+                            "hover:text-foreground inline-flex items-center gap-1 font-medium",
                             align === "right" && "flex-row-reverse",
                           )}
                         >

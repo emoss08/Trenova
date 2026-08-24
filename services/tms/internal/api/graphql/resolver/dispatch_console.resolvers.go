@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
@@ -107,6 +108,56 @@ func (r *mutationResolver) DispatchUnassignMoves(ctx context.Context, moveIds []
 	}
 
 	return summarizeBulkResults(results), nil
+}
+
+// DispatchAssignMoveToCarrier is the resolver for the dispatchAssignMoveToCarrier field.
+func (r *mutationResolver) DispatchAssignMoveToCarrier(ctx context.Context, input gqlmodel.DispatchAssignMoveToCarrierInput) (*shipment.CarrierAssignment, error) {
+	authCtx, err := r.requirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpAssign,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := assignMoveToCarrierRequestFromInput(&input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return r.carrierAssignmentService.AssignToMove(ctx, req)
+}
+
+// DispatchCancelCarrierAssignment is the resolver for the dispatchCancelCarrierAssignment field.
+func (r *mutationResolver) DispatchCancelCarrierAssignment(ctx context.Context, moveID string, reason string) (bool, error) {
+	authCtx, err := r.requirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpUnassign,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	parsedMoveID, err := parseDispatchID(
+		moveID,
+		"moveId",
+		"Move ID is not a valid identifier",
+	)
+	if err != nil {
+		return false, err
+	}
+
+	if err = r.carrierAssignmentService.Cancel(ctx, &repositories.CancelCarrierAssignmentRequest{
+		TenantInfo:     tenantInfo(authCtx),
+		ShipmentMoveID: parsedMoveID,
+		Reason:         reason,
+	}); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // DispatchPlanAutoAssign is the resolver for the dispatchPlanAutoAssign field.
@@ -323,5 +374,40 @@ func (r *queryResolver) DispatchAssignmentPreview(ctx context.Context, input gql
 		Blocked:          preview.Blocked,
 		RequiresOverride: preview.RequiresOverride,
 		Score:            mapDispatchCandidate(preview.Score),
+	}, nil
+}
+
+// DispatchCarrierAssignmentPreview is the resolver for the dispatchCarrierAssignmentPreview field.
+func (r *queryResolver) DispatchCarrierAssignmentPreview(ctx context.Context, input gqlmodel.DispatchCarrierAssignmentPreviewInput) (*gqlmodel.DispatchCarrierEligibility, error) {
+	authCtx, err := r.requirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	carrierID, err := parseDispatchID(
+		input.CarrierID,
+		"carrierId",
+		"Carrier ID is not a valid identifier",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.carrierAssignmentService.PreviewEligibility(
+		ctx,
+		tenantInfo(authCtx),
+		carrierID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.DispatchCarrierEligibility{
+		Blockers: append([]string{}, result.Blockers...),
+		Warnings: append([]string{}, result.Warnings...),
 	}, nil
 }

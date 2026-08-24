@@ -46,7 +46,11 @@ func NewPprofServer(p PprofServerParams) *PprofServer {
 	mux.Handle("/debug/pprof/mutex", pprof.Handler("mutex"))
 
 	s.server = &http.Server{
-		Addr:              fmt.Sprintf("%s:%d", p.Config.Monitoring.Pprof.GetHost(), p.Config.Monitoring.Pprof.GetPort()),
+		Addr: fmt.Sprintf(
+			"%s:%d",
+			p.Config.Monitoring.Pprof.GetHost(),
+			p.Config.Monitoring.Pprof.GetPort(),
+		),
 		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
@@ -69,7 +73,10 @@ func (s *PprofServer) Start(_ context.Context) error {
 		return nil
 	}
 
-	s.logger.Info("Starting pprof server", zap.String("address", fmt.Sprintf("http://%s", s.server.Addr)))
+	s.logger.Info(
+		"Starting pprof server",
+		zap.String("address", fmt.Sprintf("http://%s", s.server.Addr)),
+	)
 
 	go func() {
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

@@ -64,9 +64,9 @@ function VersionSelect({
           <Button
             variant="outline"
             className={cn(
-              "group flex h-8 w-full items-center justify-between rounded-md border border-input bg-muted whitespace-nowrap hover:bg-muted/80",
-              "px-1.5 py-2 text-xs ring-offset-background outline-hidden placeholder:text-muted-foreground",
-              "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/30",
+              "group border-input bg-muted hover:bg-muted/80 flex h-8 w-full items-center justify-between rounded-md border whitespace-nowrap",
+              "ring-offset-background placeholder:text-muted-foreground px-1.5 py-2 text-xs outline-hidden",
+              "data-pressed:border-brand data-pressed:ring-brand/30 data-pressed:ring-4",
               "transition-[border-color,box-shadow] duration-200 ease-in-out",
               "cursor-default",
             )}
@@ -209,7 +209,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <FlaskConicalIcon className="size-4 text-muted-foreground" />
+            <FlaskConicalIcon className="text-muted-foreground size-4" />
             <CardTitle>Rule Simulation</CardTitle>
           </div>
           <CardDescription>
@@ -350,14 +350,14 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
       {isError && (
         <Card className="border-destructive/50">
           <CardContent className="flex items-start gap-3 pt-4">
-            <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
+            <AlertTriangleIcon className="text-destructive mt-0.5 size-4 shrink-0" />
             <div className="space-y-1">
-              <p className="text-sm font-medium text-destructive">Simulation failed</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-destructive text-sm font-medium">Simulation failed</p>
+              <p className="text-muted-foreground text-xs">
                 {error instanceof Error ? error.message : "An unexpected error occurred."}
               </p>
               <div className="flex items-start gap-1.5 pt-1">
-                <InfoIcon className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
+                <InfoIcon className="text-muted-foreground mt-0.5 size-3 shrink-0" />
                 <p className="text-2xs text-muted-foreground">
                   Check that the selected version has valid rule configuration and the document text
                   is not empty. If the issue persists, verify the rule version status on the

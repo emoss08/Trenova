@@ -1,0 +1,133 @@
+enum JurisdictionRuleStatus {
+  Active
+  Inactive
+  Draft
+}
+
+enum JurisdictionVerificationState {
+  Unverified
+  Verified
+  Disputed
+}
+
+"""
+Shared oversize and overweight limits for a jurisdiction.
+
+This data is global. It carries no organization or business unit, because the
+legal width of a load in a given state does not vary by carrier — a carrier
+expressing a stricter posture records a JurisdictionRuleOverride instead. A
+change here is visible to every organization on the platform.
+"""
+type JurisdictionRule {
+  id: ID!
+  stateId: ID!
+  status: JurisdictionRuleStatus!
+
+  maxWidthFeet: Float!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+
+  superloadWidthFeet: Float
+  superloadWeightPounds: Int
+
+  daylightOnly: Boolean!
+  rushHourRestricted: Boolean!
+  weekendRestricted: Boolean!
+  holidayRestricted: Boolean!
+
+  permitLeadTimeDays: Int!
+  permitValidityDays: Int!
+  permitBaseFee: String
+  permitPerMileFee: String
+
+  """
+  What this row was checked against. Seeded rows carry a note saying which
+  fields are a federal baseline and which are simply not populated.
+  """
+  sourceNote: String
+  sourceUrl: String
+
+  """
+  Whether anyone has confirmed this row against the issuing state. Requirements
+  derived from an unverified row carry that state through to the operator.
+  """
+  verificationState: JurisdictionVerificationState!
+  verifiedAt: Int
+
+  effectiveStartDate: Int
+  effectiveEndDate: Int
+
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+
+  state: UsState
+}
+
+type JurisdictionRuleEdge {
+  node: JurisdictionRule!
+  cursor: String!
+}
+
+type JurisdictionRuleConnection {
+  edges: [JurisdictionRuleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  jurisdictionRules(input: DataTableConnectionInput!): JurisdictionRuleConnection!
+  jurisdictionRule(id: ID!): JurisdictionRule
+}
+
+"""
+One organization's stricter posture on a jurisdiction.
+
+Unlike JurisdictionRule these rows are tenant data. Every field is optional —
+an unset field defers to the statutory rule — and the engine applies a value
+only when it is stricter than the statute, so a permissive override cannot make
+an illegal load look legal.
+"""
+type JurisdictionRuleOverride {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  stateId: ID!
+
+  maxWidthFeet: Float
+  maxHeightFeet: Float
+  maxLengthFeet: Float
+  maxWeightPounds: Int
+
+  permitLeadTimeDays: Int
+
+  daylightOnly: Boolean
+  holidayRestricted: Boolean
+
+  """Why this organization runs tighter than the statute. Required, minimum ten characters."""
+  reason: String!
+
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+
+  state: UsState
+}
+
+type JurisdictionRuleOverrideEdge {
+  node: JurisdictionRuleOverride!
+  cursor: String!
+}
+
+type JurisdictionRuleOverrideConnection {
+  edges: [JurisdictionRuleOverrideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  jurisdictionRuleOverrides(
+    input: DataTableConnectionInput!
+  ): JurisdictionRuleOverrideConnection!
+}

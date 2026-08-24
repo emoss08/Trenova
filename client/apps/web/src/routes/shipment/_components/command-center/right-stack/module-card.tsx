@@ -40,22 +40,22 @@ export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, c
 
   return (
     <section ref={setNodeRef} style={style} className="cc-module-card flex min-h-0 flex-1 flex-col">
-      <header className="flex items-center justify-between gap-2 border-b border-border px-2 py-1">
+      <header className="border-border flex items-center justify-between gap-2 border-b px-2 py-1">
         <div className="flex min-w-0 items-center gap-1">
           <button
             type="button"
             aria-label={`Drag ${title}`}
-            className="flex size-4 shrink-0 cursor-grab items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground flex size-4 shrink-0 cursor-grab items-center justify-center rounded active:cursor-grabbing"
             {...attributes}
             {...listeners}
           >
             <GripVerticalIcon className="size-3" />
           </button>
-          <h3 className="cc-label truncate text-foreground">{title}</h3>
+          <h3 className="cc-label text-foreground truncate">{title}</h3>
           {typeof count === "number" && (
             <span
               className={cn(
-                "inline-flex min-w-4.5 justify-center rounded px-1 font-table text-[9px] tabular-nums",
+                "font-table inline-flex min-w-4.5 justify-center rounded px-1 text-[9px] tabular-nums",
                 COUNT_CLASS[countTone],
               )}
             >

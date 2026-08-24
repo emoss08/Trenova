@@ -74,5 +74,7 @@ function toOrganizationInput(values: OrganizationSettings): OrganizationInput {
     postalCode: values.postalCode,
     timezone: values.timezone,
     taxId: values.taxId ?? null,
+    brokerageEnabled: values.brokerageEnabled,
+    assetOperationsEnabled: values.assetOperationsEnabled,
   };
 }

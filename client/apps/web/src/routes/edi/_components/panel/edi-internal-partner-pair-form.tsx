@@ -91,7 +91,7 @@ function PartnerSideFields({
     <FormSection
       title={title}
       description={description}
-      className="rounded-md border bg-muted/20 p-3"
+      className="bg-muted/20 rounded-md border p-3"
     >
       <FormGroup cols={2}>
         <FormControl>

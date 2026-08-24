@@ -262,7 +262,11 @@ func (r *programRepository) Update(
 			return uErr
 		}
 
-		if uErr = dberror.CheckRowsAffected(results, "FuelSurchargeProgram", entity.ID.String()); uErr != nil {
+		if uErr = dberror.CheckRowsAffected(
+			results,
+			"FuelSurchargeProgram",
+			entity.ID.String(),
+		); uErr != nil {
 			return uErr
 		}
 
@@ -340,7 +344,7 @@ func (r *programRepository) ListFallbackShipmentIDs(
 		Where("ac.is_system_generated = TRUE").
 		Where("ac.fuel_surcharge_program_id IS NOT NULL").
 		Where("ac.fuel_surcharge_detail->>'usedFallback' = 'true'").
-		Where("sp.status NOT IN (?)", bun.In([]shipment.Status{
+		Where("sp.status NOT IN (?)", bun.List([]shipment.Status{
 			shipment.StatusInvoiced,
 			shipment.StatusCanceled,
 		})).

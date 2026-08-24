@@ -68,7 +68,7 @@ function AiMessages({
         onClick={() => scrollToBottom("smooth")}
         aria-label="Scroll to bottom"
         className={cn(
-          "absolute bottom-4 left-1/2 z-10 flex size-8 -translate-x-1/2 items-center justify-center border bg-background transition-all hover:bg-muted",
+          "bg-background hover:bg-muted absolute bottom-4 left-1/2 z-10 flex size-8 -translate-x-1/2 items-center justify-center border transition-all",
           isAtBottom
             ? "pointer-events-none scale-0 opacity-0"
             : "pointer-events-auto scale-100 opacity-100"

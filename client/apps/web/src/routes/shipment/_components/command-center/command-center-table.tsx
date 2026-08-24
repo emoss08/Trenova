@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import {
   convertFilterItemsToFieldFilters,
   convertFilterItemsToFilterGroups,
@@ -50,7 +51,9 @@ import { FilterChipRow } from "./filter-chip-row";
 import { SavedViewsBar } from "./saved-views-bar";
 import { useCommandCenterStore } from "./store";
 import {
+  isTimelineViewAvailable,
   PAGE_SIZE_OPTIONS,
+  resolveCommandCenterViewMode,
   useCommandCenterUrl,
   type CommandCenterPageSize,
   type CommandCenterViewMode,
@@ -100,6 +103,33 @@ function ExpandedRowLoadingFallback() {
   );
 }
 
+const SKELETON_CELL_WIDTHS = ["w-3/4", "w-1/2", "w-2/3", "w-3/5"] as const;
+
+function TableBodySkeleton({ columnCount, rowCount }: { columnCount: number; rowCount: number }) {
+  return (
+    <>
+      {Array.from({ length: rowCount }).map((_, rowIndex) => (
+        <tr
+          key={rowIndex}
+          data-testid="command-center-skeleton-row"
+          className="border-border/70 h-9 border-b"
+        >
+          {Array.from({ length: columnCount }).map((_, columnIndex) => (
+            <td key={columnIndex} className="px-2.5 py-1.5 align-middle">
+              <Skeleton
+                className={cn(
+                  "h-3.5",
+                  SKELETON_CELL_WIDTHS[(rowIndex + columnIndex) % SKELETON_CELL_WIDTHS.length],
+                )}
+              />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
 const QUERY_KEY = "shipment-list";
 const RESOURCE_NAME = "Shipment";
 
@@ -124,8 +154,13 @@ export function CommandCenterTable({
   onUploadDocument,
   onSummaryChange,
 }: CommandCenterTableProps) {
-  const [{ mode: viewMode, expanded: expandedId, page, size: pageSize, q: query }, setUrl] =
-    useCommandCenterUrl();
+  const [
+    { mode: requestedViewMode, expanded: expandedId, page, size: pageSize, q: query },
+    setUrl,
+  ] = useCommandCenterUrl();
+  const capabilities = useOrgCapabilities();
+  const timelineAvailable = isTimelineViewAvailable(capabilities);
+  const viewMode = resolveCommandCenterViewMode(requestedViewMode, capabilities);
   const pageIndex = Math.max(0, page - 1);
   const setQuery = (next: string) => void setUrl({ q: next.length === 0 ? null : next, page: 1 });
   const setPageIndex = (next: number) => void setUrl({ page: next + 1 });
@@ -227,6 +262,7 @@ export function CommandCenterTable({
   const totalCount = dataQuery.data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const rows = (dataQuery.data?.results ?? []) as Shipment[];
+  const isInitialLoading = dataQuery.isPending;
   const backgroundQueriesEnabled = dataQuery.isSuccess && !dataQuery.isFetching;
 
   const [timelineSummary, setTimelineSummary] = useState<CommandCenterTableSummary | null>(null);
@@ -321,7 +357,7 @@ export function CommandCenterTable({
 
   const rightSlot = (
     <>
-      <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />
+      {timelineAvailable && <ViewModeToggle viewMode={viewMode} setViewMode={setViewMode} />}
       <Suspense fallback={<ToolbarButtonSkeleton />}>
         <DataTableConfigManager
           resource={RESOURCE_NAME}
@@ -364,7 +400,12 @@ export function CommandCenterTable({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.length === 0 && !dataQuery.isLoading ? (
+            {isInitialLoading ? (
+              <TableBodySkeleton
+                columnCount={table.getVisibleFlatColumns().length}
+                rowCount={Math.min(pageSize, 10)}
+              />
+            ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={table.getVisibleFlatColumns().length}>
                   No shipments match the current view.
@@ -392,8 +433,8 @@ export function CommandCenterTable({
             )}
           </TableBody>
         </Table>
-        {dataQuery.isFetching && (
-          <div className="pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1 rounded bg-background/70 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm">
+        {dataQuery.isFetching && !isInitialLoading && (
+          <div className="bg-background/70 text-muted-foreground pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] backdrop-blur-sm">
             <Spinner className="size-3" />
             Refreshing
           </div>
@@ -406,6 +447,7 @@ export function CommandCenterTable({
         totalPages={totalPages}
         rowCount={rows.length}
         pageSize={pageSize as CommandCenterPageSize}
+        isLoading={isInitialLoading}
         onPageSizeChange={setPageSize}
         onPrev={() => setPageIndex(Math.max(0, pageIndex - 1))}
         onNext={() => setPageIndex(Math.min(totalPages - 1, pageIndex + 1))}
@@ -414,9 +456,9 @@ export function CommandCenterTable({
   );
 
   return (
-    <section className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
+    <section className="border-border bg-card flex flex-col overflow-hidden rounded-md border">
       <SavedViewsBar rightSlot={rightSlot} countsEnabled={countsEnabled} />
-      <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
+      <div className="border-border flex items-center gap-2 border-b px-3 py-1.5">
         <Suspense fallback={<SearchSkeleton />}>
           <DataTableSearch value={query} onChange={setQuery} placeholder="Search shipments..." />
         </Suspense>
@@ -427,13 +469,17 @@ export function CommandCenterTable({
             onFiltersChange={setFilterItems}
           />
         </Suspense>
-        <div className="mx-1 h-4 w-px bg-border" />
+        <div className="bg-border mx-1 h-4 w-px" />
         <FilterChipRow />
         {viewMode === "table" && (
           <>
-            <p className="ml-auto shrink-0 font-table text-[10.5px] text-muted-foreground tabular-nums">
-              {rows.length} of {totalCount} results
-            </p>
+            {isInitialLoading ? (
+              <Skeleton className="ml-auto h-3.5 w-24 shrink-0" />
+            ) : (
+              <p className="font-table text-muted-foreground ml-auto shrink-0 text-[10.5px] tabular-nums">
+                {rows.length} of {totalCount} results
+              </p>
+            )}
             <Suspense fallback={<ToolbarButtonSkeleton />}>
               <DataTableViewOptions table={table as unknown as TanstackTable<RowData>} />
             </Suspense>
@@ -477,7 +523,7 @@ function ViewModeToggle({
     <div
       role="group"
       aria-label="View mode"
-      className="inline-flex overflow-hidden rounded-md border border-border"
+      className="border-border inline-flex overflow-hidden rounded-md border"
     >
       <button
         type="button"
@@ -498,7 +544,7 @@ function ViewModeToggle({
         onClick={() => setViewMode("timeline")}
         aria-pressed={viewMode === "timeline"}
         className={cn(
-          "flex items-center gap-1 border-l border-border px-2 py-1 text-[11px] transition-colors",
+          "border-border flex items-center gap-1 border-l px-2 py-1 text-[11px] transition-colors",
           viewMode === "timeline"
             ? "bg-muted text-foreground"
             : "bg-background text-muted-foreground hover:text-foreground",
@@ -534,8 +580,8 @@ function RowFragment({
     <>
       <tr
         className={cn(
-          "group/row h-9 cursor-pointer border-b border-border/70 transition-colors hover:bg-muted/30",
-          isExpanded && "bg-brand/10 outline-1 -outline-offset-1 outline-brand hover:bg-brand/20",
+          "group/row border-border/70 hover:bg-muted/30 h-9 cursor-pointer border-b transition-colors",
+          isExpanded && "bg-brand/10 outline-brand hover:bg-brand/20 outline-1 -outline-offset-1",
           isHighlighted && "bg-muted/50",
         )}
         onClick={onClick}
@@ -549,7 +595,7 @@ function RowFragment({
         ))}
       </tr>
       {isExpanded && (
-        <tr className="border-b border-border bg-background">
+        <tr className="border-border bg-background border-b">
           <td colSpan={row.getVisibleCells().length} className="p-0">
             <div className="cc-fade-in">
               <Suspense fallback={<ExpandedRowLoadingFallback />}>
@@ -574,6 +620,7 @@ function CommandCenterFooter({
   totalPages,
   rowCount,
   pageSize,
+  isLoading,
   onPageSizeChange,
   onPrev,
   onNext,
@@ -583,15 +630,20 @@ function CommandCenterFooter({
   totalPages: number;
   rowCount: number;
   pageSize: CommandCenterPageSize;
+  isLoading: boolean;
   onPageSizeChange: (size: CommandCenterPageSize) => void;
   onPrev: () => void;
   onNext: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between border-t border-border px-3 py-1.5 text-[11px] text-muted-foreground">
-      <p className="font-table tabular-nums">
-        {rowCount} rows · page {pageIndex + 1} of {totalPages} · {totalCount} total
-      </p>
+    <div className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-1.5 text-[11px]">
+      {isLoading ? (
+        <Skeleton className="h-3.5 w-44" />
+      ) : (
+        <p className="font-table tabular-nums">
+          {rowCount} rows · page {pageIndex + 1} of {totalPages} · {totalCount} total
+        </p>
+      )}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
           <span>Rows</span>

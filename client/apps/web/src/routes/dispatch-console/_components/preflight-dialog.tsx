@@ -113,7 +113,7 @@ function Stat({ value, label, tone }: { value: string; label: string; tone?: "la
       >
         {value}
       </span>
-      <span className="text-[9.5px] font-medium tracking-wider text-muted-foreground uppercase">
+      <span className="text-muted-foreground text-[9.5px] font-medium tracking-wider uppercase">
         {label}
       </span>
     </div>
@@ -177,11 +177,11 @@ export function PreflightDialog({
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="max-w-lg gap-0 p-0">
-        <DialogHeader className="gap-3 border-b border-border px-5 pt-5 pb-4">
+        <DialogHeader className="border-border gap-3 border-b px-5 pt-5 pb-4">
           <div className="flex items-center gap-3">
             <span
               aria-hidden
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-semibold text-brand"
+              className="bg-brand/10 text-brand flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
             >
               {workerInitials(driver.firstName, driver.lastName)}
             </span>
@@ -189,7 +189,7 @@ export function PreflightDialog({
               <DialogTitle className="truncate text-sm leading-none font-semibold">
                 {move.isCovered ? "Reassign" : "Assign"} {driver.firstName} {driver.lastName}
               </DialogTitle>
-              <div className="flex items-center gap-1.5 text-[11px] leading-none text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-1.5 text-[11px] leading-none">
                 {tractorId ? (
                   <span className="font-mono">{driver.tractorCode || tractorId}</span>
                 ) : (
@@ -205,10 +205,10 @@ export function PreflightDialog({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 rounded-md border border-border bg-muted/30 px-3 py-2.5">
+          <div className="border-border bg-muted/30 flex flex-col gap-2 rounded-md border px-3 py-2.5">
             <div className="flex items-center justify-between gap-2 text-[10.5px] leading-none">
-              <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
-                <span className="truncate font-mono font-medium text-foreground/80">
+              <span className="text-muted-foreground flex min-w-0 items-center gap-1.5">
+                <span className="text-foreground/80 truncate font-mono font-medium">
                   {move.proNumber}
                 </span>
                 {move.distance ? (
@@ -234,13 +234,13 @@ export function PreflightDialog({
                 <span className="truncate text-xs leading-none font-semibold">
                   {move.originCity}, {move.originState}
                 </span>
-                <span className="text-[10.5px] tabular-nums text-muted-foreground">
+                <span className="text-muted-foreground text-[10.5px] tabular-nums">
                   {move.originWindowStart > 0
                     ? formatUnixDateTimeShort(move.originWindowStart)
                     : "Unscheduled"}
                 </span>
               </div>
-              <div aria-hidden className="flex items-center text-muted-foreground/50">
+              <div aria-hidden className="text-muted-foreground/50 flex items-center">
                 <span className="w-6 border-t border-dashed border-current" />
                 <MoveRightIcon className="size-3.5" />
               </div>
@@ -249,7 +249,7 @@ export function PreflightDialog({
                   {move.destinationCity}, {move.destinationState}
                 </span>
                 {move.destinationWindowStart > 0 ? (
-                  <span className="text-[10.5px] tabular-nums text-muted-foreground">
+                  <span className="text-muted-foreground text-[10.5px] tabular-nums">
                     {formatUnixDateTimeShort(move.destinationWindowStart)}
                   </span>
                 ) : null}
@@ -280,7 +280,7 @@ export function PreflightDialog({
                     <span className={cn("text-xs leading-none font-semibold", banner.iconClass)}>
                       {verdict.label}
                     </span>
-                    <span className="text-[11px] leading-snug text-foreground/80">
+                    <span className="text-foreground/80 text-[11px] leading-snug">
                       {lead.message}
                     </span>
                   </div>
@@ -289,7 +289,7 @@ export function PreflightDialog({
 
               <motion.div
                 {...section(1)}
-                className="grid grid-cols-3 divide-x divide-border rounded-md border border-border"
+                className="divide-border border-border grid grid-cols-3 divide-x rounded-md border"
               >
                 <Stat value={formatMiles(data.score.deadheadMiles)} label="Empty miles" />
                 <Stat
@@ -315,14 +315,14 @@ export function PreflightDialog({
                 </motion.div>
               ) : null}
 
-              <motion.div {...section(3)} className="border-t border-border pt-3.5">
+              <motion.div {...section(3)} className="border-border border-t pt-3.5">
                 <ScoreBreakdown score={data.score.score} factors={data.score.factors} />
               </motion.div>
             </div>
           </ScrollArea>
         )}
 
-        <DialogFooter className="border-t border-border px-5 py-3.5">
+        <DialogFooter className="border-border border-t px-5 py-3.5">
           <Button variant="outline" size="sm" onClick={onCancel}>
             Cancel
           </Button>

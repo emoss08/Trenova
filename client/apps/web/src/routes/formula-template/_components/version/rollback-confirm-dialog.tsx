@@ -106,10 +106,10 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <div className="rounded-md border border-border bg-muted/30 p-3">
+      <div className="border-border bg-muted/30 rounded-md border p-3">
         <CollapsibleTrigger className="flex w-full items-center justify-between text-left">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground">
+            <span className="text-foreground text-sm font-medium">
               {changeEntries.length} change
               {changeEntries.length !== 1 ? "s" : ""} will be applied
             </span>
@@ -133,20 +133,20 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
             </div>
             <ChevronDownIcon
               className={cn(
-                "size-4 text-muted-foreground transition-transform",
+                "text-muted-foreground size-4 transition-transform",
                 isExpanded && "rotate-180",
               )}
             />
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="mt-3 max-h-48 space-y-1.5 overflow-y-auto border-t border-border pt-3">
+          <div className="border-border mt-3 max-h-48 space-y-1.5 overflow-y-auto border-t pt-3">
             {changeEntries.map(([path, change]) => (
               <div
                 key={path}
-                className="flex items-center justify-between gap-2 rounded px-2 py-1 text-xs hover:bg-muted"
+                className="hover:bg-muted flex items-center justify-between gap-2 rounded px-2 py-1 text-xs"
               >
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {formatFieldName(path)}
                 </span>
                 <Badge
@@ -168,7 +168,7 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
 
 function ChangeSummarySkeleton() {
   return (
-    <div className="rounded-md border border-border bg-muted/30 p-3">
+    <div className="border-border bg-muted/30 rounded-md border p-3">
       <div className="flex items-center gap-2">
         <Skeleton className="size-4" />
         <Skeleton className="h-4 w-32" />
@@ -230,7 +230,7 @@ export function RollbackConfirmDialog({
           <AlertDialogDescription
             render={
               <div className="space-y-3">
-                <span className="block text-sm text-muted-foreground">
+                <span className="text-muted-foreground block text-sm">
                   This will restore the template to version {targetVersion},
                   creating a new version (v{currentVersion + 1}).
                 </span>

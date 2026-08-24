@@ -16,7 +16,7 @@ export function AuthPage() {
   return (
     <>
       <Metadata title="Sign In" description="Sign in to your Trenova account" />
-      <div className="fixed inset-0 h-svh w-full overflow-hidden bg-background">
+      <div className="bg-background fixed inset-0 h-svh w-full overflow-hidden">
         <div className="relative flex h-full flex-col items-center justify-center gap-6 p-6 md:p-10">
           <LazyImage
             src={logoRainbow}

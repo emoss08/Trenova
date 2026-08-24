@@ -77,7 +77,7 @@ export default function TemplateList() {
       ) : null}
       {templatesQuery.isError ? (
         <div className="flex flex-col items-center gap-2 p-3 text-center">
-          <span className="text-sm text-destructive">Failed to load templates.</span>
+          <span className="text-destructive text-sm">Failed to load templates.</span>
           <Button
             type="button"
             variant="outline"
@@ -89,7 +89,7 @@ export default function TemplateList() {
         </div>
       ) : null}
       {!templatesQuery.isLoading && templates.length === 0 ? (
-        <div className="p-3 text-sm text-muted-foreground">No matching templates.</div>
+        <div className="text-muted-foreground p-3 text-sm">No matching templates.</div>
       ) : null}
       {isFetchingNextPage ? (
         <div className="flex justify-center p-3">
@@ -117,7 +117,7 @@ function TemplateListItem({
   return (
     <>
       <div
-        className={cn("group flex items-start rounded-md hover:bg-muted", isSelected && "bg-muted")}
+        className={cn("group hover:bg-muted flex items-start rounded-md", isSelected && "bg-muted")}
       >
         <button
           type="button"
@@ -130,7 +130,7 @@ function TemplateListItem({
               {template.status}
             </Badge>
           </div>
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-1 text-xs">
             {template.transactionSet} {template.direction} / {template.versions.length} versions
           </div>
         </button>

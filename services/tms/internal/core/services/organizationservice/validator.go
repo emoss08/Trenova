@@ -52,6 +52,12 @@ func NewValidator(p ValidatorParams) *Validator {
 			"login_slug",
 			"Organization with this login slug already exists",
 			func(o *tenant.Organization) any { return o.LoginSlug },
+		).
+		WithCustomRule(
+			validationframework.NewScopedRule[*tenant.Organization]("operating_capabilities").
+				OnUpdate().
+				WithParallelSafeExecution().
+				WithValidation(validateOperatingCapabilities),
 		)
 
 	if p.DB != nil {
@@ -65,6 +71,25 @@ func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		validator: builder.Build(),
 	}
+}
+
+func validateOperatingCapabilities(
+	_ context.Context,
+	entity *tenant.Organization,
+	_ *validationframework.ScopedValidationContext,
+	multiErr *errortypes.MultiError,
+) error {
+	if entity.BrokerageEnabled || entity.AssetOperationsEnabled {
+		return nil
+	}
+
+	const message = "At least one operating capability must be enabled. " +
+		"An organization with neither brokerage nor asset operations cannot move freight"
+
+	multiErr.Add(brokerageEnabledField, errortypes.ErrInvalid, message)
+	multiErr.Add(assetOperationsEnabledField, errortypes.ErrInvalid, message)
+
+	return nil
 }
 
 func (v *Validator) ValidateCreate(

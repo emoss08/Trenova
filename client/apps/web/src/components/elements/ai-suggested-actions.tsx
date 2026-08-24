@@ -28,7 +28,7 @@ function AiSuggestedActions({
           type="button"
           key={suggestion.prompt}
           onClick={() => onSelect?.(suggestion.prompt)}
-          className="border bg-background p-3 text-left text-xs transition-colors hover:bg-muted"
+          className="bg-background hover:bg-muted border p-3 text-left text-xs transition-colors"
           style={{
             animationDelay: `${index * 50}ms`,
           }}

@@ -3,9 +3,16 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormSaveDock } from "@/components/form-save-dock";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@trenova/shared/components/ui/card";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
+import { FormulaTemplateAutocompleteField } from "@/components/autocomplete-fields";
 import {
   billingExceptionDispositionChoices,
   billingQueueTransferModeChoices,
@@ -16,6 +23,7 @@ import {
   rateVarianceAutoResolutionModeChoices,
   readyToBillAssignmentModeChoices,
   transferScheduleChoices,
+  unratedShipmentDispositionChoices,
 } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -66,6 +74,7 @@ export default function BillingControlForm() {
           <InvoiceDefaultsCard />
           <AutomationCard />
           <ExceptionPolicyCard />
+          <RatingPolicyCard />
           <FormSaveDock saveButtonContent="Save Changes" />
         </div>
       </Form>
@@ -291,15 +300,15 @@ function ExceptionPolicyCard() {
           {(shipmentRequirementEnforcement === "RequireReview" ||
             rateValidationEnforcement === "RequireReview") && (
             <FormControl className="max-w-[420px]">
-                <SelectField
-                  control={control}
-                  name="billingExceptionDisposition"
-                  label="Billing Exception Disposition"
-                  description="Determines whether review-required billing exceptions stay with billing or are returned to operations."
-                  options={billingExceptionDispositionChoices}
-                  rules={{ required: true }}
-                />
-              </FormControl>
+              <SelectField
+                control={control}
+                name="billingExceptionDisposition"
+                label="Billing Exception Disposition"
+                description="Determines whether review-required billing exceptions stay with billing or are returned to operations."
+                options={billingExceptionDispositionChoices}
+                rules={{ required: true }}
+              />
+            </FormControl>
           )}
           <FormControl>
             <SwitchField
@@ -327,6 +336,71 @@ function ExceptionPolicyCard() {
               description="Controls whether review is skipped for rate variances that are within the configured tolerance."
               options={rateVarianceAutoResolutionModeChoices}
               rules={{ required: true }}
+            />
+          </FormControl>
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RatingPolicyCard() {
+  const { control } = useFormContext<BillingControl>();
+
+  const unratedShipmentDisposition = useWatch({
+    control,
+    name: "unratedShipmentDisposition",
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Rating Policy</CardTitle>
+        <CardDescription>
+          Decide what happens when no rate agreement covers a shipment&apos;s lane, and how manual
+          rate overrides are governed.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="unratedShipmentDisposition"
+              label="Unrated Shipment Disposition"
+              description="What happens to a shipment no rate agreement covers. Falling back to a formula template is exactly how rating worked before agreements existed."
+              options={unratedShipmentDispositionChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          {unratedShipmentDisposition === "FallbackFormulaTemplate" && (
+            <FormControl className="max-w-[420px]">
+              <FormulaTemplateAutocompleteField
+                control={control}
+                name="fallbackFormulaTemplateId"
+                label="Fallback Formula Template"
+                placeholder="Select formula template"
+                clearable
+                description="Used when an unrated shipment carries no formula template of its own. Leave empty to require one on the shipment."
+              />
+            </FormControl>
+          )}
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="requireRateOverrideReason"
+              label="Require Rate Override Reason"
+              description="A manual rate override must say why, so the audit trail explains the departure from the contract."
+              position="left"
+            />
+          </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="enforceMarginFloor"
+              label="Enforce Margin Floor"
+              description="Blocks rates that fall below an agreement's margin floor instead of only flagging them."
+              position="left"
             />
           </FormControl>
         </FormGroup>

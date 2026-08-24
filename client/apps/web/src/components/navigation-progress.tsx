@@ -79,7 +79,7 @@ export function NavigationProgress() {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-[100] h-0.5">
       <div
-        className="relative h-full bg-brand will-change-transform"
+        className="bg-brand relative h-full will-change-transform"
         style={{
           transform: `translateX(${(progress - 1) * 100}%)`,
           transition: isAtStart ? "none" : phase === "done" ? COMPLETE_TRANSITION : TRICKLE_TRANSITION,

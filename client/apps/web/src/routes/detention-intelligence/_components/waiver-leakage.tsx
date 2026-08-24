@@ -53,7 +53,7 @@ function LeakageRow({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.26, delay: Math.min(index, 10) * 0.04, ease: "easeOut" }}
-      className="px-3 py-2.5 transition-colors hover:bg-muted/40"
+      className="hover:bg-muted/40 px-3 py-2.5 transition-colors"
     >
       <div className="flex items-center gap-3">
         <span
@@ -67,7 +67,7 @@ function LeakageRow({
             {reasonLabel(row.reason)}
           </p>
           {description ? (
-            <p className="mt-0.5 truncate text-2xs text-muted-foreground">
+            <p className="text-2xs text-muted-foreground mt-0.5 truncate">
               {description}
             </p>
           ) : null}
@@ -76,7 +76,7 @@ function LeakageRow({
           <p className="text-sm leading-tight font-medium tabular-nums">
             {formatCurrency(row.waivedAmount)}
           </p>
-          <p className="mt-0.5 text-2xs text-muted-foreground tabular-nums">
+          <p className="text-2xs text-muted-foreground mt-0.5 tabular-nums">
             {Math.round(share * 100)}% of leakage
           </p>
         </div>
@@ -89,7 +89,7 @@ function LeakageRow({
           barClassName={LEAKAGE_TONES[index % LEAKAGE_TONES.length]}
           delay={Math.min(index, 10) * 0.04}
         />
-        <p className="shrink-0 text-2xs text-muted-foreground tabular-nums">
+        <p className="text-2xs text-muted-foreground shrink-0 tabular-nums">
           {row.waiverCount} {row.waiverCount === 1 ? "waiver" : "waivers"} ·{" "}
           {row.approverCount} {row.approverCount === 1 ? "approver" : "approvers"} ·{" "}
           {formatCurrency(perWaiver)} each
@@ -147,7 +147,7 @@ export function WaiverLeakage({
       footer={
         leader ? (
           <p className="text-2xs text-muted-foreground">
-            <span className="font-medium text-foreground">
+            <span className="text-foreground font-medium">
               {reasonLabel(leader.reason)}
             </span>{" "}
             accounts for {Math.round(leaderShare * 100)}% of everything forgiven —{" "}
@@ -168,12 +168,12 @@ export function WaiverLeakage({
         />
       ) : (
         <>
-          <div className="border-b border-border px-3 py-3">
+          <div className="border-border border-b px-3 py-3">
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-2xl leading-none font-semibold tracking-tight text-amber-600 tabular-nums dark:text-amber-400">
                 {formatCurrency(total)}
               </p>
-              <p className="shrink-0 text-2xs text-muted-foreground tabular-nums">
+              <p className="text-2xs text-muted-foreground shrink-0 tabular-nums">
                 {waiverCount} {waiverCount === 1 ? "waiver" : "waivers"} ·{" "}
                 {sorted.length} {sorted.length === 1 ? "reason" : "reasons"}
               </p>
@@ -181,7 +181,7 @@ export function WaiverLeakage({
             <ShareBreakdown segments={segments} className="mt-3" />
           </div>
 
-          <div className="divide-y divide-border">
+          <div className="divide-border divide-y">
             {sorted.map((row, rowIndex) => (
               <LeakageRow key={row.reason} row={row} total={total} index={rowIndex} />
             ))}

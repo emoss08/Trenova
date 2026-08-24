@@ -3,9 +3,10 @@ import { SidebarSectionLabel } from "@/components/navigation/sidebar-primitives"
 import { navigationConfig } from "@/config/navigation.config";
 import type { QuickActionCommand } from "@/config/navigation.types";
 import { QUICK_ACTION_ICONS } from "@/config/quick-action-icons";
+import { canAccessQuickAction } from "@/hooks/use-filtered-navigation";
 import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import { Operation } from "@trenova/shared/types/permission";
 import type { LucideIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
@@ -18,6 +19,7 @@ interface SidebarQuickAction {
 
 export function QuickActionsSection() {
   const hasPermission = usePermissionStore((state) => state.hasPermission);
+  const capabilities = useOrgCapabilities();
   const { data: preferences } = useSidebarPreferences();
   const quickActionIds = preferences?.quickActionIds;
 
@@ -31,17 +33,14 @@ export function QuickActionsSection() {
         if (!definition || !QUICK_ACTION_ICONS[definition.id]) {
           return false;
         }
-        if (!definition.resource) {
-          return true;
-        }
-        return hasPermission(definition.resource, definition.requiredOperation ?? Operation.Create);
+        return canAccessQuickAction(definition, { capabilities, hasPermission });
       })
       .map((definition) => ({
         definition,
         icon: QUICK_ACTION_ICONS[definition.id],
         href: buildCommandHref(definition.path, definition.query),
       }));
-  }, [hasPermission, quickActionIds]);
+  }, [capabilities, hasPermission, quickActionIds]);
 
   if (actions.length === 0) {
     return null;
@@ -56,9 +55,9 @@ export function QuickActionsSection() {
             key={definition.id}
             to={href}
             title={definition.description}
-            className="flex h-7 items-center gap-1.5 truncate rounded-md border border-border bg-background px-2 text-xs font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+            className="border-border bg-background text-foreground/80 hover:bg-muted hover:text-foreground flex h-7 items-center gap-1.5 truncate rounded-md border px-2 text-xs font-medium transition-colors"
           >
-            <Icon className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+            <Icon className="text-muted-foreground size-3.5 shrink-0" strokeWidth={1.75} />
             <span className="truncate">{definition.label.replace(/^Create /, "New ")}</span>
           </Link>
         ))}

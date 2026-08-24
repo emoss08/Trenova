@@ -18,12 +18,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@trenova/shared/components/ui/tooltip";
+import { CapabilityExplainer } from "@trenova/shared/components/capability-explainer";
 import { queries } from "@/lib/queries";
 import { cn, findDuplicateIds, pluralize, truncateText } from "@trenova/shared/lib/utils";
 import { ApiRequestError } from "@trenova/shared/lib/api";
+import {
+  CAPABILITIES,
+  getProfile,
+  isCapabilitySectionVisible,
+} from "@trenova/shared/lib/capability";
+import { describeCommodityDimensions } from "@trenova/shared/lib/permit";
+import {
+  CapabilityFields,
+  type FieldDescriptor,
+} from "@trenova/shared/components/capability-form-section";
 import { apiService } from "@/services/api";
 import type { Commodity } from "@trenova/shared/types/commodity";
-import type { Shipment } from "@trenova/shared/types/shipment";
+import type { ResolvedModeProfile, Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircleIcon,
@@ -47,6 +58,7 @@ function CommodityDialog({
   isEditing,
   maxShipmentWeightLimit,
   checkHazmatSegregation,
+  profile,
   update,
 }: {
   open: boolean;
@@ -56,11 +68,41 @@ function CommodityDialog({
   isEditing: boolean;
   maxShipmentWeightLimit?: number;
   checkHazmatSegregation?: boolean;
+  profile: ResolvedModeProfile | null;
   update: (index: number, value: any) => void;
 }) {
-  const { control, setValue, getValues, setError, clearErrors } =
-    useFormContext<Shipment>();
+  const { control, setValue, getValues, setError, clearErrors } = useFormContext<Shipment>();
   const [saving, setSaving] = useState(false);
+  const showDimensions = isCapabilitySectionVisible(profile, CAPABILITIES.dimensionalCargo);
+
+  // The three sides share one rule, one capability gate and one explainer, so
+  // they are described once and rendered by the shared renderer rather than
+  // hand-wired three times.
+  const dimensionDescriptors: FieldDescriptor[] = (
+    [
+      ["lengthFeet", "Length"],
+      ["widthFeet", "Width"],
+      ["heightFeet", "Height"],
+    ] as const
+  ).map(([field, label]) => ({
+    name: `commodities.${index}.${field}`,
+    // The mode profile's dimension rule names `commodities`, not the individual
+    // sides, so that is what resolves the required state.
+    ruleField: "commodities",
+    capability: CAPABILITIES.dimensionalCargo,
+    // One explainer under the group rather than three identical popovers.
+    hideExplainer: true,
+    render: ({ required }) => (
+      <NumberField
+        control={control}
+        name={`commodities.${index}.${field}`}
+        label={label}
+        placeholder="0"
+        sideText="ft"
+        rules={{ required }}
+      />
+    ),
+  }));
 
   function handleCommoditySelected(option: Commodity | null) {
     setValue(`commodities.${index}.commodity`, option ?? undefined);
@@ -70,17 +112,12 @@ function CommodityDialog({
     const values = getValues(`commodities.${index}`);
     const commodities = getValues("commodities") ?? [];
     const nextWeight = typeof values.weight === "number" ? values.weight : 0;
-    const totalWeightExcludingCurrent = commodities.reduce(
-      (sum, commodity, commodityIndex) => {
-        if (commodityIndex === index) {
-          return sum;
-        }
-        return (
-          sum + (typeof commodity?.weight === "number" ? commodity.weight : 0)
-        );
-      },
-      0,
-    );
+    const totalWeightExcludingCurrent = commodities.reduce((sum, commodity, commodityIndex) => {
+      if (commodityIndex === index) {
+        return sum;
+      }
+      return sum + (typeof commodity?.weight === "number" ? commodity.weight : 0);
+    }, 0);
 
     if (
       typeof maxShipmentWeightLimit === "number" &&
@@ -103,9 +140,7 @@ function CommodityDialog({
       if (allCommodityIds.length >= 2) {
         setSaving(true);
         try {
-          await apiService.shipmentService.checkHazmatSegregation(
-            allCommodityIds,
-          );
+          await apiService.shipmentService.checkHazmatSegregation(allCommodityIds);
           for (let i = 0; i < commodities.length; i++) {
             clearErrors(`commodities.${i}.commodityId`);
           }
@@ -140,9 +175,7 @@ function CommodityDialog({
     >
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Edit Commodity" : "Add Commodity"}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Commodity" : "Add Commodity"}</DialogTitle>
           <DialogDescription>
             {isEditing
               ? "Update the commodity details"
@@ -176,13 +209,10 @@ function CommodityDialog({
             />
           </FormControl>
         </FormGroup>
+        <CapabilityFields descriptors={dimensionDescriptors} profile={profile} cols={3} />
+        {showDimensions && <CapabilityExplainer profile={profile} field="commodities" />}
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={saving}
-          >
+          <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
             Cancel
           </Button>
           <Button type="button" onClick={handleSave} disabled={saving}>
@@ -213,10 +243,10 @@ export default function CommoditiesSection() {
   const [isEditing, setIsEditing] = useState(false);
   const commodities = useWatch({ control, name: "commodities" }) ?? [];
 
-  const duplicateCommodityIds = findDuplicateIds(
-    commodities,
-    (c) => c?.commodityId,
-  );
+  const profile = getProfile(shipmentUIPolicy);
+  const showDimensions = isCapabilitySectionVisible(profile, CAPABILITIES.dimensionalCargo);
+
+  const duplicateCommodityIds = findDuplicateIds(commodities, (c) => c?.commodityId);
 
   const totalPieces = commodities.reduce(
     (sum, c) => sum + (typeof c.pieces === "number" ? c.pieces : 0),
@@ -264,15 +294,10 @@ export default function CommoditiesSection() {
         title="Commodities"
         titleCount={commodities.length}
         description="Cargo items, weights, and hazardous material compliance"
-        className="border-t border-border pt-4"
+        className="border-border border-t pt-4"
         action={
           fields.length > 0 && (
-            <Button
-              type="button"
-              variant="outline"
-              size="xxs"
-              onClick={handleAdd}
-            >
+            <Button type="button" variant="outline" size="xxs" onClick={handleAdd}>
               <PlusIcon className="size-3" />
               Add Commodity
             </Button>
@@ -281,10 +306,16 @@ export default function CommoditiesSection() {
       >
         {fields.length > 0 ? (
           <div className="rounded-lg border">
-            <div className="grid grid-cols-10 gap-2 border-b border-border px-4 py-2 text-2xs text-muted-foreground uppercase">
-              <span className="col-span-4">Commodity</span>
+            <div
+              className={cn(
+                "border-border text-2xs text-muted-foreground grid gap-2 border-b px-4 py-2 uppercase",
+                showDimensions ? "grid-cols-12" : "grid-cols-10",
+              )}
+            >
+              <span className={showDimensions ? "col-span-3" : "col-span-4"}>Commodity</span>
               <span className="col-span-2">Pieces</span>
               <span className="col-span-2">Weight</span>
+              {showDimensions && <span className="col-span-3">L × W × H</span>}
               <span className="col-span-2" />
             </div>
             <div className="divide-y">
@@ -296,17 +327,12 @@ export default function CommoditiesSection() {
                 const stackable = commodityObj?.stackable;
                 const fragile = commodityObj?.fragile;
                 const isDuplicate =
-                  !!item?.commodityId &&
-                  duplicateCommodityIds.has(item.commodityId);
+                  !!item?.commodityId && duplicateCommodityIds.has(item.commodityId);
 
                 const commodityErrors = errors.commodities?.[index];
-                const hasErrors = !!(
-                  commodityErrors && Object.keys(commodityErrors).length > 0
-                );
+                const hasErrors = !!(commodityErrors && Object.keys(commodityErrors).length > 0);
                 const errorMessages = hasErrors
-                  ? Object.entries(
-                      commodityErrors as Record<string, { message?: string }>,
-                    )
+                  ? Object.entries(commodityErrors as Record<string, { message?: string }>)
                       .filter(([key]) => key !== "ref" && key !== "root")
                       .map(([, err]) => err?.message ?? "Invalid")
                   : [];
@@ -315,29 +341,30 @@ export default function CommoditiesSection() {
                   <div
                     key={field.fieldId}
                     className={cn(
-                      "grid grid-cols-10 items-center gap-2 px-4 py-2",
-                      hasErrors &&
-                        "bg-destructive/10 ring-1 ring-destructive ring-inset",
-                      !hasErrors &&
-                        isDuplicate &&
-                        "bg-warning/20 ring-1 ring-warning ring-inset",
+                      "grid items-center gap-2 px-4 py-2",
+                      showDimensions ? "grid-cols-12" : "grid-cols-10",
+                      hasErrors && "bg-destructive/10 ring-destructive ring-1 ring-inset",
+                      !hasErrors && isDuplicate && "bg-warning/20 ring-warning ring-1 ring-inset",
                     )}
                   >
-                    <div className="col-span-4 flex items-center gap-1.5">
+                    <div
+                      className={cn(
+                        "flex items-center gap-1.5",
+                        showDimensions ? "col-span-3" : "col-span-4",
+                      )}
+                    >
                       <EntityRedirectLink
                         entityId={commodityObj?.id}
                         baseUrl="/shipment-management/configuration-files/commodities"
                         panelOpen
                       >
-                        <span className="text-xs font-medium">
-                          {truncateText(displayName, 15)}
-                        </span>
+                        <span className="text-xs font-medium">{truncateText(displayName, 15)}</span>
                       </EntityRedirectLink>
                       <div className="flex items-center gap-1">
                         {hasHazmat && (
                           <Tooltip>
                             <TooltipTrigger>
-                              <BiohazardIcon className="size-3.5 cursor-help text-warning" />
+                              <BiohazardIcon className="text-warning size-3.5 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="top" sideOffset={10}>
                               Commodity is classified as hazardous material.
@@ -347,7 +374,7 @@ export default function CommoditiesSection() {
                         {stackable && (
                           <Tooltip>
                             <TooltipTrigger>
-                              <BoxesIcon className="size-3.5 cursor-help text-success" />
+                              <BoxesIcon className="text-success size-3.5 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="top" sideOffset={10}>
                               Commodity is marked as stackable.
@@ -357,7 +384,7 @@ export default function CommoditiesSection() {
                         {fragile && (
                           <Tooltip>
                             <TooltipTrigger>
-                              <AlertCircleIcon className="size-3.5 cursor-help text-destructive" />
+                              <AlertCircleIcon className="text-destructive size-3.5 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent side="top" sideOffset={10}>
                               Commodity is marked as fragile.
@@ -366,12 +393,17 @@ export default function CommoditiesSection() {
                         )}
                       </div>
                     </div>
-                    <span className="col-span-2 text-xs text-muted-foreground">
+                    <span className="text-muted-foreground col-span-2 text-xs">
                       {truncateText(item?.pieces?.toLocaleString() ?? 0, 10)}
                     </span>
-                    <span className="col-span-2 text-xs text-muted-foreground">
+                    <span className="text-muted-foreground col-span-2 text-xs">
                       {truncateText(item?.weight?.toLocaleString() ?? 0, 8)} lbs
                     </span>
+                    {showDimensions && (
+                      <span className="text-muted-foreground col-span-3 text-xs">
+                        {describeCommodityDimensions(item)}
+                      </span>
+                    )}
                     <div className="col-span-2 flex items-center justify-end gap-1">
                       <Button
                         type="button"
@@ -380,7 +412,7 @@ export default function CommoditiesSection() {
                         className="size-7"
                         onClick={() => handleEdit(index)}
                       >
-                        <PencilIcon className="size-3.5 text-muted-foreground" />
+                        <PencilIcon className="text-muted-foreground size-3.5" />
                       </Button>
                       <Button
                         type="button"
@@ -389,12 +421,12 @@ export default function CommoditiesSection() {
                         className="size-7"
                         onClick={() => remove(index)}
                       >
-                        <TrashIcon className="size-3.5 text-muted-foreground" />
+                        <TrashIcon className="text-muted-foreground size-3.5" />
                       </Button>
                       {hasErrors && (
                         <Tooltip>
                           <TooltipTrigger>
-                            <TriangleAlertIcon className="size-3.5 cursor-help text-destructive" />
+                            <TriangleAlertIcon className="text-destructive size-3.5 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent side="top" sideOffset={10}>
                             <div className="space-y-1">
@@ -412,8 +444,8 @@ export default function CommoditiesSection() {
                 );
               })}
             </div>
-            <div className="flex flex-row items-center justify-end gap-3 rounded-b-lg border-t border-border bg-muted px-4 py-2">
-              <span className="text-xs text-muted-foreground">
+            <div className="border-border bg-muted flex flex-row items-center justify-end gap-3 rounded-b-lg border-t px-4 py-2">
+              <span className="text-muted-foreground text-xs">
                 {truncateText(totalPieces.toLocaleString(), 10)} total{" "}
                 {pluralize("piece", totalPieces)}
               </span>
@@ -432,22 +464,18 @@ export default function CommoditiesSection() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                {typeof shipmentUIPolicy?.maxShipmentWeightLimit ===
-                  "number" && (
+                {typeof shipmentUIPolicy?.maxShipmentWeightLimit === "number" && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger
                         render={
-                          <span className="cursor-help text-xs text-muted-foreground">
-                            /{" "}
-                            {shipmentUIPolicy.maxShipmentWeightLimit.toLocaleString()}{" "}
-                            lbs
+                          <span className="text-muted-foreground cursor-help text-xs">
+                            / {shipmentUIPolicy.maxShipmentWeightLimit.toLocaleString()} lbs
                           </span>
                         }
                       />
                       <TooltipContent side="top" sideOffset={10}>
-                        Maximum shipment weight limit configured by
-                        organization.
+                        Maximum shipment weight limit configured by organization.
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -469,7 +497,7 @@ export default function CommoditiesSection() {
           />
         )}
         {duplicateCommodityIds.size > 0 && (
-          <p className="flex items-center gap-1 text-xs text-warning">
+          <p className="text-warning flex items-center gap-1 text-xs">
             <TriangleAlertIcon className="size-3.5" />
             Duplicate commodities detected in this shipment.
           </p>
@@ -484,6 +512,7 @@ export default function CommoditiesSection() {
           isEditing={isEditing}
           maxShipmentWeightLimit={shipmentUIPolicy?.maxShipmentWeightLimit}
           checkHazmatSegregation={shipmentUIPolicy?.checkHazmatSegregation}
+          profile={profile}
           update={update}
         />
       )}

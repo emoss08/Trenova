@@ -1,0 +1,127 @@
+{
+  "engineVersion": "1.0.0",
+  "inputs": {
+    "ratingDate": 1700000000,
+    "weekday": 2,
+    "partyType": "Customer",
+    "partyId": "",
+    "partyName": "Acme Foods",
+    "distance": "720",
+    "weight": "40000",
+    "pieces": 22,
+    "linearFeet": "0",
+    "cubicFeet": "0",
+    "stops": 2,
+    "densityPcf": null,
+    "hasHazmat": false,
+    "requiresTempControl": false
+  },
+  "candidateCount": 3,
+  "candidates": [
+    {
+      "agreementId": "rag_golden",
+      "agreementCode": "ACME-2026",
+      "agreementName": "Acme Foods 2026",
+      "ruleId": "ragr_city-pair",
+      "ruleLabel": "city-pair",
+      "laneKey": "CityState:golden\u003eCityState:golden",
+      "won": true,
+      "rank": 0,
+      "specificityScore": 717500,
+      "rulePriority": 0,
+      "agreementPriority": 0,
+      "effectiveFrom": 1,
+      "rejectDetail": "Applied",
+      "matchedOn": [
+        "origin:CityState",
+        "destination:CityState"
+      ],
+      "amount": null
+    },
+    {
+      "agreementId": "rag_golden",
+      "agreementCode": "ACME-2026",
+      "agreementName": "Acme Foods 2026",
+      "ruleId": "ragr_zone-pair",
+      "ruleLabel": "zone-pair",
+      "laneKey": "Zone:golden\u003eZone:golden",
+      "won": false,
+      "rank": 1,
+      "specificityScore": 614400,
+      "rulePriority": 0,
+      "agreementPriority": 0,
+      "effectiveFrom": 1,
+      "rejectReason": "LostOnSpecificity",
+      "rejectDetail": "Another rate was written more specifically",
+      "amount": null
+    },
+    {
+      "agreementId": "rag_golden",
+      "agreementCode": "ACME-2026",
+      "agreementName": "Acme Foods 2026",
+      "ruleId": "ragr_light-freight-only",
+      "ruleLabel": "light-freight-only",
+      "laneKey": "State:golden\u003eState:golden",
+      "won": false,
+      "rank": 0,
+      "specificityScore": 512000,
+      "rulePriority": 0,
+      "agreementPriority": 0,
+      "effectiveFrom": 1,
+      "rejectReason": "WeightOutOfRange",
+      "rejectDetail": "The shipment weight falls outside the rate's range",
+      "amount": null
+    }
+  ],
+  "tieBreak": "specificity 717500",
+  "components": [
+    {
+      "sequence": 0,
+      "kind": "Linehaul",
+      "label": "Linehaul",
+      "basis": "Per Mile @ 2.55",
+      "quantity": null,
+      "rate": "2.55",
+      "amount": "1836",
+      "runningTotal": "1836",
+      "source": "FormulaTemplate",
+      "sourceId": "ft_per_mile_stub",
+      "sourceName": "Per Mile",
+      "detail": {
+        "expression": "baseRate * totalDistance",
+        "formulaTemplateId": "ft_per_mile_stub"
+      }
+    },
+    {
+      "sequence": 1,
+      "kind": "MinimumCharge",
+      "label": "Minimum charge",
+      "basis": "raised from 1836",
+      "quantity": null,
+      "rate": null,
+      "amount": "664",
+      "runningTotal": "2500",
+      "source": "AgreementRule",
+      "sourceId": "ragr_city-pair",
+      "sourceName": "city-pair"
+    }
+  ],
+  "guardrails": [
+    {
+      "kind": "MinimumCharge",
+      "applied": true,
+      "bound": "2500",
+      "raw": "1836",
+      "result": "2500"
+    }
+  ],
+  "totals": {
+    "linehaul": "2500",
+    "fuel": "0",
+    "accessorial": "0",
+    "total": "2500",
+    "cost": null,
+    "margin": null,
+    "marginPercent": null
+  }
+}

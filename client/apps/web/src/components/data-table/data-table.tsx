@@ -720,7 +720,7 @@ export function DataTable<TData extends Record<string, any>>({
                   containerClassName="max-h-[calc(65vh_-_var(--top-bar-height))] rounded-md border border-border"
                   style={{ ...columnSizeVars, minWidth: `${totalSize}px` }}
                 >
-                  <TableHeader className="sticky top-0 z-20 bg-muted backdrop-blur-sm">
+                  <TableHeader className="bg-muted sticky top-0 z-20 backdrop-blur-sm">
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow key={headerGroup.id} className="hover:bg-transparent">
                         <SortableContext

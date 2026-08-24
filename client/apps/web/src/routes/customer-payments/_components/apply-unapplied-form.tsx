@@ -122,9 +122,9 @@ export function ApplyUnappliedForm({
           <ArrowLeftIcon className="size-3.5" />
           Back to payment
         </Button>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Unapplied cash available:{" "}
-          <span className="font-semibold text-foreground tabular-nums">
+          <span className="text-foreground font-semibold tabular-nums">
             {formatCurrency(budgetMinor / 100)}
           </span>
         </p>

@@ -26,7 +26,7 @@ export function AnnouncementWidget({ widget }: WidgetProps) {
       {!text ? (
         <WidgetEmpty>Nothing announced.</WidgetEmpty>
       ) : (
-        <p className="text-xs leading-relaxed whitespace-pre-wrap text-foreground/90">{text}</p>
+        <p className="text-foreground/90 text-xs leading-relaxed whitespace-pre-wrap">{text}</p>
       )}
     </WidgetShell>
   );

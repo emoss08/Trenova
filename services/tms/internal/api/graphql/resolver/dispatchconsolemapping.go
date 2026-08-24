@@ -116,6 +116,26 @@ func mapDispatchBoardMove(move *dispatchconsoleservice.BoardMove) *gqlmodel.Disp
 		AssignedTrailerCode:   move.AssignedTrailerCode,
 		AssignmentAckStatus:   string(move.AssignmentAckStatus),
 		PreviousMoveTrailerID: idPtr(move.PreviousMoveTrailerID),
+
+		LiveTender: mapDispatchBoardTenderSummary(move.LiveTender),
+	}
+}
+
+func mapDispatchBoardTenderSummary(
+	summary *dispatchconsoleservice.MoveTenderSummary,
+) *gqlmodel.DispatchBoardTenderSummary {
+	if summary == nil {
+		return nil
+	}
+
+	return &gqlmodel.DispatchBoardTenderSummary{
+		ID:                    summary.ID.String(),
+		Status:                summary.Status,
+		Mode:                  summary.Mode,
+		CurrentRank:           int(summary.CurrentRank),
+		OfferCount:            summary.OfferCount,
+		CurrentCarrierName:    summary.CurrentCarrierName,
+		CurrentOfferExpiresAt: intPtr(summary.CurrentOfferExpiresAt),
 	}
 }
 
@@ -279,6 +299,12 @@ func mapDispatchPlan(plan *services.DispatchPlan) *gqlmodel.DispatchPlan {
 			AutoExecutable: planned.AutoExecutable,
 			ProposalID:     idPtr(planned.ProposalID),
 			Score:          mapDispatchCandidate(planned.Score),
+
+			TourID:                    idPtr(planned.TourID),
+			SequenceIndex:             planned.SequenceIndex,
+			ProjectedStartAt:          int(planned.ProjectedStartAt),
+			ProjectedCompleteAt:       int(planned.ProjectedCompleteAt),
+			ProjectedDriveRemainingMs: int(planned.ProjectedDriveRemains),
 		})
 	}
 
@@ -292,10 +318,31 @@ func mapDispatchPlan(plan *services.DispatchPlan) *gqlmodel.DispatchPlan {
 		})
 	}
 
+	tours := make([]*gqlmodel.DispatchTour, 0, len(plan.Tours))
+	for _, tour := range plan.Tours {
+		moveIDs := make([]string, 0, len(tour.MoveIDs))
+		for _, moveID := range tour.MoveIDs {
+			moveIDs = append(moveIDs, moveID.String())
+		}
+
+		tours = append(tours, &gqlmodel.DispatchTour{
+			TourID:             tour.TourID.String(),
+			WorkerID:           tour.WorkerID.String(),
+			WorkerName:         tour.WorkerName,
+			MoveIds:            moveIDs,
+			StartsAt:           int(tour.StartsAt),
+			EndsAt:             int(tour.EndsAt),
+			TotalScore:         tour.TotalScore,
+			TotalDeadheadMiles: tour.TotalDeadheadMiles,
+		})
+	}
+
 	return &gqlmodel.DispatchPlan{
 		RunID:        idPtr(plan.RunID),
 		Assignments:  assignments,
 		Uncovered:    uncovered,
+		Tours:        tours,
+		PlanningMode: plan.PlanningMode,
 		ShadowMode:   plan.ShadowMode,
 		AutonomyTier: string(plan.AutonomyTier),
 		TotalScore:   plan.TotalScore,

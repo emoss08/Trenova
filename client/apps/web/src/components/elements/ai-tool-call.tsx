@@ -94,7 +94,7 @@ function AiToolCall({
         open={isOpen}
         onOpenChange={handleOpenChange}
         className={cn(
-          "overflow-hidden rounded-lg border border-border bg-card text-card-foreground",
+          "border-border bg-card text-card-foreground overflow-hidden rounded-lg border",
           className,
         )}
       >
@@ -159,12 +159,12 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
     <CollapsiblePrimitive.Trigger
       data-slot="ai-tool-call-header"
       className={cn(
-        "flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        "hover:bg-muted/50 focus-visible:ring-ring flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
         className,
       )}
     >
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-        <Wrench className="size-4 text-muted-foreground" />
+      <div className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-md">
+        <Wrench className="text-muted-foreground size-4" />
       </div>
       <div className="flex flex-1 items-center gap-2 text-left">
         <span className="font-mono text-sm">{name}</span>
@@ -181,7 +181,7 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
       {children}
       <ChevronDown
         className={cn(
-          "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+          "text-muted-foreground size-4 shrink-0 transition-transform duration-200",
           isOpen && "rotate-180",
         )}
       />
@@ -199,7 +199,7 @@ function AiToolCallContent({ children, className }: AiToolCallContentProps) {
     <CollapsiblePrimitive.Content
       data-slot="ai-tool-call-content"
       className={cn(
-        "border-t border-border data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down",
+        "border-border data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down border-t",
         className,
       )}
     >
@@ -224,10 +224,10 @@ function AiToolCallInput({ input, className }: AiToolCallInputProps) {
       data-slot="ai-tool-call-input"
       className={cn("space-y-1.5", className)}
     >
-      <span className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+      <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
         Input
       </span>
-      <pre className="overflow-x-auto rounded-md bg-muted/50 p-3 font-mono text-xs text-foreground">
+      <pre className="bg-muted/50 text-foreground overflow-x-auto rounded-md p-3 font-mono text-xs">
         {formattedJson}
       </pre>
     </div>
@@ -245,10 +245,10 @@ function AiToolCallOutput({ children, className }: AiToolCallOutputProps) {
       data-slot="ai-tool-call-output"
       className={cn("space-y-1.5", className)}
     >
-      <span className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+      <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
         Output
       </span>
-      <div className="overflow-x-auto rounded-md bg-muted/50 p-3 text-sm">
+      <div className="bg-muted/50 overflow-x-auto rounded-md p-3 text-sm">
         {children}
       </div>
     </div>

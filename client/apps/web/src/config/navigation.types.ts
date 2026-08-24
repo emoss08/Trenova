@@ -1,3 +1,4 @@
+import type { OrganizationCapabilityType } from "@trenova/shared/types/organization-capability";
 import type { OperationType } from "@trenova/shared/types/permission";
 import type { LucideIcon } from "lucide-react";
 
@@ -8,6 +9,7 @@ export type ModuleId =
   | "billing"
   | "detention"
   | "payroll"
+  | "carrier-settlements"
   | "edi"
   | "reports"
   | "accounting"
@@ -31,6 +33,13 @@ export interface NavItem {
   includeBetaTag?: boolean;
   external?: boolean;
   resource?: string;
+  /**
+   * Hides the entry when the organization has the capability turned off. It sits
+   * alongside `resource` rather than replacing it: permissions are access
+   * control, a capability is only whether the organization uses that half of the
+   * product at all.
+   */
+  capability?: OrganizationCapabilityType;
   badge?: NavItemBadgeKind;
 }
 
@@ -41,6 +50,7 @@ export interface NavGroup {
   items: NavItem[];
   defaultOpen?: boolean;
   resource?: string;
+  capability?: OrganizationCapabilityType;
 }
 
 export interface NavModule {
@@ -56,6 +66,7 @@ export interface NavModule {
   navigation: (NavItem | NavGroup)[];
   hideSecondarySidebar?: boolean;
   resource?: string;
+  capability?: OrganizationCapabilityType;
 }
 
 export interface NavigationConfig {
@@ -70,6 +81,11 @@ export interface QuickActionCommand {
   path: string;
   resource?: string;
   requiredOperation?: OperationType;
+  /**
+   * Mirrors `NavItem.capability`: a create shortcut for a half of the product
+   * the organization does not run would only lead to a route that refuses it.
+   */
+  capability?: OrganizationCapabilityType;
   query?: Record<string, string>;
   keywords?: string[];
 }

@@ -59,19 +59,19 @@ export function OrganizationSelection({ organizations }: { organizations: UserOr
               type="button"
               aria-pressed={isSelected}
               className={cn(
-                "flex min-h-13 w-full cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors hover:bg-muted",
+                "hover:bg-muted flex min-h-13 w-full cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors",
                 isSelected ? "border-primary bg-primary/5" : "border-border bg-background",
               )}
               disabled={isContinuing}
               onClick={() => setSelectedOrganizationId(organization.id)}
             >
-              <span className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-xs font-semibold">
+              <span className="bg-muted grid size-8 shrink-0 place-items-center rounded-md text-xs font-semibold">
                 {organization.name.slice(0, 2).toUpperCase()}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">{organization.name}</span>
                 {location && (
-                  <span className="block truncate text-xs text-muted-foreground">{location}</span>
+                  <span className="text-muted-foreground block truncate text-xs">{location}</span>
                 )}
               </span>
               {organization.isCurrent && <Badge variant="outline">Current</Badge>}

@@ -4,7 +4,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn, formatCompactCurrency } from "@trenova/shared/lib/utils";
-import { FlameIcon, SnowflakeIcon, TriangleAlertIcon } from "lucide-react";
+import { Building2Icon, FlameIcon, SendIcon, SnowflakeIcon, TriangleAlertIcon } from "lucide-react";
 import { useMemo } from "react";
 import { CoverageKanbanSkeleton } from "./console-skeletons";
 import {
@@ -15,6 +15,34 @@ import {
   urgencyMeta,
   type UrgencyBucket,
 } from "./dispatch-vocabulary";
+import { formatOfferCountdown, tenderChipMeta, type TenderChipTone } from "./tender-vocabulary";
+
+const TENDER_CHIP_VARIANT: Record<TenderChipTone, "info" | "active" | "warning"> = {
+  info: "info",
+  active: "active",
+  attention: "warning",
+};
+
+function TenderChip({ move }: { move: DispatchBoardMove }) {
+  const summary = move.liveTender;
+  if (!summary) return null;
+
+  const meta = tenderChipMeta(summary);
+  // The countdown is computed at render; the board's periodic refetch keeps it
+  // honest without every card running its own timer.
+  const countdown =
+    summary.status === "Active"
+      ? formatOfferCountdown(summary.currentOfferExpiresAt, Math.floor(Date.now() / 1000))
+      : "";
+
+  return (
+    <Badge variant={TENDER_CHIP_VARIANT[meta.tone]} className="h-4 rounded px-1 text-[9px]">
+      <SendIcon className="mr-0.5 size-2.5" aria-hidden />
+      {meta.label}
+      {countdown ? ` · ${countdown}` : ""}
+    </Badge>
+  );
+}
 
 function MoveCard({
   move,
@@ -44,7 +72,7 @@ function MoveCard({
         }
       }}
       className={cn(
-        "flex cursor-pointer flex-col gap-1.5 rounded-md border bg-card p-2 transition-[border-color,box-shadow]",
+        "bg-card flex cursor-pointer flex-col gap-1.5 rounded-md border p-2 transition-[border-color,box-shadow]",
         isSelected ? "border-brand shadow-[0_0_0_1px_var(--brand)]" : "hover:border-brand/40",
         isOver && isDriverDrag && "border-brand bg-brand/5 shadow-[0_0_0_2px_var(--brand)]",
       )}
@@ -83,7 +111,7 @@ function MoveCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-muted-foreground text-[10px]">
           {move.originWindowStart > 0
             ? formatUnixDateTime(move.originWindowStart)
             : "No appointment"}
@@ -116,16 +144,26 @@ function MoveCard({
             On hold
           </Badge>
         )}
+        <TenderChip move={move} />
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-[10px] text-muted-foreground">{move.customerName}</span>
-        {move.isCovered && (
-          <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
-            {move.assignedWorkerName}
-            {move.assignedTractorCode ? ` · ${move.assignedTractorCode}` : ""}
-          </Badge>
-        )}
+        <span className="text-muted-foreground truncate text-[10px]">{move.customerName}</span>
+        {move.isCovered &&
+          (move.coverageType === "carrier" ? (
+            <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
+              <Building2Icon className="mr-0.5 size-2.5" aria-hidden />
+              {move.assignedCarrierName}
+              {move.carrierTotalCost != null
+                ? ` · ${formatCompactCurrency(move.carrierTotalCost)}`
+                : ""}
+            </Badge>
+          ) : (
+            <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
+              {move.assignedWorkerName}
+              {move.assignedTractorCode ? ` · ${move.assignedTractorCode}` : ""}
+            </Badge>
+          ))}
       </div>
     </div>
   );
@@ -145,11 +183,11 @@ function UrgencyColumn({
   const meta = urgencyMeta(bucket);
 
   return (
-    <div className="flex min-h-0 w-60 shrink-0 flex-col rounded-md border bg-muted/30 xl:w-auto xl:flex-1">
+    <div className="bg-muted/30 flex min-h-0 w-60 shrink-0 flex-col rounded-md border xl:w-auto xl:flex-1">
       <header className="flex items-center gap-1.5 border-b px-2 py-1.5" title={meta.description}>
         <span className={cn("size-1.5 rounded-full", meta.dotClass)} aria-hidden />
         <span className="text-[10.5px] font-semibold tracking-wide uppercase">{meta.label}</span>
-        <span className="ml-auto text-[10.5px] text-muted-foreground tabular-nums">
+        <span className="text-muted-foreground ml-auto text-[10.5px] tabular-nums">
           {moves.length}
         </span>
       </header>
@@ -164,7 +202,7 @@ function UrgencyColumn({
             />
           ))}
           {moves.length === 0 && (
-            <p className="py-6 text-center text-[11px] text-muted-foreground">Nothing here.</p>
+            <p className="text-muted-foreground py-6 text-center text-[11px]">Nothing here.</p>
           )}
         </div>
       </ScrollArea>

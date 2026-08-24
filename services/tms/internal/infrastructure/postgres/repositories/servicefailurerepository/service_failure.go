@@ -53,7 +53,12 @@ func (r *repository) List(
 		NewSelect().
 		Model(&entities).
 		Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-			q = querybuilder.ApplyFilters(q, "sf", req.Filter, (*servicefailure.ServiceFailure)(nil))
+			q = querybuilder.ApplyFilters(
+				q,
+				"sf",
+				req.Filter,
+				(*servicefailure.ServiceFailure)(nil),
+			)
 			if req.ShipmentID.IsNotNil() {
 				q = q.Where("sf.shipment_id = ?", req.ShipmentID)
 			}

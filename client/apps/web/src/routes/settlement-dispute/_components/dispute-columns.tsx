@@ -72,7 +72,7 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
             <span className="font-mono text-xs font-medium">
               {row.original.settlement.settlementNumber}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               Net{" "}
               <AmountDisplay
                 value={row.original.settlement.netPayMinor}
@@ -81,7 +81,7 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
             </span>
           </div>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-muted-foreground text-xs">—</span>
         ),
       size: 150,
       meta: { apiField: "settlementId", label: "Settlement" },
@@ -90,7 +90,7 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
       accessorKey: "description",
       header: "Description",
       cell: ({ row }) => (
-        <span className="line-clamp-2 max-w-96 text-xs text-muted-foreground">
+        <span className="text-muted-foreground line-clamp-2 max-w-96 text-xs">
           {row.original.description}
         </span>
       ),
@@ -112,11 +112,11 @@ export function getColumns(): ColumnDef<SettlementDisputeRow>[] {
           <div className="flex flex-col">
             <span className="text-xs">{formatDate(row.original.resolvedAt)}</span>
             {row.original.resolvedBy ? (
-              <span className="text-xs text-muted-foreground">{row.original.resolvedBy.name}</span>
+              <span className="text-muted-foreground text-xs">{row.original.resolvedBy.name}</span>
             ) : null}
           </div>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-muted-foreground text-xs">—</span>
         ),
       size: 130,
       meta: { apiField: "resolvedAt", label: "Resolved" },

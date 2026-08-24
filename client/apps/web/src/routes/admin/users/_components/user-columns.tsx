@@ -43,7 +43,7 @@ function UserNameCell({ user, isOnline }: { user: User; isOnline: boolean }) {
         name={user.name}
         profilePicUrl={user.profilePicUrl}
         thumbnailUrl={user.thumbnailUrl}
-        className="size-8 rounded-md bg-muted"
+        className="bg-muted size-8 rounded-md"
         imageClassName="rounded-md bg-muted"
         fallbackClassName="text-xs"
       />
@@ -57,7 +57,7 @@ function UserNameCell({ user, isOnline }: { user: User; isOnline: boolean }) {
             title={isOnline ? "Online" : "Offline"}
           />
         </span>
-        <span className="text-xs text-muted-foreground">{user.emailAddress}</span>
+        <span className="text-muted-foreground text-xs">{user.emailAddress}</span>
       </div>
     </div>
   );

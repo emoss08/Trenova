@@ -65,7 +65,7 @@ export default function InspectorTabs({
       <div className="overflow-x-auto p-3 pb-0">
         <TabsList
           variant="underline"
-          className={`grid w-max ${tabGridClass} border-b border-border`}
+          className={`grid w-max ${tabGridClass} border-border border-b`}
         >
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="controls">Controls</TabsTrigger>

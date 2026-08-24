@@ -13,6 +13,25 @@ export const decimalStringSchema = z
   ])
   .nullish();
 export const optionalStringSchema = z.string().optional();
+
+/**
+ * Rate-style fields arrive as plain numbers from form inputs but as decimal
+ * strings when prefilled from GraphQL, so both are accepted and normalized to
+ * a number — mirroring the `decimalStringSchema` pattern.
+ */
+export const decimalNumberSchema = (requiredError: string, negativeError: string) =>
+  z
+    .union(
+      [
+        z
+          .string()
+          .transform((val) => (val.trim() === "" ? Number.NaN : Number(val)))
+          .refine((val) => Number.isFinite(val), { error: requiredError }),
+        z.number().refine((val) => Number.isFinite(val), { error: requiredError }),
+      ],
+      { error: requiredError },
+    )
+    .refine((val) => val >= 0, { error: negativeError });
 export const nullableTextSchema = z
   .string()
   .nullish()
@@ -54,6 +73,17 @@ export type Status = z.infer<typeof statusSchema>;
 
 export const equipmentStatusSchema = z.enum(["Available", "OutOfService", "AtMaintenance", "Sold"]);
 export type EquipmentStatus = z.infer<typeof equipmentStatusSchema>;
+
+/**
+ * Organization capability flags gate what the UI *shows*, never what the API
+ * allows. An older payload that predates a flag — or omits it from a narrow
+ * projection — must never hide a feature, so an absent or null value fails open
+ * to enabled.
+ */
+export const capabilityFlagSchema = z
+  .boolean()
+  .nullish()
+  .transform((value) => value ?? true);
 
 export const nullableIntegerSchema = z
   .union([

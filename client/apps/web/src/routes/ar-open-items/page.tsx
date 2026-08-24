@@ -219,14 +219,14 @@ export function AROpenItemsPage() {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="flex items-center justify-between rounded-md border bg-card px-3 py-2"
+                className="bg-card flex items-center justify-between rounded-md border px-3 py-2"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-medium tabular-nums">
                     {selection.items.length} selected · {formatCurrency(selection.totalOpen / 100)}
                   </span>
                   {!selection.singleCustomerId ? (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       Select invoices from a single customer to apply a payment
                     </span>
                   ) : null}
@@ -299,7 +299,7 @@ function SummaryCard({
     >
       <Card className="h-full gap-0 rounded-lg py-3">
         <CardContent className="px-4">
-          <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+          <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
             {label}
           </p>
           <p
@@ -311,7 +311,7 @@ function SummaryCard({
             {value}
           </p>
           {detail ? (
-            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{detail}</p>
+            <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">{detail}</p>
           ) : null}
         </CardContent>
       </Card>

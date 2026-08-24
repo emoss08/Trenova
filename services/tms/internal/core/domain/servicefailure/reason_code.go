@@ -25,7 +25,7 @@ var (
 
 type ReasonCode struct {
 	bun.BaseModel             `bun:"table:service_failure_reason_codes,alias:sfrc" json:"-"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
 
 	ID                   pulid.ID            `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID       pulid.ID            `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -51,8 +51,8 @@ type ReasonCode struct {
 	UpdatedAt            int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	SearchVector         string              `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"                     bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"-"                     bun:"rel:belongs-to,join:organization_id=id"`
 	ArchivedBy   *tenant.User         `json:"archivedBy,omitempty"  bun:"rel:belongs-to,join:archived_by_id=id"`
 	ActivatedBy  *tenant.User         `json:"activatedBy,omitempty" bun:"rel:belongs-to,join:activated_by_id=id"`
 }

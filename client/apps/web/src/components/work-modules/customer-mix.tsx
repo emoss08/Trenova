@@ -26,7 +26,7 @@ const PICKUP_STATUS: Record<PickupStatus, { label: string; variant: BadgeVariant
   scheduled: { label: "Scheduled", variant: "outline" },
   confirmed: { label: "Confirmed", variant: "active" },
   tentative: { label: "Tentative", variant: "warning" },
-  unassigned: { label: "Needs driver", variant: "warning" },
+  unassigned: { label: "Needs coverage", variant: "warning" },
 };
 
 const SHARE_BAR_COLORS = [
@@ -43,7 +43,7 @@ export function CustomerMix({ customerMix, tomorrowsPickups, enabled = true }: C
   return (
     <CustomerMixSection>
       <Tabs defaultValue="customers" className="flex min-h-0 flex-1 flex-col gap-0">
-        <header className="flex items-center justify-between border-b border-border px-2 py-1">
+        <header className="border-border flex items-center justify-between border-b px-2 py-1">
           <TabsList
             variant="underline"
             className="h-6 bg-transparent p-0 hover:bg-transparent *:data-[slot=tabs-tab]:hover:bg-transparent"
@@ -55,7 +55,7 @@ export function CustomerMix({ customerMix, tomorrowsPickups, enabled = true }: C
               Tomorrow&apos;s pickups
             </TabsTab>
           </TabsList>
-          <span className="font-mono text-[10px] text-muted-foreground">
+          <span className="text-muted-foreground font-mono text-[10px]">
             {customerMix.windowDays}d
           </span>
         </header>
@@ -87,13 +87,13 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
             <div className="flex items-baseline justify-between gap-2">
               <span className="truncate text-[11.5px] font-medium">{entry.name}</span>
               <span
-                className="font-mono text-[10.5px] text-muted-foreground tabular-nums"
+                className="text-muted-foreground font-mono text-[10.5px] tabular-nums"
                 title={`${formatCurrency(entry.revenue)} · ${entry.loads} ${pluralize("load", entry.loads)}`}
               >
                 {formatCompactCurrency(entry.revenue)} · {entry.loads}
               </span>
             </div>
-            <div aria-hidden className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
+            <div aria-hidden className="bg-muted mt-1 h-1 w-full overflow-hidden rounded-full">
               <span
                 className="block h-full rounded-full"
                 style={{
@@ -210,8 +210,8 @@ function PickupsList({
         <li
           key={`${pickup.shipmentId}-${pickup.pickupWindowStart}`}
           className={cn(
-            "transition-colors hover:bg-muted",
-            index < pickups.length - 1 && "border-b border-border/60",
+            "hover:bg-muted transition-colors",
+            index < pickups.length - 1 && "border-border/60 border-b",
           )}
         >
           <button
@@ -229,7 +229,7 @@ function PickupsList({
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[11px] font-medium">{pickup.customer}</p>
-              <p className="truncate font-mono text-[9.5px] text-muted-foreground">
+              <p className="text-muted-foreground truncate font-mono text-[9.5px]">
                 {pickup.origin} → {pickup.destination}
               </p>
             </div>
@@ -238,7 +238,7 @@ function PickupsList({
                 {PICKUP_STATUS[pickup.status].label}
               </Badge>
             ) : (
-              <span className="max-w-20 truncate font-mono text-[10px] text-muted-foreground">
+              <span className="text-muted-foreground max-w-20 truncate font-mono text-[10px]">
                 {pickup.driver || PICKUP_STATUS[pickup.status].label}
               </span>
             )}
@@ -259,7 +259,7 @@ function PickupsList({
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="flex h-full min-h-32 items-center justify-center px-3 py-6 text-center text-[11px] text-muted-foreground">
+    <div className="text-muted-foreground flex h-full min-h-32 items-center justify-center px-3 py-6 text-center text-[11px]">
       {label}
     </div>
   );

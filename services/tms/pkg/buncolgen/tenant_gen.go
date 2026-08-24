@@ -725,6 +725,10 @@ var BillingControlColumns = struct {
 	NotifyOnBillingExceptions             Column // "notify_on_billing_exceptions" → qualified: "bc.notify_on_billing_exceptions"
 	RateVarianceTolerancePercent          Column // "rate_variance_tolerance_percent" → qualified: "bc.rate_variance_tolerance_percent"
 	RateVarianceAutoResolutionMode        Column // "rate_variance_auto_resolution_mode" → qualified: "bc.rate_variance_auto_resolution_mode"
+	UnratedShipmentDisposition            Column // "unrated_shipment_disposition" → qualified: "bc.unrated_shipment_disposition"
+	FallbackFormulaTemplateID             Column // "fallback_formula_template_id" → qualified: "bc.fallback_formula_template_id"
+	RequireRateOverrideReason             Column // "require_rate_override_reason" → qualified: "bc.require_rate_override_reason"
+	EnforceMarginFloor                    Column // "enforce_margin_floor" → qualified: "bc.enforce_margin_floor"
 	Version                               Column // "version" → qualified: "bc.version"
 	CreatedAt                             Column // "created_at" → qualified: "bc.created_at"
 	UpdatedAt                             Column // "updated_at" → qualified: "bc.updated_at"
@@ -751,6 +755,10 @@ var BillingControlColumns = struct {
 	NotifyOnBillingExceptions:             NewColumn("notify_on_billing_exceptions", "bc"),
 	RateVarianceTolerancePercent:          NewColumn("rate_variance_tolerance_percent", "bc"),
 	RateVarianceAutoResolutionMode:        NewColumn("rate_variance_auto_resolution_mode", "bc"),
+	UnratedShipmentDisposition:            NewColumn("unrated_shipment_disposition", "bc"),
+	FallbackFormulaTemplateID:             NewColumn("fallback_formula_template_id", "bc"),
+	RequireRateOverrideReason:             NewColumn("require_rate_override_reason", "bc"),
+	EnforceMarginFloor:                    NewColumn("enforce_margin_floor", "bc"),
 	Version:                               NewColumn("version", "bc"),
 	CreatedAt:                             NewColumn("created_at", "bc"),
 	UpdatedAt:                             NewColumn("updated_at", "bc"),
@@ -783,6 +791,10 @@ var BillingControlFieldMap = map[string]string{
 	"notifyOnBillingExceptions":             "notify_on_billing_exceptions",
 	"rateVarianceTolerancePercent":          "rate_variance_tolerance_percent",
 	"rateVarianceAutoResolutionMode":        "rate_variance_auto_resolution_mode",
+	"unratedShipmentDisposition":            "unrated_shipment_disposition",
+	"fallbackFormulaTemplateId":             "fallback_formula_template_id",
+	"requireRateOverrideReason":             "require_rate_override_reason",
+	"enforceMarginFloor":                    "enforce_margin_floor",
 	"version":                               "version",
 	"createdAt":                             "created_at",
 	"updatedAt":                             "updated_at",
@@ -813,6 +825,10 @@ var BillingControlInsertableColumns = []string{
 	"notify_on_billing_exceptions",
 	"rate_variance_tolerance_percent",
 	"rate_variance_auto_resolution_mode",
+	"unrated_shipment_disposition",
+	"fallback_formula_template_id",
+	"require_rate_override_reason",
+	"enforce_margin_floor",
 	"version",
 	"created_at",
 	"updated_at",
@@ -903,6 +919,10 @@ var BillingControlFilter = struct {
 	NotifyOnBillingExceptions             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notifyOnBillingExceptions" → DB: "notify_on_billing_exceptions"
 	RateVarianceTolerancePercent          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateVarianceTolerancePercent" → DB: "rate_variance_tolerance_percent"
 	RateVarianceAutoResolutionMode        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateVarianceAutoResolutionMode" → DB: "rate_variance_auto_resolution_mode"
+	UnratedShipmentDisposition            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unratedShipmentDisposition" → DB: "unrated_shipment_disposition"
+	FallbackFormulaTemplateID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fallbackFormulaTemplateId" → DB: "fallback_formula_template_id"
+	RequireRateOverrideReason             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireRateOverrideReason" → DB: "require_rate_override_reason"
+	EnforceMarginFloor                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceMarginFloor" → DB: "enforce_margin_floor"
 	Version                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -972,6 +992,18 @@ var BillingControlFilter = struct {
 	},
 	RateVarianceAutoResolutionMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("rateVarianceAutoResolutionMode", op, value)
+	},
+	UnratedShipmentDisposition: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("unratedShipmentDisposition", op, value)
+	},
+	FallbackFormulaTemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fallbackFormulaTemplateId", op, value)
+	},
+	RequireRateOverrideReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requireRateOverrideReason", op, value)
+	},
+	EnforceMarginFloor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enforceMarginFloor", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -1075,6 +1107,249 @@ var BusinessUnitFilter = struct {
 	},
 	Code: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("code", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// CarrierSettlementControl — table "carrier_settlement_controls", alias "carstlc"
+// ---------------------------------------------------------------------------
+
+// CarrierSettlementControlTable holds the table name, alias, and primary key columns
+// for the "carrier_settlement_controls" table. The alias "carstlc" is used in all generated
+// SQL fragments (e.g. "carstlc.id = ?").
+var CarrierSettlementControlTable = TableInfo{
+	Name:       "carrier_settlement_controls",
+	Alias:      "carstlc",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// CarrierSettlementControlColumns provides type-safe column references for the "carrier_settlement_controls" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(CarrierSettlementControlColumns.ID.String())
+//	// SELECT carstlc.id FROM carrier_settlement_controls AS carstlc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(CarrierSettlementControlColumns.ID.Eq(), id)           // WHERE carstlc.id = ?
+//	q.Order(CarrierSettlementControlColumns.CreatedAt.OrderDesc())  // ORDER BY carstlc.created_at DESC
+var CarrierSettlementControlColumns = struct {
+	ID                                      Column // "id" → qualified: "carstlc.id"
+	BusinessUnitID                          Column // "business_unit_id" → qualified: "carstlc.business_unit_id"
+	OrganizationID                          Column // "organization_id" → qualified: "carstlc.organization_id"
+	PayTrigger                              Column // "pay_trigger" → qualified: "carstlc.pay_trigger"
+	PayPeriodFrequency                      Column // "pay_period_frequency" → qualified: "carstlc.pay_period_frequency"
+	PeriodEndDayOfWeek                      Column // "period_end_day_of_week" → qualified: "carstlc.period_end_day_of_week"
+	PayDelayDays                            Column // "pay_delay_days" → qualified: "carstlc.pay_delay_days"
+	AutoGenerateBatches                     Column // "auto_generate_batches" → qualified: "carstlc.auto_generate_batches"
+	AutoPostOnApprove                       Column // "auto_post_on_approve" → qualified: "carstlc.auto_post_on_approve"
+	VarianceToleranceMinor                  Column // "variance_tolerance_minor" → qualified: "carstlc.variance_tolerance_minor"
+	AutoMatchInboundInvoices                Column // "auto_match_inbound_invoices" → qualified: "carstlc.auto_match_inbound_invoices"
+	AutoAcceptWithinTolerance               Column // "auto_accept_within_tolerance" → qualified: "carstlc.auto_accept_within_tolerance"
+	DefaultAPAccountID                      Column // "default_ap_account_id" → qualified: "carstlc.default_ap_account_id"
+	DefaultPurchasedTransportationAccountID Column // "default_purchased_transportation_account_id" → qualified: "carstlc.default_purchased_transportation_account_id"
+	Version                                 Column // "version" → qualified: "carstlc.version"
+	CreatedAt                               Column // "created_at" → qualified: "carstlc.created_at"
+	UpdatedAt                               Column // "updated_at" → qualified: "carstlc.updated_at"
+}{
+	ID:                                      NewColumn("id", "carstlc"),
+	BusinessUnitID:                          NewColumn("business_unit_id", "carstlc"),
+	OrganizationID:                          NewColumn("organization_id", "carstlc"),
+	PayTrigger:                              NewColumn("pay_trigger", "carstlc"),
+	PayPeriodFrequency:                      NewColumn("pay_period_frequency", "carstlc"),
+	PeriodEndDayOfWeek:                      NewColumn("period_end_day_of_week", "carstlc"),
+	PayDelayDays:                            NewColumn("pay_delay_days", "carstlc"),
+	AutoGenerateBatches:                     NewColumn("auto_generate_batches", "carstlc"),
+	AutoPostOnApprove:                       NewColumn("auto_post_on_approve", "carstlc"),
+	VarianceToleranceMinor:                  NewColumn("variance_tolerance_minor", "carstlc"),
+	AutoMatchInboundInvoices:                NewColumn("auto_match_inbound_invoices", "carstlc"),
+	AutoAcceptWithinTolerance:               NewColumn("auto_accept_within_tolerance", "carstlc"),
+	DefaultAPAccountID:                      NewColumn("default_ap_account_id", "carstlc"),
+	DefaultPurchasedTransportationAccountID: NewColumn("default_purchased_transportation_account_id", "carstlc"),
+	Version:                                 NewColumn("version", "carstlc"),
+	CreatedAt:                               NewColumn("created_at", "carstlc"),
+	UpdatedAt:                               NewColumn("updated_at", "carstlc"),
+}
+
+// CarrierSettlementControlFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by CarrierSettlementControl.GetStaticFieldMap().
+var CarrierSettlementControlFieldMap = map[string]string{
+	"id":                                      "id",
+	"businessUnitId":                          "business_unit_id",
+	"organizationId":                          "organization_id",
+	"payTrigger":                              "pay_trigger",
+	"payPeriodFrequency":                      "pay_period_frequency",
+	"periodEndDayOfWeek":                      "period_end_day_of_week",
+	"payDelayDays":                            "pay_delay_days",
+	"autoGenerateBatches":                     "auto_generate_batches",
+	"autoPostOnApprove":                       "auto_post_on_approve",
+	"varianceToleranceMinor":                  "variance_tolerance_minor",
+	"autoMatchInboundInvoices":                "auto_match_inbound_invoices",
+	"autoAcceptWithinTolerance":               "auto_accept_within_tolerance",
+	"defaultApAccountId":                      "default_ap_account_id",
+	"defaultPurchasedTransportationAccountId": "default_purchased_transportation_account_id",
+	"version":                                 "version",
+	"createdAt":                               "created_at",
+	"updatedAt":                               "updated_at",
+}
+
+// CarrierSettlementControlInsertableColumns lists column names suitable for INSERT statements on the "carrier_settlement_controls" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var CarrierSettlementControlInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"pay_trigger",
+	"pay_period_frequency",
+	"period_end_day_of_week",
+	"pay_delay_days",
+	"auto_generate_batches",
+	"auto_post_on_approve",
+	"variance_tolerance_minor",
+	"auto_match_inbound_invoices",
+	"auto_accept_within_tolerance",
+	"default_ap_account_id",
+	"default_purchased_transportation_account_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// CarrierSettlementControlRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(CarrierSettlementControlRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var CarrierSettlementControlRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// CarrierSettlementControlScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE carstlc.organization_id = ? AND carstlc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.CarrierSettlementControlScopeTenant(sq, ti).
+//		Where(buncolgen.CarrierSettlementControlColumns.ID.Eq(), id)
+func CarrierSettlementControlScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, CarrierSettlementControlColumns.OrganizationID, CarrierSettlementControlColumns.BusinessUnitID, ti)
+}
+
+// CarrierSettlementControlScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.CarrierSettlementControlScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.CarrierSettlementControlColumns.ID.In(), bun.List(ids))
+//	})
+func CarrierSettlementControlScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, CarrierSettlementControlColumns.OrganizationID, CarrierSettlementControlColumns.BusinessUnitID, ti)
+}
+
+// CarrierSettlementControlScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.CarrierSettlementControlScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.CarrierSettlementControlColumns.ID.Eq(), id)
+//	})
+func CarrierSettlementControlScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, CarrierSettlementControlColumns.OrganizationID, CarrierSettlementControlColumns.BusinessUnitID, ti)
+}
+
+// CarrierSettlementControlApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.CarrierSettlementControlApplyTenant(tenantInfo))
+func CarrierSettlementControlApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(CarrierSettlementControlColumns.OrganizationID, CarrierSettlementControlColumns.BusinessUnitID, ti)
+}
+
+// CarrierSettlementControlFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "carrier_settlement_controls" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	CarrierSettlementControlFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var CarrierSettlementControlFilter = struct {
+	ID                                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	PayTrigger                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payTrigger" → DB: "pay_trigger"
+	PayPeriodFrequency                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payPeriodFrequency" → DB: "pay_period_frequency"
+	PeriodEndDayOfWeek                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodEndDayOfWeek" → DB: "period_end_day_of_week"
+	PayDelayDays                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payDelayDays" → DB: "pay_delay_days"
+	AutoGenerateBatches                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoGenerateBatches" → DB: "auto_generate_batches"
+	AutoPostOnApprove                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoPostOnApprove" → DB: "auto_post_on_approve"
+	VarianceToleranceMinor                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "varianceToleranceMinor" → DB: "variance_tolerance_minor"
+	AutoMatchInboundInvoices                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoMatchInboundInvoices" → DB: "auto_match_inbound_invoices"
+	AutoAcceptWithinTolerance               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoAcceptWithinTolerance" → DB: "auto_accept_within_tolerance"
+	DefaultAPAccountID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultApAccountId" → DB: "default_ap_account_id"
+	DefaultPurchasedTransportationAccountID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultPurchasedTransportationAccountId" → DB: "default_purchased_transportation_account_id"
+	Version                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	PayTrigger: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payTrigger", op, value)
+	},
+	PayPeriodFrequency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payPeriodFrequency", op, value)
+	},
+	PeriodEndDayOfWeek: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("periodEndDayOfWeek", op, value)
+	},
+	PayDelayDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payDelayDays", op, value)
+	},
+	AutoGenerateBatches: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoGenerateBatches", op, value)
+	},
+	AutoPostOnApprove: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoPostOnApprove", op, value)
+	},
+	VarianceToleranceMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("varianceToleranceMinor", op, value)
+	},
+	AutoMatchInboundInvoices: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoMatchInboundInvoices", op, value)
+	},
+	AutoAcceptWithinTolerance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoAcceptWithinTolerance", op, value)
+	},
+	DefaultAPAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultApAccountId", op, value)
+	},
+	DefaultPurchasedTransportationAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultPurchasedTransportationAccountId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -2080,45 +2355,49 @@ var OrganizationTable = TableInfo{
 //	q.Where(OrganizationColumns.ID.Eq(), id)           // WHERE org.id = ?
 //	q.Order(OrganizationColumns.CreatedAt.OrderDesc())  // ORDER BY org.created_at DESC
 var OrganizationColumns = struct {
-	ID             Column // "id" → qualified: "org.id"
-	StateID        Column // "state_id" → qualified: "org.state_id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "org.business_unit_id"
-	Name           Column // "name" → qualified: "org.name"
-	LoginSlug      Column // "login_slug" → qualified: "org.login_slug"
-	ScacCode       Column // "scac_code" → qualified: "org.scac_code"
-	DOTNumber      Column // "dot_number" → qualified: "org.dot_number"
-	LogoURL        Column // "logo_url" → qualified: "org.logo_url"
-	BucketName     Column // "bucket_name" → qualified: "org.bucket_name"
-	AddressLine1   Column // "address_line1" → qualified: "org.address_line1"
-	AddressLine2   Column // "address_line2" → qualified: "org.address_line2"
-	City           Column // "city" → qualified: "org.city"
-	PostalCode     Column // "postal_code" → qualified: "org.postal_code"
-	Timezone       Column // "timezone" → qualified: "org.timezone"
-	TaxID          Column // "tax_id" → qualified: "org.tax_id"
-	Metadata       Column // "metadata" → qualified: "org.metadata"
-	Version        Column // "version" → qualified: "org.version"
-	CreatedAt      Column // "created_at" → qualified: "org.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "org.updated_at"
+	ID                     Column // "id" → qualified: "org.id"
+	StateID                Column // "state_id" → qualified: "org.state_id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "org.business_unit_id"
+	Name                   Column // "name" → qualified: "org.name"
+	LoginSlug              Column // "login_slug" → qualified: "org.login_slug"
+	ScacCode               Column // "scac_code" → qualified: "org.scac_code"
+	DOTNumber              Column // "dot_number" → qualified: "org.dot_number"
+	LogoURL                Column // "logo_url" → qualified: "org.logo_url"
+	BucketName             Column // "bucket_name" → qualified: "org.bucket_name"
+	AddressLine1           Column // "address_line1" → qualified: "org.address_line1"
+	AddressLine2           Column // "address_line2" → qualified: "org.address_line2"
+	City                   Column // "city" → qualified: "org.city"
+	PostalCode             Column // "postal_code" → qualified: "org.postal_code"
+	Timezone               Column // "timezone" → qualified: "org.timezone"
+	TaxID                  Column // "tax_id" → qualified: "org.tax_id"
+	BrokerageEnabled       Column // "brokerage_enabled" → qualified: "org.brokerage_enabled"
+	AssetOperationsEnabled Column // "asset_operations_enabled" → qualified: "org.asset_operations_enabled"
+	Metadata               Column // "metadata" → qualified: "org.metadata"
+	Version                Column // "version" → qualified: "org.version"
+	CreatedAt              Column // "created_at" → qualified: "org.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "org.updated_at"
 }{
-	ID:             NewColumn("id", "org"),
-	StateID:        NewColumn("state_id", "org"),
-	BusinessUnitID: NewColumn("business_unit_id", "org"),
-	Name:           NewColumn("name", "org"),
-	LoginSlug:      NewColumn("login_slug", "org"),
-	ScacCode:       NewColumn("scac_code", "org"),
-	DOTNumber:      NewColumn("dot_number", "org"),
-	LogoURL:        NewColumn("logo_url", "org"),
-	BucketName:     NewColumn("bucket_name", "org"),
-	AddressLine1:   NewColumn("address_line1", "org"),
-	AddressLine2:   NewColumn("address_line2", "org"),
-	City:           NewColumn("city", "org"),
-	PostalCode:     NewColumn("postal_code", "org"),
-	Timezone:       NewColumn("timezone", "org"),
-	TaxID:          NewColumn("tax_id", "org"),
-	Metadata:       NewColumn("metadata", "org"),
-	Version:        NewColumn("version", "org"),
-	CreatedAt:      NewColumn("created_at", "org"),
-	UpdatedAt:      NewColumn("updated_at", "org"),
+	ID:                     NewColumn("id", "org"),
+	StateID:                NewColumn("state_id", "org"),
+	BusinessUnitID:         NewColumn("business_unit_id", "org"),
+	Name:                   NewColumn("name", "org"),
+	LoginSlug:              NewColumn("login_slug", "org"),
+	ScacCode:               NewColumn("scac_code", "org"),
+	DOTNumber:              NewColumn("dot_number", "org"),
+	LogoURL:                NewColumn("logo_url", "org"),
+	BucketName:             NewColumn("bucket_name", "org"),
+	AddressLine1:           NewColumn("address_line1", "org"),
+	AddressLine2:           NewColumn("address_line2", "org"),
+	City:                   NewColumn("city", "org"),
+	PostalCode:             NewColumn("postal_code", "org"),
+	Timezone:               NewColumn("timezone", "org"),
+	TaxID:                  NewColumn("tax_id", "org"),
+	BrokerageEnabled:       NewColumn("brokerage_enabled", "org"),
+	AssetOperationsEnabled: NewColumn("asset_operations_enabled", "org"),
+	Metadata:               NewColumn("metadata", "org"),
+	Version:                NewColumn("version", "org"),
+	CreatedAt:              NewColumn("created_at", "org"),
+	UpdatedAt:              NewColumn("updated_at", "org"),
 }
 
 // OrganizationFieldMap maps JSON API field names to database column names.
@@ -2126,24 +2405,26 @@ var OrganizationColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Organization.GetStaticFieldMap().
 var OrganizationFieldMap = map[string]string{
-	"id":             "id",
-	"stateId":        "state_id",
-	"businessUnitId": "business_unit_id",
-	"name":           "name",
-	"loginSlug":      "login_slug",
-	"scacCode":       "scac_code",
-	"dotNumber":      "dot_number",
-	"logoUrl":        "logo_url",
-	"bucketName":     "bucket_name",
-	"addressLine1":   "address_line1",
-	"addressLine2":   "address_line2",
-	"city":           "city",
-	"postalCode":     "postal_code",
-	"timezone":       "timezone",
-	"taxId":          "tax_id",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":                     "id",
+	"stateId":                "state_id",
+	"businessUnitId":         "business_unit_id",
+	"name":                   "name",
+	"loginSlug":              "login_slug",
+	"scacCode":               "scac_code",
+	"dotNumber":              "dot_number",
+	"logoUrl":                "logo_url",
+	"bucketName":             "bucket_name",
+	"addressLine1":           "address_line1",
+	"addressLine2":           "address_line2",
+	"city":                   "city",
+	"postalCode":             "postal_code",
+	"timezone":               "timezone",
+	"taxId":                  "tax_id",
+	"brokerageEnabled":       "brokerage_enabled",
+	"assetOperationsEnabled": "asset_operations_enabled",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // OrganizationInsertableColumns lists column names suitable for INSERT statements on the "organizations" table.
@@ -2164,6 +2445,8 @@ var OrganizationInsertableColumns = []string{
 	"postal_code",
 	"timezone",
 	"tax_id",
+	"brokerage_enabled",
+	"asset_operations_enabled",
 	"metadata",
 	"version",
 	"created_at",
@@ -2191,24 +2474,26 @@ var OrganizationRelations = struct {
 //	OrganizationFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var OrganizationFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	StateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	LoginSlug      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loginSlug" → DB: "login_slug"
-	ScacCode       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scacCode" → DB: "scac_code"
-	DOTNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
-	LogoURL        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "logoUrl" → DB: "logo_url"
-	BucketName     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bucketName" → DB: "bucket_name"
-	AddressLine1   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine1" → DB: "address_line1"
-	AddressLine2   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line2"
-	City           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
-	PostalCode     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
-	Timezone       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
-	TaxID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxId" → DB: "tax_id"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	StateID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Name                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	LoginSlug              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loginSlug" → DB: "login_slug"
+	ScacCode               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scacCode" → DB: "scac_code"
+	DOTNumber              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
+	LogoURL                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "logoUrl" → DB: "logo_url"
+	BucketName             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bucketName" → DB: "bucket_name"
+	AddressLine1           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine1" → DB: "address_line1"
+	AddressLine2           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line2"
+	City                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
+	PostalCode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
+	Timezone               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
+	TaxID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxId" → DB: "tax_id"
+	BrokerageEnabled       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "brokerageEnabled" → DB: "brokerage_enabled"
+	AssetOperationsEnabled func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assetOperationsEnabled" → DB: "asset_operations_enabled"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -2254,6 +2539,12 @@ var OrganizationFilter = struct {
 	},
 	TaxID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("taxId", op, value)
+	},
+	BrokerageEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("brokerageEnabled", op, value)
+	},
+	AssetOperationsEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("assetOperationsEnabled", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

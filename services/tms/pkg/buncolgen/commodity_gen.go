@@ -60,6 +60,9 @@ var CommodityColumns = struct {
 	MaxTemperature         Column // "max_temperature" → qualified: "com.max_temperature"
 	WeightPerUnit          Column // "weight_per_unit" → qualified: "com.weight_per_unit"
 	LinearFeetPerUnit      Column // "linear_feet_per_unit" → qualified: "com.linear_feet_per_unit"
+	LengthPerUnit          Column // "length_per_unit" → qualified: "com.length_per_unit"
+	WidthPerUnit           Column // "width_per_unit" → qualified: "com.width_per_unit"
+	HeightPerUnit          Column // "height_per_unit" → qualified: "com.height_per_unit"
 	MaxQuantityPerShipment Column // "max_quantity_per_shipment" → qualified: "com.max_quantity_per_shipment"
 	FreightClass           Column // "freight_class" → qualified: "com.freight_class"
 	LoadingInstructions    Column // "loading_instructions" → qualified: "com.loading_instructions"
@@ -82,6 +85,9 @@ var CommodityColumns = struct {
 	MaxTemperature:         NewColumn("max_temperature", "com"),
 	WeightPerUnit:          NewColumn("weight_per_unit", "com"),
 	LinearFeetPerUnit:      NewColumn("linear_feet_per_unit", "com"),
+	LengthPerUnit:          NewColumn("length_per_unit", "com"),
+	WidthPerUnit:           NewColumn("width_per_unit", "com"),
+	HeightPerUnit:          NewColumn("height_per_unit", "com"),
 	MaxQuantityPerShipment: NewColumn("max_quantity_per_shipment", "com"),
 	FreightClass:           NewColumn("freight_class", "com"),
 	LoadingInstructions:    NewColumn("loading_instructions", "com"),
@@ -110,6 +116,9 @@ var CommodityFieldMap = map[string]string{
 	"maxTemperature":         "max_temperature",
 	"weightPerUnit":          "weight_per_unit",
 	"linearFeetPerUnit":      "linear_feet_per_unit",
+	"lengthPerUnit":          "length_per_unit",
+	"widthPerUnit":           "width_per_unit",
+	"heightPerUnit":          "height_per_unit",
 	"maxQuantityPerShipment": "max_quantity_per_shipment",
 	"freightClass":           "freight_class",
 	"loadingInstructions":    "loading_instructions",
@@ -134,6 +143,9 @@ var CommodityInsertableColumns = []string{
 	"max_temperature",
 	"weight_per_unit",
 	"linear_feet_per_unit",
+	"length_per_unit",
+	"width_per_unit",
+	"height_per_unit",
 	"max_quantity_per_shipment",
 	"freight_class",
 	"loading_instructions",
@@ -220,6 +232,9 @@ var CommodityFilter = struct {
 	MaxTemperature         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxTemperature" → DB: "max_temperature"
 	WeightPerUnit          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "weightPerUnit" → DB: "weight_per_unit"
 	LinearFeetPerUnit      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "linearFeetPerUnit" → DB: "linear_feet_per_unit"
+	LengthPerUnit          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lengthPerUnit" → DB: "length_per_unit"
+	WidthPerUnit           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "widthPerUnit" → DB: "width_per_unit"
+	HeightPerUnit          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "heightPerUnit" → DB: "height_per_unit"
 	MaxQuantityPerShipment func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxQuantityPerShipment" → DB: "max_quantity_per_shipment"
 	FreightClass           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freightClass" → DB: "freight_class"
 	LoadingInstructions    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loadingInstructions" → DB: "loading_instructions"
@@ -261,6 +276,15 @@ var CommodityFilter = struct {
 	},
 	LinearFeetPerUnit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("linearFeetPerUnit", op, value)
+	},
+	LengthPerUnit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lengthPerUnit", op, value)
+	},
+	WidthPerUnit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("widthPerUnit", op, value)
+	},
+	HeightPerUnit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("heightPerUnit", op, value)
 	},
 	MaxQuantityPerShipment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("maxQuantityPerShipment", op, value)

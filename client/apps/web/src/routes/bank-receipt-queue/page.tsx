@@ -216,7 +216,7 @@ export function BankReceiptQueuePage() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search reference, ID..."
-              leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               className="h-7 text-xs"
             />
             <Select
@@ -369,13 +369,13 @@ function WorkItemDetail({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{workItem.id}</h2>
-          <p className="text-sm text-muted-foreground">Bank Receipt: {workItem.bankReceiptId}</p>
+          <p className="text-muted-foreground text-sm">Bank Receipt: {workItem.bankReceiptId}</p>
         </div>
         <Badge variant={STATUS_VARIANTS[workItem.status]}>{STATUS_LABELS[workItem.status]}</Badge>
       </div>
 
       {receipt ? (
-        <div className="rounded-lg border bg-card p-3">
+        <div className="bg-card rounded-lg border p-3">
           <SectionLabel>Bank Receipt Info</SectionLabel>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
             <PropertyCell label="Receipt Date">
@@ -411,7 +411,7 @@ function WorkItemDetail({
       ) : null}
 
       {workItem.assignedToUserId ? (
-        <div className="rounded-lg border bg-card p-3">
+        <div className="bg-card rounded-lg border p-3">
           <SectionLabel>Assignment</SectionLabel>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
             <PropertyCell label="Assigned To">
@@ -429,7 +429,7 @@ function WorkItemDetail({
       ) : null}
 
       {workItem.status === "Resolved" || workItem.status === "Dismissed" ? (
-        <div className="rounded-lg border bg-card p-3">
+        <div className="bg-card rounded-lg border p-3">
           <SectionLabel>Resolution</SectionLabel>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
             {workItem.resolutionType ? (
@@ -454,14 +454,14 @@ function WorkItemDetail({
             ) : null}
           </div>
           {workItem.resolutionNote ? (
-            <p className="mt-2 border-l-2 border-muted-foreground/20 pl-2.5 text-xs text-muted-foreground italic">
+            <p className="border-muted-foreground/20 text-muted-foreground mt-2 border-l-2 pl-2.5 text-xs italic">
               {workItem.resolutionNote}
             </p>
           ) : null}
         </div>
       ) : null}
 
-      <div className="rounded-lg border bg-card p-3">
+      <div className="bg-card rounded-lg border p-3">
         <SectionLabel>Actions</SectionLabel>
         <div className="mt-2">
           {workItem.status === "Open" ? (
@@ -618,7 +618,7 @@ function WorkItemDetail({
           ) : null}
 
           {workItem.status === "Resolved" || workItem.status === "Dismissed" ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               This work item has been {workItem.status.toLowerCase()}. No further actions available.
             </p>
           ) : null}
@@ -630,8 +630,8 @@ function WorkItemDetail({
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-card px-3 py-2.5">
-      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+    <div className="bg-card rounded-lg border px-3 py-2.5">
+      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
         {label}
       </p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
@@ -640,7 +640,7 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 }
 
 function SectionLabel({ children }: { children: ReactNode }) {
-  return <p className="text-xs font-medium text-muted-foreground">{children}</p>;
+  return <p className="text-muted-foreground text-xs font-medium">{children}</p>;
 }
 
 function PropertyCell({ label, children }: { label: string; children: ReactNode }) {

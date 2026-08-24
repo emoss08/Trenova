@@ -16,7 +16,10 @@ func NewValidator() *Validator {
 	return &Validator{}
 }
 
-func (v *Validator) ValidateProfile(_ context.Context, profile *email.Profile) *errortypes.MultiError {
+func (v *Validator) ValidateProfile(
+	_ context.Context,
+	profile *email.Profile,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if profile == nil {
 		multiErr.Add("", errortypes.ErrRequired, "Email profile is required")
@@ -29,7 +32,10 @@ func (v *Validator) ValidateProfile(_ context.Context, profile *email.Profile) *
 	return nil
 }
 
-func (v *Validator) ValidateSend(_ context.Context, req *services.SendEmailRequest) *errortypes.MultiError {
+func (v *Validator) ValidateSend(
+	_ context.Context,
+	req *services.SendEmailRequest,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("", errortypes.ErrRequired, "Email request is required")

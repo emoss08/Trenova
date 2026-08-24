@@ -47,7 +47,7 @@ export function RestoreVersionDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="rounded-md border bg-muted/30 p-3">
+        <div className="bg-muted/30 rounded-md border p-3">
           <table className="w-full text-xs">
             <thead>
               <tr className="text-muted-foreground">
@@ -56,27 +56,27 @@ export function RestoreVersionDialog({
                 <th className="pb-2 text-left font-medium">Current</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-border divide-y">
               <tr>
-                <td className="py-1.5 pr-3 text-muted-foreground">File</td>
+                <td className="text-muted-foreground py-1.5 pr-3">File</td>
                 <td className="py-1.5 pr-3 font-medium">
                   {versionToRestore.originalName}
                 </td>
-                <td className="py-1.5 text-muted-foreground">
+                <td className="text-muted-foreground py-1.5">
                   {currentVersion.originalName}
                 </td>
               </tr>
               <tr>
-                <td className="py-1.5 pr-3 text-muted-foreground">Size</td>
+                <td className="text-muted-foreground py-1.5 pr-3">Size</td>
                 <td className="py-1.5 pr-3">{formatFileSize(versionToRestore.fileSize)}</td>
-                <td className="py-1.5 text-muted-foreground">
+                <td className="text-muted-foreground py-1.5">
                   {formatFileSize(currentVersion.fileSize)}
                 </td>
               </tr>
               <tr>
-                <td className="py-1.5 pr-3 text-muted-foreground">Uploaded</td>
+                <td className="text-muted-foreground py-1.5 pr-3">Uploaded</td>
                 <td className="py-1.5 pr-3">{formatUnixDateMedium(versionToRestore.createdAt)}</td>
-                <td className="py-1.5 text-muted-foreground">
+                <td className="text-muted-foreground py-1.5">
                   {formatUnixDateMedium(currentVersion.createdAt)}
                 </td>
               </tr>

@@ -312,21 +312,21 @@ export function RolePermissionBuilder({
               type="button"
               onClick={() => handleTemplateSelect(template.id)}
               className={cn(
-                "flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-all hover:border-primary/50 hover:bg-accent",
+                "hover:border-primary/50 hover:bg-accent flex flex-col items-center gap-1.5 rounded-lg border p-3 text-center transition-all",
                 selectedTemplate === template.id &&
-                  "border-primary bg-primary/5 ring-1 ring-primary/20",
+                  "border-primary bg-primary/5 ring-primary/20 ring-1",
               )}
             >
               <div
                 className={cn(
-                  "flex size-8 items-center justify-center rounded-full bg-muted",
+                  "bg-muted flex size-8 items-center justify-center rounded-full",
                   selectedTemplate === template.id && "bg-primary/10 text-primary",
                 )}
               >
                 {template.icon}
               </div>
               <span className="text-xs font-medium">{template.name}</span>
-              <span className="text-[10px] leading-tight text-muted-foreground">
+              <span className="text-muted-foreground text-[10px] leading-tight">
                 {template.description}
               </span>
             </button>
@@ -337,7 +337,7 @@ export function RolePermissionBuilder({
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <SearchIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
             <Input
               placeholder="Search resources..."
               value={searchQuery}
@@ -348,7 +348,7 @@ export function RolePermissionBuilder({
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
               >
                 <XIcon className="size-4" />
               </button>
@@ -356,9 +356,9 @@ export function RolePermissionBuilder({
           </div>
         </div>
 
-        <div className="max-h-[400px] overflow-y-auto rounded-lg border bg-card p-1">
+        <div className="bg-card max-h-[400px] overflow-y-auto rounded-lg border p-1">
           {filteredCategories.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground py-8 text-center text-sm">
               No resources found matching &ldquo;{searchQuery}&rdquo;
             </div>
           ) : (
@@ -404,11 +404,11 @@ function CategorySection({
   return (
     <AccordionItem value={category.category} className="border-none">
       <AccordionHeader>
-        <AccordionTrigger className="group flex w-full items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent">
+        <AccordionTrigger className="group hover:bg-accent flex w-full items-center justify-between rounded-md px-3 py-2 text-sm">
           <div className="flex items-center gap-2">
-            <ChevronDownIcon className="size-4 -rotate-90 text-muted-foreground transition-transform duration-200 group-data-panel-open:rotate-0" />
+            <ChevronDownIcon className="text-muted-foreground size-4 -rotate-90 transition-transform duration-200 group-data-panel-open:rotate-0" />
             <span className="font-medium">{category.category}</span>
-            <span className="text-xs text-muted-foreground">({category.resources.length})</span>
+            <span className="text-muted-foreground text-xs">({category.resources.length})</span>
           </div>
           {grantedInCategory > 0 && (
             <Badge variant="secondary" className="text-xs">
@@ -464,7 +464,7 @@ function ResourceRow({
   return (
     <div
       className={cn(
-        "rounded-md border bg-background transition-all",
+        "bg-background rounded-md border transition-all",
         isGranted && "border-primary/30 bg-primary/5",
       )}
     >
@@ -490,13 +490,13 @@ function ResourceRow({
               )}
             </div>
             {resource.description && (
-              <p className="truncate text-xs text-muted-foreground">{resource.description}</p>
+              <p className="text-muted-foreground truncate text-xs">{resource.description}</p>
             )}
           </div>
           {isGranted && (
             <ChevronDownIcon
               className={cn(
-                "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                "text-muted-foreground size-4 shrink-0 transition-transform duration-200",
                 showDetails ? "rotate-0" : "-rotate-90",
               )}
             />
@@ -562,7 +562,7 @@ function ResourceRow({
             })}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Scope:</span>
+            <span className="text-muted-foreground text-xs">Scope:</span>
             <Select
               value={permission.dataScope}
               onValueChange={(value) => onDataScopeChange(value as DataScope)}

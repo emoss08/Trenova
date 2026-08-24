@@ -8,7 +8,7 @@ function LegendItem({ swatch, label }: { swatch: React.ReactNode; label: string 
   return (
     <div className="flex items-center gap-2 py-0.5">
       {swatch}
-      <span className="text-xs text-foreground">{label}</span>
+      <span className="text-foreground text-xs">{label}</span>
     </div>
   );
 }
@@ -71,7 +71,7 @@ export function MapLegendPopover() {
           render={
             <PopoverTrigger
               render={
-                <Button variant="outline" size="icon" className="size-7 bg-background shadow-sm" />
+                <Button variant="outline" size="icon" className="bg-background size-7 shadow-sm" />
               }
             />
           }
@@ -81,7 +81,7 @@ export function MapLegendPopover() {
         <TooltipContent side="bottom">Map legend</TooltipContent>
       </Tooltip>
       <PopoverContent side="bottom" sideOffset={8} className="w-48 gap-0.5 p-3">
-        <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+        <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
           Legend
         </span>
         <div className="mt-2 flex flex-col gap-0.5">
@@ -95,7 +95,7 @@ export function MapLegendPopover() {
 
         <Separator className="my-2.5" />
 
-        <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+        <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
           Overlays
         </span>
         <div className="mt-2 flex flex-col gap-0.5">

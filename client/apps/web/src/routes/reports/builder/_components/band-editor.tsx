@@ -83,7 +83,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
   return (
     <div className="col-span-2 flex flex-col gap-2">
       <div className="flex flex-col gap-1">
-        <Label className="text-xs text-muted-foreground">Group into</Label>
+        <Label className="text-muted-foreground text-xs">Group into</Label>
         <Select
           value={mode}
           onValueChange={(next) => {
@@ -106,7 +106,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
 
       {mode === "width" && (
         <div className="flex flex-col gap-1">
-          <Label className="text-xs text-muted-foreground">Range size</Label>
+          <Label className="text-muted-foreground text-xs">Range size</Label>
           <Input
             className="h-7"
             type="number"
@@ -121,7 +121,7 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
       {mode === "edges" && (
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <Label className="text-xs text-muted-foreground">Range starts at</Label>
+            <Label className="text-muted-foreground text-xs">Range starts at</Label>
             <div className="flex-1" />
             <Button
               variant="ghost"
@@ -213,7 +213,7 @@ function BandPreview({
       {labels.map((label, i) => (
         <span
           key={i}
-          className="rounded-sm bg-muted px-1.5 py-px font-mono text-2xs text-foreground/80 tabular-nums"
+          className="bg-muted text-2xs text-foreground/80 rounded-sm px-1.5 py-px font-mono tabular-nums"
         >
           {label}
         </span>

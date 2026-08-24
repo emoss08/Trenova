@@ -38,7 +38,7 @@ export function GeocodedBadge({ longitude, latitude, placeId }: GeocodeBadgeSche
       <HoverCardTrigger
         render={
           <div className="flex items-center justify-center">
-            <div className="size-2 rounded-full bg-success" />
+            <div className="bg-success size-2 rounded-full" />
           </div>
         }
       />
@@ -49,10 +49,10 @@ export function GeocodedBadge({ longitude, latitude, placeId }: GeocodeBadgeSche
           <Row label="Place ID" value={placeId} />
         </div>
         {placeId && (
-          <div className="h-32 w-full overflow-hidden rounded-md border border-border">
+          <div className="border-border h-32 w-full overflow-hidden rounded-md border">
             <Suspense
               fallback={
-                <div className="flex h-full w-full animate-pulse items-center justify-center bg-muted text-xs text-muted-foreground">
+                <div className="bg-muted text-muted-foreground flex h-full w-full animate-pulse items-center justify-center text-xs">
                   Loading map...
                 </div>
               }

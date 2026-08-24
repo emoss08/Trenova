@@ -35,7 +35,7 @@ const withAppProviders: Decorator = (Story, context) => {
             defaultTheme={theme}
             storageKey={`trenova-storybook-theme-${theme}`}
           >
-            <div className="min-h-screen bg-background p-6 text-foreground">
+            <div className="bg-background text-foreground min-h-screen p-6">
               <Story />
             </div>
             <Toaster position="top-center" />

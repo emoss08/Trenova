@@ -186,7 +186,7 @@ const ActivityViewButton = memo(function ActivityViewButton({
     <button
       type="button"
       className={cn(
-        "flex items-center justify-between gap-2 rounded-lg border bg-background p-3 text-left transition-colors hover:border-brand hover:bg-brand/20",
+        "bg-background hover:border-brand hover:bg-brand/20 flex items-center justify-between gap-2 rounded-lg border p-3 text-left transition-colors",
         active && "border-brand bg-brand/20 hover:bg-brand/30",
       )}
       onClick={() => onViewChange(view)}
@@ -334,7 +334,7 @@ function AuthEventsTable({ records, isLoading }: { records: AuthEvent[]; isLoadi
         <TableRow key={item.id}>
           <TableCell>
             <div className="font-medium">{formatIdentityProviderName(item.provider)}</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-muted-foreground text-xs">
               {item.ipAddress || "No IP captured"}
             </div>
           </TableCell>
@@ -347,7 +347,7 @@ function AuthEventsTable({ records, isLoading }: { records: AuthEvent[]; isLoadi
           <TableCell className="text-muted-foreground">
             {formatUnixDateTimeOrDash(item.occurredAt)}
           </TableCell>
-          <TableCell className="max-w-72 truncate text-muted-foreground">
+          <TableCell className="text-muted-foreground max-w-72 truncate">
             {item.errorCode || item.riskSignals.join(", ") || "-"}
           </TableCell>
         </TableRow>
@@ -376,7 +376,7 @@ function RiskDecisionsTable({
             <Badge variant={riskVariant(item.outcome)}>{toTitleCase(item.outcome)}</Badge>
           </TableCell>
           <TableCell className="max-w-80 truncate">{item.reason || "-"}</TableCell>
-          <TableCell className="max-w-80 truncate text-muted-foreground">
+          <TableCell className="text-muted-foreground max-w-80 truncate">
             {item.signals.join(", ") || "-"}
           </TableCell>
           <TableCell className="text-muted-foreground">
@@ -406,7 +406,7 @@ function ExternalIdentitiesTable({
         <TableRow key={item.id}>
           <TableCell>
             <div className="font-medium">{item.externalEmail || "-"}</div>
-            <div className="text-xs text-muted-foreground">{item.externalUsername || "-"}</div>
+            <div className="text-muted-foreground text-xs">{item.externalUsername || "-"}</div>
           </TableCell>
           <TableCell className="max-w-80 truncate">{item.externalSubject}</TableCell>
           <TableCell className="text-muted-foreground">
@@ -439,7 +439,7 @@ function MFAAuthenticatorsTable({
         <TableRow key={item.id}>
           <TableCell>
             <div className="font-medium">{item.name}</div>
-            <div className="text-xs text-muted-foreground">{item.type.toUpperCase()}</div>
+            <div className="text-muted-foreground text-xs">{item.type.toUpperCase()}</div>
           </TableCell>
           <TableCell>
             <Badge variant={item.enabled ? "active" : "inactive"}>
@@ -486,7 +486,7 @@ function ActivityTableShell({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-background">
+    <div className="bg-background overflow-hidden rounded-lg border">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>

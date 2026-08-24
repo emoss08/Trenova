@@ -227,7 +227,7 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold">Assigned Drivers</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Drivers currently paid under this profile. Overrides show where a driver&apos;s rate
             differs from the template — prefer overrides over cloning profiles.
           </p>
@@ -271,7 +271,7 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
           </table>
         </div>
       ) : (
-        <p className="mt-3 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-3 text-xs">
           No drivers assigned yet. Assign drivers here, or from the Pay tab on the worker.
         </p>
       )}

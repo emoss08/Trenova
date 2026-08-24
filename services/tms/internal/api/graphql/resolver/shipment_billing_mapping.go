@@ -39,12 +39,22 @@ func shipmentBillingReadinessToModel(
 		ShipmentID:     readiness.ShipmentID,
 		ShipmentStatus: gqlmodel.ShipmentStatus(readiness.ShipmentStatus),
 		Policy: &gqlmodel.ShipmentBillingReadinessPolicy{
-			ShipmentBillingRequirementEnforcement: string(readiness.Policy.ShipmentBillingRequirementEnforcement),
-			RateValidationEnforcement:             string(readiness.Policy.RateValidationEnforcement),
-			BillingExceptionDisposition:           string(readiness.Policy.BillingExceptionDisposition),
-			NotifyOnBillingExceptions:             readiness.Policy.NotifyOnBillingExceptions,
-			ReadyToBillAssignmentMode:             string(readiness.Policy.ReadyToBillAssignmentMode),
-			BillingQueueTransferMode:              string(readiness.Policy.BillingQueueTransferMode),
+			ShipmentBillingRequirementEnforcement: string(
+				readiness.Policy.ShipmentBillingRequirementEnforcement,
+			),
+			RateValidationEnforcement: string(
+				readiness.Policy.RateValidationEnforcement,
+			),
+			BillingExceptionDisposition: string(
+				readiness.Policy.BillingExceptionDisposition,
+			),
+			NotifyOnBillingExceptions: readiness.Policy.NotifyOnBillingExceptions,
+			ReadyToBillAssignmentMode: string(
+				readiness.Policy.ReadyToBillAssignmentMode,
+			),
+			BillingQueueTransferMode: string(
+				readiness.Policy.BillingQueueTransferMode,
+			),
 		},
 		Requirements:        requirements,
 		MissingRequirements: missing,

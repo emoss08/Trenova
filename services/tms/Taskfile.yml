@@ -5,7 +5,7 @@ version: "3"
 vars:
   ROOT_DIR: "{{.TASKFILE_DIR}}/../.."
   BUILD_DIR: ./build
-  CLI_BINARY: trenova-cli
+  CLI_BINARY: "trenova-cli{{exeExt}}"
   CLI_PATH: "{{.BUILD_DIR}}/{{.CLI_BINARY}}"
   DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/docker-compose-local.yml"
   CLIENT_DIR: "{{.ROOT_DIR}}/client"
@@ -230,6 +230,20 @@ tasks:
       - go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency
       - go run ./cmd/openapi-postprocess
 
+  docs-generate-check:
+    desc: Check the generated OpenAPI spec is up to date
+    cmds:
+      - |
+        go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency
+        go run ./cmd/openapi-postprocess
+        if git diff --quiet -- docs; then
+          echo "OpenAPI spec is up to date"
+        else
+          echo "OpenAPI spec is out of date — run 'task docs-generate' and commit"
+          git diff --stat -- docs
+          exit 1
+        fi
+
   generate-columns:
     desc: Generate Bun column constants from domain entities
     cmds:
@@ -260,11 +274,13 @@ tasks:
     desc: Check if seed IDs need regeneration
     cmds:
       - |
-        go generate ./internal/infrastructure/database/seeder/... 2>/dev/null || true
-        if git diff --quiet pkg/seedhelpers/seed_ids_gen.go 2>/dev/null; then
+        go generate ./internal/infrastructure/database/seeder/...
+        if git diff --quiet pkg/seedhelpers/seed_ids_gen.go; then
           echo "Seed IDs are up to date"
         else
-          echo "Seed IDs were regenerated - commit the changes"
+          echo "Seed IDs are out of date - run 'task generate-seeds' and commit"
+          git diff --stat pkg/seedhelpers/seed_ids_gen.go
+          exit 1
         fi
 
   docker-up:

@@ -20,5 +20,5 @@ tasks:
     desc: Build both binaries
     cmds:
       - mkdir -p ./build
-      - go build -o ./build/edi-partner-sim ./cmd/edi-partner-sim
-      - go build -o ./build/edi-e2e ./cmd/edi-e2e
+      - go build -o ./build/edi-partner-sim{{exeExt}} ./cmd/edi-partner-sim
+      - go build -o ./build/edi-e2e{{exeExt}} ./cmd/edi-e2e

@@ -3,13 +3,14 @@ package shipmentcommercial
 import (
 	"testing"
 
+	"go.uber.org/zap"
+
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -32,11 +33,7 @@ func TestRecalculate_GeneratesDetentionCharge(t *testing.T) {
 		DetentionChargeID:            new(pulid.MustNew("acc_")),
 	}
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(100)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 100)
 
 	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
@@ -56,7 +53,8 @@ func TestRecalculate_GeneratesDetentionCharge(t *testing.T) {
 		Once()
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialRepo,
 	})
 	calculator.now = func() int64 { return 7300 }
@@ -93,11 +91,7 @@ func TestRecalculate_RemovesGeneratedDetentionChargeWhenNoLongerEligible(t *test
 		DetentionChargeID:            &detentionChargeID,
 	}
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(100)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 100)
 
 	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
@@ -111,7 +105,8 @@ func TestRecalculate_RemovesGeneratedDetentionChargeWhenNoLongerEligible(t *test
 		Once()
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialRepo,
 	})
 	calculator.now = func() int64 { return 1000 }
@@ -148,11 +143,7 @@ func TestRecalculate_UpdatesExistingGeneratedDetentionChargeWithoutDuplicating(t
 		DetentionChargeID:            &detentionChargeID,
 	}
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(100)}, nil).
-		Twice()
+	rateEngine := StubRateEngine(t, 100)
 
 	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
@@ -166,7 +157,8 @@ func TestRecalculate_UpdatesExistingGeneratedDetentionChargeWithoutDuplicating(t
 		Twice()
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialRepo,
 	})
 	now := int64(3_700)
@@ -212,11 +204,7 @@ func TestRecalculate_PreservesUserEditedDetentionChargeAmount(t *testing.T) {
 		DetentionChargeID:            &detentionChargeID,
 	}
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(100)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 100)
 
 	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
@@ -230,7 +218,8 @@ func TestRecalculate_PreservesUserEditedDetentionChargeAmount(t *testing.T) {
 		Once()
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialRepo,
 	})
 	calculator.now = func() int64 { return 7300 }
@@ -275,16 +264,13 @@ func TestCalculateTotals_PreservesOverriddenDetentionChargeAmounts(t *testing.T)
 		DetentionChargeID:            &detentionChargeID,
 	}
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(100)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 100)
 
 	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialRepo,
 	})
 	calculator.now = func() int64 { return 7300 }
@@ -306,11 +292,7 @@ func TestCalculateTotals_IncludesFuelSurchargeEstimate(t *testing.T) {
 	programID := pulid.MustNew("fsp_")
 	fuelChargeID := pulid.MustNew("acc_")
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -324,13 +306,15 @@ func TestCalculateTotals_IncludesFuelSurchargeEstimate(t *testing.T) {
 		Once()
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
 	resp, err := calculator.CalculateTotals(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -362,11 +346,7 @@ func TestCalculateTotals_ReplacesStaleFuelSurchargeFromPayload(t *testing.T) {
 		},
 	}
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -375,13 +355,15 @@ func TestCalculateTotals_ReplacesStaleFuelSurchargeFromPayload(t *testing.T) {
 		Once()
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
 	resp, err := calculator.CalculateTotals(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -409,20 +391,18 @@ func TestCalculateTotals_LockedFuelSurchargeIsPreserved(t *testing.T) {
 		},
 	}
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 1000)
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   mocks.NewMockFuelSurchargeResolver(t),
 	})
 
 	resp, err := calculator.CalculateTotals(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -439,11 +419,7 @@ func TestRecalculate_GeneratesFuelSurchargeCharge(t *testing.T) {
 	programID := pulid.MustNew("fsp_")
 	fuelChargeID := pulid.MustNew("acc_")
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -457,12 +433,18 @@ func TestRecalculate_GeneratesFuelSurchargeCharge(t *testing.T) {
 		Once()
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
-	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+	err := calculator.Recalculate(
+		t.Context(),
+		entity,
+		&tenant.ShipmentControl{},
+		pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entity.AdditionalCharges, 1)
@@ -500,11 +482,7 @@ func TestRecalculate_ReplacesFuelSurchargeOnProgramSwap(t *testing.T) {
 		},
 	}
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -517,12 +495,18 @@ func TestRecalculate_ReplacesFuelSurchargeOnProgramSwap(t *testing.T) {
 		Once()
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
-	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+	err := calculator.Recalculate(
+		t.Context(),
+		entity,
+		&tenant.ShipmentControl{},
+		pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entity.AdditionalCharges, 1)
@@ -559,11 +543,7 @@ func TestRecalculate_RemovesFuelSurchargeWhenNoLongerApplicable(t *testing.T) {
 		},
 	}
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -572,12 +552,18 @@ func TestRecalculate_RemovesFuelSurchargeWhenNoLongerApplicable(t *testing.T) {
 		Once()
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
-	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+	err := calculator.Recalculate(
+		t.Context(),
+		entity,
+		&tenant.ShipmentControl{},
+		pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entity.AdditionalCharges, 1)
@@ -603,11 +589,7 @@ func TestRecalculate_RemovesFuelSurchargeWhenAmountIsZero(t *testing.T) {
 		},
 	}
 
-	formula := mocks.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1000)}, nil).
-		Once()
+	rateEngine := StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -620,12 +602,18 @@ func TestRecalculate_RemovesFuelSurchargeWhenAmountIsZero(t *testing.T) {
 		Once()
 
 	calculator := New(Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateEngine,
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		FuelSurcharge:   resolver,
 	})
 
-	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+	err := calculator.Recalculate(
+		t.Context(),
+		entity,
+		&tenant.ShipmentControl{},
+		pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	assert.Empty(t, entity.AdditionalCharges)
@@ -660,9 +648,4 @@ func validShipment() *shipment.Shipment {
 			},
 		},
 	}
-}
-
-//go:fix inline
-func int16Ptr(value int16) *int16 {
-	return new(value)
 }

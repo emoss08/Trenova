@@ -7,45 +7,64 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
+	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type Params struct {
 	fx.In
 
-	Formula         services.FormulaCalculator
-	AccessorialRepo repositories.AccessorialChargeRepository
-	FuelSurcharge   services.FuelSurchargeResolver
-	DetentionEngine *detentionservice.Service
+	Logger             *zap.Logger
+	RateEngine         services.RateEngine
+	Predicate          services.FormulaPredicateEvaluator
+	AccessorialRepo    repositories.AccessorialChargeRepository
+	AgreementRepo      repositories.RateAgreementRepository
+	QuoteRepo          repositories.RateQuoteRepository
+	BillingControlRepo repositories.BillingControlRepository
+	FuelSurcharge      services.FuelSurchargeResolver
+	DetentionEngine    *detentionservice.Service
 }
 
 type Calculator struct {
-	formula         services.FormulaCalculator
-	accessorialRepo repositories.AccessorialChargeRepository
-	fuelSurcharge   services.FuelSurchargeResolver
-	detentionEngine *detentionservice.Service
-	now             func() int64
+	logger             *zap.Logger
+	rateEngine         services.RateEngine
+	predicate          services.FormulaPredicateEvaluator
+	accessorialRepo    repositories.AccessorialChargeRepository
+	agreementRepo      repositories.RateAgreementRepository
+	quoteRepo          repositories.RateQuoteRepository
+	billingControlRepo repositories.BillingControlRepository
+	fuelSurcharge      services.FuelSurchargeResolver
+	detentionEngine    *detentionservice.Service
+	now                func() int64
 }
 
 func New(p Params) *Calculator {
 	return &Calculator{
-		formula:         p.Formula,
-		accessorialRepo: p.AccessorialRepo,
-		fuelSurcharge:   p.FuelSurcharge,
-		detentionEngine: p.DetentionEngine,
-		now:             timeutils.NowUnix,
+		logger:             p.Logger.Named("service.shipmentcommercial"),
+		rateEngine:         p.RateEngine,
+		predicate:          p.Predicate,
+		accessorialRepo:    p.AccessorialRepo,
+		agreementRepo:      p.AgreementRepo,
+		quoteRepo:          p.QuoteRepo,
+		billingControlRepo: p.BillingControlRepo,
+		fuelSurcharge:      p.FuelSurcharge,
+		detentionEngine:    p.DetentionEngine,
+		now:                timeutils.NowUnix,
 	}
 }
 
@@ -136,6 +155,13 @@ func (c *Calculator) calculateCommercialTotals(
 	userID pulid.ID,
 	sync chargeSyncOptions,
 ) (decimal.Decimal, decimal.Decimal, *shipment.RatingDetail, error) {
+	// One shipment can reach the formula engine several times over — the base
+	// charge, a contract accessorial priced by template, a fuel program that
+	// evaluates one. Each of those would otherwise re-read the tenant's rate
+	// tables. A caller walking a batch installs its own memo first, and this
+	// one steps aside for it.
+	ctx = ratetablecache.With(ctx)
+
 	if sync.detention {
 		if err := c.syncDetentionCharge(ctx, entity, control); err != nil {
 			return decimal.Zero, decimal.Zero, nil, err
@@ -147,8 +173,15 @@ func (c *Calculator) calculateCommercialTotals(
 		return decimal.Zero, decimal.Zero, nil, err
 	}
 
+	// The contract is read for one thing only: it may point fuel at a different
+	// program than the customer default. Its accessorials are not reconciled
+	// here — they were written into the shipment's own charge rows when the
+	// contract was applied, and rebuilding them on every save would undo any
+	// figure a rater has since agreed with the customer.
+	agreement := c.loadAgreement(ctx, entity)
+
 	if sync.fuel {
-		if err = c.syncFuelSurcharge(ctx, entity, baseCharge); err != nil {
+		if err = c.syncFuelSurcharge(ctx, entity, baseCharge, agreement); err != nil {
 			return decimal.Zero, decimal.Zero, nil, err
 		}
 	}
@@ -183,39 +216,251 @@ func CalculateAdditionalCharge(
 	}
 }
 
+// calculateBaseCharge produces the linehaul from the shipment's own rating
+// fields.
+//
+// A contract is applied to a shipment once, writing its rating method and base
+// rate into the shipment, and from that moment those fields are what price it.
+// So this evaluates the formula template the shipment carries and nothing else:
+// no contract is resolved, and no quote is written. Recalculation is triggered
+// by a stop edit, an assignment, a fuel price job, and any of those quietly
+// replacing a figure a rater has since agreed with the customer is exactly what
+// makes people switch auto-rating off.
+//
+// A locked shipment keeps what it already had, because the customer has been
+// invoiced against it.
 func (c *Calculator) calculateBaseCharge(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	userID pulid.ID,
 ) (decimal.Decimal, *shipment.RatingDetail, error) {
-	resp, err := c.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
-		TemplateID: entity.FormulaTemplateID,
-		Entity:     entity,
+	if entity.RateLocked {
+		return c.lockedCharge(entity), entity.RatingDetail, nil
+	}
+
+	rated, err := c.rateEngine.RateShipment(ctx, &services.RateShipmentRequest{
+		Shipment:  entity,
+		Purpose:   ratequote.PurposeRating,
+		PartyType: rateagreement.PartyTypeCustomer,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  entity.OrganizationID,
 			BuID:   entity.BusinessUnitID,
 			UserID: userID,
 		},
-		RatingDate: ratingDate(entity, c.now),
+		BillingControl: c.billingControl(ctx, entity),
+		FormulaOnly:    true,
+		Persist:        false,
+		UserID:         userID,
 	})
 	if err != nil {
 		return decimal.Zero, nil, err
 	}
 
-	result, _ := resp.Amount.Float64()
-	detail := &shipment.RatingDetail{
-		FormulaTemplateID:   resp.FormulaTemplateID,
-		FormulaTemplateName: resp.FormulaTemplateName,
-		Expression:          resp.Expression,
-		ResolvedVariables:   maputils.WithoutFuncValues(resp.Variables),
-		Result:              result,
-		RatedAt:             c.now(),
-		VersionNumber:       resp.VersionNumber,
-		Breakdown:           ratingBreakdown(resp.Breakdown),
-		Guardrail:           ratingGuardrail(resp.Guardrail),
+	detail := ratingDetailFromQuote(rated)
+	carryContractProvenance(entity, detail)
+
+	return rated.Amount, detail, nil
+}
+
+// carryContractProvenance keeps the contract's name on a rating detail the
+// formula produced.
+//
+// The arithmetic is the formula's, and the breakdown has to describe it — but
+// the shipment was priced by a contract, and the billing panel naming a formula
+// where a rater expects to see the agreement is how somebody concludes the
+// contract stopped applying. The link is carried across from the shipment's own
+// stamped fields rather than re-resolved, which is the whole point.
+func carryContractProvenance(entity *shipment.Shipment, detail *shipment.RatingDetail) {
+	previous := entity.RatingDetail
+	if detail == nil || previous == nil || !entity.AutoRated {
+		return
 	}
 
-	return resp.Amount, detail, nil
+	detail.RateQuoteID = previous.RateQuoteID
+	detail.AgreementID = previous.AgreementID
+	detail.AgreementName = previous.AgreementName
+	detail.RuleID = previous.RuleID
+	detail.RuleLabel = previous.RuleLabel
+	detail.Source = previous.Source
+	detail.Explanation = previous.Explanation
+}
+
+// lockedCharge keeps an invoiced shipment exactly as it was. Nothing is
+// recomputed and no quote is written: the numbers have already been billed.
+func (c *Calculator) lockedCharge(entity *shipment.Shipment) decimal.Decimal {
+	if entity.FreightChargeAmount.Valid {
+		return entity.FreightChargeAmount.Decimal
+	}
+
+	return decimal.Zero
+}
+
+// applyQuote stamps the rating decision back onto the shipment, so the record
+// of what priced it travels with the shipment rather than only in the quote.
+func (c *Calculator) applyQuote(
+	entity *shipment.Shipment,
+	rated *services.RatedShipment,
+) {
+	entity.RateAgreementID = rated.AgreementID
+	entity.RateAgreementRuleID = rated.RuleID
+
+	if rated.Quote != nil && !rated.Quote.ID.IsNil() {
+		quoteID := rated.Quote.ID
+		entity.RateQuoteID = &quoteID
+	}
+
+	// A rule that delegates to a formula keeps the shipment's template field
+	// meaningful, so the existing billing screen goes on showing which formula
+	// produced the number.
+	if rated.FormulaTemplateID != nil && !rated.FormulaTemplateID.IsNil() {
+		entity.FormulaTemplateID = *rated.FormulaTemplateID
+	}
+
+	entity.RatingDetail = ratingDetailFromQuote(rated)
+}
+
+func ratingDetailFromQuote(rated *services.RatedShipment) *shipment.RatingDetail {
+	result, _ := rated.Amount.Float64()
+
+	// The trace records what priced the load, not the variables that fed the
+	// arithmetic, so there are none to carry across. The map is still written
+	// empty rather than left nil: every reader of the detail treats it as
+	// always present, and a nil one fails the read rather than the field.
+	detail := &shipment.RatingDetail{
+		Result:            result,
+		Source:            string(rated.Outcome),
+		ResolvedVariables: map[string]any{},
+	}
+
+	quote := rated.Quote
+	if quote == nil {
+		return detail
+	}
+
+	detail.RatedAt = quote.RatedAt
+	detail.Explanation = quote.Explanation()
+	if !quote.ID.IsNil() {
+		detail.RateQuoteID = quote.ID.String()
+	}
+	if quote.RateAgreementID != nil {
+		detail.AgreementID = quote.RateAgreementID.String()
+	}
+	if quote.RateAgreementRuleID != nil {
+		detail.RuleID = quote.RateAgreementRuleID.String()
+	}
+	if quote.FormulaTemplateID != nil {
+		detail.FormulaTemplateID = quote.FormulaTemplateID.String()
+	}
+
+	if trace := quote.Trace; trace != nil {
+		detail.Breakdown = breakdownFromTrace(trace)
+		applyFormulaComponent(detail, trace)
+		applyGuardrail(detail, trace)
+
+		if winner := trace.Winner(); winner != nil {
+			detail.AgreementName = winner.AgreementName
+			detail.RuleLabel = winner.RuleLabel
+		}
+	}
+
+	return detail
+}
+
+// applyFormulaComponent lifts the template that produced the linehaul out of
+// the trace, for the two ways a formula can price a load: a rule that delegates
+// to one, and the fallback taken when no contract covers the lane.
+//
+// Without this the detail names a template id and nothing else, and the billing
+// panel shows a blank where the formula's name and expression belong.
+func applyFormulaComponent(detail *shipment.RatingDetail, trace *ratetypes.Trace) {
+	for i := range trace.Components {
+		component := &trace.Components[i]
+		if component.Source != ratetypes.ComponentSourceFormulaTemplate {
+			continue
+		}
+
+		if detail.FormulaTemplateID == "" {
+			detail.FormulaTemplateID = component.SourceID
+		}
+		detail.FormulaTemplateName = component.SourceName
+		detail.Expression = maputils.StringValue(component.Detail, "expression")
+		if version, ok := maputils.IntValue(component.Detail, "versionNumber"); ok {
+			detail.VersionNumber = version
+		}
+
+		return
+	}
+}
+
+// applyGuardrail records the bound that decided the final number.
+//
+// The trace can hold several — a weight break's minimum, then the rule's
+// absolute minimum — and the last one applied is the one that produced the
+// amount the customer sees, so that is the one carried onto the shipment.
+func applyGuardrail(detail *shipment.RatingDetail, trace *ratetypes.Trace) {
+	for i := len(trace.Guardrails) - 1; i >= 0; i-- {
+		guardrail := trace.Guardrails[i]
+		if !guardrail.Applied {
+			continue
+		}
+
+		rawResult, _ := guardrail.Raw.Float64()
+		clamped, _ := guardrail.Result.Float64()
+
+		applied := &shipment.RatingGuardrail{Applied: true, RawResult: rawResult}
+		if guardrail.Kind == ratetypes.ComponentKindMaximumCharge {
+			applied.Bound = "max"
+			applied.MaxCharge = &clamped
+		} else {
+			applied.Bound = "min"
+			applied.MinCharge = &clamped
+		}
+
+		detail.Guardrail = applied
+
+		return
+	}
+}
+
+// breakdownFromTrace renders the trace's components as the breakdown lines the
+// existing billing screen already knows how to display, so the rating panel
+// keeps working unchanged while showing far more than it used to.
+func breakdownFromTrace(trace *ratetypes.Trace) []shipment.RatingBreakdownItem {
+	if len(trace.Components) == 0 {
+		return nil
+	}
+
+	items := make([]shipment.RatingBreakdownItem, 0, len(trace.Components))
+	for _, component := range trace.Components {
+		amount, _ := component.Amount.Float64()
+		items = append(items, shipment.RatingBreakdownItem{
+			Name:   component.Kind.String(),
+			Label:  component.Label,
+			Amount: amount,
+		})
+	}
+
+	return items
+}
+
+// billingControl carries the organization's decision about what to do when no
+// agreement covers a lane. A failure to load it is not worth failing a save
+// over: the default it falls back to is the behaviour that existed before rate
+// agreements, which is the safe answer.
+func (c *Calculator) billingControl(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) *tenant.BillingControl {
+	if c.billingControlRepo == nil {
+		return nil
+	}
+
+	control, err := c.billingControlRepo.GetByOrgID(ctx, entity.OrganizationID)
+	if err != nil {
+		return nil
+	}
+
+	return control
 }
 
 func ratingDate(entity *shipment.Shipment, now func() int64) int64 {
@@ -226,51 +471,6 @@ func ratingDate(entity *shipment.Shipment, now func() int64) int64 {
 		return entity.CreatedAt
 	}
 	return now()
-}
-
-func ratingBreakdown(
-	items []formulatemplatetypes.BreakdownAmount,
-) []shipment.RatingBreakdownItem {
-	if len(items) == 0 {
-		return nil
-	}
-
-	breakdown := make([]shipment.RatingBreakdownItem, 0, len(items))
-	for _, item := range items {
-		amount, _ := item.Amount.Float64()
-		breakdown = append(breakdown, shipment.RatingBreakdownItem{
-			Name:   item.Name,
-			Label:  item.Label,
-			Amount: amount,
-			Error:  item.Error,
-		})
-	}
-
-	return breakdown
-}
-
-func ratingGuardrail(result *formulatemplatetypes.GuardrailResult) *shipment.RatingGuardrail {
-	if result == nil {
-		return nil
-	}
-
-	raw, _ := result.RawAmount.Float64()
-	guardrail := &shipment.RatingGuardrail{
-		Applied:   result.Applied,
-		Bound:     result.Bound,
-		RawResult: raw,
-	}
-
-	if result.MinCharge != nil {
-		minCharge, _ := result.MinCharge.Float64()
-		guardrail.MinCharge = &minCharge
-	}
-	if result.MaxCharge != nil {
-		maxCharge, _ := result.MaxCharge.Float64()
-		guardrail.MaxCharge = &maxCharge
-	}
-
-	return guardrail
 }
 
 func (c *Calculator) syncDetentionCharge(
@@ -385,6 +585,7 @@ func (c *Calculator) syncFuelSurcharge(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	baseCharge decimal.Decimal,
+	agreement *rateagreement.RateAgreement,
 ) error {
 	if entity == nil || c.fuelSurcharge == nil {
 		return nil
@@ -400,6 +601,7 @@ func (c *Calculator) syncFuelSurcharge(
 			Shipment:         entity,
 			Linehaul:         baseCharge,
 			AccessorialTotal: nonFuelSurchargeChargeTotal(entity, baseCharge),
+			Override:         fuelOverride(agreement),
 		},
 	)
 	if err != nil {

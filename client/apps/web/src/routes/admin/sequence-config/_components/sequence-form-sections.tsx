@@ -183,7 +183,7 @@ export function DateComponentsSection({ index }: SectionProps) {
                   })}
                 </div>
                 {fieldState.error?.message ? (
-                  <p className="text-xs text-destructive">{fieldState.error.message}</p>
+                  <p className="text-destructive text-xs">{fieldState.error.message}</p>
                 ) : (
                   <p className="text-2xs text-muted-foreground">
                     How many digits of the year to embed in the code.
@@ -264,19 +264,19 @@ export function AdvancedSection({ index }: SectionProps) {
             >
               <div className="flex flex-col gap-0.5">
                 <span className="text-base leading-snug font-medium">Advanced</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground text-sm">
                   Validation helpers and custom formatting overrides.
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 {enabledCount > 0 ? (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground">
+                  <span className="bg-muted text-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
                     {enabledCount} enabled
                   </span>
                 ) : null}
                 <ChevronDownIcon
                   className={cn(
-                    "size-4 text-muted-foreground transition-transform",
+                    "text-muted-foreground size-4 transition-transform",
                     open && "rotate-180",
                   )}
                 />

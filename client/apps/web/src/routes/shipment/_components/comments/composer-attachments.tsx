@@ -42,7 +42,7 @@ function AttachmentThumbnail({ upload }: { upload: UploadState }) {
   }
 
   return (
-    <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
+    <span className="bg-muted flex size-8 shrink-0 items-center justify-center overflow-hidden rounded">
       {objectUrl ? (
         <img
           src={objectUrl}
@@ -80,14 +80,14 @@ function UploadChip({
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.15, ease: "easeOut" }}
       className={cn(
-        "relative flex w-52 items-center gap-2 overflow-hidden rounded-md border border-border bg-card px-2 py-1.5",
+        "border-border bg-card relative flex w-52 items-center gap-2 overflow-hidden rounded-md border px-2 py-1.5",
         isError && "border-red-500/50 bg-red-500/5",
       )}
     >
       <AttachmentThumbnail upload={upload} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-xs font-medium">{upload.file.name}</span>
-        <span className={cn("block text-2xs", isError ? "text-red-500" : "text-muted-foreground")}>
+        <span className={cn("text-2xs block", isError ? "text-red-500" : "text-muted-foreground")}>
           {isError
             ? (upload.error ?? "Upload failed")
             : isActive
@@ -111,16 +111,16 @@ function UploadChip({
         type="button"
         variant="ghost"
         size="icon-xs"
-        className="size-5 shrink-0 text-muted-foreground"
+        className="text-muted-foreground size-5 shrink-0"
         onClick={isActive ? onCancel : onRemove}
         aria-label={`Remove ${upload.file.name}`}
       >
         <XIcon className="size-3" />
       </Button>
       {isActive && (
-        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-muted">
+        <span className="bg-muted absolute inset-x-0 bottom-0 h-0.5">
           <span
-            className="block h-full bg-brand transition-[width] duration-200"
+            className="bg-brand block h-full transition-[width] duration-200"
             style={{ width: `${Math.max(4, upload.progress)}%` }}
           />
         </span>

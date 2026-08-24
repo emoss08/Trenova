@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/core/services/carrierservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
@@ -45,7 +46,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
-	"github.com/emoss08/trenova/internal/core/services/ratetableservice"
+	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
+	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
+	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/sequenceconfigservice"
@@ -138,6 +141,7 @@ var ValidatorModule = fx.Module("validators",
 		hazmatsegregationruleservice.NewValidator,
 		commodityservice.NewValidator,
 		customerpaymentservice.NewValidator,
+		carrierservice.NewValidator,
 		customerservice.NewValidator,
 		accountingcontrolservice.NewValidator,
 		accounttypeservice.NewValidator,
@@ -151,8 +155,10 @@ var ValidatorModule = fx.Module("validators",
 		emailservice.NewValidator,
 		holdreasonservice.NewValidator,
 		recurringshipmentservice.NewValidator,
-		ratetableservice.NewValidator,
 		detentionpolicyservice.NewValidator,
+		rateagreementservice.NewValidator,
+		ratezoneservice.NewValidator,
+		ratematrixservice.NewValidator,
 		invoiceadjustmentcontrolservice.NewValidator,
 		invoiceadjustmentservice.NewValidator,
 		invoiceservice.NewValidator,

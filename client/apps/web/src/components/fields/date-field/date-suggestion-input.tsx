@@ -281,7 +281,7 @@ export function DateSuggestionInput({
             variant="ghost"
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleClear}
-            className="absolute top-1/2 right-8 size-5 -translate-y-1/2 text-muted-foreground [&>svg]:size-3"
+            className="text-muted-foreground absolute top-1/2 right-8 size-5 -translate-y-1/2 [&>svg]:size-3"
           >
             <span className="sr-only">Clear date</span>
             <XIcon className="size-4" />
@@ -294,7 +294,7 @@ export function DateSuggestionInput({
         createPortal(
           <div
             ref={dropdownRef}
-            className="fixed z-[9999] animate-in rounded-md border bg-popover p-0 shadow-md fade-in-0"
+            className="animate-in bg-popover fade-in-0 fixed z-[9999] rounded-md border p-0 shadow-md"
             tabIndex={-1}
           >
             {suggestions.length > 0 ? (
@@ -319,14 +319,14 @@ export function DateSuggestionInput({
                     onMouseEnter={() => setSelectedIndex(index)}
                   >
                     <span className="xs:w-auto w-[110px] truncate">{suggestion.inputString}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
+                    <span className="text-muted-foreground shrink-0 text-xs">
                       {formatValue(suggestion.date)}
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="px-3 py-1.5 text-xs text-muted-foreground">
+              <p className="text-muted-foreground px-3 py-1.5 text-xs">
                 No matching date. Try &quot;t+2&quot;, &quot;next friday&quot;, or &quot;07/15&quot;.
               </p>
             )}

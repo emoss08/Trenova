@@ -24,7 +24,7 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-muted/40 p-2 sm:grid-cols-4">
+      <div className="border-border bg-muted/40 grid grid-cols-2 gap-3 rounded-md border p-2 sm:grid-cols-4">
         <Skeleton className="h-9 w-full" />
         <Skeleton className="h-9 w-full" />
         <Skeleton className="h-9 w-full" />
@@ -43,9 +43,9 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
   const profitTone = getMarginTone(marginPct ?? (profit < 0 ? -1 : targetPct), targetPct);
 
   return (
-    <div className="rounded-md border border-border bg-muted/40 p-2">
+    <div className="border-border bg-muted/40 rounded-md border p-2">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
           Profitability estimate
         </span>
         <ProfitabilityBreakdownPopover
@@ -53,7 +53,7 @@ export function ProfitabilitySummary({ shipmentId }: { shipmentId: string }) {
           trigger={
             <button
               type="button"
-              className="cursor-pointer text-2xs font-medium text-primary hover:underline"
+              className="text-2xs text-primary cursor-pointer font-medium hover:underline"
             >
               View breakdown
             </button>

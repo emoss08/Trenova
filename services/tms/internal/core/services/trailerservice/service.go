@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -514,7 +513,7 @@ func (s *Service) Locate( //nolint:gocognit // legacy workflow
 		if multiErr := s.coordinator.PrepareForUpdateWithDelayThreshold(
 			previousShipment,
 			updatedShipment,
-			resolveDelayThresholdMinutes(control),
+			shipmentstate.ResolveControlDelayThreshold(control),
 		); multiErr != nil {
 			return multiErr
 		}
@@ -748,15 +747,4 @@ func cloneShipment(source *shipment.Shipment) *shipment.Shipment {
 	}
 
 	return &clone
-}
-
-func resolveDelayThresholdMinutes(control *tenant.ShipmentControl) int16 {
-	if control == nil || !control.AutoDelayShipments {
-		return shipmentstate.DisabledDelayThresholdMinutes
-	}
-	if control.AutoDelayShipmentsThreshold == nil {
-		return shipmentstate.ResolveDelayThresholdMinutes(0)
-	}
-
-	return shipmentstate.ResolveDelayThresholdMinutes(*control.AutoDelayShipmentsThreshold)
 }

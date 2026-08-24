@@ -27,14 +27,14 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <div className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-lg">
         <Icon className="size-4" />
       </div>
       <div>
         <h3 className="text-sm leading-none font-semibold tracking-tight">
           {title}
         </h3>
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <p className="text-muted-foreground mt-1 text-xs">{description}</p>
       </div>
     </div>
   );

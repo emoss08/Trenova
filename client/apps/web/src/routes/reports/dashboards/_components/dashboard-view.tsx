@@ -115,7 +115,7 @@ function TileControls({
             max={MAX_TILE_HEIGHT}
             onChange={(h) => onResize({ h })}
           />
-          <div className="flex flex-col gap-1 border-t border-border pt-2">
+          <div className="border-border flex flex-col gap-1 border-t pt-2">
             <Button variant="ghost" size="sm" className="h-7 justify-start" onClick={onEdit}>
               <PencilIcon className="size-3.5" />
               Edit tile
@@ -123,7 +123,7 @@ function TileControls({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 justify-start text-destructive"
+              className="text-destructive h-7 justify-start"
               onClick={onRemove}
             >
               <Trash2Icon className="size-3.5" />
@@ -200,7 +200,7 @@ function TileFrame({
     <SortableTile id={tile.id} w={tile.w} h={tile.h} editing={editing}>
       {(drag: TileDragHandleProps) => (
         <>
-          <div className="flex h-8 shrink-0 items-center gap-1 border-b border-border px-2">
+          <div className="border-border flex h-8 shrink-0 items-center gap-1 border-b px-2">
             {editing && <TileDragHandle {...drag} />}
             <span className="min-w-0 flex-1 truncate text-xs font-medium">{title}</span>
             {editing ? (
@@ -416,7 +416,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
+      <header className="border-border flex h-12 shrink-0 items-center gap-2 border-b px-3">
         <Button
           variant="ghost"
           size="icon"
@@ -455,7 +455,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-destructive"
+              className="text-destructive h-7"
               onClick={handleDelete}
               disabled={deleteDashboard.isPending}
             >
@@ -499,12 +499,12 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
       {(parameters.length > 0 ||
         configuredFilters.length > 0 ||
         Object.keys(crossFilters).length > 0) && (
-        <div className="flex flex-wrap items-end gap-3 border-b border-border bg-muted/20 px-3 py-2">
+        <div className="border-border bg-muted/20 flex flex-wrap items-end gap-3 border-b px-3 py-2">
           {configuredFilters.map((filter) => {
             const field = index ? resolveField(index, filter.entity, filter.ref) : undefined;
             return (
               <div key={filter.id} className="flex flex-col gap-1">
-                <Label className="text-xs text-muted-foreground">
+                <Label className="text-muted-foreground text-xs">
                   {filter.label || field?.label || filter.ref.field}
                 </Label>
                 <FilterValueEditor
@@ -564,15 +564,15 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-auto bg-muted/20 p-3">
+      <div className="bg-muted/20 min-h-0 flex-1 overflow-auto p-3">
         {layout.tiles.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-              <LayoutDashboardIcon className="size-5 text-muted-foreground" strokeWidth={1.75} />
+            <div className="bg-muted flex size-10 items-center justify-center rounded-lg">
+              <LayoutDashboardIcon className="text-muted-foreground size-5" strokeWidth={1.75} />
             </div>
             <div className="text-center">
               <p className="text-sm font-medium">Nothing here yet</p>
-              <p className="max-w-xs text-xs text-muted-foreground">
+              <p className="text-muted-foreground max-w-xs text-xs">
                 {editing
                   ? "Add a tile to point at a report."
                   : "Edit this dashboard to add your first tile."}
@@ -614,7 +614,7 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
           </TileGrid>
         )}
         {editing && draft.tiles.length >= MAX_DASHBOARD_TILES && (
-          <p className="pt-3 text-center text-2xs text-muted-foreground">
+          <p className="text-2xs text-muted-foreground pt-3 text-center">
             This dashboard has reached the {MAX_DASHBOARD_TILES}-tile limit.
           </p>
         )}

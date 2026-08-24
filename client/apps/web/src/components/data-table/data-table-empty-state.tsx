@@ -13,10 +13,10 @@ export function DataTableEmptyState({
     <div className="flex size-full flex-col items-center justify-center overflow-hidden">
       <div className="relative size-full">
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-          <p className="pointer-events-none bg-amber-300 px-1 py-0.5 text-center font-table text-sm/none font-medium text-amber-950 uppercase select-none dark:bg-amber-400 dark:text-neutral-900">
+          <p className="font-table pointer-events-none bg-amber-300 px-1 py-0.5 text-center text-sm/none font-medium text-amber-950 uppercase select-none dark:bg-amber-400 dark:text-neutral-900">
             No data available
           </p>
-          <p className="pointer-events-none bg-neutral-900 px-1 py-0.5 text-center font-table text-sm/none font-medium text-white uppercase select-none dark:bg-neutral-500 dark:text-neutral-900">
+          <p className="font-table pointer-events-none bg-neutral-900 px-1 py-0.5 text-center text-sm/none font-medium text-white uppercase select-none dark:bg-neutral-500 dark:text-neutral-900">
             {hasActiveFilters
               ? "No records match your filters"
               : "Try adjusting your filters or search query"}

@@ -5,11 +5,11 @@ import {
   type ActionDockPosition,
 } from "@/components/action-dock";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import type { ReactNode } from "react";
 import { useCallback } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
-import { Spinner } from "@trenova/shared/components/ui/spinner";
 
 type DockPosition = ActionDockPosition;
 

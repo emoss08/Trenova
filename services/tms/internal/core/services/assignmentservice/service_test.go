@@ -11,10 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
+	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
@@ -24,9 +27,24 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+func assetOperationsOrgRepo(
+	t *testing.T,
+	tenantInfo pagination.TenantInfo,
+	enabled bool,
+) *mocks.MockOrganizationRepository {
+	t.Helper()
+
+	return capabilitytest.OrgRepo(t, capabilitytest.OrgRepoParams{
+		TenantInfo:             tenantInfo,
+		Lock:                   repositories.CapabilityLockShare,
+		BrokerageEnabled:       true,
+		AssetOperationsEnabled: enabled,
+		Optional:               true,
+	})
+}
 
 func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testing.T) {
 	t.Parallel()
@@ -39,6 +57,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 	}
 
 	original := validShipment(shipmentID, moveID, tenantInfo)
+	original.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
 
 	repo := mocks.NewMockAssignmentRepository(t)
 	repo.EXPECT().
@@ -49,6 +68,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			Status:         shipment.MoveStatusNew,
+			CoverageType:   shipment.MoveCoverageTypeUnassigned,
 		}, nil).
 		Once()
 	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
@@ -88,7 +108,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 			_ context.Context,
 			_ *repositories.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return cloneShipment(original), nil
+			return shipment.CloneForUpdate(original), nil
 		}).
 		Once()
 	shipmentRepo.EXPECT().
@@ -99,6 +119,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		) (*shipment.Shipment, error) {
 			assert.Equal(t, shipment.StatusAssigned, entity.Status)
 			assert.Equal(t, shipment.MoveStatusAssigned, entity.Moves[0].Status)
+			assert.Equal(t, shipment.MoveCoverageTypeDriver, entity.Moves[0].CoverageType)
 			require.NotNil(t, entity.Moves[0].Assignment)
 			return entity, nil
 		}).
@@ -122,14 +143,16 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		Once()
 
 	svc := &service{
+		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: shipmentRepo,
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -159,8 +182,9 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 	}
 
 	svc := &service{
-		l:  zap.NewNop(),
-		db: testDBConnection{},
+		orgRepo: assetOperationsOrgRepo(t, tenantInfo, true),
+		l:       zap.NewNop(),
+		db:      dbtest.NopConnection{},
 		repo: func() *mocks.MockAssignmentRepository {
 			repo := mocks.NewMockAssignmentRepository(t)
 			repo.EXPECT().
@@ -172,7 +196,8 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 		shipmentRepo: mocks.NewMockShipmentRepository(t),
 		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -222,13 +247,15 @@ func TestAssignToMove_RejectsDispatchBlockingHold(t *testing.T) {
 		Once()
 
 	svc := &service{
+		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: mocks.NewMockShipmentRepository(t),
 		holdRepo:     holdRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -278,7 +305,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 	shipmentRepo := mocks.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
-		Return(cloneShipment(original), nil).
+		Return(shipment.CloneForUpdate(original), nil).
 		Once()
 
 	holdRepo := mocks.NewMockShipmentHoldRepository(t)
@@ -339,8 +366,9 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 		Once()
 
 	svc := &service{
+		orgRepo:             assetOperationsOrgRepo(t, tenantInfo, true),
 		l:                   zap.NewNop(),
-		db:                  testDBConnection{},
+		db:                  dbtest.NopConnection{},
 		repo:                repo,
 		shipmentRepo:        shipmentRepo,
 		holdRepo:            holdRepo,
@@ -349,7 +377,8 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 		trailerRepo:         trailerRepo,
 		locationRepo:        locationRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -424,16 +453,19 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	shipmentRepo := mocks.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
-		Return(cloneShipment(original), nil).
+		Return(shipment.CloneForUpdate(original), nil).
 		Once()
 	shipmentRepo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
-		Return(cloneShipment(original), nil).
+		Return(shipment.CloneForUpdate(original), nil).
 		Once()
 
 	holdRepo := mocks.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
-		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*repositories.ActiveShipmentHoldRequest")).
+		HasActiveDispatchHold(
+			mock.Anything,
+			mock.AnythingOfType("*repositories.ActiveShipmentHoldRequest"),
+		).
 		Return(false, nil).
 		Once()
 
@@ -466,8 +498,9 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 		Once()
 
 	svc := &service{
+		orgRepo:             assetOperationsOrgRepo(t, tenantInfo, true),
 		l:                   zap.NewNop(),
-		db:                  testDBConnection{},
+		db:                  dbtest.NopConnection{},
 		repo:                repo,
 		shipmentRepo:        shipmentRepo,
 		holdRepo:            holdRepo,
@@ -475,7 +508,8 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 		dispatchControlRepo: dispatchControlRepo,
 		continuityRepo:      continuityRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -495,20 +529,25 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	require.NotNil(t, entity)
 }
 
-func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
-	t.Parallel()
+type unassignServiceParams struct {
+	TenantInfo pagination.TenantInfo
+	ShipmentID pulid.ID
+	MoveID     pulid.ID
+	OrgRepo    repositories.OrganizationRepository
+}
 
-	moveID := pulid.MustNew("sm_")
-	shipmentID := pulid.MustNew("shp_")
-	tenantInfo := pagination.TenantInfo{
-		OrgID: pulid.MustNew("org_"),
-		BuID:  pulid.MustNew("bu_"),
-	}
+func newUnassignService(t *testing.T, params unassignServiceParams) *service {
+	t.Helper()
+
+	tenantInfo := params.TenantInfo
+	shipmentID := params.ShipmentID
+	moveID := params.MoveID
 
 	assignmentID := pulid.MustNew("asn_")
 	original := validShipment(shipmentID, moveID, tenantInfo)
 	original.Status = shipment.StatusAssigned
 	original.Moves[0].Status = shipment.MoveStatusAssigned
+	original.Moves[0].CoverageType = shipment.MoveCoverageTypeDriver
 	original.Moves[0].Assignment = &shipment.Assignment{
 		ID:              assignmentID,
 		OrganizationID:  tenantInfo.OrgID,
@@ -528,6 +567,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			Status:         shipment.MoveStatusAssigned,
+			CoverageType:   shipment.MoveCoverageTypeDriver,
 		}, nil).
 		Once()
 	repo.EXPECT().
@@ -554,7 +594,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		RunAndReturn(func(_ context.Context, _ *repositories.GetShipmentByIDRequest) (*shipment.Shipment, error) {
-			return cloneShipment(original), nil
+			return shipment.CloneForUpdate(original), nil
 		}).
 		Once()
 	shipmentRepo.EXPECT().
@@ -562,6 +602,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
 			assert.Equal(t, shipment.StatusNew, entity.Status)
 			assert.Equal(t, shipment.MoveStatusNew, entity.Moves[0].Status)
+			assert.Equal(t, shipment.MoveCoverageTypeUnassigned, entity.Moves[0].CoverageType)
 			assert.Nil(t, entity.Moves[0].Assignment)
 			return entity, nil
 		}).
@@ -580,19 +621,40 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
+		orgRepo:      params.OrgRepo,
 		shipmentRepo: shipmentRepo,
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
 		eventService:      noopShipmentEventService{},
 		coordinator:       shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
+
+	return svc
+}
+
+func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	shipmentID := pulid.MustNew("shp_")
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+
+	svc := newUnassignService(t, unassignServiceParams{
+		TenantInfo: tenantInfo,
+		ShipmentID: shipmentID,
+		MoveID:     moveID,
+	})
 
 	err := svc.Unassign(t.Context(), &repositories.UnassignShipmentMoveRequest{
 		TenantInfo:     tenantInfo,
@@ -633,12 +695,13 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: shipmentRepo,
 		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -676,12 +739,13 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 
 	svc := &service{
 		l:            zap.NewNop(),
-		db:           testDBConnection{},
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: mocks.NewMockShipmentRepository(t),
 		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
@@ -697,21 +761,6 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 	require.Error(t, err)
 	var businessErr *errortypes.BusinessError
 	require.ErrorAs(t, err, &businessErr)
-}
-
-type testDBConnection struct{}
-
-func (testDBConnection) DB() *bun.DB                          { return nil }
-func (testDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (testDBConnection) HealthCheck(context.Context) error    { return nil }
-func (testDBConnection) IsHealthy(context.Context) bool       { return true }
-func (testDBConnection) Close() error                         { return nil }
-func (testDBConnection) WithTx(
-	ctx context.Context,
-	_ ports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
 }
 
 func validShipment(
@@ -782,13 +831,228 @@ func ptrInt64(v int64) *int64 {
 func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, resolveDelayThresholdMinutes(nil))
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, resolveDelayThresholdMinutes(&tenant.ShipmentControl{
+	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, shipmentstate.ResolveControlDelayThreshold(nil))
+	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
 		AutoDelayShipments:          false,
 		AutoDelayShipmentsThreshold: new(int16(30)),
 	}))
-	assert.Equal(t, int16(30), resolveDelayThresholdMinutes(&tenant.ShipmentControl{
+	assert.Equal(t, int16(30), shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
 		AutoDelayShipments:          true,
 		AutoDelayShipmentsThreshold: new(int16(30)),
 	}))
+}
+
+type recordingTenderGuard struct {
+	moveIDs []pulid.ID
+	reasons []string
+	err     error
+}
+
+func (g *recordingTenderGuard) CancelLiveTenderForMove(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	moveID pulid.ID,
+	reason string,
+) error {
+	g.moveIDs = append(g.moveIDs, moveID)
+	g.reasons = append(g.reasons, reason)
+	return g.err
+}
+
+func (g *recordingTenderGuard) CancelLiveTendersForShipment(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ pulid.ID,
+	_ string,
+) error {
+	return nil
+}
+
+func newAssignToMoveService(
+	t *testing.T,
+	tenantInfo pagination.TenantInfo,
+	shipmentID, moveID pulid.ID,
+	guard portservices.TenderGuard,
+) *service {
+	t.Helper()
+
+	original := validShipment(shipmentID, moveID, tenantInfo)
+	original.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
+
+	repo := mocks.NewMockAssignmentRepository(t)
+	repo.EXPECT().
+		GetMoveByID(mock.Anything, tenantInfo, moveID).
+		Return(&shipment.ShipmentMove{
+			ID:             moveID,
+			ShipmentID:     shipmentID,
+			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
+			Status:         shipment.MoveStatusNew,
+			CoverageType:   shipment.MoveCoverageTypeUnassigned,
+		}, nil).
+		Once()
+	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
+	repo.EXPECT().
+		Create(mock.Anything, mock.AnythingOfType("*shipment.Assignment")).
+		RunAndReturn(func(_ context.Context, entity *shipment.Assignment) (*shipment.Assignment, error) {
+			entity.ID = pulid.MustNew("asn_")
+			return entity, nil
+		}).
+		Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetAssignmentByIDRequest")).
+		RunAndReturn(func(
+			_ context.Context,
+			req *repositories.GetAssignmentByIDRequest,
+		) (*shipment.Assignment, error) {
+			return &shipment.Assignment{
+				ID:              req.AssignmentID,
+				OrganizationID:  tenantInfo.OrgID,
+				BusinessUnitID:  tenantInfo.BuID,
+				ShipmentMoveID:  moveID,
+				PrimaryWorkerID: pulid.Must("wrk_"),
+				TractorID:       pulid.Must("trac_"),
+				Status:          shipment.AssignmentStatusNew,
+				ShipmentMove: &shipment.ShipmentMove{
+					ID:         moveID,
+					ShipmentID: shipmentID,
+					Status:     shipment.MoveStatusAssigned,
+				},
+			}, nil
+		}).
+		Once()
+
+	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		RunAndReturn(func(
+			_ context.Context,
+			_ *repositories.GetShipmentByIDRequest,
+		) (*shipment.Shipment, error) {
+			return shipment.CloneForUpdate(original), nil
+		}).
+		Once()
+	shipmentRepo.EXPECT().
+		Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
+		RunAndReturn(func(
+			_ context.Context,
+			entity *shipment.Shipment,
+		) (*shipment.Shipment, error) {
+			assert.Equal(t, shipment.MoveCoverageTypeDriver, entity.Moves[0].CoverageType)
+			return entity, nil
+		}).
+		Once()
+
+	holdRepo := mocks.NewMockShipmentHoldRepository(t)
+	holdRepo.EXPECT().
+		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*repositories.ActiveShipmentHoldRequest")).
+		Return(false, nil).
+		Once()
+
+	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	controlRepo.EXPECT().
+		Get(mock.Anything, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo}).
+		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
+		Once()
+
+	formula := mocks.NewMockFormulaCalculator(t)
+	formula.EXPECT().
+		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
+		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
+		Once()
+
+	return &service{
+		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
+		l:            zap.NewNop(),
+		db:           dbtest.NopConnection{},
+		repo:         repo,
+		shipmentRepo: shipmentRepo,
+		holdRepo:     holdRepo,
+		controlRepo:  controlRepo,
+		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
+			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
+		}),
+		shipmentValidator: shipmentservice.NewTestValidator(t),
+		eventService:      noopShipmentEventService{},
+		coordinator:       shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
+		tenderGuard:       guard,
+	}
+}
+
+func TestAssignToMove_WithdrawsLiveTenderForCoveredMove(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	shipmentID := pulid.MustNew("shp_")
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+
+	guard := &recordingTenderGuard{}
+	svc := newAssignToMoveService(t, tenantInfo, shipmentID, moveID, guard)
+
+	entity, err := svc.AssignToMove(t.Context(), &repositories.AssignShipmentMoveRequest{
+		TenantInfo:      tenantInfo,
+		ShipmentMoveID:  moveID,
+		PrimaryWorkerID: pulid.MustNew("wrk_"),
+		TractorID:       pulid.MustNew("trac_"),
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, entity)
+	require.Len(t, guard.moveIDs, 1)
+	assert.Equal(t, moveID, guard.moveIDs[0])
+	assert.Equal(t, []string{"Move was covered outside the tender"}, guard.reasons)
+}
+
+func TestAssignToMove_TenderWithdrawFailureDoesNotFailAssignment(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	shipmentID := pulid.MustNew("shp_")
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+
+	guard := &recordingTenderGuard{err: errortypes.NewBusinessError("tender withdraw exploded")}
+	svc := newAssignToMoveService(t, tenantInfo, shipmentID, moveID, guard)
+
+	entity, err := svc.AssignToMove(t.Context(), &repositories.AssignShipmentMoveRequest{
+		TenantInfo:      tenantInfo,
+		ShipmentMoveID:  moveID,
+		PrimaryWorkerID: pulid.MustNew("wrk_"),
+		TractorID:       pulid.MustNew("trac_"),
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, entity)
+	require.Len(t, guard.moveIDs, 1)
+}
+
+func TestAssignToMove_WithoutTenderGuardIsNoOp(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	shipmentID := pulid.MustNew("shp_")
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+
+	svc := newAssignToMoveService(t, tenantInfo, shipmentID, moveID, nil)
+
+	entity, err := svc.AssignToMove(t.Context(), &repositories.AssignShipmentMoveRequest{
+		TenantInfo:      tenantInfo,
+		ShipmentMoveID:  moveID,
+		PrimaryWorkerID: pulid.MustNew("wrk_"),
+		TractorID:       pulid.MustNew("trac_"),
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, entity)
+	assert.Nil(t, svc.tenderGuard)
 }

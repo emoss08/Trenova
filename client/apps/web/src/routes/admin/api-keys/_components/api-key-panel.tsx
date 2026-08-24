@@ -156,7 +156,7 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
           <Form id="api-key-create-form" onSubmit={form.handleSubmit(onSubmit)}>
             <fieldset className="space-y-6">
               <APIKeyForm />
-              <div className="border-t border-border/70 pt-6">
+              <div className="border-border/70 border-t pt-6">
                 <APIKeyPermissionsEditor />
               </div>
             </fieldset>
@@ -371,9 +371,9 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
           ) : (
             <>
               {isRevoked && (
-                <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3">
-                  <ShieldAlertIcon className="size-4 shrink-0 text-destructive" />
-                  <p className="text-sm text-destructive">
+                <div className="border-destructive/30 bg-destructive/10 flex items-center gap-3 rounded-lg border px-4 py-3">
+                  <ShieldAlertIcon className="text-destructive size-4 shrink-0" />
+                  <p className="text-destructive text-sm">
                     This API key has been revoked. All fields are read-only.
                   </p>
                 </div>
@@ -382,7 +382,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
                 <Form id="api-key-edit-form" onSubmit={form.handleSubmit(onSubmit)}>
                   <fieldset disabled={isRevoked} className="space-y-6">
                     <APIKeyForm />
-                    <div className="border-t border-border/70 pt-6">
+                    <div className="border-border/70 border-t pt-6">
                       <APIKeyPermissionsEditor />
                     </div>
                   </fieldset>
@@ -452,7 +452,7 @@ function TokenSuccessDialog({
             This plaintext token is only shown once after create or rotate.
           </DialogDescription>
         </DialogHeader>
-        <pre className="overflow-x-auto rounded-md border border-border/70 bg-muted/30 p-4 font-mono text-xs">
+        <pre className="border-border/70 bg-muted/30 overflow-x-auto rounded-md border p-4 font-mono text-xs">
           {token}
         </pre>
         <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">

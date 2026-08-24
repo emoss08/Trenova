@@ -61,7 +61,7 @@ export function CategoryGroupHeader({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
         {label}
       </h2>
       <span className="text-2xs text-muted-foreground/70 tabular-nums">
@@ -89,9 +89,9 @@ export function ReportCard({
       transition={{ duration: 0.25, delay: Math.min(index, 12) * 0.03, ease: "easeOut" }}
       onClick={onClick}
       className={cn(
-        "group relative flex flex-col rounded-lg border border-border bg-card p-4",
+        "group border-border bg-card relative flex flex-col rounded-lg border p-4",
         "transition-[border-color,box-shadow,background-color] duration-200",
-        "hover:border-brand hover:bg-muted hover:ring-2 hover:ring-brand/25",
+        "hover:border-brand hover:bg-muted hover:ring-brand/25 hover:ring-2",
         onClick && "cursor-pointer",
         className,
       )}
@@ -117,14 +117,14 @@ export function ReportGridEmptyState({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="col-span-full flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-16"
+      className="border-border col-span-full flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16"
     >
-      <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-        <Icon className="size-5 text-muted-foreground" strokeWidth={1.75} />
+      <div className="bg-muted flex size-10 items-center justify-center rounded-lg">
+        <Icon className="text-muted-foreground size-5" strokeWidth={1.75} />
       </div>
       <div className="text-center">
         <p className="text-sm font-medium">{title}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <p className="text-muted-foreground text-xs">{description}</p>
       </div>
       {action}
     </m.div>

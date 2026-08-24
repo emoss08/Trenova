@@ -827,3 +827,122 @@ func TestResolve_OverridesNewFactors(t *testing.T) {
 	assert.InDelta(t, 2.0, resolved[FactorSafetyHistory], 0.001,
 		"untouched factors keep the preset value")
 }
+
+func TestHorizonSearchRounds(t *testing.T) {
+	t.Parallel()
+
+	rounds := func(v int16) *int16 { return &v }
+
+	tests := []struct {
+		name    string
+		control *DispatchControl
+		want    int
+	}{
+		{
+			name:    "nil control uses the default",
+			control: nil,
+			want:    int(DefaultHorizonSearchIterations),
+		},
+		{
+			name:    "unset uses the default",
+			control: &DispatchControl{},
+			want:    int(DefaultHorizonSearchIterations),
+		},
+		{
+			name:    "an explicit zero disables the search",
+			control: &DispatchControl{HorizonSearchIterations: rounds(0)},
+			want:    0,
+		},
+		{
+			name:    "a negative value is malformed data and falls back to the default",
+			control: &DispatchControl{HorizonSearchIterations: rounds(-10)},
+			want:    int(DefaultHorizonSearchIterations),
+		},
+		{
+			name:    "a configured value is honoured",
+			control: &DispatchControl{HorizonSearchIterations: rounds(120)},
+			want:    120,
+		},
+		{
+			name:    "an oversized value is clamped",
+			control: &DispatchControl{HorizonSearchIterations: rounds(5000)},
+			want:    int(MaxHorizonSearchIterations),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, tt.control.HorizonSearchRounds())
+		})
+	}
+}
+
+func TestHorizonMovesPerDriver(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(
+		t,
+		int(DefaultHorizonMaxMovesPerDriver),
+		(*DispatchControl)(nil).HorizonMovesPerDriver(),
+	)
+	assert.Equal(
+		t,
+		int(DefaultHorizonMaxMovesPerDriver),
+		(&DispatchControl{}).HorizonMovesPerDriver(),
+	)
+	assert.Equal(
+		t,
+		5,
+		(&DispatchControl{HorizonMaxMovesPerDriver: 5}).HorizonMovesPerDriver(),
+	)
+	assert.Equal(
+		t,
+		int(MaxHorizonMovesPerDriver),
+		(&DispatchControl{HorizonMaxMovesPerDriver: 999}).HorizonMovesPerDriver(),
+	)
+}
+
+func TestValidate_HorizonSearchIterationsBounds(t *testing.T) {
+	t.Parallel()
+
+	rounds := func(v int16) *int16 { return &v }
+
+	tests := []struct {
+		name    string
+		value   *int16
+		wantErr bool
+	}{
+		{name: "unset is allowed", value: nil},
+		{name: "zero disables the search", value: rounds(0)},
+		{name: "a normal value is allowed", value: rounds(50)},
+		{name: "the maximum is allowed", value: rounds(MaxHorizonSearchIterations)},
+		{name: "negative is rejected", value: rounds(-1), wantErr: true},
+		{name: "above the maximum is rejected", value: rounds(501), wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			dc := &DispatchControl{
+				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
+				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
+				RecordServiceFailures:      ServiceIncidentTypeNever,
+				HorizonSearchIterations:    tt.value,
+			}
+
+			multiErr := errortypes.NewMultiError()
+			dc.Validate(multiErr)
+
+			found := false
+			for _, e := range multiErr.Errors {
+				if e.Field == "horizonSearchIterations" {
+					found = true
+				}
+			}
+			assert.Equal(t, tt.wantErr, found)
+		})
+	}
+}

@@ -4,6 +4,12 @@ import {
   serializeAnchorDate,
   shiftAnchorByDays,
 } from "@/lib/timeline/time-scale";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import {
+  hasOrganizationCapability,
+  OrganizationCapability,
+  type OrganizationCapabilities,
+} from "@trenova/shared/types/organization-capability";
 import { startOfDay } from "date-fns";
 import {
   debounce,
@@ -32,6 +38,29 @@ import { TIMELINE_ZOOM_OPTIONS, type TimelineZoomDays } from "./timeline-metrics
 
 const CENTER_MODES = ["board", "timeline"] as const;
 export type CenterMode = (typeof CENTER_MODES)[number];
+
+/**
+ * The console's timeline is a grid of driver lanes with loads dropped onto them —
+ * the same shape as the capacity rail, laid out horizontally. An organization
+ * without its own drivers has no lanes, so the view is withheld and the board is
+ * the only centre.
+ */
+export function isDispatchTimelineAvailable(capabilities: OrganizationCapabilities): boolean {
+  return hasOrganizationCapability(capabilities, OrganizationCapability.AssetOperations);
+}
+
+/**
+ * Resolves the requested centre view against what the organization can use. The
+ * console's whole state is shareable through the URL, so `?mode=timeline` can
+ * outlive the capability behind it and must degrade rather than render lanes
+ * that cannot exist.
+ */
+export function resolveCenterMode(
+  mode: CenterMode,
+  capabilities: OrganizationCapabilities,
+): CenterMode {
+  return mode === "timeline" && !isDispatchTimelineAvailable(capabilities) ? "board" : mode;
+}
 
 const ZOOM_VALUES: readonly TimelineZoomDays[] = TIMELINE_ZOOM_OPTIONS.map((option) => option.id);
 const CAPACITY_FILTER_IDS: readonly CapacityFilter[] = CAPACITY_FILTERS.map((filter) => filter.id);
@@ -127,6 +156,7 @@ export function useDispatchSelection() {
 
 export function useDispatchView() {
   const [{ mode, urgency }, setView] = useQueryStates(dispatchViewParsers, URL_OPTIONS);
+  const capabilities = useOrgCapabilities();
 
   const setMode = useCallback((next: CenterMode) => void setView({ mode: next }), [setView]);
   const setUrgencyFocus = useCallback(
@@ -134,7 +164,13 @@ export function useDispatchView() {
     [setView],
   );
 
-  return { mode, urgencyFocus: urgency, setMode, setUrgencyFocus };
+  return {
+    mode: resolveCenterMode(mode, capabilities),
+    timelineAvailable: isDispatchTimelineAvailable(capabilities),
+    urgencyFocus: urgency,
+    setMode,
+    setUrgencyFocus,
+  };
 }
 
 export function useDispatchRail() {

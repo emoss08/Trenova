@@ -123,7 +123,7 @@ export function TileFilterPopover({ index, ir, values, onChange }: TileFilterPop
       >
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+            <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
               Filter this tile
             </span>
             {active > 0 && (
@@ -136,7 +136,7 @@ export function TileFilterPopover({ index, ir, values, onChange }: TileFilterPop
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 text-2xs"
+                className="text-2xs h-6"
                 onClick={() => onChange({})}
               >
                 Clear
@@ -148,7 +148,7 @@ export function TileFilterPopover({ index, ir, values, onChange }: TileFilterPop
             const field = resolveField(index, filter.entity, filter.ref);
             return (
               <div key={filter.id} className="flex flex-col gap-1">
-                <Label className="text-xs text-muted-foreground">
+                <Label className="text-muted-foreground text-xs">
                   {refLabel(index, filter.entity, filter.ref)}
                 </Label>
                 <FilterValueEditor

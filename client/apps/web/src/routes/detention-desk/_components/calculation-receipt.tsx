@@ -54,7 +54,7 @@ export function CalculationReceipt({
 
   if (!trace || trace.steps.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-xs">
         No calculation has been recorded for this stop yet.
       </p>
     );
@@ -63,7 +63,7 @@ export function CalculationReceipt({
   return (
     <div className={cn("flex flex-col", className)}>
       <div className="flex items-center justify-between gap-2">
-        <h4 className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+        <h4 className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
           How this charge was calculated
         </h4>
         <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export function CalculationReceipt({
         </div>
       </div>
 
-      <ol className="mt-2 divide-y divide-border/60">
+      <ol className="divide-border/60 mt-2 divide-y">
         {trace.steps.map((step, index) => {
           const value = stepValue(step, currency);
           const isFinal = step.kind === "Final";
@@ -91,7 +91,7 @@ export function CalculationReceipt({
               key={`${step.kind}-${index}`}
               className={cn(
                 "flex items-baseline justify-between gap-3 py-2",
-                isFinal && "border-t border-border pt-2.5",
+                isFinal && "border-border border-t pt-2.5",
               )}
             >
               <div className="min-w-0">

@@ -124,7 +124,7 @@ export function PTOFilterPopover({
                 />
               </FormControl>
             </FormGroup>
-            <div className="flex justify-end gap-2 border-t border-border p-2">
+            <div className="border-border flex justify-end gap-2 border-t p-2">
               <Button size="sm" variant="outline" onClick={handleReset}>
                 Reset
               </Button>

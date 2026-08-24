@@ -1,6 +1,7 @@
 package dispatchconsoleservice
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
@@ -18,13 +19,24 @@ const (
 	UrgencyPlanned  = UrgencyBucket("Planned")
 )
 
+type MoveTenderSummary struct {
+	ID                    pulid.ID      `json:"id"`
+	Status                tender.Status `json:"status"`
+	Mode                  tender.Mode   `json:"mode"`
+	CurrentRank           int16         `json:"currentRank"`
+	OfferCount            int           `json:"offerCount"`
+	CurrentCarrierName    string        `json:"currentCarrierName"`
+	CurrentOfferExpiresAt *int64        `json:"currentOfferExpiresAt"`
+}
+
 type BoardMove struct {
 	*repositories.BoardMove
 
-	Urgency         UrgencyBucket `json:"urgency"`
-	MinutesToPickup int64         `json:"minutesToPickup"`
-	IsCovered       bool          `json:"isCovered"`
-	TotalStopCount  int           `json:"totalStopCount"`
+	Urgency         UrgencyBucket      `json:"urgency"`
+	MinutesToPickup int64              `json:"minutesToPickup"`
+	IsCovered       bool               `json:"isCovered"`
+	TotalStopCount  int                `json:"totalStopCount"`
+	LiveTender      *MoveTenderSummary `json:"liveTender"`
 }
 
 type DriverAvailability string

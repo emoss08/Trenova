@@ -26,6 +26,9 @@ type RenderInput struct {
 	DocumentPayload edi.DocumentPayload
 	X12Version      string
 	Runtime         map[string]any
+	// CarrierSCAC overrides the partner-settings carrier.scac lookup for this
+	// render only; the stored profile settings stay untouched.
+	CarrierSCAC string
 }
 
 type RenderResult struct {
@@ -75,6 +78,10 @@ func RenderX12(input *RenderInput) (*RenderResult, error) {
 		return segments[i].Sequence < segments[j].Sequence
 	})
 	libraries := templateScriptLibraries(input.TemplateVersion.ScriptLibraries)
+	partnerSettings := partnerSettingsWithCarrierSCAC(
+		input.Profile.PartnerSettings,
+		input.CarrierSCAC,
+	)
 
 	rendered := make([]string, 0, len(segments)+8)
 	diagnostics := make([]Diagnostic, 0)
@@ -86,7 +93,7 @@ func RenderX12(input *RenderInput) (*RenderResult, error) {
 		for _, repeatValue := range repeats {
 			env := renderEnvironment(
 				payloadMap,
-				input.Profile.PartnerSettings,
+				partnerSettings,
 				input.Runtime,
 				repeatValue,
 			)
@@ -450,15 +457,17 @@ func validateRenderedSegment(segment *edi.EDITemplateSegment, elements []string)
 		return nil
 	}
 
-	return []Diagnostic{{
-		Severity:        edi.ValidationSeverityError,
-		Code:            "shipment_status_reason_required",
-		SegmentID:       x12SegmentAT7,
-		ElementPosition: 2,
-		Path:            "shipmentStatus.statusReasonCode",
-		Message:         "Shipment status reason code is required when AT7 shipment status code is SD",
-		SuggestedFix:    "Set shipmentStatus.statusReasonCode for service failure shipment status payloads.",
-	}}
+	return []Diagnostic{
+		{
+			Severity:        edi.ValidationSeverityError,
+			Code:            "shipment_status_reason_required",
+			SegmentID:       x12SegmentAT7,
+			ElementPosition: 2,
+			Path:            "shipmentStatus.statusReasonCode",
+			Message:         "Shipment status reason code is required when AT7 shipment status code is SD",
+			SuggestedFix:    "Set shipmentStatus.statusReasonCode for service failure shipment status payloads.",
+		},
+	}
 }
 
 func segmentElementValue(elements []string, position int) string {
@@ -593,6 +602,25 @@ func setElementIfNotEmpty(parts []string, index int, value string) {
 	if value != "" {
 		setElement(parts, index, value)
 	}
+}
+
+func partnerSettingsWithCarrierSCAC(
+	settings map[string]any,
+	scac string,
+) map[string]any {
+	scac = strings.ToUpper(strings.TrimSpace(scac))
+	if scac == "" {
+		return settings
+	}
+	merged := make(map[string]any, len(settings)+1)
+	maps.Copy(merged, settings)
+	carrierSettings := map[string]any{}
+	if existing, ok := merged["carrier"].(map[string]any); ok {
+		carrierSettings = maputils.CloneShallow(existing)
+	}
+	carrierSettings["scac"] = scac
+	merged["carrier"] = carrierSettings
+	return merged
 }
 
 func renderEnvironment(

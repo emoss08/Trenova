@@ -47,10 +47,10 @@ export function SequenceConfigPanel({ index, sequenceType }: PanelProps) {
     <div className="flex min-w-0 flex-1 flex-col gap-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          <h2 className="text-foreground text-lg font-semibold tracking-tight">
             {sequenceTitles[sequenceType]}
           </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-sm">
             {sequenceDescriptions[sequenceType]}
           </p>
         </div>

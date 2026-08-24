@@ -94,7 +94,7 @@ function FormulaTemplateHeaderActions({
               type="button"
               variant="outline"
               size="xs"
-              className="gap-1.5 text-destructive"
+              className="text-destructive gap-1.5"
               onClick={() => onApprovalAction("reject")}
             >
               <XIcon className="size-3" />

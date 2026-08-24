@@ -61,13 +61,13 @@ export function DetentionChargeLabel({
 
   return (
     <>
-      <TimerIcon className="size-3 shrink-0 text-primary" />
+      <TimerIcon className="text-primary size-3 shrink-0" />
       {code}
-      <span className="rounded bg-primary/10 px-1 py-0.5 text-2xs text-primary">Detention</span>
+      <span className="bg-primary/10 text-2xs text-primary rounded px-1 py-0.5">Detention</span>
       {risk && (
         <Tooltip>
           <TooltipTrigger>
-            <span className={cn("rounded px-1 py-0.5 text-2xs", risk.className)}>{risk.label}</span>
+            <span className={cn("text-2xs rounded px-1 py-0.5", risk.className)}>{risk.label}</span>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={6}>
             <p className="max-w-56 text-xs">{risk.detail}</p>
@@ -127,7 +127,7 @@ export function DetentionChargeAction({
             className="size-7"
             onClick={onOpenClaimFile}
           >
-            <TimerIcon className="size-3.5 text-primary" />
+            <TimerIcon className="text-primary size-3.5" />
           </Button>
         }
       />

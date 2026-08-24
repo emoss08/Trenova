@@ -15,6 +15,7 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { DeltaValue, StatTile } from "@/components/metric-tiles";
 import { apiService } from "@/services/api";
 import type {
   BacktestResult,
@@ -23,15 +24,7 @@ import type {
   FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 import { useMutation } from "@tanstack/react-query";
-import {
-  AlertTriangleIcon,
-  ArrowDownIcon,
-  ArrowRightIcon,
-  ArrowUpIcon,
-  HistoryIcon,
-  PlayIcon,
-  ShieldIcon,
-} from "lucide-react";
+import { AlertTriangleIcon, ArrowRightIcon, HistoryIcon, PlayIcon, ShieldIcon } from "lucide-react";
 import { useState } from "react";
 import { useWatch, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -56,43 +49,6 @@ const SOURCE_OPTIONS: { value: CandidateSource; label: string; description: stri
   },
 ];
 
-function formatDeltaPct(deltaPct: number): string {
-  return `${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(2)}%`;
-}
-
-function DeltaValue({ delta, deltaPct }: { delta: number; deltaPct?: number }) {
-  const isZero = delta === 0;
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 font-mono tabular-nums",
-        isZero
-          ? "text-muted-foreground"
-          : delta > 0
-            ? "text-emerald-600 dark:text-emerald-400"
-            : "text-red-600 dark:text-red-400",
-      )}
-    >
-      {!isZero &&
-        (delta > 0 ? <ArrowUpIcon className="size-3" /> : <ArrowDownIcon className="size-3" />)}
-      {formatCurrency(Math.abs(delta))}
-      {deltaPct !== undefined && !isZero && (
-        <span className="text-2xs opacity-80">({formatDeltaPct(deltaPct)})</span>
-      )}
-    </span>
-  );
-}
-
-function StatTile({ label, value, tone }: { label: string; value: string; tone?: string }) {
-  return (
-    <div className="rounded-lg border bg-muted/30 px-3 py-2">
-      <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
-      <p className={cn("mt-0.5 text-lg font-semibold tabular-nums", tone)}>{value}</p>
-    </div>
-  );
-}
-
 function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
   return (
     <div className="space-y-3">
@@ -116,17 +72,17 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm">
+      <div className="bg-muted/30 flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 text-sm">
         <span className="text-muted-foreground">Total</span>
         <span className="font-mono font-medium tabular-nums">
           {formatCurrency(summary.currentTotal)}
         </span>
-        <ArrowRightIcon className="size-3.5 text-muted-foreground" />
+        <ArrowRightIcon className="text-muted-foreground size-3.5" />
         <span className="font-mono font-medium tabular-nums">
           {formatCurrency(summary.candidateTotal)}
         </span>
         <DeltaValue delta={summary.totalDelta} deltaPct={summary.totalDeltaPct} />
-        <span className="ml-auto text-xs text-muted-foreground">
+        <span className="text-muted-foreground ml-auto text-xs">
           Max increase {formatCurrency(summary.maxIncrease)} · Max decrease{" "}
           {formatCurrency(summary.maxDecrease)}
         </span>
@@ -177,7 +133,7 @@ function BacktestResultRow({ result }: { result: BacktestResult }) {
           {hasError && (
             <Tooltip>
               <TooltipTrigger
-                render={<AlertTriangleIcon className="size-3.5 text-destructive" />}
+                render={<AlertTriangleIcon className="text-destructive size-3.5" />}
               />
               <TooltipContent side="left" className="max-w-72 text-xs">
                 {result.currentError && <p>Current: {result.currentError}</p>}
@@ -218,10 +174,10 @@ export default function FormulaTemplateBacktestTab({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="bg-muted/30 rounded-lg border p-3">
         <div className="mb-3">
           <p className="text-sm font-medium">Backtest Candidate</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             Re-rate recent shipments priced by this template and compare against their current
             amounts. Nothing is saved.
           </p>
@@ -241,7 +197,7 @@ export default function FormulaTemplateBacktestTab({
               )}
             >
               <p className="text-xs font-medium">{option.label}</p>
-              <p className="mt-0.5 text-2xs text-muted-foreground">{option.description}</p>
+              <p className="text-2xs text-muted-foreground mt-0.5">{option.description}</p>
             </button>
           ))}
         </div>
@@ -249,7 +205,7 @@ export default function FormulaTemplateBacktestTab({
         <div className="flex flex-wrap items-end gap-3">
           {source === "version" && (
             <div className="w-32">
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
                 Version
               </label>
               <NumberFieldRoot
@@ -266,7 +222,7 @@ export default function FormulaTemplateBacktestTab({
             </div>
           )}
           <div className="w-32">
-            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
               Shipment Limit
             </label>
             <NumberFieldRoot
@@ -317,7 +273,7 @@ export default function FormulaTemplateBacktestTab({
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="py-8 text-center text-sm text-muted-foreground"
+                      className="text-muted-foreground py-8 text-center text-sm"
                     >
                       No shipments have been rated with this template yet
                     </TableCell>
@@ -334,13 +290,13 @@ export default function FormulaTemplateBacktestTab({
       ) : (
         !mutation.isPending && (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-            <HistoryIcon className="mb-3 size-8 text-muted-foreground" />
+            <HistoryIcon className="text-muted-foreground mb-3 size-8" />
             <p className="text-sm font-medium">No backtest results yet</p>
-            <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 max-w-sm text-xs">
               Run a backtest to preview how the candidate expression would change charges on
               shipments already rated by this template.
               {template?.currentVersionNumber ? (
-                <Badge variant="outline" className="ml-1 font-mono text-2xs">
+                <Badge variant="outline" className="text-2xs ml-1 font-mono">
                   head v{template.currentVersionNumber}
                 </Badge>
               ) : null}

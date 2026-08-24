@@ -175,9 +175,23 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
+	current, err := h.service.GetByID(c.Request.Context(), repositories.GetOrganizationByIDRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  orgID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
 	entity := new(tenant.Organization)
 	entity.ID = orgID
 	entity.BusinessUnitID = authCtx.BusinessUnitID
+	entity.BrokerageEnabled = current.BrokerageEnabled
+	entity.AssetOperationsEnabled = current.AssetOperationsEnabled
 
 	if err = c.ShouldBindJSON(entity); err != nil {
 		h.eh.HandleError(c, err)

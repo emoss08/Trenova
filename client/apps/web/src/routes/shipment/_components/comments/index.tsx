@@ -176,7 +176,7 @@ export default function ShipmentCommentsTab({ shipmentId }: { shipmentId: string
             />
           </div>
           {connectionState !== "connected" && (
-            <div className="flex items-center gap-1.5 border-t border-border bg-amber-500/5 px-4 py-1 text-2xs text-muted-foreground">
+            <div className="border-border text-2xs text-muted-foreground flex items-center gap-1.5 border-t bg-amber-500/5 px-4 py-1">
               <WifiOffIcon className="size-3" />
               Live updates paused — reconnecting…
             </div>
@@ -185,7 +185,7 @@ export default function ShipmentCommentsTab({ shipmentId }: { shipmentId: string
             <TypingIndicator typingUsers={typingUsers} />
             <ViewersStack viewers={viewers} />
           </div>
-          <div className="shrink-0 border-t border-border px-4 pt-3 pb-4">
+          <div className="border-border shrink-0 border-t px-4 pt-3 pb-4">
             <CommentComposer
               shipmentId={shipmentId}
               isSubmitting={mutations.isCreating}

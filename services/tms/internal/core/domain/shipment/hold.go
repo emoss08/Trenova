@@ -13,16 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type HoldSource string
-
-const (
-	HoldSourceUser HoldSource = "User"
-	HoldSourceRule HoldSource = "Rule"
-	HoldSourceAPI  HoldSource = "API"
-	HoldSourceELD  HoldSource = "ELD"
-	HoldSourceEDI  HoldSource = "EDI"
-)
-
 type ShipmentHold struct {
 	bun.BaseModel `bun:"table:shipment_holds,alias:shh" json:"-"`
 
@@ -68,7 +58,8 @@ func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
 			&h.BusinessUnitID,
 			validation.Required.Error("Business unit ID is required"),
 		),
-		validation.Field(&h.Type,
+		validation.Field(
+			&h.Type,
 			validation.Required.Error("Hold type is required"),
 			validation.In(
 				holdreason.HoldTypeOperational,
@@ -77,7 +68,8 @@ func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
 				holdreason.HoldTypeFinance,
 			).Error("Invalid hold type"),
 		),
-		validation.Field(&h.Severity,
+		validation.Field(
+			&h.Severity,
 			validation.Required.Error("Severity is required"),
 			validation.In(
 				holdreason.HoldSeverityInformational,
@@ -91,11 +83,13 @@ func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
 			validation.In(HoldSourceUser, HoldSourceRule, HoldSourceAPI, HoldSourceELD, HoldSourceEDI).
 				Error("Invalid hold source"),
 		),
-		validation.Field(&h.StartedAt,
+		validation.Field(
+			&h.StartedAt,
 			validation.Required.Error("Started At is required"),
 			validation.Min(int64(1)).Error("Started At must be greater than zero"),
 		),
-		validation.Field(&h.ReleasedAt,
+		validation.Field(
+			&h.ReleasedAt,
 			validation.By(func(_ any) error {
 				if h.ReleasedAt != nil && *h.ReleasedAt < h.StartedAt {
 					return errors.New("released at must be greater than or equal to started at")
@@ -103,12 +97,15 @@ func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
 				return nil
 			}),
 		),
-		validation.Field(&h.CreatedByID,
-			validation.When(h.Source == HoldSourceUser,
+		validation.Field(
+			&h.CreatedByID,
+			validation.When(
+				h.Source == HoldSourceUser,
 				validation.Required.Error("Created By is required when source is user"),
 			),
 		),
-		validation.Field(&h.BlocksDispatch,
+		validation.Field(
+			&h.BlocksDispatch,
 			validation.By(func(_ any) error {
 				if h.Severity == holdreason.HoldSeverityBlocking &&
 					(!h.BlocksDispatch && !h.BlocksDelivery && !h.BlocksBilling) {

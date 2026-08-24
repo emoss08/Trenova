@@ -95,6 +95,7 @@ search:
     indexes:
       shipments: shipments
       customers: customers
+      carriers: carriers
       workers: workers
       documents: documents
 

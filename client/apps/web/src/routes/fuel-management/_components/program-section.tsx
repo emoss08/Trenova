@@ -60,7 +60,7 @@ export default function ProgramSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Programs apply automatically to shipments of customers assigned to them — this week&apos;s
           computed rate is shown on each card
         </p>
@@ -78,11 +78,11 @@ export default function ProgramSection() {
         </div>
       ) : !entries || entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <Fuel className="size-5 text-muted-foreground" />
+          <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+            <Fuel className="text-muted-foreground size-5" />
           </div>
           <p className="mt-3 text-sm font-medium">No fuel surcharge programs</p>
-          <p className="mt-1 max-w-md text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 max-w-md text-xs">
             Create a program with a peg price and increment, assign it to customers from their
             billing profile, and fuel surcharges apply to shipments automatically.
           </p>
@@ -126,7 +126,7 @@ function ProgramCard({
   return (
     <div
       className={cn(
-        "group relative flex cursor-pointer flex-col rounded-lg border bg-card p-4 transition-colors hover:bg-muted/40",
+        "group bg-card hover:bg-muted/40 relative flex cursor-pointer flex-col rounded-lg border p-4 transition-colors",
         inactive && "opacity-60",
       )}
       onClick={onEdit}
@@ -139,7 +139,7 @@ function ProgramCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{entry.program.name}</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 truncate text-xs">
             {entry.program.code}
             {entry.program.fuelIndex ? ` · ${entry.program.fuelIndex.code}` : ""}
             {entry.program.fuelIndex?.region ? ` · ${entry.program.fuelIndex.region}` : ""}
@@ -155,7 +155,7 @@ function ProgramCard({
               event.stopPropagation();
               onDelete();
             }}
-            className="size-7 p-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+            className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive size-7 p-0 opacity-0 transition-opacity group-hover:opacity-100"
           >
             <Trash2 className="size-3.5" />
           </Button>
@@ -166,10 +166,10 @@ function ProgramCard({
         {rate ? (
           <>
             <span className="text-2xl font-semibold tabular-nums">{rate.value}</span>
-            <span className="text-xs text-muted-foreground">{rate.unit}</span>
+            <span className="text-muted-foreground text-xs">{rate.unit}</span>
           </>
         ) : (
-          <span className="text-sm text-muted-foreground">No rate for this week yet</span>
+          <span className="text-muted-foreground text-sm">No rate for this week yet</span>
         )}
       </div>
 
@@ -185,7 +185,7 @@ function ProgramCard({
         {entry.usedFallback && (
           <Badge
             variant="outline"
-            className="gap-1 border-amber-500/50 text-2xs text-amber-600 dark:text-amber-400"
+            className="text-2xs gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400"
           >
             <AlertTriangle className="size-3" />
             Prior week price

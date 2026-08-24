@@ -40,7 +40,7 @@ func NewValidator(p ValidatorParams) *Validator {
 				"stateId",
 				"State does not exist",
 				func(l *location.Location) pulid.ID { return l.StateID },
-				createStateCheck(p.DB),
+				validationframework.NewUSStateReferenceCheck(func() bun.IDB { return p.DB.DB() }),
 			).
 			WithCustomReferenceCheck(
 				"locationCategoryId",
@@ -49,26 +49,6 @@ func NewValidator(p ValidatorParams) *Validator {
 				createLocationCategoryCheck(p.DB),
 			).
 			Build(),
-	}
-}
-
-func createStateCheck(
-	db *postgres.Connection,
-) validationframework.CustomReferenceCheckFunc {
-	return func(ctx context.Context, _, _ pulid.ID, refID pulid.ID) (bool, error) {
-		if refID.IsNil() {
-			return true, nil
-		}
-
-		exists, err := db.DB().NewSelect().
-			TableExpr("us_states").
-			ColumnExpr("1").
-			Where("id = ?", refID).
-			Exists(ctx)
-		if err != nil {
-			return false, err
-		}
-		return exists, nil
 	}
 }
 

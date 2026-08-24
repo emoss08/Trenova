@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
-	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
@@ -23,11 +22,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
-
-// DetentionAlertThresholdMinutes is the resolver for the detentionAlertThresholdMinutes field.
-func (r *dashControlResolver) DetentionAlertThresholdMinutes(ctx context.Context, obj *tenant.DashControl) (int, error) {
-	return int(obj.DetentionAlertThresholdMinutes), nil
-}
 
 // InviteWorkerToPortal is the resolver for the inviteWorkerToPortal field.
 func (r *mutationResolver) InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalservice.InviteWorkerResult, error) {
@@ -893,8 +887,3 @@ func (r *queryResolver) DashControl(ctx context.Context) (*tenant.DashControl, e
 	}
 	return r.dashControlService.Get(ctx, tenantInfo(authCtx))
 }
-
-// DashControl returns generated.DashControlResolver implementation.
-func (r *Resolver) DashControl() generated.DashControlResolver { return &dashControlResolver{r} }
-
-type dashControlResolver struct{ *Resolver }

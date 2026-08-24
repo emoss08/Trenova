@@ -46,10 +46,10 @@ export function ExpressionEditor<T extends FieldValues>({
         >
           <div
             className={cn(
-              "overflow-hidden rounded-md border border-input transition-all duration-200",
-              "focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/30 focus-within:outline-hidden",
+              "border-input overflow-hidden rounded-md border transition-all duration-200",
+              "focus-within:border-brand focus-within:ring-brand/30 focus-within:ring-4 focus-within:outline-hidden",
               fieldState.invalid &&
-                "border-destructive focus-within:border-destructive focus-within:ring-4 focus-within:ring-destructive/20",
+                "border-destructive focus-within:border-destructive focus-within:ring-destructive/20 focus-within:ring-4",
             )}
           >
             <CodeMirror

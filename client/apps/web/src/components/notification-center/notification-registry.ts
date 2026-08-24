@@ -5,14 +5,18 @@ import {
   BanIcon,
   BellIcon,
   CalendarOffIcon,
+  CircleCheckIcon,
   CircleDollarSignIcon,
   DatabaseZapIcon,
   FileDownIcon,
   FileWarningIcon,
   FileXIcon,
+  FilterXIcon,
   LandmarkIcon,
   MailWarningIcon,
+  OctagonAlertIcon,
   ReceiptTextIcon,
+  TriangleAlertIcon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -79,6 +83,9 @@ export interface NotificationDescriptor {
 }
 
 const reportRunsLink = () => "/reports/runs";
+
+const dispatchConsoleLink = (notification: Notification) =>
+  notificationDataString(notification, "link") ?? "/dispatch/console";
 
 const REPORT_READY: NotificationDescriptor = {
   category: "Reports",
@@ -179,6 +186,48 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     tileClass: "bg-destructive/10",
     getLink: (n) => notificationDataString(n, "link") ?? "/edi/inbound-files",
   },
+  tender_accepted: {
+    category: "Dispatch",
+    icon: CircleCheckIcon,
+    iconClass: "text-success",
+    tileClass: "bg-success/10",
+    getLink: dispatchConsoleLink,
+  },
+  tender_needs_review: {
+    category: "Dispatch",
+    icon: TriangleAlertIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning/10",
+    getLink: dispatchConsoleLink,
+  },
+  tender_waterfall_exhausted: {
+    category: "Dispatch",
+    icon: OctagonAlertIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-destructive/10",
+    getLink: dispatchConsoleLink,
+  },
+  rate_confirmation_issue_failed: {
+    category: "Dispatch",
+    icon: FileWarningIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-destructive/10",
+    getLink: dispatchConsoleLink,
+  },
+  tender_delivery_failed: {
+    category: "Dispatch",
+    icon: MailWarningIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-destructive/10",
+    getLink: dispatchConsoleLink,
+  },
+  tender_entries_skipped: {
+    category: "Dispatch",
+    icon: FilterXIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning/10",
+    getLink: dispatchConsoleLink,
+  },
 };
 
 const TCA_DESCRIPTOR: NotificationDescriptor = {
@@ -186,6 +235,7 @@ const TCA_DESCRIPTOR: NotificationDescriptor = {
   icon: DatabaseZapIcon,
   iconClass: "text-info",
   tileClass: "bg-info/10",
+  getLink: (n) => notificationDataString(n, "link"),
 };
 
 const FALLBACK_DESCRIPTOR: NotificationDescriptor = {
@@ -193,6 +243,7 @@ const FALLBACK_DESCRIPTOR: NotificationDescriptor = {
   icon: BellIcon,
   iconClass: "text-muted-foreground",
   tileClass: "bg-muted",
+  getLink: (n) => notificationDataString(n, "link"),
 };
 
 export function getNotificationDescriptor(eventType: string): NotificationDescriptor {

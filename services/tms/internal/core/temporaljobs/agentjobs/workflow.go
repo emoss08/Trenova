@@ -85,7 +85,8 @@ func BillingExceptionAgentWorkflow(ctx workflow.Context, payload *AgentRunPayloa
 		TenantInfo:      tenant,
 		Proposals:       diagnosis.Proposals,
 		Exceptions:      diagnosis.Exceptions,
-	}).Get(persistCtx, nil); err != nil {
+	}).
+		Get(persistCtx, nil); err != nil {
 		_ = completeRun(ctx, a, payload.RunID, agent.RunStatusFailed, tenant)
 		return err
 	}

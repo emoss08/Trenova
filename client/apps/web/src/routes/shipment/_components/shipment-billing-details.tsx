@@ -4,23 +4,37 @@ import {
   OrderAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import { Separator } from "@trenova/shared/components/ui/separator";
-import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { TextareaField } from "@/components/fields/textarea-field";
+import { useShipmentAutoRate } from "@/hooks/use-shipment-auto-rate";
 import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
 import { queries } from "@/lib/queries";
+import { useQuery } from "@tanstack/react-query";
+import {
+  CapabilityFields,
+  type FieldDescriptor,
+} from "@trenova/shared/components/capability-form-section";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormSection } from "@trenova/shared/components/ui/form";
+import { Separator } from "@trenova/shared/components/ui/separator";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { getProfile } from "@trenova/shared/lib/capability";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { CreditStatus } from "@trenova/shared/types/customer";
-import type { GetPreviousRatesRequest, Shipment } from "@trenova/shared/types/shipment";
-import { useQuery } from "@tanstack/react-query";
-import { AlertTriangleIcon, ShieldAlertIcon, ShieldIcon } from "lucide-react";
+import type {
+  ContractRate,
+  GetPreviousRatesRequest,
+  Shipment,
+} from "@trenova/shared/types/shipment";
+import { AlertTriangleIcon, ShieldAlertIcon, ShieldIcon, SparklesIcon } from "lucide-react";
 import type React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { FuelSurchargeChangeDialog } from "./additional-charges/fuel-surcharge-change-dialog";
+import { AutoRateDialog } from "./auto-rate-dialog";
 import { PreviousRatesButton } from "./previous-rates-dialog";
 import { ProfitabilitySummary } from "./profitability/profitability-summary";
+import { WhyThisRate } from "./why-this-rate";
 
 function Inner({ children }: { children: React.ReactNode }) {
   const { control, getValues } = useFormContext<Shipment>();
@@ -48,7 +62,7 @@ function Inner({ children }: { children: React.ReactNode }) {
       title="Billing & Rating"
       description="Customer, rating method, and charge amounts"
       action={<PreviousRatesButton request={previousRatesRequest} />}
-      className="border-t border-border pt-4"
+      className="border-border border-t pt-4"
     >
       {children}
     </FormSection>
@@ -121,14 +135,14 @@ function ChargeSummaryRow({
   return (
     <div className="flex items-center justify-between">
       <span
-        className={cn("text-sm", bold ? "font-medium text-foreground" : "text-muted-foreground")}
+        className={cn("text-sm", bold ? "text-foreground font-medium" : "text-muted-foreground")}
       >
         {label}
       </span>
       <span
         className={cn(
           "tracking-tight tabular-nums",
-          bold ? "text-base font-semibold text-foreground" : "text-sm text-muted-foreground",
+          bold ? "text-foreground text-base font-semibold" : "text-muted-foreground text-sm",
         )}
       >
         {formatCurrency(value ?? 0)}
@@ -144,17 +158,17 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
   const freightChargeAmount = useWatch({ control, name: "freightChargeAmount" });
 
   return (
-    <div className="relative mt-3 overflow-hidden rounded-lg border bg-muted/50 p-2">
+    <div className="bg-muted/50 relative mt-3 overflow-hidden rounded-lg border p-2">
       {isCalculating && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/50 backdrop-blur-[2px]">
+        <div className="bg-background/50 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-[2px]">
           <TextShimmer as="span" className="text-sm font-medium" duration={1.5}>
             Calculating...
           </TextShimmer>
         </div>
       )}
       {error && !isCalculating && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-destructive/5 backdrop-blur-[2px]">
-          <div className="flex items-center gap-2 text-destructive">
+        <div className="bg-destructive/5 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-[2px]">
+          <div className="text-destructive flex items-center gap-2">
             <AlertTriangleIcon className="size-4" />
             <span className="text-sm font-medium">{error}</span>
           </div>
@@ -162,7 +176,7 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
       )}
       <div className="mb-3">
         <span className="text-xs font-medium">Charge Summary</span>
-        <p className="mt-0.5 text-2xs text-muted-foreground">
+        <p className="text-2xs text-muted-foreground mt-0.5">
           Automatically calculated based on the rating method, freight charges, and any additional
           accessorial charges.
         </p>
@@ -177,9 +191,86 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
   );
 }
 
-function RatingBreakdownCard() {
+/**
+ * Says which contract just filled in the rating fields.
+ *
+ * The numbers appear in the form as ordinary values, so without this the rater
+ * has no way of telling a contract rate from something a colleague typed — and
+ * they are free to change any of it, which is worth saying plainly.
+ */
+function ContractRateAppliedAlert({
+  rate,
+  onDismiss,
+}: {
+  rate: ContractRate;
+  onDismiss: () => void;
+}) {
+  return (
+    <Alert variant="info" className="mb-3">
+      <SparklesIcon className="size-4" />
+      <AlertTitle>
+        Rated from {rate.agreementName || "a rate agreement"}
+        {rate.ruleLabel ? ` — ${rate.ruleLabel}` : ""}
+      </AlertTitle>
+      <AlertDescription>
+        <span>
+          The rating method and base rate below came from the contract
+          {rate.accessorials.length > 0
+            ? `, along with ${rate.accessorials.length} automatic ${
+                rate.accessorials.length === 1 ? "charge" : "charges"
+              }`
+            : ""}
+          . Change any of them and this shipment is priced by hand instead.
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="mt-1 h-6 px-1.5"
+          onClick={onDismiss}
+        >
+          <span className="text-2xs">Dismiss</span>
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+/**
+ * Asks why a shipment is priced at something other than its contract.
+ *
+ * It appears only once a shipment has actually departed, because that is the
+ * only moment the question means anything. The answer is what the audit trail
+ * explains the invoice with, and what the organization's billing policy can
+ * require before the shipment is allowed to bill.
+ */
+function RateDepartureReason() {
   const { control } = useFormContext<Shipment>();
+  const autoRated = useWatch({ control, name: "autoRated" });
+  const agreementId = useWatch({ control, name: "rateAgreementId" });
+  const overrideAmount = useWatch({ control, name: "rateOverrideAmount" });
+
+  if (autoRated || !agreementId || !overrideAmount) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3">
+      <TextareaField
+        control={control}
+        name="rateOverrideReason"
+        label="Reason for the rate change"
+        placeholder="Why is this shipment priced differently from its contract?"
+        description="This shipment no longer charges what its rate agreement says. The reason is kept with the rating history and shown on the rate leakage report."
+      />
+    </div>
+  );
+}
+
+function RatingBreakdownCard() {
+  const { control, getValues } = useFormContext<Shipment>();
   const ratingDetail = useWatch({ control, name: "ratingDetail" });
+  const shipmentId = getValues("id");
 
   const breakdown = ratingDetail?.breakdown ?? [];
   const guardrail = ratingDetail?.guardrail;
@@ -188,34 +279,49 @@ function RatingBreakdownCard() {
     return null;
   }
 
+  // The contract that priced the shipment leads, since that is what somebody
+  // reading an invoice recognises. The formula name only appears when a formula
+  // is what actually produced the number.
+  const source = ratingDetail.agreementName || ratingDetail.formulaTemplateName;
+
   return (
-    <div className="mt-3 rounded-lg border bg-muted/50 p-2">
+    <div className="bg-muted/50 mt-3 rounded-lg border p-2">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <div>
-          <span className="text-xs font-medium">Rating Breakdown</span>
-          <p className="mt-0.5 text-2xs text-muted-foreground">
-            Itemized amounts from {ratingDetail.formulaTemplateName || "the rating formula"}
+        <div className="flex flex-col gap-1 w-full">
+          <div className="flex justify-between items-center">
+            <div className="flex flex-row gap-1">
+              <span className="text-xs font-medium">Rating Breakdown</span>
+              <AutoRateDialog />
+            </div>
+            <WhyThisRate shipmentId={shipmentId} />
+          </div>
+          <p className="text-2xs text-muted-foreground mt-0.5">
+            {ratingDetail.ruleLabel
+              ? `${source} — ${ratingDetail.ruleLabel}`
+              : `Itemized amounts from ${source || "the rating formula"}`}
           </p>
         </div>
-        {ratingDetail.versionNumber ? (
-          <Badge variant="outline" className="font-mono text-2xs">
-            v{ratingDetail.versionNumber}
-          </Badge>
-        ) : null}
+        <div className="flex items-center gap-1">
+          {ratingDetail.versionNumber ? (
+            <Badge variant="outline" className="text-2xs font-mono">
+              v{ratingDetail.versionNumber}
+            </Badge>
+          ) : null}
+        </div>
       </div>
 
       {breakdown.length > 0 && (
         <div className="space-y-2">
           {breakdown.map((item) => (
             <div key={item.name} className="flex items-center justify-between gap-3">
-              <span className="text-sm text-muted-foreground">{item.label || item.name}</span>
+              <span className="text-muted-foreground text-sm">{item.label || item.name}</span>
               {item.error ? (
-                <span className="flex items-center gap-1 text-xs text-destructive">
+                <span className="text-destructive flex items-center gap-1 text-xs">
                   <AlertTriangleIcon className="size-3" />
                   {item.error}
                 </span>
               ) : (
-                <span className="text-sm tracking-tight text-muted-foreground tabular-nums">
+                <span className="text-muted-foreground text-sm tracking-tight tabular-nums">
                   {formatCurrency(item.amount)}
                 </span>
               )}
@@ -227,7 +333,7 @@ function RatingBreakdownCard() {
       {guardrail?.applied && (
         <div
           className={cn(
-            "flex items-start gap-2 rounded-md border bg-background/50 px-2 py-1.5",
+            "bg-background/50 flex items-start gap-2 rounded-md border px-2 py-1.5",
             breakdown.length > 0 && "mt-3",
           )}
         >
@@ -256,6 +362,75 @@ export default function ShipmentBillingDetails() {
     fuelSurchargeChange,
     resolveFuelSurchargeChange,
   } = useShipmentTotalsPreview();
+  const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+
+  // A contract prices a shipment once, while it is being typed. An existing
+  // one already carries a rate somebody may have negotiated, and replacing it
+  // on open is exactly what this design exists to stop.
+  const { appliedRate, dismissAppliedRate } = useShipmentAutoRate({ enabled: !shipmentId });
+
+  const profile = getProfile(shipmentUIPolicy);
+
+  const descriptors: FieldDescriptor[] = [
+    {
+      name: "orderId",
+      render: () => (
+        <OrderAutocompleteField
+          control={control}
+          name="orderId"
+          label="Order"
+          placeholder="Select Order"
+          description="Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards."
+          disabled={!customerId}
+          extraSearchParams={customerId ? { customerId, attachableOnly: "true" } : undefined}
+        />
+      ),
+    },
+    {
+      name: "customerId",
+      render: () => (
+        <CustomerAutocompleteField
+          control={control}
+          name="customerId"
+          rules={{ required: true }}
+          label="Customer"
+          placeholder="Select Customer"
+          description="Choose the customer who requested this shipment."
+        />
+      ),
+    },
+    {
+      name: "formulaTemplateId",
+      cols: "full",
+      render: () => (
+        <FormulaTemplateAutocompleteField
+          control={control}
+          name="formulaTemplateId"
+          label="Rating Method"
+          placeholder="Select Rating Method"
+          description="Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate)."
+          rules={{ required: true }}
+        />
+      ),
+    },
+    {
+      name: "baseRate",
+      cols: "full",
+      render: () => (
+        <NumberField
+          decimalScale={4}
+          thousandSeparator
+          control={control}
+          rules={{ required: true }}
+          name="baseRate"
+          label="Base Rate"
+          placeholder="Enter Base Rate"
+          description="Per-unit rate used by the formula template to calculate freight charges."
+          sideText="USD"
+        />
+      ),
+    },
+  ];
 
   return (
     <Inner>
@@ -263,57 +438,16 @@ export default function ShipmentBillingDetails() {
         change={fuelSurchargeChange}
         onResolve={resolveFuelSurchargeChange}
       />
+      {appliedRate && (
+        <ContractRateAppliedAlert rate={appliedRate} onDismiss={dismissAppliedRate} />
+      )}
       {customerId && <CreditHoldAlert customerId={customerId} />}
       {shipmentId && <ProfitabilitySummary shipmentId={shipmentId} />}
-      <FormGroup cols={2}>
-        <FormControl>
-          <OrderAutocompleteField
-            control={control}
-            name="orderId"
-            label="Order"
-            placeholder="Select Order"
-            description="Optionally group this shipment under a commercial order for the same customer. Set on creation; use the order's Add Legs afterwards."
-            disabled={!customerId}
-            extraSearchParams={customerId ? { customerId, attachableOnly: "true" } : undefined}
-          />
-        </FormControl>
-        <FormControl>
-          <CustomerAutocompleteField
-            control={control}
-            name="customerId"
-            rules={{ required: true }}
-            label="Customer"
-            placeholder="Select Customer"
-            description="Choose the customer who requested this shipment."
-          />
-        </FormControl>
-        <FormControl cols="full">
-          <FormulaTemplateAutocompleteField
-            control={control}
-            name="formulaTemplateId"
-            label="Rating Method"
-            placeholder="Select Rating Method"
-            description="Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate)."
-            rules={{ required: true }}
-          />
-        </FormControl>
-        <FormControl cols="full">
-          <NumberField
-            decimalScale={4}
-            thousandSeparator
-            control={control}
-            rules={{ required: true }}
-            name="baseRate"
-            label="Base Rate"
-            placeholder="Enter Base Rate"
-            description="Per-unit rate used by the formula template to calculate freight charges."
-            sideText="USD"
-          />
-        </FormControl>
-      </FormGroup>
+      <CapabilityFields descriptors={descriptors} profile={profile} />
 
       <ChargeSummary isCalculating={isCalculating} error={totalsError} />
       <RatingBreakdownCard />
+      <RateDepartureReason />
     </Inner>
   );
 }

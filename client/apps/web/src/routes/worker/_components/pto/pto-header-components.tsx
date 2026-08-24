@@ -33,7 +33,7 @@ export function HeaderContent({
     <HeaderOuter>
       <div className="flex flex-col leading-tight">
         <h3 className="font-table text-lg font-medium">{title}</h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Records shown in the timezone of <span>{userTimezoneLabel}</span>
         </p>
       </div>

@@ -101,7 +101,13 @@ export const Form = React.memo(({ className, onSubmit, children, ...props }: For
   };
 
   return (
-    <form onSubmit={handleSubmit} className={className} {...props}>
+    // Validation is react-hook-form's and zod's job, and native constraint validation
+    // only gets in its way: a control that fails a browser constraint blocks submission
+    // before React sees the event. The controls that trip it are usually invisible —
+    // Base UI's NumberField, for one, mirrors its value into an aria-hidden input
+    // carrying min/max/step — so the browser refuses a submit it cannot even focus a
+    // control to explain ("An invalid form control with name='' is not focusable").
+    <form onSubmit={handleSubmit} className={className} noValidate {...props}>
       <FormRootError className="mb-4" />
       {children}
     </form>

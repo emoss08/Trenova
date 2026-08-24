@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -72,6 +73,8 @@ func TestMutationResolver_UpdateOrganization_MapsInputToService(t *testing.T) {
 	bucketName := "acme-bucket"
 	addressLine2 := "Suite 200"
 	taxID := "12-3456789"
+	brokerageEnabled := false
+	assetOperationsEnabled := true
 	expected := &tenant.Organization{
 		ID:             orgID,
 		BusinessUnitID: buID,
@@ -97,7 +100,9 @@ func TestMutationResolver_UpdateOrganization_MapsInputToService(t *testing.T) {
 				entity.City == "Chicago" &&
 				entity.PostalCode == "60601" &&
 				entity.Timezone == "America/Chicago" &&
-				entity.TaxID == taxID
+				entity.TaxID == taxID &&
+				!entity.BrokerageEnabled &&
+				entity.AssetOperationsEnabled
 		})).
 		Return(expected, nil).
 		Once()
@@ -129,6 +134,9 @@ func TestMutationResolver_UpdateOrganization_MapsInputToService(t *testing.T) {
 		PostalCode:   "60601",
 		Timezone:     "America/Chicago",
 		TaxID:        &taxID,
+
+		BrokerageEnabled:       &brokerageEnabled,
+		AssetOperationsEnabled: &assetOperationsEnabled,
 	})
 	require.NoError(t, err)
 
@@ -136,4 +144,57 @@ func TestMutationResolver_UpdateOrganization_MapsInputToService(t *testing.T) {
 	require.NotNil(t, permissionEngine.request)
 	assert.Equal(t, permission.ResourceOrganization.String(), permissionEngine.request.Resource)
 	assert.Equal(t, permission.OpUpdate, permissionEngine.request.Operation)
+}
+
+func TestMutationResolver_UpdateOrganization_PreservesOmittedCapabilityFlags(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	stateID := pulid.MustNew("us_")
+	stored := &tenant.Organization{
+		ID:                     orgID,
+		BusinessUnitID:         buID,
+		BrokerageEnabled:       false,
+		AssetOperationsEnabled: true,
+	}
+	organizationService := mocks.NewMockOrganizationService(t)
+	organizationService.EXPECT().
+		GetByID(mock.Anything, repositories.GetOrganizationByIDRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		}).
+		Return(stored, nil).
+		Once()
+	organizationService.EXPECT().
+		Update(mock.Anything, mock.MatchedBy(func(entity *tenant.Organization) bool {
+			return !entity.BrokerageEnabled && entity.AssetOperationsEnabled
+		})).
+		Return(stored, nil).
+		Once()
+	resolver := &mutationResolver{&Resolver{
+		organizationService: organizationService,
+		permissionEngine:    &recordingPermissionEngine{},
+	}}
+	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{
+		PrincipalType:  authctx.PrincipalTypeUser,
+		PrincipalID:    userID,
+		UserID:         userID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+	})
+
+	result, err := resolver.UpdateOrganization(ctx, orgID.String(), gqlmodel.OrganizationInput{
+		Version:      1,
+		Name:         "Acme Logistics",
+		ScacCode:     "ACME",
+		DotNumber:    "1234567",
+		AddressLine1: "123 Main St",
+		City:         "Chicago",
+		StateID:      stateID.String(),
+		PostalCode:   "60601",
+		Timezone:     "America/Chicago",
+	})
+	require.NoError(t, err)
+	assert.Same(t, stored, result)
 }

@@ -96,7 +96,12 @@ func (s *PostmarkSender) Send(
 		return nil, fmt.Errorf("%w: marshal postmark payload: %w", ErrNonRetryableSend, err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/email", bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		baseURL+"/email",
+		bytes.NewReader(body),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("%w: create postmark request: %w", ErrNonRetryableSend, err)
 	}

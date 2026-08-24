@@ -65,7 +65,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
 
   if (measures.length === 0) {
     return (
-      <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground px-2 py-4 text-center text-sm">
         Pivots spread measures across the values of a dimension — add a measure column first.
       </p>
     );
@@ -118,7 +118,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
       {pivot && (
         <>
           <div className="flex flex-col gap-1.5">
-            <Label className="text-xs text-muted-foreground">Pivot Values</Label>
+            <Label className="text-muted-foreground text-xs">Pivot Values</Label>
             {pivotField && pivotField.enumValues.length > 0 ? (
               <div className="flex flex-col gap-1">
                 {pivotField.enumValues.map((enumValue) => (
@@ -161,14 +161,14 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
           </div>
           {pivot.values.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <Label className="text-xs text-muted-foreground">Column names</Label>
+              <Label className="text-muted-foreground text-xs">Column names</Label>
               <p className="text-2xs text-muted-foreground">
                 Each pivot value becomes its own column — name them however the report should read.
               </p>
               <div className="flex flex-col gap-1">
                 {pivot.values.map((value, valueIndex) => (
                   <div key={value} className="flex items-center gap-2">
-                    <span className="w-24 shrink-0 truncate text-xs text-muted-foreground">
+                    <span className="text-muted-foreground w-24 shrink-0 truncate text-xs">
                       {pivotValueLabel(pivotField, value)}
                     </span>
                     <Input
@@ -188,7 +188,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
             </div>
           )}
           <div className="flex flex-col gap-1.5">
-            <Label className="text-xs text-muted-foreground">Measures to Pivot</Label>
+            <Label className="text-muted-foreground text-xs">Measures to Pivot</Label>
             <div className="flex flex-col gap-1">
               {measures.map((column) => (
                 <label key={column.id} className="flex items-center gap-2 text-sm">
@@ -210,7 +210,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <Label htmlFor="pivot-include-other" className="text-xs text-muted-foreground">
+            <Label htmlFor="pivot-include-other" className="text-muted-foreground text-xs">
               Include &quot;Other&quot; bucket
             </Label>
             <Switch

@@ -95,7 +95,7 @@ export default function ReconciliationWorkspace({
             <ScrollArea className="min-h-0 flex-1">
               <div className="border-b">
                 <div className="px-3 pt-2 pb-1">
-                  <span className="text-2xs font-medium tracking-wider text-muted-foreground/50 uppercase">
+                  <span className="text-2xs text-muted-foreground/50 font-medium tracking-wider uppercase">
                     Required Details
                   </span>
                 </div>
@@ -107,7 +107,7 @@ export default function ReconciliationWorkspace({
 
               <div className="border-b">
                 <div className="px-3 pt-3 pb-1">
-                  <span className="text-2xs font-medium tracking-wider text-muted-foreground/50 uppercase">
+                  <span className="text-2xs text-muted-foreground/50 font-medium tracking-wider uppercase">
                     Extracted Fields
                   </span>
                 </div>
@@ -123,7 +123,7 @@ export default function ReconciliationWorkspace({
               {state.stops.length > 0 && (
                 <div>
                   <div className="px-3 pt-3 pb-1">
-                    <span className="text-2xs font-medium tracking-wider text-muted-foreground/50 uppercase">
+                    <span className="text-2xs text-muted-foreground/50 font-medium tracking-wider uppercase">
                       Stops
                     </span>
                   </div>
@@ -142,8 +142,8 @@ export default function ReconciliationWorkspace({
                 </div>
               )}
             </ScrollArea>
-            <div className="flex shrink-0 items-center justify-between border-t bg-muted/30 px-4 py-2.5">
-              <div className="text-xs text-muted-foreground">
+            <div className="bg-muted/30 flex shrink-0 items-center justify-between border-t px-4 py-2.5">
+              <div className="text-muted-foreground text-xs">
                 {counts.total} fields
                 {issueCount > 0 && (
                   <span className="ml-1 text-amber-500">&middot; {issueCount} need attention</span>

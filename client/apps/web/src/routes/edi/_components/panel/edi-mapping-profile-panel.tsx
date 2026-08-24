@@ -84,7 +84,7 @@ export function MappingProfilePanel({
   return (
     <Tabs defaultValue="Customer" className="gap-3">
       <TabsList
-        className="w-full flex-wrap justify-start! border-b border-border px-1"
+        className="border-border w-full flex-wrap justify-start! border-b px-1"
         variant="underline"
       >
         {mappingEntityTypes.map((entityType) => (
@@ -194,7 +194,7 @@ export function MappingProfilePanel({
                   ))}
                   {entries.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="h-16 text-center text-muted-foreground">
+                      <TableCell colSpan={3} className="text-muted-foreground h-16 text-center">
                         No mappings saved for {entityType}.
                       </TableCell>
                     </TableRow>
@@ -242,7 +242,7 @@ function MappingSourceInput({
         renderOption={(option) => (
           <div className="flex size-full flex-col items-start">
             <span className="w-full truncate font-medium">{option.code}</span>
-            <span className="w-full truncate text-2xs text-muted-foreground">{option.label}</span>
+            <span className="text-2xs text-muted-foreground w-full truncate">{option.label}</span>
           </div>
         )}
       />

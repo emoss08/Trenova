@@ -196,7 +196,10 @@ func (r *repository) ListConnection(
 					NewSelect().
 					Model(entities).
 					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return applyHazmatSegregationRuleColumns(sq, req.HazmatSegregationRuleColumns)
+						return applyHazmatSegregationRuleColumns(
+							sq,
+							req.HazmatSegregationRuleColumns,
+						)
 					})
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {

@@ -211,7 +211,7 @@ function CadenceSentence({
     <p className="text-2xs text-muted-foreground" aria-live="polite">
       {described ? (
         <>
-          Runs <span className="font-medium text-foreground">{described.toLowerCase()}</span>
+          Runs <span className="text-foreground font-medium">{described.toLowerCase()}</span>
           {" · "}
           {timezoneLabel(timezone)}
         </>
@@ -241,7 +241,7 @@ function ToggleChip({
       className={cn(
         "inline-flex h-6 items-center gap-1 rounded-md border px-2 text-xs font-medium",
         "transition-[border-color,background-color,color] duration-150",
-        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
         active
           ? "border-blue-600 bg-blue-600/10 text-blue-600 dark:text-blue-400"
           : "border-input text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground",
@@ -284,7 +284,7 @@ function AlertConditionFields({
   const measureLabel = measures.find((choice) => choice.value === columnId)?.label ?? "the total";
 
   return (
-    <div className="flex flex-col gap-3 border-t border-border pt-3">
+    <div className="border-border flex flex-col gap-3 border-t pt-3">
       <SectionLabel>Alert</SectionLabel>
       <SwitchField
         control={control}
@@ -335,7 +335,7 @@ function AlertConditionFields({
                   />
                 )}
               </div>
-              {!targetsMeasure && <span className="pb-2 text-xs text-muted-foreground">rows</span>}
+              {!targetsMeasure && <span className="text-muted-foreground pb-2 text-xs">rows</span>}
             </div>
             <p className="text-2xs text-muted-foreground">
               {targetsMeasure ? (
@@ -365,7 +365,7 @@ function AlertConditionFields({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
+    <span className="text-2xs text-muted-foreground font-semibold tracking-wide uppercase">
       {children}
     </span>
   );
@@ -464,7 +464,7 @@ function CadenceBuilder({ control }: { control: Control<ScheduleFormValues> }) {
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 p-3">
+    <div className="border-border bg-muted/30 flex flex-col gap-3 rounded-lg border p-3">
       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-sm">
         <span className="text-muted-foreground">Run</span>
         <Select items={FREQUENCY_OPTIONS} value={tab} onValueChange={handleFrequencyChange}>
@@ -617,7 +617,7 @@ function ScheduleForm({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="flex flex-col gap-5 rounded-lg border border-border bg-card p-4"
+      className="border-border bg-card flex flex-col gap-5 rounded-lg border p-4"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="flex flex-col gap-2.5">
@@ -678,7 +678,7 @@ function ScheduleForm({
 
       <AlertConditionFields control={control} measures={measures} />
 
-      <div className="flex items-center justify-between border-t border-border pt-3">
+      <div className="border-border flex items-center justify-between border-t pt-3">
         <SwitchField control={control} name="enabled" label="Enabled" />
         <div className="flex shrink-0 gap-2">
           <Button type="button" variant="outline" size="sm" onClick={onCancel}>
@@ -767,8 +767,8 @@ function ScheduleRow({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: Math.min(index, 8) * 0.03, ease: "easeOut" }}
       className={cn(
-        "group flex items-center gap-3 rounded-lg border border-border bg-card p-3",
-        "transition-[border-color,box-shadow,opacity] duration-200 hover:border-brand/60",
+        "group border-border bg-card flex items-center gap-3 rounded-lg border p-3",
+        "hover:border-brand/60 transition-[border-color,box-shadow,opacity] duration-200",
         !schedule.enabled && "opacity-60",
       )}
     >
@@ -791,13 +791,13 @@ function ScheduleRow({
             <code className="truncate text-sm">{schedule.cronExpression}</code>
           )}
           {schedule.consecutiveFailures > 0 && (
-            <Badge variant="warning" className="h-5 gap-1 text-2xs">
+            <Badge variant="warning" className="text-2xs h-5 gap-1">
               <TriangleAlertIcon className="size-3" />
               {schedule.consecutiveFailures} failed
             </Badge>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs text-muted-foreground">
+        <div className="text-2xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5">
           <span>{timezoneLabel(schedule.timezone)}</span>
           <span className="text-muted-foreground/50">·</span>
           <span className="tracking-wide uppercase">
@@ -827,7 +827,7 @@ function ScheduleRow({
             disabled={deleting}
             aria-label="Delete schedule"
           >
-            <Trash2Icon className="size-3.5 text-destructive" />
+            <Trash2Icon className="text-destructive size-3.5" />
           </Button>
         </div>
         <Switch
@@ -954,9 +954,9 @@ export function ReportSchedulesDialog({
             </>
           )}
           {!isLoading && (schedules ?? []).length === 0 && editing === null && (
-            <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border py-8">
-              <div className="flex size-9 items-center justify-center rounded-md bg-muted">
-                <CalendarClockIcon className="size-4.5 text-muted-foreground" strokeWidth={1.75} />
+            <div className="border-border flex flex-col items-center gap-2 rounded-lg border border-dashed py-8">
+              <div className="bg-muted flex size-9 items-center justify-center rounded-md">
+                <CalendarClockIcon className="text-muted-foreground size-4.5" strokeWidth={1.75} />
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium">No schedules yet</p>

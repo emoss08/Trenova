@@ -9,6 +9,7 @@ import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge
 import type { AccountType } from "@/types/account-type";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Commodity } from "@trenova/shared/types/commodity";
+import type { RateAgreement, RateMatrix, RateZone } from "@trenova/shared/types/rate";
 import type { DetentionPolicy } from "@trenova/shared/types/detention";
 import type { DistanceProfile } from "@/types/distance-profile";
 import type { Document } from "@trenova/shared/types/document";
@@ -157,6 +158,10 @@ function selectOptionDateRange(option: GraphQLSelectOption) {
   return formatRange(startDate, endDate);
 }
 
+const carrierSelectOptionsGraphQL = {
+  resource: "CARRIER",
+} satisfies GraphQLSelectOptionsConfig;
+
 const customerSelectOptionsGraphQL = {
   resource: "CUSTOMER",
 } satisfies GraphQLSelectOptionsConfig;
@@ -272,7 +277,7 @@ function EDIOptionStack({ primary, secondary }: { primary: ReactNode; secondary?
     <div className="flex size-full min-w-0 flex-col items-start pr-4">
       <span className="w-full truncate">{primary}</span>
       {secondary ? (
-        <span className="w-full truncate text-2xs text-muted-foreground">{secondary}</span>
+        <span className="text-2xs text-muted-foreground w-full truncate">{secondary}</span>
       ) : null}
     </div>
   );
@@ -422,7 +427,7 @@ export function EquipmentTypeAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
           {option?.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
             </span>
           )}
@@ -447,7 +452,7 @@ export function EquipmentManufacturerAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span className="w-full truncate">{option.label}</span>
           {option.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description}
             </span>
           )}
@@ -503,7 +508,7 @@ export function FleetCodeAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <ColorOptionValue color={option.color} value={option.code} />
           {option?.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
             </span>
           )}
@@ -527,7 +532,7 @@ export function ShipmentTypeAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <ColorOptionValue color={option.color} value={option.code} />
           {option?.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
             </span>
           )}
@@ -551,7 +556,7 @@ export function ServiceTypeAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <ColorOptionValue color={option.color} value={option.code} />
           {option?.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
             </span>
           )}
@@ -588,7 +593,7 @@ export function WorkerAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.label}</span>
           {selectOptionMetaString(option, "fleetCode") && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               Fleet: {selectOptionMetaString(option, "fleetCode")}
             </span>
           )}
@@ -613,7 +618,7 @@ export function ShipmentAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span className="w-full truncate">{option.label}</span>
           {(selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")) && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")}
             </span>
           )}
@@ -638,7 +643,7 @@ export function OrderAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span className="w-full truncate">{option.label}</span>
           {option.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description}
             </span>
           )}
@@ -675,6 +680,32 @@ export function CustomerAutocompleteField<T extends FieldValues>({
   );
 }
 
+export function CarrierAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/carriers/select-options/"
+      graphql={carrierSelectOptionsGraphQL}
+      popoutLink="/dispatch/carriers"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return code ? `${code} - ${option.label}` : option.label;
+      }}
+      renderOption={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return (
+          <div className="flex size-full flex-col items-start">
+            <span>{code ? `${code} - ${option.label}` : option.label}</span>
+          </div>
+        );
+      }}
+      {...props}
+    />
+  );
+}
+
 export function EDICommunicationProfileAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<EDICommunicationProfile, T>) {
@@ -687,7 +718,7 @@ export function EDICommunicationProfileAutocompleteField<T extends FieldValues>(
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
           <span>{option.name}</span>
-          <span className="w-full truncate text-2xs text-muted-foreground">
+          <span className="text-2xs text-muted-foreground w-full truncate">
             {option.method} · {option.status}
           </span>
         </div>
@@ -735,7 +766,7 @@ export function EDIMappingProfileAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.name}</span>
           {option.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description}
             </span>
           )}
@@ -761,7 +792,7 @@ export function GLAccountAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.label}</span>
           {option?.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description}
             </span>
           )}
@@ -787,7 +818,7 @@ export function GLAccountMultiSelectAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.label}</span>
           {option?.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description}
             </span>
           )}
@@ -814,7 +845,7 @@ export function AccountTypeAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <ColorOptionValue color={option.color} value={option.code} />
           {option?.name && (
-            <span className="w-full truncate text-2xs text-muted-foreground">{option.name}</span>
+            <span className="text-2xs text-muted-foreground w-full truncate">{option.name}</span>
           )}
         </div>
       )}
@@ -837,7 +868,7 @@ export function LocationAutocompleteField<T extends FieldValues>({
           <span>
             {option.code} - {option.name}
           </span>
-          <span className="w-full truncate text-2xs text-muted-foreground">
+          <span className="text-2xs text-muted-foreground w-full truncate">
             {formatLocation(option)}
           </span>
         </div>
@@ -863,7 +894,7 @@ export function OrganizationAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.scacCode ? `${option.scacCode} - ${option.name}` : option.name}</span>
           {option.city && (
-            <span className="w-full truncate text-2xs text-muted-foreground">{option.city}</span>
+            <span className="text-2xs text-muted-foreground w-full truncate">{option.city}</span>
           )}
         </div>
       )}
@@ -888,7 +919,7 @@ export function EDIPartnerAutocompleteField<T extends FieldValues>({
             {option.code} - {option.name}
           </span>
           {option.internalOrganization?.name && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option.internalOrganization.name}
             </span>
           )}
@@ -912,7 +943,7 @@ export function EDIDocumentTypeAutocompleteField<T extends FieldValues>({
           <span>
             {option.code} - {option.name}
           </span>
-          <span className="w-full truncate text-2xs text-muted-foreground">
+          <span className="text-2xs text-muted-foreground w-full truncate">
             {option.transactionSet} / {option.direction} / {option.defaultVersion}
           </span>
         </div>
@@ -945,7 +976,7 @@ export function EDITemplateAutocompleteField<T extends FieldValues>({
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
           <span>{option.name}</span>
-          <span className="w-full truncate text-2xs text-muted-foreground">
+          <span className="text-2xs text-muted-foreground w-full truncate">
             {option.description ?? option.status}
           </span>
         </div>
@@ -982,7 +1013,7 @@ export function EDIDocumentProfileAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.name}</span>
           {option.partner ? (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option.partner.code} - {option.partner.name}
             </span>
           ) : null}
@@ -1004,7 +1035,7 @@ export function EmailProfileAutocompleteField<T extends FieldValues>({
       renderOption={(option) => (
         <div className="flex size-full min-w-0 flex-col items-start pr-4">
           <span className="w-full truncate">{option.name}</span>
-          <span className="w-full truncate text-2xs text-muted-foreground">
+          <span className="text-2xs text-muted-foreground w-full truncate">
             {option.senderEmail} · {option.provider} · {option.status}
           </span>
         </div>
@@ -1215,7 +1246,7 @@ export function FormulaTemplateAutocompleteField<T extends FieldValues>({
               <div className="flex size-full flex-col items-start">
                 <span>{option.name}</span>
                 {option?.description && (
-                  <span className="w-full truncate text-2xs text-muted-foreground">
+                  <span className="text-2xs text-muted-foreground w-full truncate">
                     {option?.description}
                   </span>
                 )}
@@ -1225,7 +1256,7 @@ export function FormulaTemplateAutocompleteField<T extends FieldValues>({
           <TooltipContent align="center" sideOffset={20} side="left" className="size-full">
             <div className="flex size-full flex-col gap-0.5">
               <h3 className="font-semibold">Expression:</h3>
-              <div className="flex w-full rounded-md border border-muted/20 bg-muted/10 p-1">
+              <div className="border-muted/20 bg-muted/10 flex w-full rounded-md border p-1">
                 {option?.expression}
               </div>
             </div>
@@ -1252,7 +1283,7 @@ export function LocationCategoryAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <ColorOptionValue color={option.color ?? undefined} value={option.name} />
           {option?.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
             </span>
           )}
@@ -1276,7 +1307,7 @@ export function DistanceProfileAutocompleteField<T extends FieldValues>({
       renderOption={(option) => (
         <div className="flex size-full min-w-0 flex-col items-start">
           <span className="w-full truncate">{option.name}</span>
-          <span className="w-full truncate text-2xs text-muted-foreground">
+          <span className="text-2xs text-muted-foreground w-full truncate">
             {option.routingType} · {option.distanceUnits}
             {option.isDefault ? " · Default" : ""}
           </span>
@@ -1302,7 +1333,7 @@ export function DocumentTypeAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <ColorOptionValue color={option.color ?? undefined} value={option.code} />
           {option?.name && (
-            <span className="w-full truncate text-2xs text-muted-foreground">{option.name}</span>
+            <span className="text-2xs text-muted-foreground w-full truncate">{option.name}</span>
           )}
         </div>
       )}
@@ -1344,7 +1375,7 @@ export function DocumentMultiSelectAutocompleteField<T extends FieldValues>({
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
           <span className="w-full truncate">{option.originalName || option.fileName}</span>
-          <span className="w-full truncate text-2xs text-muted-foreground">
+          <span className="text-2xs text-muted-foreground w-full truncate">
             {option.documentType?.name || option.resourceType}
           </span>
         </div>
@@ -1366,7 +1397,7 @@ export function ServiceFailureReasonCodeAutocompleteField<T extends FieldValues>
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
           <span className="w-full truncate font-medium">{option.code}</span>
-          <span className="w-full truncate text-2xs text-muted-foreground">{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">{option.label}</span>
         </div>
       )}
       {...props}
@@ -1387,7 +1418,7 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.name}</span>
           {option?.class && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               Class {option.class}
             </span>
           )}
@@ -1418,7 +1449,7 @@ export function CommodityAutocompleteField<T extends FieldValues>({
             )}
           </div>
           {option?.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description}
             </span>
           )}
@@ -1451,13 +1482,13 @@ export function FiscalYearAutocompleteField<T extends FieldValues>({
                 </span>
               )}
               {status && status !== "Open" && (
-                <span className="rounded bg-muted px-1 py-0.5 text-2xs text-muted-foreground">
+                <span className="bg-muted text-2xs text-muted-foreground rounded px-1 py-0.5">
                   {status}
                 </span>
               )}
             </span>
             {dateRange && (
-              <span className="w-full truncate text-2xs text-muted-foreground">{dateRange}</span>
+              <span className="text-2xs text-muted-foreground w-full truncate">{dateRange}</span>
             )}
           </div>
         );
@@ -1485,12 +1516,12 @@ export function FiscalPeriodAutocompleteField<T extends FieldValues>({
             <span className="flex items-center gap-1.5">
               {option.label}
               {status && status !== "Open" && (
-                <span className="rounded bg-muted px-1 py-0.5 text-2xs text-muted-foreground">
+                <span className="bg-muted text-2xs text-muted-foreground rounded px-1 py-0.5">
                   {status}
                 </span>
               )}
             </span>
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {[periodType, dateRange].filter(Boolean).join(" · ")}
             </span>
           </div>
@@ -1537,13 +1568,13 @@ export function FuelIndexAutocompleteField<T extends FieldValues>({
             <span className="flex items-center gap-1.5">
               {option.label}
               {region && (
-                <span className="rounded bg-muted px-1 py-0.5 text-2xs text-muted-foreground">
+                <span className="bg-muted text-2xs text-muted-foreground rounded px-1 py-0.5">
                   {region}
                 </span>
               )}
             </span>
             {option?.description && (
-              <span className="w-full truncate text-2xs text-muted-foreground">
+              <span className="text-2xs text-muted-foreground w-full truncate">
                 {option.description}
                 {fuelType ? ` · ${fuelType}` : ""}
               </span>
@@ -1570,7 +1601,7 @@ export function FuelSurchargeProgramAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.label}</span>
           {option?.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
             </span>
           )}
@@ -1654,7 +1685,7 @@ export function DetentionPolicyAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.name}</span>
           {option?.code && (
-            <span className="w-full truncate text-2xs text-muted-foreground">{option.code}</span>
+            <span className="text-2xs text-muted-foreground w-full truncate">{option.code}</span>
           )}
         </div>
       )}
@@ -1676,10 +1707,78 @@ export function AccessorialChargeAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.code}</span>
           {option?.description && (
-            <span className="w-full truncate text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description}
             </span>
           )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function RateZoneAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<RateZone, T>) {
+  return (
+    <AutocompleteField<RateZone, T>
+      link="/rate-zones/select-options/"
+      popoutLink="/billing/configuration-files/rate-zones"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          {option?.code && (
+            <span className="text-2xs text-muted-foreground w-full truncate">{option.code}</span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function RateMatrixAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<RateMatrix, T>) {
+  return (
+    <AutocompleteField<RateMatrix, T>
+      link="/rate-matrices/select-options/"
+      popoutLink="/billing/configuration-files/rate-matrices"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          {option?.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function RateAgreementAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<RateAgreement, T>) {
+  return (
+    <AutocompleteField<RateAgreement, T>
+      link="/rate-agreements/select-options/"
+      popoutLink="/billing/rate-agreements"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {option.code}
+          </span>
         </div>
       )}
       {...props}

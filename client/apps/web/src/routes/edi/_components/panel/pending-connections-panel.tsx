@@ -60,11 +60,11 @@ export function PendingConnectionsPanel() {
   }
 
   return (
-    <div className="rounded-md border bg-background">
+    <div className="bg-background rounded-md border">
       <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
         <div>
           <div className="text-sm font-medium">Pending EDI connection requests</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             Accepting creates reciprocal internal partners and communication profiles.
           </div>
         </div>
@@ -113,7 +113,7 @@ export function PendingConnectionsPanel() {
           ))}
           {isLoading && (
             <TableRow>
-              <TableCell colSpan={5} className="h-16 text-center text-muted-foreground">
+              <TableCell colSpan={5} className="text-muted-foreground h-16 text-center">
                 Loading connection requests.
               </TableCell>
             </TableRow>

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
@@ -162,6 +163,11 @@ func (a *Activities) ReRateFallbackShipmentsActivity(
 	if err != nil {
 		log.Warn("failed to load shipment control for fallback re-rate", zap.Error(err))
 	}
+
+	// Every shipment in this batch belongs to one tenant and reads one set of
+	// rate tables. The memo makes the activity read them once rather than once
+	// per shipment.
+	ctx = ratetablecache.With(ctx)
 
 	reRated := 0
 	for idx, shipmentID := range shipmentIDs {

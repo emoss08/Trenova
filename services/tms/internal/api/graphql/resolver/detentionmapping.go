@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -199,7 +200,7 @@ func detentionPolicyFromInput(
 		entity.IsOrgDefault = *input.IsOrgDefault
 	}
 	if input.Priority != nil {
-		entity.Priority = int16(*input.Priority)
+		entity.Priority = intutils.SafeToInt16(*input.Priority)
 	}
 
 	if entity.CustomerID, err = pulidPtrFromStringPtr(
@@ -248,19 +249,19 @@ func detentionPolicyFromInput(
 		entity.LateArrivalRule = *input.LateArrivalRule
 	}
 	if input.LateArrivalGraceMinutes != nil {
-		entity.LateArrivalGraceMinutes = int16(*input.LateArrivalGraceMinutes)
+		entity.LateArrivalGraceMinutes = intutils.SafeToInt16(*input.LateArrivalGraceMinutes)
 	}
 	if input.BillingFreeMinutes != nil {
-		entity.BillingFreeMinutes = int32(*input.BillingFreeMinutes)
+		entity.BillingFreeMinutes = intutils.SafeToInt32(*input.BillingFreeMinutes)
 	}
 	entity.PickupFreeMinutes = intPtrToInt32Ptr(input.PickupFreeMinutes)
 	entity.DeliveryFreeMinutes = intPtrToInt32Ptr(input.DeliveryFreeMinutes)
 	entity.PayFreeMinutes = intPtrToInt32Ptr(input.PayFreeMinutes)
 	if input.MinimumBillableMinutes != nil {
-		entity.MinimumBillableMinutes = int32(*input.MinimumBillableMinutes)
+		entity.MinimumBillableMinutes = intutils.SafeToInt32(*input.MinimumBillableMinutes)
 	}
 	if input.BillingIncrementMinutes != nil {
-		entity.BillingIncrementMinutes = int16(*input.BillingIncrementMinutes)
+		entity.BillingIncrementMinutes = intutils.SafeToInt16(*input.BillingIncrementMinutes)
 	}
 	if input.RoundingMode != nil {
 		entity.RoundingMode = *input.RoundingMode
@@ -303,10 +304,12 @@ func detentionPolicyFromInput(
 		entity.NotificationRequirement = *input.NotificationRequirement
 	}
 	if input.NotificationLeadMinutes != nil {
-		entity.NotificationLeadMinutes = int16(*input.NotificationLeadMinutes)
+		entity.NotificationLeadMinutes = intutils.SafeToInt16(*input.NotificationLeadMinutes)
 	}
 	if input.NotificationDeadlineMinutes != nil {
-		entity.NotificationDeadlineMinutes = int16(*input.NotificationDeadlineMinutes)
+		entity.NotificationDeadlineMinutes = intutils.SafeToInt16(
+			*input.NotificationDeadlineMinutes,
+		)
 	}
 	if input.UnnotifiedBehavior != nil {
 		entity.UnnotifiedBehavior = *input.UnnotifiedBehavior
@@ -365,7 +368,7 @@ func detentionTiersFromInput(
 		tier := &detention.DetentionPolicyTier{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			FromMinute:     int32(input.FromMinute),
+			FromMinute:     intutils.SafeToInt32(input.FromMinute),
 			ToMinute:       intPtrToInt32Ptr(input.ToMinute),
 			Rate:           rate,
 			RateUnit:       detention.TierRateUnitHour,
@@ -379,7 +382,7 @@ func detentionTiersFromInput(
 			tier.Label = *input.Label
 		}
 		if input.SortOrder != nil {
-			tier.SortOrder = int32(*input.SortOrder)
+			tier.SortOrder = intutils.SafeToInt32(*input.SortOrder)
 		}
 
 		tiers = append(tiers, tier)
@@ -560,8 +563,8 @@ func detentionCollectabilityToModel(
 		factors = append(factors, &gqlmodel.DetentionScoreFactor{
 			Key:      factor.Key,
 			Label:    factor.Label,
-			Earned:   int(factor.Earned),
-			Possible: int(factor.Possible),
+			Earned:   factor.Earned,
+			Possible: factor.Possible,
 			Detail:   factor.Detail,
 			Remedy:   factor.Remedy,
 		})
@@ -801,7 +804,7 @@ func intPtrToInt32Ptr(value *int) *int32 {
 	if value == nil {
 		return nil
 	}
-	v := int32(*value)
+	v := intutils.SafeToInt32(*value)
 	return &v
 }
 

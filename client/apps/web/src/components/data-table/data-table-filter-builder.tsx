@@ -261,7 +261,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
             <FilterIcon className="size-3.5" />
             Filter
             {totalFilters > 0 && (
-              <span className="ml-1.5 flex size-5 items-center justify-center rounded-md bg-muted font-mono text-xs">
+              <span className="bg-muted ml-1.5 flex size-5 items-center justify-center rounded-md font-mono text-xs">
                 {totalFilters}
               </span>
             )}
@@ -276,7 +276,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
           <div className="flex flex-col items-start gap-3 p-3">
             <div className="flex flex-col items-start">
               <h3 className="text-xl font-semibold">No filters applied</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Add filters to narrow down your results.
               </p>
             </div>
@@ -318,7 +318,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
                 ),
               )}
             </div>
-            <div className="flex items-center gap-2 border-t bg-sidebar p-2 dark:bg-background">
+            <div className="bg-sidebar dark:bg-background flex items-center gap-2 border-t p-2">
               <Button
                 variant="outline"
                 onClick={handleAddFilter}
@@ -377,7 +377,7 @@ function FilterGroupRow({
     <div className="flex w-full flex-col gap-1">
       <div className="flex items-start gap-2">
         {index === 0 ? (
-          <span className="flex h-7 w-12 shrink-0 items-center text-sm text-muted-foreground">
+          <span className="text-muted-foreground flex h-7 w-12 shrink-0 items-center text-sm">
             Where
           </span>
         ) : (
@@ -402,7 +402,7 @@ function FilterGroupRow({
           </Select>
         )}
 
-        <div className="flex-1 rounded-md border border-dashed bg-muted/30 p-2">
+        <div className="bg-muted/30 flex-1 rounded-md border border-dashed p-2">
           <div className="flex flex-col gap-1.5">
             {group.items.map((filter, filterIndex) => (
               <FilterRow
@@ -432,7 +432,7 @@ function FilterGroupRow({
         <Button
           variant="ghost"
           size="icon"
-          className="size-7 text-muted-foreground hover:text-destructive"
+          className="text-muted-foreground hover:text-destructive size-7"
           onClick={() => onRemoveGroup(group.id)}
         >
           <TrashIcon className="size-4" />
@@ -471,7 +471,7 @@ function FilterRow({
   return (
     <div className="flex items-center gap-2">
       {index === 0 ? (
-        <span className="w-12 shrink-0 text-sm text-muted-foreground">
+        <span className="text-muted-foreground w-12 shrink-0 text-sm">
           {isNested ? "" : "Where"}
         </span>
       ) : (
@@ -538,7 +538,7 @@ function FilterRow({
       <Button
         variant="ghost"
         size="icon"
-        className="size-7 text-muted-foreground hover:text-destructive"
+        className="text-muted-foreground hover:text-destructive size-7"
         onClick={() => onRemove(filter.id)}
       >
         <TrashIcon className="size-4" />
@@ -608,7 +608,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
 
   if (filterType === "boolean") {
     return (
-      <div className="flex h-7 items-center gap-2 rounded-md border bg-background px-2.5">
+      <div className="bg-background flex h-7 items-center gap-2 rounded-md border px-2.5">
         <Switch checked={value === true} onCheckedChange={(checked) => onChange(checked)} />
         <span className="text-sm">{value === true ? "Yes" : "No"}</span>
       </div>
@@ -641,7 +641,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-7 w-full justify-start truncate rounded-md bg-muted text-left text-sm font-normal",
+                  "bg-muted h-7 w-full justify-start truncate rounded-md text-left text-sm font-normal",
                   (!dateValue.from || !dateValue.to) && "text-muted-foreground",
                 )}
               >
@@ -687,7 +687,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
             <Button
               variant="outline"
               className={cn(
-                "h-7 w-full justify-start rounded-md bg-muted text-left text-sm font-normal",
+                "bg-muted h-7 w-full justify-start rounded-md text-left text-sm font-normal",
                 !dateValue && "text-muted-foreground",
               )}
             >

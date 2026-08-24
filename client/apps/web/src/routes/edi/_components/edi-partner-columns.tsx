@@ -159,7 +159,7 @@ function PartnerReadinessCell({ partnerId }: { partnerId: string }) {
   });
   if (partnerId === "" || isError) return <DataTablePlaceholder />;
   if (isPending) {
-    return <span className="text-xs text-muted-foreground">…</span>;
+    return <span className="text-muted-foreground text-xs">…</span>;
   }
   if (!data) return <DataTablePlaceholder />;
   return (

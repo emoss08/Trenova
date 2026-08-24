@@ -1,5 +1,6 @@
 import { cn } from "@trenova/shared/lib/utils";
 import { CircleAlert } from "lucide-react";
+import { m } from "motion/react";
 import type { ReactNode } from "react";
 
 export type ActionDockPosition = "center" | "left" | "right";
@@ -14,6 +15,8 @@ export type ActionDockProps = {
   position?: ActionDockPosition;
   width?: string;
   className?: string;
+  /** Slide the dock up from below the viewport edge when it mounts. */
+  animated?: boolean;
   /** The status block on the left of the dock; omit to show actions alone. */
   indicator?: ReactNode;
   children: ReactNode;
@@ -24,16 +27,44 @@ export type ActionDockProps = {
  * the form save dock uses, so every dock in the app sits in the same place and
  * wears the same surface.
  */
-export function ActionDock({ position = "center", width, className, indicator, children }: ActionDockProps) {
+export function ActionDock({
+  position = "center",
+  width,
+  className,
+  animated = false,
+  indicator,
+  children,
+}: ActionDockProps) {
+  const containerClassName = cn("fixed bottom-6 z-50", POSITION_CLASSES[position], className);
+  const pill = (
+    <div className="bg-foreground flex w-fit min-w-112.5 items-center gap-x-10 rounded-lg p-2 shadow-lg">
+      {indicator}
+      <div className="ml-auto flex items-center space-x-2">{children}</div>
+    </div>
+  );
+
+  // The entrance animation has to live on the fixed element itself. A transform
+  // on any wrapper becomes the containing block for `position: fixed`, which
+  // pins the dock wherever that wrapper sits in the document flow until the
+  // transform clears — the dock renders high on the page, then jumps down.
+  if (animated) {
+    return (
+      <m.div
+        className={containerClassName}
+        style={{ width }}
+        initial={{ opacity: 0, y: "150%" }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: "150%" }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+      >
+        {pill}
+      </m.div>
+    );
+  }
+
   return (
-    <div
-      className={cn("fixed bottom-6 z-50", POSITION_CLASSES[position], className)}
-      style={{ width }}
-    >
-      <div className="flex w-fit min-w-[450px] items-center gap-x-10 rounded-lg bg-foreground p-2 shadow-lg">
-        {indicator}
-        <div className="ml-auto flex items-center space-x-2">{children}</div>
-      </div>
+    <div className={containerClassName} style={{ width }}>
+      {pill}
     </div>
   );
 }
@@ -51,7 +82,7 @@ export function ActionDockIndicator({
     <div className="flex items-center gap-x-3">
       {icon ?? <CircleAlert className="rounded-full bg-amber-400/10 text-amber-400 dark:text-amber-600" />}
       <div className="flex flex-col">
-        <span className="text-sm font-medium text-background">{title}</span>
+        <span className="text-background text-sm font-medium">{title}</span>
         <span className="text-2xs text-background/80">{description}</span>
       </div>
     </div>

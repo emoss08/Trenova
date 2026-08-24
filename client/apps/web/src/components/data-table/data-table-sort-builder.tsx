@@ -158,7 +158,7 @@ export default function DataTableSortBuilder<TData extends RowData>({
             <ArrowUpDownIcon className="size-3.5" />
             Sort
             {sortCount > 0 && (
-              <span className="ml-1.5 flex size-5 items-center justify-center rounded-md bg-muted font-mono text-xs">
+              <span className="bg-muted ml-1.5 flex size-5 items-center justify-center rounded-md font-mono text-xs">
                 {sortCount}
               </span>
             )}
@@ -173,7 +173,7 @@ export default function DataTableSortBuilder<TData extends RowData>({
           <div className="flex flex-col items-start gap-3 p-3">
             <div className="flex flex-col items-start">
               <h3 className="text-xl font-semibold">No sorts applied</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Add sorts to narrow down your results.
               </p>
             </div>
@@ -218,7 +218,7 @@ export default function DataTableSortBuilder<TData extends RowData>({
                 </DragOverlay>
               </DndContext>
             </div>
-            <div className="flex items-center gap-2 border-t bg-sidebar p-2 dark:bg-background">
+            <div className="bg-sidebar dark:bg-background flex items-center gap-2 border-t p-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -280,7 +280,7 @@ function SortableSortRow({
       style={style}
       className={cn("flex items-center gap-2 rounded-md py-1", isDragging && "opacity-50")}
     >
-      <span className="w-10 shrink-0 text-sm text-muted-foreground">
+      <span className="text-muted-foreground w-10 shrink-0 text-sm">
         {index === 0 ? "By" : "Then"}
       </span>
 
@@ -348,7 +348,7 @@ function SortableSortRow({
       <Button
         variant="ghost"
         size="icon"
-        className="size-7 text-muted-foreground hover:text-destructive"
+        className="text-muted-foreground hover:text-destructive size-7"
         onClick={() => onRemove(sortField.field)}
       >
         <TrashIcon className="size-4" />
@@ -357,7 +357,7 @@ function SortableSortRow({
       <Button
         variant="ghost"
         size="icon"
-        className="size-7 cursor-grab touch-none text-muted-foreground"
+        className="text-muted-foreground size-7 cursor-grab touch-none"
         {...attributes}
         {...listeners}
       >
@@ -375,16 +375,16 @@ type SortRowOverlayProps = {
 
 function SortRowOverlay({ sortField, index, getColumnLabel }: SortRowOverlayProps) {
   return (
-    <div className="flex items-center gap-2 rounded-md border bg-popover px-2 py-1 shadow-lg">
-      <span className="w-10 shrink-0 text-sm text-muted-foreground">
+    <div className="bg-popover flex items-center gap-2 rounded-md border px-2 py-1 shadow-lg">
+      <span className="text-muted-foreground w-10 shrink-0 text-sm">
         {index === 0 ? "By" : "Then"}
       </span>
 
-      <div className="flex h-7 w-36 items-center rounded-md border bg-muted px-2 text-sm">
+      <div className="bg-muted flex h-7 w-36 items-center rounded-md border px-2 text-sm">
         {getColumnLabel(sortField.field)}
       </div>
 
-      <div className="flex h-7 w-36 items-center gap-2 rounded-md border bg-muted px-2 text-sm">
+      <div className="bg-muted flex h-7 w-36 items-center gap-2 rounded-md border px-2 text-sm">
         {sortField.direction === "asc" ? (
           <>
             <ArrowUpIcon className="size-3.5" />
@@ -400,7 +400,7 @@ function SortRowOverlay({ sortField, index, getColumnLabel }: SortRowOverlayProp
 
       <div className="size-7" />
 
-      <div className="flex size-7 items-center justify-center text-muted-foreground">
+      <div className="text-muted-foreground flex size-7 items-center justify-center">
         <GripVerticalIcon className="size-4" />
       </div>
     </div>

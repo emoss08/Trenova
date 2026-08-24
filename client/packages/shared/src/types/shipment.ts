@@ -5,6 +5,7 @@ import type { Commodity } from "./commodity";
 import { customerSchema } from "./customer";
 import { formulaTemplateSchema } from "./formula-template";
 import {
+  decimalNumberSchema,
   decimalStringSchema,
   nullableIntegerSchema,
   nullableStringSchema,
@@ -195,6 +196,140 @@ export const assignmentSchema = z.object({
 });
 export type Assignment = z.infer<typeof assignmentSchema>;
 
+export const moveCoverageTypeSchema = z.enum(["unassigned", "driver", "carrier"]);
+export type MoveCoverageType = z.infer<typeof moveCoverageTypeSchema>;
+
+export const carrierAssignmentStatusSchema = z.enum(["Pending", "Confirmed", "Canceled"]);
+export type CarrierAssignmentStatus = z.infer<typeof carrierAssignmentStatusSchema>;
+
+export const carrierRateMethodSchema = z.enum(["Flat", "PerMile"]);
+export type CarrierRateMethod = z.infer<typeof carrierRateMethodSchema>;
+
+const carrierAssignmentCarrierSummarySchema = z.object({
+  id: optionalStringSchema,
+  code: optionalStringSchema,
+  name: optionalStringSchema,
+  scac: nullableStringSchema,
+});
+
+export const carrierAssignmentAccessorialSchema = z.object({
+  id: optionalStringSchema,
+  carrierAssignmentId: optionalStringSchema,
+  accessorialChargeId: nullableStringSchema,
+  description: z.string(),
+  amount: decimalStringSchema,
+  version: z.number().optional(),
+});
+export type CarrierAssignmentAccessorial = z.infer<typeof carrierAssignmentAccessorialSchema>;
+
+export const carrierAssignmentSchema = z.object({
+  id: optionalStringSchema,
+  shipmentMoveId: optionalStringSchema,
+  carrierId: optionalStringSchema,
+  status: carrierAssignmentStatusSchema.default("Pending"),
+  rateMethod: carrierRateMethodSchema.default("Flat"),
+  baseRate: decimalStringSchema,
+  baseAmount: decimalStringSchema,
+  fuelSurcharge: decimalStringSchema,
+  accessorialTotal: decimalStringSchema,
+  totalCost: decimalStringSchema,
+  currencyCode: optionalStringSchema,
+  proNumber: nullableStringSchema,
+  externalDriverName: nullableStringSchema,
+  externalDriverPhone: nullableStringSchema,
+  externalTractorNumber: nullableStringSchema,
+  externalTrailerNumber: nullableStringSchema,
+  confirmedAt: z.number().nullish(),
+  canceledAt: z.number().nullish(),
+  cancellationReason: nullableStringSchema,
+  carrier: carrierAssignmentCarrierSummarySchema.nullish(),
+  accessorials: z.array(carrierAssignmentAccessorialSchema).nullish(),
+  version: z.number().optional(),
+});
+export type CarrierAssignment = z.infer<typeof carrierAssignmentSchema>;
+
+export function isActiveCarrierAssignment(
+  carrierAssignment: CarrierAssignment | null | undefined,
+): carrierAssignment is CarrierAssignment {
+  return !!carrierAssignment?.id && carrierAssignment.status !== "Canceled";
+}
+
+const carrierAssignmentAccessorialPayloadSchema = z.object({
+  accessorialChargeId: nullableStringSchema,
+  description: z
+    .string()
+    .min(1, { error: "Description is required" })
+    .max(255, { error: "Description must be at most 255 characters" }),
+  amount: decimalNumberSchema("Amount is required", "Amount cannot be negative"),
+});
+export type CarrierAssignmentAccessorialPayload = z.infer<
+  typeof carrierAssignmentAccessorialPayloadSchema
+>;
+
+export const carrierAssignmentPayloadSchema = z.object({
+  carrierId: z.string().min(1, { error: "Carrier is required" }),
+  rateMethod: carrierRateMethodSchema,
+  baseRate: decimalNumberSchema("Base rate is required", "Base rate cannot be negative"),
+  fuelSurcharge: decimalNumberSchema(
+    "Fuel surcharge must be a valid number",
+    "Fuel surcharge cannot be negative",
+  ).nullish(),
+  accessorials: z.array(carrierAssignmentAccessorialPayloadSchema),
+  proNumber: z.string().max(50, { error: "Pro number must be at most 50 characters" }),
+  externalDriverName: z.string().max(255, { error: "Driver name must be at most 255 characters" }),
+  externalDriverPhone: z.string().max(20, { error: "Driver phone must be at most 20 characters" }),
+  externalTractorNumber: z
+    .string()
+    .max(50, { error: "Tractor number must be at most 50 characters" }),
+  externalTrailerNumber: z
+    .string()
+    .max(50, { error: "Trailer number must be at most 50 characters" }),
+  overrideInsuranceWarning: z.boolean(),
+
+  /**
+   * Asks the carrier's contract to price this assignment instead of taking the
+   * rate typed alongside it. A typed rate wins: that is a negotiated number,
+   * and overruling it is what makes people switch auto-rating off.
+   */
+  autoRate: z.boolean().default(false),
+
+  /**
+   * Lets somebody assign a carrier the contract's margin terms would otherwise
+   * refuse, the same escape the insurance warning has.
+   */
+  overrideMarginFloor: z.boolean().default(false),
+});
+export type CarrierAssignmentPayload = z.infer<typeof carrierAssignmentPayloadSchema>;
+export type CarrierAssignmentPayloadInput = z.input<typeof carrierAssignmentPayloadSchema>;
+
+export const emptyCarrierAssignmentPayload: CarrierAssignmentPayload = {
+  carrierId: "",
+  rateMethod: "Flat",
+  baseRate: 0,
+  fuelSurcharge: null,
+  accessorials: [],
+  proNumber: "",
+  externalDriverName: "",
+  externalDriverPhone: "",
+  externalTractorNumber: "",
+  externalTrailerNumber: "",
+  overrideInsuranceWarning: false,
+  autoRate: false,
+  overrideMarginFloor: false,
+};
+
+export const carrierEligibilitySchema = z.object({
+  blockers: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  warnings: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+});
+export type CarrierEligibility = z.infer<typeof carrierEligibilitySchema>;
+
 const shipmentMoveBaseSchema = z.object({
   status: moveStatusSchema.default("New"),
   loaded: z.boolean().default(true),
@@ -218,8 +353,10 @@ const shipmentMoveReadMetadataSchema = z.object({
 export const shipmentMoveSchema = shipmentMoveReadMetadataSchema.extend({
   ...shipmentMoveBaseSchema.shape,
   id: optionalStringSchema,
+  coverageType: moveCoverageTypeSchema.optional(),
   stops: z.array(stopSchema).default([]),
   assignment: assignmentSchema.nullish(),
+  carrierAssignment: carrierAssignmentSchema.nullish(),
 });
 export type ShipmentMove = z.infer<typeof shipmentMoveSchema>;
 
@@ -311,6 +448,9 @@ const shipmentCommodityBaseSchema = z.object({
     .int()
     .nonnegative({ error: "Weight cannot be negative" })
     .default(0),
+  lengthFeet: decimalStringSchema,
+  widthFeet: decimalStringSchema,
+  heightFeet: decimalStringSchema,
 });
 
 export const shipmentCommoditySchema = z.object({
@@ -351,6 +491,17 @@ export const ratingDetailSchema = z.object({
   versionNumber: z.number().nullish(),
   breakdown: z.array(ratingBreakdownItemSchema).nullish(),
   guardrail: ratingGuardrailSchema.nullish(),
+
+  // The contract that priced the shipment, when one did. These point at the
+  // quote rather than duplicating it: the quote holds the full explanation, and
+  // copying any of it here would let the two drift.
+  rateQuoteId: z.string().nullish(),
+  agreementId: z.string().nullish(),
+  agreementName: z.string().nullish(),
+  ruleId: z.string().nullish(),
+  ruleLabel: z.string().nullish(),
+  source: z.string().nullish(),
+  explanation: z.string().nullish(),
 });
 export type RatingDetail = z.infer<typeof ratingDetailSchema>;
 
@@ -367,8 +518,26 @@ const shipmentBaseSchema = z.object({
   ownerId: nullableStringSchema,
   enteredById: nullableStringSchema,
   canceledById: nullableStringSchema,
-  formulaTemplateId: z.string().min(1, { error: "Formula Template is required" }),
+  formulaTemplateId: nullableStringSchema,
   consolidationGroupId: nullableStringSchema,
+
+  // Set by the rating engine, never by a caller. A payload that omitted them
+  // would otherwise clear an override or unlock an invoiced shipment as a side
+  // effect of saving something else, which is why the server restores them.
+  rateQuoteId: nullableStringSchema,
+  rateAgreementId: nullableStringSchema,
+  rateAgreementRuleId: nullableStringSchema,
+  rateOverrideAmount: decimalStringSchema,
+  rateOverrideReason: z.string().nullish(),
+  rateOverrideById: nullableStringSchema,
+  rateOverrideAt: z.number().nullish(),
+  rateLocked: z.boolean().nullish(),
+  // True while the shipment still carries the rate its contract applied. It
+  // goes false the moment somebody edits the rating method, the base rate or
+  // one of the contract's own accessorial charges.
+  autoRated: z.boolean().nullish(),
+  autoRatedAt: z.number().nullish(),
+
   status: shipmentStatusSchema.default("New"),
   tenderStatus: shipmentTenderStatusSchema.nullable().optional(),
   entryMethod: shipmentEntryMethodSchema.optional(),
@@ -381,6 +550,10 @@ const shipmentBaseSchema = z.object({
   totalChargeAmount: decimalStringSchema.default(0),
   pieces: nullableIntegerSchema,
   weight: nullableIntegerSchema,
+  envelopeLengthFeet: decimalStringSchema,
+  envelopeWidthFeet: decimalStringSchema,
+  envelopeHeightFeet: decimalStringSchema,
+  envelopeOverallHeightFeet: decimalStringSchema,
   temperatureMin: nullableIntegerSchema,
   temperatureMax: nullableIntegerSchema,
   actualDeliveryDate: nullableIntegerSchema,
@@ -395,6 +568,42 @@ const shipmentBaseSchema = z.object({
   ratingDetail: ratingDetailSchema.nullable().optional(),
 });
 
+/** One charge a contract applies automatically to every shipment it prices. */
+export const contractRateAccessorialSchema = z.object({
+  accessorialChargeId: z.string(),
+  description: z.string(),
+  method: accessorialChargeMethodSchema.default("Flat"),
+  amount: decimalStringSchema,
+  unit: z.number(),
+});
+export type ContractRateAccessorial = z.infer<typeof contractRateAccessorialSchema>;
+
+/**
+ * What the rate agreements charge for a shipment.
+ *
+ * The same shape answers both questions the billing panel asks — what would
+ * this rate at, and what did the re-rate just apply — because a preview and an
+ * application differ only in whether the numbers were kept.
+ */
+export const contractRateSchema = z.object({
+  applied: z.boolean(),
+  outcome: z.string(),
+  agreementId: nullableStringSchema,
+  agreementName: z.string(),
+  ruleId: nullableStringSchema,
+  ruleLabel: z.string(),
+  formulaTemplateId: nullableStringSchema,
+  formulaTemplateName: z.string(),
+  baseRate: decimalStringSchema,
+  linehaulAmount: decimalStringSchema,
+  otherChargeAmount: decimalStringSchema,
+  totalChargeAmount: decimalStringSchema,
+  previousLinehaulAmount: decimalStringSchema,
+  accessorials: z.array(contractRateAccessorialSchema).default([]),
+  explanation: z.string(),
+});
+export type ContractRate = z.infer<typeof contractRateSchema>;
+
 export const shipmentProfitabilityEstimateSchema = z.object({
   shipmentId: z.string(),
   loadedMiles: z.number(),
@@ -408,9 +617,7 @@ export const shipmentProfitabilityEstimateSchema = z.object({
   targetMarginPercent: z.string().nullish(),
   missingDistance: z.boolean(),
 });
-export type ShipmentProfitabilityEstimate = z.infer<
-  typeof shipmentProfitabilityEstimateSchema
->;
+export type ShipmentProfitabilityEstimate = z.infer<typeof shipmentProfitabilityEstimateSchema>;
 
 export const shipmentSchema = z.object({
   ...tenantInfoSchema.shape,
@@ -481,6 +688,13 @@ export type SplitMoveResponse = {
   newMove: ShipmentMove;
 };
 
+export type StopActualAction = "Arrive" | "Depart";
+
+export type RecordStopActualPayload = {
+  action: StopActualAction;
+  occurredAt?: number;
+};
+
 export const transferOwnershipSchema = z.object({
   ownerId: z.string().min(1, { error: "Owner is required" }),
 });
@@ -525,11 +739,73 @@ export const shipmentDistanceResponseSchema = z.object({
 
 export type ShipmentDistanceResponse = z.infer<typeof shipmentDistanceResponseSchema>;
 
+export const enforcementLevelSchema = z.enum(["Ignore", "Warn", "RequireReview", "Block"]);
+export type EnforcementLevel = z.infer<typeof enforcementLevelSchema>;
+
+export const capabilityProvenanceSchema = z.object({
+  profileId: z.string(),
+  profileCode: z.string(),
+  profileName: z.string(),
+  isOrgDefault: z.boolean(),
+  priority: z.number().int(),
+  specificityScore: z.number().int(),
+  matchedOn: z.array(z.string()).nullish(),
+  ruleKey: z.string(),
+  capability: z.string(),
+  capabilityLabel: z.string(),
+  enforcement: enforcementLevelSchema,
+  defaultEnforcement: enforcementLevelSchema,
+  overridden: z.boolean(),
+  overrideReason: z.string().nullish(),
+  rationale: z.string(),
+});
+export type CapabilityProvenance = z.infer<typeof capabilityProvenanceSchema>;
+
+export const resolvedCapabilityRuleSchema = z.object({
+  key: z.string(),
+  capability: z.string(),
+  label: z.string(),
+  enforcement: enforcementLevelSchema,
+  enabled: z.boolean(),
+  fields: z.array(z.string()).nullish(),
+  requiredFields: z.array(z.string()).nullish(),
+  parameters: z.record(z.string(), z.unknown()).nullish(),
+  provenance: capabilityProvenanceSchema,
+});
+export type ResolvedCapabilityRule = z.infer<typeof resolvedCapabilityRuleSchema>;
+
+export const profileCandidateSchema = z.object({
+  profileId: z.string(),
+  profileCode: z.string(),
+  profileName: z.string(),
+  priority: z.number().int(),
+  specificityScore: z.number().int(),
+  matchedOn: z.array(z.string()).nullish(),
+  selected: z.boolean(),
+  rejectionReason: z.string().nullish(),
+});
+export type ProfileCandidate = z.infer<typeof profileCandidateSchema>;
+
+export const resolvedModeProfileSchema = z.object({
+  profileId: z.string(),
+  profileCode: z.string(),
+  profileName: z.string(),
+  serviceModel: z.string(),
+  equipmentClass: z.string(),
+  executionParty: z.string(),
+  capabilities: z.array(z.string()).nullish(),
+  rules: z.record(z.string(), resolvedCapabilityRuleSchema),
+  candidates: z.array(profileCandidateSchema).nullish(),
+  resolvedAt: z.number().int(),
+});
+export type ResolvedModeProfile = z.infer<typeof resolvedModeProfileSchema>;
+
 export const shipmentUIPolicySchema = z.object({
   allowMoveRemovals: z.boolean(),
   checkForDuplicateBols: z.boolean(),
   checkHazmatSegregation: z.boolean(),
   maxShipmentWeightLimit: z.number().int().nonnegative(),
+  profile: resolvedModeProfileSchema.nullish(),
 });
 export type ShipmentUIPolicy = z.infer<typeof shipmentUIPolicySchema>;
 

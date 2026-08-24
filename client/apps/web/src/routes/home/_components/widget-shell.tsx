@@ -63,9 +63,9 @@ export function WidgetShell({
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
       {!editing && (
-        <div className="flex h-8 shrink-0 items-center gap-1.5 border-b border-border/60 px-2.5">
-          {Icon && <Icon className="size-3 shrink-0 text-muted-foreground" />}
-          <span className="cc-label min-w-0 flex-1 truncate text-foreground">{title}</span>
+        <div className="border-border/60 flex h-8 shrink-0 items-center gap-1.5 border-b px-2.5">
+          {Icon && <Icon className="text-muted-foreground size-3 shrink-0" />}
+          <span className="cc-label text-foreground min-w-0 flex-1 truncate">{title}</span>
           {badge}
           {actions}
         </div>
@@ -82,7 +82,7 @@ export function WidgetShell({
       {href && !editing && (
         <Link
           to={href}
-          className="group/footer flex h-7 shrink-0 items-center justify-between border-t border-border/60 px-2.5 text-2xs text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+          className="group/footer border-border/60 text-2xs text-muted-foreground hover:bg-muted/40 hover:text-foreground flex h-7 shrink-0 items-center justify-between border-t px-2.5 transition-colors"
         >
           <span>{hrefLabel}</span>
           <ArrowRightIcon className="size-3 transition-transform duration-200 group-hover/footer:translate-x-0.5" />
@@ -112,7 +112,7 @@ export function WidgetCount({
   return (
     <span
       className={cn(
-        "inline-flex min-w-4.5 shrink-0 justify-center rounded px-1 font-table text-[9px] tabular-nums",
+        "font-table inline-flex min-w-4.5 shrink-0 justify-center rounded px-1 text-[9px] tabular-nums",
         toneClass,
       )}
     >
@@ -134,10 +134,10 @@ export function WidgetEmpty({
 }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center">
-      <span className="flex size-7 items-center justify-center rounded-full border border-border/60 bg-muted/50">
-        <Icon className="size-3.5 text-muted-foreground/70" />
+      <span className="border-border/60 bg-muted/50 flex size-7 items-center justify-center rounded-full border">
+        <Icon className="text-muted-foreground/70 size-3.5" />
       </span>
-      <p className="max-w-52 text-2xs text-muted-foreground">{children}</p>
+      <p className="text-2xs text-muted-foreground max-w-52">{children}</p>
     </div>
   );
 }
@@ -168,7 +168,7 @@ export function WidgetNeedsSetup({
 }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center">
-      <p className="max-w-50 text-2xs text-muted-foreground">{message}</p>
+      <p className="text-2xs text-muted-foreground max-w-50">{message}</p>
       {actionLabel && onAction && (
         <Button variant="outline" size="xs" onClick={onAction}>
           {actionLabel}

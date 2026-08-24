@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // CandidateVerdict records why a policy did or did not govern a stop. Surfacing
@@ -148,7 +149,7 @@ func explain(winner *detention.DetentionPolicy, matched []*detention.DetentionPo
 			"(priority %d, specificity %d) while the next closest, %s (%s), applies %s "+
 			"(priority %d, specificity %d).",
 		winner.Name, winner.Code,
-		len(matched)-1, pluralize("policy", "policies", len(matched)-1),
+		len(matched)-1, stringutils.Pluralize("policy", "policies", len(matched)-1),
 		scope, winner.Priority, winner.ComputeSpecificity(),
 		runnerUp.Name, runnerUp.Code, describeScope(runnerUp),
 		runnerUp.Priority, runnerUp.ComputeSpecificity(),
@@ -188,7 +189,6 @@ func describeScope(policy *detention.DetentionPolicy) string {
 	return strings.Join(parts, " and ")
 }
 
-//nolint:gocognit // one branch per scope dimension keeps the message specific
 func rejectionReason(policy *detention.DetentionPolicy, in detention.MatchInput) string {
 	if policy.Status != detention.PolicyStatusActive {
 		return fmt.Sprintf("Policy status is %s", policy.Status)
@@ -229,11 +229,4 @@ func rejectionReason(policy *detention.DetentionPolicy, in detention.MatchInput)
 	}
 
 	return "Did not match"
-}
-
-func pluralize(singular, plural string, count int) string {
-	if count == 1 {
-		return singular
-	}
-	return plural
 }

@@ -1,15 +1,15 @@
+import { toneVar } from "@/components/kpi/tone";
+import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
+import { queries } from "@/lib/queries";
+import { useQuery } from "@tanstack/react-query";
 import type { ShipmentProfitabilityQuery } from "@trenova/graphql/generated/graphql";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
-import { queries } from "@/lib/queries";
 import { formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { toneVar } from "@/components/kpi/tone";
 
 const sourceBadges: Record<string, { label: string; className: string }> = {
   Benchmark: { label: "Benchmark", className: "text-2xs" },
@@ -56,7 +56,7 @@ export function ProfitabilityBreakdownPopover({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger render={<span>{trigger}</span>} />
+      <PopoverTrigger render={<button>{trigger}</button>} />
       <PopoverContent align={align} className="w-80 space-y-3">
         {isLoading || !data ? <BreakdownSkeleton /> : <BreakdownContent data={data} />}
       </PopoverContent>
@@ -95,7 +95,7 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
             {formatPerMile(parseDecimal(data.profile.totalCpm))}
           </Badge>
         </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-0.5 text-xs">
           {data.totalMiles.toFixed(0)} mi total · {data.loadedMiles.toFixed(0)} loaded ·{" "}
           {data.deadheadMiles.toFixed(0)} empty
         </p>
@@ -120,14 +120,14 @@ function BreakdownContent({ data }: { data: ProfitabilityData }) {
               className="flex items-center justify-between gap-2 text-xs"
             >
               <span className="flex min-w-0 items-center gap-1.5">
-                <span className="truncate text-muted-foreground">{line.name}</span>
+                <span className="text-muted-foreground truncate">{line.name}</span>
                 <Badge variant="outline" className={badge.className}>
                   {badge.label}
                 </Badge>
               </span>
               <span className="shrink-0 font-medium tabular-nums">
                 {formatCurrency(parseDecimal(line.amount))}
-                <span className="ml-1 text-muted-foreground">
+                <span className="text-muted-foreground ml-1">
                   ({formatPerMile(parseDecimal(line.ratePerMile))})
                 </span>
               </span>

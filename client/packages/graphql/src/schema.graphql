@@ -285,6 +285,16 @@ type AccountTypeEdge {
   node: AccountType!
 }
 
+input AddCarrierSettlementAdjustmentInput {
+  amountMinor: Int!
+  description: String!
+  """
+  Optional GL account override — the adjustment posts there instead of the default expense account.
+  """
+  glAccountId: ID
+  settlementId: ID!
+}
+
 input AddSettlementAdjustmentInput {
   amountMinor: Int!
   description: String!
@@ -798,6 +808,549 @@ type CannedReport {
   version: String!
 }
 
+type Carrier {
+  addressLine1: String
+  addressLine2: String
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  carrierType: CarrierType!
+  city: String
+  code: String!
+  complianceStatus: CarrierComplianceStatus!
+  contacts: [CarrierContact!]
+  createdAt: Int!
+  dbaName: String
+  disqualifiedReason: String
+  dotNumber: String
+  email: String
+  externalId: String
+  id: ID!
+  insurancePolicies: [CarrierInsurancePolicy!]
+  is1099Eligible: Boolean!
+  mcNumber: String
+  name: String!
+  notes: String
+  organization: Organization
+  organizationId: ID!
+  paymentMethod: CarrierPaymentMethod!
+  paymentTermDays: Int!
+  phone: String
+  postalCode: String
+  qualifiedAt: Int
+  remitAddressLine1: String
+  remitAddressLine2: String
+  remitCity: String
+  remitPostalCode: String
+  remitState: UsState
+  remitStateId: ID
+  remitToName: String
+  safetyRating: CarrierSafetyRating!
+  scac: String
+  state: UsState
+  stateId: ID
+  status: CarrierStatus!
+  taxId: String
+  taxIdType: CarrierTaxIDType
+  updatedAt: Int!
+  version: Int!
+  w9OnFile: Boolean!
+}
+
+type CarrierAssignment {
+  accessorialTotal: String!
+  accessorials: [CarrierAssignmentAccessorial!]
+  assignedById: ID
+  baseAmount: String!
+  baseRate: String!
+  businessUnitId: ID!
+  canceledAt: Int
+  cancellationReason: String
+  carrier: Carrier
+  carrierId: ID!
+  confirmedAt: Int
+  createdAt: Int!
+  currencyCode: String!
+  externalDriverName: String
+  externalDriverPhone: String
+  externalTractorNumber: String
+  externalTrailerNumber: String
+  fuelSurcharge: String!
+  id: ID!
+  organizationId: ID!
+  proNumber: String
+  rateMethod: CarrierRateMethod!
+  shipmentMoveId: ID!
+  status: CarrierAssignmentStatus!
+  totalCost: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type CarrierAssignmentAccessorial {
+  accessorialChargeId: ID
+  amount: String!
+  businessUnitId: ID!
+  carrierAssignmentId: ID!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  organizationId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum CarrierAssignmentStatus {
+  Canceled
+  Confirmed
+  Pending
+}
+
+enum CarrierComplianceStatus {
+  Disqualified
+  Expired
+  Pending
+  Qualified
+}
+
+type CarrierConnection {
+  edges: [CarrierEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierContact {
+  businessUnitId: ID!
+  carrierId: ID!
+  createdAt: Int!
+  email: String
+  id: ID!
+  isPrimary: Boolean!
+  name: String!
+  organizationId: ID!
+  phone: String
+  receivesRateConfirmations: Boolean!
+  title: String
+  updatedAt: Int!
+  version: Int!
+}
+
+"""
+The purchased-transportation accrual ledger: one cost event per buy-rate line
+on a carrier assignment, created automatically when a carrier-covered shipment
+reaches the organization's pay trigger. Events are recomputed while Pending,
+locked once attached to a settlement, and voided if the shipment cancels.
+"""
+type CarrierCostEvent {
+  amountMinor: Int!
+  assignmentVersion: Int!
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierAssignmentId: ID
+  carrierId: ID!
+  createdAt: Int!
+  currencyCode: String!
+  description: String!
+  eventDate: Int!
+  eventType: CarrierCostEventType!
+  id: ID!
+  moveId: ID
+  organizationId: ID!
+  proNumber: String!
+  settlementId: ID
+  shipmentId: ID
+  status: CarrierCostEventStatus!
+  updatedAt: Int!
+  version: Int!
+  voidReason: String!
+  voidedAt: Int
+}
+
+type CarrierCostEventConnection {
+  edges: [CarrierCostEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierCostEventEdge {
+  cursor: String!
+  node: CarrierCostEvent!
+}
+
+enum CarrierCostEventStatus {
+  Attached
+  Pending
+  Settled
+  Voided
+}
+
+enum CarrierCostEventType {
+  Accessorial
+  Adjustment
+  FuelSurcharge
+  LinehaulCost
+}
+
+type CarrierEdge {
+  cursor: String!
+  node: Carrier!
+}
+
+type CarrierInsurancePolicy {
+  businessUnitId: ID!
+  carrierId: ID!
+  coverageAmount: String!
+  createdAt: Int!
+  effectiveDate: Int!
+  expirationDate: Int!
+  id: ID!
+  isVerified: Boolean!
+  organizationId: ID!
+  policyNumber: String!
+  policyType: CarrierInsurancePolicyType!
+  providerName: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum CarrierInsurancePolicyType {
+  AutoLiability
+  CargoLiability
+  GeneralLiability
+  Umbrella
+  WorkersComp
+}
+
+"""
+A reconciliation record pairing a carrier freight invoice (EDI 210 or a
+document-AI extraction) with the carrier assignment it bills. The expected
+total comes from the assignment's negotiated buy rate; the variance is invoice
+minus expected. Within the control's tolerance the match lands Matched,
+otherwise Variance — resolvable as-is, with a variance adjustment cost event,
+or by rejection.
+"""
+type CarrierInvoiceMatch {
+  adjustmentCostEventId: ID
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierAssignment: CarrierAssignment
+  carrierAssignmentId: ID!
+  carrierId: ID!
+  carrierSettlementId: ID
+  createdAt: Int!
+  currencyCode: String!
+  documentAiExtractionId: ID
+  ediCarrierInvoiceId: ID
+  expectedTotalMinor: Int!
+  id: ID!
+  invoiceNumber: String!
+  invoiceTotalMinor: Int!
+  matchedVia: CarrierInvoiceMatchVia!
+  organizationId: ID!
+  resolutionNote: String!
+  resolvedAt: Int
+  resolvedById: ID
+  status: CarrierInvoiceMatchStatus!
+  updatedAt: Int!
+  varianceMinor: Int!
+  version: Int!
+}
+
+input CarrierInvoiceMatchActionInput {
+  matchId: ID!
+  note: String
+}
+
+type CarrierInvoiceMatchList {
+  items: [CarrierInvoiceMatch!]!
+  totalCount: Int!
+}
+
+enum CarrierInvoiceMatchStatus {
+  Matched
+  Rejected
+  Resolved
+  Suggested
+  Variance
+}
+
+"""
+How an invoice match came to exist: Manual for a dispatcher-created match, Auto
+for one created by the inbound EDI 210 auto-match sweep.
+"""
+enum CarrierInvoiceMatchVia {
+  Auto
+  Manual
+}
+
+"""
+One immutable entry in a carrier's AP subledger. Posting a settlement appends a
+Bill, paying it appends a Payment, and voiding a posted settlement appends an
+Adjustment — so the running balance always reconciles to the GL's AP account.
+"""
+type CarrierLedgerEntry {
+  amountMinor: Int!
+  businessUnitId: ID!
+  carrierId: ID!
+  createdAt: Int!
+  createdById: ID!
+  documentNumber: String!
+  entryType: CarrierLedgerEntryType!
+  id: ID!
+  journalBatchId: ID
+  lineNumber: Int!
+  organizationId: ID!
+  relatedSettlementId: ID
+  sourceEventType: String!
+  sourceObjectId: String!
+  sourceObjectType: String!
+  transactionDate: Int!
+}
+
+enum CarrierLedgerEntryType {
+  Adjustment
+  Bill
+  Payment
+}
+
+enum CarrierPaymentMethod {
+  ACHManual
+  Check
+}
+
+enum CarrierRateMethod {
+  Flat
+  PerMile
+}
+
+enum CarrierSafetyRating {
+  Conditional
+  NotRated
+  Satisfactory
+  Unsatisfactory
+}
+
+"""
+A carrier's payable statement for one period. Lifecycle: Draft ->
+PendingApproval -> Approved -> Posted -> Paid, with Void available before
+payment. Posting writes DR purchased transportation / CR accounts payable to
+the GL plus a Bill entry in the carrier ledger; marking paid posts the cash
+disbursement (DR AP / CR cash) and the Payment ledger entry.
+"""
+type CarrierSettlement {
+  adjustmentsMinor: Int!
+  approvedAt: Int
+  approvedById: ID
+  batchId: ID
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierId: ID!
+  createdAt: Int!
+  currencyCode: String!
+  grossCostMinor: Int!
+  id: ID!
+  lines: [CarrierSettlementLine!]
+  netPayableMinor: Int!
+  notes: String!
+  organizationId: ID!
+  paidAt: Int
+  paidById: ID
+  paidJournalBatchId: ID
+  payDate: Int!
+  paymentMethod: String!
+  paymentReference: String!
+  periodEnd: Int!
+  periodStart: Int!
+  postedAt: Int
+  postedById: ID
+  postedJournalBatchId: ID
+  settlementNumber: String!
+  shipmentCount: Int!
+  status: CarrierSettlementStatus!
+  submittedAt: Int
+  submittedById: ID
+  updatedAt: Int!
+  version: Int!
+  voidJournalBatchId: ID
+  voidReason: String!
+  voidedAt: Int
+  voidedById: ID
+}
+
+input CarrierSettlementActionInput {
+  reason: String
+  settlementId: ID!
+}
+
+"""
+Groups every carrier settlement generated for one pay period so an AP run can
+be reviewed, exported, and remitted as a unit. Batches are idempotent per
+period and can be generated manually or automatically (carrier settlement
+control).
+"""
+type CarrierSettlementBatch {
+  businessUnitId: ID!
+  canceledAt: Int
+  canceledById: ID
+  completedAt: Int
+  createdAt: Int!
+  currencyCode: String!
+  generatedAt: Int
+  generatedById: ID
+  id: ID!
+  name: String!
+  notes: String!
+  organizationId: ID!
+  payDate: Int!
+  periodEnd: Int!
+  periodStart: Int!
+  settlementCount: Int!
+  settlements: [CarrierSettlement!]
+  status: CarrierSettlementBatchStatus!
+  totalGrossMinor: Int!
+  totalNetMinor: Int!
+  updatedAt: Int!
+  version: Int!
+}
+
+type CarrierSettlementBatchConnection {
+  edges: [CarrierSettlementBatchEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type CarrierSettlementBatchEdge {
+  cursor: String!
+  node: CarrierSettlementBatch!
+}
+
+enum CarrierSettlementBatchStatus {
+  Canceled
+  Completed
+  Open
+}
+
+type CarrierSettlementConnection {
+  edges: [CarrierSettlementEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Organization-wide carrier settlement policy: the shipment milestone at which
+purchased-transportation cost accrues, pay period cadence, batch automation,
+invoice-match variance tolerance, and GL account defaults.
+"""
+type CarrierSettlementControl {
+  """
+  When on (and auto-match is on), auto-created matches within the variance tolerance are resolved into the settlement pool without review.
+  """
+  autoAcceptWithinTolerance: Boolean!
+  autoGenerateBatches: Boolean!
+  """
+  When on, inbound EDI 210 invoices that resolve to an accepted tender offer are matched to their carrier assignment automatically.
+  """
+  autoMatchInboundInvoices: Boolean!
+  """
+  When on, approving a carrier settlement immediately posts it to the general ledger.
+  """
+  autoPostOnApprove: Boolean!
+  businessUnitId: ID!
+  createdAt: Int!
+  defaultApAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  id: ID!
+  organizationId: ID!
+  payDelayDays: Int!
+  payPeriodFrequency: PayPeriodFrequency!
+  payTrigger: SettlementPayTrigger!
+  periodEndDayOfWeek: Int!
+  updatedAt: Int!
+  """
+  Invoice totals within this many minor units of the buy rate auto-match; larger gaps flag a variance.
+  """
+  varianceToleranceMinor: Int!
+  version: Int!
+}
+
+type CarrierSettlementEdge {
+  cursor: String!
+  node: CarrierSettlement!
+}
+
+"""
+One line on a carrier settlement statement. Cost lines trace back to the cost
+event, shipment, and move that produced them; manual adjustment lines have no
+cost event and may carry a GL account override.
+"""
+type CarrierSettlementLine {
+  amountMinor: Int!
+  costEventId: ID
+  description: String!
+  eventType: CarrierCostEventType!
+  glAccountId: ID
+  id: ID!
+  lineNumber: Int!
+  moveId: ID
+  proNumber: String!
+  settlementId: ID!
+  shipmentId: ID
+}
+
+type CarrierSettlementPeriodBounds {
+  payDate: Int!
+  periodEnd: Int!
+  periodStart: Int!
+}
+
+enum CarrierSettlementStatus {
+  Approved
+  Draft
+  Paid
+  PendingApproval
+  Posted
+  Voided
+}
+
+"""
+One-call snapshot powering the carrier settlement workspace: settlement counts
+by status for the pay period plus the org-wide pool of pending cost events
+waiting to be settled.
+"""
+type CarrierSettlementWorkspaceSummary {
+  approvedCount: Int!
+  draftCount: Int!
+  openBatchId: ID
+  paidCount: Int!
+  payDate: Int!
+  pendingAmountMinor: Int!
+  pendingApprovalCount: Int!
+  pendingCarrierCount: Int!
+  pendingEventCount: Int!
+  periodEnd: Int!
+  periodStart: Int!
+  postedCount: Int!
+  totalGrossMinor: Int!
+  totalNetMinor: Int!
+}
+
+enum CarrierStatus {
+  Active
+  DoNotUse
+  Inactive
+}
+
+enum CarrierTaxIDType {
+  EIN
+  SSN
+}
+
+enum CarrierType {
+  Broker
+  Common
+  Contract
+  Exempt
+}
+
 type CategoryCostLine {
   amount: String!
   category: CostCategoryType!
@@ -938,6 +1491,32 @@ input CostingControlInput {
   targetMarginPercent: String
   useLiveFuelPrice: Boolean!
   version: Int!
+}
+
+input CreateCarrierInvoiceMatchInput {
+  """
+  Optional explicit assignment; otherwise resolved by pro number or shipment reference.
+  """
+  carrierAssignmentId: ID
+  """
+  Required for document AI sources; EDI sources take the carrier from the linked invoice.
+  """
+  carrierId: ID
+  documentAiExtractionId: ID
+  """
+  Exactly one source is required: an EDI carrier invoice or a document AI extraction.
+  """
+  ediCarrierInvoiceId: ID
+  """Document AI sources only: the extracted invoice number."""
+  invoiceNumber: String
+  """Document AI sources only: the extracted invoice total in minor units."""
+  invoiceTotalMinor: Int
+  """
+  Document AI sources only: the pro number used to locate the assignment.
+  """
+  proNumber: String
+  """Document AI sources only: the shipment used to locate the assignment."""
+  shipmentId: ID
 }
 
 input CreateDocumentTemplateVersionInput {
@@ -1937,6 +2516,30 @@ input DispatchAssignMoveInput {
   trailerId: ID
 }
 
+input DispatchAssignMoveToCarrierInput {
+  accessorials: [DispatchCarrierAccessorialInput!]
+  baseRate: String!
+  carrierId: ID!
+  externalDriverName: String
+  externalDriverPhone: String
+  externalTractorNumber: String
+  externalTrailerNumber: String
+  fuelSurcharge: String
+  moveId: ID!
+  """
+  Proceed despite insurance policies that expire inside the warning window. Hard blockers
+  (inactive, unqualified, or expired coverage) can never be overridden.
+  """
+  overrideInsuranceWarning: Boolean
+  proNumber: String
+  rateMethod: CarrierRateMethod!
+  """
+  Replace an existing carrier assignment rather than rejecting the request. The console
+  sets this when a dispatcher re-covers a move that already has carrier coverage.
+  """
+  replace: Boolean
+}
+
 """
 Per-move outcome of a bulk assignment. Failures carry their reason rather than aborting
 the batch: covering nine of ten moves and saying which one failed beats covering none.
@@ -2032,6 +2635,8 @@ input DispatchBoardInput {
 }
 
 type DispatchBoardMove {
+  assignedCarrierId: ID
+  assignedCarrierName: String!
   assignedTractorCode: String!
   assignedTractorId: ID
   assignedTrailerCode: String!
@@ -2041,6 +2646,9 @@ type DispatchBoardMove {
   assignmentAckStatus: String!
   assignmentId: ID
   bol: String!
+  carrierAssignmentId: ID
+  carrierTotalCost: Float
+  coverageType: String!
   customerId: ID
   customerName: String!
   destinationCity: String!
@@ -2056,6 +2664,7 @@ type DispatchBoardMove {
   hasActiveHold: Boolean!
   hasHazmat: Boolean!
   isCovered: Boolean!
+  liveTender: DispatchBoardTenderSummary
   loaded: Boolean!
   minutesToPickup: Int!
   moveCount: Int!
@@ -2101,6 +2710,20 @@ type DispatchBoardSummary {
   utilizationPercent: Float!
 }
 
+"""
+The live tender riding on a move, condensed to what a board card chip needs: where the
+waterfall stands and which carrier is currently holding the offer.
+"""
+type DispatchBoardTenderSummary {
+  currentCarrierName: String!
+  currentOfferExpiresAt: Int
+  currentRank: Int!
+  id: ID!
+  mode: TenderMode!
+  offerCount: Int!
+  status: TenderStatus!
+}
+
 type DispatchBulkAssignResult {
   failed: Int!
   results: [DispatchAssignResult!]!
@@ -2139,6 +2762,21 @@ type DispatchCandidate {
   verdict: String!
   workerId: ID!
   workerName: String!
+}
+
+input DispatchCarrierAccessorialInput {
+  accessorialChargeId: ID
+  amount: String!
+  description: String!
+}
+
+input DispatchCarrierAssignmentPreviewInput {
+  carrierId: ID!
+}
+
+type DispatchCarrierEligibility {
+  blockers: [String!]!
+  warnings: [String!]!
 }
 
 """
@@ -2195,6 +2833,7 @@ type DispatchPlan {
   assignments: [DispatchPlannedAssignment!]!
   autonomyTier: String!
   generatedAt: Int!
+  planningMode: String!
   runId: ID
   """
   True when the organization is watching what the agent would do without letting it act;
@@ -2202,6 +2841,11 @@ type DispatchPlan {
   """
   shadowMode: Boolean!
   totalScore: Int!
+  """
+  Populated under Horizon planning only; empty when the organization plans a single
+  period at a time.
+  """
+  tours: [DispatchTour!]!
   uncovered: [DispatchUncoveredMove!]!
 }
 
@@ -2230,9 +2874,22 @@ type DispatchPlannedAssignment {
   confidence: Float!
   moveId: ID!
   proNumber: String!
+  projectedCompleteAt: Int!
+  projectedDriveRemainingMs: Int!
+  """
+  When the driver is projected to start and finish this move, and the drive time left
+  on their clock afterwards. These are projections from the plan, not commitments.
+  """
+  projectedStartAt: Int!
   proposalId: ID
   rationale: String!
   score: DispatchCandidate!
+  sequenceIndex: Int!
+  """
+  Set only under Horizon planning: the tour this move belongs to and its position
+  within that tour. Immediate planning leaves both empty.
+  """
+  tourId: ID
   tractorId: ID
   trailerId: ID
   workerId: ID!
@@ -2256,6 +2913,22 @@ type DispatchTimeOff {
   endDate: Int!
   startDate: Int!
   type: String!
+}
+
+"""
+A sequence of moves horizon planning chained onto one driver. Each move's empty miles
+are measured from where the previous move ends, which is what makes the chain worth
+more than the same moves assigned independently.
+"""
+type DispatchTour {
+  endsAt: Int!
+  moveIds: [ID!]!
+  startsAt: Int!
+  totalDeadheadMiles: Float!
+  totalScore: Int!
+  tourId: ID!
+  workerId: ID!
+  workerName: String!
 }
 
 """
@@ -2921,6 +3594,36 @@ type EIASeriesOption {
   name: String!
   region: String!
   seriesId: String!
+}
+
+"""An inbound EDI 210 carrier freight invoice awaiting reconciliation."""
+type EdiCarrierInvoice {
+  billToName: String!
+  bol: String!
+  businessUnitId: ID!
+  carrierId: ID
+  createdAt: Int!
+  currencyCode: String!
+  deliveryDate: Int
+  expectedAmount: String
+  id: ID!
+  invoiceDate: Int
+  invoiceNumber: String!
+  organizationId: ID!
+  proNumber: String!
+  reconciliationNotes: String!
+  reconciliationStatus: String!
+  shipmentId: ID
+  shipmentReference: String!
+  totalAmount: String
+  updatedAt: Int!
+  varianceAmount: String
+  version: Int!
+}
+
+type EdiCarrierInvoiceList {
+  items: [EdiCarrierInvoice!]!
+  totalCount: Int!
 }
 
 type EdiCommunicationProfile {
@@ -4131,6 +4834,13 @@ type GLActualsWindow {
   toDate: Int!
 }
 
+input GenerateCarrierSettlementBatchInput {
+  name: String
+  notes: String
+  periodEnd: Int
+  periodStart: Int
+}
+
 input GenerateDriverSettlementInput {
   batchId: ID
   payDate: Int!
@@ -4700,6 +5410,116 @@ type JournalSourceInfo {
   status: String!
 }
 
+"""
+Shared oversize and overweight limits for a jurisdiction.
+
+This data is global. It carries no organization or business unit, because the
+legal width of a load in a given state does not vary by carrier — a carrier
+expressing a stricter posture records a JurisdictionRuleOverride instead. A
+change here is visible to every organization on the platform.
+"""
+type JurisdictionRule {
+  createdAt: Int!
+  daylightOnly: Boolean!
+  effectiveEndDate: Int
+  effectiveStartDate: Int
+  holidayRestricted: Boolean!
+  id: ID!
+  maxHeightFeet: Float!
+  maxLengthFeet: Float!
+  maxWeightPounds: Int!
+  maxWidthFeet: Float!
+  permitBaseFee: String
+  permitLeadTimeDays: Int!
+  permitPerMileFee: String
+  permitValidityDays: Int!
+  rushHourRestricted: Boolean!
+  """
+  What this row was checked against. Seeded rows carry a note saying which
+  fields are a federal baseline and which are simply not populated.
+  """
+  sourceNote: String
+  sourceUrl: String
+  state: UsState
+  stateId: ID!
+  status: JurisdictionRuleStatus!
+  superloadWeightPounds: Int
+  superloadWidthFeet: Float
+  updatedAt: Int!
+  """
+  Whether anyone has confirmed this row against the issuing state. Requirements
+  derived from an unverified row carry that state through to the operator.
+  """
+  verificationState: JurisdictionVerificationState!
+  verifiedAt: Int
+  version: Int!
+  weekendRestricted: Boolean!
+}
+
+type JurisdictionRuleConnection {
+  edges: [JurisdictionRuleEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type JurisdictionRuleEdge {
+  cursor: String!
+  node: JurisdictionRule!
+}
+
+"""
+One organization's stricter posture on a jurisdiction.
+
+Unlike JurisdictionRule these rows are tenant data. Every field is optional —
+an unset field defers to the statutory rule — and the engine applies a value
+only when it is stricter than the statute, so a permissive override cannot make
+an illegal load look legal.
+"""
+type JurisdictionRuleOverride {
+  businessUnitId: ID!
+  createdAt: Int!
+  daylightOnly: Boolean
+  holidayRestricted: Boolean
+  id: ID!
+  maxHeightFeet: Float
+  maxLengthFeet: Float
+  maxWeightPounds: Int
+  maxWidthFeet: Float
+  organizationId: ID!
+  permitLeadTimeDays: Int
+  """
+  Why this organization runs tighter than the statute. Required, minimum ten characters.
+  """
+  reason: String!
+  state: UsState
+  stateId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+type JurisdictionRuleOverrideConnection {
+  edges: [JurisdictionRuleOverrideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type JurisdictionRuleOverrideEdge {
+  cursor: String!
+  node: JurisdictionRuleOverride!
+}
+
+enum JurisdictionRuleStatus {
+  Active
+  Draft
+  Inactive
+}
+
+enum JurisdictionVerificationState {
+  Disputed
+  Unverified
+  Verified
+}
+
 input LocateTractorInput {
   newLocationId: ID!
   tractorId: ID!
@@ -4856,10 +5676,31 @@ enum ManualJournalStatus {
   Rejected
 }
 
+input MarkCarrierSettlementPaidInput {
+  paymentMethod: String!
+  paymentReference: String
+  settlementId: ID!
+}
+
 input MarkDriverSettlementPaidInput {
   paymentMethod: String!
   paymentReference: String
   settlementId: ID!
+}
+
+input MatchRoutingGuideInput {
+  destinationCity: String
+  destinationLocationId: ID
+  destinationState: String
+  originCity: String
+  originLocationId: ID
+  originState: String
+}
+
+enum MoveCoverageType {
+  carrier
+  driver
+  unassigned
 }
 
 enum MoveStatus {
@@ -4871,12 +5712,19 @@ enum MoveStatus {
 }
 
 type Mutation {
+  acceptCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
+  """
+  Resolves a variance match by accruing an Adjustment cost event for the variance amount.
+  """
+  acceptCarrierInvoiceMatchWithVariance(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
   acknowledgeShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
+  addCarrierSettlementAdjustment(input: AddCarrierSettlementAdjustmentInput!): CarrierSettlement!
   addDriverSettlementAdjustment(input: AddSettlementAdjustmentInput!): DriverSettlement!
   addFuelIndexPrice(input: FuelIndexPriceInput!): FuelIndexPrice!
   addOrderCharge(amount: String!, description: String!, orderId: ID!): Order!
   adjustEscrowAccount(input: AdjustEscrowAccountInput!): EscrowAccount!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
+  approveCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   approveDetentionOccurrence(occurrenceId: ID!): DetentionOccurrence!
   approveDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   approveWorkerPTO(id: ID!): WorkerPTO!
@@ -4887,6 +5735,11 @@ type Mutation {
   attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
   """Transfer accrued pay events onto a draft settlement."""
   attachPayEventsToSettlement(input: AttachPayEventsInput!): DriverSettlement!
+  """
+  Prices a saved shipment from its contract again, overwriting its rating
+  method, base rate and contract accessorials.
+  """
+  autoRateShipment(id: ID!): ShipmentAutoRateResponse!
   """
   Run one lifecycle action across many settlements; per-settlement failures don't abort the rest.
   """
@@ -4908,6 +5761,7 @@ type Mutation {
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
   closeEscrowAccount(accountId: ID!): EscrowAccount!
   closeOrder(id: ID!): Order!
+  createCarrierInvoiceMatch(input: CreateCarrierInvoiceMatchInput!): CarrierInvoiceMatch!
   createDetentionPolicy(input: DetentionPolicyInput!): DetentionPolicy!
   createDocumentTemplate(input: DocumentTemplateInput!): DocumentTemplate!
   createDocumentTemplateVersion(input: CreateDocumentTemplateVersionInput!): DocumentTemplateVersion!
@@ -4964,13 +5818,16 @@ type Mutation {
   detentionBacktest(input: DetentionBacktestInput!): DetentionBacktestResult!
   dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
+  dispatchAssignMoveToCarrier(input: DispatchAssignMoveToCarrierInput!): CarrierAssignment!
   dispatchAssignMoves(input: [DispatchAssignMoveInput!]!): DispatchBulkAssignResult!
+  dispatchCancelCarrierAssignment(moveId: ID!, reason: String!): Boolean!
   dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
   dispatchUnassignMoves(moveIds: [ID!]!): DispatchBulkAssignResult!
   disputeDetentionOccurrence(input: DetentionDisputeInput!): DetentionOccurrence!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   endWorkerPayAssignment(input: EndWorkerPayAssignmentInput!): WorkerPayAssignment!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
+  generateCarrierSettlementBatch(input: GenerateCarrierSettlementBatchInput!): CarrierSettlementBatch!
   generateDriverSettlement(input: GenerateDriverSettlementInput!): DriverSettlement
   generateSettlementBatch(input: GenerateSettlementBatchInput!): SettlementBatch!
   """
@@ -4980,6 +5837,8 @@ type Mutation {
   """Invites a worker to the driver portal (back office)."""
   inviteWorkerToPortal(input: InviteWorkerToPortalInput!): InviteWorkerToPortalResult!
   issuePayAdvance(input: IssuePayAdvanceInput!): PayAdvance!
+  """Links an inbound EDI carrier invoice to a carrier in the master."""
+  linkEdiCarrierInvoiceToCarrier(carrierId: ID!, invoiceId: ID!): EdiCarrierInvoice!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
   """
@@ -4987,6 +5846,7 @@ type Mutation {
   """
   markAllMyNotificationsRead: Boolean!
   markAllNotificationsRead: Boolean!
+  markCarrierSettlementPaid(input: MarkCarrierSettlementPaidInput!): CarrierSettlement!
   markDriverSettlementPaid(input: MarkDriverSettlementPaidInput!): DriverSettlement!
   """
   Notification state changes for the signed-in driver. Each only ever touches
@@ -5013,8 +5873,16 @@ type Mutation {
   payWorkerNow(input: PayWorkerNowInput!): DriverSettlement!
   pinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
+  postCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   postDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
+  """
+  Asks the rate agreements what they would charge for a shipment, without
+  writing anything. This is what the billing panel offers before anyone commits
+  to a contract rate.
+  """
+  previewShipmentContractRate(input: ShipmentInput!): ShipmentContractRate!
   publishDocumentTemplateVersion(id: ID!, notes: String): DocumentTemplateVersion!
+  recalculateCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   recalculateDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   recalculateShipmentDistance(shipmentId: ID!): ShipmentDistanceResponse!
   """
@@ -5023,10 +5891,13 @@ type Mutation {
   cascade, and pay accrues when the move completes.
   """
   recordMyStopAction(input: RecordMyStopActionInput!): Boolean!
+  rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
+  rejectCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   """Release a held pay event back into the settlement pool."""
   releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
+  removeCarrierSettlementAdjustment(input: RemoveCarrierSettlementAdjustmentInput!): CarrierSettlement!
   removeDriverSettlementAdjustment(input: RemoveSettlementAdjustmentInput!): DriverSettlement!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
@@ -5069,6 +5940,7 @@ type Mutation {
   setOrgDefaultTableConfiguration(enabled: Boolean!, id: ID!): TableConfiguration!
   """Moves an open dispute into review (back office)."""
   startSettlementDisputeReview(id: ID!): SettlementDispute!
+  submitCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   submitDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   submitMyExpense(input: SubmitMyExpenseInput!): DriverExpense!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
@@ -5079,6 +5951,7 @@ type Mutation {
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAgentControl(input: AgentControlInput!): AgentControl!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
+  updateCarrierSettlementControl(input: UpdateCarrierSettlementControlInput!): CarrierSettlementControl!
   updateCostCategory(input: CostCategoryUpdateInput!): CostCategory!
   updateCostingControl(input: CostingControlInput!): CostingControl!
   """Updates the org's Dash feature toggles (back office)."""
@@ -5117,6 +5990,7 @@ type Mutation {
   updateTableConfiguration(id: ID!, input: TableConfigurationInput!): TableConfiguration!
   updateTractor(id: ID!, input: TractorInput!): Tractor!
   updateTrailer(id: ID!, input: TrailerInput!): Trailer!
+  voidCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   voidDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
   waiveDetentionOccurrence(input: DetentionWaiveInput!): DetentionOccurrence!
   """Withdraws one of the signed-in driver's own open disputes."""
@@ -5284,6 +6158,8 @@ enum OrderStatus {
 type Organization {
   addressLine1: String!
   addressLine2: String!
+  assetOperationsEnabled: Boolean!
+  brokerageEnabled: Boolean!
   bucketName: String!
   businessUnit: BusinessUnit
   businessUnitId: ID!
@@ -5307,6 +6183,8 @@ type Organization {
 input OrganizationInput {
   addressLine1: String!
   addressLine2: String
+  assetOperationsEnabled: Boolean
+  brokerageEnabled: Boolean
   bucketName: String
   city: String!
   dotNumber: String!
@@ -5919,9 +6797,25 @@ type Query {
   auditEntriesByResourceId(input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
   cannedReports: [CannedReport!]!
+  carrier(id: ID!): Carrier
+  carrierCostEvents(input: DataTableConnectionInput!): CarrierCostEventConnection!
+  carrierInvoiceMatches(carrierId: ID, limit: Int, offset: Int, status: CarrierInvoiceMatchStatus): CarrierInvoiceMatchList!
+  """A carrier's AP subledger, newest first."""
+  carrierLedgerEntries(carrierId: ID!, limit: Int): [CarrierLedgerEntry!]!
+  carrierSettlement(id: ID!): CarrierSettlement
+  carrierSettlementBatch(id: ID!): CarrierSettlementBatch
+  carrierSettlementBatches(input: DataTableConnectionInput!): CarrierSettlementBatchConnection!
+  carrierSettlementControl: CarrierSettlementControl!
+  """
+  Workspace snapshot for a pay period; omit bounds to use the current period.
+  """
+  carrierSettlementWorkspaceSummary(periodEnd: Int, periodStart: Int): CarrierSettlementWorkspaceSummary!
+  carrierSettlements(input: DataTableConnectionInput!): CarrierSettlementConnection!
+  carriers(input: DataTableConnectionInput!): CarrierConnection!
   commodities(input: DataTableConnectionInput!): CommodityConnection!
   commodity(id: ID!): Commodity
   costingControl: CostingControl!
+  currentCarrierSettlementPeriod: CarrierSettlementPeriodBounds!
   currentSettlementPeriod: SettlementPeriodBounds!
   customFieldDefinition(id: ID!): CustomFieldDefinition
   customFieldDefinitions(input: DataTableConnectionInput!): CustomFieldDefinitionConnection!
@@ -5944,6 +6838,7 @@ type Query {
   detentionWaiverStats(input: DetentionStatsInput!): [DetentionWaiverLeakageStat!]!
   dispatchAssignmentPreview(input: DispatchAssignmentPreviewInput!): DispatchAssignmentPreview!
   dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
+  dispatchCarrierAssignmentPreview(input: DispatchCarrierAssignmentPreviewInput!): DispatchCarrierEligibility!
   dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
   dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
   distanceOverride(id: ID!): DistanceOverride
@@ -5969,6 +6864,10 @@ type Query {
   driverPayEvents(input: DataTableConnectionInput!): DriverPayEventConnection!
   driverSettlement(id: ID!): DriverSettlement
   driverSettlements(input: DataTableConnectionInput!): DriverSettlementConnection!
+  """
+  Inbound EDI carrier invoices, filterable by reconciliation status (e.g. Unmatched).
+  """
+  ediCarrierInvoices(limit: Int, offset: Int, reconciliationStatus: String): EdiCarrierInvoiceList!
   ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
   ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
@@ -5992,6 +6891,7 @@ type Query {
   equipmentTypes(classes: [EquipmentClass!], input: DataTableConnectionInput!): EquipmentTypeConnection!
   escrowAccount(id: ID!): EscrowAccount
   escrowAccounts(input: DataTableConnectionInput!): EscrowAccountConnection!
+  exportCarrierSettlementBatchCsv(batchId: ID!): String!
   exportSettlementBatchCsv(batchId: ID!): String!
   fiscalYear(id: ID!): FiscalYear
   fiscalYears(input: DataTableConnectionInput!): FiscalYearConnection!
@@ -6031,12 +6931,17 @@ type Query {
   journalReversal(id: ID!): JournalReversal
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
   journalSourceByObject(sourceId: String!, sourceType: String!): JournalSourceInfo
+  jurisdictionRule(id: ID!): JurisdictionRule
+  jurisdictionRuleOverrides(input: DataTableConnectionInput!): JurisdictionRuleOverrideConnection!
+  jurisdictionRules(input: DataTableConnectionInput!): JurisdictionRuleConnection!
+  liveTenderByMove(moveId: ID!): Tender
   location(id: ID!): Location
   locationCategories(input: DataTableConnectionInput!): LocationCategoryConnection!
   locationCategory(id: ID!): LocationCategory
   locations(input: DataTableConnectionInput!): LocationConnection!
   manualJournal(id: ID!): ManualJournal
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
+  matchRoutingGuide(input: MatchRoutingGuideInput!): RoutingGuide
   myAdvances: [PayAdvance!]!
   """
   The signed-in driver's qualification-file view (license, medical, contact).
@@ -6107,8 +7012,10 @@ type Query {
   pendingDriverExpenseCount: Int!
   previewDriverSettlement(periodEnd: Int, periodStart: Int, workerId: ID!): DriverSettlement!
   previewReport(definition: ReportIRInput!, params: JSON, supersede: Boolean): ReportPreview!
-  rateTable(id: ID!): RateTable
-  rateTables(input: DataTableConnectionInput!): RateTableConnection!
+  rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
+  rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
+  rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
+  rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   recurringDeduction(id: ID!): RecurringDeduction
   recurringDeductions(input: DataTableConnectionInput!): RecurringDeductionConnection!
   recurringEarning(id: ID!): RecurringEarning
@@ -6135,6 +7042,8 @@ type Query {
   resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
   role(id: ID!): Role
   roles(input: DataTableConnectionInput!): RoleConnection!
+  routingGuide(id: ID!): RoutingGuide
+  routingGuides(input: DataTableConnectionInput!): RoutingGuideConnection!
   scimGroupRoleMappings(directoryId: ID!, input: DataTableConnectionInput!): SCIMGroupRoleMappingConnection!
   selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
   serviceFailure(id: ID!): ServiceFailure
@@ -6173,6 +7082,10 @@ type Query {
   sidebarPreferences: SidebarPreferences!
   storedMileage(id: ID!): StoredMileage
   storedMileages(input: DataTableConnectionInput!): StoredMileageConnection!
+  """
+  Suggests a carrier for an EDI invoice by SCAC/DOT lookup against the carrier master.
+  """
+  suggestCarrierForEdiInvoice(invoiceId: ID!): Carrier
   tableConfiguration(id: ID!): TableConfiguration
   tableConfigurations(input: DataTableConnectionInput!, resource: String, visibility: ConfigurationVisibility): TableConfigurationConnection!
   tcaSubscription(id: ID!): TCASubscription
@@ -6180,6 +7093,8 @@ type Query {
   telematicsFormMapping(id: ID!): TelematicsFormMapping
   telematicsFormMappings: [TelematicsFormMapping!]!
   telematicsStatus: TelematicsStatus!
+  tender(id: ID!): Tender
+  tendersByShipment(shipmentId: ID!): [Tender!]!
   tractor(id: ID!): Tractor
   tractors(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, includeWorkerDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TractorConnection!
   trailer(id: ID!): Trailer
@@ -6217,36 +7132,171 @@ type Query {
   workers(input: DataTableConnectionInput!): WorkerConnection!
 }
 
-type RateTable {
-  active: Boolean!
-  businessUnit: BusinessUnit
+"""
+A negotiated agreement with a customer or a carrier. The lane rules it carries
+are what decide the price of a shipment; the agreement itself carries the terms
+they are all written under.
+"""
+type RateAgreement {
+  agreementType: RateAgreementType!
+  approvedAt: Int
+  approvedById: ID
+  autoRenew: Boolean!
   businessUnitId: ID!
+  carrierId: ID
+  code: String!
+  contractRef: String!
   createdAt: Int!
+  currency: String!
+  currentVersionNumber: Int!
+  customerId: ID
+  defaultMaxCharge: String
+  defaultMinCharge: String
   description: String!
+  effectiveFrom: Int!
+  effectiveTo: Int
   id: ID!
-  key: String!
-  lookupType: RateTableLookupType!
+  marginFloorPercent: String
+  maxPayPercentOfSell: String
   name: String!
-  organization: Organization
   organizationId: ID!
+  partyType: RateAgreementPartyType!
+  priority: Int!
+  renewalNoticeDays: Int!
+  reviewComment: String!
+  status: RateAgreementStatus!
+  submittedAt: Int
+  submittedById: ID
   updatedAt: Int!
   version: Int!
 }
 
-type RateTableConnection {
-  edges: [RateTableEdge!]!
+type RateAgreementConnection {
+  edges: [RateAgreementEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
 }
 
-type RateTableEdge {
+type RateAgreementEdge {
   cursor: String!
-  node: RateTable!
+  node: RateAgreement!
 }
 
-enum RateTableLookupType {
-  Exact
-  Range
+enum RateAgreementPartyType {
+  Carrier
+  Customer
+}
+
+enum RateAgreementStatus {
+  Active
+  Archived
+  Draft
+  Expired
+  InReview
+  Suspended
+}
+
+enum RateAgreementType {
+  Contract
+  Dedicated
+  Project
+  Spot
+  Tariff
+}
+
+"""
+A multi-dimensional rate table — origin zone by destination zone by weight break
+by class, and any subset of that.
+"""
+type RateMatrix {
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  currency: String!
+  description: String!
+  """
+  The formula template that says what a cell's number means. The same grid is a
+  per-mile tariff or a flat table depending on which template prices it, so the
+  list has to show it — the numbers alone do not say.
+  """
+  formulaTemplateId: ID!
+  formulaTemplateName: String!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  status: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type RateMatrixConnection {
+  edges: [RateMatrixEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RateMatrixEdge {
+  cursor: String!
+  node: RateMatrix!
+}
+
+"""
+The record of how one shipment was priced: which agreement and rule won, what
+each term contributed, and what it came to. Quotes are never edited — correcting
+one means re-rating, which writes a new quote and supersedes the old.
+"""
+type RateQuote {
+  asOf: Int!
+  billingAmount: String!
+  billingCurrency: String!
+  businessUnitId: ID!
+  createdAt: Int!
+  currency: String!
+  engineVersion: String!
+  foregoneAmount: String
+  formulaTemplateId: ID
+  id: ID!
+  linehaulAmount: String!
+  organizationId: ID!
+  outcome: RateQuoteOutcome!
+  overrideReason: String!
+  partyId: ID!
+  partyType: RateAgreementPartyType!
+  purpose: RateQuotePurpose!
+  rateAgreementId: ID
+  rateAgreementRuleId: ID
+  ratedAt: Int!
+  ratedById: ID
+  shipmentId: ID
+  specificityScore: Int!
+  totalAmount: String!
+}
+
+type RateQuoteConnection {
+  edges: [RateQuoteEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RateQuoteEdge {
+  cursor: String!
+  node: RateQuote!
+}
+
+enum RateQuoteOutcome {
+  Error
+  FormulaFallback
+  ManualOverride
+  NoRateFound
+  Rated
+}
+
+enum RateQuotePurpose {
+  Quote
+  Rating
+  Shopping
+  Simulation
+  WhatIf
 }
 
 enum RateUnit {
@@ -6254,6 +7304,35 @@ enum RateUnit {
   Hour
   Mile
   Stop
+}
+
+"""
+A named grouping of geography that lane rules and rate matrices are written
+against, so a tariff can say "Southeast" rather than listing two hundred postal
+prefixes.
+"""
+type RateZone {
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  status: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type RateZoneConnection {
+  edges: [RateZoneEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RateZoneEdge {
+  cursor: String!
+  node: RateZone!
 }
 
 input RecordMyStopActionInput {
@@ -6426,6 +7505,11 @@ enum RecurringShipmentStatus {
   Active
   Expired
   Paused
+}
+
+input RemoveCarrierSettlementAdjustmentInput {
+  lineId: ID!
+  settlementId: ID!
 }
 
 input RemoveOrderChargeInput {
@@ -6955,6 +8039,54 @@ type RoleEdge {
   node: Role!
 }
 
+type RoutingGuide {
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  destinationCity: String!
+  destinationLocationId: ID
+  destinationState: String!
+  entries: [RoutingGuideEntry!]
+  id: ID!
+  name: String!
+  organizationId: ID!
+  originCity: String!
+  originLocationId: ID
+  originState: String!
+  specificity: Int!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type RoutingGuideConnection {
+  edges: [RoutingGuideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type RoutingGuideEdge {
+  cursor: String!
+  node: RoutingGuide!
+}
+
+type RoutingGuideEntry {
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierId: ID!
+  channel: TenderChannel!
+  createdAt: Int!
+  id: ID!
+  offerTtlSeconds: Int!
+  organizationId: ID!
+  rank: Int!
+  rate: String!
+  rateMethod: CarrierRateMethod!
+  routingGuideId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
 input RunReportInput {
   cannedKey: String
   definitionId: ID
@@ -7057,6 +8189,7 @@ type SelectOptionEdge {
 }
 
 enum SelectOptionResource {
+  CARRIER
   CUSTOMER
   EDI_TRANSFER
   EQUIPMENT_MANUFACTURER
@@ -7066,7 +8199,9 @@ enum SelectOptionResource {
   FUEL_INDEX
   FUEL_SURCHARGE_PROGRAM
   GL_ACCOUNT
+  LOCATION
   ORDER
+  RATE_ZONE
   SHIPMENT
   TRACTOR
   TRAILER
@@ -7451,6 +8586,14 @@ type Shipment {
   actualDeliveryDate: Int
   actualShipDate: Int
   additionalCharges: [ShipmentAdditionalCharge!]!
+  """
+  Whether this shipment still carries the rate its contract applied. It goes
+  false the moment somebody edits the rating method, the base rate, or one of
+  the contract's own accessorial charges.
+  """
+  autoRated: Boolean!
+  """When the contract priced this shipment. Null if none ever did."""
+  autoRatedAt: Int
   baseRate: String!
   billedAt: Int
   billingTransferStatus: String
@@ -7483,6 +8626,17 @@ type Shipment {
   pieces: Int
   proNumber: String!
   profitabilityEstimate: ShipmentProfitabilityEstimate
+  rateAgreementId: ID
+  rateAgreementRuleId: ID
+  """Freezes the numbers of a shipment that has already been invoiced."""
+  rateLocked: Boolean!
+  """
+  Set once a shipment has been priced at something other than its contract.
+  """
+  rateOverrideAmount: String
+  rateOverrideAt: Int
+  rateOverrideReason: String
+  rateQuoteId: ID
   ratingDetail: ShipmentRatingDetail
   ratingUnit: Int!
   serviceTypeId: ID!
@@ -7615,6 +8769,12 @@ type ShipmentAtRisk {
   etaSlip: Int!
   reefer: Int!
   weather: Int!
+}
+
+"""The result of re-rating a saved shipment from its contract."""
+type ShipmentAutoRateResponse {
+  contractRate: ShipmentContractRate!
+  shipment: Shipment!
 }
 
 type ShipmentAxleWeight {
@@ -7874,13 +9034,16 @@ type ShipmentCommodity {
   commodity: ShipmentCommodityDetail
   commodityId: ID!
   createdAt: Int!
+  heightFeet: Float
   id: ID
+  lengthFeet: Float
   organizationId: ID!
   pieces: Int!
   shipmentId: ID!
   updatedAt: Int!
   version: Int!
   weight: Int!
+  widthFeet: Float
 }
 
 type ShipmentCommodityDetail {
@@ -7907,17 +9070,62 @@ type ShipmentCommodityDetail {
 
 input ShipmentCommodityInput {
   commodityId: ID!
+  heightFeet: Float
   id: ID
+  lengthFeet: Float
   pieces: Int = 1
   shipmentId: ID
   version: Int
   weight: Int = 0
+  widthFeet: Float
 }
 
 type ShipmentConnection {
   edges: [ShipmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+}
+
+"""
+What the rate agreements charge for a shipment, either as a preview of what
+they would charge or as an account of what was just applied.
+"""
+type ShipmentContractRate {
+  accessorials: [ShipmentContractRateAccessorial!]!
+  agreementId: ID
+  agreementName: String!
+  """
+  False when no contract covered the lane, in which case nothing was changed.
+  """
+  applied: Boolean!
+  """
+  The rate that method prices with. Null when the rule defers to the shipment.
+  """
+  baseRate: String
+  explanation: String!
+  """The rating method the contract seats on the shipment."""
+  formulaTemplateId: ID
+  formulaTemplateName: String!
+  linehaulAmount: String!
+  otherChargeAmount: String!
+  """Rated, FormulaFallback, ManualOverride, NoRateFound or Error."""
+  outcome: String!
+  """What the shipment charged before, so a dialog can state the change."""
+  previousLinehaulAmount: String!
+  ruleId: ID
+  ruleLabel: String!
+  totalChargeAmount: String!
+}
+
+"""
+One charge a contract applies automatically to every shipment it prices.
+"""
+type ShipmentContractRateAccessorial {
+  accessorialChargeId: ID!
+  amount: String!
+  description: String!
+  method: AccessorialMethod!
+  unit: Int!
 }
 
 type ShipmentCustomer {
@@ -7929,6 +9137,11 @@ type ShipmentCustomer {
   code: String!
   consolidationPriority: Int!
   createdAt: Int!
+  """
+  Active internal EDI partner linked to this customer that is enabled for
+  outbound load tenders, if any.
+  """
+  ediPartner: EdiPartner
   exclusiveConsolidation: Boolean!
   externalId: String!
   id: ID!
@@ -8093,6 +9306,8 @@ type ShipmentEventShipmentReference {
 }
 
 enum ShipmentEventType {
+  CarrierAssigned
+  CarrierUnassigned
   CommentPosted
   DriverAssigned
   DriverReassigned
@@ -8104,12 +9319,23 @@ enum ShipmentEventType {
   MoveDeparted
   MoveStatusChanged
   OwnershipTransferred
+  RoutingGuideExhausted
   ShipmentCanceled
   ShipmentCreated
   ShipmentUncanceled
   ShipmentUpdated
   StatusChanged
   StopCompleted
+  TenderAccepted
+  TenderDeclined
+  TenderDeliveryFailed
+  TenderEntrySkipped
+  TenderEntryWarned
+  TenderExpired
+  TenderLateResponse
+  TenderNeedsReview
+  TenderOffered
+  TenderWithdrawn
 }
 
 input ShipmentEventsInput {
@@ -8196,7 +9422,12 @@ input ShipmentInput {
   ownerId: ID
   pieces: Int
   proNumber: String
-  ratingDetail: ShipmentRatingDetailInput
+  """
+  Why this shipment is billed at something other than its contract rate. It is
+  the only rating field a caller may write: everything else the rater owns is
+  an ordinary field, and everything else the system owns is restored on save.
+  """
+  rateOverrideReason: String
   ratingUnit: Int = 1
   serviceTypeId: ID!
   shipmentTypeId: ID!
@@ -8298,6 +9529,8 @@ type ShipmentLoadingWarning {
 type ShipmentMove {
   assignment: ShipmentAssignment
   businessUnitId: ID!
+  carrierAssignment: CarrierAssignment
+  coverageType: MoveCoverageType!
   createdAt: Int!
   distance: Float
   distanceCalculatedAt: Int
@@ -8419,25 +9652,61 @@ type ShipmentProfitabilityEstimate {
   totalMiles: Float!
 }
 
+"""
+One line of the arithmetic that produced the rate, in the order it was applied.
+"""
+type ShipmentRatingBreakdownItem {
+  amount: Float!
+  """
+  Set when the line could not be evaluated, in which case the amount is zero.
+  """
+  error: String!
+  label: String!
+  name: String!
+}
+
+"""
+Why a shipment is priced the way it is.
+
+The contract fields are filled in when a rate agreement priced the load. They
+name the quote rather than repeating it: the quote holds the full explanation,
+and copying it here would let the two drift.
+"""
 type ShipmentRatingDetail {
+  agreementId: String!
+  agreementName: String!
+  breakdown: [ShipmentRatingBreakdownItem!]!
+  explanation: String!
   expression: String!
   formulaTemplateId: String!
   formulaTemplateName: String!
+  guardrail: ShipmentRatingGuardrail
+  rateQuoteId: String!
   ratedAt: Int!
   """
   Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended.
   """
   resolvedVariables: JSON!
   result: Float!
+  ruleId: String!
+  ruleLabel: String!
+  """
+  The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound.
+  """
+  source: String!
+  """Zero when the rate did not come from a versioned formula template."""
+  versionNumber: Int!
 }
 
-input ShipmentRatingDetailInput {
-  expression: String!
-  formulaTemplateId: String!
-  formulaTemplateName: String!
-  ratedAt: Int!
-  resolvedVariables: JSON!
-  result: Float!
+"""
+A bound that changed the answer — a minimum or maximum charge that took over from the computed rate.
+"""
+type ShipmentRatingGuardrail {
+  applied: Boolean!
+  bound: String!
+  maxCharge: Float
+  minCharge: Float
+  rawResult: Float!
 }
 
 type ShipmentReadyToDispatch {
@@ -8608,6 +9877,17 @@ type ShipmentUIPolicy {
   checkForDuplicateBols: Boolean!
   checkHazmatSegregation: Boolean!
   maxShipmentWeightLimit: Int!
+  """
+  The mode profile resolved for this tenant, carrying its capabilities and the
+  resolved state of every rule. Null when no profile matched.
+  
+  Sent as JSON rather than a typed selection because `rules` is keyed by rule
+  key, and GraphQL has no map type. Modelling it would mean a list of key/value
+  pairs plus a second schema to keep in step with the Go structs; the client
+  validates the payload against resolvedModeProfileSchema instead, so the
+  `json` tags on modeprofile.ResolvedPolicy are the single contract.
+  """
+  profile: JSON
 }
 
 type ShipmentUnassignedAnalytics {
@@ -8920,6 +10200,96 @@ type TelematicsStatus {
   webhookConfigured: Boolean!
 }
 
+type Tender {
+  acceptedAt: Int
+  acceptedOfferId: ID
+  businessUnitId: ID!
+  canceledAt: Int
+  canceledById: ID
+  cancellationReason: String!
+  createdAt: Int!
+  createdById: ID
+  currentRank: Int!
+  exhaustedAt: Int
+  id: ID!
+  mode: TenderMode!
+  offers: [TenderOffer!]
+  organizationId: ID!
+  routingGuide: RoutingGuide
+  routingGuideId: ID
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  status: TenderStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum TenderChannel {
+  EDI
+  Email
+}
+
+enum TenderMode {
+  SpotBroadcast
+  SpotSequential
+  Waterfall
+}
+
+type TenderOffer {
+  businessUnitId: ID!
+  carrier: Carrier
+  carrierId: ID!
+  channel: TenderChannel!
+  createdAt: Int!
+  declineReason: String!
+  deliveryError: String!
+  ediMessageId: ID
+  ediPartnerId: ID
+  expiresAt: Int
+  id: ID!
+  lateResponseAction: String!
+  lateResponseAt: Int
+  offerTtlSeconds: Int!
+  organizationId: ID!
+  rank: Int!
+  rate: String!
+  rateMethod: CarrierRateMethod!
+  recipientEmail: String!
+  respondedAt: Int
+  responseSource: TenderResponseSource
+  sentAt: Int
+  status: TenderOfferStatus!
+  tenderId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum TenderOfferStatus {
+  Accepted
+  Declined
+  DeliveryFailed
+  Expired
+  Pending
+  Sent
+  Skipped
+  Superseded
+  Withdrawn
+}
+
+enum TenderResponseSource {
+  EDI
+  Email
+  Manual
+}
+
+enum TenderStatus {
+  Accepted
+  Active
+  Canceled
+  Exhausted
+  NeedsReview
+}
+
 enum TimeFormat {
   TwelveHour
   TwentyFourHour
@@ -9141,6 +10511,21 @@ input UpcomingWorkerPTOInput {
   timezone: String
   type: PTOType
   workerId: ID
+}
+
+input UpdateCarrierSettlementControlInput {
+  autoAcceptWithinTolerance: Boolean!
+  autoGenerateBatches: Boolean!
+  autoMatchInboundInvoices: Boolean!
+  autoPostOnApprove: Boolean!
+  defaultApAccountId: ID
+  defaultPurchasedTransportationAccountId: ID
+  payDelayDays: Int!
+  payPeriodFrequency: PayPeriodFrequency!
+  payTrigger: SettlementPayTrigger!
+  periodEndDayOfWeek: Int!
+  varianceToleranceMinor: Int!
+  version: Int!
 }
 
 input UpdateDashControlInput {

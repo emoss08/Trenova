@@ -338,7 +338,7 @@ func (r *analyticsRepository) EntityNames(
 			ColumnExpr(locCols.Name.As("name")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return buncolgen.LocationScopeTenant(sq, req.TenantInfo).
-					Where(locCols.ID.In(), bun.In(req.LocationIDs))
+					Where(locCols.ID.In(), bun.List(req.LocationIDs))
 			}).
 			Scan(ctx, &rows)
 		if err != nil {
@@ -362,7 +362,7 @@ func (r *analyticsRepository) EntityNames(
 			ColumnExpr(cusCols.Name.As("name")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return buncolgen.CustomerScopeTenant(sq, req.TenantInfo).
-					Where(cusCols.ID.In(), bun.In(req.CustomerIDs))
+					Where(cusCols.ID.In(), bun.List(req.CustomerIDs))
 			}).
 			Scan(ctx, &rows)
 		if err != nil {

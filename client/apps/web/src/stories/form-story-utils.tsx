@@ -52,21 +52,21 @@ function DebugPanel<T extends FieldValues>({
   errors: FieldErrors<T>;
 }) {
   return (
-    <aside className="rounded-md border bg-muted p-3">
+    <aside className="bg-muted rounded-md border p-3">
       <div className="mb-2 flex items-center justify-between gap-3">
         <h3 className="text-sm font-medium">Form State</h3>
         <span className="text-2xs text-muted-foreground">react-hook-form</span>
       </div>
       <div className="grid gap-3">
         <div>
-          <p className="mb-1 text-2xs font-medium text-muted-foreground">Values</p>
-          <pre className="max-h-80 overflow-auto rounded-md bg-background p-2 text-2xs">
+          <p className="text-2xs text-muted-foreground mb-1 font-medium">Values</p>
+          <pre className="bg-background text-2xs max-h-80 overflow-auto rounded-md p-2">
             {JSON.stringify(values, null, 2)}
           </pre>
         </div>
         <div>
-          <p className="mb-1 text-2xs font-medium text-muted-foreground">Errors</p>
-          <pre className="max-h-40 overflow-auto rounded-md bg-background p-2 text-2xs">
+          <p className="text-2xs text-muted-foreground mb-1 font-medium">Errors</p>
+          <pre className="bg-background text-2xs max-h-40 overflow-auto rounded-md p-2">
             {JSON.stringify(formatErrors(errors as FieldErrors<FieldValues>), null, 2)}
           </pre>
         </div>
@@ -126,7 +126,7 @@ export function StoryForm<T extends FieldValues>({
         className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]"
         onSubmit={(event) => event.preventDefault()}
       >
-        <div className="rounded-md border bg-background p-4">
+        <div className="bg-background rounded-md border p-4">
           <div className="grid gap-4">{children({ control: form.control, form })}</div>
           <div className="mt-4 flex justify-end">
             <Button type="button" variant="outline" onClick={() => void form.trigger()}>

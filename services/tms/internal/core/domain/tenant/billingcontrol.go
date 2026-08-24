@@ -44,6 +44,16 @@ type BillingControl struct {
 	RateVarianceTolerancePercent          decimal.Decimal                `json:"rateVarianceTolerancePercent"          bun:"rate_variance_tolerance_percent,type:NUMERIC(9,6),notnull,default:0.000000"`
 	RateVarianceAutoResolutionMode        RateVarianceAutoResolutionMode `json:"rateVarianceAutoResolutionMode"        bun:"rate_variance_auto_resolution_mode,type:rate_variance_auto_resolution_mode_enum,notnull,default:'Disabled'"`
 
+	// UnratedShipmentDisposition decides what happens when no rate agreement
+	// covers a shipment's lane. It defaults to falling back to the formula
+	// template on the shipment, which is exactly how rating worked before
+	// agreements existed, so an organization that has not written a contract
+	// yet sees no change at all.
+	UnratedShipmentDisposition UnratedShipmentDisposition `json:"unratedShipmentDisposition" bun:"unrated_shipment_disposition,type:unrated_shipment_disposition_enum,notnull,default:'FallbackFormulaTemplate'"`
+	FallbackFormulaTemplateID  *pulid.ID                  `json:"fallbackFormulaTemplateId"  bun:"fallback_formula_template_id,type:VARCHAR(100),nullzero"`
+	RequireRateOverrideReason  bool                       `json:"requireRateOverrideReason"  bun:"require_rate_override_reason,type:BOOLEAN,notnull,default:true"`
+	EnforceMarginFloor         bool                       `json:"enforceMarginFloor"         bun:"enforce_margin_floor,type:BOOLEAN,notnull,default:false"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

@@ -150,7 +150,7 @@ function PolicyConditionsSection() {
             ))}
           </div>
         ) : (
-          <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
+          <div className="bg-muted/30 text-muted-foreground rounded-md border border-dashed p-3 text-xs">
             No conditions. The policy applies whenever the resource and operation match.
           </div>
         )}

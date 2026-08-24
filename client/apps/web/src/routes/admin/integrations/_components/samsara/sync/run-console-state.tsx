@@ -12,13 +12,13 @@ export function RunConsoleLoadingState({
   return (
     <div
       className={cn(
-        "flex h-76.75 w-full flex-col items-center justify-center rounded-md border border-border",
+        "border-border flex h-76.75 w-full flex-col items-center justify-center rounded-md border",
         className,
       )}
     >
       <div className="relative size-full">
         <Skeleton className="size-full" />
-        <span className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
+        <span className="text-muted-foreground absolute inset-0 flex items-center justify-center text-sm">
           <TextShimmer duration={1.5}>{description}</TextShimmer>
         </span>
       </div>

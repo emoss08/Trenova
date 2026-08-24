@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/formula"
@@ -44,21 +43,14 @@ func (s *stubFormulaVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-type stubRateTableRepo struct {
-	repositories.RateTableRepository
+type stubMatrixLookupRepo struct {
+	repositories.RateMatrixRepository
 }
 
-func (s *stubRateTableRepo) GetLookupData(
+func (s *stubMatrixLookupRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateTableLookupDataRequest,
-) ([]*ratetable.RateTable, error) {
-	return nil, nil
-}
-
-func (s *stubRateTableRepo) GetByKeys(
-	_ context.Context,
-	_ *repositories.GetRateTablesByKeysRequest,
-) ([]*ratetable.RateTable, error) {
+	_ *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
 	return nil, nil
 }
 
@@ -84,7 +76,7 @@ func newFormulaService(t *testing.T) *formula.Service {
 		Engine:        eng,
 		Resolver:      res,
 		VersionRepo:   &stubFormulaVersionRepo{},
-		RateTableRepo: &stubRateTableRepo{},
+		RateMatrixRepo: &stubMatrixLookupRepo{},
 	})
 }
 
@@ -1459,7 +1451,7 @@ func TestApprovalTransitions(t *testing.T) {
 
 			req := &ApprovalActionRequest{
 				TenantInfo: newTenantInfo(),
-				TemplateID: template.ID,
+				EntityID:   template.ID,
 				Comment:    tt.comment,
 			}
 
@@ -1501,7 +1493,7 @@ func TestSubmit_StampsSubmissionFields(t *testing.T) {
 
 	result, err := deps.svc.Submit(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
-		TemplateID: template.ID,
+		EntityID:   template.ID,
 		Comment:    "ready for review",
 	})
 
@@ -1536,7 +1528,7 @@ func TestApprove_StampsApprovalAndKeepsSubmission(t *testing.T) {
 
 	result, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
 		TenantInfo: tenant,
-		TemplateID: template.ID,
+		EntityID:   template.ID,
 		Comment:    "approved",
 	})
 
@@ -1559,7 +1551,7 @@ func TestReject_RequiresComment(t *testing.T) {
 
 	result, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
 		TenantInfo: newTenantInfo(),
-		TemplateID: pulid.MustNew("ft_"),
+		EntityID:   pulid.MustNew("ft_"),
 	})
 
 	require.Error(t, err)
@@ -1586,7 +1578,7 @@ func TestReject_ClearsSubmissionFields(t *testing.T) {
 
 	result, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
 		TenantInfo: newTenantInfo(),
-		TemplateID: template.ID,
+		EntityID:   template.ID,
 		Comment:    "expression is wrong",
 	})
 

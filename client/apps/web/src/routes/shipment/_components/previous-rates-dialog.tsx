@@ -47,12 +47,12 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
             </div>
           ) : !rates || rates.items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <HistoryIcon className="mb-2 size-6 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">No previous rates found for this lane</p>
+              <HistoryIcon className="text-muted-foreground/40 mb-2 size-6" />
+              <p className="text-muted-foreground text-sm">No previous rates found for this lane</p>
             </div>
           ) : (
             <>
-              <p className="mb-2 text-xs text-muted-foreground">
+              <p className="text-muted-foreground mb-2 text-xs">
                 {rates.total} previous rate{rates.total !== 1 ? "s" : ""} found
               </p>
               <div className="space-y-2">
@@ -70,10 +70,10 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
 
 function RateCard({ rate }: { rate: PreviousRateSummary }) {
   return (
-    <div className="rounded-lg border bg-card p-3">
+    <div className="bg-card rounded-lg border p-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium">{rate.proNumber}</span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           {formatToUserTimezone(rate.createdAt, { showTime: false })}
         </span>
       </div>
@@ -88,13 +88,13 @@ function RateCard({ rate }: { rate: PreviousRateSummary }) {
         </div>
         <div>
           <p className="text-2xs text-muted-foreground">Total</p>
-          <p className="text-xs font-semibold text-primary">
+          <p className="text-primary text-xs font-semibold">
             {formatCurrency(Number(rate.totalChargeAmount))}
           </p>
         </div>
       </div>
       {(rate.pieces || rate.weight) && (
-        <div className="mt-1 flex gap-3 text-2xs text-muted-foreground">
+        <div className="text-2xs text-muted-foreground mt-1 flex gap-3">
           {rate.pieces && <span>{rate.pieces} pcs</span>}
           {rate.weight && <span>{rate.weight} lbs</span>}
         </div>

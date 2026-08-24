@@ -1,0 +1,145 @@
+fragment RateAgreementRowFields on RateAgreement {
+  id
+  businessUnitId
+  organizationId
+  partyType
+  customerId
+  carrierId
+  code
+  name
+  description
+  agreementType
+  status
+  contractRef
+  priority
+  effectiveFrom
+  effectiveTo
+  autoRenew
+  renewalNoticeDays
+  currency
+  defaultMinCharge
+  defaultMaxCharge
+  marginFloorPercent
+  maxPayPercentOfSell
+  submittedById
+  submittedAt
+  approvedById
+  approvedAt
+  reviewComment
+  currentVersionNumber
+  version
+  createdAt
+  updatedAt
+}
+
+fragment RateZoneRowFields on RateZone {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  status
+  version
+  createdAt
+  updatedAt
+}
+
+fragment RateMatrixRowFields on RateMatrix {
+  id
+  businessUnitId
+  organizationId
+  code
+  name
+  description
+  status
+  formulaTemplateId
+  formulaTemplateName
+  currency
+  version
+  createdAt
+  updatedAt
+}
+
+fragment RateQuoteRowFields on RateQuote {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  partyType
+  partyId
+  purpose
+  outcome
+  rateAgreementId
+  rateAgreementRuleId
+  formulaTemplateId
+  specificityScore
+  currency
+  billingCurrency
+  linehaulAmount
+  totalAmount
+  billingAmount
+  foregoneAmount
+  overrideReason
+  asOf
+  ratedAt
+  ratedById
+  engineVersion
+  createdAt
+}
+
+query RateAgreementTable($input: DataTableConnectionInput!) {
+  rateAgreements(input: $input) {
+    edges {
+      node {
+        ...RateAgreementRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query RateZoneTable($input: DataTableConnectionInput!) {
+  rateZones(input: $input) {
+    edges {
+      node {
+        ...RateZoneRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query RateMatrixTable($input: DataTableConnectionInput!) {
+  rateMatrices(input: $input) {
+    edges {
+      node {
+        ...RateMatrixRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query RateQuoteTable($input: DataTableConnectionInput!) {
+  rateQuotes(input: $input) {
+    edges {
+      node {
+        ...RateQuoteRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

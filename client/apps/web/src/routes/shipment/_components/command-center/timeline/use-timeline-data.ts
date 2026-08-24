@@ -1,7 +1,14 @@
 import { listShipmentsGraphQL } from "@/lib/graphql/shipment";
 import { getShipmentEtaTone, type ShipmentEtaTone } from "@/lib/shipment-utils";
 import type { FieldFilter, FilterGroup } from "@trenova/shared/types/data-table";
-import type { Assignment, Shipment, ShipmentMove, Stop } from "@trenova/shared/types/shipment";
+import { isActiveCarrierAssignment } from "@trenova/shared/types/shipment";
+import type {
+  Assignment,
+  CarrierAssignment,
+  Shipment,
+  ShipmentMove,
+  Stop,
+} from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { TimelineSort } from "../url-state";
@@ -51,6 +58,7 @@ export type TimelineBar = {
   shipment: Shipment;
   move: ShipmentMove;
   assignment: Assignment | null;
+  carrierAssignment: CarrierAssignment | null;
   start: number;
   end: number;
   tone: ShipmentEtaTone;
@@ -74,6 +82,8 @@ export type TimelineRow = {
   key: string;
   workerName: string;
   workerProfilePicUrl: string | null;
+  /** Row groups moves brokered to an external carrier rather than a driver's day. */
+  isCarrier: boolean;
   equipmentCodes: string[];
   bars: TimelineBar[];
   laneCount: number;
@@ -133,8 +143,21 @@ export function barMatchesFocus(bar: TimelineBar, focus: TimelineFocus): boolean
     case "overlaps":
       return bar.hasOverlap;
     case "unassigned":
-      return !bar.assignment && !bar.isCanceled;
+      return !bar.assignment && !bar.carrierAssignment && !bar.isCanceled;
   }
+}
+
+/**
+ * Whether dropping `bar` onto `row` is a legal reassignment. Carrier-covered
+ * bars never accept a driver drop, and carrier rows are not drop targets:
+ * coverage moves through the carrier dialogs, not drag-and-drop. The unassigned
+ * lane only accepts bars that actually have a driver assignment to remove, and
+ * dropping a bar back onto its own driver is a no-op.
+ */
+export function isValidDropTarget(bar: TimelineBar, row: TimelineRow): boolean {
+  if (bar.carrierAssignment || row.isCarrier) return false;
+  if (row.key === UNASSIGNED_ROW_KEY) return !!bar.assignment;
+  return bar.assignment?.primaryWorker?.id !== row.key;
 }
 
 type UseTimelineDataParams = {
@@ -216,14 +239,25 @@ export function buildTimelineData(
       if (!span || span.start >= range.end || span.end <= range.start) continue;
 
       const assignment = move.assignment ?? null;
+      // A move brokered to a carrier is covered even though no driver row owns it, so
+      // it gets a carrier row instead of landing in the unassigned lane.
+      const carrierAssignment =
+        move.coverageType === "carrier" && isActiveCarrierAssignment(move.carrierAssignment)
+          ? move.carrierAssignment
+          : null;
       const worker = assignment?.primaryWorker;
-      const key = worker?.id ?? UNASSIGNED_ROW_KEY;
+      const key = carrierAssignment
+        ? `carrier:${carrierAssignment.carrierId ?? carrierAssignment.id ?? "unknown"}`
+        : (worker?.id ?? UNASSIGNED_ROW_KEY);
       let row = rowsByKey.get(key);
       if (!row) {
         row = {
           key,
-          workerName: getWorkerDisplayName(worker),
+          workerName: carrierAssignment
+            ? carrierAssignment.carrier?.name || "External carrier"
+            : getWorkerDisplayName(worker),
           workerProfilePicUrl: worker?.profilePicUrl ?? null,
+          isCarrier: !!carrierAssignment,
           equipmentCodes: [],
           bars: [],
           laneCount: 1,
@@ -244,6 +278,7 @@ export function buildTimelineData(
         shipment,
         move,
         assignment,
+        carrierAssignment,
         start: span.start,
         end: span.end,
         tone: isCanceled ? "pending" : tone,
@@ -273,7 +308,9 @@ export function buildTimelineData(
     }
     row.laneCount = packing.laneCount;
 
-    if (row.key !== UNASSIGNED_ROW_KEY) markOverlaps(row.bars);
+    // Overlap detection means double-booking a driver; a carrier can run several trucks
+    // at once, so its row is exempt like the unassigned lane.
+    if (row.key !== UNASSIGNED_ROW_KEY && !row.isCarrier) markOverlaps(row.bars);
 
     let hasCriticalDwell = false;
     for (const bar of row.bars) {
@@ -357,9 +394,7 @@ function getBarDwell(stops: TimelineStopMarker[], nowSeconds: number): TimelineD
   return dwell;
 }
 
-function getWorkerDisplayName(
-  worker: Assignment["primaryWorker"] | undefined,
-): string {
+function getWorkerDisplayName(worker: Assignment["primaryWorker"] | undefined): string {
   // wholeName is a scanonly generated column the server doesn't always select
   // on nested assignment loads — fall back to composing it, like DriverCell.
   const wholeName = worker?.wholeName?.trim();

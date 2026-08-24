@@ -77,10 +77,10 @@ export function AddWidgetDialog({
 
         <ScrollArea className="max-h-100">
           <div className="flex flex-col gap-4 pr-2">
-            {loading && <p className="py-6 text-center text-xs text-muted-foreground">Loading…</p>}
+            {loading && <p className="text-muted-foreground py-6 text-center text-xs">Loading…</p>}
 
             {!loading && grouped.length === 0 && (
-              <p className="py-6 text-center text-xs text-muted-foreground">
+              <p className="text-muted-foreground py-6 text-center text-xs">
                 No widgets match &ldquo;{search}&rdquo;.
               </p>
             )}
@@ -99,7 +99,7 @@ export function AddWidgetDialog({
                       disabled={remaining <= 0}
                       onClick={() => onAdd(widget)}
                       className={cn(
-                        "group flex flex-col items-start gap-1 rounded-md border border-border bg-background p-2.5 text-left transition-colors",
+                        "group border-border bg-background flex flex-col items-start gap-1 rounded-md border p-2.5 text-left transition-colors",
                         remaining > 0
                           ? "hover:border-foreground/20 hover:bg-muted/60"
                           : "cursor-not-allowed opacity-50",
@@ -110,13 +110,13 @@ export function AddWidgetDialog({
                           {widget.label}
                         </span>
                         {usedKeys.has(widget.key) && (
-                          <span className="shrink-0 rounded bg-muted px-1 text-[9px] text-muted-foreground">
+                          <span className="bg-muted text-muted-foreground shrink-0 rounded px-1 text-[9px]">
                             on canvas
                           </span>
                         )}
-                        <PlusIcon className="size-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                        <PlusIcon className="text-muted-foreground size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                       </span>
-                      <span className="text-[10px] leading-snug text-muted-foreground">
+                      <span className="text-muted-foreground text-[10px] leading-snug">
                         {widget.description}
                       </span>
                     </button>

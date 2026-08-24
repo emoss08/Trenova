@@ -15,6 +15,7 @@ const (
 	SequenceTypeManualJournalRequest = SequenceType("manual_journal_request")
 	SequenceTypeLocationCode         = SequenceType("location_code")
 	SequenceTypeDriverSettlement     = SequenceType("driver_settlement")
+	SequenceTypeCarrierSettlement    = SequenceType("carrier_settlement")
 )
 
 type AccountingBasisType string
@@ -156,6 +157,9 @@ const (
 	JournalSourceEventDriverSettlementPosted  = JournalSourceEventType("DriverSettlementPosted")
 	JournalSourceEventDriverSettlementVoided  = JournalSourceEventType("DriverSettlementVoided")
 	JournalSourceEventEscrowInterestAccrued   = JournalSourceEventType("EscrowInterestAccrued")
+	JournalSourceEventCarrierSettlementPosted = JournalSourceEventType("CarrierSettlementPosted")
+	JournalSourceEventCarrierSettlementVoided = JournalSourceEventType("CarrierSettlementVoided")
+	JournalSourceEventCarrierSettlementPaid   = JournalSourceEventType("CarrierSettlementPaid")
 )
 
 func (j JournalSourceEventType) String() string {
@@ -174,7 +178,10 @@ func (j JournalSourceEventType) IsValid() bool {
 		JournalSourceEventVendorPaymentPosted,
 		JournalSourceEventDriverSettlementPosted,
 		JournalSourceEventDriverSettlementVoided,
-		JournalSourceEventEscrowInterestAccrued:
+		JournalSourceEventEscrowInterestAccrued,
+		JournalSourceEventCarrierSettlementPosted,
+		JournalSourceEventCarrierSettlementVoided,
+		JournalSourceEventCarrierSettlementPaid:
 		return true
 	}
 	return false
@@ -204,6 +211,12 @@ func (j JournalSourceEventType) GetDescription() string {
 		return "Trigger on voided driver settlement"
 	case JournalSourceEventEscrowInterestAccrued:
 		return "Trigger on accrued escrow interest"
+	case JournalSourceEventCarrierSettlementPosted:
+		return "Trigger on posted carrier settlement"
+	case JournalSourceEventCarrierSettlementVoided:
+		return "Trigger on voided carrier settlement"
+	case JournalSourceEventCarrierSettlementPaid:
+		return "Trigger on paid carrier settlement"
 	default:
 		return "Unknown journal source event"
 	}
@@ -350,6 +363,44 @@ const (
 	)
 )
 
+// UnratedShipmentDisposition says what happens when no rate agreement covers a
+// shipment's lane.
+//
+// The default preserves the behaviour that existed before agreements: fall back
+// to the formula template on the shipment. An organization that has not written
+// a contract yet therefore sees no change whatsoever, and opting in is a matter
+// of writing the first agreement rather than flipping a switch.
+type UnratedShipmentDisposition string
+
+const (
+	// UnratedShipmentDispositionFallbackFormulaTemplate prices from the
+	// shipment's own formula template, or the organization's fallback template.
+	UnratedShipmentDispositionFallbackFormulaTemplate = UnratedShipmentDisposition(
+		"FallbackFormulaTemplate",
+	)
+	// UnratedShipmentDispositionZeroAndFlag prices at nothing and raises a
+	// billing exception, for organizations that would rather see the gap than
+	// have a number invented for it.
+	UnratedShipmentDispositionZeroAndFlag = UnratedShipmentDisposition("ZeroAndFlag")
+	// UnratedShipmentDispositionBlock refuses the save outright.
+	UnratedShipmentDispositionBlock = UnratedShipmentDisposition("Block")
+)
+
+func (usd UnratedShipmentDisposition) String() string {
+	return string(usd)
+}
+
+func (usd UnratedShipmentDisposition) IsValid() bool {
+	switch usd {
+	case UnratedShipmentDispositionFallbackFormulaTemplate,
+		UnratedShipmentDispositionZeroAndFlag,
+		UnratedShipmentDispositionBlock:
+		return true
+	default:
+		return false
+	}
+}
+
 type PaymentTerm string
 
 const (
@@ -488,7 +539,8 @@ func (v SequenceType) IsValid() bool {
 		SequenceTypeJournalEntry,
 		SequenceTypeManualJournalRequest,
 		SequenceTypeLocationCode,
-		SequenceTypeDriverSettlement:
+		SequenceTypeDriverSettlement,
+		SequenceTypeCarrierSettlement:
 		return true
 	default:
 		return false

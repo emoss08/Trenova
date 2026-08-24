@@ -206,6 +206,7 @@ func (r *Registry) registerAll() {
 	r.registerOperationsResources()
 	r.registerBillingResources()
 	r.registerCustomerResources()
+	r.registerCarrierResources()
 	r.registerLocationResources()
 	r.registerCommodityResources()
 	r.registerAccountingResources()
@@ -916,6 +917,87 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceJurisdictionRuleOverride.String(),
+		DisplayName: "Carrier Override",
+		Description: "This organization's stricter posture on a jurisdiction. " +
+			"Unlike a jurisdiction rule these are yours alone, and an override can " +
+			"only tighten a state limit, never loosen one.",
+		Category:       "Operations",
+		ParentResource: ResourceJurisdictionRule.String(),
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View carrier overrides"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Hold this fleet to a stricter limit than a state requires",
+			},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify an override"},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Remove an override, returning the jurisdiction to its statutory limits",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceJurisdictionRule.String(),
+		DisplayName: "Jurisdiction Rule",
+		Description: "Shared oversize and overweight limits per state. " +
+			"This data is global: it has no organization column and every tenant " +
+			"reads the same rows, so a change here alters what the whole platform " +
+			"is told is legal. Carrier-specific posture belongs in an override.",
+		Category: "Operations",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View jurisdiction limits and their verification state",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Add a jurisdiction rule, visible to every organization",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Change limits every organization is held to",
+			},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Verify",
+				Description: "Confirm a rule against the issuing state, or mark it disputed",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:       ResourcePermit.String(),
+		DisplayName:    "Oversize Permit",
+		Description:    "Oversize and overweight permits and their derived requirements",
+		Category:       "Operations",
+		ParentResource: ResourceShipment.String(),
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View permits and permit requirements",
+			},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Record permits"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify recorded permits"},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Waive",
+				Description: "Waive a permit requirement, accepting the compliance risk",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceServiceFailure.String(),
 		DisplayName: "Service Failure",
 		Description: "Service failure investigation and approval records",
@@ -1306,15 +1388,6 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceRateTable.String(),
-		DisplayName:        "Rate Table",
-		Description:        "Tenant rate lookup tables (fuel surcharges, lane rates, weight breaks)",
-		Category:           "Billing",
-		Operations:         standardOpsWithDelete,
-		DefaultSensitivity: SensitivityInternal,
-	})
-
-	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceFuelSurchargeProgram.String(),
 		DisplayName:        "Fuel Surcharge Program",
 		Description:        "Fuel surcharge programs, fuel price indices, and DOE weekly price data",
@@ -1330,6 +1403,103 @@ func (r *Registry) registerBillingResources() {
 		Category:           "Billing",
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
+	})
+
+	r.registerRateResources()
+}
+
+// registerRateResources covers the commercial layer: the contracts that decide
+// which rate applies, the geography and matrices they are written against, and
+// the quotes recording what each shipment was actually priced at.
+func (r *Registry) registerRateResources() {
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceRateAgreement.String(),
+		DisplayName: "Rate Agreement",
+		Description: "Customer and carrier rate agreements, their lane rules, accessorial schedules, and versions",
+		Category:    "Billing",
+		Operations: append(
+			standardOpsWithDelete,
+			OperationDefinition{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Activate a rate agreement so it prices shipments",
+			},
+			OperationDefinition{
+				Operation:   OpReject,
+				DisplayName: "Reject",
+				Description: "Send a rate agreement back for revision",
+			},
+			OperationDefinition{
+				Operation:   OpDuplicate,
+				DisplayName: "Duplicate",
+				Description: "Copy a rate agreement as the basis for a new one",
+			},
+		),
+		// A rate agreement is the negotiated price, which is exactly what a
+		// competitor would want and what a customer would object to seeing.
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceRateZone.String(),
+		DisplayName:        "Rate Zone",
+		Description:        "Named groupings of geography that lane rules and rate matrices are written against",
+		Category:           "Billing",
+		Operations:         standardOpsWithDelete,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceRateMatrix.String(),
+		DisplayName:        "Rate Matrix",
+		Description:        "Multi-dimensional rate tables, their axes, cells, and density classification scales",
+		Category:           "Billing",
+		Operations:         standardOpsWithDelete,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceRateSimulation.String(),
+		DisplayName: "Rate Simulation",
+		Description: "Replays of a proposed contract against freight that already moved, and what it would have charged",
+		Category:    "Billing",
+		// A simulation is run and read; its results are produced by the engine
+		// and never edited, so there is nothing to update.
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View simulations and their results",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Run a simulation against historical shipments",
+			},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Delete",
+				Description: "Remove a simulation and its results",
+			},
+		},
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceRateQuote.String(),
+		DisplayName: "Rate Quote",
+		Description: "The record of how each shipment was priced, including every rate considered and why it lost",
+		Category:    "Billing",
+		// Quotes are written by the rating engine and never edited: correcting
+		// one means re-rating, which produces a new quote and supersedes the old.
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View rate quotes and their explanations",
+			},
+		},
+		DefaultSensitivity: SensitivityConfidential,
 	})
 }
 
@@ -1366,6 +1536,196 @@ func (r *Registry) registerCustomerResources() {
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add contacts"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify contacts"},
 		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+}
+
+func (r *Registry) registerCarrierResources() {
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceCarrier.String(),
+		DisplayName: "Carrier",
+		Description: "External carrier management for brokered freight",
+		Category:    "Carriers",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View carriers"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create carriers"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify carriers"},
+			{Operation: OpExport, DisplayName: "Export", Description: "Export carrier data"},
+			{Operation: OpImport, DisplayName: "Import", Description: "Import carriers"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:       ResourceRateConfirmation.String(),
+		DisplayName:    "Rate Confirmation",
+		Description:    "Outbound carrier rate confirmations",
+		Category:       "Carriers",
+		ParentResource: ResourceCarrier.String(),
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View rate confirmations"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Generate rate confirmations",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Send, confirm, and void rate confirmations",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceCarrierSettlement.String(),
+		DisplayName: "Carrier Settlement",
+		Description: "Carrier settlement statements, batches, and cost events",
+		Category:    "Carriers",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpSubmit,
+				DisplayName: "Submit",
+				Description: "Submit carrier settlements for approval",
+			},
+			OperationDefinition{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Approve and post carrier settlements",
+			},
+			OperationDefinition{
+				Operation:   OpReject,
+				DisplayName: "Reject",
+				Description: "Send carrier settlements back to draft",
+			},
+			OperationDefinition{
+				Operation:   OpCancel,
+				DisplayName: "Void",
+				Description: "Void carrier settlements",
+			},
+		),
+		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"id":                   SensitivityInternal,
+			"businessUnitId":       SensitivityInternal,
+			"organizationId":       SensitivityInternal,
+			"carrierId":            SensitivityInternal,
+			"carrierAssignmentId":  SensitivityInternal,
+			"batchId":              SensitivityInternal,
+			"settlementId":         SensitivityInternal,
+			"shipmentId":           SensitivityInternal,
+			"moveId":               SensitivityInternal,
+			"settlementNumber":     SensitivityInternal,
+			"status":               SensitivityInternal,
+			"eventType":            SensitivityInternal,
+			"idempotencyKey":       SensitivityInternal,
+			"eventDate":            SensitivityInternal,
+			"periodStart":          SensitivityInternal,
+			"periodEnd":            SensitivityInternal,
+			"payDate":              SensitivityInternal,
+			"grossCostMinor":       SensitivityRestricted,
+			"adjustmentsMinor":     SensitivityRestricted,
+			"netPayableMinor":      SensitivityRestricted,
+			"amountMinor":          SensitivityRestricted,
+			"shipmentCount":        SensitivityInternal,
+			"currencyCode":         SensitivityInternal,
+			"description":          SensitivityInternal,
+			"proNumber":            SensitivityInternal,
+			"assignmentVersion":    SensitivityInternal,
+			"notes":                SensitivityInternal,
+			"submittedById":        SensitivityInternal,
+			"submittedAt":          SensitivityInternal,
+			"approvedById":         SensitivityInternal,
+			"approvedAt":           SensitivityInternal,
+			"postedById":           SensitivityInternal,
+			"postedAt":             SensitivityInternal,
+			"postedJournalBatchId": SensitivityInternal,
+			"paidAt":               SensitivityInternal,
+			"paidById":             SensitivityInternal,
+			"paymentMethod":        SensitivityRestricted,
+			"paymentReference":     SensitivityRestricted,
+			"paidJournalBatchId":   SensitivityInternal,
+			"voidedById":           SensitivityInternal,
+			"voidedAt":             SensitivityInternal,
+			"voidReason":           SensitivityInternal,
+			"voidJournalBatchId":   SensitivityInternal,
+			"version":              SensitivityInternal,
+			"createdAt":            SensitivityInternal,
+			"updatedAt":            SensitivityInternal,
+		},
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceCarrierSettlementControl.String(),
+		DisplayName:        "Carrier Settlement Control",
+		Description:        "Carrier settlement pay period, trigger, and GL default configuration",
+		Category:           "Carriers",
+		ParentResource:     ResourceCarrierSettlement.String(),
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceCarrierInvoiceMatch.String(),
+		DisplayName: "Carrier Invoice Match",
+		Description: "Carrier invoice matching against negotiated buy rates",
+		Category:    "Carriers",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpApprove,
+				DisplayName: "Resolve",
+				Description: "Accept or accept-with-variance carrier invoice matches",
+			},
+			OperationDefinition{
+				Operation:   OpReject,
+				DisplayName: "Reject",
+				Description: "Reject carrier invoice matches",
+			},
+		),
+		ParentResource:     ResourceCarrierSettlement.String(),
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceRoutingGuide.String(),
+		DisplayName: "Routing Guide",
+		Description: "Ranked carrier lists per freight lane that drive waterfall tenders",
+		Category:    "Carriers",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View routing guides"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create routing guides"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify routing guides"},
+			{Operation: OpDelete, DisplayName: "Delete", Description: "Delete routing guides"},
+		},
+		ParentResource:     ResourceCarrier.String(),
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceTender.String(),
+		DisplayName: "Carrier Tender",
+		Description: "Waterfall and spot tender offers made to carriers for brokered moves",
+		Category:    "Carriers",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View tenders and offers"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Start waterfall and spot tenders",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Record manual carrier responses",
+			},
+			{
+				Operation:   OpCancel,
+				DisplayName: "Cancel",
+				Description: "Withdraw outstanding tenders",
+			},
+		},
+		ParentResource:     ResourceCarrier.String(),
 		DefaultSensitivity: SensitivityInternal,
 	})
 }

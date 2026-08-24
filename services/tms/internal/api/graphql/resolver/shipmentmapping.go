@@ -19,28 +19,51 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
+
+// shipmentFormulaTemplateID parses the rating method, which a shipment being
+// written for the first time is allowed not to have yet.
+//
+// A shipment carries either a rate agreement or a formula template, and which
+// one it gets is settled by the rate engine after this mapping runs: the
+// contract preview asks what an agreement would charge precisely because
+// nothing has been chosen yet, and requiring one here refused that question
+// before it could be asked. Whether the shipment ends up priced at all is the
+// rate coverage rule's to answer, once the engine has spoken.
+//
+// An existing shipment is held to the stricter reading. Its rating method is a
+// field a rater owns and nothing restores on save, so a payload that arrives
+// without one — an older client, an integration echoing back the fields it
+// cares about — would otherwise silently unprice a load somebody had rated.
+func shipmentFormulaTemplateID(shipmentID pulid.ID, value string) (pulid.ID, error) {
+	if shipmentID.IsNil() {
+		return optionalScopedID("formulaTemplateId", &value)
+	}
+
+	return requiredID("formulaTemplateId", value)
+}
 
 func shipmentFromInput(
 	input gqlmodel.ShipmentInput,
 	id pulid.ID,
 	authCtx *authctx.AuthContext,
 ) (*shipmentdomain.Shipment, error) {
-	serviceTypeID, err := pulid.MustParse(input.ServiceTypeID)
+	serviceTypeID, err := requiredID("serviceTypeId", input.ServiceTypeID)
 	if err != nil {
 		return nil, err
 	}
-	shipmentTypeID, err := pulid.MustParse(input.ShipmentTypeID)
+	shipmentTypeID, err := requiredID("shipmentTypeId", input.ShipmentTypeID)
 	if err != nil {
 		return nil, err
 	}
-	customerID, err := pulid.MustParse(input.CustomerID)
+	customerID, err := requiredID("customerId", input.CustomerID)
 	if err != nil {
 		return nil, err
 	}
-	formulaTemplateID, err := pulid.MustParse(input.FormulaTemplateID)
+	formulaTemplateID, err := shipmentFormulaTemplateID(id, input.FormulaTemplateID)
 	if err != nil {
 		return nil, err
 	}
@@ -107,42 +130,45 @@ func shipmentFromInput(
 	}
 
 	entity := &shipmentdomain.Shipment{
-		ID:                     id,
-		BusinessUnitID:         authCtx.BusinessUnitID,
-		OrganizationID:         authCtx.OrganizationID,
-		ServiceTypeID:          serviceTypeID,
-		ShipmentTypeID:         shipmentTypeID,
-		CustomerID:             customerID,
-		TractorTypeID:          tractorTypeID,
-		TrailerTypeID:          trailerTypeID,
-		OwnerID:                ownerID,
-		EnteredByID:            enteredByID,
-		CanceledByID:           canceledByID,
-		FormulaTemplateID:      formulaTemplateID,
-		ConsolidationGroupID:   consolidationGroupID,
-		OrderID:                orderID,
-		Status:                 status,
-		EntryMethod:            entryMethod,
-		ProNumber:              stringValue(input.ProNumber),
-		BOL:                    stringValue(input.Bol),
-		CancelReason:           stringValue(input.CancelReason),
-		OtherChargeAmount:      otherChargeAmount,
-		FreightChargeAmount:    freightChargeAmount,
-		BaseRate:               baseRate,
-		TotalChargeAmount:      totalChargeAmount,
-		Pieces:                 int64Ptr(input.Pieces),
-		Weight:                 int64Ptr(input.Weight),
-		TemperatureMin:         temperatureMin,
-		TemperatureMax:         temperatureMax,
-		ActualDeliveryDate:     int64Ptr(input.ActualDeliveryDate),
-		ActualShipDate:         int64Ptr(input.ActualShipDate),
-		CanceledAt:             int64Ptr(input.CanceledAt),
-		BillingTransferStatus:  shipmentdomain.BillingTransferStatus(stringValue(input.BillingTransferStatus)),
+		ID:                   id,
+		BusinessUnitID:       authCtx.BusinessUnitID,
+		OrganizationID:       authCtx.OrganizationID,
+		ServiceTypeID:        serviceTypeID,
+		ShipmentTypeID:       shipmentTypeID,
+		CustomerID:           customerID,
+		TractorTypeID:        tractorTypeID,
+		TrailerTypeID:        trailerTypeID,
+		OwnerID:              ownerID,
+		EnteredByID:          enteredByID,
+		CanceledByID:         canceledByID,
+		FormulaTemplateID:    formulaTemplateID,
+		ConsolidationGroupID: consolidationGroupID,
+		OrderID:              orderID,
+		Status:               status,
+		EntryMethod:          entryMethod,
+		ProNumber:            stringValue(input.ProNumber),
+		BOL:                  stringValue(input.Bol),
+		CancelReason:         stringValue(input.CancelReason),
+		OtherChargeAmount:    otherChargeAmount,
+		FreightChargeAmount:  freightChargeAmount,
+		BaseRate:             baseRate,
+		TotalChargeAmount:    totalChargeAmount,
+		Pieces:               int64Ptr(input.Pieces),
+		Weight:               int64Ptr(input.Weight),
+		TemperatureMin:       temperatureMin,
+		TemperatureMax:       temperatureMax,
+		ActualDeliveryDate:   int64Ptr(input.ActualDeliveryDate),
+		ActualShipDate:       int64Ptr(input.ActualShipDate),
+		CanceledAt:           int64Ptr(input.CanceledAt),
+		BillingTransferStatus: shipmentdomain.BillingTransferStatus(
+			stringValue(input.BillingTransferStatus),
+		),
 		TransferredToBillingAt: int64Ptr(input.TransferredToBillingAt),
 		MarkedReadyToBillAt:    int64Ptr(input.MarkedReadyToBillAt),
 		BilledAt:               int64Ptr(input.BilledAt),
 		RatingUnit:             int64Value(input.RatingUnit),
 		FuelSurchargeLocked:    boolValue(input.FuelSurchargeLocked),
+		RateOverrideReason:     stringValue(input.RateOverrideReason),
 		SourceDocumentID:       stringValue(input.SourceDocumentID),
 	}
 	if entity.RatingUnit == 0 {
@@ -151,16 +177,6 @@ func shipmentFromInput(
 	if input.TenderStatus != nil {
 		tenderStatus := shipmentdomain.TenderStatus(*input.TenderStatus)
 		entity.TenderStatus = &tenderStatus
-	}
-	if input.RatingDetail != nil {
-		entity.RatingDetail = &shipmentdomain.RatingDetail{
-			FormulaTemplateID:   input.RatingDetail.FormulaTemplateID,
-			FormulaTemplateName: input.RatingDetail.FormulaTemplateName,
-			Expression:          input.RatingDetail.Expression,
-			ResolvedVariables:   input.RatingDetail.ResolvedVariables,
-			Result:              input.RatingDetail.Result,
-			RatedAt:             int64(input.RatingDetail.RatedAt),
-		}
 	}
 	if input.Version != nil {
 		entity.Version = int64(*input.Version)
@@ -190,15 +206,16 @@ func shipmentMovesFromInput(
 	authCtx *authctx.AuthContext,
 ) ([]*shipmentdomain.ShipmentMove, error) {
 	moves := make([]*shipmentdomain.ShipmentMove, 0, len(inputs))
-	for _, input := range inputs {
+	for idx, input := range inputs {
 		if input == nil {
 			continue
 		}
-		id, err := optionalID(input.ID)
+		path := fmt.Sprintf("moves[%d]", idx)
+		id, err := optionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentID, err := optionalID(input.ShipmentID)
+		shipmentID, err := optionalScopedID(path+".shipmentId", input.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
@@ -231,7 +248,7 @@ func shipmentMovesFromInput(
 		if input.Version != nil {
 			move.Version = int64(*input.Version)
 		}
-		stops, err := shipmentStopsFromInput(input.Stops, authCtx)
+		stops, err := shipmentStopsFromInput(input.Stops, path, authCtx)
 		if err != nil {
 			return nil, err
 		}
@@ -243,22 +260,24 @@ func shipmentMovesFromInput(
 
 func shipmentStopsFromInput(
 	inputs []*gqlmodel.ShipmentStopInput,
+	movePath string,
 	authCtx *authctx.AuthContext,
 ) ([]*shipmentdomain.Stop, error) {
 	stops := make([]*shipmentdomain.Stop, 0, len(inputs))
-	for _, input := range inputs {
+	for idx, input := range inputs {
 		if input == nil {
 			continue
 		}
-		id, err := optionalID(input.ID)
+		path := fmt.Sprintf("%s.stops[%d]", movePath, idx)
+		id, err := optionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentMoveID, err := optionalID(input.ShipmentMoveID)
+		shipmentMoveID, err := optionalScopedID(path+".shipmentMoveId", input.ShipmentMoveID)
 		if err != nil {
 			return nil, err
 		}
-		locationID, err := pulid.MustParse(input.LocationID)
+		locationID, err := requiredID(path+".locationId", input.LocationID)
 		if err != nil {
 			return nil, err
 		}
@@ -307,19 +326,20 @@ func shipmentAdditionalChargesFromInput(
 	authCtx *authctx.AuthContext,
 ) ([]*shipmentdomain.AdditionalCharge, error) {
 	charges := make([]*shipmentdomain.AdditionalCharge, 0, len(inputs))
-	for _, input := range inputs {
+	for idx, input := range inputs {
 		if input == nil {
 			continue
 		}
-		id, err := optionalID(input.ID)
+		path := fmt.Sprintf("additionalCharges[%d]", idx)
+		id, err := optionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentID, err := optionalID(input.ShipmentID)
+		shipmentID, err := optionalScopedID(path+".shipmentId", input.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
-		accessorialChargeID, err := pulid.MustParse(input.AccessorialChargeID)
+		accessorialChargeID, err := requiredID(path+".accessorialChargeId", input.AccessorialChargeID)
 		if err != nil {
 			return nil, err
 		}
@@ -343,11 +363,17 @@ func shipmentAdditionalChargesFromInput(
 		if input.Method != nil {
 			method = accessorialcharge.Method(*input.Method)
 		}
-		fuelSurchargeProgramID, err := optionalID(input.FuelSurchargeProgramID)
+		fuelSurchargeProgramID, err := optionalScopedID(
+			path+".fuelSurchargeProgramId",
+			input.FuelSurchargeProgramID,
+		)
 		if err != nil {
 			return nil, err
 		}
-		detentionOccurrenceID, err := optionalID(input.DetentionOccurrenceID)
+		detentionOccurrenceID, err := optionalScopedID(
+			path+".detentionOccurrenceId",
+			input.DetentionOccurrenceID,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -381,19 +407,20 @@ func shipmentCommoditiesFromInput(
 	authCtx *authctx.AuthContext,
 ) ([]*shipmentdomain.ShipmentCommodity, error) {
 	commodities := make([]*shipmentdomain.ShipmentCommodity, 0, len(inputs))
-	for _, input := range inputs {
+	for idx, input := range inputs {
 		if input == nil {
 			continue
 		}
-		id, err := optionalID(input.ID)
+		path := fmt.Sprintf("commodities[%d]", idx)
+		id, err := optionalScopedID(path+".id", input.ID)
 		if err != nil {
 			return nil, err
 		}
-		shipmentID, err := optionalID(input.ShipmentID)
+		shipmentID, err := optionalScopedID(path+".shipmentId", input.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
-		commodityID, err := pulid.MustParse(input.CommodityID)
+		commodityID, err := requiredID(path+".commodityId", input.CommodityID)
 		if err != nil {
 			return nil, err
 		}
@@ -405,6 +432,9 @@ func shipmentCommoditiesFromInput(
 			CommodityID:    commodityID,
 			Pieces:         int64Value(input.Pieces),
 			Weight:         int64Value(input.Weight),
+			LengthFeet:     input.LengthFeet,
+			WidthFeet:      input.WidthFeet,
+			HeightFeet:     input.HeightFeet,
 		}
 		if commodity.Pieces == 0 {
 			commodity.Pieces = 1
@@ -415,6 +445,49 @@ func shipmentCommoditiesFromInput(
 		commodities = append(commodities, commodity)
 	}
 	return commodities, nil
+}
+
+// contractRateToModel renders what the rate agreements charged, for both the
+// preview the billing panel shows and the account the re-rate dialog reads out.
+func contractRateToModel(
+	application *services.ContractRateApplication,
+) *gqlmodel.ShipmentContractRate {
+	if application == nil {
+		return nil
+	}
+
+	accessorials := make(
+		[]*gqlmodel.ShipmentContractRateAccessorial,
+		0,
+		len(application.Accessorials),
+	)
+	for _, accessorial := range application.Accessorials {
+		accessorials = append(accessorials, &gqlmodel.ShipmentContractRateAccessorial{
+			AccessorialChargeID: accessorial.AccessorialChargeID.String(),
+			Description:         accessorial.Description,
+			Method:              accessorial.Method,
+			Amount:              accessorial.Amount.String(),
+			Unit:                int(accessorial.Unit),
+		})
+	}
+
+	return &gqlmodel.ShipmentContractRate{
+		Applied:                application.Applied,
+		Outcome:                string(application.Outcome),
+		AgreementID:            idPtrFromPtr(application.AgreementID),
+		AgreementName:          application.AgreementName,
+		RuleID:                 idPtrFromPtr(application.RuleID),
+		RuleLabel:              application.RuleLabel,
+		FormulaTemplateID:      idPtrFromPtr(application.FormulaTemplateID),
+		FormulaTemplateName:    application.FormulaTemplateName,
+		BaseRate:               nullDecimalStringPtr(application.BaseRate),
+		LinehaulAmount:         application.LinehaulAmount.String(),
+		OtherChargeAmount:      application.OtherChargeAmount.String(),
+		TotalChargeAmount:      application.TotalChargeAmount.String(),
+		PreviousLinehaulAmount: application.PreviousLinehaulAmount.String(),
+		Accessorials:           accessorials,
+		Explanation:            application.Explanation,
+	}
 }
 
 func shipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error) {
@@ -473,6 +546,15 @@ func shipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error
 		RatingUnit:             int(entity.RatingUnit),
 		FuelSurchargeLocked:    entity.FuelSurchargeLocked,
 		RatingDetail:           ratingDetailToModel(entity.RatingDetail),
+		AutoRated:              entity.AutoRated,
+		AutoRatedAt:            intPtr(entity.AutoRatedAt),
+		RateAgreementID:        idPtrFromPtr(entity.RateAgreementID),
+		RateAgreementRuleID:    idPtrFromPtr(entity.RateAgreementRuleID),
+		RateQuoteID:            idPtrFromPtr(entity.RateQuoteID),
+		RateOverrideAmount:     nullDecimalStringPtr(entity.RateOverrideAmount),
+		RateOverrideReason:     stringPtrFromValue(entity.RateOverrideReason),
+		RateOverrideAt:         intPtr(entity.RateOverrideAt),
+		RateLocked:             entity.RateLocked,
 		Version:                int(entity.Version),
 		CreatedAt:              int(entity.CreatedAt),
 		UpdatedAt:              int(entity.UpdatedAt),
@@ -502,12 +584,18 @@ func shipmentMovesToModel(
 		if err != nil {
 			return nil, err
 		}
+		coverageType := entity.CoverageType
+		if coverageType == "" {
+			coverageType = shipmentdomain.MoveCoverageTypeUnassigned
+		}
 		moves = append(moves, &gqlmodel.ShipmentMove{
 			ID:                     idPtr(entity.ID),
 			BusinessUnitID:         entity.BusinessUnitID.String(),
 			OrganizationID:         entity.OrganizationID.String(),
 			ShipmentID:             idPtr(entity.ShipmentID),
 			Status:                 gqlmodel.MoveStatus(entity.Status),
+			CoverageType:           coverageType,
+			CarrierAssignment:      entity.CarrierAssignment,
 			Loaded:                 entity.Loaded,
 			Sequence:               int(entity.Sequence),
 			Distance:               entity.Distance,
@@ -645,6 +733,9 @@ func shipmentCommoditiesToModel(
 			CommodityID:    entity.CommodityID.String(),
 			Pieces:         int(entity.Pieces),
 			Weight:         int(entity.Weight),
+			LengthFeet:     entity.LengthFeet,
+			WidthFeet:      entity.WidthFeet,
+			HeightFeet:     entity.HeightFeet,
 			Version:        int(entity.Version),
 			CreatedAt:      int(entity.CreatedAt),
 			UpdatedAt:      int(entity.UpdatedAt),
@@ -999,7 +1090,11 @@ func loadingOptimizationToModel(
 			Compliant:  item.Compliant,
 		})
 	}
-	recommendations := make([]*gqlmodel.ShipmentLoadingRecommendation, 0, len(result.Recommendations))
+	recommendations := make(
+		[]*gqlmodel.ShipmentLoadingRecommendation,
+		0,
+		len(result.Recommendations),
+	)
 	for _, item := range result.Recommendations {
 		recommendations = append(recommendations, &gqlmodel.ShipmentLoadingRecommendation{
 			Type:         item.Type,
@@ -1097,9 +1192,51 @@ func ratingDetailToModel(detail *shipmentdomain.RatingDetail) *gqlmodel.Shipment
 		FormulaTemplateID:   detail.FormulaTemplateID,
 		FormulaTemplateName: detail.FormulaTemplateName,
 		Expression:          detail.Expression,
-		ResolvedVariables:   detail.ResolvedVariables,
+		ResolvedVariables:   maputils.OrEmpty(detail.ResolvedVariables),
 		Result:              detail.Result,
 		RatedAt:             int(detail.RatedAt),
+		VersionNumber:       int(detail.VersionNumber),
+		Breakdown:           ratingBreakdownToModel(detail.Breakdown),
+		Guardrail:           ratingGuardrailToModel(detail.Guardrail),
+		RateQuoteID:         detail.RateQuoteID,
+		AgreementID:         detail.AgreementID,
+		AgreementName:       detail.AgreementName,
+		RuleID:              detail.RuleID,
+		RuleLabel:           detail.RuleLabel,
+		Source:              detail.Source,
+		Explanation:         detail.Explanation,
+	}
+}
+
+func ratingBreakdownToModel(
+	items []shipmentdomain.RatingBreakdownItem,
+) []*gqlmodel.ShipmentRatingBreakdownItem {
+	models := make([]*gqlmodel.ShipmentRatingBreakdownItem, 0, len(items))
+	for i := range items {
+		models = append(models, &gqlmodel.ShipmentRatingBreakdownItem{
+			Name:   items[i].Name,
+			Label:  items[i].Label,
+			Amount: items[i].Amount,
+			Error:  items[i].Error,
+		})
+	}
+
+	return models
+}
+
+func ratingGuardrailToModel(
+	guardrail *shipmentdomain.RatingGuardrail,
+) *gqlmodel.ShipmentRatingGuardrail {
+	if guardrail == nil {
+		return nil
+	}
+
+	return &gqlmodel.ShipmentRatingGuardrail{
+		Applied:   guardrail.Applied,
+		Bound:     guardrail.Bound,
+		RawResult: guardrail.RawResult,
+		MinCharge: guardrail.MinCharge,
+		MaxCharge: guardrail.MaxCharge,
 	}
 }
 

@@ -82,7 +82,7 @@ function ScopedFieldPicker({
       <PopoverContent className="h-72 w-64 p-2" align="start">
         {scoped && scopeEntity ? (
           <div className="flex h-full min-h-0 flex-col gap-1">
-            <p className="px-1 pb-1 text-2xs text-muted-foreground">
+            <p className="text-2xs text-muted-foreground px-1 pb-1">
               {scopeEntity.pluralLabel} fields
             </p>
             <div className="min-h-0 flex-1 overflow-y-auto">
@@ -92,7 +92,7 @@ function ScopedFieldPicker({
                   <button
                     key={field.key}
                     type="button"
-                    className="flex w-full items-center rounded-md px-2 py-1 text-left text-xs transition-colors hover:bg-accent hover:text-accent-foreground"
+                    className="hover:bg-accent hover:text-accent-foreground flex w-full items-center rounded-md px-2 py-1 text-left text-xs transition-colors"
                     onClick={() =>
                       handleSelection({
                         ref: { path: column.ref?.path, field: field.key },
@@ -149,10 +149,10 @@ export function MeasureFilterEditor({ index, ir, column, onUpdate }: MeasureFilt
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-dashed border-border bg-muted/30 p-2">
+    <div className="border-border bg-muted/30 flex flex-col gap-2 rounded-md border border-dashed p-2">
       <div className="flex items-center gap-2">
-        <FilterIcon className="size-3 text-muted-foreground" />
-        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+        <FilterIcon className="text-muted-foreground size-3" />
+        <span className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
           Only count
         </span>
         {filterCount(column.filter) > 1 && (

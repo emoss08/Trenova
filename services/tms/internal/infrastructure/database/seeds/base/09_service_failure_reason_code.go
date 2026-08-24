@@ -433,7 +433,7 @@ func (s *ServiceFailureReasonCodeSeed) existingCodes(
 		Column("code").
 		Where("organization_id = ?", orgID).
 		Where("business_unit_id = ?", buID).
-		Where("code IN (?)", bun.In(codes)).
+		Where("code IN (?)", bun.List(codes)).
 		Scan(ctx, &existingRows); err != nil {
 		return nil, fmt.Errorf("get existing service failure reason codes: %w", err)
 	}

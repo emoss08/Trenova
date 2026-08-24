@@ -67,6 +67,20 @@ query DispatchBoard($input: DispatchBoardInput!) {
       assignedTrailerCode
       assignmentAckStatus
       previousMoveTrailerId
+      coverageType
+      carrierAssignmentId
+      assignedCarrierId
+      assignedCarrierName
+      carrierTotalCost
+      liveTender {
+        id
+        status
+        mode
+        currentRank
+        offerCount
+        currentCarrierName
+        currentOfferExpiresAt
+      }
     }
     drivers {
       workerId
@@ -227,6 +241,11 @@ query DispatchDriverMoves($input: DispatchDriverMovesInput!) {
       assignedTrailerCode
       assignmentAckStatus
       previousMoveTrailerId
+      coverageType
+      carrierAssignmentId
+      assignedCarrierId
+      assignedCarrierName
+      carrierTotalCost
     }
     score {
       workerId
@@ -356,6 +375,52 @@ mutation DispatchUnassignMoves($moveIds: [ID!]!) {
       }
     }
   }
+}
+
+query DispatchCarrierAssignmentPreview($input: DispatchCarrierAssignmentPreviewInput!) {
+  dispatchCarrierAssignmentPreview(input: $input) {
+    blockers
+    warnings
+  }
+}
+
+mutation DispatchAssignMoveToCarrier($input: DispatchAssignMoveToCarrierInput!) {
+  dispatchAssignMoveToCarrier(input: $input) {
+    id
+    shipmentMoveId
+    carrierId
+    status
+    rateMethod
+    baseRate
+    baseAmount
+    fuelSurcharge
+    accessorialTotal
+    totalCost
+    currencyCode
+    proNumber
+    externalDriverName
+    externalDriverPhone
+    externalTractorNumber
+    externalTrailerNumber
+    confirmedAt
+    canceledAt
+    cancellationReason
+    carrier {
+      id
+      name
+      scac
+    }
+    accessorials {
+      id
+      accessorialChargeId
+      description
+      amount
+    }
+  }
+}
+
+mutation DispatchCancelCarrierAssignment($moveId: ID!, $reason: String!) {
+  dispatchCancelCarrierAssignment(moveId: $moveId, reason: $reason)
 }
 
 mutation DispatchPlanAutoAssign($input: DispatchPlanInput!) {

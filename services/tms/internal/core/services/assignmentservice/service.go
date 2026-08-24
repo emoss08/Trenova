@@ -11,12 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/capabilityguard"
+	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
@@ -38,6 +39,7 @@ type Params struct {
 	DB                  ports.DBConnection
 	Repo                repositories.AssignmentRepository
 	ShipmentRepo        repositories.ShipmentRepository
+	OrgRepo             repositories.OrganizationRepository
 	HoldRepo            repositories.ShipmentHoldRepository
 	ControlRepo         repositories.ShipmentControlRepository
 	DispatchControlRepo repositories.DispatchControlRepository
@@ -54,6 +56,7 @@ type Params struct {
 	EventService        portservices.ShipmentEventService
 	Realtime            portservices.RealtimeService
 	DriverNotify        *drivernotificationservice.Service
+	TenderGuard         portservices.TenderGuard `optional:"true"`
 }
 
 type service struct {
@@ -61,6 +64,7 @@ type service struct {
 	db                  ports.DBConnection
 	repo                repositories.AssignmentRepository
 	shipmentRepo        repositories.ShipmentRepository
+	orgRepo             repositories.OrganizationRepository
 	holdRepo            repositories.ShipmentHoldRepository
 	controlRepo         repositories.ShipmentControlRepository
 	dispatchControlRepo repositories.DispatchControlRepository
@@ -77,6 +81,7 @@ type service struct {
 	eventService        portservices.ShipmentEventService
 	realtime            portservices.RealtimeService
 	driverNotify        *drivernotificationservice.Service
+	tenderGuard         portservices.TenderGuard
 }
 
 func New(p Params) portservices.AssignmentService {
@@ -85,6 +90,7 @@ func New(p Params) portservices.AssignmentService {
 		db:                  p.DB,
 		repo:                p.Repo,
 		shipmentRepo:        p.ShipmentRepo,
+		orgRepo:             p.OrgRepo,
 		holdRepo:            p.HoldRepo,
 		controlRepo:         p.ControlRepo,
 		dispatchControlRepo: p.DispatchControlRepo,
@@ -101,6 +107,7 @@ func New(p Params) portservices.AssignmentService {
 		eventService:        p.EventService,
 		realtime:            p.Realtime,
 		driverNotify:        p.DriverNotify,
+		tenderGuard:         p.TenderGuard,
 	}
 }
 
@@ -215,24 +222,6 @@ func (s *service) recordAssignmentEvent(
 	}
 }
 
-func tenantRefForTenant(tenantInfo pagination.TenantInfo) shipmenteventservice.TenantRef {
-	return shipmenteventservice.TenantRef{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-	}
-}
-
-func actorFromTenant(tenantInfo pagination.TenantInfo) portservices.AuditActor {
-	if tenantInfo.UserID.IsNil() {
-		return portservices.AuditActor{}
-	}
-	return portservices.AuditActor{
-		PrincipalType: portservices.PrincipalTypeUser,
-		PrincipalID:   tenantInfo.UserID,
-		UserID:        tenantInfo.UserID,
-	}
-}
-
 func assignmentEventRef(
 	assignment *shipment.Assignment,
 ) (shipmenteventservice.AssignmentRef, bool) {
@@ -312,19 +301,37 @@ func (s *service) AssignToMove(
 		return nil, err
 	}
 
+	s.withdrawLiveTender(ctx, req.TenantInfo, req.ShipmentMoveID)
+
 	if ref, ok := assignmentEventRef(result); ok {
 		s.recordAssignmentEvent(ctx, shipmenteventservice.BuildDriverAssigned(
-			tenantRefForTenant(req.TenantInfo),
+			shipmenteventservice.TenantRefFor(req.TenantInfo),
 			ref,
 			result,
 			driverDisplayName(result),
-			actorFromTenant(req.TenantInfo),
+			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
 		s.publishAssignmentInvalidation(ctx, req.TenantInfo, ref.ShipmentID, "assigned")
 		s.notifyAssignedWorkers(ctx, req.TenantInfo, result, nil)
 	}
 
 	return result, nil
+}
+
+func (s *service) withdrawLiveTender(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+) {
+	if s.tenderGuard == nil {
+		return
+	}
+	if err := s.tenderGuard.CancelLiveTenderForMove(
+		ctx, tenantInfo, moveID, "Move was covered outside the tender",
+	); err != nil {
+		s.l.Error("failed to withdraw live tender for covered move",
+			zap.Error(err), zap.String("moveId", moveID.String()))
+	}
 }
 
 func (s *service) Reassign(
@@ -367,11 +374,11 @@ func (s *service) Reassign(
 
 	if ref, ok := assignmentEventRef(result); ok {
 		s.recordAssignmentEvent(ctx, shipmenteventservice.BuildDriverReassigned(
-			tenantRefForTenant(req.TenantInfo),
+			shipmenteventservice.TenantRefFor(req.TenantInfo),
 			ref,
 			result,
 			driverDisplayName(result),
-			actorFromTenant(req.TenantInfo),
+			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
 		s.publishAssignmentInvalidation(ctx, req.TenantInfo, ref.ShipmentID, "reassigned")
 		currentWorkers := assignmentWorkerIDs(result)
@@ -397,9 +404,9 @@ func (s *service) Unassign(
 
 	if ref != nil {
 		s.recordAssignmentEvent(ctx, shipmenteventservice.BuildDriverUnassigned(
-			tenantRefForTenant(req.TenantInfo),
+			shipmenteventservice.TenantRefFor(req.TenantInfo),
 			*ref,
-			actorFromTenant(req.TenantInfo),
+			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
 		s.publishAssignmentInvalidation(ctx, req.TenantInfo, ref.ShipmentID, "unassigned")
 		s.notifyUnassignedWorkers(ctx, req.TenantInfo, previousWorkers, nil)
@@ -461,13 +468,14 @@ func (s *service) unassignWithinTx(
 			MoveID:       req.ShipmentMoveID,
 			AssignmentID: existing.ID,
 		}
-		updatedShipment := cloneShipment(original)
-		targetMove := findMove(updatedShipment, req.ShipmentMoveID)
+		updatedShipment := shipment.CloneForUpdate(original)
+		targetMove := updatedShipment.FindMove(req.ShipmentMoveID)
 		if targetMove == nil {
 			return errortypes.NewBusinessError("Shipment does not contain the target move").
 				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
 		}
 		targetMove.Assignment = nil
+		targetMove.CoverageType = shipment.MoveCoverageTypeUnassigned
 		targetMove.Status = shipment.MoveStatusNew
 
 		control, err := s.controlRepo.Get(txCtx, repositories.GetShipmentControlRequest{
@@ -480,7 +488,7 @@ func (s *service) unassignWithinTx(
 		if multiErr := s.coordinator.PrepareForUpdateWithDelayThreshold(
 			original,
 			updatedShipment,
-			resolveDelayThresholdMinutes(control),
+			shipmentstate.ResolveControlDelayThreshold(control),
 		); multiErr != nil {
 			return multiErr
 		}
@@ -660,10 +668,23 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 			return err
 		}
 
-		if err = ensureAssignableMove(move); err != nil {
+		if err = move.EnsureAssignable(); err != nil {
 			return err
 		}
-		if err = s.ensureNoDispatchHold(txCtx, move.ShipmentID, tenantInfo); err != nil {
+		if err = capabilityguard.EnsureDriverAssignable(
+			txCtx,
+			s.orgRepo,
+			tenantInfo,
+			moveID,
+		); err != nil {
+			return err
+		}
+		if err = dispatchguard.EnsureNoDispatchHold(
+			txCtx,
+			s.holdRepo,
+			tenantInfo,
+			move.ShipmentID,
+		); err != nil {
 			return err
 		}
 
@@ -680,9 +701,13 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 		if err != nil {
 			return err
 		}
-		targetMove := findMove(original, moveID)
+		targetMove := original.FindMove(moveID)
 		if targetMove == nil {
 			return errortypes.NewBusinessError("Shipment does not contain the target move").
+				WithParam("shipmentMoveId", moveID.String())
+		}
+		if targetMove.HasCarrierAssignment() {
+			return errortypes.NewBusinessError("Shipment move is covered by an external carrier. Cancel the carrier assignment before assigning a driver").
 				WithParam("shipmentMoveId", moveID.String())
 		}
 
@@ -708,13 +733,14 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 			return err
 		}
 
-		updatedShipment := cloneShipment(original)
-		targetMove = findMove(updatedShipment, moveID)
+		updatedShipment := shipment.CloneForUpdate(original)
+		targetMove = updatedShipment.FindMove(moveID)
 		if targetMove == nil {
 			return errortypes.NewBusinessError("Shipment does not contain the target move").
 				WithParam("shipmentMoveId", moveID.String())
 		}
 		targetMove.Assignment = savedAssignment
+		targetMove.CoverageType = shipment.MoveCoverageTypeDriver
 
 		control, err := s.controlRepo.Get(txCtx, repositories.GetShipmentControlRequest{
 			TenantInfo: tenantInfo,
@@ -726,7 +752,7 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 		if multiErr := s.coordinator.PrepareForUpdateWithDelayThreshold(
 			original,
 			updatedShipment,
-			resolveDelayThresholdMinutes(control),
+			shipmentstate.ResolveControlDelayThreshold(control),
 		); multiErr != nil {
 			return multiErr
 		}
@@ -855,85 +881,6 @@ func (s *service) resolveTrailerContinuityMessageParts(
 	return trailerEntity, locationEntity, nil
 }
 
-func (s *service) ensureNoDispatchHold(
-	ctx context.Context,
-	shipmentID pulid.ID,
-	tenantInfo pagination.TenantInfo,
-) error {
-	hasHold, err := s.holdRepo.HasActiveDispatchHold(ctx, &repositories.ActiveShipmentHoldRequest{
-		ShipmentID: shipmentID,
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return err
-	}
-	if hasHold {
-		return errortypes.NewBusinessError("Shipment has an active dispatch-blocking hold").
-			WithParam("shipmentId", shipmentID.String())
-	}
-
-	return nil
-}
-
-func ensureAssignableMove(move *shipment.ShipmentMove) error {
-	//nolint:exhaustive // only actionable enum states require explicit handling here
-	switch move.Status {
-	case shipment.MoveStatusCompleted:
-		return errortypes.NewBusinessError("Completed shipment moves cannot be assigned")
-	case shipment.MoveStatusCanceled:
-		return errortypes.NewBusinessError("Canceled shipment moves cannot be assigned")
-	default:
-		return nil
-	}
-}
-
-func cloneShipment(source *shipment.Shipment) *shipment.Shipment {
-	if source == nil {
-		return nil
-	}
-
-	clone := *source
-	clone.Moves = make([]*shipment.ShipmentMove, 0, len(source.Moves))
-
-	for _, move := range source.Moves {
-		if move == nil {
-			clone.Moves = append(clone.Moves, nil)
-			continue
-		}
-
-		moveClone := *move
-		if move.Assignment != nil {
-			assignmentClone := *move.Assignment
-			moveClone.Assignment = &assignmentClone
-		}
-		moveClone.Stops = make([]*shipment.Stop, 0, len(move.Stops))
-
-		for _, stop := range move.Stops {
-			if stop == nil {
-				moveClone.Stops = append(moveClone.Stops, nil)
-				continue
-			}
-
-			stopClone := *stop
-			moveClone.Stops = append(moveClone.Stops, &stopClone)
-		}
-
-		clone.Moves = append(clone.Moves, &moveClone)
-	}
-
-	return &clone
-}
-
-func findMove(entity *shipment.Shipment, moveID pulid.ID) *shipment.ShipmentMove {
-	for _, move := range entity.Moves {
-		if move != nil && move.ID == moveID {
-			return move
-		}
-	}
-
-	return nil
-}
-
 func firstPickupStop(move *shipment.ShipmentMove) (*shipment.Stop, error) {
 	var candidate *shipment.Stop
 	for _, stop := range move.Stops {
@@ -952,15 +899,4 @@ func firstPickupStop(move *shipment.ShipmentMove) (*shipment.Stop, error) {
 	}
 
 	return candidate, nil
-}
-
-func resolveDelayThresholdMinutes(control *tenant.ShipmentControl) int16 {
-	if control == nil || !control.AutoDelayShipments {
-		return shipmentstate.DisabledDelayThresholdMinutes
-	}
-	if control.AutoDelayShipmentsThreshold == nil {
-		return shipmentstate.ResolveDelayThresholdMinutes(0)
-	}
-
-	return shipmentstate.ResolveDelayThresholdMinutes(*control.AutoDelayShipmentsThreshold)
 }

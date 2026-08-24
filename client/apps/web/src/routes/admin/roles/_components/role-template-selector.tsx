@@ -107,7 +107,7 @@ export function RoleTemplateSelector({
                     "h-8 gap-1.5 rounded-md px-3 text-sm font-medium",
                     isSelected
                       ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
-                      : "border border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
+                      : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground border",
                   )}
                 >
                   {template.icon}

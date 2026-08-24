@@ -38,6 +38,9 @@ type Params struct {
 	DocumentProfileRepo repositories.EDIPartnerDocumentProfileRepository
 	TransferRepo        repositories.EDILoadTenderTransferRepository
 	TenderRecipientRepo repositories.EDITenderRecipientRepository
+	TenderRepo          repositories.TenderRepository      `optional:"true"`
+	TenderResponses     services.TenderResponseRecorder    `optional:"true"`
+	InvoiceMatcher      services.CarrierInvoiceAutoMatcher `optional:"true"`
 	EDIService          *ediservice.Service
 	Transport           services.EDITransportDispatcher
 	WorkflowStarter     services.WorkflowStarter
@@ -54,6 +57,9 @@ type Service struct {
 	documentProfileRepo repositories.EDIPartnerDocumentProfileRepository
 	transferRepo        repositories.EDILoadTenderTransferRepository
 	tenderRecipientRepo repositories.EDITenderRecipientRepository
+	tenderRepo          repositories.TenderRepository
+	tenderResponses     services.TenderResponseRecorder
+	invoiceMatcher      services.CarrierInvoiceAutoMatcher
 	ediService          *ediservice.Service
 	transport           services.EDITransportDispatcher
 	workflowStarter     services.WorkflowStarter
@@ -76,6 +82,9 @@ func New(p Params) *Service {
 		documentProfileRepo: p.DocumentProfileRepo,
 		transferRepo:        p.TransferRepo,
 		tenderRecipientRepo: p.TenderRecipientRepo,
+		tenderRepo:          p.TenderRepo,
+		tenderResponses:     p.TenderResponses,
+		invoiceMatcher:      p.InvoiceMatcher,
 		ediService:          p.EDIService,
 		transport:           p.Transport,
 		workflowStarter:     p.WorkflowStarter,

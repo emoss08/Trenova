@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -48,56 +49,78 @@ type RatingDetail struct {
 	VersionNumber       int64                 `json:"versionNumber,omitempty"`
 	Breakdown           []RatingBreakdownItem `json:"breakdown,omitempty"`
 	Guardrail           *RatingGuardrail      `json:"guardrail,omitempty"`
+	RateQuoteID         string                `json:"rateQuoteId,omitempty"`
+	AgreementID         string                `json:"agreementId,omitempty"`
+	AgreementName       string                `json:"agreementName,omitempty"`
+	RuleID              string                `json:"ruleId,omitempty"`
+	RuleLabel           string                `json:"ruleLabel,omitempty"`
+	Source              string                `json:"source,omitempty"`
+	Explanation         string                `json:"explanation,omitempty"`
 }
 
 type Shipment struct {
 	bun.BaseModel             `json:"-" bun:"table:shipments,alias:sp"`
 	pagination.CursorValueSet `json:"-" bun:",embed"`
 
-	ID                     pulid.ID              `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID              `json:"businessUnitId"             bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID         pulid.ID              `json:"organizationId"             bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ServiceTypeID          pulid.ID              `json:"serviceTypeId"              bun:"service_type_id,type:VARCHAR(100),notnull"`
-	ShipmentTypeID         pulid.ID              `json:"shipmentTypeId"             bun:"shipment_type_id,type:VARCHAR(100),nullzero"`
-	CustomerID             pulid.ID              `json:"customerId"                 bun:"customer_id,type:VARCHAR(100),notnull"`
-	TractorTypeID          pulid.ID              `json:"tractorTypeId"              bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
-	TrailerTypeID          pulid.ID              `json:"trailerTypeId"              bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
-	OwnerID                pulid.ID              `json:"ownerId"                    bun:"owner_id,type:VARCHAR(100),nullzero"`
-	EnteredByID            pulid.ID              `json:"enteredById"                bun:"entered_by_id,type:VARCHAR(100),nullzero"`
-	CanceledByID           pulid.ID              `json:"canceledById"               bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
-	FormulaTemplateID      pulid.ID              `json:"formulaTemplateId"          bun:"formula_template_id,type:VARCHAR(100)"`
-	ConsolidationGroupID   pulid.ID              `json:"consolidationGroupId"       bun:"consolidation_group_id,type:VARCHAR(100),nullzero"`
-	OrderID                pulid.ID              `json:"orderId"                    bun:"order_id,type:VARCHAR(100),nullzero"`
-	Status                 Status                `json:"status"                     bun:"status,type:shipment_status_enum,notnull,default:'New'"`
-	TenderStatus           *TenderStatus         `json:"tenderStatus"               bun:"tender_status,type:shipment_tender_status_enum,nullzero"`
-	EntryMethod            EntryMethod           `json:"entryMethod"                bun:"entry_method,type:shipment_entry_method_enum,notnull,default:'Manual'"`
-	ProNumber              string                `json:"proNumber"                  bun:"pro_number,type:VARCHAR(100),notnull"`
-	BOL                    string                `json:"bol"                        bun:"bol,type:VARCHAR(100),nullzero"`
-	CancelReason           string                `json:"cancelReason"               bun:"cancel_reason,type:VARCHAR(100),nullzero"`
-	OtherChargeAmount      decimal.NullDecimal   `json:"otherChargeAmount"          bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
-	FreightChargeAmount    decimal.NullDecimal   `json:"freightChargeAmount"        bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
-	BaseRate               decimal.NullDecimal   `json:"baseRate"                   bun:"base_rate,type:NUMERIC(19,4),notnull,default:0"`
-	TotalChargeAmount      decimal.NullDecimal   `json:"totalChargeAmount"          bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
-	Pieces                 *int64                `json:"pieces"                     bun:"pieces,type:INTEGER,nullzero"`
-	Weight                 *int64                `json:"weight"                     bun:"weight,type:INTEGER,nullzero"`
-	TemperatureMin         *int16                `json:"temperatureMin"             bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
-	TemperatureMax         *int16                `json:"temperatureMax"             bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
-	ActualDeliveryDate     *int64                `json:"actualDeliveryDate"         bun:"actual_delivery_date,type:BIGINT,nullzero"`
-	ActualShipDate         *int64                `json:"actualShipDate"             bun:"actual_ship_date,type:BIGINT,nullzero"`
-	CanceledAt             *int64                `json:"canceledAt"                 bun:"canceled_at,type:BIGINT,nullzero"`
-	BillingTransferStatus  BillingTransferStatus `json:"billingTransferStatus"      bun:"billing_transfer_status,type:VARCHAR(50),nullzero"`
-	TransferredToBillingAt *int64                `json:"transferredToBillingAt"     bun:"transferred_to_billing_at,type:BIGINT,nullzero"`
-	MarkedReadyToBillAt    *int64                `json:"markedReadyToBillAt"        bun:"marked_ready_to_bill_at,type:BIGINT,nullzero"`
-	BilledAt               *int64                `json:"billedAt"                   bun:"billed_at,type:BIGINT,nullzero"`
-	RatingUnit             int64                 `json:"ratingUnit"                 bun:"rating_unit,type:INTEGER,notnull,default:1"`
-	FuelSurchargeLocked    bool                  `json:"fuelSurchargeLocked"        bun:"fuel_surcharge_locked,type:BOOLEAN,notnull"`
-	RatingDetail           *RatingDetail         `json:"ratingDetail"               bun:"rating_detail,type:JSONB,nullzero"`
-	SourceDocumentID       string                `json:"sourceDocumentId,omitempty" bun:"-"`
-	SearchVector           string                `json:"-"                          bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                   string                `json:"-"                          bun:"rank,type:VARCHAR(100),scanonly"`
-	Version                int64                 `json:"version"                    bun:"version,type:BIGINT"`
-	CreatedAt              int64                 `json:"createdAt"                  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64                 `json:"updatedAt"                  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                        pulid.ID              `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID            pulid.ID              `json:"businessUnitId"            bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID            pulid.ID              `json:"organizationId"            bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ServiceTypeID             pulid.ID              `json:"serviceTypeId"             bun:"service_type_id,type:VARCHAR(100),notnull"`
+	ShipmentTypeID            pulid.ID              `json:"shipmentTypeId"            bun:"shipment_type_id,type:VARCHAR(100),nullzero"`
+	CustomerID                pulid.ID              `json:"customerId"                bun:"customer_id,type:VARCHAR(100),notnull"`
+	TractorTypeID             pulid.ID              `json:"tractorTypeId"             bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
+	TrailerTypeID             pulid.ID              `json:"trailerTypeId"             bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
+	OwnerID                   pulid.ID              `json:"ownerId"                   bun:"owner_id,type:VARCHAR(100),nullzero"`
+	EnteredByID               pulid.ID              `json:"enteredById"               bun:"entered_by_id,type:VARCHAR(100),nullzero"`
+	CanceledByID              pulid.ID              `json:"canceledById"              bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
+	FormulaTemplateID         pulid.ID              `json:"formulaTemplateId"         bun:"formula_template_id,type:VARCHAR(100)"`
+	ConsolidationGroupID      pulid.ID              `json:"consolidationGroupId"      bun:"consolidation_group_id,type:VARCHAR(100),nullzero"`
+	OrderID                   pulid.ID              `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"`
+	Status                    Status                `json:"status"                    bun:"status,type:shipment_status_enum,notnull,default:'New'"`
+	TenderStatus              *TenderStatus         `json:"tenderStatus"              bun:"tender_status,type:shipment_tender_status_enum,nullzero"`
+	EntryMethod               EntryMethod           `json:"entryMethod"               bun:"entry_method,type:shipment_entry_method_enum,notnull,default:'Manual'"`
+	ProNumber                 string                `json:"proNumber"                 bun:"pro_number,type:VARCHAR(100),notnull"`
+	BOL                       string                `json:"bol"                       bun:"bol,type:VARCHAR(100),nullzero"`
+	CancelReason              string                `json:"cancelReason"              bun:"cancel_reason,type:VARCHAR(100),nullzero"`
+	OtherChargeAmount         decimal.NullDecimal   `json:"otherChargeAmount"         bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	FreightChargeAmount       decimal.NullDecimal   `json:"freightChargeAmount"       bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	BaseRate                  decimal.NullDecimal   `json:"baseRate"                  bun:"base_rate,type:NUMERIC(19,4),notnull,default:0"`
+	TotalChargeAmount         decimal.NullDecimal   `json:"totalChargeAmount"         bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	Pieces                    *int64                `json:"pieces"                    bun:"pieces,type:INTEGER,nullzero"`
+	Weight                    *int64                `json:"weight"                    bun:"weight,type:INTEGER,nullzero"`
+	EnvelopeLengthFeet        *float64              `json:"envelopeLengthFeet"        bun:"envelope_length_feet,type:NUMERIC(10,2),nullzero"`
+	EnvelopeWidthFeet         *float64              `json:"envelopeWidthFeet"         bun:"envelope_width_feet,type:NUMERIC(10,2),nullzero"`
+	EnvelopeHeightFeet        *float64              `json:"envelopeHeightFeet"        bun:"envelope_height_feet,type:NUMERIC(10,2),nullzero"`
+	EnvelopeOverallHeightFeet *float64              `json:"envelopeOverallHeightFeet" bun:"envelope_overall_height_feet,type:NUMERIC(10,2),nullzero"`
+	TemperatureMin            *int16                `json:"temperatureMin"            bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
+	TemperatureMax            *int16                `json:"temperatureMax"            bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
+	ActualDeliveryDate        *int64                `json:"actualDeliveryDate"        bun:"actual_delivery_date,type:BIGINT,nullzero"`
+	ActualShipDate            *int64                `json:"actualShipDate"            bun:"actual_ship_date,type:BIGINT,nullzero"`
+	CanceledAt                *int64                `json:"canceledAt"                bun:"canceled_at,type:BIGINT,nullzero"`
+	BillingTransferStatus     BillingTransferStatus `json:"billingTransferStatus"     bun:"billing_transfer_status,type:VARCHAR(50),nullzero"`
+	TransferredToBillingAt    *int64                `json:"transferredToBillingAt"    bun:"transferred_to_billing_at,type:BIGINT,nullzero"`
+	MarkedReadyToBillAt       *int64                `json:"markedReadyToBillAt"       bun:"marked_ready_to_bill_at,type:BIGINT,nullzero"`
+	BilledAt                  *int64                `json:"billedAt"                  bun:"billed_at,type:BIGINT,nullzero"`
+	RatingUnit                int64                 `json:"ratingUnit"                bun:"rating_unit,type:INTEGER,notnull,default:1"`
+	FuelSurchargeLocked       bool                  `json:"fuelSurchargeLocked"       bun:"fuel_surcharge_locked,type:BOOLEAN,notnull"`
+	RatingDetail              *RatingDetail         `json:"ratingDetail"              bun:"rating_detail,type:JSONB,nullzero"`
+	RateQuoteID               *pulid.ID             `json:"rateQuoteId"               bun:"rate_quote_id,type:VARCHAR(100),nullzero"`
+	RateAgreementID           *pulid.ID             `json:"rateAgreementId"           bun:"rate_agreement_id,type:VARCHAR(100),nullzero"`
+	RateAgreementRuleID       *pulid.ID             `json:"rateAgreementRuleId"       bun:"rate_agreement_rule_id,type:VARCHAR(100),nullzero"`
+	RateOverrideAmount        decimal.NullDecimal   `json:"rateOverrideAmount"        bun:"rate_override_amount,type:NUMERIC(19,4),nullzero"`
+	RateOverrideReason        string                `json:"rateOverrideReason"        bun:"rate_override_reason,type:TEXT,nullzero"`
+	RateOverrideByID          *pulid.ID             `json:"rateOverrideById"          bun:"rate_override_by_id,type:VARCHAR(100),nullzero"`
+	RateOverrideAt            *int64                `json:"rateOverrideAt"            bun:"rate_override_at,type:BIGINT,nullzero"`
+	RateLocked                bool                  `json:"rateLocked"                bun:"rate_locked,type:BOOLEAN,notnull"`
+	AutoRated                 bool                  `json:"autoRated"                 bun:"auto_rated,type:BOOLEAN,notnull"`
+	AutoRatedAt               *int64                `json:"autoRatedAt"               bun:"auto_rated_at,type:BIGINT,nullzero"`
+
+	SourceDocumentID string `json:"sourceDocumentId,omitempty" bun:"-"`
+	SearchVector     string `json:"-"                          bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank             string `json:"-"                          bun:"rank,type:VARCHAR(100),scanonly"`
+	Version          int64  `json:"version"                    bun:"version,type:BIGINT"`
+	CreatedAt        int64  `json:"createdAt"                  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt        int64  `json:"updatedAt"                  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnit      *tenant.BusinessUnit             `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization      *tenant.Organization             `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`
@@ -155,35 +178,103 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 				TenderStatusCanceled,
 			).Error("Tender status must be a valid tender status"),
 		),
-		validation.Field(
-			&s.FormulaTemplateID,
-			validation.Required.Error("Formula template is required"),
-		),
 	))
 
-	// The pieces a shipment is made of are validated with it: they arrive in
-	// the same payload, and a caller that sent a malformed stop should hear
-	// about it here rather than from a constraint at insert.
-	for i, move := range s.Moves {
-		if move == nil {
-			continue
-		}
-		move.Validate(multiErr.WithIndex("moves", i))
+	s.validateRateOverride(multiErr)
+}
+
+func (s *Shipment) validateRateOverride(multiErr *errortypes.MultiError) {
+	if !s.RateOverrideAmount.Valid {
+		return
 	}
 
-	for i, commodity := range s.Commodities {
-		if commodity == nil {
-			continue
-		}
-		commodity.Validate(multiErr.WithIndex("commodities", i))
+	if s.RateOverrideAmount.Decimal.IsNegative() {
+		multiErr.Add(
+			"rateOverrideAmount",
+			errortypes.ErrInvalid,
+			"An overridden rate cannot be negative",
+		)
+	}
+}
+
+func (s *Shipment) HasRateOverride() bool {
+	return s.RateOverrideAmount.Valid
+}
+
+func RestoreRateOwnedFields(original, updated *Shipment) {
+	if original == nil || updated == nil {
+		return
 	}
 
-	for i, charge := range s.AdditionalCharges {
-		if charge == nil {
+	updated.RateOverrideAmount = original.RateOverrideAmount
+	updated.RateOverrideByID = original.RateOverrideByID
+	updated.RateOverrideAt = original.RateOverrideAt
+	updated.RateLocked = original.RateLocked
+	updated.RateQuoteID = original.RateQuoteID
+	updated.RateAgreementID = original.RateAgreementID
+	updated.RateAgreementRuleID = original.RateAgreementRuleID
+	updated.AutoRated = original.AutoRated
+	updated.AutoRatedAt = original.AutoRatedAt
+
+	if updated.RateOverrideReason == "" {
+		updated.RateOverrideReason = original.RateOverrideReason
+	}
+
+	updated.RatingDetail = original.RatingDetail
+}
+
+func (s *Shipment) ClearAutoRating() {
+	s.AutoRated = false
+	s.AutoRatedAt = nil
+}
+
+func (s *Shipment) MarkAutoRated(at int64) {
+	s.AutoRated = true
+	s.AutoRatedAt = &at
+}
+
+func RatedFieldsEdited(original, updated *Shipment) bool {
+	if original == nil || updated == nil {
+		return false
+	}
+
+	if original.FormulaTemplateID != updated.FormulaTemplateID {
+		return true
+	}
+
+	if !decimalutils.NullEqual(original.BaseRate, updated.BaseRate) {
+		return true
+	}
+
+	return agreementChargesEdited(original.AdditionalCharges, updated.AdditionalCharges)
+}
+
+func agreementChargesEdited(original, updated []*AdditionalCharge) bool {
+	remaining := make(map[pulid.ID]*AdditionalCharge, len(updated))
+	for _, charge := range updated {
+		if charge == nil || charge.ID.IsNil() {
 			continue
 		}
-		charge.Validate(multiErr.WithIndex("additionalCharges", i))
+		remaining[charge.ID] = charge
 	}
+
+	for _, charge := range original {
+		if charge == nil || charge.Owner() != SystemOwnerAgreement {
+			continue
+		}
+
+		current, kept := remaining[charge.ID]
+		if !kept {
+			return true
+		}
+
+		if current.Method != charge.Method || current.Unit != charge.Unit ||
+			!current.Amount.Equal(charge.Amount) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *Shipment) ApplyEntryMethodDefault(original *Shipment) {
@@ -227,6 +318,52 @@ func FirstShipperStop(moves []*ShipmentMove) *Stop {
 				(move.Sequence == bestMoveSeq &&
 					(stop.Sequence < bestStopSeq ||
 						(stop.Sequence == bestStopSeq && stopID < bestStopID))) {
+				best = stop
+				bestMoveSeq = move.Sequence
+				bestStopSeq = stop.Sequence
+				bestStopID = stopID
+			}
+		}
+	}
+
+	return best
+}
+
+// DeliveryStop is the last place the shipment is delivered to, which is the
+// destination end of the lane a rate is written against.
+func (s *Shipment) DeliveryStop() *Stop {
+	if s == nil {
+		return nil
+	}
+
+	return LastConsigneeStop(s.Moves)
+}
+
+// LastConsigneeStop mirrors FirstShipperStop from the other end of the trip.
+//
+// The ordering is the same one read backwards — latest move, then latest stop
+// within it — and the stop id settles a tie so the answer never depends on the
+// order the moves happened to be loaded in.
+func LastConsigneeStop(moves []*ShipmentMove) *Stop {
+	var best *Stop
+	var bestMoveSeq int64
+	var bestStopSeq int64
+	bestStopID := ""
+
+	for _, move := range moves {
+		if move == nil {
+			continue
+		}
+		for _, stop := range move.Stops {
+			if stop == nil || !stop.IsDestinationStop() {
+				continue
+			}
+			stopID := stop.ID.String()
+			if best == nil ||
+				move.Sequence > bestMoveSeq ||
+				(move.Sequence == bestMoveSeq &&
+					(stop.Sequence > bestStopSeq ||
+						(stop.Sequence == bestStopSeq && stopID > bestStopID))) {
 				best = stop
 				bestMoveSeq = move.Sequence
 				bestStopSeq = stop.Sequence

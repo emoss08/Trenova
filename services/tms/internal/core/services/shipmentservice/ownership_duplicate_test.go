@@ -236,11 +236,14 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 			{ID: pulid.MustNew("shp_"), ProNumber: "PRO-500"},
 		}, nil).
 		Once()
+	// A new shipment is priced twice: once to ask the contracts what they
+	// charge, and once to recalculate from whatever rating fields it ends up
+	// with. Both reach the formula engine through the fallback rate engine.
 	formula := mocks.NewMockFormulaCalculator(t)
 	formula.EXPECT().
 		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
 		Return(&formulatemplatetypes.CalculateResponse{}, nil).
-		Once()
+		Twice()
 
 	svc := &service{
 		l:            zap.NewNop(),
@@ -248,7 +251,7 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		commercial: newTestCommercialCalculator(
+		commercial: newTestCommercialCalculator(t,
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),

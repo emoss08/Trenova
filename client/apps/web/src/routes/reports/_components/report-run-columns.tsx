@@ -28,7 +28,7 @@ function StatusCell({ run }: { run: ReportRun }) {
       {run.error && (
         <Tooltip>
           <TooltipTrigger>
-            <CircleAlertIcon className="size-4 text-destructive" />
+            <CircleAlertIcon className="text-destructive size-4" />
           </TooltipTrigger>
           <TooltipContent className="max-w-sm">
             <p className="font-medium">{run.error.code}</p>

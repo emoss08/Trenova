@@ -2,10 +2,6 @@ package driverportalservice
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -23,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/tokenutils"
 	"go.uber.org/zap"
 )
 
@@ -72,6 +69,10 @@ func (s *Service) InviteWorker(
 		return nil, errortypes.NewAuthorizationError(
 			"Portal invitations require an authenticated user",
 		)
+	}
+
+	if err := s.requireAssetOperations(ctx, req.TenantInfo); err != nil {
+		return nil, err
 	}
 
 	wrk, err := s.portalRepo.GetWorkerForPortalManagement(ctx, req.TenantInfo, req.WorkerID)
@@ -454,17 +455,11 @@ func (s *Service) sendInvitationEmail(
 }
 
 func newInvitationToken() (token, tokenHash string, err error) {
-	raw := make([]byte, 32)
-	if _, err = rand.Read(raw); err != nil {
-		return "", "", fmt.Errorf("generate invitation token: %w", err)
-	}
-	token = base64.RawURLEncoding.EncodeToString(raw)
-	return token, hashInvitationToken(token), nil
+	return tokenutils.New()
 }
 
 func hashInvitationToken(token string) string {
-	sum := sha256.Sum256([]byte(token))
-	return hex.EncodeToString(sum[:])
+	return tokenutils.Hash(token)
 }
 
 func usernameFromEmail(address string) string {

@@ -128,7 +128,7 @@ function CopyableId({ value, truncate = true }: { value: string; truncate?: bool
         render={
           <button
             type="button"
-            className="group inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-muted/50 px-2 py-0.5 font-mono text-xs transition-colors hover:bg-muted"
+            className="group bg-muted/50 hover:bg-muted inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-0.5 font-mono text-xs transition-colors"
             onClick={() => void copy(value, { timeout: 2000, withToast: true })}
           />
         }
@@ -158,12 +158,12 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+      <span className="bg-muted text-muted-foreground inline-flex size-6 shrink-0 items-center justify-center rounded-md">
         <Icon className="size-3.5" />
       </span>
       <h3 className="text-sm font-medium">{title}</h3>
       {count != null && (
-        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums">
+        <span className="bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums">
           {count}
         </span>
       )}
@@ -174,7 +174,7 @@ function SectionHeader({
 function MetadataCell({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="rounded-lg border p-3">
-      <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+      <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
         {label}
       </div>
       <div className="mt-1.5 text-sm">{children}</div>
@@ -206,7 +206,7 @@ function DocumentSearch({
         onChange={(e) => setInput(e.target.value)}
         placeholder="Paste a document ID to inspect..."
         className="truncate pr-18 font-mono placeholder:font-sans"
-        leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+        leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
         rightElement={
           <Button
             type="submit"
@@ -257,12 +257,12 @@ function ActionButton({
           <button
             type="button"
             disabled={mutation.isPending}
-            className="group flex min-w-0 flex-1 cursor-pointer flex-col items-start gap-2 rounded-lg border border-border/80 p-3 text-left transition-all hover:border-border hover:bg-muted/30 disabled:pointer-events-none disabled:opacity-50"
+            className="group border-border/80 hover:border-border hover:bg-muted/30 flex min-w-0 flex-1 cursor-pointer flex-col items-start gap-2 rounded-lg border p-3 text-left transition-all disabled:pointer-events-none disabled:opacity-50"
           />
         }
       >
         <div className="flex w-full items-center justify-between">
-          <span className="inline-flex size-7 items-center justify-center rounded-md bg-muted text-muted-foreground transition-colors group-hover:bg-background group-hover:text-foreground">
+          <span className="bg-muted text-muted-foreground group-hover:bg-background group-hover:text-foreground inline-flex size-7 items-center justify-center rounded-md transition-colors">
             <Icon className="size-3.5" />
           </span>
           {mutation.isPending && (
@@ -274,7 +274,7 @@ function ActionButton({
         </div>
         <div>
           <div className="text-sm font-medium">{label}</div>
-          <div className="mt-0.5 text-[11px] text-muted-foreground">{detail}</div>
+          <div className="text-muted-foreground mt-0.5 text-[11px]">{detail}</div>
         </div>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -303,7 +303,7 @@ function StatusPipeline({ doc }: { doc: Document }) {
     <div className="flex items-center gap-1">
       {stages.map((stage, i) => (
         <div key={stage.label} className="flex items-center gap-1">
-          {i > 0 && <div className="h-px w-4 bg-border" />}
+          {i > 0 && <div className="bg-border h-px w-4" />}
           <Tooltip>
             <TooltipTrigger
               render={<div className="flex items-center gap-1.5 rounded-full border px-2 py-1" />}
@@ -326,8 +326,8 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
     <section className="grid gap-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-            <FileIcon className="size-5 text-muted-foreground" />
+          <span className="bg-muted inline-flex size-10 shrink-0 items-center justify-center rounded-lg">
+            <FileIcon className="text-muted-foreground size-5" />
           </span>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -337,7 +337,7 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
                 <Badge variant="info">{doc.detectedKind}</Badge>
               )}
             </div>
-            <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="text-muted-foreground mt-0.5 flex items-center gap-2 text-xs">
               <CopyableId value={doc.id} />
               <span>&middot;</span>
               <span>{(doc.fileSize / 1024).toFixed(1)} KB</span>
@@ -366,11 +366,11 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
         </MetadataCell>
         <MetadataCell label="Created">
           <span>{formatTimestamp(doc.createdAt)}</span>
-          <span className="ml-1 text-muted-foreground">{relativeTime(doc.createdAt)}</span>
+          <span className="text-muted-foreground ml-1">{relativeTime(doc.createdAt)}</span>
         </MetadataCell>
         <MetadataCell label="Updated">
           <span>{formatTimestamp(doc.updatedAt)}</span>
-          <span className="ml-1 text-muted-foreground">{relativeTime(doc.updatedAt)}</span>
+          <span className="text-muted-foreground ml-1">{relativeTime(doc.updatedAt)}</span>
         </MetadataCell>
       </div>
 
@@ -446,7 +446,7 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
         </span>
         <div>
           <div className="text-sm font-medium">Extracted Content</div>
-          <div className="text-[11px] text-muted-foreground">
+          <div className="text-muted-foreground text-[11px]">
             {hasContent ? "Content available" : "Not extracted yet"}
           </div>
         </div>
@@ -461,7 +461,7 @@ function PresenceSection({ hasContent, hasDraft }: { hasContent: boolean; hasDra
         </span>
         <div>
           <div className="text-sm font-medium">Shipment Draft</div>
-          <div className="text-[11px] text-muted-foreground">
+          <div className="text-muted-foreground text-[11px]">
             {hasDraft ? "Draft available" : "No draft generated"}
           </div>
         </div>
@@ -482,7 +482,7 @@ function VersionsSection({ versions }: { versions: Document[] }) {
             key={v.id}
             className={`flex items-center gap-3 rounded-lg border p-3 ${v.isCurrentVersion ? "border-brand/20 bg-brand/5" : ""}`}
           >
-            <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-xs font-semibold text-muted-foreground">
+            <span className="bg-muted text-muted-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-md font-mono text-xs font-semibold">
               v{v.versionNumber}
             </span>
             <div className="min-w-0 flex-1">
@@ -490,7 +490,7 @@ function VersionsSection({ versions }: { versions: Document[] }) {
                 <CopyableId value={v.id} />
                 {v.isCurrentVersion && <Badge variant="active">Current</Badge>}
               </div>
-              <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+              <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-[11px]">
                 <ClockIcon className="size-3" />
                 {formatTimestamp(v.createdAt)}
               </div>
@@ -523,7 +523,7 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
                   <CopyableId value={s.id} />
                   <Badge variant={statusVariant(s.status)}>{s.status}</Badge>
                 </div>
-                <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-1 text-[11px]">
                   <ClockIcon className="size-3" />
                   {relativeTime(s.lastActivityAt)}
                 </div>
@@ -546,13 +546,13 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
                     <span className="text-muted-foreground">-</span>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-muted-foreground text-xs">
                   Created {formatTimestamp(s.createdAt)}
                 </div>
               </div>
 
               {hasFailure && (
-                <div className="mt-2 rounded-md border border-destructive/20 bg-destructive/5 px-2.5 py-1.5 font-mono text-[11px] text-destructive">
+                <div className="border-destructive/20 bg-destructive/5 text-destructive mt-2 rounded-md border px-2.5 py-1.5 font-mono text-[11px]">
                   {s.failureCode && <span className="font-semibold">{s.failureCode}: </span>}
                   {s.failureMessage}
                 </div>
@@ -577,11 +577,11 @@ function WorkflowsSection({ refs }: { refs: WorkflowReference[] }) {
             key={`${ref.kind}:${ref.workflowId}`}
             className="flex items-center gap-3 rounded-lg border p-3"
           >
-            <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-muted">
-              <WorkflowIcon className="size-3.5 text-muted-foreground" />
+            <span className="bg-muted inline-flex size-7 shrink-0 items-center justify-center rounded-md">
+              <WorkflowIcon className="text-muted-foreground size-3.5" />
             </span>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+              <div className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
                 {ref.kind.replace(/_/g, " ")}
               </div>
               <div className="mt-0.5">
@@ -599,8 +599,8 @@ function ErrorsBanner({ errors }: { errors: string[] }) {
   if (errors.length === 0) return null;
 
   return (
-    <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-      <div className="flex items-center gap-2 text-sm font-medium text-destructive">
+    <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-3">
+      <div className="text-destructive flex items-center gap-2 text-sm font-medium">
         <AlertTriangleIcon className="size-4" />
         {errors.length} {errors.length === 1 ? "error" : "errors"} detected
       </div>
@@ -608,7 +608,7 @@ function ErrorsBanner({ errors }: { errors: string[] }) {
         {errors.map((err, i) => (
           <div
             key={i}
-            className="rounded-md bg-destructive/10 px-2.5 py-1.5 font-mono text-[11px] text-destructive"
+            className="bg-destructive/10 text-destructive rounded-md px-2.5 py-1.5 font-mono text-[11px]"
           >
             {err}
           </div>
@@ -628,7 +628,7 @@ function DiagnosticsView({ data }: { data: DocumentOperationsDiagnostics }) {
   }
 
   return (
-    <Card className="gap-0 overflow-hidden border-border/80 shadow-none">
+    <Card className="border-border/80 gap-0 overflow-hidden shadow-none">
       <CardContent className="grid gap-6 p-5">
         <ErrorsBanner errors={data.lastErrors} />
         <DocumentOverviewSection doc={data.document} />
@@ -655,7 +655,7 @@ function DiagnosticsView({ data }: { data: DocumentOperationsDiagnostics }) {
 
 function DiagnosticsSkeleton() {
   return (
-    <Card className="gap-0 overflow-hidden border-border/80 shadow-none">
+    <Card className="border-border/80 gap-0 overflow-hidden shadow-none">
       <CardContent className="grid gap-6 p-5">
         <div className="flex items-center gap-3">
           <Skeleton className="size-10 rounded-lg" />
@@ -712,24 +712,24 @@ export function DocumentOperationsPage() {
       </div>
       {!documentId && (
         <div className="flex flex-col items-center justify-center py-20">
-          <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-            <FileSearchIcon className="size-7 text-muted-foreground" />
+          <div className="bg-muted flex size-14 items-center justify-center rounded-full">
+            <FileSearchIcon className="text-muted-foreground size-7" />
           </div>
           <h3 className="mt-4 text-sm font-medium">No document selected</h3>
-          <p className="mt-1 max-w-[260px] text-center text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 max-w-[260px] text-center text-xs">
             Paste a document ID above to view its lifecycle state and available recovery actions
           </p>
         </div>
       )}
       {documentId && diagnosticsQuery.isLoading && <DiagnosticsSkeleton />}
       {documentId && diagnosticsQuery.isError && (
-        <Card className="gap-0 overflow-hidden border-border/80 shadow-none">
+        <Card className="border-border/80 gap-0 overflow-hidden shadow-none">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
-              <XCircleIcon className="size-6 text-destructive" />
+            <div className="bg-destructive/10 flex size-12 items-center justify-center rounded-full">
+              <XCircleIcon className="text-destructive size-6" />
             </div>
             <h3 className="mt-3 text-sm font-medium">Failed to load diagnostics</h3>
-            <p className="mt-1 max-w-[300px] text-center text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 max-w-[300px] text-center text-xs">
               {diagnosticsQuery.error instanceof Error
                 ? diagnosticsQuery.error.message
                 : "Document not found or an unexpected error occurred"}

@@ -1390,7 +1390,7 @@ export type InternalPartnerPair = z.infer<typeof internalPartnerPairSchema>;
 
 export type SubmitLoadTenderRequest = {
   sourceShipmentId: string;
-  ediPartnerId: string;
+  ediPartnerId?: string;
 };
 
 export type ApproveEDITransferRequest = {

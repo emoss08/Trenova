@@ -236,9 +236,9 @@ export function AddressField<TForm extends FieldValues>({
                 >
                   <span
                     id="address-search-button"
-                    className="flex cursor-pointer items-center gap-1 rounded-md p-1 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground"
+                    className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground flex cursor-pointer items-center gap-1 rounded-md p-1"
                   >
-                    <SearchIcon className="size-3 text-muted-foreground" />
+                    <SearchIcon className="text-muted-foreground size-3" />
                     <span className="sr-only">Search addresses</span>
                   </span>
                 </Button>
@@ -262,7 +262,7 @@ export function AddressField<TForm extends FieldValues>({
                       {apiKeyError ? (
                         <LocationSearchError error={apiKeyError} />
                       ) : (
-                        <div className="flex min-h-[100px] flex-col justify-center gap-1 text-center text-sm text-muted-foreground">
+                        <div className="text-muted-foreground flex min-h-[100px] flex-col justify-center gap-1 text-center text-sm">
                           <span>No locations found.</span>
                           <span>Please try a different search.</span>
                         </div>
@@ -299,7 +299,7 @@ export function AddressField<TForm extends FieldValues>({
                     </CommandGroup>
                   )}
                 </CommandList>
-                <div className="flex items-center justify-between gap-0.5 border-t bg-muted px-2 py-0.5 text-2xs text-muted-foreground">
+                <div className="bg-muted text-2xs text-muted-foreground flex items-center justify-between gap-0.5 border-t px-2 py-0.5">
                   <div className="flex items-center gap-0.5">Powered by Google Maps</div>
                   <div>Found {locations.length} locations</div>
                 </div>
@@ -313,7 +313,7 @@ export function AddressField<TForm extends FieldValues>({
                 <span className="absolute top-1/2 right-2 mt-0.5 inline-flex -translate-y-1/2">
                   <Button size="icon-xs" variant="ghost" disabled>
                     <span className="flex items-center gap-1 rounded-md p-1">
-                      <SearchIcon className="size-3 text-muted-foreground/40" />
+                      <SearchIcon className="text-muted-foreground/40 size-3" />
                     </span>
                   </Button>
                 </span>
@@ -331,14 +331,14 @@ export function AddressField<TForm extends FieldValues>({
 
 function LocationSearchError({ error }: { error: string }) {
   return (
-    <div className="flex animate-in flex-col items-center gap-2.5 px-4 py-3 duration-300 fade-in">
-      <div className="flex w-full max-w-md items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-destructive shadow-sm">
+    <div className="animate-in fade-in flex flex-col items-center gap-2.5 px-4 py-3 duration-300">
+      <div className="border-destructive/30 bg-destructive/5 text-destructive flex w-full max-w-md items-center gap-2 rounded-lg border p-3 shadow-sm">
         <div className="flex flex-col space-y-0.5">
           <span className="text-sm font-medium">API Key Error</span>
-          <span className="text-xs text-destructive/80">{error}</span>
+          <span className="text-destructive/80 text-xs">{error}</span>
         </div>
       </div>
-      <div className="flex flex-col gap-1 text-center text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex flex-col gap-1 text-center text-sm">
         <span>This feature requires a valid Google Maps API key.</span>
         <span>Please contact your IT administrator for assistance.</span>
       </div>

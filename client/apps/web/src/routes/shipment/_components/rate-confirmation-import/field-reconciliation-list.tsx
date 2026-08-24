@@ -52,7 +52,7 @@ function SectionHeader({
   return (
     <button
       type="button"
-      className="flex w-full items-center gap-2 px-2 py-1.5 text-2xs font-medium tracking-wider text-muted-foreground/60 uppercase transition-colors hover:text-muted-foreground"
+      className="text-2xs text-muted-foreground/60 hover:text-muted-foreground flex w-full items-center gap-2 px-2 py-1.5 font-medium tracking-wider uppercase transition-colors"
       onClick={onToggle}
     >
       <ChevronDownIcon
@@ -60,7 +60,7 @@ function SectionHeader({
       />
       <span>{label}</span>
       {issueCount > 0 && (
-        <span className="flex size-4 items-center justify-center rounded-full bg-amber-500/15 text-2xs font-medium text-amber-500">
+        <span className="text-2xs flex size-4 items-center justify-center rounded-full bg-amber-500/15 font-medium text-amber-500">
           {issueCount}
         </span>
       )}
@@ -119,7 +119,7 @@ export function FieldReconciliationList({
 
   if (groupedSections.length === 0 && ungroupedFields.length === 0) {
     return (
-      <div className="px-4 py-6 text-center text-xs text-muted-foreground/50">
+      <div className="text-muted-foreground/50 px-4 py-6 text-center text-xs">
         {showIssuesOnly ? "All fields accepted. No issues to review." : "No fields extracted."}
       </div>
     );

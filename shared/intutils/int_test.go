@@ -257,3 +257,25 @@ func TestClonePointer(t *testing.T) {
 		assert.NotSame(t, &value, cloned)
 	})
 }
+
+func TestSafeToInt32(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, int32(42), intutils.SafeToInt32(42))
+	assert.Equal(t, int32(math.MaxInt32), intutils.SafeToInt32(int64(math.MaxInt32)))
+	assert.Equal(t, int32(math.MinInt32), intutils.SafeToInt32(int64(math.MinInt32)))
+	assert.Equal(t, int32(math.MaxInt32), intutils.SafeToInt32(int64(math.MaxInt32)+1),
+		"overflow must saturate rather than wrap to a negative")
+	assert.Equal(t, int32(math.MinInt32), intutils.SafeToInt32(int64(math.MinInt32)-1))
+}
+
+func TestSafeToInt16(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, int16(42), intutils.SafeToInt16(42))
+	assert.Equal(t, int16(math.MaxInt16), intutils.SafeToInt16(math.MaxInt16))
+	assert.Equal(t, int16(math.MinInt16), intutils.SafeToInt16(math.MinInt16))
+	assert.Equal(t, int16(math.MaxInt16), intutils.SafeToInt16(math.MaxInt16+1),
+		"a value past the ceiling must stay past any valid bound, not wrap into range")
+	assert.Equal(t, int16(math.MinInt16), intutils.SafeToInt16(math.MinInt16-1))
+}

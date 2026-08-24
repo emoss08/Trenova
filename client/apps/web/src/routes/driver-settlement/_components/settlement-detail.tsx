@@ -141,8 +141,8 @@ function ReadOnlyNotice({ settlement }: { settlement: SettlementDetailData }) {
   const isTerminal = settlement.status === "Paid" || settlement.status === "Voided";
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3 py-2">
-      <p className="text-[11px] text-muted-foreground">
+    <div className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
+      <p className="text-muted-foreground text-[11px]">
         {isTerminal
           ? "This settlement is finalized and shown here for record-keeping."
           : "This is a read-only view — process, adjust, or pay this settlement from the workspace."}
@@ -169,11 +169,11 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
           classification={settlement.classification as PayeeClassification}
         />
         {settlement.payProfileName && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             Pay profile: {settlement.payProfileName}
           </span>
         )}
-        <span className="ml-auto text-xs text-muted-foreground">
+        <span className="text-muted-foreground ml-auto text-xs">
           {formatDate(settlement.periodStart)} – {formatDate(settlement.periodEnd)} · pays{" "}
           {formatDate(settlement.payDate)}
         </span>
@@ -234,7 +234,7 @@ function SummaryTile({
           : "bg-muted/30",
       )}
     >
-      <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
         {label}
       </p>
       <div className="mt-1 text-sm font-semibold">{children}</div>
@@ -407,7 +407,7 @@ function SettlementActions({
         onChanged={onChanged}
       />
       {status === "Voided" && settlement.voidReason && (
-        <span className="text-xs text-muted-foreground">Voided: {settlement.voidReason}</span>
+        <span className="text-muted-foreground text-xs">Voided: {settlement.voidReason}</span>
       )}
       <span className="sr-only">
         <Button variant="ghost" onClick={onClose}>
@@ -513,7 +513,7 @@ function MarkPaidDialog({
         <div className="flex flex-col gap-3">
           <div>
             <p className="mb-1 text-xs font-medium">Payment method</p>
-            <p className="mb-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mb-1 text-[11px]">
               How the net pay was sent to the driver — recorded on the statement and audit trail.
             </p>
             <div className="flex gap-2">
@@ -536,7 +536,7 @@ function MarkPaidDialog({
               onChange={(e) => setPaymentReference(e.target.value)}
               placeholder="ACH trace / check number (optional)"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               The ACH trace or check number so the payment can be reconciled with the bank.
             </p>
           </div>
@@ -608,7 +608,7 @@ function AddAdjustmentDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Description (e.g. Layover pay - Detroit 6/12)"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               Appears as the line item on the driver&apos;s statement — say what and when.
             </p>
           </div>
@@ -619,7 +619,7 @@ function AddAdjustmentDialog({
               placeholder="Amount (e.g. 150.00 or -75.00)"
               inputMode="decimal"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               Dollars, not cents; positive adds pay, negative deducts.
             </p>
           </div>
@@ -644,7 +644,7 @@ function AddAdjustmentDialog({
                 ))}
               </SelectContent>
             </Select>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[11px]">
               Optional — tagging a pay code posts the adjustment to that code&apos;s GL account
               instead of the default expense account.
             </p>
@@ -709,7 +709,7 @@ function SettlementLines({
   const canDetach = !readOnly && settlement.status === "Draft";
 
   if (grouped.length === 0) {
-    return <p className="text-sm text-muted-foreground">This settlement has no line items.</p>;
+    return <p className="text-muted-foreground text-sm">This settlement has no line items.</p>;
   }
 
   return (
@@ -719,7 +719,7 @@ function SettlementLines({
         return (
           <div key={category}>
             <div className="mb-1 flex items-baseline justify-between">
-              <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              <h4 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                 {lineCategoryLabels[category] ?? category}
               </h4>
               <AmountDisplay value={subtotal} currency={settlement.currencyCode} />
@@ -732,12 +732,12 @@ function SettlementLines({
                       <td className="px-3 py-2">
                         <span className="font-medium">{line.description}</span>
                         {line.proNumber && (
-                          <span className="ml-2 font-mono text-muted-foreground">
+                          <span className="text-muted-foreground ml-2 font-mono">
                             {line.proNumber}
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">
+                      <td className="text-muted-foreground px-3 py-2 text-right tabular-nums">
                         {Number(line.quantity) > 0 && (
                           <>
                             {Number(line.quantity).toLocaleString()}
@@ -814,7 +814,7 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
 
   return (
     <div className="border-t pt-3">
-      <h4 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
         History
       </h4>
       <ol className="flex flex-col gap-1">

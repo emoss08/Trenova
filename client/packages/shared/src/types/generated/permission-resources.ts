@@ -56,6 +56,9 @@ export const Resource = {
   ShipmentMove: "shipment_move",
   ShipmentStop: "shipment_stop",
   ShipmentHold: "shipment_hold",
+  Permit: "permit",
+  JurisdictionRule: "jurisdiction_rule",
+  JurisdictionRuleOverride: "jurisdiction_rule_override",
   ServiceFailure: "service_failure",
   ServiceFailureReasonCode: "service_failure_reason_code",
   DispatchControl: "dispatch_control",
@@ -74,9 +77,13 @@ export const Resource = {
   ChargeType: "charge_type",
   RevenueCode: "revenue_code",
   FormulaTemplate: "formula_template",
-  RateTable: "rate_table",
   FuelSurchargeProgram: "fuel_surcharge_program",
   DetentionPolicy: "detention_policy",
+  RateAgreement: "rate_agreement",
+  RateZone: "rate_zone",
+  RateMatrix: "rate_matrix",
+  RateQuote: "rate_quote",
+  RateSimulation: "rate_simulation",
 
   // Agent
   AgentRun: "agent_run",
@@ -87,6 +94,15 @@ export const Resource = {
   // Customers
   Customer: "customer",
   CustomerContact: "customer_contact",
+
+  // Carriers
+  Carrier: "carrier",
+  RateConfirmation: "rate_confirmation",
+  CarrierSettlement: "carrier_settlement",
+  CarrierSettlementControl: "carrier_settlement_control",
+  CarrierInvoiceMatch: "carrier_invoice_match",
+  RoutingGuide: "routing_guide",
+  Tender: "tender",
 
   // Locations
   Location: "location",

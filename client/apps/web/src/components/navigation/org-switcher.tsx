@@ -32,7 +32,7 @@ function OrgLogo({
 
   if (isSwitching) {
     return (
-      <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+      <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-md">
         <Loader2 className="size-3 animate-spin" />
       </div>
     );
@@ -50,7 +50,7 @@ function OrgLogo({
   }
 
   return (
-    <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-primary-foreground">
+    <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-md text-[10px] font-bold">
       {initials}
     </div>
   );
@@ -126,12 +126,12 @@ export function OrgSwitcher() {
           <button
             type="button"
             disabled={switchMutation.isPending}
-            className="flex w-full items-center gap-2 rounded-md px-1 py-1 transition-colors select-none hover:bg-accent/50"
+            className="hover:bg-accent/50 flex w-full items-center gap-2 rounded-md px-1 py-1 transition-colors select-none"
           />
         }
       >
         {rowContent}
-        <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+        <ChevronsUpDown className="text-muted-foreground size-3.5 shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent side="bottom" align="start" sideOffset={6} className="w-60">
         <DropdownMenuGroup>
@@ -144,7 +144,7 @@ export function OrgSwitcher() {
               onClick={() => handleSwitch(org)}
               disabled={switchMutation.isPending || org.isCurrent}
               className={cn(org.isCurrent && "bg-accent")}
-              endContent={org.isCurrent ? <Check className="size-4 text-primary" /> : undefined}
+              endContent={org.isCurrent ? <Check className="text-primary size-4" /> : undefined}
             />
           ))}
         </DropdownMenuGroup>

@@ -64,7 +64,7 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
           <div className="min-w-0">
             <span className="text-sm font-medium">{row.original.name}</span>
             {row.original.description && (
-              <p className="line-clamp-1 text-2xs text-muted-foreground">
+              <p className="text-2xs text-muted-foreground line-clamp-1">
                 {row.original.description}
               </p>
             )}

@@ -149,7 +149,11 @@ func (r *repository) SaveFormMapping(
 			if updErr != nil {
 				return updErr
 			}
-			if raErr := dberror.CheckRowsAffected(result, "FormMapping", mapping.ID.String()); raErr != nil {
+			if raErr := dberror.CheckRowsAffected(
+				result,
+				"FormMapping",
+				mapping.ID.String(),
+			); raErr != nil {
 				return raErr
 			}
 			if _, delErr := tx.NewDelete().

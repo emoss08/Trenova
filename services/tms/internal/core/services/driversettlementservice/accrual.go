@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,32 +18,6 @@ import (
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
-
-//nolint:exhaustive // canceled shipments never accrue pay
-var shipmentStatusRank = map[shipment.Status]int{
-	shipment.StatusNew:                0,
-	shipment.StatusPartiallyAssigned:  1,
-	shipment.StatusAssigned:           2,
-	shipment.StatusInTransit:          3,
-	shipment.StatusDelayed:            3,
-	shipment.StatusPartiallyCompleted: 4,
-	shipment.StatusCompleted:          5,
-	shipment.StatusReadyToInvoice:     6,
-	shipment.StatusInvoiced:           7,
-}
-
-func payTriggerRank(trigger tenant.PayTrigger) int {
-	switch trigger {
-	case tenant.PayTriggerMoveCompleted, tenant.PayTriggerShipmentDelivered:
-		return shipmentStatusRank[shipment.StatusCompleted]
-	case tenant.PayTriggerPODReceived:
-		return shipmentStatusRank[shipment.StatusReadyToInvoice]
-	case tenant.PayTriggerShipmentInvoiced:
-		return shipmentStatusRank[shipment.StatusInvoiced]
-	default:
-		return shipmentStatusRank[shipment.StatusCompleted]
-	}
-}
 
 func (s *Service) AfterShipmentUpdate(
 	ctx context.Context,
@@ -73,13 +48,13 @@ func (s *Service) AfterShipmentUpdate(
 		return nil
 	}
 
-	triggerRank := payTriggerRank(control.PayTrigger)
-	updatedRank, ok := shipmentStatusRank[updated.Status]
+	triggerRank := settlementshared.PayTriggerRank(control.PayTrigger)
+	updatedRank, ok := settlementshared.ShipmentStatusRank(updated.Status)
 	if !ok || updatedRank < triggerRank {
 		return nil
 	}
 	if original != nil {
-		if originalRank, known := shipmentStatusRank[original.Status]; known &&
+		if originalRank, known := settlementshared.ShipmentStatusRank(original.Status); known &&
 			originalRank >= triggerRank {
 			return nil
 		}

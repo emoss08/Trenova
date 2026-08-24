@@ -49,23 +49,26 @@ type PreviewEDIDocumentRequest struct {
 	TransactionSet           edi.TransactionSet    `json:"transactionSet"`
 	Direction                edi.DocumentDirection `json:"direction"`
 	Payload                  *edi.DocumentPayload  `json:"payload"`
+	CarrierSCAC              string                `json:"carrierScac"`
 }
 
 type GenerateEDIDocumentRequest struct {
-	TenantInfo               pagination.TenantInfo `json:"-"`
-	PartnerDocumentProfileID pulid.ID              `json:"partnerDocumentProfileId"`
-	EDIPartnerID             pulid.ID              `json:"ediPartnerId"`
-	ShipmentID               pulid.ID              `json:"shipmentId"`
-	TransferID               pulid.ID              `json:"transferId"`
-	InvoiceID                pulid.ID              `json:"invoiceId"`
-	ShipmentEventID          pulid.ID              `json:"shipmentEventId"`
-	ServiceFailureID         pulid.ID              `json:"serviceFailureId"`
-	SourceMessageID          pulid.ID              `json:"sourceMessageId"`
-	TransactionSet           edi.TransactionSet    `json:"transactionSet"`
-	Direction                edi.DocumentDirection `json:"direction"`
-	Payload                  *edi.DocumentPayload  `json:"payload"`
-	GeneratedByID            pulid.ID              `json:"-"`
-	DisableDeliveryQueue     bool                  `json:"-"`
+	TenantInfo                    pagination.TenantInfo `json:"-"`
+	PartnerDocumentProfileID      pulid.ID              `json:"partnerDocumentProfileId"`
+	EDIPartnerID                  pulid.ID              `json:"ediPartnerId"`
+	ShipmentID                    pulid.ID              `json:"shipmentId"`
+	TransferID                    pulid.ID              `json:"transferId"`
+	InvoiceID                     pulid.ID              `json:"invoiceId"`
+	ShipmentEventID               pulid.ID              `json:"shipmentEventId"`
+	ServiceFailureID              pulid.ID              `json:"serviceFailureId"`
+	SourceMessageID               pulid.ID              `json:"sourceMessageId"`
+	TransactionSet                edi.TransactionSet    `json:"transactionSet"`
+	Direction                     edi.DocumentDirection `json:"direction"`
+	Payload                       *edi.DocumentPayload  `json:"payload"`
+	CarrierSCAC                   string                `json:"-"`
+	GeneratedByID                 pulid.ID              `json:"-"`
+	DisableDeliveryQueue          bool                  `json:"-"`
+	SuppressTenderRecipientUpsert bool                  `json:"-"`
 }
 
 type ServiceFailure214LifecycleRequest struct {

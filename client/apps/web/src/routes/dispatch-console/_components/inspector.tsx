@@ -1,3 +1,6 @@
+import { CapabilityGate } from "@/components/capability-gate";
+import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
+import { PermissionGate } from "@/components/permission-gate";
 import { isTypingTarget } from "@/lib/dom";
 import type {
   DispatchBoardDriver,
@@ -6,18 +9,29 @@ import type {
   DispatchDriverMoveMatch,
 } from "@/lib/graphql/dispatch-console";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
+import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { formatClockDurationMs, formatUnixDateTime } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import {
+  hasOrganizationCapability,
+  OrganizationCapability,
+} from "@trenova/shared/types/organization-capability";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
+import { Building2Icon, SendIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatMiles, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
 import { ScoreBreakdown } from "./score-breakdown";
+import { TenderHistory } from "./tender-history";
+import { TenderLivePanel } from "./tender-live-panel";
+import type { DispatchActions } from "./use-dispatch-actions";
 
 const CANDIDATE_STALE_MS = 30_000;
 const MAX_HOTKEY_RANK = 9;
@@ -56,7 +70,7 @@ function CandidateRow({
         </Badge>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px]">
         <span className="tabular-nums">Score {candidate.score}</span>
         <span>· {formatMiles(candidate.deadheadMiles)} empty</span>
         <span>· {formatClockDurationMs(candidate.driveRemainingMs)} drive left</span>
@@ -102,22 +116,127 @@ function CandidateRow({
   );
 }
 
+function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
+  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
+  const openCarrierCancel = useDispatchConsoleStore.use.openCarrierCancel();
+
+  return (
+    <div className="bg-muted/30 flex flex-col gap-1.5 border-b px-2.5 py-2">
+      <div className="flex items-center gap-1.5">
+        <Building2Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+        <span className="truncate text-xs font-medium">{move.assignedCarrierName}</span>
+        <Badge variant="active" className="h-4 shrink-0 rounded px-1 text-[9px]">
+          Carrier
+        </Badge>
+      </div>
+      {move.carrierTotalCost != null && (
+        <span className="text-muted-foreground text-[10px] tabular-nums">
+          Total cost {formatCurrency(move.carrierTotalCost)}
+        </span>
+      )}
+      {move.carrierAssignmentId && (
+        <RateConfirmationActions
+          moveId={move.moveId}
+          carrierAssignmentId={move.carrierAssignmentId}
+        />
+      )}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {/* Re-brokering is a brokerage action; canceling is the way an
+            asset-only org unwinds coverage it inherited, so it always stays. */}
+        <CapabilityGate capability={OrganizationCapability.Brokerage}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-[10px]"
+            title="Broker this move to a different carrier — the current assignment is replaced"
+            onClick={() => openCarrierAssign(move)}
+          >
+            Replace carrier
+          </Button>
+        </CapabilityGate>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-[10px]"
+          onClick={() => openCarrierCancel(move)}
+        >
+          Cancel carrier assignment
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function TenderCoverageCard({
+  move,
+  actions,
+}: {
+  move: DispatchBoardMove;
+  actions: DispatchActions;
+}) {
+  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
+
+  const { data: liveTender, isLoading } = useQuery({
+    ...dispatchConsoleQueries.liveTender(move.moveId),
+  });
+
+  // The board summary can lag the live query: a tender that just resolved still
+  // flags the move while liveTender comes back null. Rendering the frame anyway
+  // would leave an empty bordered strip in the inspector.
+  if (!isLoading && !liveTender) {
+    return null;
+  }
+
+  return (
+    <div className="bg-muted/30 flex max-h-72 flex-col gap-1.5 overflow-y-auto border-b px-2.5 py-2">
+      {isLoading ? (
+        <Skeleton className="h-20 rounded-md" />
+      ) : liveTender ? (
+        <TenderLivePanel
+          tender={liveTender}
+          isTendering={actions.isTendering}
+          onCancelTender={actions.cancelTender}
+          onRecordResponse={actions.recordOfferResponse}
+          onAssignManually={() => openCarrierAssign(move)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function MoveInspector({
   move,
   onAssign,
   isAssigning,
   hotkeysEnabled,
+  actions,
 }: {
   move: DispatchBoardMove;
   onAssign: (candidate: DispatchCandidate) => void;
   isAssigning: boolean;
   hotkeysEnabled: boolean;
+  actions: DispatchActions;
 }) {
   const [includeBlocked, setIncludeBlocked] = useState(false);
+  const openCarrierAssign = useDispatchConsoleStore.use.openCarrierAssign();
+  const openTender = useDispatchConsoleStore.use.openTender();
+  const capabilities = useOrgCapabilities();
+  // Ranking drivers is the whole point of this pane, and an organization that
+  // employs none has nothing to rank — the ranking is withheld rather than shown
+  // permanently empty, and the query behind it is never issued.
+  const canRankDrivers = hasOrganizationCapability(
+    capabilities,
+    OrganizationCapability.AssetOperations,
+  );
+  const isCarrierCovered = move.coverageType === "carrier";
+  // A carrier-covered move cannot take a driver on top; the carrier assignment has to be
+  // canceled first, so driver assignment is held off rather than allowed to fail.
+  const assignLocked = isAssigning || isCarrierCovered;
 
   const { data, isLoading } = useQuery({
     ...dispatchConsoleQueries.moveCandidates({ moveId: move.moveId, includeBlocked }),
     staleTime: CANDIDATE_STALE_MS,
+    enabled: canRankDrivers,
   });
 
   const candidates = useMemo(() => data ?? [], [data]);
@@ -125,7 +244,7 @@ function MoveInspector({
   // The rank shown next to each candidate doubles as its keyboard shortcut: pressing the
   // digit assigns without touching the mouse.
   useEffect(() => {
-    if (!hotkeysEnabled || isAssigning) return;
+    if (!hotkeysEnabled || assignLocked || !canRankDrivers) return;
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -140,33 +259,77 @@ function MoveInspector({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [candidates, hotkeysEnabled, isAssigning, onAssign]);
+  }, [candidates, hotkeysEnabled, assignLocked, canRankDrivers, onAssign]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-col gap-0.5 border-b px-2.5 py-2">
         <span className="font-mono text-xs font-semibold">{move.proNumber}</span>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-muted-foreground text-[11px]">
           {move.originCity}, {move.originState} → {move.destinationCity}, {move.destinationState}
         </span>
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-muted-foreground text-[10px]">
           Pickup{" "}
           {move.originWindowStart > 0 ? formatUnixDateTime(move.originWindowStart) : "unscheduled"}
         </span>
       </div>
 
+      {isCarrierCovered && <CarrierCoverageCard move={move} />}
+
+      {move.liveTender && (
+        <CapabilityGate capability={OrganizationCapability.Brokerage}>
+          <TenderCoverageCard move={move} actions={actions} />
+        </CapabilityGate>
+      )}
+
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
-        <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
-          {candidates.length} candidates
-        </span>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-6 px-2 text-[10px]"
-          onClick={() => setIncludeBlocked((value) => !value)}
-        >
-          {includeBlocked ? "Hide ineligible" : "Show ineligible"}
-        </Button>
+        {canRankDrivers && (
+          <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+            {candidates.length} candidates
+          </span>
+        )}
+        <div className="ml-auto flex items-center gap-1.5">
+          <CapabilityGate capability={OrganizationCapability.Brokerage}>
+            {!move.isCovered && (
+              <PermissionGate resource={Resource.ShipmentMove} operation={Operation.Assign}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[10px]"
+                  disabled={isAssigning}
+                  onClick={() => openCarrierAssign(move)}
+                >
+                  <Building2Icon className="size-3" aria-hidden />
+                  Assign to carrier
+                </Button>
+              </PermissionGate>
+            )}
+            {!move.isCovered && (
+              <PermissionGate resource={Resource.Tender} operation={Operation.Create}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[10px]"
+                  disabled={isAssigning}
+                  onClick={() => openTender(move)}
+                >
+                  <SendIcon className="size-3" aria-hidden />
+                  Tender to carriers
+                </Button>
+              </PermissionGate>
+            )}
+          </CapabilityGate>
+          {canRankDrivers && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px]"
+              onClick={() => setIncludeBlocked((value) => !value)}
+            >
+              {includeBlocked ? "Hide ineligible" : "Show ineligible"}
+            </Button>
+          )}
+        </div>
       </div>
 
       <ScrollArea
@@ -176,25 +339,33 @@ function MoveInspector({
         maskHeight={18}
       >
         <div className="flex flex-col gap-1.5 p-2">
-          {isLoading
-            ? Array.from({ length: 5 }, (_, index) => (
-                <Skeleton key={index} className="h-24 rounded-md" />
-              ))
-            : candidates.map((candidate, index) => (
-                <CandidateRow
-                  key={candidate.workerId}
-                  candidate={candidate}
-                  rank={index + 1}
-                  onAssign={onAssign}
-                  isAssigning={isAssigning}
-                />
-              ))}
-          {!isLoading && candidates.length === 0 && (
-            <p className="px-1 py-6 text-center text-xs text-muted-foreground">
-              No eligible driver for this move.
-              {!includeBlocked ? " Show ineligible drivers to see why." : ""}
-            </p>
+          {canRankDrivers && (
+            <>
+              {isLoading
+                ? Array.from({ length: 5 }, (_, index) => (
+                    <Skeleton key={index} className="h-24 rounded-md" />
+                  ))
+                : candidates.map((candidate, index) => (
+                    <CandidateRow
+                      key={candidate.workerId}
+                      candidate={candidate}
+                      rank={index + 1}
+                      onAssign={onAssign}
+                      isAssigning={assignLocked}
+                    />
+                  ))}
+              {!isLoading && candidates.length === 0 && (
+                <p className="text-muted-foreground px-1 py-6 text-center text-xs">
+                  No eligible driver for this move.
+                  {!includeBlocked ? " Show ineligible drivers to see why." : ""}
+                </p>
+              )}
+            </>
           )}
+
+          <CapabilityGate capability={OrganizationCapability.Brokerage}>
+            <TenderHistory shipmentId={move.shipmentId} className="mt-2" />
+          </CapabilityGate>
         </div>
       </ScrollArea>
     </div>
@@ -214,7 +385,7 @@ function DriverMatchRow({
     <button
       type="button"
       onClick={() => onSelectMove(match.move.moveId)}
-      className="flex flex-col gap-1 rounded-md border bg-card p-2 text-left transition-colors hover:border-brand/40"
+      className="bg-card hover:border-brand/40 flex flex-col gap-1 rounded-md border p-2 text-left transition-colors"
     >
       <div className="flex items-start justify-between gap-2">
         <span className="truncate font-mono text-xs font-semibold">{match.move.proNumber}</span>
@@ -229,7 +400,7 @@ function DriverMatchRow({
         {match.move.originCity}, {match.move.originState} → {match.move.destinationCity},{" "}
         {match.move.destinationState}
       </span>
-      <span className="text-[10px] text-muted-foreground">
+      <span className="text-muted-foreground text-[10px]">
         {formatUnixDateTime(match.move.originWindowStart)} ·{" "}
         {formatMiles(match.score.deadheadMiles)} empty
       </span>
@@ -257,11 +428,11 @@ function DriverInspector({
         <span className="text-xs font-semibold">
           {driver.firstName} {driver.lastName}
         </span>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-muted-foreground text-[11px]">
           {driver.tractorCode ? `${driver.tractorCode} · ` : ""}
           {driver.formattedLocation || `${driver.city}, ${driver.stateAbbreviation}`}
         </span>
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-muted-foreground text-[10px]">
           Available {formatUnixDateTime(driver.projectedTimeAvailable)}
         </span>
       </div>
@@ -271,16 +442,16 @@ function DriverInspector({
 
         {driver.commitments.length > 0 && (
           <div className="flex flex-col gap-1">
-            <span className="text-[10px] tracking-wide text-muted-foreground uppercase">
+            <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
               Committed
             </span>
             {driver.commitments.map((commitment) => (
               <div
                 key={commitment.moveId}
-                className="flex items-center justify-between gap-2 rounded border bg-muted/30 px-2 py-1"
+                className="bg-muted/30 flex items-center justify-between gap-2 rounded border px-2 py-1"
               >
                 <span className="truncate font-mono text-[10px]">{commitment.proNumber}</span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">
+                <span className="text-muted-foreground shrink-0 text-[10px]">
                   to {commitment.destinationCity}, {commitment.destinationState}
                 </span>
               </div>
@@ -289,7 +460,7 @@ function DriverInspector({
         )}
       </div>
 
-      <span className="border-b px-2.5 pb-1.5 text-[10px] tracking-wide text-muted-foreground uppercase">
+      <span className="text-muted-foreground border-b px-2.5 pb-1.5 text-[10px] tracking-wide uppercase">
         Best fit ({matches.length})
       </span>
 
@@ -308,7 +479,7 @@ function DriverInspector({
                 <DriverMatchRow key={match.move.moveId} match={match} onSelectMove={onSelectMove} />
               ))}
           {!isLoading && matches.length === 0 && (
-            <p className="px-1 py-6 text-center text-xs text-muted-foreground">
+            <p className="text-muted-foreground px-1 py-6 text-center text-xs">
               No open moves suit this driver right now.
             </p>
           )}
@@ -329,6 +500,7 @@ export function Inspector({
   onSelectMove,
   isAssigning,
   hotkeysEnabled,
+  actions,
 }: {
   selectedMove: DispatchBoardMove | null;
   selectedDriver: DispatchBoardDriver | null;
@@ -336,12 +508,25 @@ export function Inspector({
   onSelectMove: (moveId: string) => void;
   isAssigning: boolean;
   hotkeysEnabled: boolean;
+  actions: DispatchActions;
 }) {
+  const capabilities = useOrgCapabilities();
+  const canRankDrivers = hasOrganizationCapability(
+    capabilities,
+    OrganizationCapability.AssetOperations,
+  );
+
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
+    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
       <header className="flex items-center justify-between border-b px-2.5 py-1.5">
-        <h2 className="text-[10.5px] font-semibold tracking-wide text-muted-foreground uppercase">
-          {selectedMove ? "Rank drivers" : selectedDriver ? "Find work" : "Inspector"}
+        <h2 className="text-muted-foreground text-[10.5px] font-semibold tracking-wide uppercase">
+          {selectedMove
+            ? canRankDrivers
+              ? "Rank drivers"
+              : "Cover move"
+            : selectedDriver
+              ? "Find work"
+              : "Inspector"}
         </h2>
       </header>
 
@@ -351,14 +536,17 @@ export function Inspector({
           onAssign={onAssign}
           isAssigning={isAssigning}
           hotkeysEnabled={hotkeysEnabled}
+          actions={actions}
         />
       ) : selectedDriver ? (
         <DriverInspector driver={selectedDriver} onSelectMove={onSelectMove} />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 p-6 text-center">
           <p className="text-xs font-medium">Nothing selected</p>
-          <p className="text-[11px] text-muted-foreground">
-            Select a move to rank drivers for it, or a driver to find them work.
+          <p className="text-muted-foreground text-[11px]">
+            {canRankDrivers
+              ? "Select a move to rank drivers for it, or a driver to find them work."
+              : "Select a move to see how it can be covered."}
           </p>
         </div>
       )}

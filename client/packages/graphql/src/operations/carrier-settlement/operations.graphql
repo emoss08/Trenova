@@ -1,0 +1,498 @@
+query CarrierSettlementTable($input: DataTableConnectionInput!) {
+  carrierSettlements(input: $input) {
+    edges {
+      node {
+        id
+        carrierId
+        batchId
+        settlementNumber
+        status
+        periodStart
+        periodEnd
+        payDate
+        grossCostMinor
+        adjustmentsMinor
+        netPayableMinor
+        shipmentCount
+        currencyCode
+        paymentMethod
+        paymentReference
+        version
+        createdAt
+        updatedAt
+        carrier {
+          id
+          code
+          name
+          scac
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query CarrierSettlementDetail($id: ID!) {
+  carrierSettlement(id: $id) {
+    id
+    carrierId
+    batchId
+    settlementNumber
+    status
+    periodStart
+    periodEnd
+    payDate
+    grossCostMinor
+    adjustmentsMinor
+    netPayableMinor
+    shipmentCount
+    currencyCode
+    notes
+    submittedById
+    submittedAt
+    approvedById
+    approvedAt
+    postedById
+    postedAt
+    postedJournalBatchId
+    paidAt
+    paidById
+    paymentMethod
+    paymentReference
+    paidJournalBatchId
+    voidedById
+    voidedAt
+    voidReason
+    voidJournalBatchId
+    version
+    createdAt
+    updatedAt
+    carrier {
+      id
+      code
+      name
+      scac
+      paymentMethod
+      paymentTermDays
+      remitToName
+      remitAddressLine1
+      remitAddressLine2
+      remitCity
+      remitPostalCode
+      remitState {
+        id
+        abbreviation
+      }
+    }
+    lines {
+      id
+      lineNumber
+      eventType
+      description
+      amountMinor
+      costEventId
+      glAccountId
+      shipmentId
+      moveId
+      proNumber
+    }
+  }
+}
+
+query CarrierSettlementBatchTable($input: DataTableConnectionInput!) {
+  carrierSettlementBatches(input: $input) {
+    edges {
+      node {
+        id
+        status
+        name
+        periodStart
+        periodEnd
+        payDate
+        settlementCount
+        totalGrossMinor
+        totalNetMinor
+        currencyCode
+        notes
+        generatedById
+        generatedAt
+        completedAt
+        canceledAt
+        version
+        createdAt
+        updatedAt
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query CarrierSettlementBatchDetail($id: ID!) {
+  carrierSettlementBatch(id: $id) {
+    id
+    status
+    name
+    periodStart
+    periodEnd
+    payDate
+    settlementCount
+    totalGrossMinor
+    totalNetMinor
+    currencyCode
+    notes
+    version
+    settlements {
+      id
+      settlementNumber
+      status
+      grossCostMinor
+      adjustmentsMinor
+      netPayableMinor
+      currencyCode
+      carrier {
+        id
+        code
+        name
+        scac
+      }
+    }
+  }
+}
+
+query CarrierCostEventTable($input: DataTableConnectionInput!) {
+  carrierCostEvents(input: $input) {
+    edges {
+      node {
+        id
+        carrierId
+        carrierAssignmentId
+        shipmentId
+        moveId
+        settlementId
+        eventType
+        status
+        eventDate
+        amountMinor
+        currencyCode
+        description
+        proNumber
+        assignmentVersion
+        voidedAt
+        voidReason
+        version
+        createdAt
+        updatedAt
+        carrier {
+          id
+          code
+          name
+          scac
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query CarrierSettlementControl {
+  carrierSettlementControl {
+    id
+    organizationId
+    businessUnitId
+    payTrigger
+    payPeriodFrequency
+    periodEndDayOfWeek
+    payDelayDays
+    autoGenerateBatches
+    autoPostOnApprove
+    varianceToleranceMinor
+    autoMatchInboundInvoices
+    autoAcceptWithinTolerance
+    defaultApAccountId
+    defaultPurchasedTransportationAccountId
+    version
+  }
+}
+
+query CurrentCarrierSettlementPeriod {
+  currentCarrierSettlementPeriod {
+    periodStart
+    periodEnd
+    payDate
+  }
+}
+
+query CarrierSettlementWorkspaceSummary($periodStart: Int, $periodEnd: Int) {
+  carrierSettlementWorkspaceSummary(periodStart: $periodStart, periodEnd: $periodEnd) {
+    periodStart
+    periodEnd
+    payDate
+    draftCount
+    pendingApprovalCount
+    approvedCount
+    postedCount
+    paidCount
+    totalNetMinor
+    totalGrossMinor
+    pendingEventCount
+    pendingAmountMinor
+    pendingCarrierCount
+    openBatchId
+  }
+}
+
+query CarrierLedgerEntries($carrierId: ID!, $limit: Int) {
+  carrierLedgerEntries(carrierId: $carrierId, limit: $limit) {
+    id
+    carrierId
+    entryType
+    sourceObjectType
+    sourceObjectId
+    sourceEventType
+    relatedSettlementId
+    journalBatchId
+    documentNumber
+    transactionDate
+    lineNumber
+    amountMinor
+    createdAt
+  }
+}
+
+query CarrierInvoiceMatches(
+  $status: CarrierInvoiceMatchStatus
+  $carrierId: ID
+  $limit: Int
+  $offset: Int
+) {
+  carrierInvoiceMatches(status: $status, carrierId: $carrierId, limit: $limit, offset: $offset) {
+    items {
+      id
+      ediCarrierInvoiceId
+      documentAiExtractionId
+      carrierId
+      carrierAssignmentId
+      carrierSettlementId
+      adjustmentCostEventId
+      status
+      matchedVia
+      invoiceNumber
+      invoiceTotalMinor
+      expectedTotalMinor
+      varianceMinor
+      currencyCode
+      resolutionNote
+      resolvedById
+      resolvedAt
+      version
+      createdAt
+      updatedAt
+      carrier {
+        id
+        code
+        name
+        scac
+      }
+      carrierAssignment {
+        id
+        shipmentMoveId
+        status
+        rateMethod
+        baseRate
+        baseAmount
+        fuelSurcharge
+        accessorialTotal
+        totalCost
+        currencyCode
+        proNumber
+        accessorials {
+          id
+          description
+          amount
+        }
+      }
+    }
+    totalCount
+  }
+}
+
+query EdiCarrierInvoices($reconciliationStatus: String, $limit: Int, $offset: Int) {
+  ediCarrierInvoices(reconciliationStatus: $reconciliationStatus, limit: $limit, offset: $offset) {
+    items {
+      id
+      carrierId
+      shipmentId
+      invoiceNumber
+      invoiceDate
+      deliveryDate
+      shipmentReference
+      bol
+      proNumber
+      billToName
+      currencyCode
+      totalAmount
+      expectedAmount
+      varianceAmount
+      reconciliationStatus
+      reconciliationNotes
+      version
+      createdAt
+      updatedAt
+    }
+    totalCount
+  }
+}
+
+query SuggestCarrierForEdiInvoice($invoiceId: ID!) {
+  suggestCarrierForEdiInvoice(invoiceId: $invoiceId) {
+    id
+    code
+    name
+    scac
+    dotNumber
+  }
+}
+
+query ExportCarrierSettlementBatchCsv($batchId: ID!) {
+  exportCarrierSettlementBatchCsv(batchId: $batchId)
+}
+
+mutation GenerateCarrierSettlementBatch($input: GenerateCarrierSettlementBatchInput!) {
+  generateCarrierSettlementBatch(input: $input) {
+    id
+    name
+    settlementCount
+    totalGrossMinor
+    totalNetMinor
+  }
+}
+
+mutation SubmitCarrierSettlement($input: CarrierSettlementActionInput!) {
+  submitCarrierSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation ApproveCarrierSettlement($input: CarrierSettlementActionInput!) {
+  approveCarrierSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation RejectCarrierSettlement($input: CarrierSettlementActionInput!) {
+  rejectCarrierSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation PostCarrierSettlement($input: CarrierSettlementActionInput!) {
+  postCarrierSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation MarkCarrierSettlementPaid($input: MarkCarrierSettlementPaidInput!) {
+  markCarrierSettlementPaid(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation VoidCarrierSettlement($input: CarrierSettlementActionInput!) {
+  voidCarrierSettlement(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation RecalculateCarrierSettlement($input: CarrierSettlementActionInput!) {
+  recalculateCarrierSettlement(input: $input) {
+    id
+    version
+  }
+}
+
+mutation AddCarrierSettlementAdjustment($input: AddCarrierSettlementAdjustmentInput!) {
+  addCarrierSettlementAdjustment(input: $input) {
+    id
+    version
+  }
+}
+
+mutation RemoveCarrierSettlementAdjustment($input: RemoveCarrierSettlementAdjustmentInput!) {
+  removeCarrierSettlementAdjustment(input: $input) {
+    id
+    version
+  }
+}
+
+mutation UpdateCarrierSettlementControl($input: UpdateCarrierSettlementControlInput!) {
+  updateCarrierSettlementControl(input: $input) {
+    id
+    version
+  }
+}
+
+mutation LinkEdiCarrierInvoiceToCarrier($invoiceId: ID!, $carrierId: ID!) {
+  linkEdiCarrierInvoiceToCarrier(invoiceId: $invoiceId, carrierId: $carrierId) {
+    id
+    carrierId
+    reconciliationStatus
+    version
+  }
+}
+
+mutation CreateCarrierInvoiceMatch($input: CreateCarrierInvoiceMatchInput!) {
+  createCarrierInvoiceMatch(input: $input) {
+    id
+    status
+    invoiceTotalMinor
+    expectedTotalMinor
+    varianceMinor
+    version
+  }
+}
+
+mutation AcceptCarrierInvoiceMatch($input: CarrierInvoiceMatchActionInput!) {
+  acceptCarrierInvoiceMatch(input: $input) {
+    id
+    status
+    version
+  }
+}
+
+mutation AcceptCarrierInvoiceMatchWithVariance($input: CarrierInvoiceMatchActionInput!) {
+  acceptCarrierInvoiceMatchWithVariance(input: $input) {
+    id
+    status
+    adjustmentCostEventId
+    version
+  }
+}
+
+mutation RejectCarrierInvoiceMatch($input: CarrierInvoiceMatchActionInput!) {
+  rejectCarrierInvoiceMatch(input: $input) {
+    id
+    status
+    version
+  }
+}

@@ -40,9 +40,9 @@ export const SequencePreview = memo(function SequencePreview({
   };
 
   return (
-    <div className="rounded-lg border border-border bg-muted/30 px-4 py-3.5">
+    <div className="border-border bg-muted/30 rounded-lg border px-4 py-3.5">
       <div className="mb-1.5 flex items-center justify-between gap-3">
-        <span className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+        <span className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
           Live Preview
         </span>
         <div className="flex items-center gap-1">
@@ -58,10 +58,10 @@ export const SequencePreview = memo(function SequencePreview({
               />
               <HoverCardContent align="end" className="w-64">
                 <div className="mb-1.5 text-xs font-medium">Custom format tokens</div>
-                <ul className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <ul className="text-muted-foreground grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                   {tokenLegend.map(({ token, label }) => (
                     <li key={token} className="flex items-center gap-1.5">
-                      <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-foreground">
+                      <code className="bg-muted text-foreground rounded px-1 py-0.5 font-mono text-[10px]">
                         {token}
                       </code>
                       <span>{label}</span>
@@ -90,12 +90,12 @@ export const SequencePreview = memo(function SequencePreview({
       </div>
       <code
         className={cn(
-          "block font-mono text-xl font-semibold tracking-tight text-foreground",
+          "text-foreground block font-mono text-xl font-semibold tracking-tight",
         )}
       >
         {preview || "—"}
       </code>
-      <p className="mt-1.5 text-xs text-muted-foreground">
+      <p className="text-muted-foreground mt-1.5 text-xs">
         Representative sample — actual values increment sequentially.
       </p>
     </div>

@@ -2,6 +2,7 @@ package pagination
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -79,13 +80,13 @@ func (s CursorValueSet) CursorValues(count int) []any {
 
 func EncodeCursor(cursor Cursor) (string, error) {
 	if cursor.ID.IsNil() {
-		return "", fmt.Errorf("cursor id is required")
+		return "", errors.New("cursor id is required")
 	}
 	if _, err := pulid.MustParse(cursor.ID.String()); err != nil {
 		return "", fmt.Errorf("cursor id is invalid: %w", err)
 	}
 	if len(cursor.Sort) > 0 && len(cursor.Sort) != len(cursor.Values) {
-		return "", fmt.Errorf("cursor sort values do not match cursor sort shape")
+		return "", errors.New("cursor sort values do not match cursor sort shape")
 	}
 
 	bytes, err := sonic.Marshal(cursor)
@@ -107,13 +108,13 @@ func DecodeCursor(encoded string) (Cursor, error) {
 		return Cursor{}, fmt.Errorf("unmarshal cursor: %w", err)
 	}
 	if cursor.ID.IsNil() {
-		return Cursor{}, fmt.Errorf("cursor id is required")
+		return Cursor{}, errors.New("cursor id is required")
 	}
 	if _, err = pulid.MustParse(cursor.ID.String()); err != nil {
 		return Cursor{}, fmt.Errorf("cursor id is invalid: %w", err)
 	}
 	if len(cursor.Sort) > 0 && len(cursor.Sort) != len(cursor.Values) {
-		return Cursor{}, fmt.Errorf("cursor sort values do not match cursor sort shape")
+		return Cursor{}, errors.New("cursor sort values do not match cursor sort shape")
 	}
 
 	return cursor, nil
@@ -121,12 +122,12 @@ func DecodeCursor(encoded string) (Cursor, error) {
 
 func ValidateCursorSort(cursor Cursor, sort []CursorSortField) error {
 	if len(cursor.Sort) != len(sort) {
-		return fmt.Errorf("cursor sort does not match request sort")
+		return errors.New("cursor sort does not match request sort")
 	}
 
 	for i := range sort {
 		if cursor.Sort[i] != sort[i] {
-			return fmt.Errorf("cursor sort does not match request sort")
+			return errors.New("cursor sort does not match request sort")
 		}
 	}
 
@@ -193,7 +194,7 @@ func (r *CursorListResult[T]) WithCursorSort(sort []CursorSortField) *CursorList
 
 func (r *CursorListResult[T]) WithCursorValues(values [][]any) error {
 	if len(values) < len(r.Items) {
-		return fmt.Errorf("cursor values do not match result items")
+		return errors.New("cursor values do not match result items")
 	}
 
 	r.CursorValues = make([][]any, len(r.Items))
@@ -262,7 +263,7 @@ func EncodeCursorFromEntityWithValues[T any](
 		return EncodeCursorFromEntity(item)
 	}
 	if len(values) != len(sort) {
-		return "", fmt.Errorf("cursor sort values do not match cursor sort shape")
+		return "", errors.New("cursor sort values do not match cursor sort shape")
 	}
 
 	normalizedValues := make([]any, 0, len(values))
@@ -318,7 +319,7 @@ func cursorIDFromSortValues(sort []CursorSortField, values []any) (pulid.ID, err
 		switch typed := values[i].(type) {
 		case pulid.ID:
 			if typed.IsNil() {
-				return pulid.Nil, fmt.Errorf("cursor id is required")
+				return pulid.Nil, errors.New("cursor id is required")
 			}
 			return typed, nil
 		case string:
@@ -332,7 +333,7 @@ func cursorIDFromSortValues(sort []CursorSortField, values []any) (pulid.ID, err
 		}
 	}
 
-	return pulid.Nil, fmt.Errorf("cursor id is required")
+	return pulid.Nil, errors.New("cursor id is required")
 }
 
 func cursorCreatedAtFromSortValues(sort []CursorSortField, values []any) int64 {

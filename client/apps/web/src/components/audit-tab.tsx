@@ -83,12 +83,12 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
 
   if (query.isError) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+      <div className="text-muted-foreground flex flex-col items-center justify-center py-12">
         <p className="text-sm">Failed to load audit history.</p>
         <button
           type="button"
           onClick={() => void query.refetch()}
-          className="mt-2 text-xs text-foreground underline"
+          className="text-foreground mt-2 text-xs underline"
         >
           Retry
         </button>
@@ -98,7 +98,7 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
 
   if (allEntries.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+      <div className="text-muted-foreground flex flex-col items-center justify-center py-12">
         <p className="text-sm">No audit history for this resource.</p>
       </div>
     );
@@ -148,20 +148,20 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntry; canNavigate: boo
     <Collapsible open={open} onOpenChange={setOpen}>
       <div
         className={cn(
-          "rounded-lg border border-border bg-card",
-          !hasDetails && canNavigate && "cursor-pointer transition-colors hover:bg-muted/50",
+          "border-border bg-card rounded-lg border",
+          !hasDetails && canNavigate && "hover:bg-muted/50 cursor-pointer transition-colors",
         )}
         onClick={handleCardClick}
       >
         <CollapsibleTrigger
           className={cn(
             "flex w-full items-center gap-3 p-3 text-left",
-            hasDetails && "cursor-pointer transition-colors hover:bg-muted/50",
-            open && "border-b border-border",
+            hasDetails && "hover:bg-muted/50 cursor-pointer transition-colors",
+            open && "border-border border-b",
           )}
           disabled={!hasDetails}
         >
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+          <span className="bg-muted text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium">
             {userInitials(entry.user?.name)}
           </span>
 
@@ -176,13 +176,13 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntry; canNavigate: boo
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <span className="text-xs text-muted-foreground" title={fullDate}>
+            <span className="text-muted-foreground text-xs" title={fullDate}>
               {relativeTime}
             </span>
             {hasDetails && (
               <ChevronRight
                 className={cn(
-                  "size-4 text-muted-foreground transition-transform duration-200",
+                  "text-muted-foreground size-4 transition-transform duration-200",
                   open && "rotate-90",
                 )}
               />
@@ -191,7 +191,7 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntry; canNavigate: boo
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="flex flex-col gap-px rounded-b-lg border-b border-border bg-muted p-2">
+          <div className="border-border bg-muted flex flex-col gap-px rounded-b-lg border-b p-2">
             {changes.map((change) => (
               <ChangeItem key={change.path} change={change} />
             ))}
@@ -200,7 +200,7 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntry; canNavigate: boo
             <div className="justify-left flex px-2 py-1">
               <Link
                 to={auditEntryUrl(entry.id)}
-                className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors"
               >
                 View full record
                 <ExternalLinkIcon className="size-3" />
@@ -215,22 +215,22 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntry; canNavigate: boo
 
 function OperationSummary({ operation, changeCount }: { operation: string; changeCount: number }) {
   if (operation === "create") {
-    return <p className="text-xs text-muted-foreground">Created this resource</p>;
+    return <p className="text-muted-foreground text-xs">Created this resource</p>;
   }
 
   if (operation === "delete") {
-    return <p className="text-xs text-muted-foreground">Deleted this resource</p>;
+    return <p className="text-muted-foreground text-xs">Deleted this resource</p>;
   }
 
   if (operation === "update" && changeCount > 0) {
     return (
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-xs">
         {changeCount} field{changeCount !== 1 ? "s" : ""} changed
       </p>
     );
   }
 
-  return <p className="text-xs text-muted-foreground">{operationLabel(operation)} this resource</p>;
+  return <p className="text-muted-foreground text-xs">{operationLabel(operation)} this resource</p>;
 }
 
 function ChangeItem({ change }: { change: NormalizedAuditChange }) {
@@ -241,7 +241,7 @@ function ChangeItem({ change }: { change: NormalizedAuditChange }) {
 
   return (
     <div className="flex items-start gap-3 rounded-md px-3 py-2">
-      <span className="shrink-0 pt-px text-xs font-medium text-foreground">
+      <span className="text-foreground shrink-0 pt-px text-xs font-medium">
         {formatFieldLabel(change.path)}
       </span>
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 text-xs">
@@ -271,7 +271,7 @@ function AuditCardsSkeleton() {
   return (
     <div className="flex flex-col gap-2">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="rounded-lg border border-border bg-card p-3">
+        <div key={i} className="border-border bg-card rounded-lg border p-3">
           <div className="flex items-center gap-3">
             <Skeleton className="size-7 rounded-full" />
             <div className="flex flex-1 flex-col gap-1.5">

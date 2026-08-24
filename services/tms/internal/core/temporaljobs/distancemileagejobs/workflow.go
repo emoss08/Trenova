@@ -38,7 +38,8 @@ func ScheduledStoredMileageFlushWorkflow(ctx workflow.Context) error {
 
 	var a *Activities
 	var flushResult *FlushStoredMileageBufferResult
-	if err := workflow.ExecuteActivity(ctx, a.FlushStoredMileageBufferActivity).Get(ctx, &flushResult); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.FlushStoredMileageBufferActivity).
+		Get(ctx, &flushResult); err != nil {
 		logger.Error("failed to flush stored mileage buffer", "error", err)
 		return err
 	}
@@ -52,7 +53,8 @@ func ScheduledStoredMileageFlushWorkflow(ctx workflow.Context) error {
 		}
 		payload := &UpsertStoredMileageBatchPayload{Records: batch}
 		var result *UpsertStoredMileageBatchResult
-		if err := workflow.ExecuteActivity(ctx, a.UpsertStoredMileageBatchActivity, payload).Get(ctx, &result); err != nil {
+		if err := workflow.ExecuteActivity(ctx, a.UpsertStoredMileageBatchActivity, payload).
+			Get(ctx, &result); err != nil {
 			logger.Error("failed to upsert stored mileage batch", "error", err)
 			return err
 		}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -25,9 +27,9 @@ type ServiceParams struct {
 	Registry      *schema.Registry
 	Engine        *engine.Engine
 	Resolver      *resolver.Resolver
-	Repo          repositories.FormulaTemplateRepository
-	VersionRepo   repositories.FormulaTemplateVersionRepository
-	RateTableRepo repositories.RateTableRepository
+	Repo           repositories.FormulaTemplateRepository
+	VersionRepo    repositories.FormulaTemplateVersionRepository
+	RateMatrixRepo repositories.RateMatrixRepository
 }
 
 type Service struct {
@@ -35,9 +37,9 @@ type Service struct {
 	registry      *schema.Registry
 	engine        *engine.Engine
 	resolver      *resolver.Resolver
-	repo          repositories.FormulaTemplateRepository
-	versionRepo   repositories.FormulaTemplateVersionRepository
-	rateTableRepo repositories.RateTableRepository
+	repo           repositories.FormulaTemplateRepository
+	versionRepo    repositories.FormulaTemplateVersionRepository
+	rateMatrixRepo repositories.RateMatrixRepository
 }
 
 //nolint:gocritic // fx param structs are passed by value
@@ -49,9 +51,9 @@ func NewService(p ServiceParams) *Service {
 		registry:      p.Registry,
 		engine:        p.Engine,
 		resolver:      p.Resolver,
-		repo:          p.Repo,
-		versionRepo:   p.VersionRepo,
-		rateTableRepo: p.RateTableRepo,
+		repo:           p.Repo,
+		versionRepo:    p.VersionRepo,
+		rateMatrixRepo: p.RateMatrixRepo,
 	}
 }
 
@@ -91,6 +93,7 @@ func (s *Service) Calculate(
 		Template:  resolved,
 		Entity:    req.Entity,
 		Variables: req.Variables,
+		Overrides: req.Overrides,
 	})
 	if err != nil {
 		log.Error("failed to evaluate formula", zap.Error(err))
@@ -142,6 +145,7 @@ type RateRequest struct {
 	Template  *formulatemplate.FormulaTemplate
 	Entity    any
 	Variables map[string]any
+	Overrides map[string]any
 }
 
 func (s *Service) Rate(
@@ -160,6 +164,7 @@ func (s *Service) Rate(
 		Template:  req.Template,
 		Entity:    req.Entity,
 		Variables: req.Variables,
+		Overrides: req.Overrides,
 		Lookup:    lookup,
 	})
 	if err != nil {
@@ -180,18 +185,35 @@ func (s *Service) Rate(
 	}, nil
 }
 
+// buildLookup reads the tenant's lookup tables, once per unit of work.
+//
+// A lookup table is a single-axis rate matrix: the expression language calls
+// them tables and the storage calls them matrices, and this is where the two
+// vocabularies meet. Reading them is expensive — every one-axis matrix with
+// every cell — and rating now happens on every shipment write and in batches.
+// The memo is only present when a caller installed one; without it this
+// behaves exactly as it always did, which is what keeps a formula evaluated
+// outside a request working.
 func (s *Service) buildLookup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (formulatemplatetypes.RateTableLookup, error) {
-	tables, err := s.rateTableRepo.GetLookupData(ctx, &repositories.GetRateTableLookupDataRequest{
-		TenantInfo: tenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
+	return ratetablecache.Get(
+		ctx,
+		tenantInfo.OrgID,
+		tenantInfo.BuID,
+		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
+			data, err := s.rateMatrixRepo.GetLookupData(
+				ctx,
+				&repositories.GetRateMatrixLookupDataRequest{TenantInfo: tenantInfo},
+			)
+			if err != nil {
+				return nil, err
+			}
 
-	return NewRateTableLookup(tables), nil
+			return NewMatrixLookup(data), nil
+		},
+	)
 }
 
 func applyGuardrails(
@@ -278,6 +300,41 @@ func (s *Service) EvaluateExpression(
 	}, nil
 }
 
+// EvaluatePredicate answers a yes-or-no question about an entity.
+//
+// The expression language has no boolean result type of its own — every
+// evaluation lands on a decimal, with true and false arriving as one and zero —
+// so the truth test is "not zero". That also makes a numeric condition like
+// `totalStops - 2` behave the way somebody writing it would expect.
+//
+// No rate-table lookup is built. A condition that reaches for a rate table is
+// asking the wrong question, and building one would put a full tenant table
+// load on the save path of every shipment.
+func (s *Service) EvaluatePredicate(
+	ctx context.Context,
+	req *services.EvaluatePredicateRequest,
+) (bool, error) {
+	result, err := s.engine.EvaluateExpression(
+		ctx,
+		&formulatemplatetypes.ExpressionEvaluationRequest{
+			Expression: req.Expression,
+			Entity:     req.Entity,
+			SchemaID:   req.SchemaID,
+		},
+	)
+	if err != nil {
+		s.l.Warn("failed to evaluate predicate",
+			zap.String("operation", "EvaluatePredicate"),
+			zap.String("schemaId", req.SchemaID),
+			zap.Error(err),
+		)
+
+		return false, err
+	}
+
+	return !result.Value.IsZero(), nil
+}
+
 func (s *Service) ValidateExpression(ctx context.Context, expression, schemaID string) error {
 	return s.engine.ValidateExpression(ctx, expression, schemaID)
 }
@@ -316,26 +373,19 @@ func (s *Service) ValidateLookupTables(
 		return nil //nolint:nilerr // unparseable expressions are rejected by compile validation
 	}
 
-	existing, err := s.rateTableRepo.GetByKeys(ctx, &repositories.GetRateTablesByKeysRequest{
-		TenantInfo: tenantInfo,
-		Keys:       tables,
-	})
+	lookup, err := s.buildLookup(ctx, tenantInfo)
 	if err != nil {
 		return err
 	}
 
-	known := make(map[string]struct{}, len(existing))
-	for _, table := range existing {
-		known[table.Key] = struct{}{}
-	}
-
 	multiErr := errortypes.NewMultiError()
 	for _, table := range tables {
-		if _, ok := known[table]; !ok {
+		if !lookup.Has(table) {
 			multiErr.Add(
 				"expression",
 				errortypes.ErrInvalid,
-				"Unknown rate table: "+table,
+				"Unknown rate table: "+table+
+					" — a lookup table is an active rate matrix with a single axis",
 			)
 		}
 	}

@@ -61,7 +61,7 @@ export function SensitiveTextareaField<T extends FieldValues>({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute top-1 right-1 size-6 text-muted-foreground"
+                className="text-muted-foreground absolute top-1 right-1 size-6"
                 title={show ? "Hide value" : "Show value"}
                 onClick={() => setShow((current) => !current)}
               >

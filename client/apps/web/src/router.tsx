@@ -1,8 +1,13 @@
 import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
-import { combineLoaders, createPermissionLoader } from "@/lib/route-permission";
+import {
+  combineLoaders,
+  createCapabilityLoader,
+  createPermissionLoader,
+} from "@/lib/route-permission";
 import { AppLayout } from "@/routes/app-layout";
 import { RootLayout } from "@/routes/root-layout";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
@@ -30,7 +35,7 @@ const guestLoader: LoaderFunction = async () => {
   return null;
 };
 
-const routes: RouteObject[] = [
+export const routes: RouteObject[] = [
   {
     element: <RootLayout />,
     errorElement: <RouteErrorBoundary />,
@@ -249,6 +254,7 @@ const routes: RouteObject[] = [
             path: "/payroll/workspace",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DriverSettlement),
             ),
             async lazy() {
@@ -261,6 +267,7 @@ const routes: RouteObject[] = [
             path: "/payroll/settlements",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DriverSettlement),
             ),
             async lazy() {
@@ -272,6 +279,7 @@ const routes: RouteObject[] = [
             path: "/payroll/disputes",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.SettlementDispute),
             ),
             async lazy() {
@@ -281,7 +289,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/payroll/expenses",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DriverExpense)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.DriverExpense),
+            ),
             async lazy() {
               const { DriverExpensesPage } = await import("@/routes/driver-expense/page");
               return { Component: DriverExpensesPage };
@@ -291,6 +303,7 @@ const routes: RouteObject[] = [
             path: "/payroll/settlement-batches",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DriverSettlement),
             ),
             async lazy() {
@@ -302,6 +315,7 @@ const routes: RouteObject[] = [
             path: "/payroll/pay-events",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DriverSettlement),
             ),
             async lazy() {
@@ -313,6 +327,7 @@ const routes: RouteObject[] = [
             path: "/payroll/pay-profiles",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.DriverPayProfile),
             ),
             async lazy() {
@@ -324,6 +339,7 @@ const routes: RouteObject[] = [
             path: "/payroll/deductions",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.RecurringDeduction),
             ),
             async lazy() {
@@ -335,6 +351,7 @@ const routes: RouteObject[] = [
             path: "/payroll/earnings",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.RecurringEarning),
             ),
             async lazy() {
@@ -344,7 +361,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/payroll/pay-codes",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.PayCode)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.PayCode),
+            ),
             async lazy() {
               const { PayCodesPage } = await import("@/routes/pay-code/page");
               return { Component: PayCodesPage };
@@ -352,7 +373,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/payroll/advances",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.PayAdvance)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.PayAdvance),
+            ),
             async lazy() {
               const { PayAdvancesPage } = await import("@/routes/pay-advance/page");
               return { Component: PayAdvancesPage };
@@ -360,10 +385,77 @@ const routes: RouteObject[] = [
           },
           {
             path: "/payroll/escrow-accounts",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EscrowAccount)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.EscrowAccount),
+            ),
             async lazy() {
               const { EscrowAccountsPage } = await import("@/routes/escrow-account/page");
               return { Component: EscrowAccountsPage };
+            },
+          },
+          {
+            path: "/carrier-settlements/workspace",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierSettlementWorkspacePage } =
+                await import("@/routes/carrier-settlement-workspace/page");
+              return { Component: CarrierSettlementWorkspacePage };
+            },
+          },
+          {
+            path: "/carrier-settlements/settlements",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierSettlementsPage } = await import("@/routes/carrier-settlement/page");
+              return { Component: CarrierSettlementsPage };
+            },
+          },
+          {
+            path: "/carrier-settlements/batches",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierSettlementBatchesPage } =
+                await import("@/routes/carrier-settlement-batch/page");
+              return { Component: CarrierSettlementBatchesPage };
+            },
+          },
+          {
+            path: "/carrier-settlements/cost-events",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPermissionLoader(Resource.CarrierSettlement),
+            ),
+            async lazy() {
+              const { CarrierCostEventsPage } = await import("@/routes/carrier-cost-event/page");
+              return { Component: CarrierCostEventsPage };
+            },
+          },
+          {
+            path: "/carrier-settlements/invoice-matching",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPermissionLoader(Resource.CarrierInvoiceMatch),
+            ),
+            async lazy() {
+              const { CarrierInvoiceMatchingPage } =
+                await import("@/routes/carrier-invoice-matching/page");
+              return { Component: CarrierInvoiceMatchingPage };
             },
           },
           {
@@ -409,6 +501,30 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/billing/rate-agreements",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateAgreement)),
+            async lazy() {
+              const { RateAgreementPage } = await import("@/routes/rate-agreement/page");
+              return { Component: RateAgreementPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/rate-zones",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateZone)),
+            async lazy() {
+              const { RateZonePage } = await import("@/routes/rate-zone/page");
+              return { Component: RateZonePage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/rate-matrices",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateMatrix)),
+            async lazy() {
+              const { RateMatrixPage } = await import("@/routes/rate-matrix/page");
+              return { Component: RateMatrixPage };
+            },
+          },
+          {
             path: "/detention/configuration-files/detention-policies",
             loader: combineLoaders(
               protectedLoader,
@@ -426,9 +542,8 @@ const routes: RouteObject[] = [
               createPermissionLoader(Resource.DetentionPolicy),
             ),
             async lazy() {
-              const { DetentionIntelligencePage } = await import(
-                "@/routes/detention-intelligence/page"
-              );
+              const { DetentionIntelligencePage } =
+                await import("@/routes/detention-intelligence/page");
               return { Component: DetentionIntelligencePage };
             },
           },
@@ -682,14 +797,6 @@ const routes: RouteObject[] = [
             },
           },
           {
-            path: "/billing/configuration-files/rate-tables",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.RateTable)),
-            async lazy() {
-              const { RateTablesPage } = await import("@/routes/rate-table/page");
-              return { Component: RateTablesPage };
-            },
-          },
-          {
             path: "/billing/fuel-management",
             loader: combineLoaders(
               protectedLoader,
@@ -702,7 +809,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/equipment/tractors",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Tractor)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.Tractor),
+            ),
             async lazy() {
               const { TractorsPage } = await import("@/routes/tractor/page");
               return { Component: TractorsPage };
@@ -710,7 +821,11 @@ const routes: RouteObject[] = [
           },
           {
             path: "/equipment/trailers",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Trailer)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.Trailer),
+            ),
             async lazy() {
               const { TrailersPage } = await import("@/routes/trailer/page");
               return { Component: TrailersPage };
@@ -752,6 +867,7 @@ const routes: RouteObject[] = [
             path: "/dispatch/configuration-files/fleet-codes",
             loader: combineLoaders(
               protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
               createPermissionLoader(Resource.FleetCode, Operation.Read),
             ),
             async lazy() {
@@ -846,10 +962,7 @@ const routes: RouteObject[] = [
           },
           {
             path: "/dispatch/console",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.ShipmentMove),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ShipmentMove)),
             async lazy() {
               const { DispatchConsolePage } = await import("@/routes/dispatch-console/page");
               return { Component: DispatchConsolePage };
@@ -857,10 +970,38 @@ const routes: RouteObject[] = [
           },
           {
             path: "/dispatch/workers",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Worker)),
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.Worker),
+            ),
             async lazy() {
               const { WorkersPage } = await import("@/routes/worker/page");
               return { Component: WorkersPage };
+            },
+          },
+          {
+            path: "/dispatch/carriers",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPermissionLoader(Resource.Carrier),
+            ),
+            async lazy() {
+              const { CarriersPage } = await import("@/routes/carrier/page");
+              return { Component: CarriersPage };
+            },
+          },
+          {
+            path: "/dispatch/routing-guides",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.Brokerage),
+              createPermissionLoader(Resource.RoutingGuide),
+            ),
+            async lazy() {
+              const { RoutingGuidesPage } = await import("@/routes/routing-guide/page");
+              return { Component: RoutingGuidesPage };
             },
           },
           {
@@ -947,7 +1088,10 @@ const routes: RouteObject[] = [
               },
               {
                 path: "settlement-control",
-                loader: createPermissionLoader(Resource.SettlementControl, Operation.Read),
+                loader: combineLoaders(
+                  createCapabilityLoader(OrganizationCapability.AssetOperations),
+                  createPermissionLoader(Resource.SettlementControl, Operation.Read),
+                ),
                 async lazy() {
                   const { SettlementControlPage } =
                     await import("@/routes/settlement-control/page");
@@ -955,8 +1099,23 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "carrier-settlement-control",
+                loader: combineLoaders(
+                  createCapabilityLoader(OrganizationCapability.Brokerage),
+                  createPermissionLoader(Resource.CarrierSettlementControl, Operation.Read),
+                ),
+                async lazy() {
+                  const { CarrierSettlementControlPage } =
+                    await import("@/routes/carrier-settlement-control/page");
+                  return { Component: CarrierSettlementControlPage };
+                },
+              },
+              {
                 path: "dash-control",
-                loader: createPermissionLoader(Resource.DashControl, Operation.Read),
+                loader: combineLoaders(
+                  createCapabilityLoader(OrganizationCapability.AssetOperations),
+                  createPermissionLoader(Resource.DashControl, Operation.Read),
+                ),
                 async lazy() {
                   const { DashControlPage } = await import("@/routes/dash-control/page");
                   return { Component: DashControlPage };
@@ -1049,6 +1208,29 @@ const routes: RouteObject[] = [
                 async lazy() {
                   const { HoldReasonsPage } = await import("@/routes/hold-reason/page");
                   return { Component: HoldReasonsPage };
+                },
+              },
+              {
+                path: "jurisdiction-rules",
+                loader: combineLoaders(
+                  protectedLoader,
+                  createPermissionLoader(Resource.JurisdictionRule),
+                ),
+                async lazy() {
+                  const { JurisdictionRulesPage } = await import("@/routes/jurisdiction-rule/page");
+                  return { Component: JurisdictionRulesPage };
+                },
+              },
+              {
+                path: "jurisdiction-rule-overrides",
+                loader: combineLoaders(
+                  protectedLoader,
+                  createPermissionLoader(Resource.JurisdictionRuleOverride),
+                ),
+                async lazy() {
+                  const { JurisdictionRuleOverridesPage } =
+                    await import("@/routes/jurisdiction-rule-override/page");
+                  return { Component: JurisdictionRuleOverridesPage };
                 },
               },
               {
@@ -1191,6 +1373,41 @@ const routes: RouteObject[] = [
                 },
               },
             ],
+          },
+        ],
+      },
+      {
+        // Public carrier-facing pages: no auth, no app chrome. An external
+        // carrier lands here from an emailed offer link, logged in or not.
+        children: [
+          {
+            path: "/tender-offer/:token",
+            async lazy() {
+              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
+              return { Component: TenderOfferPublicPage };
+            },
+          },
+          {
+            path: "/tender-offer/:token/accept",
+            async lazy() {
+              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
+              return { Component: TenderOfferPublicPage };
+            },
+          },
+          {
+            path: "/tender-offer/:token/decline",
+            async lazy() {
+              const { TenderOfferPublicPage } = await import("@/routes/tender-offer-public/page");
+              return { Component: TenderOfferPublicPage };
+            },
+          },
+          {
+            path: "/rate-confirmation/:token",
+            async lazy() {
+              const { RateConfirmationPublicPage } =
+                await import("@/routes/rate-confirmation-public/page");
+              return { Component: RateConfirmationPublicPage };
+            },
           },
         ],
       },

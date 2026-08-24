@@ -12,15 +12,47 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/order"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
+
+// BaseRate is the resolver for the baseRate field.
+func (r *carrierAssignmentResolver) BaseRate(ctx context.Context, obj *shipmentdomain.CarrierAssignment) (string, error) {
+	return obj.BaseRate.String(), nil
+}
+
+// BaseAmount is the resolver for the baseAmount field.
+func (r *carrierAssignmentResolver) BaseAmount(ctx context.Context, obj *shipmentdomain.CarrierAssignment) (string, error) {
+	return obj.BaseAmount.String(), nil
+}
+
+// FuelSurcharge is the resolver for the fuelSurcharge field.
+func (r *carrierAssignmentResolver) FuelSurcharge(ctx context.Context, obj *shipmentdomain.CarrierAssignment) (string, error) {
+	return obj.FuelSurcharge.String(), nil
+}
+
+// AccessorialTotal is the resolver for the accessorialTotal field.
+func (r *carrierAssignmentResolver) AccessorialTotal(ctx context.Context, obj *shipmentdomain.CarrierAssignment) (string, error) {
+	return obj.AccessorialTotal.String(), nil
+}
+
+// TotalCost is the resolver for the totalCost field.
+func (r *carrierAssignmentResolver) TotalCost(ctx context.Context, obj *shipmentdomain.CarrierAssignment) (string, error) {
+	return obj.TotalCost.String(), nil
+}
+
+// Amount is the resolver for the amount field.
+func (r *carrierAssignmentAccessorialResolver) Amount(ctx context.Context, obj *shipmentdomain.CarrierAssignmentAccessorial) (string, error) {
+	return obj.Amount.String(), nil
+}
 
 // CreateShipment is the resolver for the createShipment field.
 func (r *mutationResolver) CreateShipment(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error) {
@@ -269,6 +301,62 @@ func (r *mutationResolver) CalculateShipmentTotals(ctx context.Context, input gq
 	}
 
 	return shipmentTotalsToModel(response), nil
+}
+
+// PreviewShipmentContractRate is the resolver for the previewShipmentContractRate field.
+func (r *mutationResolver) PreviewShipmentContractRate(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.ShipmentContractRate, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := shipmentFromInput(input, pulid.Nil, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	application, err := r.shipmentService.PreviewContractRate(
+		ctx, entity, actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return contractRateToModel(application), nil
+}
+
+// AutoRateShipment is the resolver for the autoRateShipment field.
+func (r *mutationResolver) AutoRateShipment(ctx context.Context, id string) (*gqlmodel.ShipmentAutoRateResponse, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	shipmentID, err := requiredID("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, application, err := r.shipmentService.AutoRate(ctx, &services.AutoRateShipmentRequest{
+		ShipmentID: shipmentID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	model, err := shipmentToModel(entity)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.ShipmentAutoRateResponse{
+		Shipment:     model,
+		ContractRate: contractRateToModel(application),
+	}, nil
 }
 
 // CalculateShipmentDistance is the resolver for the calculateShipmentDistance field.
@@ -814,6 +902,7 @@ func (r *queryResolver) ShipmentUIPolicy(ctx context.Context) (*gqlmodel.Shipmen
 		CheckForDuplicateBols:  policy.CheckForDuplicateBOLs,
 		CheckHazmatSegregation: policy.CheckHazmatSegregation,
 		MaxShipmentWeightLimit: int(policy.MaxShipmentWeightLimit),
+		Profile:                r.resolvedProfileToJSON(policy.Profile),
 	}, nil
 }
 
@@ -978,7 +1067,49 @@ func (r *shipmentResolver) ProfitabilityEstimate(ctx context.Context, obj *gqlmo
 	return shipmentProfitabilityEstimateToModel(estimate), nil
 }
 
+// EdiPartner is the resolver for the ediPartner field.
+func (r *shipmentCustomerResolver) EdiPartner(ctx context.Context, obj *gqlmodel.ShipmentCustomer) (*edi.EDIPartner, error) {
+	if obj == nil || obj.ID == "" {
+		return nil, nil
+	}
+
+	loadersForRequest, ok := loaders.FromContext(ctx)
+	if !ok || loadersForRequest == nil {
+		return nil, errortypes.NewDatabaseError("EDI partner loader is not configured")
+	}
+
+	partner, err := loadersForRequest.EDIPartnerByCustomerID.Load(ctx, obj.ID)()
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return partner, nil
+}
+
+// CarrierAssignment returns generated.CarrierAssignmentResolver implementation.
+func (r *Resolver) CarrierAssignment() generated.CarrierAssignmentResolver {
+	return &carrierAssignmentResolver{r}
+}
+
+// CarrierAssignmentAccessorial returns generated.CarrierAssignmentAccessorialResolver implementation.
+func (r *Resolver) CarrierAssignmentAccessorial() generated.CarrierAssignmentAccessorialResolver {
+	return &carrierAssignmentAccessorialResolver{r}
+}
+
 // Shipment returns generated.ShipmentResolver implementation.
 func (r *Resolver) Shipment() generated.ShipmentResolver { return &shipmentResolver{r} }
 
-type shipmentResolver struct{ *Resolver }
+// ShipmentCustomer returns generated.ShipmentCustomerResolver implementation.
+func (r *Resolver) ShipmentCustomer() generated.ShipmentCustomerResolver {
+	return &shipmentCustomerResolver{r}
+}
+
+type (
+	carrierAssignmentResolver            struct{ *Resolver }
+	carrierAssignmentAccessorialResolver struct{ *Resolver }
+	shipmentResolver                     struct{ *Resolver }
+	shipmentCustomerResolver             struct{ *Resolver }
+)

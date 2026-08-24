@@ -267,6 +267,7 @@ func parseTenderResponse(t *parsedTransaction) tenderResponseDetails {
 	if details.shipmentRef == "" {
 		details.shipmentRef = referenceFromL11(t.segments)
 	}
+	details.references = referenceValues(t.segments)
 	if k1 := findSegment(t.segments, "K1"); k1 != nil {
 		details.remarks = strings.TrimSpace(strings.Join(stringutils.NonEmptyStrings(
 			elementValue(k1, 1),
@@ -285,6 +286,7 @@ func parseShipmentStatus(t *parsedTransaction) shipmentStatusDetails {
 	if details.shipmentRef == "" {
 		details.shipmentRef = referenceFromL11(t.segments)
 	}
+	details.references = referenceValues(t.segments)
 	if at7 := findSegment(t.segments, "AT7"); at7 != nil {
 		details.statusCode = strings.ToUpper(strings.TrimSpace(elementValue(at7, 1)))
 		details.reasonCode = strings.ToUpper(strings.TrimSpace(elementValue(at7, 2)))
@@ -782,6 +784,25 @@ func stopTypeFromCode(code string) string {
 	default:
 		return "Pickup"
 	}
+}
+
+// referenceValues collects every L11 (value, qualifier) and N9 (qualifier,
+// value) reference on the transaction, regardless of qualifier.
+func referenceValues(segments []edix12inspect.X12Segment) []string {
+	references := make([]string, 0, 4)
+	l11Segments := findSegmentsByID(segments, "L11")
+	for index := range l11Segments {
+		if value := strings.TrimSpace(elementValue(&l11Segments[index], 1)); value != "" {
+			references = append(references, value)
+		}
+	}
+	n9Segments := findSegmentsByID(segments, "N9")
+	for index := range n9Segments {
+		if value := strings.TrimSpace(elementValue(&n9Segments[index], 2)); value != "" {
+			references = append(references, value)
+		}
+	}
+	return references
 }
 
 func referenceFromL11(segments []edix12inspect.X12Segment) string {

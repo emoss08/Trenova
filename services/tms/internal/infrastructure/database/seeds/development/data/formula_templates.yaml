@@ -55,6 +55,40 @@ templates:
     schema_id: shipment
     variables: []
 
+  - name: Per Piece
+    description: Charges based on piece count. Multiplies the base rate per piece by total pieces.
+    type: freight_charge
+    expression: baseRate * totalPieces
+    status: active
+    schema_id: shipment
+    variables: []
+
+  - name: Per Hour
+    description: Charges based on hours of service, such as hourly dray or local work. Multiplies the base rate per hour by the hours worked.
+    type: freight_charge
+    expression: baseRate * totalHours
+    status: active
+    schema_id: shipment
+    variables:
+      - name: totalHours
+        type: number
+        description: Hours of service to bill
+        required: false
+        default_value: 0.0
+
+  - name: Percent of Sell Rate
+    description: Buy-side rate written as a share of what the customer pays. The lane's rate is the percentage; the rating engine supplies the sell total.
+    type: freight_charge
+    expression: round(sellTotal * (baseRate / 100), 2)
+    status: active
+    schema_id: shipment
+    variables:
+      - name: sellTotal
+        type: number
+        description: The sell-side total the percentage is taken of, supplied by the rating engine
+        required: false
+        default_value: 0.0
+
   - name: Flat Fee (Use Existing Charges)
     description: Uses the freight and other charges already entered on the shipment. Adds freight charge amount plus other charge amount.
     type: freight_charge

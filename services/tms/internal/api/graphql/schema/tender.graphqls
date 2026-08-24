@@ -1,0 +1,95 @@
+enum TenderMode {
+  Waterfall
+  SpotBroadcast
+  SpotSequential
+}
+
+enum TenderStatus {
+  Active
+  Accepted
+  Exhausted
+  Canceled
+  NeedsReview
+}
+
+enum TenderOfferStatus {
+  Pending
+  Sent
+  Accepted
+  Declined
+  Expired
+  Withdrawn
+  Superseded
+  Skipped
+  DeliveryFailed
+}
+
+enum TenderChannel {
+  Email
+  EDI
+}
+
+enum TenderResponseSource {
+  Email
+  EDI
+  Manual
+}
+
+type TenderOffer {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  tenderId: ID!
+  carrierId: ID!
+  rank: Int!
+  rateMethod: CarrierRateMethod!
+  rate: String!
+  offerTtlSeconds: Int!
+  channel: TenderChannel!
+  status: TenderOfferStatus!
+  recipientEmail: String!
+  sentAt: Int
+  expiresAt: Int
+  respondedAt: Int
+  responseSource: TenderResponseSource
+  declineReason: String!
+  deliveryError: String!
+  ediPartnerId: ID
+  ediMessageId: ID
+  lateResponseAction: String!
+  lateResponseAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  carrier: Carrier
+}
+
+type Tender {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  shipmentId: ID!
+  shipmentMoveId: ID!
+  routingGuideId: ID
+  mode: TenderMode!
+  status: TenderStatus!
+  currentRank: Int!
+  createdById: ID
+  canceledById: ID
+  cancellationReason: String!
+  acceptedOfferId: ID
+  acceptedAt: Int
+  exhaustedAt: Int
+  canceledAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  routingGuide: RoutingGuide
+  offers: [TenderOffer!]
+}
+
+extend type Query {
+  tender(id: ID!): Tender
+  tendersByShipment(shipmentId: ID!): [Tender!]!
+  liveTenderByMove(moveId: ID!): Tender
+}

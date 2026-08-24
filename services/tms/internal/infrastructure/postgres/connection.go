@@ -151,7 +151,6 @@ func reportingSettings(cfg *config.Config) connectionSettings {
 				"%dms",
 				max(cfg.Database.GetIdleTxTimeout().Milliseconds(), 1),
 			),
-			"default_transaction_read_only": "on",
 		},
 		registerStats: false,
 	}
@@ -205,9 +204,9 @@ func (c *Connection) openDB(
 	dsn string,
 ) (*sql.DB, schema.Dialect, error) {
 	if dialect.IsSQLite() {
-		sqldb, err := sql.Open(sqliteDriverName, dsn)
+		sqldb, err := openSQLiteDB(dsn)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to open sqlite database: %w", err)
+			return nil, nil, err
 		}
 
 		return sqldb, sqlitedialect.New(), nil

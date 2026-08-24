@@ -29,6 +29,8 @@ aliases:
 virtuals:
   ApiKey:
     - permissionScope
+  RateMatrix:
+    - formulaTemplateName
   VehiclePosition:
     - tractorCode
     - primaryWorkerId
@@ -70,6 +72,8 @@ virtuals:
     - orderNumber
     - orderStatus
     - profitabilityEstimate
+  ShipmentCustomer:
+    - ediPartner
   ShipmentAdditionalCharge:
     - accessorialCharge
   ShipmentCommodity:

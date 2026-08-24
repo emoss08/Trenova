@@ -53,7 +53,7 @@ function relativeOrNever(unixSeconds: number | null, now: number): string {
 function HealthRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3 px-3 py-2">
-      <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground shrink-0 text-xs">{label}</span>
       <div className="flex min-w-0 items-center justify-end gap-1.5 text-xs font-medium">
         {children}
       </div>
@@ -63,7 +63,7 @@ function HealthRow({ label, children }: { label: string; children: React.ReactNo
 
 function HealthSkeleton() {
   return (
-    <div className="divide-y divide-border rounded-md border border-border">
+    <div className="divide-border border-border divide-y rounded-md border">
       {Array.from({ length: 6 }, (_, i) => (
         <div key={i} className="flex items-center justify-between gap-3 px-3 py-2">
           <Skeleton className="h-3 w-20" />
@@ -99,14 +99,14 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
     body = <HealthSkeleton />;
   } else if (statusQuery.isError || !status) {
     body = (
-      <p className="rounded-md border border-border px-3 py-4 text-center text-xs text-muted-foreground">
+      <p className="border-border text-muted-foreground rounded-md border px-3 py-4 text-center text-xs">
         Sync status is unavailable right now.
       </p>
     );
   } else {
     const vehiclesShort = status.mappedTractors < status.totalTractors;
     body = (
-      <div className="divide-y divide-border rounded-md border border-border">
+      <div className="divide-border border-border divide-y rounded-md border">
         <HealthRow label="Provider">
           <span className="capitalize">{status.provider}</span>
         </HealthRow>
@@ -123,7 +123,7 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <span className="max-w-48 truncate text-[11px] font-normal text-muted-foreground" />
+                      <span className="text-muted-foreground max-w-48 truncate text-[11px] font-normal" />
                     }
                   >
                     {status.lastError}
@@ -154,11 +154,11 @@ export function SamsaraSyncHealthSection({ open }: { open: boolean }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 border-t border-border pt-4">
+    <div className="border-border flex flex-col gap-3 border-t pt-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-col gap-0.5">
           <p className="text-sm font-semibold">Sync Health</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Live polling status for the Samsara telematics feed.
           </p>
         </div>

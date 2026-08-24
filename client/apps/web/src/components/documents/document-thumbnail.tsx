@@ -56,7 +56,7 @@ export function DocumentThumbnail({
     return (
       <div
         className={cn(
-          "relative overflow-hidden rounded-md bg-muted",
+          "bg-muted relative overflow-hidden rounded-md",
           sizeClasses[size],
           className,
         )}
@@ -75,14 +75,14 @@ export function DocumentThumbnail({
     return (
       <div
         className={cn(
-          "flex items-center justify-center rounded-md bg-muted",
+          "bg-muted flex items-center justify-center rounded-md",
           sizeClasses[size],
           className,
         )}
         title="Generating thumbnail..."
       >
         <LoaderCircleIcon
-          className={cn("animate-spin text-muted-foreground", iconSizes[size])}
+          className={cn("text-muted-foreground animate-spin", iconSizes[size])}
         />
       </div>
     );
@@ -91,7 +91,7 @@ export function DocumentThumbnail({
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-md bg-muted",
+        "bg-muted flex items-center justify-center rounded-md",
         sizeClasses[size],
         className,
       )}

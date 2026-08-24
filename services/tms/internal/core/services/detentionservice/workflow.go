@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/shared/intutils"
+
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -101,7 +103,7 @@ func (s *Service) ListDesk(
 
 		entry := &DeskEntry{
 			Occurrence:            occurrence,
-			MinutesUntilFreeEnds:  int32((occurrence.FreeTimeExpiresAt - now) / 60),
+			MinutesUntilFreeEnds:  intutils.SafeToInt32((occurrence.FreeTimeExpiresAt - now) / 60),
 			MinutesUntilNoticeDue: occurrence.MinutesUntilNoticeDue(now),
 			NoticeWindowOpen:      occurrence.NoticeWindowOpen(now),
 			AmountAtRisk:          occurrence.BillableAmount,
@@ -163,10 +165,13 @@ func (s *Service) Waive(
 			"waiverReason", errortypes.ErrInvalid, "A coded waiver reason is required")
 	}
 
-	occurrence, err := s.occurrenceRepo.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
-		OccurrenceID: p.OccurrenceID,
-		TenantInfo:   p.TenantInfo,
-	})
+	occurrence, err := s.occurrenceRepo.GetByID(
+		ctx,
+		&repositories.GetDetentionOccurrenceByIDRequest{
+			OccurrenceID: p.OccurrenceID,
+			TenantInfo:   p.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -205,10 +210,13 @@ func (s *Service) Approve(
 	ctx context.Context,
 	p ApproveParams,
 ) (*detention.DetentionOccurrence, error) {
-	occurrence, err := s.occurrenceRepo.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
-		OccurrenceID: p.OccurrenceID,
-		TenantInfo:   p.TenantInfo,
-	})
+	occurrence, err := s.occurrenceRepo.GetByID(
+		ctx,
+		&repositories.GetDetentionOccurrenceByIDRequest{
+			OccurrenceID: p.OccurrenceID,
+			TenantInfo:   p.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -250,10 +258,13 @@ func (s *Service) Dispute(
 	ctx context.Context,
 	p DisputeParams,
 ) (*detention.DetentionOccurrence, error) {
-	occurrence, err := s.occurrenceRepo.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
-		OccurrenceID: p.OccurrenceID,
-		TenantInfo:   p.TenantInfo,
-	})
+	occurrence, err := s.occurrenceRepo.GetByID(
+		ctx,
+		&repositories.GetDetentionOccurrenceByIDRequest{
+			OccurrenceID: p.OccurrenceID,
+			TenantInfo:   p.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

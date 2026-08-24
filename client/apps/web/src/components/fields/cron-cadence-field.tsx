@@ -120,7 +120,7 @@ export function CadenceToggleChip({
       className={cn(
         "inline-flex h-6 items-center gap-1 rounded-md border px-2 text-xs font-medium",
         "transition-[border-color,background-color,color] duration-150",
-        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
         active
           ? "border-blue-600 bg-blue-600/10 text-blue-600 dark:text-blue-400"
           : "border-input text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground",
@@ -174,7 +174,7 @@ export function CronCadenceField<T extends FieldValues>({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 p-3">
+    <div className="border-border bg-muted/30 flex flex-col gap-3 rounded-lg border p-3">
       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 text-sm">
         <span className="text-muted-foreground">{verb}</span>
         <Select items={FREQUENCY_OPTIONS} value={tab} onValueChange={handleFrequencyChange}>

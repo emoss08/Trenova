@@ -163,7 +163,7 @@ function JsonNode({
             type="button"
             onClick={handleCopyPath}
             aria-label={`Copy path ${path}`}
-            className="ml-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground ml-1 text-xs opacity-0 transition-opacity group-hover:opacity-100"
           >
             {copied ? "✓" : "⎘"}
           </button>
@@ -205,7 +205,7 @@ function JsonNode({
           onClick={handleToggle}
           onKeyDown={handleKeyDown}
           aria-label={isCollapsed ? "Expand" : "Collapse"}
-          className="flex h-4 w-4 items-center justify-center text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground flex h-4 w-4 items-center justify-center"
         >
           {isCollapsed ? "▶" : "▼"}
         </button>
@@ -229,14 +229,14 @@ function JsonNode({
             type="button"
             onClick={handleCopyPath}
             aria-label={`Copy path ${path}`}
-            className="ml-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground ml-1 text-xs opacity-0 transition-opacity group-hover:opacity-100"
           >
             {copied ? "✓" : "⎘"}
           </button>
         )}
       </div>
       {!isCollapsed && (
-        <div className="ml-4 border-l border-border pl-2" role="group">
+        <div className="border-border ml-4 border-l pl-2" role="group">
           {entries.map(([k, v]) => (
             <JsonNode
               key={k}
@@ -281,7 +281,7 @@ export function JsonViewer({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search..."
-            className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
+            className="border-border bg-background w-full rounded border px-2 py-1 text-sm"
           />
         </div>
       )}

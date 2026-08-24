@@ -37,7 +37,7 @@ export function AutoCompleteDatePicker({
             size="icon"
             variant="ghost"
             disabled={disabled || readOnly}
-            className="absolute top-1/2 right-2 size-5 -translate-y-1/2 text-muted-foreground [&>svg]:size-3"
+            className="text-muted-foreground absolute top-1/2 right-2 size-5 -translate-y-1/2 [&>svg]:size-3"
           >
             <span className="sr-only">Open date picker</span>
             <CalendarIcon className="size-4" />

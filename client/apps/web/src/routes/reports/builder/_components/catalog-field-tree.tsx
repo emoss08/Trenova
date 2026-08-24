@@ -47,8 +47,8 @@ function FieldRow({
       className={cn(
         "group/field relative flex h-6.5 w-full items-center justify-between gap-2 rounded-md px-2 text-left text-xs",
         disabled
-          ? "cursor-not-allowed text-muted-foreground/60"
-          : "transition-colors hover:bg-accent hover:text-accent-foreground",
+          ? "text-muted-foreground/60 cursor-not-allowed"
+          : "hover:bg-accent hover:text-accent-foreground transition-colors",
       )}
       onClick={onSelect}
       disabled={disabled}
@@ -66,7 +66,7 @@ function FieldRow({
           {FIELD_TYPE_BADGES[field.type] ?? field.type}
         </Badge>
         {!disabled && (
-          <PlusIcon className="absolute right-2 size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover/field:opacity-100" />
+          <PlusIcon className="text-muted-foreground absolute right-2 size-3.5 opacity-0 transition-opacity group-hover/field:opacity-100" />
         )}
       </span>
     </button>
@@ -127,7 +127,7 @@ function EntityFields({
           <div key={edge.name} className="flex flex-col">
             <button
               type="button"
-              className="flex w-full items-center gap-1 rounded-md px-2 py-1 text-left text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+              className="hover:bg-accent hover:text-accent-foreground flex w-full items-center gap-1 rounded-md px-2 py-1 text-left text-sm font-medium"
               onClick={() =>
                 setExpanded((prev) => {
                   const next = new Set(prev);
@@ -153,7 +153,7 @@ function EntityFields({
               )}
             </button>
             {isOpen && (
-              <div className="ml-3 border-l border-border pl-1">
+              <div className="border-border ml-3 border-l pl-1">
                 <EntityFields
                   index={index}
                   entity={target}
@@ -192,7 +192,7 @@ export function CatalogFieldTree({
           className="h-8 pl-7"
           placeholder="Search fields..."
           value={search}
-          leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+          leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>

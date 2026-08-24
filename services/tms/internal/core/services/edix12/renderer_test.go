@@ -60,6 +60,45 @@ func TestRender204_ResolvesRepeatPartnerAndDateTimeFields(t *testing.T) {
 	assert.Contains(t, result.RawX12, "L5**Palletized freight")
 }
 
+func TestRender204_CarrierSCACOverrideAndOfferReference(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeWarnOnly)
+	input.Profile.PartnerSettings = map[string]any{
+		"carrier": map[string]any{"scac": "ABCD"},
+	}
+	input.CarrierSCAC = "wxyz"
+	offerID := pulid.MustNew("tof_")
+	input.Payload.TenderOfferID = offerID
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	assert.Contains(t, result.RawX12, "B2*WXYZ*"+input.Payload.ShipmentID.String())
+	assert.NotContains(t, result.RawX12, "B2*ABCD*")
+	assert.Contains(t, result.RawX12, "L11*"+offerID.String()+"*CR")
+	assert.Equal(
+		t,
+		map[string]any{"carrier": map[string]any{"scac": "ABCD"}},
+		input.Profile.PartnerSettings,
+	)
+}
+
+func TestRender204_CarrierSCACFallsBackToPartnerSettings(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeWarnOnly)
+	input.Profile.PartnerSettings = map[string]any{
+		"carrier": map[string]any{"scac": "ABCD"},
+	}
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	assert.Contains(t, result.RawX12, "B2*ABCD*"+input.Payload.ShipmentID.String())
+	assert.NotContains(t, result.RawX12, "*CR")
+}
+
 func TestRender204_AppliesCustomSeparatorsAndTrailerCounts(t *testing.T) {
 	t.Parallel()
 

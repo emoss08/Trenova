@@ -13,7 +13,7 @@ export function NewCommentsPill({ count, onClick }: { count: number; onClick: ()
           transition={{ duration: 0.15, ease: "easeOut" }}
           className="absolute bottom-3 left-1/2 z-30 -translate-x-1/2"
         >
-          <div className="rounded-full border border-border bg-popover p-0.5 shadow-md">
+          <div className="border-border bg-popover rounded-full border p-0.5 shadow-md">
             <Button
               type="button"
               variant="ghost"

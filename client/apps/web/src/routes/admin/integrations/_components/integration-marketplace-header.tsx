@@ -10,7 +10,7 @@ export function IntegrationMarketplaceHeader() {
     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold tracking-tight">Integrations and Connected Apps</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Connect your stack, sync operational data, and manage telematics from one workspace.
         </p>
       </div>
@@ -19,8 +19,8 @@ export function IntegrationMarketplaceHeader() {
           value={searchParams.query}
           onChange={(event) => setSearchParams({ query: event.target.value })}
           placeholder="Search integrations"
-          className="h-9 bg-background"
-          leftElement={<SearchIcon className="size-4 text-muted-foreground" />}
+          className="bg-background h-9"
+          leftElement={<SearchIcon className="text-muted-foreground size-4" />}
         />
       </div>
     </div>

@@ -25,6 +25,7 @@ type Params struct {
 	OccurrenceRepo    repositories.DetentionOccurrenceRepository
 	EvidenceRepo      repositories.DetentionEvidenceRepository
 	AccessorialRepo   repositories.AccessorialChargeRepository
+	AgreementRepo     repositories.RateAgreementRepository
 	PayAssignmentRepo repositories.WorkerPayAssignmentRepository
 	PayProfileRepo    repositories.PayProfileRepository
 	OrgCacheRepo      repositories.OrganizationCacheRepository
@@ -47,6 +48,7 @@ type Service struct {
 	occurrenceRepo    repositories.DetentionOccurrenceRepository
 	evidenceRepo      repositories.DetentionEvidenceRepository
 	accessorialRepo   repositories.AccessorialChargeRepository
+	agreementRepo     repositories.RateAgreementRepository
 	payAssignmentRepo repositories.WorkerPayAssignmentRepository
 	payProfileRepo    repositories.PayProfileRepository
 	orgCacheRepo      repositories.OrganizationCacheRepository
@@ -73,6 +75,7 @@ func New(p Params) *Service {
 		occurrenceRepo:    p.OccurrenceRepo,
 		evidenceRepo:      p.EvidenceRepo,
 		accessorialRepo:   p.AccessorialRepo,
+		agreementRepo:     p.AgreementRepo,
 		payAssignmentRepo: p.PayAssignmentRepo,
 		payProfileRepo:    p.PayProfileRepo,
 		orgCacheRepo:      p.OrgCacheRepo,
@@ -134,6 +137,9 @@ func (s *Service) SyncShipment(
 	shipmentAccrued := decimal.Zero
 	now := s.now()
 
+	// The contract's own accessorial prices, read once for the whole shipment.
+	prices := s.resolveContractPrices(ctx, entity, tenantInfo, now)
+
 	for _, move := range entity.Moves {
 		if move == nil {
 			continue
@@ -176,6 +182,7 @@ func (s *Service) SyncShipment(
 				payRate:         payRate,
 				dayAccrued:      dayAccrued,
 				shipmentAccrued: shipmentAccrued,
+				prices:          prices,
 				now:             now,
 			})
 			if err != nil {
@@ -208,10 +215,12 @@ type computeStopParams struct {
 	payRate         decimal.NullDecimal
 	dayAccrued      map[string]decimal.Decimal
 	shipmentAccrued decimal.Decimal
-	now             int64
+	// prices is what the shipment's own contract charges, when a contract
+	// priced it. Nil means the organization defaults apply.
+	prices *contractPrices
+	now    int64
 }
 
-//nolint:funlen // one linear pass from stop facts to a persisted occurrence
 func (s *Service) computeStop(
 	ctx context.Context,
 	p computeStopParams,
@@ -254,13 +263,23 @@ func (s *Service) computeStop(
 		return nil, err
 	}
 
+	// The contract's price wins over the organization default, which is what
+	// makes the rate confirmation and the invoice agree on detention.
+	flatRate := accessorial.Amount
+	rateUnit := accessorial.RateUnit
+
+	if contractRate, contractUnit, priced := p.prices.priceFor(accessorial); priced {
+		flatRate = contractRate
+		rateUnit = contractUnit
+	}
+
 	snapshot := detention.NewPolicySnapshot(detention.SnapshotInput{
 		Policy:          policy,
 		StopType:        string(p.stop.Type),
 		FreeMinutes:     policy.FreeMinutesForStopType(p.stop.Type),
 		AccessorialCode: accessorial.Code,
-		FlatRate:        accessorial.Amount,
-		FlatRateUnit:    tierUnitFromAccessorial(accessorial.RateUnit),
+		FlatRate:        flatRate,
+		FlatRateUnit:    tierUnitFromAccessorial(rateUnit),
 		CapturedAt:      p.now,
 	})
 

@@ -92,7 +92,7 @@ function ColorSwatchPicker({
           className={cn(
             "size-4 cursor-pointer rounded-full transition-transform hover:scale-110",
             FORMAT_RULE_COLOR_SWATCHES[color],
-            value === color && "ring-2 ring-ring ring-offset-1 ring-offset-background",
+            value === color && "ring-ring ring-offset-background ring-2 ring-offset-1",
           )}
         />
       ))}
@@ -229,10 +229,10 @@ export default function DataTableFormatBuilder<TData extends RowData>({
           </DialogDescription>
         </DialogHeader>
         {rules.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-center">
-            <PaintbrushIcon className="size-4 text-muted-foreground" />
+          <div className="border-border flex flex-col items-center gap-2 rounded-lg border border-dashed px-4 py-8 text-center">
+            <PaintbrushIcon className="text-muted-foreground size-4" />
             <h3 className="text-sm font-medium">No formatting rules</h3>
-            <p className="max-w-72 text-xs text-muted-foreground">
+            <p className="text-muted-foreground max-w-72 text-xs">
               Tint rows that need attention — for example, unassigned or late records.
             </p>
             <Button size="sm" onClick={addRule} disabled={formatColumns.length === 0}>
@@ -248,10 +248,10 @@ export default function DataTableFormatBuilder<TData extends RowData>({
               return (
                 <div
                   key={rule.id}
-                  className="flex flex-col gap-2 rounded-lg border border-border bg-card p-2.5"
+                  className="border-border bg-card flex flex-col gap-2 rounded-lg border p-2.5"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="w-11 shrink-0 text-xs font-medium text-muted-foreground">
+                    <span className="text-muted-foreground w-11 shrink-0 text-xs font-medium">
                       {index === 0 ? "When" : "Else if"}
                     </span>
                     <Select

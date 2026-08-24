@@ -303,13 +303,13 @@ coalesce(customerSpecificRate, standardRate) * totalDistance
 
 ## Rating Features
 
-### Rate Tables
+### Lookup Tables
 
-Instead of encoding tiers as nested conditions, define a rate table (Billing → Rate Tables) and
-reference it with `lookup("table_key", value)` or `lookupOr("table_key", value, default)`.
-Exact tables map string keys to values (lane rates); Range tables map numeric bands
-(fuel surcharge matrices, weight breaks). Only active tables resolve; validation rejects
-expressions referencing unknown tables.
+Instead of encoding tiers as nested conditions, define a single-axis rate matrix
+(Billing → Rate Matrices) and reference it by code with `lookup("code", value)` or
+`lookupOr("code", value, default)`. An Exact axis maps string keys to values (lane rates);
+a Range axis maps numeric bands (fuel surcharge scales, weight breaks). Only active
+single-axis matrices resolve; validation rejects expressions referencing unknown tables.
 
 ### Rate Breakdown
 

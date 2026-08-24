@@ -32,13 +32,13 @@ function LedgerStat({
 }) {
   return (
     <div className="min-w-0 px-3.5 py-2.5">
-      <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
         {label}
       </p>
       <p className={cn("mt-1 truncate text-sm font-medium tabular-nums", valueClassName)}>
         {value}
       </p>
-      <p className="mt-0.5 truncate text-2xs text-muted-foreground tabular-nums">
+      <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
         {detail}
       </p>
     </div>
@@ -93,20 +93,20 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden rounded-lg border border-border bg-card"
+      className="border-border bg-card relative overflow-hidden rounded-lg border"
     >
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent"
+        className="via-foreground/20 pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent to-transparent"
       />
       <span
         aria-hidden
-        className="pointer-events-none absolute -top-28 -right-20 size-64 rounded-full bg-brand/10 blur-3xl"
+        className="bg-brand/10 pointer-events-none absolute -top-28 -right-20 size-64 rounded-full blur-3xl"
       />
 
       <div className="relative flex flex-col gap-5 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+          <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
             Net detention margin
           </p>
           <p
@@ -117,7 +117,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
           >
             <NumberFlow value={netMargin} format={CURRENCY_FORMAT} />
           </p>
-          <p className="mt-2 text-2xs text-muted-foreground tabular-nums">
+          <p className="text-2xs text-muted-foreground mt-2 tabular-nums">
             {stopCount.toLocaleString()} settled{" "}
             {stopCount === 1 ? "stop" : "stops"} across {rollup.facilityCount}{" "}
             {rollup.facilityCount === 1 ? "facility" : "facilities"} ·{" "}
@@ -130,7 +130,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
           </div>
 
           {overrun ? (
-            <p className="mt-3 text-2xs text-red-600 dark:text-red-400">
+            <p className="text-2xs mt-3 text-red-600 dark:text-red-400">
               Driver detention pay exceeded what was billed — the free-time
               concessions granted to customers are wider than the driver contract
               allows for.
@@ -150,16 +150,16 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
               <p className="text-lg leading-none font-semibold tabular-nums">
                 {Math.round(retention * 100)}%
               </p>
-              <p className="mt-0.5 text-2xs text-muted-foreground">retained</p>
+              <p className="text-2xs text-muted-foreground mt-0.5">retained</p>
             </div>
           </RingGauge>
-          <p className="max-w-[9rem] text-2xs leading-snug text-muted-foreground sm:text-center">
+          <p className="text-2xs text-muted-foreground max-w-[9rem] leading-snug sm:text-center">
             of every billed detention dollar survives driver pay
           </p>
         </div>
       </div>
 
-      <div className="relative grid grid-cols-2 divide-x divide-y divide-border border-t border-border sm:grid-cols-4 sm:divide-y-0">
+      <div className="divide-border border-border relative grid grid-cols-2 divide-x divide-y border-t sm:grid-cols-4 sm:divide-y-0">
         <LedgerStat
           label="Billed"
           value={formatCurrency(billed)}

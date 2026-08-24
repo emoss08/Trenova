@@ -1,10 +1,12 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
+import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
   BarChart3Icon,
   CalculatorIcon,
   ContainerIcon,
   FileSlidersIcon,
+  HandshakeIcon,
   HomeIcon,
   Package,
   ReceiptTextIcon,
@@ -132,6 +134,21 @@ const dispatchModule: NavModule = {
       label: "Workers",
       path: "/dispatch/workers",
       resource: Resource.Worker,
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
+      id: "carriers",
+      label: "Carriers",
+      path: "/dispatch/carriers",
+      resource: Resource.Carrier,
+      capability: OrganizationCapability.Brokerage,
+    },
+    {
+      id: "routing-guides",
+      label: "Routing Guides",
+      path: "/dispatch/routing-guides",
+      resource: Resource.RoutingGuide,
+      capability: OrganizationCapability.Brokerage,
     },
     {
       id: "dispatch-config-group",
@@ -149,6 +166,7 @@ const dispatchModule: NavModule = {
           label: "Fleet Codes",
           path: "/dispatch/configuration-files/fleet-codes",
           resource: Resource.FleetCode,
+          capability: OrganizationCapability.AssetOperations,
         },
       ],
     },
@@ -167,12 +185,14 @@ const equipmentModule: NavModule = {
       label: "Tractors",
       path: "/equipment/tractors",
       resource: Resource.Tractor,
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "trailers",
       label: "Trailers",
       path: "/equipment/trailers",
       resource: Resource.Trailer,
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "equipment-config-group",
@@ -240,6 +260,13 @@ const billingModule: NavModule = {
       resource: Resource.FuelSurchargeProgram,
     },
     {
+      id: "rate-agreements",
+      label: "Rate Agreements",
+      path: "/billing/rate-agreements",
+      resource: Resource.RateAgreement,
+      includeBetaTag: true,
+    },
+    {
       id: "billing-config-group",
       label: "Configuration Files",
       defaultOpen: false,
@@ -264,10 +291,17 @@ const billingModule: NavModule = {
           includeBetaTag: true,
         },
         {
-          id: "rate-tables",
-          label: "Rate Tables",
-          path: "/billing/configuration-files/rate-tables",
-          resource: Resource.RateTable,
+          id: "rate-zones",
+          label: "Rate Zones",
+          path: "/billing/configuration-files/rate-zones",
+          resource: Resource.RateZone,
+          includeBetaTag: true,
+        },
+        {
+          id: "rate-matrices",
+          label: "Rate Matrices",
+          path: "/billing/configuration-files/rate-matrices",
+          resource: Resource.RateMatrix,
           includeBetaTag: true,
         },
         {
@@ -334,6 +368,7 @@ const payrollModule: NavModule = {
   icon: WalletIcon,
   description: "Driver and owner-operator pay",
   basePath: "/payroll",
+  capability: OrganizationCapability.AssetOperations,
   navigation: [
     {
       id: "settlement-workspace",
@@ -413,6 +448,47 @@ const payrollModule: NavModule = {
           resource: Resource.EscrowAccount,
         },
       ],
+    },
+  ],
+};
+
+const carrierSettlementsModule: NavModule = {
+  id: "carrier-settlements",
+  label: "Carrier Settlements",
+  icon: HandshakeIcon,
+  description: "Carrier payables and invoice reconciliation",
+  basePath: "/carrier-settlements",
+  capability: OrganizationCapability.Brokerage,
+  navigation: [
+    {
+      id: "carrier-settlement-workspace",
+      label: "Workspace",
+      path: "/carrier-settlements/workspace",
+      resource: Resource.CarrierSettlement,
+    },
+    {
+      id: "carrier-settlements-history",
+      label: "Settlement History",
+      path: "/carrier-settlements/settlements",
+      resource: Resource.CarrierSettlement,
+    },
+    {
+      id: "carrier-settlement-batches",
+      label: "Settlement Batches",
+      path: "/carrier-settlements/batches",
+      resource: Resource.CarrierSettlement,
+    },
+    {
+      id: "carrier-cost-events",
+      label: "Cost Events",
+      path: "/carrier-settlements/cost-events",
+      resource: Resource.CarrierSettlement,
+    },
+    {
+      id: "carrier-invoice-matching",
+      label: "Invoice Matching",
+      path: "/carrier-settlements/invoice-matching",
+      resource: Resource.CarrierInvoiceMatch,
     },
   ],
 };
@@ -655,6 +731,7 @@ export const navigationConfig: NavigationConfig = {
     billingModule,
     detentionModule,
     payrollModule,
+    carrierSettlementsModule,
     ediModule,
     reportsModule,
     accountingModule,
@@ -752,14 +829,34 @@ export const navigationConfig: NavigationConfig = {
       keywords: ["formula", "template"],
     },
     {
-      id: "create-rate-table",
-      label: "Create Rate Table",
-      description: "Add a new rate table",
-      path: "/billing/configuration-files/rate-tables",
-      resource: Resource.RateTable,
+      id: "create-rate-agreement",
+      label: "Create Rate Agreement",
+      description: "Write a customer or carrier contract",
+      path: "/billing/rate-agreements",
+      resource: Resource.RateAgreement,
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
-      keywords: ["rate", "table", "lookup"],
+      keywords: ["rate", "agreement", "contract", "tariff", "lane"],
+    },
+    {
+      id: "create-rate-zone",
+      label: "Create Rate Zone",
+      description: "Name a market area contracts can be priced against",
+      path: "/billing/configuration-files/rate-zones",
+      resource: Resource.RateZone,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["rate", "zone", "region", "market", "geography"],
+    },
+    {
+      id: "create-rate-matrix",
+      label: "Create Rate Matrix",
+      description: "Enter a published tariff as the grid it was published as",
+      path: "/billing/configuration-files/rate-matrices",
+      resource: Resource.RateMatrix,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["rate", "matrix", "tariff", "grid", "weight break", "class", "ltl"],
     },
     {
       id: "create-detention-policy",
@@ -810,6 +907,7 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["tractor", "equipment"],
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "create-trailer",
@@ -820,6 +918,7 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["trailer", "equipment"],
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "create-equipment-type",
@@ -860,6 +959,7 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { pageTab: "workers", panelType: "create" },
       keywords: ["worker", "driver", "employee"],
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "create-location-category",
@@ -880,6 +980,7 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["fleet", "code"],
+      capability: OrganizationCapability.AssetOperations,
     },
     {
       id: "create-hold-reason",
@@ -890,6 +991,26 @@ export const navigationConfig: NavigationConfig = {
       requiredOperation: Operation.Create,
       query: { panelType: "create" },
       keywords: ["hold", "reason"],
+    },
+    {
+      id: "create-jurisdiction-rule",
+      label: "Create Jurisdiction Rule",
+      description: "Add oversize limits for a state",
+      path: "/admin/jurisdiction-rules",
+      resource: Resource.JurisdictionRule,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["jurisdiction", "oversize", "permit", "state", "limits"],
+    },
+    {
+      id: "create-jurisdiction-rule-override",
+      label: "Create Carrier Override",
+      description: "Hold this fleet to a stricter limit than a state requires",
+      path: "/admin/jurisdiction-rule-overrides",
+      resource: Resource.JurisdictionRuleOverride,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["override", "carrier", "jurisdiction", "stricter", "limits"],
     },
     {
       id: "create-service-failure-reason-code",
@@ -986,7 +1107,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "financial",
     label: "Financial",
-    moduleIds: ["billing", "detention", "payroll", "reports", "accounting"],
+    moduleIds: ["billing", "detention", "payroll", "carrier-settlements", "reports", "accounting"],
   },
   {
     id: "admin",
@@ -1016,6 +1137,15 @@ export const adminLinks: SidebarLink[] = [
     group: "Organization",
     resource: Resource.SettlementControl,
     requiredOperation: Operation.Read,
+    capability: OrganizationCapability.AssetOperations,
+  },
+  {
+    href: "/admin/carrier-settlement-control",
+    title: "Carrier Settlement Control",
+    group: "Organization",
+    resource: Resource.CarrierSettlementControl,
+    requiredOperation: Operation.Read,
+    capability: OrganizationCapability.Brokerage,
   },
   {
     href: "/admin/dash-control",
@@ -1023,6 +1153,7 @@ export const adminLinks: SidebarLink[] = [
     group: "Organization",
     resource: Resource.DashControl,
     requiredOperation: Operation.Read,
+    capability: OrganizationCapability.AssetOperations,
   },
   {
     href: "/admin/agent-control",
@@ -1151,6 +1282,20 @@ export const adminLinks: SidebarLink[] = [
     title: "Hold Reasons",
     group: "Organization",
     resource: Resource.HoldReason,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/jurisdiction-rules/",
+    title: "Jurisdiction Rules",
+    group: "Organization",
+    resource: Resource.JurisdictionRule,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/jurisdiction-rule-overrides/",
+    title: "Carrier Overrides",
+    group: "Organization",
+    resource: Resource.JurisdictionRuleOverride,
     requiredOperation: Operation.Read,
   },
   {

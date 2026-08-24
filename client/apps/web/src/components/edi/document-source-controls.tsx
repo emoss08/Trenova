@@ -109,7 +109,7 @@ function DocumentSourceField({
   return (
     <div className={className}>
       <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">{label}</Label>
+        <Label className="text-muted-foreground text-xs">{label}</Label>
         <Input
           value={value}
           placeholder={placeholder}
@@ -131,7 +131,7 @@ function DocumentSourceTextarea({
 }) {
   return (
     <div className="space-y-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-muted-foreground text-xs">{label}</Label>
       <Textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}

@@ -44,17 +44,17 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
   }
 
   return (
-    <div className="mt-2 flex items-center gap-2.5 rounded-md border border-border bg-card px-2.5 py-2">
+    <div className="border-border bg-card mt-2 flex items-center gap-2.5 rounded-md border px-2.5 py-2">
       <DocumentFileTypeIcon fileName={format ? `${name}.${format}` : name} size="sm" />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-xs font-medium text-foreground">{name}</span>
+        <span className="text-foreground truncate text-xs font-medium">{name}</span>
         {meta.length > 0 && (
-          <span className="truncate text-2xs text-muted-foreground">{meta.join(" · ")}</span>
+          <span className="text-2xs text-muted-foreground truncate">{meta.join(" · ")}</span>
         )}
       </div>
       {truncated && (
-        <Badge variant="warning" className="h-4.5 shrink-0 text-2xs">
+        <Badge variant="warning" className="text-2xs h-4.5 shrink-0">
           Truncated
         </Badge>
       )}
@@ -93,17 +93,17 @@ function TableChangeDetails({ notification }: { notification: Notification }) {
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1">
       {operation && (
-        <Badge variant="info" className="h-4.5 text-2xs uppercase">
+        <Badge variant="info" className="text-2xs h-4.5 uppercase">
           {operation}
         </Badge>
       )}
       {tableName && (
-        <Badge variant="outline" className="h-4.5 font-mono text-2xs">
+        <Badge variant="outline" className="text-2xs h-4.5 font-mono">
           {tableName}
         </Badge>
       )}
       {visibleFields.map((field) => (
-        <Badge key={field} variant="secondary" className="h-4.5 font-mono text-2xs">
+        <Badge key={field} variant="secondary" className="text-2xs h-4.5 font-mono">
           {field}
         </Badge>
       ))}
@@ -121,8 +121,8 @@ function AmountRow({ label, value, emphasis }: { label: string; value: string; e
       <span
         className={
           emphasis
-            ? "text-2xs font-medium text-warning tabular-nums"
-            : "text-2xs font-medium text-foreground tabular-nums"
+            ? "text-2xs text-warning font-medium tabular-nums"
+            : "text-2xs text-foreground font-medium tabular-nums"
         }
       >
         {value}
@@ -139,7 +139,7 @@ function ReconciliationDetails({ notification }: { notification: Notification })
   if (expected === null && posted === null && discrepancy === null) return null;
 
   return (
-    <div className="mt-2 flex flex-col gap-1 rounded-md border border-border bg-card px-2.5 py-2">
+    <div className="border-border bg-card mt-2 flex flex-col gap-1 rounded-md border px-2.5 py-2">
       {expected !== null && <AmountRow label="Expected" value={formatCurrency(expected)} />}
       {posted !== null && <AmountRow label="Posted" value={formatCurrency(posted)} />}
       {discrepancy !== null && (
@@ -158,12 +158,12 @@ function BillingExceptionDetails({ notification }: { notification: Notification 
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1">
       {missing !== null && missing > 0 && (
-        <Badge variant="warning" className="h-4.5 text-2xs">
+        <Badge variant="warning" className="text-2xs h-4.5">
           {missing} missing requirement{missing === 1 ? "" : "s"}
         </Badge>
       )}
       {failures !== null && failures > 0 && (
-        <Badge variant="warning" className="h-4.5 text-2xs">
+        <Badge variant="warning" className="text-2xs h-4.5">
           {failures} rate validation failure{failures === 1 ? "" : "s"}
         </Badge>
       )}
@@ -180,12 +180,12 @@ function BankReceiptDetails({ notification }: { notification: Notification }) {
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1">
       {reference && (
-        <Badge variant="outline" className="h-4.5 font-mono text-2xs">
+        <Badge variant="outline" className="text-2xs h-4.5 font-mono">
           Ref {reference}
         </Badge>
       )}
       {amountMinor !== null && (
-        <Badge variant="secondary" className="h-4.5 text-2xs tabular-nums">
+        <Badge variant="secondary" className="text-2xs h-4.5 tabular-nums">
           {formatCurrency(amountMinor / 100)}
         </Badge>
       )}

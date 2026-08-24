@@ -27,7 +27,7 @@ export function MapZoomControls() {
               <Button
                 variant="outline"
                 size="icon-sm"
-                className="rounded-lg border bg-background shadow-sm backdrop-blur-sm"
+                className="bg-background rounded-lg border shadow-sm backdrop-blur-sm"
                 onClick={zoomIn}
               />
             }
@@ -42,7 +42,7 @@ export function MapZoomControls() {
               <Button
                 variant="outline"
                 size="icon-sm"
-                className="rounded-lg border bg-background shadow-sm backdrop-blur-sm"
+                className="bg-background rounded-lg border shadow-sm backdrop-blur-sm"
                 onClick={zoomOut}
               />
             }

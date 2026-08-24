@@ -6,7 +6,7 @@ import { UpcomingPTOContent } from "./upcoming-pto-content";
 function UpcomingPTOCardOuter({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="group relative mb-1 overflow-hidden rounded-xl border border-border p-3 transition-colors"
+      className="group border-border relative mb-1 overflow-hidden rounded-xl border p-3 transition-colors"
       role="article"
     >
       {children}
@@ -24,7 +24,7 @@ export function UpcomingPTOCard({ workerPTO }: { workerPTO: WorkerPTO }) {
   return (
     <UpcomingPTOCardOuter>
       <UpcomingPTOCardInner>
-        <Avatar className="size-9 bg-muted ring-1 ring-border">
+        <Avatar className="bg-muted ring-border size-9 ring-1">
           <AvatarImage
             src={worker?.profilePicUrl ?? undefined}
             alt={`${worker?.firstName ?? ""} ${worker?.lastName ?? ""}`}

@@ -184,26 +184,26 @@ function ReversalDetailPanel({
     >
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
         <div>
-          <dt className="text-2xs font-medium text-muted-foreground">Original Entry</dt>
+          <dt className="text-2xs text-muted-foreground font-medium">Original Entry</dt>
           <dd className="mt-0.5 font-mono text-xs">{reversal.originalJournalEntryId}</dd>
         </div>
         <div>
-          <dt className="text-2xs font-medium text-muted-foreground">Reason Code</dt>
+          <dt className="text-2xs text-muted-foreground font-medium">Reason Code</dt>
           <dd className="mt-0.5 text-xs font-medium">{reversal.reasonCode}</dd>
         </div>
         <div className="col-span-2">
-          <dt className="text-2xs font-medium text-muted-foreground">Reason</dt>
+          <dt className="text-2xs text-muted-foreground font-medium">Reason</dt>
           <dd className="mt-0.5 text-xs">{reversal.reasonText}</dd>
         </div>
         {reversal.reversalJournalEntryId ? (
           <div>
-            <dt className="text-2xs font-medium text-muted-foreground">Reversal Entry</dt>
+            <dt className="text-2xs text-muted-foreground font-medium">Reversal Entry</dt>
             <dd className="mt-0.5 font-mono text-xs">{reversal.reversalJournalEntryId}</dd>
           </div>
         ) : null}
         {reversal.rejectionReason ? (
           <div className="col-span-2">
-            <dt className="text-2xs font-medium text-muted-foreground">Rejection Reason</dt>
+            <dt className="text-2xs text-muted-foreground font-medium">Rejection Reason</dt>
             <dd className="mt-0.5 text-xs text-red-600 dark:text-red-400">
               {reversal.rejectionReason}
             </dd>
@@ -211,7 +211,7 @@ function ReversalDetailPanel({
         ) : null}
         {reversal.cancelReason ? (
           <div className="col-span-2">
-            <dt className="text-2xs font-medium text-muted-foreground">Cancel Reason</dt>
+            <dt className="text-2xs text-muted-foreground font-medium">Cancel Reason</dt>
             <dd className="mt-0.5 text-xs">{reversal.cancelReason}</dd>
           </div>
         ) : null}
@@ -271,7 +271,7 @@ function ReversalDetailPanel({
             {showRejectInput ? (
               <div className="space-y-2">
                 <textarea
-                  className="w-full rounded-md border bg-background px-3 py-2 text-xs"
+                  className="bg-background w-full rounded-md border px-3 py-2 text-xs"
                   rows={2}
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
@@ -303,7 +303,7 @@ function ReversalDetailPanel({
             {showCancelInput ? (
               <div className="space-y-2">
                 <textarea
-                  className="w-full rounded-md border bg-background px-3 py-2 text-xs"
+                  className="bg-background w-full rounded-md border px-3 py-2 text-xs"
                   rows={2}
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}

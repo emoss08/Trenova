@@ -31,18 +31,18 @@ export function FuelSurchargeChangeDialog({ change, onResolve }: FuelSurchargeCh
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <FuelIcon className="size-4 text-primary" />
+            <FuelIcon className="text-primary size-4" />
             Fuel Surcharge Re-Rated
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
             <span className="block">
               A change to this shipment (like an updated stop or distance) re-rated the automatic
               fuel surcharge from{" "}
-              <span className="font-medium text-foreground tabular-nums">
+              <span className="text-foreground font-medium tabular-nums">
                 {change ? money(change.previousAmount) : ""}
               </span>{" "}
               to{" "}
-              <span className="font-medium text-foreground tabular-nums">
+              <span className="text-foreground font-medium tabular-nums">
                 {change ? money(change.nextAmount) : ""}
               </span>
               . Only one fuel surcharge line is kept — choose which amount to bill.

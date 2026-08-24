@@ -46,7 +46,7 @@ function AttentionTile({ row, count }: { row: AttentionRowConfig; count: number 
   return (
     <Link
       to={row.path}
-      className="flex items-center gap-2 rounded px-1.5 py-1 transition-colors hover:bg-muted/60"
+      className="hover:bg-muted/60 flex items-center gap-2 rounded px-1.5 py-1 transition-colors"
     >
       <span
         className={cn(
@@ -58,7 +58,7 @@ function AttentionTile({ row, count }: { row: AttentionRowConfig; count: number 
       <span
         className={cn(
           "font-table text-[10.5px] tabular-nums",
-          hasWork ? "font-semibold text-foreground" : "text-muted-foreground",
+          hasWork ? "text-foreground font-semibold" : "text-muted-foreground",
         )}
       >
         {count > 999 ? "999+" : count}
@@ -85,7 +85,7 @@ export function UnassignedWidget({ widget }: WidgetProps) {
       badge={<WidgetCount value={summary.totalCount} tone="warning" />}
       actions={
         summary.pendingRevenue > 0 ? (
-          <span className="shrink-0 font-table text-[9.5px] text-muted-foreground tabular-nums">
+          <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
             {formatCurrency(summary.pendingRevenue)} waiting
           </span>
         ) : undefined
@@ -149,7 +149,7 @@ export function DetentionWatchWidget({ widget, data }: WidgetProps) {
             <Link
               key={item.shipmentId}
               to={shipmentHref(item.shipmentId)}
-              className="flex items-center gap-2 rounded px-1.5 py-1 transition-colors hover:bg-muted/60"
+              className="hover:bg-muted/60 flex items-center gap-2 rounded px-1.5 py-1 transition-colors"
             >
               <span
                 className={cn(
@@ -158,7 +158,7 @@ export function DetentionWatchWidget({ widget, data }: WidgetProps) {
                 )}
               />
               <span className="min-w-0 flex-1 truncate text-xs">{item.customer}</span>
-              <span className="shrink-0 font-table text-[10px] text-muted-foreground tabular-nums">
+              <span className="font-table text-muted-foreground shrink-0 text-[10px] tabular-nums">
                 {item.dwellLabel}
               </span>
             </Link>
@@ -189,20 +189,20 @@ export function TomorrowsPickupsWidget({ widget, data }: WidgetProps) {
             <Link
               key={item.shipmentId}
               to={shipmentHref(item.shipmentId)}
-              className="flex flex-col gap-0.5 rounded px-1.5 py-1 transition-colors hover:bg-muted/60"
+              className="hover:bg-muted/60 flex flex-col gap-0.5 rounded px-1.5 py-1 transition-colors"
             >
               <div className="flex items-baseline justify-between gap-2">
-                <span className="truncate font-table text-[10.5px] font-semibold tabular-nums">
+                <span className="font-table truncate text-[10.5px] font-semibold tabular-nums">
                   {item.proNumber}
                 </span>
-                <span className="shrink-0 font-table text-[9.5px] text-muted-foreground tabular-nums">
+                <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
                   {formatToUserTimezone(item.pickupWindowStart, {
                     showTimeZone: false,
                     showSeconds: false,
                   })}
                 </span>
               </div>
-              <div className="flex items-baseline justify-between gap-2 text-[10px] text-muted-foreground">
+              <div className="text-muted-foreground flex items-baseline justify-between gap-2 text-[10px]">
                 <span className="truncate">
                   {item.customer} · {item.origin} → {item.destination}
                 </span>
@@ -340,7 +340,7 @@ export function ExpiringCredentialsWidget({ widget }: WidgetProps) {
           <Link
             key={target.href}
             to={target.href}
-            className="rounded px-1.5 py-1 text-xs transition-colors hover:bg-muted/60"
+            className="hover:bg-muted/60 rounded px-1.5 py-1 text-xs transition-colors"
           >
             {target.label}
           </Link>

@@ -160,7 +160,7 @@ export function InstantPayDialog({
               <Skeleton className="h-10 w-full" />
             </div>
           ) : (events.data?.length ?? 0) === 0 ? (
-            <p className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
+            <p className="text-muted-foreground rounded-md border border-dashed p-4 text-center text-xs">
               This driver has no payable accrued events. Pay accrues once a load reaches the pay
               trigger milestone; held events must be released first.
             </p>
@@ -198,7 +198,7 @@ export function InstantPayDialog({
                 </ul>
               </ScrollArea>
 
-              <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+              <div className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2">
                 <span className="text-xs font-medium">Gross selected</span>
                 <span className="text-sm font-semibold tabular-nums">
                   <AmountDisplay value={selectedGross} currency="USD" />
@@ -213,7 +213,7 @@ export function InstantPayDialog({
                 />
                 <Label htmlFor="instant-pay-recurring" className="text-xs font-normal">
                   Apply recurring deductions, escrow, and advance recovery
-                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                  <span className="text-muted-foreground mt-0.5 block text-[11px]">
                     Off by default so this payout doesn&apos;t double-dip items the regular period
                     settlement will take.
                   </span>
@@ -283,7 +283,7 @@ function EventRow({
       />
       <div className="min-w-0 flex-1">
         <p className="truncate font-mono text-xs font-medium">{event.proNumber || "No pro #"}</p>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground text-[11px]">
           {formatUnixDate(event.eventDate)}
           {Number(event.totalMiles) > 0 ? ` · ${Number(event.totalMiles).toFixed(0)} mi` : ""}
         </p>

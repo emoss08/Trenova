@@ -101,12 +101,12 @@ export function ScriptLibraryEditor() {
               type="button"
               onClick={() => setSelectedId(library.id)}
               className={cn(
-                "block w-full border-b px-3 py-2 text-left hover:bg-muted",
+                "hover:bg-muted block w-full border-b px-3 py-2 text-left",
                 selected?.id === library.id && "bg-muted",
               )}
             >
               <div className="truncate text-sm font-medium">{library.name}</div>
-              <div className="truncate text-xs text-muted-foreground">
+              <div className="text-muted-foreground truncate text-xs">
                 {library.functionNames.length > 0
                   ? library.functionNames.join(", ")
                   : "No functions discovered"}
@@ -185,7 +185,7 @@ export function ScriptLibraryEditor() {
             />
           </div>
         ) : (
-          <div className="p-4 text-sm text-muted-foreground">No script libraries.</div>
+          <div className="text-muted-foreground p-4 text-sm">No script libraries.</div>
         )}
       </div>
     </div>

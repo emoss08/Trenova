@@ -59,7 +59,7 @@ export function ElementDesigner() {
 
   if (!selectedVersion || !segment) {
     return (
-      <div className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex h-full items-center justify-center p-4 text-sm">
         Select a template version and segment to edit.
       </div>
     );
@@ -67,7 +67,7 @@ export function ElementDesigner() {
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
-      <div className="sticky top-0 z-10 grid grid-cols-4 gap-2 border-b bg-background p-3 max-xl:grid-cols-2 max-sm:grid-cols-1">
+      <div className="bg-background sticky top-0 z-10 grid grid-cols-4 gap-2 border-b p-3 max-xl:grid-cols-2 max-sm:grid-cols-1">
         <InputBlock
           label="X12 Version"
           value={metadataDraft.x12Version}
@@ -113,7 +113,7 @@ export function ElementDesigner() {
               <Badge variant="outline">{segment.required ? "Required" : "Optional"}</Badge>
               <div>
                 <div className="text-sm font-semibold">{segment.name}</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-muted-foreground text-xs">
                   Sequence {segment.sequence}
                   {segment.repeatPath ? ` / repeats ${segment.repeatPath}` : ""}
                 </div>
@@ -198,7 +198,7 @@ function ElementInspector({
 }) {
   if (!element) {
     return (
-      <div className="flex items-center justify-center border-l p-4 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex items-center justify-center border-l p-4 text-sm">
         Select an element.
       </div>
     );
@@ -217,7 +217,7 @@ function ElementInspector({
             {segment.segmentId}
             {element.position.toString().padStart(2, "0")} {element.name}
           </div>
-          <div className="text-xs text-muted-foreground">Element source and validation rules</div>
+          <div className="text-muted-foreground text-xs">Element source and validation rules</div>
         </div>
         <ControlledSelectField
           label="Source"
@@ -254,7 +254,7 @@ function ElementInspector({
         <div className="flex items-center justify-between rounded-md border p-2">
           <div>
             <div className="text-xs font-medium">Required</div>
-            <div className="text-xs text-muted-foreground">Backend validation rule</div>
+            <div className="text-muted-foreground text-xs">Backend validation rule</div>
           </div>
           <Switch
             checked={element.validation.required}

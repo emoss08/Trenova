@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -122,6 +123,7 @@ func run(opts generatorOptions) error {
 		return err
 	}
 
+	//nolint:gosec // G306: generated Go source is meant to be world-readable
 	return os.WriteFile(resolved.OutputPath, output, 0o644)
 }
 
@@ -259,7 +261,7 @@ func loadSchema(dir string) (*gqlast.Schema, error) {
 
 func generate(data discovery) ([]byte, error) {
 	if data.Schema == nil {
-		return nil, fmt.Errorf("schema is required")
+		return nil, errors.New("schema is required")
 	}
 	if data.Manifest.Aliases == nil {
 		data.Manifest.Aliases = map[string]map[string]string{}
@@ -476,6 +478,13 @@ func selectionForModelOverride(
 	}
 
 	fieldMap, ok := data.FieldMaps[st.Name]
+	if ok && !fieldMapCoversStruct(&fieldMap, &st) {
+		// FieldMaps are keyed by unqualified struct name, so a same-named entity
+		// from another domain package (e.g. modeprofile.Profile vs email.Profile)
+		// can shadow the bound model's map. Treat a map that does not cover this
+		// struct's own columns as absent and synthesize instead.
+		ok = false
+	}
 	if !ok {
 		// Some domain packages are intentionally excluded from buncolgen (e.g.
 		// email, whose unqualified model names would collide). When a bound bun
@@ -483,7 +492,11 @@ func selectionForModelOverride(
 		// tags so the type still gets a projection spec instead of being dropped.
 		synthesized, synthOK := synthesizeFieldMap(st)
 		if !synthOK {
-			return typeSelection{}, fmt.Errorf("model %q has no buncolgen %sFieldMap", model, st.Name)
+			return typeSelection{}, fmt.Errorf(
+				"model %q has no buncolgen %sFieldMap",
+				model,
+				st.Name,
+			)
 		}
 		fieldMap = synthesized
 	}
@@ -493,6 +506,20 @@ func selectionForModelOverride(
 		Struct:   st,
 		FieldMap: fieldMap,
 	}, nil
+}
+
+func fieldMapCoversStruct(fieldMap *fieldMapRegistration, st *goStruct) bool {
+	for _, field := range st.Fields {
+		if !field.IsColumn {
+			continue
+		}
+		if column, exists := fieldMap.Values[field.JSONName]; !exists ||
+			column != field.ColumnName {
+			return false
+		}
+	}
+
+	return true
 }
 
 func synthesizeFieldMap(st goStruct) (fieldMapRegistration, bool) {
@@ -669,7 +696,11 @@ func validateOverrideTypes(data discovery) error {
 	validateTypeMap := func(groupName string, values map[string]map[string]string) error {
 		for typeName := range values {
 			if _, ok := data.Selections[typeName]; !ok {
-				return fmt.Errorf("%s override references non-projection type %q", groupName, typeName)
+				return fmt.Errorf(
+					"%s override references non-projection type %q",
+					groupName,
+					typeName,
+				)
 			}
 		}
 		return nil
@@ -677,7 +708,11 @@ func validateOverrideTypes(data discovery) error {
 	validateTypeList := func(groupName string, values map[string][]string) error {
 		for typeName := range values {
 			if _, ok := data.Selections[typeName]; !ok {
-				return fmt.Errorf("%s override references non-projection type %q", groupName, typeName)
+				return fmt.Errorf(
+					"%s override references non-projection type %q",
+					groupName,
+					typeName,
+				)
 			}
 		}
 		return nil
@@ -762,10 +797,19 @@ func validateSpecialFields(data discovery) error {
 			seenForKey := make(map[string]struct{}, len(fields))
 			for _, field := range fields {
 				if field == "" {
-					return fmt.Errorf("specials.%s.%s contains an empty field", typeName, specialKey)
+					return fmt.Errorf(
+						"specials.%s.%s contains an empty field",
+						typeName,
+						specialKey,
+					)
 				}
 				if _, ok := seenForKey[field]; ok {
-					return fmt.Errorf("specials.%s.%s lists field %q more than once", typeName, specialKey, field)
+					return fmt.Errorf(
+						"specials.%s.%s lists field %q more than once",
+						typeName,
+						specialKey,
+						field,
+					)
 				}
 				seenForKey[field] = struct{}{}
 				if _, ok := virtuals[field]; ok {

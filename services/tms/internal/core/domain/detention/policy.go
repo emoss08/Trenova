@@ -40,7 +40,7 @@ var (
 
 type DetentionPolicy struct {
 	bun.BaseModel             `bun:"table:detention_policies,alias:dtp" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                            json:"-"`
+	pagination.CursorValueSet `bun:",embed"                             json:"-"`
 
 	ID             pulid.ID     `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID     `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
@@ -265,7 +265,6 @@ func containsAny(want, have []pulid.ID) bool {
 	return false
 }
 
-//nolint:funlen // a policy is a contract; every clause needs its own message
 func (p *DetentionPolicy) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.Name,

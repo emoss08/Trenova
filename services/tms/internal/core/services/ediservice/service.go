@@ -68,6 +68,10 @@ type Params struct {
 	ShipmentCommentRepo repositories.ShipmentCommentRepository
 	UserRepo            repositories.UserRepository
 	ShipmentRepo        repositories.ShipmentRepository
+	TenderRepo          repositories.TenderRepository       `optional:"true"`
+	CarrierRepo         repositories.CarrierRepository      `optional:"true"`
+	ShipmentMoveRepo    repositories.ShipmentMoveRepository `optional:"true"`
+	ShipmentMoves       services.ShipmentMoveService        `optional:"true"`
 	ShipmentSvc         services.ShipmentService
 	WorkflowStarter     services.WorkflowStarter
 	AuditService        services.AuditService
@@ -108,6 +112,10 @@ type Service struct {
 	shipmentCommentRepo repositories.ShipmentCommentRepository
 	userRepo            repositories.UserRepository
 	shipmentRepo        repositories.ShipmentRepository
+	tenderRepo          repositories.TenderRepository
+	carrierRepo         repositories.CarrierRepository
+	shipmentMoveRepo    repositories.ShipmentMoveRepository
+	shipmentMoves       services.ShipmentMoveService
 	shipmentSvc         services.ShipmentService
 	workflowStarter     services.WorkflowStarter
 	auditService        services.AuditService
@@ -155,6 +163,10 @@ func New(p Params) *Service {
 		shipmentCommentRepo: p.ShipmentCommentRepo,
 		userRepo:            p.UserRepo,
 		shipmentRepo:        p.ShipmentRepo,
+		tenderRepo:          p.TenderRepo,
+		carrierRepo:         p.CarrierRepo,
+		shipmentMoveRepo:    p.ShipmentMoveRepo,
+		shipmentMoves:       p.ShipmentMoves,
 		shipmentSvc:         p.ShipmentSvc,
 		workflowStarter:     p.WorkflowStarter,
 		auditService:        p.AuditService,
@@ -338,10 +350,18 @@ func (s *Service) SubmitLoadTender(
 		return nil, err
 	}
 
-	sourcePartner, err := s.partnerRepo.GetByID(ctx, repositories.GetEDIPartnerByIDRequest{
-		ID:         req.EDIPartnerID,
+	sourceShipment, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         req.SourceShipmentID,
 		TenantInfo: req.TenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	sourcePartner, err := s.resolveTenderSourcePartner(ctx, req, sourceShipment)
 	if err != nil {
 		return nil, err
 	}
@@ -382,17 +402,6 @@ func (s *Service) SubmitLoadTender(
 			errortypes.ErrInvalidOperation,
 			"EDI connection is not enabled for outbound load tenders",
 		)
-	}
-
-	sourceShipment, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         req.SourceShipmentID,
-		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		return nil, err
 	}
 
 	targetPartner, err := s.partnerRepo.GetReciprocalInternalPartner(
@@ -542,6 +551,47 @@ func (s *Service) SubmitLoadTender(
 
 	s.logAction(created, actor, permission.OpCreate, nil, created, "EDI load tender submitted")
 	return created, nil
+}
+
+func (s *Service) resolveTenderSourcePartner(
+	ctx context.Context,
+	req *SubmitLoadTenderRequest,
+	sourceShipment *shipment.Shipment,
+) (*edi.EDIPartner, error) {
+	if req.EDIPartnerID.IsNotNil() {
+		return s.partnerRepo.GetByID(ctx, repositories.GetEDIPartnerByIDRequest{
+			ID:         req.EDIPartnerID,
+			TenantInfo: req.TenantInfo,
+		})
+	}
+
+	if sourceShipment.CustomerID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"ediPartnerId",
+			errortypes.ErrInvalidOperation,
+			"Shipment has no customer to resolve an EDI partner from",
+		)
+	}
+
+	partners, err := s.partnerRepo.ListInternalOutboundPartnersByCustomerIDs(
+		ctx,
+		repositories.ListEDIPartnersByCustomerIDsRequest{
+			CustomerIDs: []pulid.ID{sourceShipment.CustomerID},
+			TenantInfo:  req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if len(partners) == 0 {
+		return nil, errortypes.NewValidationError(
+			"ediPartnerId",
+			errortypes.ErrInvalidOperation,
+			"Customer is not linked to an internal EDI partner enabled for outbound load tenders",
+		)
+	}
+
+	return partners[0], nil
 }
 
 func (s *Service) ListInboundTransfers(
@@ -1869,11 +1919,6 @@ func (s *Service) createSystemShipmentComment(
 	return err
 }
 
-//go:fix inline
-func tenderStatusPtr(status shipment.TenderStatus) *shipment.TenderStatus {
-	return new(status)
-}
-
 func validateSubmitLoadTender(req *SubmitLoadTenderRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
@@ -1882,9 +1927,6 @@ func validateSubmitLoadTender(req *SubmitLoadTenderRequest) error {
 	}
 	if req.SourceShipmentID.IsNil() {
 		multiErr.Add("sourceShipmentId", errortypes.ErrRequired, "Source shipment ID is required")
-	}
-	if req.EDIPartnerID.IsNil() {
-		multiErr.Add("ediPartnerId", errortypes.ErrRequired, "EDI partner ID is required")
 	}
 	if multiErr.HasErrors() {
 		return multiErr

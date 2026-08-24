@@ -109,13 +109,13 @@ function WizardField({
         suffix={suffix}
         inputMode="decimal"
         className={cn(
-          "flex h-8 w-full rounded-md border border-input bg-muted px-2.5 text-sm tabular-nums outline-none",
+          "border-input bg-muted flex h-8 w-full rounded-md border px-2.5 text-sm tabular-nums outline-none",
           "transition-[border-color,box-shadow] duration-150 ease-in-out",
-          "focus-visible:border-brand focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-brand/20",
+          "focus-visible:border-brand focus-visible:bg-background focus-visible:ring-brand/20 focus-visible:ring-4",
           invalid && "border-red-500/60 bg-red-500/10",
         )}
       />
-      <p className="text-xs leading-snug text-muted-foreground">{helper}</p>
+      <p className="text-muted-foreground text-xs leading-snug">{helper}</p>
     </div>
   );
 }
@@ -236,7 +236,7 @@ export function GenerateTableDialog({
               suffix={valueMeta.suffix}
               decimalScale={valueMeta.decimalScale}
             />
-            <div className="flex items-start gap-2.5 rounded-lg border bg-muted/40 p-3">
+            <div className="bg-muted/40 flex items-start gap-2.5 rounded-lg border p-3">
               <Switch
                 checked={state.openEnded}
                 onCheckedChange={(checked) => update({ openEnded: checked })}
@@ -246,7 +246,7 @@ export function GenerateTableDialog({
                 <Label htmlFor={openEndedId} className="text-xs font-medium">
                   Cover prices outside the range
                 </Label>
-                <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                <p className="text-muted-foreground mt-0.5 text-xs leading-snug">
                   Adds open-ended bottom and top bands so every possible fuel price matches a band.
                   Recommended.
                 </p>
@@ -255,21 +255,21 @@ export function GenerateTableDialog({
           </div>
 
           <div className="flex min-h-72 flex-col overflow-hidden rounded-lg border">
-            <div className="flex items-center justify-between border-b bg-muted/60 px-3 py-2">
+            <div className="bg-muted/60 flex items-center justify-between border-b px-3 py-2">
               <span className="text-xs font-medium">Preview</span>
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
                 {isFetching && <LoaderCircle className="size-3 animate-spin" />}
                 {valid && !tooMany ? `${preview?.length ?? estimate} bands` : ""}
               </span>
             </div>
             {!valid ? (
-              <div className="flex flex-1 items-center justify-center p-6 text-center text-xs text-muted-foreground">
+              <div className="text-muted-foreground flex flex-1 items-center justify-center p-6 text-center text-xs">
                 {rangeInvalid
                   ? "The highest price must be above the lowest price."
                   : "Fill in the fields on the left to see the table."}
               </div>
             ) : tooMany ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-xs text-muted-foreground">
+              <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-xs">
                 <TriangleAlert className="size-5 text-amber-500" />
                 <p>
                   That would create {estimate} bands (limit {MAX_BANDS}). Widen the band width or
@@ -279,8 +279,8 @@ export function GenerateTableDialog({
             ) : (
               <div className="flex-1 overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-muted/80 backdrop-blur">
-                    <tr className="text-left text-xs text-muted-foreground">
+                  <thead className="bg-muted/80 sticky top-0 backdrop-blur">
+                    <tr className="text-muted-foreground text-left text-xs">
                       <th className="px-3 py-1.5 font-medium">From</th>
                       <th className="px-3 py-1.5 font-medium">Up To</th>
                       <th className="px-3 py-1.5 font-medium">{valueMeta.label}</th>
@@ -308,7 +308,7 @@ export function GenerateTableDialog({
         </div>
 
         <DialogFooter className="items-center gap-3 sm:justify-between">
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             {replaceCount > 0
               ? `Applying replaces your ${replaceCount} existing ${replaceCount === 1 ? "band" : "bands"}.`
               : ""}

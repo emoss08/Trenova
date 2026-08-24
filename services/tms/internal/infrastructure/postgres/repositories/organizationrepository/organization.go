@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -105,7 +106,7 @@ func (r *repository) GetByIDs(
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("org.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("org.id IN (?)", bun.In(req.OrganizationIDs))
+				Where("org.id IN (?)", bun.List(req.OrganizationIDs))
 		})
 
 	if req.IncludeState {
@@ -213,12 +214,22 @@ func (r *repository) Update(
 	ov := org.Version
 	org.Version++
 
-	results, rErr := r.db.DB().
+	results, rErr := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(org).
 		WherePK().
 		Where("version = ?", ov).
 		OmitZero().
+		Value(
+			buncolgen.OrganizationColumns.BrokerageEnabled.String(),
+			"?",
+			org.BrokerageEnabled,
+		).
+		Value(
+			buncolgen.OrganizationColumns.AssetOperationsEnabled.String(),
+			"?",
+			org.AssetOperationsEnabled,
+		).
 		Returning("*").
 		Exec(ctx)
 

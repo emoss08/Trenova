@@ -1,4 +1,5 @@
 import {
+  autoRateShipmentGraphQL,
   bulkTransferShipmentsToBillingGraphQL,
   calculateShipmentDistanceGraphQL,
   calculateShipmentLoadingOptimizationGraphQL,
@@ -15,6 +16,7 @@ import {
   listShipmentCommentsGraphQL,
   listShipmentsGraphQL,
   listUnassignedShipmentsGraphQL,
+  previewShipmentContractRateGraphQL,
   recalculateShipmentDistanceGraphQL,
   transferShipmentOwnershipGraphQL,
   transferShipmentToBillingGraphQL,
@@ -30,7 +32,17 @@ import {
 import { createLimitOffsetResponse, type PaginationInfo } from "@trenova/shared/types/server";
 import type { BillType } from "@trenova/shared/types/bill-type";
 import {
+  permitAssessmentSchema,
+  permitCreateSchema,
+  permitListSchema,
+  permitRequirementListSchema,
+  permitRequirementSchema,
+  permitSchema,
+  type PermitCreateInput,
+} from "@trenova/shared/types/permit";
+import {
   bulkTransferToBillingResponseSchema,
+  contractRateSchema,
   duplicateShipmentResponseSchema,
   previousRatesResponseSchema,
   shipmentBillingReadinessSchema,
@@ -111,6 +123,34 @@ export class ShipmentService {
     return safeParse(shipmentSchema, response, "Shipment");
   }
 
+  /**
+   * Asks the rate agreements what they would charge for what is on screen.
+   *
+   * Nothing is written. The panel offers the answer, and the shipment only
+   * carries a contract rate once somebody saves the fields it filled in.
+   */
+  public async previewContractRate(payload: Shipment) {
+    const response = await previewShipmentContractRateGraphQL(payload);
+    return safeParse(contractRateSchema, response, "Contract Rate");
+  }
+
+  /**
+   * Prices a saved shipment from its contract again.
+   *
+   * This overwrites: the rating method, the base rate and every contract
+   * accessorial go back to what the agreement says. It is the one action that
+   * discards a hand-priced rate, which is why nothing else calls it.
+   */
+  public async autoRate(shipmentId: string) {
+    const response = await autoRateShipmentGraphQL(shipmentId);
+    const [shipment, contractRate] = await Promise.all([
+      safeParse(shipmentSchema, response.shipment, "Shipment"),
+      safeParse(contractRateSchema, response.contractRate, "Contract Rate"),
+    ]);
+
+    return { shipment, contractRate };
+  }
+
   public async calculateTotals(payload: Shipment, _signal?: AbortSignal) {
     const response = await calculateShipmentTotalsGraphQL(payload);
     return safeParse(shipmentTotalsResponseSchema, response, "Shipment Totals");
@@ -172,5 +212,52 @@ export class ShipmentService {
   public async getBillingReadiness(shipmentId: Shipment["id"]) {
     const response = await getShipmentBillingReadinessGraphQL(shipmentId);
     return safeParse(shipmentBillingReadinessSchema, response, "Shipment Billing Readiness");
+  }
+
+  public async getPermitAssessment(shipmentId: NonNullable<Shipment["id"]>) {
+    const response = await api.get<unknown>(`/shipments/${shipmentId}/permit-assessment/`);
+    return safeParse(permitAssessmentSchema, response, "Shipment Permit Assessment");
+  }
+
+  public async listPermits(shipmentId: NonNullable<Shipment["id"]>) {
+    const response = await api.get<unknown>(`/shipments/${shipmentId}/permits/`);
+    return safeParse(permitListSchema, response ?? [], "Shipment Permits");
+  }
+
+  public async listPermitRequirements(shipmentId: NonNullable<Shipment["id"]>) {
+    const response = await api.get<unknown>(`/shipments/${shipmentId}/permit-requirements/`);
+    return safeParse(permitRequirementListSchema, response ?? [], "Permit Requirements");
+  }
+
+  public async createPermit(shipmentId: NonNullable<Shipment["id"]>, payload: PermitCreateInput) {
+    const response = await api.post<unknown>(
+      `/shipments/${shipmentId}/permits/`,
+      permitCreateSchema.parse(payload),
+    );
+    return safeParse(permitSchema, response, "Permit");
+  }
+
+  public async updatePermit(
+    shipmentId: NonNullable<Shipment["id"]>,
+    permitId: string,
+    payload: PermitCreateInput,
+  ) {
+    const response = await api.put<unknown>(
+      `/shipments/${shipmentId}/permits/${permitId}/`,
+      permitCreateSchema.parse(payload),
+    );
+    return safeParse(permitSchema, response, "Permit");
+  }
+
+  public async waivePermitRequirement(
+    shipmentId: NonNullable<Shipment["id"]>,
+    requirementId: string,
+    reason: string,
+  ) {
+    const response = await api.post<unknown>(
+      `/shipments/${shipmentId}/permit-requirements/${requirementId}/waive/`,
+      { reason },
+    );
+    return safeParse(permitRequirementSchema, response, "Permit Requirement");
   }
 }

@@ -19,6 +19,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/carrierhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/controlplaneprovisioninghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
@@ -65,6 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalentryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
@@ -72,14 +75,23 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/permithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pushhandler"
-	"github.com/emoss08/trenova/internal/api/handlers/ratetablehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateagreementhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateconfirmationpublichandler"
+	"github.com/emoss08/trenova/internal/api/handlers/rateimporthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratematrixhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratequotehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratesimulationhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/ratezonehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/recurringshipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
@@ -93,6 +105,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/telematicshandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tenderhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tenderpublichandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
@@ -158,6 +172,8 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	shipmenteventhandler.New,
 	shipmentmovehandler.New,
 	shipmenthandler.New,
+	permithandler.New,
+	jurisdictionrulehandler.New,
 	shipmenttypehandler.New,
 	hazardousmaterialhandler.New,
 	hazmatsegregationrulehandler.New,
@@ -166,6 +182,13 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	emailhandler.New,
 	telematicshandler.New,
 	commodityhandler.New,
+	carrierassignmenthandler.New,
+	tenderpublichandler.New,
+	tenderhandler.New,
+	routingguidehandler.New,
+	carrierhandler.New,
+	rateconfirmationhandler.New,
+	rateconfirmationpublichandler.New,
 	customerhandler.New,
 	customerpaymenthandler.New,
 	googlemapshandler.New,
@@ -181,8 +204,13 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	documenttypehandler.New,
 	holdreasonhandler.New,
 	recurringshipmenthandler.New,
-	ratetablehandler.New,
 	detentionpolicyhandler.New,
+	rateagreementhandler.New,
+	ratezonehandler.New,
+	ratematrixhandler.New,
+	ratesimulationhandler.New,
+	rateimporthandler.New,
+	ratequotehandler.New,
 	detentionhandler.New,
 	invoiceadjustmenthandler.New,
 	invoiceadjustmentcontrolhandler.New,

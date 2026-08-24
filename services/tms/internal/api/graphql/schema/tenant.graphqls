@@ -28,6 +28,8 @@ type Organization {
   postalCode: String!
   timezone: String!
   taxId: String!
+  brokerageEnabled: Boolean!
+  assetOperationsEnabled: Boolean!
   version: Int!
   createdAt: Int!
   updatedAt: Int!
@@ -50,6 +52,8 @@ input OrganizationInput {
   postalCode: String!
   timezone: String!
   taxId: String
+  brokerageEnabled: Boolean
+  assetOperationsEnabled: Boolean
 }
 
 type User {

@@ -30,6 +30,7 @@ type resolvedDocumentContext struct {
 	x12Version         string
 	runtime            map[string]any
 	partnerDiagnostics []edix12.Diagnostic
+	carrierSCAC        string
 }
 
 func (s *Service) ListDocumentTypes(
@@ -398,6 +399,7 @@ func (s *Service) GenerateDocument(
 		TransactionSet:           req.TransactionSet,
 		Direction:                req.Direction,
 		Payload:                  req.Payload,
+		CarrierSCAC:              req.CarrierSCAC,
 	}
 	resolved, err := s.resolveDocumentContext(ctx, previewReq)
 	if err != nil {
@@ -507,8 +509,10 @@ func (s *Service) GenerateDocument(
 	if err != nil {
 		return nil, err
 	}
-	if err = s.upsertExternalTenderRecipient(ctx, created, resolved.profile); err != nil {
-		return nil, err
+	if !req.SuppressTenderRecipientUpsert {
+		if err = s.upsertExternalTenderRecipient(ctx, created, resolved.profile); err != nil {
+			return nil, err
+		}
 	}
 	if !req.DisableDeliveryQueue {
 		if err = s.queueMessageForDelivery(ctx, created); err != nil {
@@ -522,7 +526,9 @@ func (s *Service) GenerateDocument(
 	return created, nil
 }
 
-func generatedMessageAckStatus(profile *edi.EDIPartnerDocumentProfile) edi.MessageAcknowledgmentStatus {
+func generatedMessageAckStatus(
+	profile *edi.EDIPartnerDocumentProfile,
+) edi.MessageAcknowledgmentStatus {
 	if profile == nil ||
 		profile.Direction != edi.DocumentDirectionOutbound ||
 		!profile.Acknowledgment.Expected ||
@@ -729,6 +735,7 @@ func (s *Service) resolveDocumentContext(
 		x12Version:         x12Version,
 		runtime:            runtime,
 		partnerDiagnostics: partnerDiagnostics,
+		carrierSCAC:        req.CarrierSCAC,
 	}, nil
 }
 
@@ -886,10 +893,13 @@ func (s *Service) resolvePayload(
 				edi.TransactionSet214,
 			)
 		}
-		result, err := s.BuildShipmentStatusPayloadForServiceFailure(ctx, &services.BuildServiceFailureEDIPayloadRequest{
-			TenantInfo:       req.TenantInfo,
-			ServiceFailureID: req.ServiceFailureID,
-		})
+		result, err := s.BuildShipmentStatusPayloadForServiceFailure(
+			ctx,
+			&services.BuildServiceFailureEDIPayloadRequest{
+				TenantInfo:       req.TenantInfo,
+				ServiceFailureID: req.ServiceFailureID,
+			},
+		)
 		if err != nil {
 			return edi.DocumentPayload{}, err
 		}
@@ -989,6 +999,7 @@ func (c *resolvedDocumentContext) renderInput() *edix12.RenderInput {
 		DocumentPayload: c.payload,
 		X12Version:      c.x12Version,
 		Runtime:         c.runtime,
+		CarrierSCAC:     c.carrierSCAC,
 	}
 }
 

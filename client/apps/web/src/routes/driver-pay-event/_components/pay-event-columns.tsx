@@ -90,7 +90,7 @@ function HoldControls({ row }: { row: DriverPayEventRow }) {
         type="button"
         disabled={pending}
         onClick={() => setDialogOpen(true)}
-        className="inline-flex cursor-pointer items-center rounded-full px-1 py-px text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground inline-flex cursor-pointer items-center rounded-full px-1 py-px opacity-0 transition-opacity group-hover/row:opacity-100"
         title="Hold this pay event — it skips settlement generation until released"
         aria-label="Hold pay event"
       >
@@ -183,7 +183,7 @@ export function getColumns(): ColumnDef<DriverPayEventRow>[] {
       id: "components",
       header: "Breakdown",
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           {(row.original.components ?? [])
             .map((component) => component.description)
             .slice(0, 3)

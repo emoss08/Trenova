@@ -117,13 +117,13 @@ function StepDot({ state }: { state: StepState }) {
             <CheckIcon className="size-2.5 stroke-[3] text-white" />
           </m.div>
         )}
-        {state === "active" && <LoaderCircleIcon className="size-2.5 animate-spin text-foreground/70" />}
-        {state === "error" && <AlertCircleIcon className="size-2.5 text-destructive" />}
+        {state === "active" && <LoaderCircleIcon className="text-foreground/70 size-2.5 animate-spin" />}
+        {state === "error" && <AlertCircleIcon className="text-destructive size-2.5" />}
       </div>
       {/* Pulse ring on active */}
       {state === "active" && (
         <m.div
-          className="absolute size-5 rounded-full border border-foreground/10"
+          className="border-foreground/10 absolute size-5 rounded-full border"
           animate={{ scale: [1, 1.8], opacity: [0.3, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
         />
@@ -156,7 +156,7 @@ export function ProcessingPhase({
         <div className="relative rounded-xl">
           {!hasFailed && <BorderBeam duration={3} />}
 
-          <div className="relative rounded-xl border bg-background p-6 shadow-xs">
+          <div className="bg-background relative rounded-xl border p-6 shadow-xs">
             {/* Header */}
             <div className="text-center">
               {!hasFailed ? (
@@ -164,14 +164,14 @@ export function ProcessingPhase({
                   Analyzing rate confirmation
                 </TextShimmer>
               ) : (
-                <span className="text-[13px] font-medium text-destructive">Extraction failed</span>
+                <span className="text-destructive text-[13px] font-medium">Extraction failed</span>
               )}
               {fileName && (
                 <m.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.15 }}
-                  className="mt-1 truncate text-2xs text-muted-foreground"
+                  className="text-2xs text-muted-foreground mt-1 truncate"
                 >
                   {fileName}
                 </m.p>
@@ -179,7 +179,7 @@ export function ProcessingPhase({
             </div>
 
             {/* Divider */}
-            <div className="my-5 h-px bg-border" />
+            <div className="bg-border my-5 h-px" />
 
             {/* Steps */}
             <div className="flex flex-col items-center">
@@ -211,7 +211,7 @@ export function ProcessingPhase({
                         className={cn(
                           "text-[13px] leading-5 transition-all duration-500",
                           step.state === "complete" && "text-foreground",
-                          step.state === "active" && "font-medium text-foreground",
+                          step.state === "active" && "text-foreground font-medium",
                           step.state === "pending" && "text-muted-foreground/30",
                           step.state === "error" && "text-destructive",
                         )}
@@ -227,7 +227,7 @@ export function ProcessingPhase({
             {/* Error */}
             {errorMessage && (
               <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-5 space-y-3 border-t pt-4">
-                <p className="text-xs text-muted-foreground">{errorMessage}</p>
+                <p className="text-muted-foreground text-xs">{errorMessage}</p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={onRetryExtraction} disabled={isRetrying}>
                     {isRetrying && <LoaderCircleIcon className="size-3.5 animate-spin" />}
@@ -247,7 +247,7 @@ export function ProcessingPhase({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
-            className="mt-4 text-center text-2xs text-muted-foreground/40"
+            className="text-2xs text-muted-foreground/40 mt-4 text-center"
           >
             This usually takes a few seconds
           </m.p>

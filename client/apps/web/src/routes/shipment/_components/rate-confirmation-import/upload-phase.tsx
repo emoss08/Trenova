@@ -48,7 +48,7 @@ export function UploadPhase({
       >
         <div className="space-y-1 text-center">
           <h2 className="text-base font-medium">Upload rate confirmation</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             PDF or image. Shipment details are extracted automatically.
           </p>
         </div>
@@ -64,7 +64,7 @@ export function UploadPhase({
           <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="space-y-3 rounded-lg border bg-background p-3"
+            className="bg-background space-y-3 rounded-lg border p-3"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
@@ -75,11 +75,11 @@ export function UploadPhase({
                   </TextShimmer>
                 )}
                 {currentUpload.status === "success" && (
-                  <span className="text-xs text-muted-foreground">Complete</span>
+                  <span className="text-muted-foreground text-xs">Complete</span>
                 )}
               </div>
               {currentUpload.status === "uploading" && (
-                <LoaderCircleIcon className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
+                <LoaderCircleIcon className="text-muted-foreground size-3.5 shrink-0 animate-spin" />
               )}
             </div>
 
@@ -90,7 +90,7 @@ export function UploadPhase({
             />
 
             {currentUpload.error && (
-              <div className="flex items-start gap-2 text-xs text-destructive">
+              <div className="text-destructive flex items-start gap-2 text-xs">
                 <AlertCircleIcon className="mt-0.5 size-3 shrink-0" />
                 <span>{currentUpload.error}</span>
               </div>

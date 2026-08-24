@@ -260,7 +260,7 @@ export function BillingQueueSidebar({
           <div className="flex items-center gap-1">
             <Input
               placeholder="Search PRO, BOL..."
-              leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               value={search}
               onChange={(e) => void setSearchParams({ query: e.target.value })}
               className="h-7 flex-1 text-xs"
@@ -272,7 +272,7 @@ export function BillingQueueSidebar({
                   <FilterIcon className="size-3" />
                   <span className="text-xs">Filters</span>
                   {activeFilterCount > 0 && (
-                    <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                    <span className="bg-primary text-primary-foreground flex size-4 items-center justify-center rounded-full text-[10px] font-medium">
                       {activeFilterCount}
                     </span>
                   )}
@@ -294,7 +294,7 @@ export function BillingQueueSidebar({
               <div className="flex flex-col gap-1">
                 <div className="flex flex-row gap-2">
                   <div className="flex flex-col gap-1">
-                    <p className="text-[11px] text-muted-foreground">Status</p>
+                    <p className="text-muted-foreground text-[11px]">Status</p>
                     <Select
                       value={statusFilter ?? "all"}
                       items={billingQueueStatusChoices}
@@ -316,7 +316,7 @@ export function BillingQueueSidebar({
                     </Select>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <p className="text-[11px] text-muted-foreground">Bill Type</p>
+                    <p className="text-muted-foreground text-[11px]">Bill Type</p>
                     <Select
                       value={billTypeFilter ?? "all"}
                       items={billTypeChoices}
@@ -341,7 +341,7 @@ export function BillingQueueSidebar({
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-[11px] text-muted-foreground">Assigned Billers</p>
+                  <p className="text-muted-foreground text-[11px]">Assigned Billers</p>
                   <MultiSelectAutocomplete<User>
                     link="/users/select-options/"
                     label="Billers"
@@ -371,7 +371,7 @@ export function BillingQueueSidebar({
                   />
                   <div className="space-y-0.5">
                     <p className="text-xs font-medium">Include posted items</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-muted-foreground text-[11px]">
                       Show historical queue records that already produced a posted invoice.
                     </p>
                   </div>
@@ -412,12 +412,12 @@ export function BillingQueueSidebar({
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-1.5 p-2">
           {isLoading && (
-            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            <div className="text-muted-foreground flex items-center justify-center py-8 text-sm">
               Loading...
             </div>
           )}
           {!isLoading && items.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
+            <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-12">
               <InboxIcon className="size-8" />
               <p className="text-sm">No items in queue</p>
             </div>

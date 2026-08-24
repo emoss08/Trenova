@@ -39,7 +39,7 @@ export function ReconciliationHeader({
           )}
           {counts.missing > 0 && (
             <div className="flex items-center gap-1.5">
-              <div className="size-1.5 rounded-full bg-muted-foreground/30" />
+              <div className="bg-muted-foreground/30 size-1.5 rounded-full" />
               <span className="text-muted-foreground">{counts.missing} missing</span>
             </div>
           )}

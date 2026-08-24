@@ -79,15 +79,15 @@ export function AiMessageBubble({
   const ProviderLogo = provider ? PROVIDER_LOGOS[provider] : null;
 
   const defaultAvatar = isUser ? (
-    <div className="flex size-7 items-center justify-center border bg-foreground text-background">
+    <div className="bg-foreground text-background flex size-7 items-center justify-center border">
       <User className="size-3.5" />
     </div>
   ) : ProviderLogo ? (
-    <div className="flex size-7 items-center justify-center border bg-background">
+    <div className="bg-background flex size-7 items-center justify-center border">
       <ProviderLogo className="size-3.5" />
     </div>
   ) : (
-    <div className="flex size-7 items-center justify-center border bg-background">
+    <div className="bg-background flex size-7 items-center justify-center border">
       <svg
         className="size-3.5"
         viewBox="0 0 24 24"
@@ -122,7 +122,7 @@ export function AiMessageBubble({
       <div
         className={cn(
           "relative max-w-[80%] px-3 py-2",
-          isUser ? "border bg-foreground text-background" : "text-foreground"
+          isUser ? "bg-foreground text-background border" : "text-foreground"
         )}
       >
         <div aria-live={isStreaming ? "polite" : undefined}>
@@ -149,7 +149,7 @@ export function AiMessageBubble({
         {!isUser && !isStreaming && (
           <button
             type="button"
-            className="absolute top-0.5 -right-8 flex size-6 items-center justify-center border bg-background opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted"
+            className="bg-background hover:bg-muted absolute top-0.5 -right-8 flex size-6 items-center justify-center border opacity-0 transition-opacity group-hover:opacity-100"
             onClick={handleCopy}
           >
             {copied ? (

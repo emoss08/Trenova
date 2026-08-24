@@ -35,7 +35,7 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
       }
     >
       {fields.length === 0 && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           No options defined. Add at least one option for select fields.
         </p>
       )}
@@ -69,7 +69,7 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
                 size="icon"
                 onClick={() => remove(index)}
               >
-                <TrashIcon className="size-4 text-destructive" />
+                <TrashIcon className="text-destructive size-4" />
               </Button>
             </div>
           </div>

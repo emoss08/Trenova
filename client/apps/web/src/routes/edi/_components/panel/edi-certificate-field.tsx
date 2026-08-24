@@ -104,13 +104,13 @@ function CertificateSummaryLine({
 }) {
   if (!hasValue) {
     return (
-      <p className="text-xs text-muted-foreground">
+      <p className="text-muted-foreground text-xs">
         Paste a PEM certificate or upload a .pem/.crt file.
       </p>
     );
   }
   if (inspection.isPending) {
-    return <p className="text-xs text-muted-foreground">Inspecting certificate…</p>;
+    return <p className="text-muted-foreground text-xs">Inspecting certificate…</p>;
   }
   if (inspection.isError || !inspection.data) {
     return (
@@ -133,12 +133,12 @@ function CertificateSummaryLine({
 
   return (
     <div className="min-w-0 text-xs">
-      <p className="truncate text-muted-foreground" title={summary.subject}>
+      <p className="text-muted-foreground truncate" title={summary.subject}>
         {summary.subject}
       </p>
       <p className={cn("font-medium", expiryTone)}>{expiryText}</p>
       <p
-        className="truncate font-mono text-2xs text-muted-foreground"
+        className="text-2xs text-muted-foreground truncate font-mono"
         title={`SHA-256 ${summary.sha256Fingerprint}`}
       >
         SHA-256 {summary.sha256Fingerprint}

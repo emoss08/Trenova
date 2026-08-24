@@ -112,7 +112,7 @@ function Figure({ label, value, tone }: { label: string; value: string; tone?: "
       <span
         className={
           tone === "danger"
-            ? "font-mono text-base leading-none font-semibold tabular-nums text-destructive"
+            ? "text-destructive font-mono text-base leading-none font-semibold tabular-nums"
             : "font-mono text-base leading-none font-semibold tabular-nums"
         }
       >
@@ -240,7 +240,7 @@ export function FleetStatusWidget({ widget, data }: WidgetProps) {
         <WidgetEmpty>Nothing moving right now.</WidgetEmpty>
       ) : (
         <div className="flex flex-col gap-2">
-          <div className="flex h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="bg-muted flex h-1.5 overflow-hidden rounded-full">
             {rows
               .filter((row) => row.value > 0)
               .map((row) => (
@@ -263,7 +263,7 @@ export function FleetStatusWidget({ widget, data }: WidgetProps) {
           ))}
           <Link
             to={SHIPMENTS_HREF}
-            className="pt-1 text-2xs text-muted-foreground hover:text-foreground"
+            className="text-2xs text-muted-foreground hover:text-foreground pt-1"
           >
             {total} active loads
           </Link>

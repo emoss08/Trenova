@@ -75,8 +75,8 @@ function RequirementRow({
             <CheckCircle2Icon className="size-3 text-green-600 dark:text-green-400" />
           </div>
         ) : (
-          <div className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted">
-            <UploadIcon className="size-3 text-muted-foreground" />
+          <div className="bg-muted flex size-5 shrink-0 items-center justify-center rounded-full">
+            <UploadIcon className="text-muted-foreground size-3" />
           </div>
         )}
         <div className="min-w-0">
@@ -124,7 +124,7 @@ export function ShipmentBillingReadinessPanel({
     !readiness.shouldAutoMarkReadyToInvoice;
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
+    <div className="bg-card overflow-hidden rounded-xl border">
       {/* Header */}
       <div className="border-b px-4 py-3">
         <div className="flex items-center justify-between gap-4">
@@ -134,7 +134,7 @@ export function ShipmentBillingReadinessPanel({
 
         <div className="mt-3 space-y-1.5">
           <Progress value={progressValue} max={progressMax} variant={progressVariant} />
-          <p className="text-xs text-muted-foreground tabular-nums">
+          <p className="text-muted-foreground text-xs tabular-nums">
             {totalRequirements > 0
               ? `${completedRequirements} of ${totalRequirements} documents uploaded`
               : "No documents required"}
@@ -175,7 +175,7 @@ export function ShipmentBillingReadinessPanel({
               {readiness.serviceFailureContext.hasUnresolved && (
                 <a
                   href={`/shipment-management/service-failures?shipmentId=${shipment?.id ?? ""}`}
-                  className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline"
+                  className="text-primary mt-2 inline-flex items-center gap-1 text-xs font-medium underline-offset-4 hover:underline"
                 >
                   View {readiness.serviceFailureContext.unresolvedCount} service failure
                   {readiness.serviceFailureContext.unresolvedCount === 1 ? "" : "s"}
@@ -199,7 +199,7 @@ export function ShipmentBillingReadinessPanel({
             ))}
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
+          <div className="text-muted-foreground flex items-center justify-center gap-2 py-6">
             <Clock3Icon className="size-4" />
             <p className="text-sm">No billing documents required.</p>
           </div>

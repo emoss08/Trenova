@@ -18,7 +18,7 @@ export function TopOverdueCustomersCard() {
         <CardTitle className="text-sm font-medium">Top overdue customers</CardTitle>
         <Link
           to="/accounting/ar/aging"
-          className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+          className="text-muted-foreground hover:text-foreground text-xs hover:underline"
         >
           View aging
         </Link>
@@ -31,7 +31,7 @@ export function TopOverdueCustomersCard() {
             ))}
           </div>
         ) : rows.length === 0 ? (
-          <div className="flex h-56 items-center justify-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex h-56 items-center justify-center text-sm">
             No overdue balances — nice work
           </div>
         ) : (
@@ -45,9 +45,9 @@ export function TopOverdueCustomersCard() {
               >
                 <Link
                   to={`/accounting/ar/customer-ledger?customerId=${row.customerId}`}
-                  className="flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/50"
+                  className="hover:bg-muted/50 flex items-center gap-3 rounded-md px-2 py-2 transition-colors"
                 >
-                  <span className="w-5 shrink-0 text-center text-xs font-medium text-muted-foreground tabular-nums">
+                  <span className="text-muted-foreground w-5 shrink-0 text-center text-xs font-medium tabular-nums">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -58,7 +58,7 @@ export function TopOverdueCustomersCard() {
                       </span>
                     </div>
                     <div className="mt-1 flex items-center gap-2">
-                      <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div className="bg-muted h-1 flex-1 overflow-hidden rounded-full">
                         <m.div
                           className="h-full rounded-full bg-red-500/70 dark:bg-red-400/70"
                           initial={{ width: 0 }}
@@ -71,7 +71,7 @@ export function TopOverdueCustomersCard() {
                           transition={{ duration: 0.5, delay: index * 0.03, ease: "easeOut" }}
                         />
                       </div>
-                      <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+                      <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
                         {row.openInvoiceCount} inv · oldest {row.oldestDaysPastDue}d
                       </span>
                     </div>

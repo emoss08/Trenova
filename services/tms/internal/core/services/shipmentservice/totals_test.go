@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -77,7 +76,7 @@ func TestServiceCalculateTotals_UsesFormulaTemplateAndNestedAdditionalCharges(t 
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -104,7 +103,7 @@ func TestServiceCalculateTotals_RejectsMissingFormulaTemplateID(t *testing.T) {
 		repo:         mocks.NewMockShipmentRepository(t),
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -128,7 +127,7 @@ func TestServiceCalculateTotals_RejectsNilShipment(t *testing.T) {
 		repo:         mocks.NewMockShipmentRepository(t),
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -194,7 +193,7 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -254,7 +253,7 @@ func TestServiceCalculateTotals_UsesAdditionalChargeOverridesForFormulaOtherChar
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -304,7 +303,7 @@ func TestServiceCalculateTotals_PropagatesFormulaErrors(t *testing.T) {
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -374,7 +373,7 @@ func TestServiceCalculateTotals_UsesCommodityRollupsInFormula(t *testing.T) {
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -466,7 +465,7 @@ func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeFormula(t *testing
 		commodityRepo: commodityRepo,
 		validator:     NewTestValidator(t),
 		auditService:  mocks.NewMockAuditService(t),
-		commercial:    newTestCommercialCalculator(formula, accessorialRepo),
+		commercial:    newTestCommercialCalculator(t, formula, accessorialRepo),
 		eventService:  noopShipmentEventService{},
 		coordinator:   newStateCoordinator(),
 	}
@@ -508,7 +507,7 @@ func newTestFormulaService(
 		Resolver:      res,
 		Repo:          repo,
 		VersionRepo:   stubTotalsVersionRepo{},
-		RateTableRepo: stubTotalsRateTableRepo{},
+		RateMatrixRepo: stubTotalsMatrixRepo{},
 	})
 }
 
@@ -523,14 +522,14 @@ func (stubTotalsVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-type stubTotalsRateTableRepo struct {
-	repositories.RateTableRepository
+type stubTotalsMatrixRepo struct {
+	repositories.RateMatrixRepository
 }
 
-func (stubTotalsRateTableRepo) GetLookupData(
+func (stubTotalsMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateTableLookupDataRequest,
-) ([]*ratetable.RateTable, error) {
+	_ *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
 	return nil, nil
 }
 

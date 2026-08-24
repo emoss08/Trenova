@@ -37,7 +37,7 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col">
           <span className="truncate">{row.original.senderName}</span>
-          <span className="truncate text-xs text-muted-foreground">{row.original.senderEmail}</span>
+          <span className="text-muted-foreground truncate text-xs">{row.original.senderEmail}</span>
         </div>
       ),
       size: 280,
@@ -84,7 +84,7 @@ export function getColumns(): ColumnDef<EmailProfile>[] {
       accessorKey: "replyToEmail",
       header: "Reply-To",
       cell: ({ row }) => (
-        <span className="truncate text-muted-foreground">
+        <span className="text-muted-foreground truncate">
           {row.original.replyToEmail || "Default sender"}
         </span>
       ),

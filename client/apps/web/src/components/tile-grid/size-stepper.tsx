@@ -19,8 +19,8 @@ export type SizeStepperProps = {
 export function SizeStepper({ icon: Icon, label, value, min, max, onChange }: SizeStepperProps) {
   return (
     <div className="flex items-center gap-2">
-      <Icon className="size-3.5 shrink-0 text-muted-foreground" />
-      <span className="flex-1 text-xs text-muted-foreground">{label}</span>
+      <Icon className="text-muted-foreground size-3.5 shrink-0" />
+      <span className="text-muted-foreground flex-1 text-xs">{label}</span>
       <Button
         variant="outline"
         size="icon"

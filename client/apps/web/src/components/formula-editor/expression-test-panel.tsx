@@ -38,11 +38,11 @@ type ExpressionTestPanelProps = {
 function BreakdownResultTable({ items }: { items: TestBreakdownItem[] }) {
   return (
     <div className="mt-4 space-y-2">
-      <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+      <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
         <ListTree className="size-3" />
         Breakdown
       </div>
-      <div className="overflow-hidden rounded-md border bg-background/50">
+      <div className="bg-background/50 overflow-hidden rounded-md border">
         {items.map((item) => (
           <div
             key={item.name}
@@ -51,11 +51,11 @@ function BreakdownResultTable({ items }: { items: TestBreakdownItem[] }) {
             <div className="min-w-0">
               <span className="font-mono text-xs">{item.name}</span>
               {item.label && (
-                <span className="ml-2 text-xs text-muted-foreground">{item.label}</span>
+                <span className="text-muted-foreground ml-2 text-xs">{item.label}</span>
               )}
             </div>
             {item.error ? (
-              <span className="flex items-center gap-1 text-xs text-destructive">
+              <span className="text-destructive flex items-center gap-1 text-xs">
                 <AlertTriangleIcon className="size-3" />
                 {item.error}
               </span>
@@ -80,14 +80,14 @@ function ResolvedVariablesView({ variables }: { variables: Record<string, unknow
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase"
       >
         {isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
         <Braces className="size-3" />
         Resolved Variables ({count})
       </button>
       {isOpen && (
-        <pre className="max-h-64 overflow-auto rounded-md border bg-background/50 p-3 font-mono text-xs whitespace-pre-wrap">
+        <pre className="bg-background/50 max-h-64 overflow-auto rounded-md border p-3 font-mono text-xs whitespace-pre-wrap">
           {JSON.stringify(variables, null, 2)}
         </pre>
       )}
@@ -167,10 +167,10 @@ export function ExpressionTestPanel({
 
   return (
     <div className={cn("mt-3 space-y-3", className)}>
-      <div className="rounded-lg border bg-muted/30 px-3 py-2">
+      <div className="bg-muted/30 rounded-lg border px-3 py-2">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Truck className="size-3.5 text-muted-foreground" />
+            <Truck className="text-muted-foreground size-3.5" />
             <Label htmlFor="use-real-shipment" className="text-xs font-medium">
               Use real shipment
             </Label>
@@ -221,7 +221,7 @@ export function ExpressionTestPanel({
               variant="ghost"
               size="sm"
               onClick={handleToggle}
-              className="gap-1.5 text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground gap-1.5"
             >
               {isExpanded ? (
                 <ChevronUp className="size-3.5" />
@@ -236,7 +236,7 @@ export function ExpressionTestPanel({
               variant="ghost"
               size="sm"
               onClick={handleClear}
-              className="gap-1.5 text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground gap-1.5"
             >
               <RotateCcw className="size-3" />
               Clear
@@ -279,7 +279,7 @@ export function ExpressionTestPanel({
             {isValid ? (
               <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
             ) : (
-              <XCircle className="size-4 text-destructive" />
+              <XCircle className="text-destructive size-4" />
             )}
             <span
               className={cn(
@@ -296,18 +296,18 @@ export function ExpressionTestPanel({
           <div className="p-4">
             {isValid && data.result !== undefined && (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
                   <Sparkles className="size-3" />
                   Result
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-mono text-2xl font-semibold text-foreground">
+                  <span className="text-foreground font-mono text-2xl font-semibold">
                     {typeof data.result === "number"
                       ? data.result.toLocaleString()
                       : String(data.result)}
                   </span>
                   {typeof data.result === "number" && (
-                    <span className="text-sm text-muted-foreground">(numeric)</span>
+                    <span className="text-muted-foreground text-sm">(numeric)</span>
                   )}
                 </div>
               </div>
@@ -315,10 +315,10 @@ export function ExpressionTestPanel({
 
             {!isValid && data.error && (
               <div className="space-y-2">
-                <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                   Error Details
                 </div>
-                <pre className="overflow-x-auto rounded-md border border-destructive/10 bg-background/50 p-3 font-mono text-sm wrap-break-word whitespace-pre-wrap text-destructive">
+                <pre className="border-destructive/10 bg-background/50 text-destructive overflow-x-auto rounded-md border p-3 font-mono text-sm wrap-break-word whitespace-pre-wrap">
                   {data.error}
                 </pre>
               </div>
@@ -332,7 +332,7 @@ export function ExpressionTestPanel({
               <ResolvedVariablesView variables={data.resolvedVariables} />
             )}
 
-            {data.message && <p className="mt-3 text-xs text-muted-foreground">{data.message}</p>}
+            {data.message && <p className="text-muted-foreground mt-3 text-xs">{data.message}</p>}
           </div>
         </div>
       )}

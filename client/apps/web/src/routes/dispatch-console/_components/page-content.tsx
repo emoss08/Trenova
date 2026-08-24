@@ -8,6 +8,12 @@ import { useDispatchConsoleStore, type PreflightTarget } from "@/stores/dispatch
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { cn } from "@trenova/shared/lib/utils";
+import {
+  hasOrganizationCapability,
+  OrganizationCapability,
+} from "@trenova/shared/types/organization-capability";
 import { Suspense, lazy, useCallback, useEffect, useMemo } from "react";
 import { CapacityRail } from "./capacity-rail";
 import { ConsoleCenterPane } from "./console-center-pane";
@@ -42,10 +48,21 @@ export function DispatchConsoleContent() {
     useDispatchSelection();
   const { urgencyFocus, setUrgencyFocus } = useDispatchView();
   const { setCapacityFilter } = useDispatchRail();
+  const capabilities = useOrgCapabilities();
+  // The rail is a column of driver rows with HOS gauges and drag handles. With no
+  // drivers to put in it there is nothing to rail, so the column is removed
+  // rather than left standing empty beside the board.
+  const showsCapacityRail = hasOrganizationCapability(
+    capabilities,
+    OrganizationCapability.AssetOperations,
+  );
 
   const setDragPreview = useDispatchConsoleStore.use.setDragPreview();
   const openPreflight = useDispatchConsoleStore.use.openPreflight();
   const preflight = useDispatchConsoleStore.use.preflight();
+  const carrierAssignTarget = useDispatchConsoleStore.use.carrierAssignTarget();
+  const carrierCancelTarget = useDispatchConsoleStore.use.carrierCancelTarget();
+  const tenderTarget = useDispatchConsoleStore.use.tenderTarget();
   const resetConsole = useDispatchConsoleStore.use.reset();
 
   // A drag or a pending pre-flight belongs to the visit, not to the store's lifetime.
@@ -141,6 +158,14 @@ export function DispatchConsoleContent() {
       }
       if (!target) return;
 
+      // A carrier-covered move cannot take a driver until its carrier assignment is
+      // canceled; selecting it surfaces the coverage card with that action instead of
+      // opening a pre-flight that is guaranteed to fail.
+      if (target.move.coverageType === "carrier") {
+        selectMove(target.move.moveId);
+        return;
+      }
+
       openPreflight(target);
       selectMove(target.move.moveId);
     },
@@ -157,7 +182,12 @@ export function DispatchConsoleContent() {
     [actions, range],
   );
 
-  const hasDialogOpen = Boolean(preflight) || Boolean(actions.plan && !actions.plan.shadowMode);
+  const hasDialogOpen =
+    Boolean(preflight) ||
+    Boolean(carrierAssignTarget) ||
+    Boolean(carrierCancelTarget) ||
+    Boolean(tenderTarget) ||
+    Boolean(actions.plan && !actions.plan.shadowMode);
 
   useDispatchHotkeys({
     enabled: !hasDialogOpen,
@@ -190,13 +220,22 @@ export function DispatchConsoleContent() {
           onPlan={planForWindow}
         />
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)_320px]">
-          <CapacityRail
-            drivers={drivers}
-            isLoading={isLoading}
-            selectedWorkerId={selectedWorkerId}
-            onSelectDriver={selectDriver}
-          />
+        <div
+          className={cn(
+            "grid min-h-0 flex-1 grid-cols-1 gap-3",
+            showsCapacityRail
+              ? "lg:grid-cols-[300px_minmax(0,1fr)_320px]"
+              : "lg:grid-cols-[minmax(0,1fr)_320px]",
+          )}
+        >
+          {showsCapacityRail && (
+            <CapacityRail
+              drivers={drivers}
+              isLoading={isLoading}
+              selectedWorkerId={selectedWorkerId}
+              onSelectDriver={selectDriver}
+            />
+          )}
 
           <ConsoleCenterPane
             moves={moves}
@@ -218,6 +257,7 @@ export function DispatchConsoleContent() {
               onSelectMove={selectMove}
               isAssigning={actions.isAssigning}
               hotkeysEnabled={!hasDialogOpen}
+              actions={actions}
             />
           </Suspense>
         </div>

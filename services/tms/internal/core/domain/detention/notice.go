@@ -51,22 +51,22 @@ type DetentionNotice struct {
 	// PDFDocumentID is the stored notice PDF, when the policy attaches one.
 	PDFDocumentID *pulid.ID `json:"pdfDocumentId" bun:"pdf_document_id,type:VARCHAR(100),nullzero"`
 
-	ScheduledFor         int64               `json:"scheduledFor"          bun:"scheduled_for,type:BIGINT,notnull"`
-	SentAt               *int64              `json:"sentAt"                bun:"sent_at,type:BIGINT,nullzero"`
-	DeliveredAt          *int64              `json:"deliveredAt"           bun:"delivered_at,type:BIGINT,nullzero"`
-	OpenedAt             *int64              `json:"openedAt"              bun:"opened_at,type:BIGINT,nullzero"`
-	FailedAt             *int64              `json:"failedAt"              bun:"failed_at,type:BIGINT,nullzero"`
-	FailureReason        string              `json:"failureReason"         bun:"failure_reason,type:TEXT,nullzero"`
-	ProviderMessageID    string              `json:"providerMessageId"     bun:"provider_message_id,type:VARCHAR(255),nullzero"`
-	SentByID             *pulid.ID           `json:"sentById"              bun:"sent_by_id,type:VARCHAR(100),nullzero"`
-	WasAutomatic         bool                `json:"wasAutomatic"          bun:"was_automatic,type:BOOLEAN,notnull"`
-	SatisfiesRequirement bool                `json:"satisfiesRequirement"  bun:"satisfies_requirement,type:BOOLEAN,notnull"`
-	QuotedFreeMinutes    int32               `json:"quotedFreeMinutes"     bun:"quoted_free_minutes,type:INTEGER,notnull"`
-	QuotedRate           decimal.NullDecimal `json:"quotedRate"            bun:"quoted_rate,type:NUMERIC(19,4),nullzero"`
-	QuotedAmount         decimal.NullDecimal `json:"quotedAmount"          bun:"quoted_amount,type:NUMERIC(19,4),nullzero"`
-	Version              int64               `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt            int64               `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ScheduledFor         int64               `json:"scheduledFor"         bun:"scheduled_for,type:BIGINT,notnull"`
+	SentAt               *int64              `json:"sentAt"               bun:"sent_at,type:BIGINT,nullzero"`
+	DeliveredAt          *int64              `json:"deliveredAt"          bun:"delivered_at,type:BIGINT,nullzero"`
+	OpenedAt             *int64              `json:"openedAt"             bun:"opened_at,type:BIGINT,nullzero"`
+	FailedAt             *int64              `json:"failedAt"             bun:"failed_at,type:BIGINT,nullzero"`
+	FailureReason        string              `json:"failureReason"        bun:"failure_reason,type:TEXT,nullzero"`
+	ProviderMessageID    string              `json:"providerMessageId"    bun:"provider_message_id,type:VARCHAR(255),nullzero"`
+	SentByID             *pulid.ID           `json:"sentById"             bun:"sent_by_id,type:VARCHAR(100),nullzero"`
+	WasAutomatic         bool                `json:"wasAutomatic"         bun:"was_automatic,type:BOOLEAN,notnull"`
+	SatisfiesRequirement bool                `json:"satisfiesRequirement" bun:"satisfies_requirement,type:BOOLEAN,notnull"`
+	QuotedFreeMinutes    int32               `json:"quotedFreeMinutes"    bun:"quoted_free_minutes,type:INTEGER,notnull"`
+	QuotedRate           decimal.NullDecimal `json:"quotedRate"           bun:"quoted_rate,type:NUMERIC(19,4),nullzero"`
+	QuotedAmount         decimal.NullDecimal `json:"quotedAmount"         bun:"quoted_amount,type:NUMERIC(19,4),nullzero"`
+	Version              int64               `json:"version"              bun:"version,type:BIGINT"`
+	CreatedAt            int64               `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (n *DetentionNotice) GetID() pulid.ID { return n.ID }

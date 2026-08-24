@@ -63,19 +63,19 @@ export function DataTablePagination<TData extends RowData>({
 
   return (
     <div className="flex items-center justify-between gap-4 px-2">
-      <div className="text-sm text-muted-foreground">
+      <div className="text-muted-foreground text-sm">
         {visibleRowCount < 1 ? (
           <>No results on this page</>
         ) : (
           <>
-            Showing <span className="font-medium text-foreground">{startRow}</span> to{" "}
-            <span className="font-medium text-foreground">{endRow}</span>
+            Showing <span className="text-foreground font-medium">{startRow}</span> to{" "}
+            <span className="text-foreground font-medium">{endRow}</span>
             {cursorMode ? (
               totalCount != null ? (
                 <>
                   {" "}
                   of{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="text-foreground font-medium">
                     {totalCount.toLocaleString()}
                   </span>{" "}
                   results
@@ -86,7 +86,7 @@ export function DataTablePagination<TData extends RowData>({
             ) : (
               <>
                 {" "}
-                of <span className="font-medium text-foreground">{rowCount}</span> results
+                of <span className="text-foreground font-medium">{rowCount}</span> results
               </>
             )}
           </>
@@ -95,7 +95,7 @@ export function DataTablePagination<TData extends RowData>({
 
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Rows per page</span>
+          <span className="text-muted-foreground text-sm">Rows per page</span>
           <Select
             value={String(pageSize)}
             onValueChange={(value) => handlePageSizeChange(Number(value))}

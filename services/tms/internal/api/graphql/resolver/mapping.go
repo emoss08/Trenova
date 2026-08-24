@@ -29,6 +29,16 @@ func optionalID(value *string) (pulid.ID, error) {
 	return pulid.MustParse(*value)
 }
 
+// idPtrFromPtr renders an optional id, which is nil both when the pointer is
+// absent and when it points at a zero id.
+func idPtrFromPtr(id *pulid.ID) *string {
+	if id == nil {
+		return nil
+	}
+
+	return idPtr(*id)
+}
+
 func idPtr(id pulid.ID) *string {
 	if id.IsNil() {
 		return nil
@@ -264,4 +274,42 @@ func sortFieldsFromGraphQL(inputs []*gqlmodel.SortFieldInput) []domaintypes.Sort
 	}
 
 	return sorts
+}
+
+// requiredID parses an id a mutation input declares as non-null.
+//
+// GraphQL only guarantees the field is present, not that it holds anything: a
+// form that posts a half-filled row sends an empty string, and the raw parse
+// failure that produced surfaces in the client as "pulid: invalid length" with
+// nothing naming what was blank. This returns the field-level error the form
+// can attach to the control instead.
+func requiredID(field, value string) (pulid.ID, error) {
+	if value == "" {
+		return pulid.Nil, errortypes.NewValidationError(
+			field,
+			errortypes.ErrRequired,
+			"This field is required",
+		)
+	}
+
+	id, err := pulid.Parse(value)
+	if err != nil {
+		return pulid.Nil, errortypes.NewValidationError(
+			field,
+			errortypes.ErrInvalid,
+			"This value is not a valid identifier",
+		)
+	}
+
+	return id, nil
+}
+
+// optionalScopedID parses an optional id, naming the field when it holds
+// something that is not one.
+func optionalScopedID(field string, value *string) (pulid.ID, error) {
+	if value == nil || *value == "" {
+		return pulid.Nil, nil
+	}
+
+	return requiredID(field, *value)
 }

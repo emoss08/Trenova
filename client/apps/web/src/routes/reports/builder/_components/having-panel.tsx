@@ -41,7 +41,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
 
   if (measures.length === 0) {
     return (
-      <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground px-2 py-4 text-center text-sm">
         Add measure columns to filter on aggregated values.
       </p>
     );
@@ -65,7 +65,7 @@ export function HavingPanel({ index, ir, onChange }: HavingPanelProps) {
       {filters.map((filter, filterIndex) => (
         <div
           key={filterIndex}
-          className="flex flex-wrap items-center gap-1.5 rounded-md border border-border p-2"
+          className="border-border flex flex-wrap items-center gap-1.5 rounded-md border p-2"
         >
           <Select
             value={measureKey(filter)}

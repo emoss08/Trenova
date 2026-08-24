@@ -112,9 +112,17 @@ func (h *Handler) list(c *gin.Context) {
 					Filter: req,
 					Cursor: cursor,
 					TractorRelationIncludes: repositories.TractorRelationIncludes{
-						IncludeEquipmentDetails: helpers.QueryBool(c, "includeEquipmentDetails", false),
-						IncludeFleetDetails:     helpers.QueryBool(c, "includeFleetDetails", false),
-						IncludeWorkerDetails:    helpers.QueryBool(c, "includeWorkerDetails", false),
+						IncludeEquipmentDetails: helpers.QueryBool(
+							c,
+							"includeEquipmentDetails",
+							false,
+						),
+						IncludeFleetDetails: helpers.QueryBool(c, "includeFleetDetails", false),
+						IncludeWorkerDetails: helpers.QueryBool(
+							c,
+							"includeWorkerDetails",
+							false,
+						),
 					},
 					Status: helpers.QueryString(c, "status", ""),
 				},

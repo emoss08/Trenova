@@ -87,7 +87,7 @@ function DataTableRowInner<TData extends RowData>({
       data-state={selected && "selected"}
       onClick={isClickable ? handleRowClick : undefined}
       className={cn(
-        "group/row -outline-offset-2 outline-brand transition-colors focus-visible:outline data-[state=selected]:outline",
+        "group/row outline-brand -outline-offset-2 transition-colors focus-visible:outline data-[state=selected]:outline",
         isClickable && "cursor-pointer",
         formatClass,
         table.options.meta?.getRowClassName?.(row),
@@ -100,7 +100,7 @@ function DataTableRowInner<TData extends RowData>({
         return (
           <TableCell
             className={cn(
-              "truncate border-b border-border font-sans",
+              "border-border truncate border-b font-sans",
               isLastRow && "border-b-0",
               pinned && pinnedCellClass(cell.column),
               pinned && "group-hover/row:bg-muted",
@@ -304,9 +304,9 @@ export function DataTableBody<TData extends Record<string, any>>({
       ) : isLoading ? (
         <TableRow>
           <TableCell colSpan={columns.length} className="h-24 rounded-b-md border-b text-center">
-            <div className="mx-auto flex w-fit flex-row items-center justify-center rounded-md border border-border bg-muted-foreground/10 p-2 text-sm font-medium text-foreground">
+            <div className="border-border bg-muted-foreground/10 text-foreground mx-auto flex w-fit flex-row items-center justify-center rounded-md border p-2 text-sm font-medium">
               <Spinner className="size-4" />
-              <p className="text-xs text-foreground">Loading data...</p>
+              <p className="text-foreground text-xs">Loading data...</p>
             </div>
           </TableCell>
         </TableRow>

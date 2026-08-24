@@ -116,6 +116,7 @@ func billingQuickActions() []QuickActionDefinition {
 			permission.ResourceAccessorialCharge,
 		),
 		createQuickAction("create-customer", "Create Customer", permission.ResourceCustomer),
+		createQuickAction("create-carrier", "Create Carrier", permission.ResourceCarrier),
 		createQuickAction(
 			"create-document-type",
 			"Create Document Type",
@@ -126,7 +127,6 @@ func billingQuickActions() []QuickActionDefinition {
 			"Create Formula Template",
 			permission.ResourceFormulaTemplate,
 		),
-		createQuickAction("create-rate-table", "Create Rate Table", permission.ResourceRateTable),
 		createQuickAction(
 			"create-detention-policy",
 			"Create Detention Policy",

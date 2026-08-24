@@ -156,7 +156,7 @@ export function InvoiceAdjustmentBatchPage() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-medium">{row.batchId}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {row.submittedByName || row.submittedById || "System"}
                       </p>
                     </div>
@@ -171,7 +171,7 @@ export function InvoiceAdjustmentBatchPage() {
                     <Metric label="Pending" value={String(row.pendingCount)} />
                   </div>
                   {row.lastFailure ? (
-                    <p className="mt-3 line-clamp-2 text-xs text-destructive">{row.lastFailure}</p>
+                    <p className="text-destructive mt-3 line-clamp-2 text-xs">{row.lastFailure}</p>
                   ) : null}
                 </button>
               ))}
@@ -226,7 +226,7 @@ export function InvoiceAdjustmentBatchPage() {
                 <CardContent className="pt-4">
                   <div className="overflow-hidden rounded-xl border">
                     <table className="w-full text-sm">
-                      <thead className="bg-muted/40 text-left text-muted-foreground">
+                      <thead className="bg-muted/40 text-muted-foreground text-left">
                         <tr>
                           <th className="px-4 py-3">Invoice</th>
                           <th className="px-4 py-3">Status</th>
@@ -239,7 +239,7 @@ export function InvoiceAdjustmentBatchPage() {
                           <tr key={item.id} className="border-t align-top">
                             <td className="px-4 py-3 font-mono text-xs">{item.invoiceId}</td>
                             <td className="px-4 py-3">{item.status}</td>
-                            <td className="px-4 py-3 text-xs text-muted-foreground">
+                            <td className="text-muted-foreground px-4 py-3 text-xs">
                               {item.errorMessage || "No failure recorded"}
                             </td>
                             <td className="px-4 py-3">
@@ -275,7 +275,7 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <Card className="shadow-none">
       <CardContent className="px-4 py-3">
-        <p className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">{label}</p>
+        <p className="text-muted-foreground text-[11px] tracking-[0.16em] uppercase">{label}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
       </CardContent>
     </Card>
@@ -284,8 +284,8 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-background px-3 py-2">
-      <p className="text-[10px] tracking-[0.16em] text-muted-foreground uppercase">{label}</p>
+    <div className="bg-background rounded-lg border px-3 py-2">
+      <p className="text-muted-foreground text-[10px] tracking-[0.16em] uppercase">{label}</p>
       <p className="mt-1 text-sm font-medium break-all">{value}</p>
     </div>
   );
@@ -295,7 +295,7 @@ function LinkButton({ to, children }: { to: string; children: ReactNode }) {
   return (
     <Link
       to={to}
-      className="inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs hover:bg-muted"
+      className="hover:bg-muted inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs"
     >
       <ExternalLinkIcon className="size-3.5" />
       {children}

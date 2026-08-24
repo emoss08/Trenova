@@ -21,11 +21,18 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { PlusIcon } from "lucide-react";
+import { useMemo } from "react";
 import { CertificationWatch } from "./certification-watch";
 import { ExceptionsInbox } from "./exceptions-inbox";
 import { HosWatch } from "./hos-watch";
-import { ALL_MODULES, useRightStackStore, type RightStackModuleId } from "./right-stack-store";
+import {
+  ALL_MODULES,
+  availableRightStackModules,
+  useRightStackStore,
+  type RightStackModuleId,
+} from "./right-stack-store";
 import { UnassignedQueue } from "./unassigned-queue";
 
 const MODULE_LABEL: Record<RightStackModuleId, string> = {
@@ -51,8 +58,23 @@ export default function RightStack({ backgroundEnabled = true }: { backgroundEna
   const hidden = useRightStackStore.use.hidden();
   const show = useRightStackStore.use.show();
   const reorder = useRightStackStore.use.reorder();
+  const capabilities = useOrgCapabilities();
 
-  const visible = order.filter((id) => !hidden.includes(id));
+  // A saved arrangement can name a module this organization no longer has any
+  // data for. Filtering here — rather than trusting the stored list — is what
+  // keeps that preference from rendering an empty card or a hole in the stack.
+  const visible = useMemo(
+    () => availableRightStackModules(order, capabilities).filter((id) => !hidden.includes(id)),
+    [order, hidden, capabilities],
+  );
+  const restorable = useMemo(
+    () => availableRightStackModules(hidden, capabilities),
+    [hidden, capabilities],
+  );
+  const addable = useMemo(
+    () => availableRightStackModules(ALL_MODULES, capabilities),
+    [capabilities],
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -70,7 +92,7 @@ export default function RightStack({ backgroundEnabled = true }: { backgroundEna
 
   if (visible.length === 0) {
     return (
-      <aside className="flex h-full min-h-0 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card p-6">
+      <aside className="border-border bg-card flex h-full min-h-0 flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-6">
         <p className="text-[11.5px] font-medium">All panels hidden</p>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -82,7 +104,7 @@ export default function RightStack({ backgroundEnabled = true }: { backgroundEna
             }
           />
           <DropdownMenuContent align="center" className="min-w-45">
-            {ALL_MODULES.map((id) => (
+            {addable.map((id) => (
               <DropdownMenuItem key={id} title={MODULE_LABEL[id]} onClick={() => show(id)} />
             ))}
           </DropdownMenuContent>
@@ -93,19 +115,19 @@ export default function RightStack({ backgroundEnabled = true }: { backgroundEna
 
   return (
     <aside className="relative flex h-full min-h-0 flex-col gap-2">
-      {hidden.length > 0 && (
+      {restorable.length > 0 && (
         <div className="absolute -top-7 right-0 z-10">
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
                 <Button variant="outline" size="xxs">
                   <PlusIcon className="size-2.5" />
-                  Add panel ({hidden.length})
+                  Add panel ({restorable.length})
                 </Button>
               }
             />
             <DropdownMenuContent align="end" className="min-w-40">
-              {hidden.map((id) => (
+              {restorable.map((id) => (
                 <DropdownMenuItem key={id} title={MODULE_LABEL[id]} onClick={() => show(id)} />
               ))}
             </DropdownMenuContent>

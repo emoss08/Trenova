@@ -55,7 +55,7 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
   return (
     <div className="flex h-full flex-col gap-4">
       <div className="relative">
-        <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
         <Input
           placeholder="Search roles..."
           value={searchQuery}
@@ -75,7 +75,7 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
                 <button
                   type="button"
                   onClick={() => handleToggleRole(roleId)}
-                  className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20"
+                  className="hover:bg-muted-foreground/20 ml-1 rounded-full p-0.5"
                 >
                   <span className="sr-only">Remove</span>
                   <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +95,7 @@ export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRoles
 
       <div className="min-h-0 flex-1 overflow-auto rounded-lg border">
         {filteredRoles.length === 0 ? (
-          <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
             {searchQuery ? "No roles found" : "No roles available"}
           </div>
         ) : (
@@ -125,7 +125,7 @@ function RoleRow({ role, isSelected, onToggle }: RoleRowProps) {
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-start gap-3 p-3 transition-colors hover:bg-muted/50",
+        "hover:bg-muted/50 flex cursor-pointer items-start gap-3 p-3 transition-colors",
         isSelected && "bg-primary/5",
       )}
     >
@@ -135,7 +135,7 @@ function RoleRow({ role, isSelected, onToggle }: RoleRowProps) {
           <span className="text-sm font-medium">{role.name}</span>
         </div>
         {role.description && (
-          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{role.description}</p>
+          <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">{role.description}</p>
         )}
       </div>
     </label>

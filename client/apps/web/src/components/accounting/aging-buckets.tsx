@@ -110,7 +110,7 @@ export function AgingDistributionBar({
           return (
             <span
               key={bucket.key}
-              className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground"
+              className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]"
             >
               <span className={cn("size-2 rounded-full", bucket.dotClass)} />
               {bucket.label} · {share.toFixed(0)}%

@@ -12,10 +12,19 @@ import type {
   RecurringEarningStatus,
   SettlementBatchStatus,
 } from "@trenova/shared/types/driver-pay";
+import type { CarrierComplianceStatus, CarrierSafetyRating } from "@trenova/shared/types/carrier";
+import type {
+  CarrierCostEventStatus,
+  CarrierInvoiceMatchStatus,
+  CarrierSettlementBatchStatus,
+  CarrierSettlementStatus,
+} from "@trenova/shared/types/carrier-settlement";
 import type { InvoiceStatus, SettlementStatus } from "@trenova/shared/types/invoice";
+import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
 import type { OrderStatus } from "@trenova/shared/types/order";
 import {
   shipmentStatusSchema,
+  type CarrierAssignmentStatus,
   type ShipmentStatus,
   type ShipmentTenderStatus,
 } from "@trenova/shared/types/shipment";
@@ -25,6 +34,7 @@ import type {
   EDIMessageDeliveryStatus,
   EDITransferStatus,
 } from "@trenova/shared/types/edi";
+import type { TenderOfferStatus, TenderStatus } from "@trenova/shared/types/tender";
 import type { PTOStatus, PTOType } from "@trenova/shared/types/worker";
 import type { VariantProps } from "class-variance-authority";
 import { CheckCheckIcon, CheckIcon, ClockIcon, LockIcon, XIcon } from "lucide-react";
@@ -1079,6 +1089,449 @@ export function PayeeClassificationBadge({
       title={attributes[classification].description}
     >
       {attributes[classification].text}
+    </Badge>
+  );
+}
+
+export function CarrierSettlementStatusBadge({
+  status,
+  className,
+}: {
+  status: CarrierSettlementStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<CarrierSettlementStatus, BadgeAttrProps> = {
+    Draft: {
+      variant: "secondary",
+      text: "Draft",
+      description: "Statement is being assembled — cost events and adjustments can still change.",
+    },
+    PendingApproval: {
+      variant: "warning",
+      text: "Pending Approval",
+      description: "Submitted for review and waiting on an approver.",
+    },
+    Approved: {
+      variant: "info",
+      text: "Approved",
+      description: "Approved and locked, ready to post to the general ledger.",
+    },
+    Posted: {
+      variant: "purple",
+      text: "Posted",
+      description:
+        "Journalized as purchased transportation against accounts payable; awaiting payment.",
+    },
+    Paid: {
+      variant: "active",
+      text: "Paid",
+      description: "Disbursed to the carrier — the cash journal and ledger payment are recorded.",
+    },
+    Voided: {
+      variant: "inactive",
+      text: "Voided",
+      description: "Reversed — cost events returned to the pool and GL postings were reversed.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function CarrierSettlementBatchStatusBadge({
+  status,
+}: {
+  status: CarrierSettlementBatchStatus;
+}) {
+  const statusAttributes: Record<CarrierSettlementBatchStatus, BadgeAttrProps> = {
+    Open: {
+      variant: "info",
+      text: "Open",
+      description: "AP run is accepting settlements; generation tops it up as cost accrues.",
+    },
+    Completed: {
+      variant: "active",
+      text: "Completed",
+      description: "AP run is closed; late accruals settle in the next period.",
+    },
+    Canceled: {
+      variant: "inactive",
+      text: "Canceled",
+      description: "Batch was canceled and no longer collects settlements.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className="max-h-5"
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function CarrierCostEventStatusBadge({ status }: { status: CarrierCostEventStatus }) {
+  const statusAttributes: Record<CarrierCostEventStatus, BadgeAttrProps> = {
+    Pending: {
+      variant: "info",
+      text: "Pending",
+      description: "Accrued purchased-transportation cost not yet on a settlement.",
+    },
+    Attached: {
+      variant: "warning",
+      text: "Attached",
+      description: "On a draft settlement — locked until the settlement is processed or voided.",
+    },
+    Settled: {
+      variant: "active",
+      text: "Settled",
+      description: "Included on a posted carrier settlement.",
+    },
+    Voided: {
+      variant: "inactive",
+      text: "Voided",
+      description: "Canceled (assignment or shipment canceled) and excluded from settlement.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className="max-h-5"
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function CarrierInvoiceMatchStatusBadge({
+  status,
+  className,
+}: {
+  status: CarrierInvoiceMatchStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<CarrierInvoiceMatchStatus, BadgeAttrProps> = {
+    Suggested: {
+      variant: "secondary",
+      text: "Suggested",
+      description: "System-proposed pairing of a carrier invoice with an assignment.",
+    },
+    Matched: {
+      variant: "info",
+      text: "Matched",
+      description: "Invoice total agrees with the negotiated buy rate within tolerance.",
+    },
+    Variance: {
+      variant: "warning",
+      text: "Variance",
+      description: "Invoice total differs from the buy rate beyond the configured tolerance.",
+    },
+    Resolved: {
+      variant: "active",
+      text: "Resolved",
+      description: "Accepted — the invoice is reconciled against the assignment.",
+    },
+    Rejected: {
+      variant: "inactive",
+      text: "Rejected",
+      description: "Dismissed — the invoice does not bill this assignment.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function CarrierComplianceStatusBadge({
+  status,
+  className,
+}: {
+  status: CarrierComplianceStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<CarrierComplianceStatus, BadgeAttrProps> = {
+    Pending: {
+      variant: "warning",
+      text: "Pending",
+      description: "Compliance review has not been completed for this carrier.",
+    },
+    Qualified: {
+      variant: "active",
+      text: "Qualified",
+      description: "The carrier passed the compliance review and can be assigned freight.",
+    },
+    Disqualified: {
+      variant: "inactive",
+      text: "Disqualified",
+      description: "The carrier failed compliance and must not be assigned freight.",
+    },
+    Expired: {
+      variant: "inactive",
+      text: "Expired",
+      description: "The carrier's qualification lapsed and must be renewed before assignment.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function CarrierSafetyRatingBadge({
+  status,
+  className,
+}: {
+  status: CarrierSafetyRating;
+  className?: string;
+}) {
+  const statusAttributes: Record<CarrierSafetyRating, BadgeAttrProps> = {
+    Satisfactory: {
+      variant: "active",
+      text: "Satisfactory",
+      description: "FMCSA rated the carrier satisfactory.",
+    },
+    Conditional: {
+      variant: "warning",
+      text: "Conditional",
+      description: "FMCSA found deficiencies — review before assigning freight.",
+    },
+    Unsatisfactory: {
+      variant: "inactive",
+      text: "Unsatisfactory",
+      description: "FMCSA rated the carrier unsatisfactory — do not assign freight.",
+    },
+    NotRated: {
+      variant: "secondary",
+      text: "Not Rated",
+      description: "FMCSA has not issued a safety rating for this carrier.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function CarrierAssignmentStatusBadge({
+  status,
+  className,
+}: {
+  status: CarrierAssignmentStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<CarrierAssignmentStatus, BadgeAttrProps> = {
+    Pending: {
+      variant: "warning",
+      text: "Pending",
+      description: "The carrier has been assigned but has not confirmed the rate yet.",
+    },
+    Confirmed: {
+      variant: "active",
+      text: "Confirmed",
+      description: "The carrier confirmed the negotiated rate for this move.",
+    },
+    Canceled: {
+      variant: "inactive",
+      text: "Canceled",
+      description: "The carrier assignment was canceled or replaced.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function TenderStatusBadge({
+  status,
+  className,
+}: {
+  status?: TenderStatus | null;
+  className?: string;
+}) {
+  if (!status) return null;
+
+  const statusAttributes: Record<TenderStatus, BadgeAttrProps> = {
+    Active: {
+      variant: "info",
+      text: "Active",
+      description: "Offers are out to carriers and a response is pending.",
+    },
+    Accepted: {
+      variant: "active",
+      text: "Accepted",
+      description: "A carrier accepted the tender and the move is covered.",
+    },
+    Exhausted: {
+      variant: "orange",
+      text: "Exhausted",
+      description: "Every carrier declined or timed out — the move is still uncovered.",
+    },
+    Canceled: {
+      variant: "inactive",
+      text: "Canceled",
+      description: "The tender was canceled by a dispatcher.",
+    },
+    NeedsReview: {
+      variant: "warning",
+      text: "Needs Review",
+      description:
+        "A carrier accepted but auto-assignment failed — assign the move manually or cancel.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function TenderOfferStatusBadge({
+  status,
+  className,
+}: {
+  status?: TenderOfferStatus | null;
+  className?: string;
+}) {
+  if (!status) return null;
+
+  const statusAttributes: Record<TenderOfferStatus, BadgeAttrProps> = {
+    Pending: {
+      variant: "secondary",
+      text: "Pending",
+      description: "Queued behind a higher-ranked carrier; nothing has been sent yet.",
+    },
+    Sent: {
+      variant: "info",
+      text: "Sent",
+      description: "Delivered to the carrier and awaiting their response.",
+    },
+    Accepted: {
+      variant: "active",
+      text: "Accepted",
+      description: "The carrier accepted this offer.",
+    },
+    Declined: {
+      variant: "inactive",
+      text: "Declined",
+      description: "The carrier declined this offer.",
+    },
+    Expired: {
+      variant: "orange",
+      text: "Expired",
+      description: "The offer window elapsed without a response.",
+    },
+    Withdrawn: {
+      variant: "outline",
+      text: "Withdrawn",
+      description: "The offer was withdrawn when the tender was canceled.",
+    },
+    Superseded: {
+      variant: "outline",
+      text: "Superseded",
+      description: "Another carrier accepted first; this offer no longer stands.",
+    },
+    Skipped: {
+      variant: "outline",
+      text: "Skipped",
+      description: "The waterfall skipped this carrier.",
+    },
+    DeliveryFailed: {
+      variant: "inactive",
+      text: "Delivery Failed",
+      description: "The offer could not be delivered on its channel.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function RateConfirmationStatusBadge({
+  status,
+  className,
+}: {
+  status: RateConfirmationStatus;
+  className?: string;
+}) {
+  const statusAttributes: Record<RateConfirmationStatus, BadgeAttrProps> = {
+    Generated: {
+      variant: "secondary",
+      text: "Generated",
+      description: "Rate confirmation PDF is filed but has not been sent to the carrier.",
+    },
+    Sent: {
+      variant: "info",
+      text: "Sent",
+      description: "Emailed to the carrier's rate confirmation contacts.",
+    },
+    Confirmed: {
+      variant: "active",
+      text: "Confirmed",
+      description: "The carrier confirmed the negotiated rate.",
+    },
+    Voided: {
+      variant: "inactive",
+      text: "Voided",
+      description: "Superseded by a newer revision or voided manually.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn("max-h-5", className)}
+      title={statusAttributes[status].description}
+    >
+      {statusAttributes[status].text}
     </Badge>
   );
 }

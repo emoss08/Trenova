@@ -12,12 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,7 +30,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -313,7 +313,7 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 		Return(nil, nil).
 		Once()
 
-	deps.svc.db = testDBConnection{}
+	deps.svc.db = dbtest.NopConnection{}
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = continuityRepo
 	deps.svc.shipmentRepo = mocks.NewMockShipmentRepository(t)
@@ -323,7 +323,8 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 	deps.svc.shipmentValidator = shipmentservice.NewTestValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Formula:         mocks.NewMockFormulaCalculator(t),
+		Logger:          zap.NewNop(),
+		RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 	})
 
@@ -515,7 +516,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		Return(&shipment.ShipmentComment{ID: pulid.MustNew("shc_")}, nil).
 		Once()
 
-	deps.svc.db = testDBConnection{}
+	deps.svc.db = dbtest.NopConnection{}
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = continuityRepo
 	deps.svc.shipmentRepo = shipmentRepo
@@ -525,7 +526,8 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 	deps.svc.shipmentValidator = shipmentservice.NewTestValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Formula:         formula,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateengine.NewFallbackEngine(t, formula),
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 	})
 
@@ -566,7 +568,7 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 		}, nil).
 		Once()
 
-	deps.svc.db = testDBConnection{}
+	deps.svc.db = dbtest.NopConnection{}
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = mocks.NewMockEquipmentContinuityRepository(t)
 	deps.svc.shipmentRepo = mocks.NewMockShipmentRepository(t)
@@ -576,7 +578,8 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 	deps.svc.shipmentValidator = shipmentservice.NewTestValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Formula:         mocks.NewMockFormulaCalculator(t),
+		Logger:          zap.NewNop(),
+		RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 	})
 
@@ -592,21 +595,6 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 	assert.Equal(t, "Trailer is currently in progress on another move", err.Error())
 }
 
-type testDBConnection struct{}
-
-func (testDBConnection) DB() *bun.DB                          { return nil }
-func (testDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (testDBConnection) HealthCheck(context.Context) error    { return nil }
-func (testDBConnection) IsHealthy(context.Context) bool       { return true }
-func (testDBConnection) Close() error                         { return nil }
-func (testDBConnection) WithTx(
-	ctx context.Context,
-	_ ports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
-
 //go:fix inline
 func ptrInt16Trailer(v int16) *int16 {
 	return new(v)
@@ -615,12 +603,12 @@ func ptrInt16Trailer(v int16) *int16 {
 func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, resolveDelayThresholdMinutes(nil))
-	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, resolveDelayThresholdMinutes(&tenant.ShipmentControl{
+	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, shipmentstate.ResolveControlDelayThreshold(nil))
+	assert.Equal(t, shipmentstate.DisabledDelayThresholdMinutes, shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
 		AutoDelayShipments:          false,
 		AutoDelayShipmentsThreshold: new(int16(30)),
 	}))
-	assert.Equal(t, int16(30), resolveDelayThresholdMinutes(&tenant.ShipmentControl{
+	assert.Equal(t, int16(30), shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
 		AutoDelayShipments:          true,
 		AutoDelayShipmentsThreshold: new(int16(30)),
 	}))

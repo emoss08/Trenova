@@ -977,15 +977,6 @@ func randomURLToken(size int) string {
 	return base64.RawURLEncoding.EncodeToString(buf)
 }
 
-func mustDecryptSecret(enc *encryptionservice.Service, secret string) string {
-	plaintext, err := enc.DecryptString(secret)
-	if err != nil {
-		return ""
-	}
-
-	return plaintext
-}
-
 func decryptSSOSecret(enc *encryptionservice.Service, cfg *tenant.SSOConfig) string {
 	if cfg == nil {
 		return ""

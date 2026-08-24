@@ -98,7 +98,7 @@ function FixtureList({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">
+        <h3 className="text-muted-foreground text-sm font-medium">
           {fixtures?.length ?? 0} fixture{(fixtures?.length ?? 0) !== 1 ? "s" : ""}
         </h3>
         {canCreate && (
@@ -117,12 +117,12 @@ function FixtureList({
 
       {(!fixtures || fixtures.length === 0) && (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-12 text-center">
-          <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-            <FlaskConicalIcon className="size-5 text-muted-foreground" />
+          <div className="bg-muted flex size-10 items-center justify-center rounded-full">
+            <FlaskConicalIcon className="text-muted-foreground size-5" />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium">No fixtures yet</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
+            <p className="text-muted-foreground max-w-xs text-xs">
               Fixtures are sample documents with expected extraction results. They let you validate
               that rules produce the correct fields and stops before publishing.
             </p>
@@ -139,17 +139,17 @@ function FixtureList({
               key={f.id}
               type="button"
               onClick={() => onSelectFixture(f.id!)}
-              className="flex w-full items-center justify-between rounded-md border p-3 text-left transition-colors hover:bg-muted/50"
+              className="hover:bg-muted/50 flex w-full items-center justify-between rounded-md border p-3 text-left transition-colors"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{f.name}</span>
                   {f.fileName && (
-                    <span className="text-xs text-muted-foreground">{f.fileName}</span>
+                    <span className="text-muted-foreground text-xs">{f.fileName}</span>
                   )}
                 </div>
                 {assertionCount > 0 && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {assertionCount} assertion{assertionCount !== 1 ? "s" : ""}
                   </p>
                 )}

@@ -872,9 +872,11 @@ func (s *Service) PlanSend(
 	headers := resolveDeliveryHeaders(fromEmail, deliveryProfile.Email)
 
 	plan := &servicesports.InvoiceSendPlan{
-		InvoiceID:            entity.ID,
-		ProviderLimitBytes:   providerLimit(profile),
-		EstimatedBodyBytes:   int64(len(wording.Subject.Value)+len(body)) + defaultBodyOverheadBytes,
+		InvoiceID:          entity.ID,
+		ProviderLimitBytes: providerLimit(profile),
+		EstimatedBodyBytes: int64(
+			len(wording.Subject.Value)+len(body),
+		) + defaultBodyOverheadBytes,
 		Parts:                make([]*servicesports.InvoiceSendPlanPart, 0),
 		Warnings:             make([]string, 0),
 		Errors:               make([]string, 0),
@@ -914,6 +916,8 @@ func (s *Service) PlanSend(
 		pdfDoc, err = s.documentForID(ctx, entity.PDFDocumentID, req.TenantInfo)
 		if err != nil {
 			plan.Errors = append(plan.Errors, "Invoice PDF document could not be loaded")
+			//nolint:nilerr // a plan reports delivery blockers in plan.Errors; a
+			// missing PDF is one of them, not a failure to produce the plan
 			return plan, nil
 		}
 	}
@@ -2293,21 +2297,6 @@ func moneyString(currency, amount string) string {
 		currency = "USD"
 	}
 	return currency + " " + amount
-}
-
-func actorForDocument(
-	actor *servicesports.RequestActor,
-	tenantInfo pagination.TenantInfo,
-) servicesports.RequestActor {
-	if actor == nil {
-		return servicesports.RequestActor{
-			UserID:         tenantInfo.UserID,
-			PrincipalID:    tenantInfo.UserID,
-			BusinessUnitID: tenantInfo.BuID,
-			OrganizationID: tenantInfo.OrgID,
-		}
-	}
-	return *actor
 }
 
 func actorUserID(actor *servicesports.RequestActor, tenantInfo pagination.TenantInfo) pulid.ID {

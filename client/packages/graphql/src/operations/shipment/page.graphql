@@ -118,11 +118,56 @@ fragment ShipmentMoveFields on ShipmentMove {
   version
   createdAt
   updatedAt
+  coverageType
   stops {
     ...ShipmentStopFields
   }
   assignment {
     ...ShipmentAssignmentFields
+  }
+  carrierAssignment {
+    ...ShipmentCarrierAssignmentFields
+  }
+}
+
+fragment ShipmentCarrierAssignmentFields on CarrierAssignment {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  carrierId
+  status
+  rateMethod
+  baseRate
+  baseAmount
+  fuelSurcharge
+  accessorialTotal
+  totalCost
+  currencyCode
+  proNumber
+  externalDriverName
+  externalDriverPhone
+  externalTractorNumber
+  externalTrailerNumber
+  confirmedAt
+  canceledAt
+  cancellationReason
+  version
+  createdAt
+  updatedAt
+  carrier {
+    id
+    code
+    name
+    scac
+  }
+  accessorials {
+    id
+    carrierAssignmentId
+    accessorialChargeId
+    description
+    amount
+    version
   }
 }
 
@@ -166,6 +211,9 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   commodityId
   pieces
   weight
+  lengthFeet
+  widthFeet
+  heightFeet
   version
   createdAt
   updatedAt
@@ -199,6 +247,27 @@ fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   resolvedVariables
   result
   ratedAt
+  versionNumber
+  breakdown {
+    name
+    label
+    amount
+    error
+  }
+  guardrail {
+    applied
+    bound
+    rawResult
+    minCharge
+    maxCharge
+  }
+  rateQuoteId
+  agreementId
+  agreementName
+  ruleId
+  ruleLabel
+  source
+  explanation
 }
 
 fragment ShipmentFields on Shipment {
@@ -258,6 +327,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -293,6 +371,11 @@ fragment ShipmentFields on Shipment {
     version
     createdAt
     updatedAt
+    ediPartner {
+      id
+      name
+      code
+    }
   }
   owner {
     ...ShipmentUserFields
@@ -793,6 +876,7 @@ query ShipmentUIPolicy {
     checkForDuplicateBols
     checkHazmatSegregation
     maxShipmentWeightLimit
+    profile
   }
 }
 
@@ -916,6 +1000,47 @@ mutation CalculateShipmentTotals($input: ShipmentInput!) {
       unit
       fuelSurchargeProgramId
       fuelSurchargeDetail
+    }
+  }
+}
+
+fragment ShipmentContractRateFields on ShipmentContractRate {
+  applied
+  outcome
+  agreementId
+  agreementName
+  ruleId
+  ruleLabel
+  formulaTemplateId
+  formulaTemplateName
+  baseRate
+  linehaulAmount
+  otherChargeAmount
+  totalChargeAmount
+  previousLinehaulAmount
+  explanation
+  accessorials {
+    accessorialChargeId
+    description
+    method
+    amount
+    unit
+  }
+}
+
+mutation PreviewShipmentContractRate($input: ShipmentInput!) {
+  previewShipmentContractRate(input: $input) {
+    ...ShipmentContractRateFields
+  }
+}
+
+mutation AutoRateShipment($id: ID!) {
+  autoRateShipment(id: $id) {
+    shipment {
+      ...ShipmentFields
+    }
+    contractRate {
+      ...ShipmentContractRateFields
     }
   }
 }

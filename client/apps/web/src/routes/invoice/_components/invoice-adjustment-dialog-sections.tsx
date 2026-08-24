@@ -117,7 +117,7 @@ export function InvoiceAdjustmentTypeSelector({
               className={cn(
                 "flex w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition-all duration-150",
                 isSelected
-                  ? "border-brand bg-brand/5 ring-1 ring-brand/20"
+                  ? "border-brand bg-brand/5 ring-brand/20 ring-1"
                   : "border-border bg-background hover:border-muted-foreground/30 hover:bg-muted/40",
               )}
               onClick={() => {
@@ -143,7 +143,7 @@ export function InvoiceAdjustmentTypeSelector({
                 >
                   {type.label}
                 </p>
-                <p className="text-xs text-muted-foreground">{type.description}</p>
+                <p className="text-muted-foreground text-xs">{type.description}</p>
               </div>
               <div
                 className={cn(
@@ -160,8 +160,8 @@ export function InvoiceAdjustmentTypeSelector({
 
       {kind === "CreditAndRebill" ? (
         <div className="space-y-1.5">
-          <p className="text-xs font-medium text-muted-foreground">Rebill Strategy</p>
-          <div className="flex gap-1 rounded-lg border border-border bg-muted/50 p-1">
+          <p className="text-muted-foreground text-xs font-medium">Rebill Strategy</p>
+          <div className="border-border bg-muted/50 flex gap-1 rounded-lg border p-1">
             {rebillStrategies.map((strategy) => {
               const isSelected = rebillStrategy === strategy.value;
               return (
@@ -190,10 +190,10 @@ export function InvoiceAdjustmentTypeSelector({
       ) : null}
 
       {errors.kind?.message ? (
-        <p className="text-xs text-destructive">{errors.kind.message}</p>
+        <p className="text-destructive text-xs">{errors.kind.message}</p>
       ) : null}
       {errors.rebillStrategy?.message ? (
-        <p className="text-xs text-destructive">{errors.rebillStrategy.message}</p>
+        <p className="text-destructive text-xs">{errors.rebillStrategy.message}</p>
       ) : null}
     </div>
   );
@@ -271,13 +271,13 @@ export function InvoiceAdjustmentLineEditor({
   previewLinesById: Map<string, InvoiceAdjustmentPreviewLine>;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border">
-      <div className="grid grid-cols-[1fr_120px_120px] items-center border-b border-border bg-muted/40 px-4 py-2">
-        <span className="text-xs font-medium text-muted-foreground">Description</span>
-        <span className="text-right text-xs font-medium text-muted-foreground">Credit</span>
-        <span className="text-right text-xs font-medium text-muted-foreground">Rebill</span>
+    <div className="border-border overflow-hidden rounded-lg border">
+      <div className="border-border bg-muted/40 grid grid-cols-[1fr_120px_120px] items-center border-b px-4 py-2">
+        <span className="text-muted-foreground text-xs font-medium">Description</span>
+        <span className="text-muted-foreground text-right text-xs font-medium">Credit</span>
+        <span className="text-muted-foreground text-right text-xs font-medium">Rebill</span>
       </div>
-      <div className="divide-y divide-border">
+      <div className="divide-border divide-y">
         {lines.map((line, index) => (
           <InvoiceAdjustmentLineEditorRow
             key={line.originalLineId}
@@ -338,12 +338,12 @@ function InvoiceAdjustmentLineEditorRow({
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <span className="inline-flex size-5 shrink-0 items-center justify-center rounded bg-muted text-2xs font-medium text-muted-foreground">
+          <span className="bg-muted text-2xs text-muted-foreground inline-flex size-5 shrink-0 items-center justify-center rounded font-medium">
             {previewLine?.lineNumber ?? index + 1}
           </span>
           <p className="truncate text-sm font-medium">{line.description}</p>
         </div>
-        <div className="mt-1.5 ml-7 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-2xs text-muted-foreground">
+        <div className="text-2xs text-muted-foreground mt-1.5 ml-7 flex flex-wrap items-center gap-x-3 gap-y-0.5">
           <span>{formatCurrency(originalAmount)} original</span>
           <span className="text-muted-foreground/40">/</span>
           <span>{formatCurrency(alreadyCreditedAmount)} credited</span>
@@ -352,14 +352,14 @@ function InvoiceAdjustmentLineEditorRow({
         </div>
         {hasError ? (
           <div className="mt-1.5 ml-7 flex items-start gap-1.5">
-            <BanIcon className="mt-0.5 size-3 shrink-0 text-destructive" />
+            <BanIcon className="text-destructive mt-0.5 size-3 shrink-0" />
             <p className="text-2xs text-destructive">
               {previewLine?.eligibilityMessage ||
                 `Exceeds eligibility by ${formatCurrency(overageAmount)}`}
             </p>
           </div>
         ) : requestedCreditAmount > 0 ? (
-          <p className="mt-1 ml-7 text-2xs text-muted-foreground">
+          <p className="text-2xs text-muted-foreground mt-1 ml-7">
             Requesting {formatCurrency(requestedCreditAmount)} credit
           </p>
         ) : null}
@@ -406,9 +406,9 @@ export function InvoiceAdjustmentPreviewPanel({
 }) {
   if (!preview) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-8">
-        <ReceiptIcon className="mb-2 size-5 text-muted-foreground/30" />
-        <p className="text-xs text-muted-foreground/60">
+      <div className="border-border flex flex-col items-center justify-center rounded-lg border border-dashed py-8">
+        <ReceiptIcon className="text-muted-foreground/30 mb-2 size-5" />
+        <p className="text-muted-foreground/60 text-xs">
           Click Preview to see the adjustment summary
         </p>
       </div>
@@ -423,11 +423,11 @@ export function InvoiceAdjustmentPreviewPanel({
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-lg border border-border">
-        <div className="border-b border-border bg-muted/40 px-4 py-2">
-          <p className="text-xs font-medium text-muted-foreground">Adjustment Summary</p>
+      <div className="border-border overflow-hidden rounded-lg border">
+        <div className="border-border bg-muted/40 border-b px-4 py-2">
+          <p className="text-muted-foreground text-xs font-medium">Adjustment Summary</p>
         </div>
-        <div className="divide-y divide-border">
+        <div className="divide-border divide-y">
           <PreviewRow
             label="Credit Total"
             value={formatCurrency(Number(preview.creditTotalAmount))}
@@ -478,14 +478,14 @@ export function InvoiceAdjustmentPreviewPanel({
       ) : null}
 
       {preview.warnings.length > 0 ? (
-        <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+        <div className="border-border bg-muted/30 rounded-lg border px-4 py-3">
           <div className="flex items-center gap-2">
-            <InfoIcon className="size-3.5 text-muted-foreground" />
-            <p className="text-xs font-medium text-muted-foreground">Warnings</p>
+            <InfoIcon className="text-muted-foreground size-3.5" />
+            <p className="text-muted-foreground text-xs font-medium">Warnings</p>
           </div>
           <div className="mt-2 space-y-1">
             {preview.warnings.map((warning) => (
-              <p key={warning} className="text-xs text-muted-foreground">
+              <p key={warning} className="text-muted-foreground text-xs">
                 {warning}
               </p>
             ))}
@@ -494,24 +494,24 @@ export function InvoiceAdjustmentPreviewPanel({
       ) : null}
 
       {hasIssues ? (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
+        <div className="border-destructive/20 bg-destructive/5 rounded-lg border px-4 py-3">
           <div className="flex items-center gap-2">
-            <AlertTriangleIcon className="size-3.5 text-destructive" />
-            <p className="text-xs font-medium text-destructive">Issues Found</p>
+            <AlertTriangleIcon className="text-destructive size-3.5" />
+            <p className="text-destructive text-xs font-medium">Issues Found</p>
           </div>
           <div className="mt-2 space-y-2">
             {eligibilityIssues.map((line) => (
-              <p key={line.originalLineId} className="text-xs text-destructive">
+              <p key={line.originalLineId} className="text-destructive text-xs">
                 {line.eligibilityMessage}
               </p>
             ))}
             {previewErrors.map(([field, messages]) => (
               <div key={field}>
-                <p className="text-2xs font-medium tracking-wide text-destructive/70 uppercase">
+                <p className="text-2xs text-destructive/70 font-medium tracking-wide uppercase">
                   {field}
                 </p>
                 {messages.map((message) => (
-                  <p key={message} className="text-xs text-destructive">
+                  <p key={message} className="text-destructive text-xs">
                     {message}
                   </p>
                 ))}
@@ -549,7 +549,7 @@ function PreviewRow({
       <span
         className={cn(
           "flex items-center gap-1.5 text-xs",
-          highlight ? "font-medium text-foreground" : "text-muted-foreground",
+          highlight ? "text-foreground font-medium" : "text-muted-foreground",
         )}
       >
         {icon}
@@ -558,7 +558,7 @@ function PreviewRow({
       <span
         className={cn(
           "text-sm tabular-nums",
-          highlight ? "font-semibold text-foreground" : "font-medium text-foreground",
+          highlight ? "text-foreground font-semibold" : "text-foreground font-medium",
         )}
       >
         {value}

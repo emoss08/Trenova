@@ -115,6 +115,142 @@ func (_c *MockOrganizationRepository_ClearLogoURL_Call) RunAndReturn(run func(ct
 	return _c
 }
 
+// CountAssetDependencies provides a mock function for the type MockOrganizationRepository
+func (_mock *MockOrganizationRepository) CountAssetDependencies(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositories.AssetDependencyCounts, error) {
+	ret := _mock.Called(ctx, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountAssetDependencies")
+	}
+
+	var r0 *repositories.AssetDependencyCounts
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (*repositories.AssetDependencyCounts, error)); ok {
+		return returnFunc(ctx, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) *repositories.AssetDependencyCounts); ok {
+		r0 = returnFunc(ctx, tenantInfo)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.AssetDependencyCounts)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationRepository_CountAssetDependencies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountAssetDependencies'
+type MockOrganizationRepository_CountAssetDependencies_Call struct {
+	*mock.Call
+}
+
+// CountAssetDependencies is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockOrganizationRepository_Expecter) CountAssetDependencies(ctx any, tenantInfo any) *MockOrganizationRepository_CountAssetDependencies_Call {
+	return &MockOrganizationRepository_CountAssetDependencies_Call{Call: _e.mock.On("CountAssetDependencies", ctx, tenantInfo)}
+}
+
+func (_c *MockOrganizationRepository_CountAssetDependencies_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockOrganizationRepository_CountAssetDependencies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationRepository_CountAssetDependencies_Call) Return(assetDependencyCounts *repositories.AssetDependencyCounts, err error) *MockOrganizationRepository_CountAssetDependencies_Call {
+	_c.Call.Return(assetDependencyCounts, err)
+	return _c
+}
+
+func (_c *MockOrganizationRepository_CountAssetDependencies_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositories.AssetDependencyCounts, error)) *MockOrganizationRepository_CountAssetDependencies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountBrokerageDependencies provides a mock function for the type MockOrganizationRepository
+func (_mock *MockOrganizationRepository) CountBrokerageDependencies(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositories.BrokerageDependencyCounts, error) {
+	ret := _mock.Called(ctx, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountBrokerageDependencies")
+	}
+
+	var r0 *repositories.BrokerageDependencyCounts
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (*repositories.BrokerageDependencyCounts, error)); ok {
+		return returnFunc(ctx, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) *repositories.BrokerageDependencyCounts); ok {
+		r0 = returnFunc(ctx, tenantInfo)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.BrokerageDependencyCounts)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationRepository_CountBrokerageDependencies_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountBrokerageDependencies'
+type MockOrganizationRepository_CountBrokerageDependencies_Call struct {
+	*mock.Call
+}
+
+// CountBrokerageDependencies is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockOrganizationRepository_Expecter) CountBrokerageDependencies(ctx any, tenantInfo any) *MockOrganizationRepository_CountBrokerageDependencies_Call {
+	return &MockOrganizationRepository_CountBrokerageDependencies_Call{Call: _e.mock.On("CountBrokerageDependencies", ctx, tenantInfo)}
+}
+
+func (_c *MockOrganizationRepository_CountBrokerageDependencies_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockOrganizationRepository_CountBrokerageDependencies_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationRepository_CountBrokerageDependencies_Call) Return(brokerageDependencyCounts *repositories.BrokerageDependencyCounts, err error) *MockOrganizationRepository_CountBrokerageDependencies_Call {
+	_c.Call.Return(brokerageDependencyCounts, err)
+	return _c
+}
+
+func (_c *MockOrganizationRepository_CountBrokerageDependencies_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositories.BrokerageDependencyCounts, error)) *MockOrganizationRepository_CountBrokerageDependencies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByID provides a mock function for the type MockOrganizationRepository
 func (_mock *MockOrganizationRepository) GetByID(ctx context.Context, req repositories.GetOrganizationByIDRequest) (*tenant.Organization, error) {
 	ret := _mock.Called(ctx, req)
@@ -179,6 +315,74 @@ func (_c *MockOrganizationRepository_GetByID_Call) Return(organization *tenant.O
 }
 
 func (_c *MockOrganizationRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetOrganizationByIDRequest) (*tenant.Organization, error)) *MockOrganizationRepository_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCapabilities provides a mock function for the type MockOrganizationRepository
+func (_mock *MockOrganizationRepository) GetCapabilities(ctx context.Context, req repositories.GetOrganizationCapabilitiesRequest) (*repositories.OrganizationCapabilities, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCapabilities")
+	}
+
+	var r0 *repositories.OrganizationCapabilities
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetOrganizationCapabilitiesRequest) (*repositories.OrganizationCapabilities, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetOrganizationCapabilitiesRequest) *repositories.OrganizationCapabilities); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.OrganizationCapabilities)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetOrganizationCapabilitiesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationRepository_GetCapabilities_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCapabilities'
+type MockOrganizationRepository_GetCapabilities_Call struct {
+	*mock.Call
+}
+
+// GetCapabilities is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetOrganizationCapabilitiesRequest
+func (_e *MockOrganizationRepository_Expecter) GetCapabilities(ctx any, req any) *MockOrganizationRepository_GetCapabilities_Call {
+	return &MockOrganizationRepository_GetCapabilities_Call{Call: _e.mock.On("GetCapabilities", ctx, req)}
+}
+
+func (_c *MockOrganizationRepository_GetCapabilities_Call) Run(run func(ctx context.Context, req repositories.GetOrganizationCapabilitiesRequest)) *MockOrganizationRepository_GetCapabilities_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetOrganizationCapabilitiesRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetOrganizationCapabilitiesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationRepository_GetCapabilities_Call) Return(organizationCapabilities *repositories.OrganizationCapabilities, err error) *MockOrganizationRepository_GetCapabilities_Call {
+	_c.Call.Return(organizationCapabilities, err)
+	return _c
+}
+
+func (_c *MockOrganizationRepository_GetCapabilities_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetOrganizationCapabilitiesRequest) (*repositories.OrganizationCapabilities, error)) *MockOrganizationRepository_GetCapabilities_Call {
 	_c.Call.Return(run)
 	return _c
 }

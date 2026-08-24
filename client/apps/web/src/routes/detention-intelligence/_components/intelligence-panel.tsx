@@ -36,18 +36,18 @@ export function Panel({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, delay: index * 0.07, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "flex flex-col overflow-hidden rounded-lg border border-border bg-card",
+        "border-border bg-card flex flex-col overflow-hidden rounded-lg border",
         className,
       )}
     >
-      <header className="flex items-start justify-between gap-3 border-b border-border px-3 py-2.5">
+      <header className="border-border flex items-start justify-between gap-3 border-b px-3 py-2.5">
         <div className="flex min-w-0 gap-2.5">
-          <span className="mt-px inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <span className="bg-muted text-muted-foreground mt-px inline-flex size-6 shrink-0 items-center justify-center rounded-md">
             <Icon className="size-3.5" />
           </span>
           <div className="min-w-0">
             <h3 className="text-sm leading-tight font-medium">{title}</h3>
-            <p className="mt-1 text-2xs leading-snug text-muted-foreground">
+            <p className="text-2xs text-muted-foreground mt-1 leading-snug">
               {description}
             </p>
           </div>
@@ -58,7 +58,7 @@ export function Panel({
       <div className="min-w-0 flex-1">{children}</div>
 
       {footer ? (
-        <footer className="border-t border-border px-3 py-2">{footer}</footer>
+        <footer className="border-border border-t px-3 py-2">{footer}</footer>
       ) : null}
     </m.section>
   );
@@ -73,8 +73,8 @@ export function PanelEmpty({
 }) {
   return (
     <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
-      <Icon className="size-5 text-muted-foreground/50" />
-      <p className="max-w-[20rem] text-xs text-muted-foreground">{message}</p>
+      <Icon className="text-muted-foreground/50 size-5" />
+      <p className="text-muted-foreground max-w-[20rem] text-xs">{message}</p>
     </div>
   );
 }
@@ -83,7 +83,7 @@ export function PanelError({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
       <TriangleAlertIcon className="size-5 text-amber-500" />
-      <p className="max-w-[20rem] text-xs text-muted-foreground">
+      <p className="text-muted-foreground max-w-[20rem] text-xs">
         These figures could not be loaded. The window may be too wide, or the
         aggregation timed out.
       </p>
@@ -97,7 +97,7 @@ export function PanelError({ onRetry }: { onRetry: () => void }) {
 
 export function PanelRowsSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="divide-y divide-border">
+    <div className="divide-border divide-y">
       {Array.from({ length: rows }).map((_, index) => (
         <div key={index} className="flex items-center gap-3 px-3 py-3">
           <Skeleton className="size-3 shrink-0 rounded-sm" />
@@ -126,14 +126,14 @@ export function MetricCell({
 }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <p className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
         {label}
       </p>
       <p className={cn("mt-1 truncate text-sm font-medium tabular-nums", valueClassName)}>
         {value}
       </p>
       {detail ? (
-        <p className="mt-0.5 truncate text-2xs text-muted-foreground tabular-nums">
+        <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
           {detail}
         </p>
       ) : null}
@@ -160,7 +160,7 @@ export function PanelExpandToggle({
     <button
       type="button"
       onClick={onToggle}
-      className="ml-auto rounded-sm text-2xs font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      className="text-2xs text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 ml-auto rounded-sm font-medium transition-colors outline-none focus-visible:ring-[3px]"
     >
       {expanded ? "Show fewer" : `Show ${hiddenCount} more ${noun}`}
     </button>

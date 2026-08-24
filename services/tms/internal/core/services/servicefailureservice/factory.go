@@ -24,10 +24,13 @@ func (s *service) activeReasonCode(
 	ctx context.Context,
 	params activeReasonCodeParams,
 ) (*servicefailure.ReasonCode, error) {
-	reason, err := s.reasonCodeRepo.GetByID(ctx, repositories.GetServiceFailureReasonCodeByIDRequest{
-		ID:         params.reasonCodeID,
-		TenantInfo: params.tenantInfo,
-	})
+	reason, err := s.reasonCodeRepo.GetByID(
+		ctx,
+		repositories.GetServiceFailureReasonCodeByIDRequest{
+			ID:         params.reasonCodeID,
+			TenantInfo: params.tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +56,11 @@ func (s *service) defaultReasonCode(
 	tenantInfo pagination.TenantInfo,
 	stopType shipment.StopType,
 ) (*servicefailure.ReasonCode, error) {
-	reason, err := s.reasonCodeRepo.FindDefault(ctx, tenantInfo, servicefailure.AppliesToForStop(&shipment.Stop{Type: stopType}))
+	reason, err := s.reasonCodeRepo.FindDefault(
+		ctx,
+		tenantInfo,
+		servicefailure.AppliesToForStop(&shipment.Stop{Type: stopType}),
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -83,7 +90,9 @@ func validateServiceFailure(entity *servicefailure.ServiceFailure) *errortypes.M
 	return nil
 }
 
-func activeStopRequest(entity *servicefailure.ServiceFailure) *repositories.ServiceFailureActiveStopRequest {
+func activeStopRequest(
+	entity *servicefailure.ServiceFailure,
+) *repositories.ServiceFailureActiveStopRequest {
 	return &repositories.ServiceFailureActiveStopRequest{
 		TenantInfo:     serviceFailureTenantInfo(entity),
 		ShipmentID:     entity.ShipmentID,
@@ -94,7 +103,8 @@ func activeStopRequest(entity *servicefailure.ServiceFailure) *repositories.Serv
 }
 
 func normalizedGracePeriod(control *dispatchcontrol.DispatchControl) int {
-	if control == nil || control.ServiceFailureGracePeriod == nil || *control.ServiceFailureGracePeriod <= 0 {
+	if control == nil || control.ServiceFailureGracePeriod == nil ||
+		*control.ServiceFailureGracePeriod <= 0 {
 		return dispatchcontrol.DefaultServiceFailureGracePeriod
 	}
 	return *control.ServiceFailureGracePeriod
@@ -120,7 +130,11 @@ func detectedFailureNote(entity *servicefailure.ServiceFailure) string {
 	if entity.Type == servicefailure.TypeLatePickup {
 		label = "late pickup"
 	}
-	return fmt.Sprintf("Detected %s service failure %d minute(s) after grace.", label, entity.LateMinutes)
+	return fmt.Sprintf(
+		"Detected %s service failure %d minute(s) after grace.",
+		label,
+		entity.LateMinutes,
+	)
 }
 
 func optionalIDString(id *pulid.ID) string {

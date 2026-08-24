@@ -2,6 +2,7 @@ package commodity
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -44,6 +45,40 @@ const (
 	FreightClass500  FreightClass = "Class500"
 )
 
+// FreightClasses is the eighteen NMFC classes in ascending order.
+//
+// The order is the classification scale itself, densest to least dense, which
+// is what density based classification walks and what a class rated tariff
+// indexes its columns by.
+var FreightClasses = []FreightClass{
+	FreightClass50,
+	FreightClass55,
+	FreightClass60,
+	FreightClass65,
+	FreightClass70,
+	FreightClass77_5,
+	FreightClass85,
+	FreightClass92_5,
+	FreightClass100,
+	FreightClass110,
+	FreightClass125,
+	FreightClass150,
+	FreightClass175,
+	FreightClass200,
+	FreightClass250,
+	FreightClass300,
+	FreightClass400,
+	FreightClass500,
+}
+
+func (fc FreightClass) String() string {
+	return string(fc)
+}
+
+func (fc FreightClass) IsValid() bool {
+	return slices.Contains(FreightClasses, fc)
+}
+
 type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
 
@@ -60,6 +95,9 @@ type Commodity struct {
 	MaxTemperature         *int               `json:"maxTemperature"         bun:"max_temperature,type:INTEGER,nullzero"`
 	WeightPerUnit          *float64           `json:"weightPerUnit"          bun:"weight_per_unit,type:NUMERIC(10,2),nullzero"`
 	LinearFeetPerUnit      *float64           `json:"linearFeetPerUnit"      bun:"linear_feet_per_unit,type:NUMERIC(10,2),nullzero"`
+	LengthPerUnit          *float64           `json:"lengthPerUnit"          bun:"length_per_unit,type:NUMERIC(10,2),nullzero"`
+	WidthPerUnit           *float64           `json:"widthPerUnit"           bun:"width_per_unit,type:NUMERIC(10,2),nullzero"`
+	HeightPerUnit          *float64           `json:"heightPerUnit"          bun:"height_per_unit,type:NUMERIC(10,2),nullzero"`
 	MaxQuantityPerShipment *float64           `json:"maxQuantityPerShipment" bun:"max_quantity_per_shipment,type:NUMERIC(10,2),nullzero"`
 	FreightClass           FreightClass       `json:"freightClass"           bun:"freight_class,type:freight_class_enum,nullzero"`
 	LoadingInstructions    string             `json:"loadingInstructions"    bun:"loading_instructions,type:TEXT,nullzero"`

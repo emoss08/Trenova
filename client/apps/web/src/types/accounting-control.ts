@@ -27,6 +27,9 @@ export const journalSourceEventSchema = z.enum([
   "CustomerPaymentPosted",
   "VendorBillPosted",
   "VendorPaymentPosted",
+  "CarrierSettlementPosted",
+  "CarrierSettlementVoided",
+  "CarrierSettlementPaid",
 ]);
 export type JournalSourceEvent = z.infer<typeof journalSourceEventSchema>;
 

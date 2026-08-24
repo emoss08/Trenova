@@ -43,9 +43,65 @@ type Assignment struct {
 	SecondaryWorker *worker.Worker   `json:"secondaryWorker,omitempty" bun:"rel:belongs-to,join:secondary_worker_id=id"`
 }
 
-// applyDefaults mirrors the column defaults so validation judges the row the
-// insert would actually write, rather than failing a payload that leaves the
-// lifecycle fields to the database.
+func (a *Assignment) Validate(multiErr *errortypes.MultiError) {
+	a.applyDefaults()
+
+	var primaryWorkerID pulid.ID
+	if a.PrimaryWorkerID != nil {
+		primaryWorkerID = *a.PrimaryWorkerID
+	}
+
+	// Tenancy and the owning move are stamped by the repository at write time.
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		a,
+		validation.Field(
+			&a.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[AssignmentStatus]("Status is invalid"),
+		),
+		validation.Field(
+			&a.AckStatus,
+			validation.Required.Error("Acknowledgment status is required"),
+			domainvalidation.ValidEnum[AssignmentAck]("Acknowledgment status is invalid"),
+		),
+		// An assignment with no driver puts equipment on a move nobody is
+		// scheduled to run.
+		validation.Field(
+			&a.PrimaryWorkerID,
+			validation.Required.Error("Primary worker is required"),
+		),
+		// The same person twice on one move would show as a team assignment
+		// while leaving the second seat empty. Read the primary into a local:
+		// the rule is built before When decides whether to run it, so the
+		// dereference cannot sit inside the condition.
+		validation.Field(
+			&a.SecondaryWorkerID,
+			validation.When(
+				a.PrimaryWorkerID != nil && a.SecondaryWorkerID != nil,
+				validation.NotIn(primaryWorkerID).
+					Error("The secondary worker cannot be the primary worker"),
+			),
+		),
+		validation.Field(
+			&a.AckAt,
+			validation.When(
+				a.AckStatus != AssignmentAckPending,
+				validation.Required.Error(
+					"An answered assignment must record when it was answered",
+				),
+			),
+		),
+		// A decline that records no reason leaves dispatch reassigning blind.
+		validation.Field(
+			&a.AckReason,
+			validation.When(
+				a.AckStatus == AssignmentAckDeclined,
+				validation.Required.Error("A declined assignment must record its reason"),
+			),
+		),
+	))
+}
+
 func (a *Assignment) applyDefaults() {
 	if a.Status == "" {
 		a.Status = AssignmentStatusNew
@@ -73,56 +129,4 @@ func (a *Assignment) BeforeAppendModel(_ context.Context, query bun.Query) error
 
 func (a *Assignment) GetID() pulid.ID {
 	return a.ID
-}
-
-func (a *Assignment) Validate(multiErr *errortypes.MultiError) {
-	a.applyDefaults()
-
-	var primaryWorkerID pulid.ID
-	if a.PrimaryWorkerID != nil {
-		primaryWorkerID = *a.PrimaryWorkerID
-	}
-
-	// Tenancy and the owning move are stamped by the repository at write time.
-	multiErr.AddOzzoError(validation.ValidateStruct(a,
-		validation.Field(&a.Status,
-			validation.Required.Error("Status is required"),
-			domainvalidation.ValidEnum[AssignmentStatus]("Status is invalid"),
-		),
-		validation.Field(&a.AckStatus,
-			validation.Required.Error("Acknowledgment status is required"),
-			domainvalidation.ValidEnum[AssignmentAck]("Acknowledgment status is invalid"),
-		),
-		// An assignment with no driver puts equipment on a move nobody is
-		// scheduled to run.
-		validation.Field(&a.PrimaryWorkerID,
-			validation.Required.Error("Primary worker is required"),
-		),
-		// The same person twice on one move would show as a team assignment
-		// while leaving the second seat empty. Read the primary into a local:
-		// the rule is built before When decides whether to run it, so the
-		// dereference cannot sit inside the condition.
-		validation.Field(&a.SecondaryWorkerID,
-			validation.When(
-				a.PrimaryWorkerID != nil && a.SecondaryWorkerID != nil,
-				validation.NotIn(primaryWorkerID).
-					Error("The secondary worker cannot be the primary worker"),
-			),
-		),
-		validation.Field(&a.AckAt,
-			validation.When(
-				a.AckStatus != AssignmentAckPending,
-				validation.Required.Error(
-					"An answered assignment must record when it was answered",
-				),
-			),
-		),
-		// A decline that records no reason leaves dispatch reassigning blind.
-		validation.Field(&a.AckReason,
-			validation.When(
-				a.AckStatus == AssignmentAckDeclined,
-				validation.Required.Error("A declined assignment must record its reason"),
-			),
-		),
-	))
 }

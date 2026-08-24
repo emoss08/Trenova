@@ -409,7 +409,7 @@ func transformFormatDecimal(r *transformRuntime, value any, args map[string]any)
 			valueToString(value),
 		)
 	}
-	places32 := int32(places) //nolint:gosec // places is bounded before converting to int32.
+	places32 := int32(places)
 	return number.StringFixed(places32), nil
 }
 
@@ -746,7 +746,7 @@ func intFromTransformValue(value any) (int, bool) {
 		if typed > maxTransformIntUint {
 			return 0, false
 		}
-		return int(typed), true //nolint:gosec // typed is bounded by maxTransformInt above.
+		return int(typed), true
 	case uint8:
 		return int(typed), true
 	case uint16:
@@ -837,7 +837,7 @@ func decimalFromTransformValue(value any) (decimal.Decimal, bool) {
 		if uint64(typed) > maxTransformInt64Uint {
 			return decimal.Zero, false
 		}
-		//nolint:gosec // typed is bounded by maxTransformInt64Uint above.
+
 		return decimal.NewFromInt(int64(typed)), true
 	case uint8:
 		return decimal.NewFromInt(int64(typed)), true

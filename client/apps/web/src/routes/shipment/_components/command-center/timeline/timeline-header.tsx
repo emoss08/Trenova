@@ -33,21 +33,21 @@ export function TimelineHeader({
   const nowX = secondsToX(now, range, zoom);
 
   return (
-    <div className="sticky top-0 z-40 flex border-b border-border" style={{ height: headerHeight }}>
+    <div className="border-border sticky top-0 z-40 flex border-b" style={{ height: headerHeight }}>
       <div
-        className="sticky left-0 z-50 flex shrink-0 items-center border-r border-border bg-muted px-2.5"
+        className="border-border bg-muted sticky left-0 z-50 flex shrink-0 items-center border-r px-2.5"
         style={{ width: RAIL_WIDTH_PX }}
       >
-        <span className="text-[9.5px] font-semibold tracking-wide text-muted-foreground uppercase">
+        <span className="text-muted-foreground text-[9.5px] font-semibold tracking-wide uppercase">
           Drivers · {driverCount}
         </span>
       </div>
-      <div className="relative shrink-0 bg-muted" style={{ width: canvasWidth }}>
+      <div className="bg-muted relative shrink-0" style={{ width: canvasWidth }}>
         {dayColumns.map((day) => (
           <div
             key={day.start}
             className={cn(
-              "absolute top-0 flex items-center border-l border-border/70 px-1.5 first:border-l-0",
+              "border-border/70 absolute top-0 flex items-center border-l px-1.5 first:border-l-0",
               day.isToday && "text-brand",
             )}
             style={{ left: day.x, width: day.width, height: DAY_LABEL_HEIGHT_PX }}
@@ -61,7 +61,7 @@ export function TimelineHeader({
           hourTicks.map((tick) => (
             <span
               key={tick.time}
-              className="absolute -translate-x-1/2 font-table text-[9px] text-muted-foreground tabular-nums"
+              className="font-table text-muted-foreground absolute -translate-x-1/2 text-[9px] tabular-nums"
               style={{ left: tick.x, top: DAY_LABEL_HEIGHT_PX + 3 }}
             >
               {tick.label}
@@ -69,7 +69,7 @@ export function TimelineHeader({
           ))}
         {nowInRange && (
           <span
-            className="absolute bottom-0 z-10 -translate-x-1/2 rounded-t bg-brand px-1 py-px font-table text-[8.5px] font-semibold text-brand-foreground tabular-nums"
+            className="bg-brand font-table text-brand-foreground absolute bottom-0 z-10 -translate-x-1/2 rounded-t px-1 py-px text-[8.5px] font-semibold tabular-nums"
             style={{ left: nowX }}
           >
             {formatUnixInUserTimezone(now, { hour: "2-digit", minute: "2-digit", hour12: false })}

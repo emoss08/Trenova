@@ -23,7 +23,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-//nolint:funlen // Tender payload construction intentionally mirrors the outbound document shape.
 func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 	payload := edi.LoadTenderPayload{
 		PurposeCode:              edi.LoadTenderPurposeOriginal,
@@ -79,55 +78,22 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 	)
 
 	for _, move := range source.Moves {
-		tenderMove := edi.LoadTenderMove{
-			Loaded:   move.Loaded,
-			Sequence: move.Sequence,
-			Distance: move.Distance,
-			Stops:    make([]edi.LoadTenderStop, 0, len(move.Stops)),
-		}
-		for _, stop := range move.Stops {
-			locLabel, locAddr := stopLocationDetails(stop)
-			tenderMove.Stops = append(tenderMove.Stops, edi.LoadTenderStop{
-				LocationID:           stop.LocationID,
-				LocationLabel:        locLabel,
-				Type:                 string(stop.Type),
-				ScheduleType:         string(stop.ScheduleType),
-				Sequence:             stop.Sequence,
-				Pieces:               stop.Pieces,
-				Weight:               stop.Weight,
-				ScheduledWindowStart: stop.ScheduledWindowStart,
-				ScheduledWindowEnd:   stop.ScheduledWindowEnd,
-				AddressLine:          stringutils.FirstNonEmpty(stop.AddressLine, locAddr),
-			})
-			if stop.Location != nil {
-				tenderMove.Stops[len(tenderMove.Stops)-1].LocationName = stop.Location.Name
-				tenderMove.Stops[len(tenderMove.Stops)-1].LocationCode = stop.Location.Code
-				tenderMove.Stops[len(tenderMove.Stops)-1].LocationAddressLine1 = stop.Location.AddressLine1
-				tenderMove.Stops[len(tenderMove.Stops)-1].LocationAddressLine2 = stop.Location.AddressLine2
-				tenderMove.Stops[len(tenderMove.Stops)-1].LocationCity = stop.Location.City
-				tenderMove.Stops[len(tenderMove.Stops)-1].LocationPostalCode = stop.Location.PostalCode
-				if stop.Location.State != nil {
-					tenderMove.Stops[len(tenderMove.Stops)-1].LocationStateCode = stop.Location.State.Abbreviation
-				}
-			}
+		tenderMove := loadTenderMoveFromShipmentMove(move)
+		for i := range tenderMove.Stops {
 			addRequiredID(
 				payload.RequiredMappingEntityIDs,
 				edi.MappingEntityTypeLocation,
-				stop.LocationID,
+				tenderMove.Stops[i].LocationID,
 			)
 		}
 		payload.Moves = append(payload.Moves, tenderMove)
 	}
 
 	for _, commodity := range source.Commodities {
-		payload.Commodities = append(payload.Commodities, edi.LoadTenderCommodity{
-			CommodityID:          commodity.CommodityID,
-			CommodityLabel:       commodityLabel(commodity),
-			CommodityName:        commodityName(commodity),
-			CommodityDescription: commodityDescription(commodity),
-			Weight:               commodity.Weight,
-			Pieces:               commodity.Pieces,
-		})
+		payload.Commodities = append(
+			payload.Commodities,
+			loadTenderCommodityFromShipmentCommodity(commodity),
+		)
 		addRequiredID(
 			payload.RequiredMappingEntityIDs,
 			edi.MappingEntityTypeCommodity,
@@ -153,6 +119,56 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 	}
 
 	return payload
+}
+
+func loadTenderMoveFromShipmentMove(move *shipment.ShipmentMove) edi.LoadTenderMove {
+	tenderMove := edi.LoadTenderMove{
+		Loaded:   move.Loaded,
+		Sequence: move.Sequence,
+		Distance: move.Distance,
+		Stops:    make([]edi.LoadTenderStop, 0, len(move.Stops)),
+	}
+	for _, stop := range move.Stops {
+		locLabel, locAddr := stopLocationDetails(stop)
+		tenderStop := edi.LoadTenderStop{
+			LocationID:           stop.LocationID,
+			LocationLabel:        locLabel,
+			Type:                 string(stop.Type),
+			ScheduleType:         string(stop.ScheduleType),
+			Sequence:             stop.Sequence,
+			Pieces:               stop.Pieces,
+			Weight:               stop.Weight,
+			ScheduledWindowStart: stop.ScheduledWindowStart,
+			ScheduledWindowEnd:   stop.ScheduledWindowEnd,
+			AddressLine:          stringutils.FirstNonEmpty(stop.AddressLine, locAddr),
+		}
+		if stop.Location != nil {
+			tenderStop.LocationName = stop.Location.Name
+			tenderStop.LocationCode = stop.Location.Code
+			tenderStop.LocationAddressLine1 = stop.Location.AddressLine1
+			tenderStop.LocationAddressLine2 = stop.Location.AddressLine2
+			tenderStop.LocationCity = stop.Location.City
+			tenderStop.LocationPostalCode = stop.Location.PostalCode
+			if stop.Location.State != nil {
+				tenderStop.LocationStateCode = stop.Location.State.Abbreviation
+			}
+		}
+		tenderMove.Stops = append(tenderMove.Stops, tenderStop)
+	}
+	return tenderMove
+}
+
+func loadTenderCommodityFromShipmentCommodity(
+	commodity *shipment.ShipmentCommodity,
+) edi.LoadTenderCommodity {
+	return edi.LoadTenderCommodity{
+		CommodityID:          commodity.CommodityID,
+		CommodityLabel:       commodityLabel(commodity),
+		CommodityName:        commodityName(commodity),
+		CommodityDescription: commodityDescription(commodity),
+		Weight:               commodity.Weight,
+		Pieces:               commodity.Pieces,
+	}
 }
 
 func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
@@ -285,7 +301,10 @@ func buildShipmentEventStatusPayload(
 		payload.StatusReasonCode = reason
 		payload.ReasonCode = reason
 	}
-	if reasonDescription := metadataString(event.Metadata, "reasonDescription"); reasonDescription != "" {
+	if reasonDescription := metadataString(
+		event.Metadata,
+		"reasonDescription",
+	); reasonDescription != "" {
 		payload.ReasonDescription = reasonDescription
 	}
 	if exceptionCode := metadataString(event.Metadata, "exceptionCode"); exceptionCode != "" {
@@ -370,7 +389,10 @@ func buildServiceFailureShipmentStatusPayload(
 	if failure.ReasonCode != nil {
 		status.ServiceFailureReasonCode = failure.ReasonCode.Code
 		if status.ReasonDescription == "" {
-			status.ReasonDescription = stringutils.FirstNonEmpty(failure.ReasonCode.Label, failure.ReasonCode.Description)
+			status.ReasonDescription = stringutils.FirstNonEmpty(
+				failure.ReasonCode.Label,
+				failure.ReasonCode.Description,
+			)
 		}
 	}
 	if strings.TrimSpace(failure.Notes) != "" {
@@ -578,7 +600,10 @@ func applyShipmentStatusStop(payload *edi.ShipmentStatusPayload, stop *shipment.
 
 	payload.LocationName = stop.Location.Name
 	payload.LocationCode = stop.Location.Code
-	payload.AddressLine = stringutils.FirstNonEmpty(payload.AddressLine, locationAddress(stop.Location))
+	payload.AddressLine = stringutils.FirstNonEmpty(
+		payload.AddressLine,
+		locationAddress(stop.Location),
+	)
 	payload.City = stop.Location.City
 	payload.PostalCode = stop.Location.PostalCode
 	if stop.Location.State != nil {

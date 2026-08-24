@@ -66,13 +66,13 @@ export function SimulationResultViewer({
       {(result.validationErrors?.length ?? 0) > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-destructive">
+            <CardTitle className="text-destructive flex items-center gap-2">
               <AlertTriangleIcon className="size-4" />
               Validation Errors
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="list-inside list-disc space-y-1 text-sm text-destructive">
+            <ul className="text-destructive list-inside list-disc space-y-1 text-sm">
               {result.validationErrors?.map((err, i) => (
                 <li key={i}>{err}</li>
               ))}
@@ -92,19 +92,19 @@ export function SimulationResultViewer({
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
               <div>
-                <dt className="text-xs text-muted-foreground">Rule Set</dt>
+                <dt className="text-muted-foreground text-xs">Rule Set</dt>
                 <dd className="font-medium">{result.metadata.ruleSetName}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Version</dt>
+                <dt className="text-muted-foreground text-xs">Version</dt>
                 <dd className="font-medium">{result.metadata.versionNumber}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Parser Mode</dt>
+                <dt className="text-muted-foreground text-xs">Parser Mode</dt>
                 <dd className="font-medium">{result.metadata.parserMode}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">
+                <dt className="text-muted-foreground text-xs">
                   Provider Matched
                 </dt>
                 <dd className="font-medium">
@@ -112,7 +112,7 @@ export function SimulationResultViewer({
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">
+                <dt className="text-muted-foreground text-xs">
                   Match Specificity
                 </dt>
                 <dd className="font-medium">
@@ -187,11 +187,11 @@ function AnalysisCard({
                     className="rounded-md border p-3"
                   >
                     <div className="mb-2 flex items-center gap-2">
-                      <MapPinIcon className="size-3.5 text-muted-foreground" />
+                      <MapPinIcon className="text-muted-foreground size-3.5" />
                       <Badge variant="info" className="capitalize">
                         {stop.role}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs">
                         Seq {stop.sequence}
                       </span>
                       <Badge variant={confidenceVariant(stop.confidence)}>
@@ -212,7 +212,7 @@ function AnalysisCard({
                         {stop.postalCode ? ` ${stop.postalCode}` : ""}
                       </p>
                       {(stop.date || stop.timeWindow) && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           {[stop.date, stop.timeWindow].filter(Boolean).join(" \u00b7 ")}
                         </p>
                       )}
@@ -228,7 +228,7 @@ function AnalysisCard({
           <>
             <Separator />
             <div>
-              <h4 className="mb-2 text-sm font-medium text-destructive">
+              <h4 className="text-destructive mb-2 text-sm font-medium">
                 Conflicts ({analysis.conflicts?.length ?? 0})
               </h4>
               <ul className="space-y-1 text-sm">
@@ -247,7 +247,7 @@ function AnalysisCard({
           <>
             <Separator />
             <div>
-              <h4 className="mb-2 text-sm font-medium text-warning">
+              <h4 className="text-warning mb-2 text-sm font-medium">
                 Missing Fields
               </h4>
               <div className="flex flex-wrap gap-1">
@@ -266,7 +266,7 @@ function AnalysisCard({
             <Separator />
             <div>
               <h4 className="mb-2 text-sm font-medium">Signals</h4>
-              <ul className="list-inside list-disc text-sm text-muted-foreground">
+              <ul className="text-muted-foreground list-inside list-disc text-sm">
                 {analysis.signals?.map((s, i) => (
                   <li key={i}>{s}</li>
                 ))}
@@ -321,7 +321,7 @@ function FieldsTable({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b text-left text-muted-foreground">
+          <tr className="text-muted-foreground border-b text-left">
             <th
               className="cursor-pointer pr-4 pb-2 select-none"
               onClick={() => toggleSort("key")}

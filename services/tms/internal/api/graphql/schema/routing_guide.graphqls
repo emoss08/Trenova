@@ -1,0 +1,62 @@
+type RoutingGuideEntry {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  routingGuideId: ID!
+  carrierId: ID!
+  rank: Int!
+  rateMethod: CarrierRateMethod!
+  rate: String!
+  offerTtlSeconds: Int!
+  channel: TenderChannel!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  carrier: Carrier
+}
+
+type RoutingGuide {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  status: EntityStatus!
+  originLocationId: ID
+  destinationLocationId: ID
+  originCity: String!
+  originState: String!
+  destinationCity: String!
+  destinationState: String!
+  specificity: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  entries: [RoutingGuideEntry!]
+}
+
+type RoutingGuideEdge {
+  node: RoutingGuide!
+  cursor: String!
+}
+
+type RoutingGuideConnection {
+  edges: [RoutingGuideEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input MatchRoutingGuideInput {
+  originLocationId: ID
+  destinationLocationId: ID
+  originCity: String
+  originState: String
+  destinationCity: String
+  destinationState: String
+}
+
+extend type Query {
+  routingGuides(input: DataTableConnectionInput!): RoutingGuideConnection!
+  routingGuide(id: ID!): RoutingGuide
+  matchRoutingGuide(input: MatchRoutingGuideInput!): RoutingGuide
+}

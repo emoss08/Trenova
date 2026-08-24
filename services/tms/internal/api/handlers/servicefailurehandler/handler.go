@@ -122,12 +122,17 @@ func (h *Handler) list(c *gin.Context) {
 	req := pagination.NewQueryOptions(c, authCtx)
 	shipmentID, _ := pulid.MustParse(c.Query("shipmentId"))
 
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
-		return h.service.List(c.Request.Context(), &repositories.ListServiceFailuresRequest{
-			Filter:     req,
-			ShipmentID: shipmentID,
-		})
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
+			return h.service.List(c.Request.Context(), &repositories.ListServiceFailuresRequest{
+				Filter:     req,
+				ShipmentID: shipmentID,
+			})
+		},
+	)
 }
 
 func (h *Handler) get(c *gin.Context) {
@@ -138,13 +143,16 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetByID(c.Request.Context(), &repositories.GetServiceFailureByIDRequest{
-		ID: id,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
+	entity, err := h.service.GetByID(
+		c.Request.Context(),
+		&repositories.GetServiceFailureByIDRequest{
+			ID: id,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -177,11 +185,18 @@ func (h *Handler) evaluateShipment(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	result, err := h.service.EvaluateShipment(c.Request.Context(), &services.EvaluateShipmentServiceFailuresRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: authCtx.OrganizationID, BuID: authCtx.BusinessUnitID},
-		ShipmentID: shipmentID,
-		Force:      c.Query("force") == "true",
-	}, actorutil.FromAuthContext(authCtx))
+	result, err := h.service.EvaluateShipment(
+		c.Request.Context(),
+		&services.EvaluateShipmentServiceFailuresRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+			ShipmentID: shipmentID,
+			Force:      c.Query("force") == "true",
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -202,13 +217,20 @@ func (h *Handler) evaluateStop(c *gin.Context) {
 		return
 	}
 	moveID, _ := pulid.MustParse(c.Query("shipmentMoveId"))
-	result, err := h.service.EvaluateStop(c.Request.Context(), &services.EvaluateStopServiceFailuresRequest{
-		TenantInfo:     pagination.TenantInfo{OrgID: authCtx.OrganizationID, BuID: authCtx.BusinessUnitID},
-		ShipmentID:     shipmentID,
-		ShipmentMoveID: moveID,
-		StopID:         stopID,
-		Force:          c.Query("force") == "true",
-	}, actorutil.FromAuthContext(authCtx))
+	result, err := h.service.EvaluateStop(
+		c.Request.Context(),
+		&services.EvaluateStopServiceFailuresRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+			ShipmentID:     shipmentID,
+			ShipmentMoveID: moveID,
+			StopID:         stopID,
+			Force:          c.Query("force") == "true",
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -219,12 +241,19 @@ func (h *Handler) evaluateStop(c *gin.Context) {
 func (h *Handler) bulkEvaluate(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(services.BulkEvaluateServiceFailuresRequest)
-	req.TenantInfo = pagination.TenantInfo{OrgID: authCtx.OrganizationID, BuID: authCtx.BusinessUnitID}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}
 	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	result, err := h.service.BulkEvaluate(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
+	result, err := h.service.BulkEvaluate(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -241,16 +270,22 @@ func (h *Handler) update(c *gin.Context) {
 	}
 	req := new(services.UpdateServiceFailureRequest)
 	req.ID = id
-	req.TenantInfo = pagination.TenantInfo{OrgID: authCtx.OrganizationID, BuID: authCtx.BusinessUnitID}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 	if req.ShipmentID.IsNil() {
-		current, getErr := h.service.GetByID(c.Request.Context(), &repositories.GetServiceFailureByIDRequest{
-			ID:         id,
-			TenantInfo: req.TenantInfo,
-		})
+		current, getErr := h.service.GetByID(
+			c.Request.Context(),
+			&repositories.GetServiceFailureByIDRequest{
+				ID:         id,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 		if getErr != nil {
 			h.eh.HandleError(c, getErr)
 			return
@@ -266,21 +301,30 @@ func (h *Handler) update(c *gin.Context) {
 }
 
 func (h *Handler) review(c *gin.Context) {
-	h.lifecycle(c, func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*servicefailure.ServiceFailure, error) {
-		return h.service.Review(ctx, req, actor)
-	})
+	h.lifecycle(
+		c,
+		func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*servicefailure.ServiceFailure, error) {
+			return h.service.Review(ctx, req, actor)
+		},
+	)
 }
 
 func (h *Handler) resolve(c *gin.Context) {
-	h.lifecycle(c, func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*servicefailure.ServiceFailure, error) {
-		return h.service.Resolve(ctx, req, actor)
-	})
+	h.lifecycle(
+		c,
+		func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*servicefailure.ServiceFailure, error) {
+			return h.service.Resolve(ctx, req, actor)
+		},
+	)
 }
 
 func (h *Handler) void(c *gin.Context) {
-	h.lifecycle(c, func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*servicefailure.ServiceFailure, error) {
-		return h.service.Void(ctx, req, actor)
-	})
+	h.lifecycle(
+		c,
+		func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*servicefailure.ServiceFailure, error) {
+			return h.service.Void(ctx, req, actor)
+		},
+	)
 }
 
 type lifecycleFn func(context.Context, *services.ServiceFailureLifecycleRequest, *services.RequestActor) (*servicefailure.ServiceFailure, error)
@@ -294,16 +338,22 @@ func (h *Handler) lifecycle(c *gin.Context, fn lifecycleFn) {
 	}
 	req := new(services.ServiceFailureLifecycleRequest)
 	req.ID = id
-	req.TenantInfo = pagination.TenantInfo{OrgID: authCtx.OrganizationID, BuID: authCtx.BusinessUnitID}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 	if req.ShipmentID.IsNil() {
-		current, getErr := h.service.GetByID(c.Request.Context(), &repositories.GetServiceFailureByIDRequest{
-			ID:         id,
-			TenantInfo: req.TenantInfo,
-		})
+		current, getErr := h.service.GetByID(
+			c.Request.Context(),
+			&repositories.GetServiceFailureByIDRequest{
+				ID:         id,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 		if getErr != nil {
 			h.eh.HandleError(c, getErr)
 			return
@@ -353,10 +403,13 @@ func (h *Handler) edi214Readiness(c *gin.Context) {
 		OrgID: authCtx.OrganizationID,
 		BuID:  authCtx.BusinessUnitID,
 	}
-	current, err := h.service.GetByID(c.Request.Context(), &repositories.GetServiceFailureByIDRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	current, err := h.service.GetByID(
+		c.Request.Context(),
+		&repositories.GetServiceFailureByIDRequest{
+			ID:         id,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

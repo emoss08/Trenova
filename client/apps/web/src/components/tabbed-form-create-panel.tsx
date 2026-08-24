@@ -172,14 +172,14 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
       <Dialog.Portal>
         <Dialog.Popup
           className={cn(
-            "fixed top-4 right-4 bottom-4 z-50 flex flex-col rounded-lg border border-border bg-background shadow-lg outline-none",
+            "border-border bg-background fixed top-4 right-4 bottom-4 z-50 flex flex-col rounded-lg border shadow-lg outline-none",
             "data-open:animate-in data-open:slide-in-from-right",
             "data-closed:animate-out data-closed:slide-out-to-right",
             "duration-200",
           )}
           style={{ width: PANEL_SIZES[size] }}
         >
-          <div className="flex flex-col border-b border-border px-4 py-3">
+          <div className="border-border flex flex-col border-b px-4 py-3">
             <div className="flex items-center justify-between">
               <Dialog.Title className="text-2xl leading-none font-semibold">
                 {`Add New ${title}`}
@@ -200,7 +200,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
                 </Dialog.Close>
               </div>
             </div>
-            <Dialog.Description className="mt-0.5 text-xs text-muted-foreground">
+            <Dialog.Description className="text-muted-foreground mt-0.5 text-xs">
               {description ?? `Fill out the form below to create a new ${title}.`}
             </Dialog.Description>
           </div>
@@ -211,9 +211,9 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
             <Tabs
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as string)}
-              className="flex flex-1 flex-col overflow-hidden gap-0"
+              className="flex flex-1 flex-col gap-0 overflow-hidden"
             >
-              <div className="border-b border-border px-4">
+              <div className="border-border border-b px-4">
                 <OverflowTabsList
                   items={formTabs.map((tab) => ({
                     value: tab.value,
@@ -267,7 +267,7 @@ export function TabbedFormCreatePanel<T extends FieldValues, TData>({
 
           <div
             className={cn(
-              "flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-4 py-3",
+              "border-border bg-muted/30 flex items-center justify-between gap-2 border-t px-4 py-3",
               useDock && "hidden",
             )}
           >

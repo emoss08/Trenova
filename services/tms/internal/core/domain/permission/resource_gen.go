@@ -53,6 +53,9 @@ const (
 	ResourceShipmentMove             Resource = "shipment_move"
 	ResourceShipmentStop             Resource = "shipment_stop"
 	ResourceShipmentHold             Resource = "shipment_hold"
+	ResourcePermit                   Resource = "permit"
+	ResourceJurisdictionRule         Resource = "jurisdiction_rule"
+	ResourceJurisdictionRuleOverride Resource = "jurisdiction_rule_override"
 	ResourceServiceFailure           Resource = "service_failure"
 	ResourceServiceFailureReasonCode Resource = "service_failure_reason_code"
 	ResourceDispatchControl          Resource = "dispatch_control"
@@ -71,9 +74,13 @@ const (
 	ResourceChargeType           Resource = "charge_type"
 	ResourceRevenueCode          Resource = "revenue_code"
 	ResourceFormulaTemplate      Resource = "formula_template"
-	ResourceRateTable            Resource = "rate_table"
 	ResourceFuelSurchargeProgram Resource = "fuel_surcharge_program"
 	ResourceDetentionPolicy      Resource = "detention_policy"
+	ResourceRateAgreement        Resource = "rate_agreement"
+	ResourceRateZone             Resource = "rate_zone"
+	ResourceRateMatrix           Resource = "rate_matrix"
+	ResourceRateQuote            Resource = "rate_quote"
+	ResourceRateSimulation       Resource = "rate_simulation"
 
 	// Agent
 	ResourceAgentRun       Resource = "agent_run"
@@ -84,6 +91,15 @@ const (
 	// Customers
 	ResourceCustomer        Resource = "customer"
 	ResourceCustomerContact Resource = "customer_contact"
+
+	// Carriers
+	ResourceCarrier                  Resource = "carrier"
+	ResourceRateConfirmation         Resource = "rate_confirmation"
+	ResourceCarrierSettlement        Resource = "carrier_settlement"
+	ResourceCarrierSettlementControl Resource = "carrier_settlement_control"
+	ResourceCarrierInvoiceMatch      Resource = "carrier_invoice_match"
+	ResourceRoutingGuide             Resource = "routing_guide"
+	ResourceTender                   Resource = "tender"
 
 	// Locations
 	ResourceLocation         Resource = "location"

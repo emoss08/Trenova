@@ -59,7 +59,7 @@ export default function RawViewTab({
             Download
           </Button>
         </div>
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <label className="text-muted-foreground flex items-center gap-2 text-xs">
           Wrap
           <Switch checked={wrap} onCheckedChange={setWrap} />
         </label>

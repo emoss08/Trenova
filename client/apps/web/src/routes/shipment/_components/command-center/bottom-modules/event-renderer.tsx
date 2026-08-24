@@ -104,6 +104,130 @@ export function renderEvent(event: ShipmentEvent): RenderedEvent {
         headline: composeHeadline(actor, "unassigned a driver from", target),
         actorHandle: actorHandle(event),
       };
+    case "CarrierAssigned": {
+      const carrier = carrierFrom(meta);
+      return {
+        headline: composeHeadline(actor, `assigned ${carrier} to`, target),
+        actorHandle: actorHandle(event),
+      };
+    }
+    case "CarrierUnassigned": {
+      const carrier = carrierFrom(meta);
+      const reason = stringFrom(meta.reason);
+      return {
+        headline: composeHeadline(actor, `unassigned ${carrier} from`, target),
+        detail: reason ? `Reason: ${reason}` : undefined,
+        actorHandle: actorHandle(event),
+      };
+    }
+    case "TenderOffered": {
+      const carrier = carrierFrom(meta);
+      const channel = stringFrom(meta.channel);
+      return {
+        headline: composeHeadline(
+          actor,
+          "offered",
+          target,
+          ` to ${carrier}${channel ? ` via ${channel}` : ""}`,
+        ),
+        actorHandle: actorHandle(event),
+      };
+    }
+    case "TenderAccepted":
+      return {
+        headline: composeHeadline(carrierFrom(meta), "accepted the tender for", target),
+        actorHandle: actorHandle(event),
+      };
+    case "TenderDeclined": {
+      const reason = stringFrom(meta.reason);
+      return {
+        headline: composeHeadline(carrierFrom(meta), "declined the tender for", target),
+        detail: reason ? `"${reason}"` : undefined,
+        actorHandle: actorHandle(event),
+      };
+    }
+    case "TenderExpired":
+      return {
+        headline: composeHeadline(`Offer to ${carrierFrom(meta)}`, "expired on", target),
+        actorHandle: actorHandle(event),
+      };
+    case "TenderWithdrawn": {
+      const reason = stringFrom(meta.reason);
+      return {
+        headline: composeHeadline(actor, "withdrew the tender on", target),
+        detail: reason ? `Reason: ${reason}` : undefined,
+        actorHandle: actorHandle(event),
+      };
+    }
+    case "TenderNeedsReview": {
+      const reason = stringFrom(meta.reason);
+      return {
+        headline: composeHeadline(
+          actor,
+          `flagged ${carrierFrom(meta)}'s acceptance on`,
+          target,
+          " for review",
+        ),
+        detail: reason ? `Reason: ${reason}` : undefined,
+        actorHandle: actorHandle(event),
+      };
+    }
+    case "RoutingGuideExhausted": {
+      const noun = stringFrom(meta.mode) === "Waterfall" ? "routing guide" : "spot tender";
+      return {
+        headline: composeHeadline(actor, `exhausted the ${noun} on`, target),
+        actorHandle: actorHandle(event),
+      };
+    }
+    case "TenderLateResponse": {
+      const action = stringFrom(meta.action) ?? "response";
+      return {
+        headline: composeHeadline(
+          actor,
+          `recorded a late ${action} from ${carrierFrom(meta)} on`,
+          target,
+        ),
+        actorHandle: actorHandle(event),
+      };
+    }
+    case "TenderDeliveryFailed": {
+      const deliveryError = stringFrom(meta.error);
+      return {
+        headline: composeHeadline(
+          actor,
+          `could not deliver the offer to ${carrierFrom(meta)} for`,
+          target,
+        ),
+        detail: deliveryError
+          ? <span className="text-destructive">{deliveryError}</span>
+          : undefined,
+        actorHandle: actorHandle(event),
+      };
+    }
+    case "TenderEntrySkipped": {
+      const reasons = stringListFrom(meta.reasons);
+      return {
+        headline: composeHeadline(
+          actor,
+          `skipped ${carrierFrom(meta)}${rankSuffix(meta.rank)} on`,
+          target,
+        ),
+        detail: reasons.length > 0 ? reasons.join("; ") : undefined,
+        actorHandle: actorHandle(event),
+      };
+    }
+    case "TenderEntryWarned": {
+      const warnings = stringListFrom(meta.warnings);
+      return {
+        headline: composeHeadline(
+          actor,
+          `tendered ${carrierFrom(meta)}${rankSuffix(meta.rank)} with warnings on`,
+          target,
+        ),
+        detail: warnings.length > 0 ? warnings.join("; ") : undefined,
+        actorHandle: actorHandle(event),
+      };
+    }
     case "HoldPlaced": {
       const holdType = stringFrom(meta.holdType);
       const verb = holdType ? `placed a ${holdType} hold on` : "placed a hold on";
@@ -154,7 +278,7 @@ function composeHeadline(
 ): ReactNode {
   return (
     <>
-      <span className="font-medium text-foreground">{actor}</span>
+      <span className="text-foreground font-medium">{actor}</span>
       {" "}
       {verb}
       {" "}
@@ -167,7 +291,7 @@ function composeHeadline(
 function formatTarget(event: ShipmentEvent): ReactNode {
   const proNumber = event.shipment?.proNumber;
   if (proNumber) {
-    return <span className="font-mono text-foreground">#{proNumber}</span>;
+    return <span className="text-foreground font-mono">#{proNumber}</span>;
   }
   return "a shipment";
 }
@@ -183,6 +307,20 @@ function actorHandle(event: ShipmentEvent): string {
   if (event.actor?.name) return `@${event.actor.name.toLowerCase().replace(/\s+/g, "-")}`;
   if (event.actorLabel) return event.actorLabel;
   return event.actorType;
+}
+
+function carrierFrom(meta: Record<string, unknown>): string {
+  return stringFrom(meta.carrierName) ?? "a carrier";
+}
+
+function rankSuffix(value: unknown): string {
+  const rank = typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return rank === undefined ? "" : ` (rank ${rank})`;
+}
+
+function stringListFrom(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is string => typeof entry === "string" && entry.length > 0);
 }
 
 function stringFrom(value: unknown): string | undefined {

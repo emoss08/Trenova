@@ -157,7 +157,10 @@ func (r *repository) Generate(
 		}
 		result.Series = series
 
-		if validationErr := validateGenerationEligibility(series, req.Trigger); validationErr != nil {
+		if validationErr := validateGenerationEligibility(
+			series,
+			req.Trigger,
+		); validationErr != nil {
 			return validationErr
 		}
 

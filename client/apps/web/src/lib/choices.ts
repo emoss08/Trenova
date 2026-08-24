@@ -43,8 +43,27 @@ import type {
   RateVarianceAutoResolutionMode,
   ReadyToBillAssignmentMode,
   TransferSchedule,
+  UnratedShipmentDisposition,
 } from "@/types/billing-control";
 import type { BillingQueueStatus, ExceptionReasonCode } from "@trenova/shared/types/billing-queue";
+import type {
+  CarrierComplianceStatus,
+  CarrierInsurancePolicyType,
+  CarrierPaymentMethod,
+  CarrierSafetyRating,
+  CarrierStatus,
+  CarrierTaxIdType,
+  CarrierType,
+} from "@trenova/shared/types/carrier";
+import type {
+  CarrierCostEventStatus,
+  CarrierCostEventType,
+  CarrierInvoiceMatchStatus,
+  CarrierLedgerEntryType,
+  CarrierSettlementBatchStatus,
+  CarrierSettlementStatus,
+} from "@trenova/shared/types/carrier-settlement";
+import type { RateConfirmationStatus } from "@trenova/shared/types/rate-confirmation";
 import type { FreightClass } from "@trenova/shared/types/commodity";
 import type { FieldType } from "@/types/custom-field";
 import type {
@@ -120,7 +139,6 @@ import type {
   FuelSurchargeRateRounding,
   FuelSurchargeStepRounding,
 } from "@/types/fuel-surcharge";
-import type { RateTableLookupType } from "@/types/rate-table";
 import type {
   RecurringShipmentExceptionPolicy,
   RecurringShipmentStatus,
@@ -141,6 +159,8 @@ import type {
   ServiceFailureReasonCodeAppliesTo,
 } from "@/types/service-failure-reason-code";
 import type {
+  CarrierAssignmentStatus,
+  CarrierRateMethod,
   MoveStatus,
   ShipmentStatus,
   ShipmentTenderStatus,
@@ -148,6 +168,7 @@ import type {
   StopStatus,
   StopType,
 } from "@trenova/shared/types/shipment";
+import type { SpotTenderMode, TenderChannel } from "@trenova/shared/types/tender";
 import type { TimeFormatType } from "@trenova/shared/types/user";
 import type {
   CDLClass,
@@ -171,11 +192,6 @@ export const formulaTemplateTypeChoices = [
   { label: "Freight Charge", value: "FreightCharge" },
   { label: "Accessorial Charge", value: "AccessorialCharge" },
 ] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateType>>;
-
-export const rateTableLookupTypeChoices = [
-  { label: "Exact", value: "Exact", color: "#2563eb" },
-  { label: "Range", value: "Range", color: "#9333ea" },
-] satisfies ReadonlyArray<GenericSelectOption<RateTableLookupType>>;
 
 export const fuelIndexSourceChoices = [
   { label: "DOE / EIA", value: "EIA", color: "#1a6fb5" },
@@ -299,6 +315,195 @@ export const statusChoices = [
   { label: "Active", value: "Active", color: "#15803d" },
   { label: "Inactive", value: "Inactive", color: "#dc2626" },
 ] satisfies ReadonlyArray<GenericSelectOption<Status>>;
+
+export const carrierStatusChoices = [
+  { label: "Active", value: "Active", color: "#15803d" },
+  { label: "Inactive", value: "Inactive", color: "#dc2626" },
+  { label: "Do Not Use", value: "DoNotUse", color: "#b91c1c" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierStatus>>;
+
+export const carrierTypeChoices = [
+  { label: "Common", value: "Common", color: "#2563eb" },
+  { label: "Contract", value: "Contract", color: "#7e22ce" },
+  { label: "Broker", value: "Broker", color: "#f59e0b" },
+  { label: "Exempt", value: "Exempt", color: "#6b7280" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierType>>;
+
+export const carrierComplianceStatusChoices = [
+  { label: "Pending", value: "Pending", color: "#f59e0b" },
+  { label: "Qualified", value: "Qualified", color: "#15803d" },
+  { label: "Disqualified", value: "Disqualified", color: "#dc2626" },
+  { label: "Expired", value: "Expired", color: "#f97316" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierComplianceStatus>>;
+
+export const carrierSafetyRatingChoices = [
+  { label: "Satisfactory", value: "Satisfactory", color: "#15803d" },
+  { label: "Conditional", value: "Conditional", color: "#f59e0b" },
+  { label: "Unsatisfactory", value: "Unsatisfactory", color: "#dc2626" },
+  { label: "Not Rated", value: "NotRated", color: "#6b7280" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierSafetyRating>>;
+
+export const carrierTaxIdTypeChoices = [
+  { label: "EIN", value: "EIN" },
+  { label: "SSN", value: "SSN" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierTaxIdType>>;
+
+export const carrierPaymentMethodChoices = [
+  { label: "Check", value: "Check", color: "#2563eb" },
+  { label: "ACH (Manual)", value: "ACHManual", color: "#0d9488" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierPaymentMethod>>;
+
+export const carrierRateMethodChoices = [
+  { label: "Flat", value: "Flat", color: "#2563eb" },
+  { label: "Per Mile", value: "PerMile", color: "#0d9488" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierRateMethod>>;
+
+export const tenderChannelChoices = [
+  { label: "Email", value: "Email", color: "#2563eb" },
+  { label: "EDI", value: "EDI", color: "#7e22ce" },
+] satisfies ReadonlyArray<GenericSelectOption<TenderChannel>>;
+
+export const spotTenderModeChoices = [
+  { label: "Broadcast to all at once", value: "SpotBroadcast" },
+  { label: "Offer one at a time", value: "SpotSequential" },
+] satisfies ReadonlyArray<GenericSelectOption<SpotTenderMode>>;
+
+/**
+ * Friendly offer-expiry presets. The server accepts any value between 5
+ * minutes and 7 days; a guide loaded with a non-preset value gets an ad-hoc
+ * option appended by the form so the stored value survives an edit.
+ */
+export const offerTtlChoices = [
+  { label: "15 minutes", value: 900 },
+  { label: "30 minutes", value: 1800 },
+  { label: "1 hour", value: 3600 },
+  { label: "2 hours", value: 7200 },
+  { label: "4 hours", value: 14400 },
+  { label: "8 hours", value: 28800 },
+  { label: "12 hours", value: 43200 },
+  { label: "24 hours", value: 86400 },
+  { label: "48 hours", value: 172800 },
+  { label: "3 days", value: 259200 },
+  { label: "7 days", value: 604800 },
+] satisfies ReadonlyArray<GenericSelectOption<number>>;
+
+export const usStateAbbreviationChoices = [
+  { label: "Alabama (AL)", value: "AL" },
+  { label: "Alaska (AK)", value: "AK" },
+  { label: "Arizona (AZ)", value: "AZ" },
+  { label: "Arkansas (AR)", value: "AR" },
+  { label: "California (CA)", value: "CA" },
+  { label: "Colorado (CO)", value: "CO" },
+  { label: "Connecticut (CT)", value: "CT" },
+  { label: "Delaware (DE)", value: "DE" },
+  { label: "District of Columbia (DC)", value: "DC" },
+  { label: "Florida (FL)", value: "FL" },
+  { label: "Georgia (GA)", value: "GA" },
+  { label: "Hawaii (HI)", value: "HI" },
+  { label: "Idaho (ID)", value: "ID" },
+  { label: "Illinois (IL)", value: "IL" },
+  { label: "Indiana (IN)", value: "IN" },
+  { label: "Iowa (IA)", value: "IA" },
+  { label: "Kansas (KS)", value: "KS" },
+  { label: "Kentucky (KY)", value: "KY" },
+  { label: "Louisiana (LA)", value: "LA" },
+  { label: "Maine (ME)", value: "ME" },
+  { label: "Maryland (MD)", value: "MD" },
+  { label: "Massachusetts (MA)", value: "MA" },
+  { label: "Michigan (MI)", value: "MI" },
+  { label: "Minnesota (MN)", value: "MN" },
+  { label: "Mississippi (MS)", value: "MS" },
+  { label: "Missouri (MO)", value: "MO" },
+  { label: "Montana (MT)", value: "MT" },
+  { label: "Nebraska (NE)", value: "NE" },
+  { label: "Nevada (NV)", value: "NV" },
+  { label: "New Hampshire (NH)", value: "NH" },
+  { label: "New Jersey (NJ)", value: "NJ" },
+  { label: "New Mexico (NM)", value: "NM" },
+  { label: "New York (NY)", value: "NY" },
+  { label: "North Carolina (NC)", value: "NC" },
+  { label: "North Dakota (ND)", value: "ND" },
+  { label: "Ohio (OH)", value: "OH" },
+  { label: "Oklahoma (OK)", value: "OK" },
+  { label: "Oregon (OR)", value: "OR" },
+  { label: "Pennsylvania (PA)", value: "PA" },
+  { label: "Rhode Island (RI)", value: "RI" },
+  { label: "South Carolina (SC)", value: "SC" },
+  { label: "South Dakota (SD)", value: "SD" },
+  { label: "Tennessee (TN)", value: "TN" },
+  { label: "Texas (TX)", value: "TX" },
+  { label: "Utah (UT)", value: "UT" },
+  { label: "Vermont (VT)", value: "VT" },
+  { label: "Virginia (VA)", value: "VA" },
+  { label: "Washington (WA)", value: "WA" },
+  { label: "West Virginia (WV)", value: "WV" },
+  { label: "Wisconsin (WI)", value: "WI" },
+  { label: "Wyoming (WY)", value: "WY" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const carrierAssignmentStatusChoices = [
+  { label: "Pending", value: "Pending", color: "#f59e0b" },
+  { label: "Confirmed", value: "Confirmed", color: "#15803d" },
+  { label: "Canceled", value: "Canceled", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierAssignmentStatus>>;
+
+export const carrierInsurancePolicyTypeChoices = [
+  { label: "Auto Liability", value: "AutoLiability", color: "#2563eb" },
+  { label: "Cargo Liability", value: "CargoLiability", color: "#0d9488" },
+  { label: "General Liability", value: "GeneralLiability", color: "#7e22ce" },
+  { label: "Workers Comp", value: "WorkersComp", color: "#f59e0b" },
+  { label: "Umbrella", value: "Umbrella", color: "#6b7280" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierInsurancePolicyType>>;
+
+export const carrierSettlementStatusChoices = [
+  { label: "Draft", value: "Draft", color: "#a3a3a3" },
+  { label: "Pending Approval", value: "PendingApproval", color: "#f59e0b" },
+  { label: "Approved", value: "Approved", color: "#2563eb" },
+  { label: "Posted", value: "Posted", color: "#9333ea" },
+  { label: "Paid", value: "Paid", color: "#15803d" },
+  { label: "Voided", value: "Voided", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierSettlementStatus>>;
+
+export const carrierCostEventTypeChoices = [
+  { label: "Linehaul Cost", value: "LinehaulCost", color: "#2563eb" },
+  { label: "Fuel Surcharge", value: "FuelSurcharge", color: "#f59e0b" },
+  { label: "Accessorial", value: "Accessorial", color: "#0d9488" },
+  { label: "Adjustment", value: "Adjustment", color: "#7e22ce" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierCostEventType>>;
+
+export const carrierSettlementBatchStatusChoices = [
+  { label: "Open", value: "Open", color: "#2563eb" },
+  { label: "Completed", value: "Completed", color: "#15803d" },
+  { label: "Canceled", value: "Canceled", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierSettlementBatchStatus>>;
+
+export const carrierLedgerEntryTypeChoices = [
+  { label: "Bill", value: "Bill", color: "#2563eb" },
+  { label: "Payment", value: "Payment", color: "#15803d" },
+  { label: "Adjustment", value: "Adjustment", color: "#7e22ce" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierLedgerEntryType>>;
+
+export const carrierCostEventStatusChoices = [
+  { label: "Pending", value: "Pending", color: "#2563eb" },
+  { label: "Attached", value: "Attached", color: "#f59e0b" },
+  { label: "Settled", value: "Settled", color: "#15803d" },
+  { label: "Voided", value: "Voided", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierCostEventStatus>>;
+
+export const carrierInvoiceMatchStatusChoices = [
+  { label: "Suggested", value: "Suggested", color: "#a3a3a3" },
+  { label: "Matched", value: "Matched", color: "#2563eb" },
+  { label: "Variance", value: "Variance", color: "#f59e0b" },
+  { label: "Resolved", value: "Resolved", color: "#15803d" },
+  { label: "Rejected", value: "Rejected", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<CarrierInvoiceMatchStatus>>;
+
+export const rateConfirmationStatusChoices = [
+  { label: "Generated", value: "Generated", color: "#a3a3a3" },
+  { label: "Sent", value: "Sent", color: "#2563eb" },
+  { label: "Confirmed", value: "Confirmed", color: "#15803d" },
+  { label: "Voided", value: "Voided", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<RateConfirmationStatus>>;
 
 export const orderStatusChoices = [
   { label: "Draft", value: "Draft", color: "#a3a3a3" },
@@ -791,6 +996,9 @@ export const journalSourceEventChoices = [
   { value: "CustomerPaymentPosted", label: "Customer Payment Posted" },
   { value: "VendorBillPosted", label: "Vendor Bill Posted" },
   { value: "VendorPaymentPosted", label: "Vendor Payment Posted" },
+  { value: "CarrierSettlementPosted", label: "Carrier Settlement Posted" },
+  { value: "CarrierSettlementVoided", label: "Carrier Settlement Voided" },
+  { value: "CarrierSettlementPaid", label: "Carrier Settlement Paid" },
 ] satisfies ReadonlyArray<GenericSelectOption<JournalSourceEvent>>;
 
 export const manualJournalEntryPolicyChoices = [
@@ -1048,6 +1256,12 @@ export const rateVarianceAutoResolutionModeChoices = [
     label: "Bypass Review Within Tolerance",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<RateVarianceAutoResolutionMode>>;
+
+export const unratedShipmentDispositionChoices = [
+  { value: "FallbackFormulaTemplate", label: "Fall Back to Formula Template" },
+  { value: "ZeroAndFlag", label: "Zero the Rate and Flag for Review" },
+  { value: "Block", label: "Block the Save" },
+] satisfies ReadonlyArray<GenericSelectOption<UnratedShipmentDisposition>>;
 
 export const paymentTermChoices = [
   { value: "Net10", label: "Net 10", color: "#0ea5e9" },
@@ -1916,3 +2130,110 @@ export const weekdayChoices = [
   { label: "Friday", value: 5 },
   { label: "Saturday", value: 6 },
 ] satisfies ReadonlyArray<GenericSelectOption<number>>;
+
+/* -------------------------------------------------------------------------- */
+/*                              Rate agreements                                */
+/* -------------------------------------------------------------------------- */
+
+export const rateAgreementStatusChoices = [
+  { label: "Active", value: "Active", color: "#15803d" },
+  { label: "In review", value: "InReview", color: "#b45309" },
+  { label: "Draft", value: "Draft", color: "#7e22ce" },
+  { label: "Suspended", value: "Suspended", color: "#c2410c" },
+  { label: "Expired", value: "Expired", color: "#57534e" },
+  { label: "Archived", value: "Archived", color: "#b91c1c" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const ratePartyTypeChoices = [
+  { label: "Customer", value: "Customer", color: "#1d4ed8" },
+  { label: "Carrier", value: "Carrier", color: "#0f766e" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateAgreementTypeChoices = [
+  { label: "Contract", value: "Contract" },
+  { label: "Tariff", value: "Tariff" },
+  { label: "Spot", value: "Spot" },
+  { label: "Project", value: "Project" },
+  { label: "Dedicated", value: "Dedicated" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+/**
+ * Ordered widest to narrowest, which is the order the resolver ranks lanes in.
+ * A rule written at a narrower scope beats a wider one covering the same load.
+ */
+export const rateScopeTypeChoices = [
+  { label: "Anywhere", value: "Any" },
+  { label: "Country", value: "Country" },
+  { label: "State", value: "State" },
+  { label: "Zone", value: "Zone" },
+  { label: "Radius", value: "Radius" },
+  { label: "City", value: "CityState" },
+  { label: "Postal prefix", value: "Zip3" },
+  { label: "Postal code", value: "Zip5" },
+  { label: "Location", value: "Location" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateDirectionChoices = [
+  { label: "One way", value: "Directional" },
+  { label: "Both ways", value: "Bidirectional" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateRoundingModeChoices = [
+  { label: "Half up", value: "HalfUp" },
+  { label: "Half even", value: "HalfEven" },
+  { label: "Up", value: "Up" },
+  { label: "Down", value: "Down" },
+  { label: "None", value: "None" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateZoneKindChoices = [
+  { label: "Custom", value: "Custom" },
+  { label: "Market area (KMA)", value: "KMA" },
+  { label: "Region", value: "Regional" },
+  { label: "Metro", value: "Metro" },
+  { label: "Country", value: "Country" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const freightClassSourceChoices = [
+  { label: "From the commodity", value: "Commodity" },
+  { label: "Fixed on the lane", value: "Fixed" },
+  { label: "Derived from density", value: "Density" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateQuoteOutcomeChoices = [
+  { label: "Rated", value: "Rated", color: "#15803d" },
+  { label: "Formula fallback", value: "FormulaFallback", color: "#0f766e" },
+  { label: "Manual override", value: "ManualOverride", color: "#b45309" },
+  { label: "No rate found", value: "NoRateFound", color: "#c2410c" },
+  { label: "Error", value: "Error", color: "#b91c1c" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateQuotePurposeChoices = [
+  { label: "Rating", value: "Rating" },
+  { label: "Quote", value: "Quote" },
+  { label: "Shopping", value: "Shopping" },
+  { label: "Simulation", value: "Simulation" },
+  { label: "What if", value: "WhatIf" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateMatrixDimensionKindChoices = [
+  { label: "Zone", value: "Zone" },
+  { label: "Postal prefix", value: "Zip3" },
+  { label: "Postal code", value: "Zip5" },
+  { label: "State", value: "State" },
+  { label: "Country", value: "Country" },
+  { label: "Weight break", value: "WeightBreak" },
+  { label: "Distance", value: "Distance" },
+  { label: "Piece count", value: "PieceCount" },
+  { label: "Linear feet", value: "LinearFeet" },
+  { label: "Freight class", value: "FreightClass" },
+  { label: "Equipment type", value: "EquipmentType" },
+  { label: "Service type", value: "ServiceType" },
+  { label: "Custom", value: "Custom" },
+  { label: "Quantity", value: "Quantity" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const rateMatrixMatchModeChoices = [
+  { label: "Exact key", value: "Exact" },
+  { label: "Band", value: "Range" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;

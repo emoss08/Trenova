@@ -60,7 +60,7 @@ function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
     <Tooltip>
       <TooltipTrigger
         render={
-          <div className="flex items-start gap-2 rounded-md px-2 py-1 transition-colors hover:bg-muted/50" />
+          <div className="hover:bg-muted/50 flex items-start gap-2 rounded-md px-2 py-1 transition-colors" />
         }
       >
         <ResolvedUserAvatar
@@ -72,13 +72,13 @@ function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
           fallbackClassName="bg-muted text-[7px] font-medium text-muted-foreground"
         />
         <span className="grid min-w-0 flex-1 leading-snug">
-          <span className="truncate text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">{firstName}</span> {headline}
+          <span className="text-muted-foreground truncate text-xs">
+            <span className="text-foreground font-medium">{firstName}</span> {headline}
           </span>
-          <span className="truncate text-2xs text-muted-foreground/70">
+          <span className="text-2xs text-muted-foreground/70 truncate">
             {entry.entityRef ? (
               <>
-                <span className="font-medium text-muted-foreground">{entry.entityRef}</span>
+                <span className="text-muted-foreground font-medium">{entry.entityRef}</span>
                 {" · "}
                 {resource}
               </>
@@ -87,7 +87,7 @@ function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
             )}
           </span>
         </span>
-        <span className="shrink-0 pt-0.5 text-2xs text-muted-foreground/60 tabular-nums">
+        <span className="text-2xs text-muted-foreground/60 shrink-0 pt-0.5 tabular-nums">
           {formatDistanceToNowStrict(fromUnixTime(entry.timestamp), { addSuffix: false })}
         </span>
       </TooltipTrigger>
@@ -117,8 +117,8 @@ function OnlineIndicator() {
   }
 
   return (
-    <span className="flex items-center gap-1.5 text-2xs text-muted-foreground normal-case">
-      <span className="size-1.5 rounded-full bg-success" />
+    <span className="text-2xs text-muted-foreground flex items-center gap-1.5 normal-case">
+      <span className="bg-success size-1.5 rounded-full" />
       {onlineUserIDs.size} online
     </span>
   );
@@ -172,7 +172,7 @@ export function ActivitySection() {
             render={(props) => (
               <button
                 {...props}
-                className="group flex h-6 items-center gap-1 rounded-md px-2 text-2xs font-semibold tracking-wider text-muted-foreground uppercase transition-colors select-none hover:text-foreground"
+                className="group text-2xs text-muted-foreground hover:text-foreground flex h-6 items-center gap-1 rounded-md px-2 font-semibold tracking-wider uppercase transition-colors select-none"
               >
                 <span>Recent Activity</span>
                 <ChevronRightIcon
@@ -198,7 +198,7 @@ export function ActivitySection() {
                 ))}
                 {isFetchingNextPage && (
                   <div className="flex items-center justify-center py-1.5">
-                    <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+                    <Loader2 className="text-muted-foreground size-3.5 animate-spin" />
                   </div>
                 )}
                 <div ref={observerTarget} aria-hidden className="h-px w-full" />

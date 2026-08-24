@@ -2,6 +2,7 @@ package ediservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -99,7 +100,7 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 	return s.completeTenderChangeDelivery(ctx, message)
 }
 
-var errAS2MICMismatch = fmt.Errorf("AS2 MDN MIC does not match the transmitted content")
+var errAS2MICMismatch = errors.New("AS2 MDN MIC does not match the transmitted content")
 
 func (s *Service) verifyAS2MDNSignature(
 	ctx context.Context,

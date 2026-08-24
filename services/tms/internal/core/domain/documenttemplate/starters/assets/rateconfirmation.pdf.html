@@ -1,0 +1,102 @@
+<header class="masthead">
+  <div class="issuer">
+    {{ if .LogoDataURI }}<img class="logo" src="{{ .LogoDataURI }}" alt="{{ .CompanyName }}">{{ end }}
+    <div class="issuer-name">{{ .CompanyName }}</div>
+  </div>
+  <div class="doc-id">
+    <div class="doc-type">Rate Confirmation</div>
+    {{ if .RevisionLabel }}<div class="doc-stage">{{ .RevisionLabel }}</div>{{ end }}
+  </div>
+</header>
+
+<section class="lede">
+  <p>
+    {{ .CompanyName }} tenders the shipment below to {{ .CarrierName }} at the agreed rate. This
+    confirmation, together with a clean proof of delivery, is the basis on which the carrier is paid.
+  </p>
+</section>
+
+<section class="parties">
+  <div class="party">
+    <h2>Carrier</h2>
+    <div class="party-name">{{ .CarrierName }}</div>
+    {{ if .CarrierSCAC }}<div>SCAC {{ .CarrierSCAC }}</div>{{ end }}
+    {{ if .CarrierMC }}<div>MC {{ .CarrierMC }}</div>{{ end }}
+    {{ if .CarrierDOT }}<div>DOT {{ .CarrierDOT }}</div>{{ end }}
+  </div>
+  <div class="party">
+    <h2>Shipment</h2>
+    <div class="party-name">{{ .ShipmentProNumber }}</div>
+    {{ if .BOL }}<div>BOL {{ .BOL }}</div>{{ end }}
+  </div>
+</section>
+
+{{ if or .ExternalDriverName .ExternalTractorNumber .ExternalTrailerNumber }}
+<section class="block">
+  <h2>Carrier Equipment</h2>
+  <table class="grid">
+    <tbody>
+      {{ if .ExternalDriverName }}<tr><td class="label">Driver</td><td>{{ .ExternalDriverName }}{{ if .ExternalDriverPhone }} <span class="muted">({{ .ExternalDriverPhone }})</span>{{ end }}</td></tr>{{ end }}
+      {{ if .ExternalTractorNumber }}<tr><td class="label">Tractor</td><td>{{ .ExternalTractorNumber }}</td></tr>{{ end }}
+      {{ if .ExternalTrailerNumber }}<tr><td class="label">Trailer</td><td>{{ .ExternalTrailerNumber }}</td></tr>{{ end }}
+    </tbody>
+  </table>
+</section>
+{{ end }}
+
+<section class="block">
+  <h2>Routing</h2>
+  <table class="stops">
+    <thead>
+      <tr><th>#</th><th>Stop</th><th>Facility</th><th>Address</th><th>Window</th></tr>
+    </thead>
+    <tbody>
+      {{ range .Stops }}
+      <tr>
+        <td>{{ .Sequence }}</td>
+        <td>{{ .Type }}</td>
+        <td>{{ .Name }}</td>
+        <td>{{ .Address }}</td>
+        <td>{{ .Window }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</section>
+
+<section class="block">
+  <h2>Agreed Rate</h2>
+  <table class="grid">
+    <tbody>
+      {{ if .BaseRateLabel }}<tr><td class="label">Linehaul ({{ .RateMethodLabel }})</td><td>{{ .BaseRateLabel }}</td></tr>{{ end }}
+      {{ if .BaseAmount }}<tr><td class="label">Linehaul amount</td><td>{{ moneyString .Currency .BaseAmount }}</td></tr>{{ end }}
+      {{ if .FuelSurcharge }}<tr><td class="label">Fuel surcharge</td><td>{{ moneyString .Currency .FuelSurcharge }}</td></tr>{{ end }}
+      {{ range .Accessorials }}
+      <tr><td class="label">{{ .Description }}</td><td>{{ moneyString $.Currency .Amount }}</td></tr>
+      {{ end }}
+      <tr class="total"><td class="label">Total agreed rate</td><td>{{ moneyString .Currency .TotalCost }}</td></tr>
+    </tbody>
+  </table>
+  {{ if .PaymentTermsLabel }}<p class="muted">Payment terms: {{ .PaymentTermsLabel }}</p>{{ end }}
+</section>
+
+<section class="block terms">
+  <h2>Terms</h2>
+  <p>
+    This rate is all-inclusive unless an accessorial is listed above. The carrier must haul the load
+    on the equipment agreed, may not re-broker or co-broker it, and must submit this confirmation
+    number with its invoice. Detention, layover, or additional stops require written approval before
+    they are billable.
+  </p>
+</section>
+
+<footer class="signoff">
+  <div class="sig">
+    <div class="sig-line"></div>
+    <div class="sig-label">Carrier acceptance — signature and date</div>
+  </div>
+  <div class="sig">
+    <div class="sig-line"></div>
+    <div class="sig-label">{{ .CompanyName }}</div>
+  </div>
+</footer>

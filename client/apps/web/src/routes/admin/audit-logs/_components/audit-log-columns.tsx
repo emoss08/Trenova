@@ -108,14 +108,14 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
               name={user?.name}
               profilePicUrl={user?.profilePicUrl}
               thumbnailUrl={user?.thumbnailUrl}
-              className="size-8 rounded-md bg-muted"
+              className="bg-muted size-8 rounded-md"
               imageClassName="rounded-md bg-muted"
               fallbackClassName="text-xs"
               alt={name}
             />
             <div className="flex flex-col">
               <span className="font-medium">{name}</span>
-              <span className="text-xs text-muted-foreground">{email}</span>
+              <span className="text-muted-foreground text-xs">{email}</span>
             </div>
           </div>
         );

@@ -56,7 +56,7 @@ export function AiResponseActions({
       role="toolbar"
       aria-label="Response actions"
       className={cn(
-        "inline-flex items-center gap-1 rounded-lg border bg-background p-1",
+        "bg-background inline-flex items-center gap-1 rounded-lg border p-1",
         className,
       )}
     >

@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -17,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -226,6 +227,80 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	assert.Equal(t, newDestination.ID, newMove.Stops[1].LocationID)
 }
 
+func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
+	t.Parallel()
+
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	svc, _, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	controlRepo.EXPECT().
+		Get(mock.Anything, mock.AnythingOfType("repositories.GetShipmentControlRequest")).
+		Return(&tenant.ShipmentControl{}, nil)
+	graph := testutil.CreateShipmentGraph(
+		t,
+		ctx,
+		db,
+		fixture,
+		tenantInfo,
+		testutil.ShipmentGraphParams{
+			BOL:          "BOL-ACT-001",
+			ProNumber:    "PRO-ACT-001",
+			ShipmentID:   pulid.MustNew("shp_"),
+			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
+		},
+	)
+	moveID := graph.Moves[0].ID
+	stopID := graph.Moves[0].Stops[0].ID
+
+	arrivedAt := timeutils.NowUnix() - 7_200
+	updated, err := svc.RecordStopActual(ctx, &repositories.RecordStopActualRequest{
+		TenantInfo: tenantInfo,
+		MoveID:     moveID,
+		StopID:     stopID,
+		Action:     repositories.StopActualActionArrive,
+		OccurredAt: &arrivedAt,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+	assert.Equal(t, shipment.MoveStatusInTransit, updated.Status)
+
+	departedAt := arrivedAt + 1_800
+	updated, err = svc.RecordStopActual(ctx, &repositories.RecordStopActualRequest{
+		TenantInfo: tenantInfo,
+		MoveID:     moveID,
+		StopID:     stopID,
+		Action:     repositories.StopActualActionDepart,
+		OccurredAt: &departedAt,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+
+	persistedMoves, err := moveRepo.GetMovesByShipmentID(
+		ctx,
+		&repositories.GetMovesByShipmentIDRequest{
+			ShipmentID:        graph.Shipment.ID,
+			TenantInfo:        tenantInfo,
+			ExpandMoveDetails: true,
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, persistedMoves, 1)
+	var persistedStop *shipment.Stop
+	for _, candidate := range persistedMoves[0].Stops {
+		if candidate.ID == stopID {
+			persistedStop = candidate
+			break
+		}
+	}
+	require.NotNil(t, persistedStop)
+	require.NotNil(t, persistedStop.ActualArrival)
+	require.NotNil(t, persistedStop.ActualDeparture)
+	assert.Equal(t, arrivedAt, *persistedStop.ActualArrival)
+	assert.Equal(t, departedAt, *persistedStop.ActualDeparture)
+	assert.Equal(t, shipment.StopStatusCompleted, persistedStop.Status)
+}
+
 func newIntegrationService(
 	t *testing.T,
 	ctx context.Context,
@@ -272,6 +347,16 @@ func newIntegrationService(
 		CommodityRepository:        commodityRepo,
 	})
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo.EXPECT().
+		GetByMoveID(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
+	holdRepo := mocks.NewMockShipmentHoldRepository(t)
+	holdRepo.EXPECT().
+		HasActiveDeliveryHold(mock.Anything, mock.Anything).
+		Return(false, nil).
+		Maybe()
 
 	registry := schema.NewRegistry()
 	testutil.RegisterShipmentFormulaSchema(t, registry)
@@ -293,22 +378,25 @@ func newIntegrationService(
 		Resolver:      res,
 		Repo:          formulaRepo,
 		VersionRepo:   moveIntgStubVersionRepo{},
-		RateTableRepo: moveIntgStubRateTableRepo{},
+		RateMatrixRepo: moveIntgStubMatrixRepo{},
 	})
 	commercial := shipmentcommercial.New(shipmentcommercial.Params{
-		Formula:         formulaSvc,
+		Logger:          zap.NewNop(),
+		RateEngine:      rateengine.NewFallbackEngine(t, formulaSvc),
 		AccessorialRepo: accessorialRepo,
 	})
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		DB:           conn,
-		Repo:         moveRepo,
-		ShipmentRepo: shipmentRepo,
-		ControlRepo:  controlRepo,
-		EventService: noopShipmentEventService{},
-		Commercial:   commercial,
-		Coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
+		Logger:         zap.NewNop(),
+		DB:             conn,
+		Repo:           moveRepo,
+		AssignmentRepo: assignmentRepo,
+		ShipmentRepo:   shipmentRepo,
+		HoldRepo:       holdRepo,
+		ControlRepo:    controlRepo,
+		EventService:   noopShipmentEventService{},
+		Commercial:     commercial,
+		Coordinator:    shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	})
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
@@ -341,13 +429,13 @@ func (moveIntgStubVersionRepo) GetEffectiveVersion(
 	return nil, nil
 }
 
-type moveIntgStubRateTableRepo struct {
-	repositories.RateTableRepository
+type moveIntgStubMatrixRepo struct {
+	repositories.RateMatrixRepository
 }
 
-func (moveIntgStubRateTableRepo) GetLookupData(
+func (moveIntgStubMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateTableLookupDataRequest,
-) ([]*ratetable.RateTable, error) {
+	_ *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
 	return nil, nil
 }

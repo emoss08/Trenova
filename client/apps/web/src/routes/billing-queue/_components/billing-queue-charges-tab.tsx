@@ -1,3 +1,5 @@
+import { apiService } from "@/services/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -6,16 +8,10 @@ import {
   NumberField as NumberFieldRoot,
 } from "@trenova/shared/components/ui/number-field";
 import { Separator } from "@trenova/shared/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@trenova/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import type { AdditionalCharge } from "@trenova/shared/types/shipment";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   CheckIcon,
@@ -27,10 +23,7 @@ import {
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import {
-  BillingQueueChargeDialog,
-  type ChargeDialogResult,
-} from "./billing-queue-charge-dialog";
+import { BillingQueueChargeDialog, type ChargeDialogResult } from "./billing-queue-charge-dialog";
 import { BillingQueueRerateDialog } from "./billing-queue-rerate-dialog";
 
 function getChargeWarnings(
@@ -164,7 +157,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
 
   if (!shipment) {
     return (
-      <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex items-center justify-center py-12 text-sm">
         Shipment details not available
       </div>
     );
@@ -176,11 +169,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
   const totalCharge = Number(shipment.totalChargeAmount ?? 0);
   const additionalCharges = shipment.additionalCharges ?? [];
   const formulaTemplate = shipment.formulaTemplate;
-  const warnings = getChargeWarnings(
-    freightCharge,
-    totalCharge,
-    additionalCharges,
-  );
+  const warnings = getChargeWarnings(freightCharge, totalCharge, additionalCharges);
 
   return (
     <div className="flex flex-col gap-3 p-4">
@@ -198,14 +187,14 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       )}
 
       {formulaTemplate && (
-        <div className="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2">
+        <div className="border-border bg-muted flex items-center justify-between rounded-md border px-3 py-2">
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground">Rating:</span>
             <span className="font-medium">{formulaTemplate.name}</span>
             {formulaTemplate.expression && (
               <>
                 <span className="text-muted-foreground/50">&middot;</span>
-                <code className="font-mono text-muted-foreground">
+                <code className="text-muted-foreground font-mono">
                   {formulaTemplate.expression}
                 </code>
               </>
@@ -234,12 +223,10 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       )}
 
       <div className="flex flex-col">
-        <div className="group flex items-center justify-between gap-2 rounded-md p-2 hover:bg-muted">
+        <div className="group hover:bg-muted flex items-center justify-between gap-2 rounded-md p-2">
           <div className="flex min-w-0 flex-col">
             <span className="text-sm">Base Rate</span>
-            <span className="text-[11px] text-muted-foreground">
-              Per-unit rate before formula
-            </span>
+            <span className="text-muted-foreground text-[11px]">Per-unit rate before formula</span>
           </div>
           {editingFreight ? (
             <div className="flex items-center gap-1">
@@ -260,8 +247,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                       if (e.key === "Enter") {
                         saveCharges({
                           baseRate: freightDraft,
-                          additionalCharges:
-                            buildChargesPayload(additionalCharges),
+                          additionalCharges: buildChargesPayload(additionalCharges),
                         });
                         setEditingFreight(false);
                       }
@@ -283,16 +269,12 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
               >
                 <CheckIcon className="size-3 text-green-600" />
               </Button>
-              <Button
-                size="icon-xs"
-                variant="ghostInvert"
-                onClick={() => setEditingFreight(false)}
-              >
-                <XIcon className="size-3 text-muted-foreground" />
+              <Button size="icon-xs" variant="ghostInvert" onClick={() => setEditingFreight(false)}>
+                <XIcon className="text-muted-foreground size-3" />
               </Button>
             </div>
           ) : (
-            <div className="relative flex min-w-[80px] items-center justify-end">
+            <div className="relative flex min-w-20 items-center justify-end">
               <span
                 className={cn(
                   "text-sm font-medium tabular-nums transition-opacity",
@@ -331,13 +313,11 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
 
         <div className="flex items-center justify-between gap-2 rounded-md p-2">
           <span className="text-sm">Line Haul</span>
-          <span className="text-sm font-medium tabular-nums">
-            {formatCurrency(freightCharge)}
-          </span>
+          <span className="text-sm font-medium tabular-nums">{formatCurrency(freightCharge)}</span>
         </div>
         <Separator className="my-1" />
         <div className="flex items-center justify-between p-2">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Accessorials
           </span>
           {isEditable && (
@@ -362,31 +342,25 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         </div>
 
         {additionalCharges.length === 0 && (
-          <p className="px-2 pb-2 text-xs text-muted-foreground">
-            No accessorial charges
-          </p>
+          <p className="text-muted-foreground px-2 pb-2 text-xs">No accessorial charges</p>
         )}
 
         {additionalCharges.map((charge, index) => {
           const name =
-            charge.accessorialCharge?.description ??
-            charge.accessorialCharge?.code ??
-            "Charge";
+            charge.accessorialCharge?.description ?? charge.accessorialCharge?.code ?? "Charge";
           const breakdown = formatChargeBreakdown(charge);
           const total = chargeLineTotal(charge);
 
           return (
             <div
               key={charge.id ?? index}
-              className="group flex items-center justify-between gap-2 rounded-md p-2 hover:bg-muted"
+              className="group hover:bg-muted flex items-center justify-between gap-2 rounded-md p-2"
             >
               <div className="flex min-w-0 flex-col">
                 <span className="truncate text-sm">{name}</span>
-                <span className="text-[11px] text-muted-foreground">
-                  {breakdown}
-                </span>
+                <span className="text-muted-foreground text-[11px]">{breakdown}</span>
               </div>
-              <div className="relative flex min-w-[80px] items-center justify-end">
+              <div className="relative flex min-w-20 items-center justify-end">
                 <span
                   className={cn(
                     "text-sm font-medium tabular-nums transition-opacity",
@@ -449,20 +423,16 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         })}
 
         {additionalCharges.length > 0 && (
-          <div className="flex items-center justify-between p-2 text-muted-foreground">
+          <div className="text-muted-foreground flex items-center justify-between p-2">
             <span className="text-xs">Subtotal</span>
-            <span className="text-xs font-medium tabular-nums">
-              {formatCurrency(otherCharge)}
-            </span>
+            <span className="text-xs font-medium tabular-nums">{formatCurrency(otherCharge)}</span>
           </div>
         )}
       </div>
 
-      <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2.5">
+      <div className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2.5">
         <span className="text-sm font-semibold">Total</span>
-        <span className="text-base font-bold tabular-nums">
-          {formatCurrency(totalCharge)}
-        </span>
+        <span className="text-base font-bold tabular-nums">{formatCurrency(totalCharge)}</span>
       </div>
 
       {chargeDialogOpen && (
@@ -485,7 +455,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           open={rerateDialogOpen}
           onOpenChange={setRerateDialogOpen}
           itemId={item.id}
-          currentTemplateId={shipment.formulaTemplateId}
+          currentTemplateId={shipment.formulaTemplateId ?? undefined}
         />
       )}
     </div>

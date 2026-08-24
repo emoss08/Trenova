@@ -81,7 +81,10 @@ func (c ReasonCategory) IsValid() bool {
 
 func (a ReasonCodeAppliesTo) IsValid() bool {
 	switch a {
-	case ReasonCodeAppliesToPickup, ReasonCodeAppliesToDelivery, ReasonCodeAppliesToBoth, ReasonCodeAppliesToAll:
+	case ReasonCodeAppliesToPickup,
+		ReasonCodeAppliesToDelivery,
+		ReasonCodeAppliesToBoth,
+		ReasonCodeAppliesToAll:
 		return true
 	default:
 		return false

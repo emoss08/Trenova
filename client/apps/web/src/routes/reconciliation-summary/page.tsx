@@ -53,7 +53,7 @@ export function ReconciliationSummaryPage() {
               />
               <Card className="gap-0 overflow-hidden rounded-md">
                 <CardHeader className="pb-1">
-                  <CardTitle className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                  <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
                     Match Rate
                   </CardTitle>
                 </CardHeader>
@@ -73,7 +73,7 @@ export function ReconciliationSummaryPage() {
                 <CardContent>
                   <div className="overflow-hidden rounded-md border">
                     <table className="w-full text-sm">
-                      <thead className="bg-muted/50 text-left text-muted-foreground">
+                      <thead className="bg-muted/50 text-muted-foreground text-left">
                         <tr>
                           <th className="px-3 py-2 text-xs font-medium">Period</th>
                           <th className="px-3 py-2 text-right text-xs font-medium">Count</th>
@@ -168,7 +168,7 @@ function SummaryKPICard({
   return (
     <Card className="gap-0 overflow-hidden rounded-md">
       <CardHeader className="pb-1">
-        <CardTitle className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+        <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
           {label}
         </CardTitle>
       </CardHeader>
@@ -180,7 +180,7 @@ function SummaryKPICard({
         >
           {count}
         </p>
-        <p className="text-xs text-muted-foreground tabular-nums">
+        <p className="text-muted-foreground text-xs tabular-nums">
           {formatCurrency(amount / 100)}
         </p>
       </CardContent>

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -60,11 +61,13 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
-			ID:             shipmentID,
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.StatusAssigned,
-			Version:        1,
+			ID:                shipmentID,
+			OrganizationID:    tenantInfo.OrgID,
+			BusinessUnitID:    tenantInfo.BuID,
+			CustomerID:        pulid.MustNew("cus_"),
+			FormulaTemplateID: pulid.MustNew("ft_"),
+			Status:            shipment.StatusAssigned,
+			Version:           1,
 			Moves: []*shipment.ShipmentMove{
 				{
 					ID:         moveID,
@@ -107,7 +110,8 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 		holdRepo:       holdRepo,
 		controlRepo:    controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -153,7 +157,8 @@ func TestBulkUpdateStatus_RejectsInvalidTransition(t *testing.T) {
 		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
 		controlRepo:  mocks.NewMockShipmentControlRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -215,7 +220,8 @@ func TestSplitMove_RejectsNonSimpleMove(t *testing.T) {
 		holdRepo:     mocks.NewMockShipmentHoldRepository(t),
 		controlRepo:  mocks.NewMockShipmentControlRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -310,11 +316,13 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
-			ID:             shipmentID,
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.StatusAssigned,
-			Version:        2,
+			ID:                shipmentID,
+			OrganizationID:    tenantInfo.OrgID,
+			BusinessUnitID:    tenantInfo.BuID,
+			CustomerID:        pulid.MustNew("cus_"),
+			FormulaTemplateID: pulid.MustNew("ft_"),
+			Status:            shipment.StatusAssigned,
+			Version:           2,
 			Moves: []*shipment.ShipmentMove{
 				{
 					ID:         moveID,
@@ -350,7 +358,8 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -409,10 +418,12 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
-			ID:             shipmentID,
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			Version:        1,
+			ID:                shipmentID,
+			OrganizationID:    tenantInfo.OrgID,
+			BusinessUnitID:    tenantInfo.BuID,
+			CustomerID:        pulid.MustNew("cus_"),
+			FormulaTemplateID: pulid.MustNew("ft_"),
+			Version:           1,
 			Moves: []*shipment.ShipmentMove{
 				{
 					ID:         moveID,
@@ -471,7 +482,8 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 		holdRepo:       holdRepo,
 		controlRepo:    controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -522,10 +534,12 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
-			ID:             shipmentID,
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			Version:        1,
+			ID:                shipmentID,
+			OrganizationID:    tenantInfo.OrgID,
+			BusinessUnitID:    tenantInfo.BuID,
+			CustomerID:        pulid.MustNew("cus_"),
+			FormulaTemplateID: pulid.MustNew("ft_"),
+			Version:           1,
 			Moves: []*shipment.ShipmentMove{
 				{
 					ID:         moveID,
@@ -584,7 +598,8 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 		holdRepo:       holdRepo,
 		controlRepo:    controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -659,7 +674,8 @@ func TestUpdateStatus_RejectsTrailerAlreadyInProgressOnAnotherMove(t *testing.T)
 		controlRepo:    mocks.NewMockShipmentControlRepository(t),
 		continuityRepo: mocks.NewMockEquipmentContinuityRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -730,7 +746,8 @@ func TestUpdateStatus_RejectsTractorAlreadyInProgressOnAnotherMove(t *testing.T)
 		controlRepo:    mocks.NewMockShipmentControlRepository(t),
 		continuityRepo: mocks.NewMockEquipmentContinuityRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -833,11 +850,13 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
-			ID:             shipmentID,
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.StatusInTransit,
-			Version:        1,
+			ID:                shipmentID,
+			OrganizationID:    tenantInfo.OrgID,
+			BusinessUnitID:    tenantInfo.BuID,
+			CustomerID:        pulid.MustNew("cus_"),
+			FormulaTemplateID: pulid.MustNew("ft_"),
+			Status:            shipment.StatusInTransit,
+			Version:           1,
 			Moves: []*shipment.ShipmentMove{
 				{
 					ID:         moveID,
@@ -874,7 +893,8 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 		controlRepo:    controlRepo,
 		continuityRepo: continuityRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         formula,
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, formula),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -930,7 +950,8 @@ func TestUpdateStatus_RejectsDeliveryBlockingHold(t *testing.T) {
 		holdRepo:     holdRepo,
 		controlRepo:  mocks.NewMockShipmentControlRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         mocks.NewMockFormulaCalculator(t),
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, mocks.NewMockFormulaCalculator(t)),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},

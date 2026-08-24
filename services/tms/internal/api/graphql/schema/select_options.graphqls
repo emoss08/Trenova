@@ -1,4 +1,5 @@
 enum SelectOptionResource {
+  CARRIER
   CUSTOMER
   EQUIPMENT_TYPE
   EQUIPMENT_MANUFACTURER
@@ -14,6 +15,8 @@ enum SelectOptionResource {
   FISCAL_YEAR
   FISCAL_PERIOD
   GL_ACCOUNT
+  LOCATION
+  RATE_ZONE
 }
 
 input SelectOptionsInput {

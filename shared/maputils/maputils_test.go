@@ -73,6 +73,16 @@ func TestCloneShallow(t *testing.T) {
 	assert.Equal(t, "two", output["value"])
 }
 
+func TestOrEmpty(t *testing.T) {
+	t.Parallel()
+
+	assert.NotNil(t, OrEmpty(nil))
+	assert.Empty(t, OrEmpty(nil))
+
+	input := map[string]any{"value": "one"}
+	assert.Equal(t, input, OrEmpty(input))
+}
+
 func TestWithoutFuncValues(t *testing.T) {
 	t.Parallel()
 

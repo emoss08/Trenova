@@ -144,7 +144,7 @@ export function CommentItem({
     <div
       data-comment-id={comment.id}
       className={cn(
-        "group/comment flex items-start gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50",
+        "group/comment hover:bg-muted/50 flex items-start gap-3 rounded-lg px-2 py-2.5 transition-colors",
         comment.pending && "opacity-60",
         comment.failed && "bg-red-500/5",
         highlighted && "animate-comment-highlight",
@@ -160,7 +160,7 @@ export function CommentItem({
           fallbackClassName="text-xs"
         />
         {isOnline && (
-          <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-background bg-emerald-500" />
+          <span className="border-background absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 bg-emerald-500" />
         )}
         {PRIORITY_INDICATOR[comment.priority] && (
           <span
@@ -180,7 +180,7 @@ export function CommentItem({
             {userName}
           </span>
           {comment.pending ? (
-            <span className="flex items-center gap-1 text-2xs text-muted-foreground">
+            <span className="text-2xs text-muted-foreground flex items-center gap-1">
               <LoaderIcon className="size-3 animate-spin" />
               Sending…
             </span>
@@ -238,7 +238,7 @@ export function CommentItem({
               type="button"
               variant="outline"
               size="xs"
-              className="h-5 gap-1 px-1.5 text-2xs"
+              className="text-2xs h-5 gap-1 px-1.5"
               onClick={actions.onRetry}
             >
               <RotateCcwIcon className="size-2.5" />
@@ -248,7 +248,7 @@ export function CommentItem({
               type="button"
               variant="ghost"
               size="xs"
-              className="h-5 gap-1 px-1.5 text-2xs text-muted-foreground"
+              className="text-2xs text-muted-foreground h-5 gap-1 px-1.5"
               onClick={actions.onDiscard}
             >
               <Trash2Icon className="size-2.5" />
@@ -258,7 +258,7 @@ export function CommentItem({
         )}
 
         {isResolved && !isEditing && (
-          <div className="mt-1.5 flex items-center gap-1.5 text-2xs text-muted-foreground">
+          <div className="text-2xs text-muted-foreground mt-1.5 flex items-center gap-1.5">
             <CheckCircle2Icon className="size-3 text-emerald-500" />
             Resolved
             {comment.resolvedBy?.name ? ` by ${comment.resolvedBy.name}` : ""}
@@ -278,7 +278,7 @@ export function CommentItem({
         {(showType || showVisibility) && !isEditing && (
           <div className="mt-1.5 flex items-center gap-2">
             {showType && (
-              <span className="flex items-center gap-1 text-2xs text-muted-foreground">
+              <span className="text-2xs text-muted-foreground flex items-center gap-1">
                 <span
                   className="inline-block size-1.5 shrink-0 rounded-full"
                   style={{ backgroundColor: typeColor }}
@@ -287,7 +287,7 @@ export function CommentItem({
               </span>
             )}
             {showVisibility && (
-              <span className="flex items-center gap-1 text-2xs text-muted-foreground">
+              <span className="text-2xs text-muted-foreground flex items-center gap-1">
                 <EyeIcon className="size-3" />
                 {commentVisibilityChoices.find((c) => c.value === comment.visibility)?.label ??
                   comment.visibility}
@@ -303,10 +303,10 @@ export function CommentItem({
 function CommentTombstone({ comment }: { comment: LocalShipmentComment }) {
   return (
     <div data-comment-id={comment.id} className="flex items-center gap-3 rounded-lg px-2 py-2.5">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
-        <CircleSlashIcon className="size-4 text-muted-foreground" />
+      <div className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full">
+        <CircleSlashIcon className="text-muted-foreground size-4" />
       </div>
-      <p className="text-sm text-muted-foreground italic">This comment was deleted</p>
+      <p className="text-muted-foreground text-sm italic">This comment was deleted</p>
     </div>
   );
 }
@@ -498,7 +498,7 @@ function CommentEditForm({
         <Button
           variant="ghost"
           size="xs"
-          className="size-6 text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground size-6"
           onClick={onCancel}
           disabled={isSubmitting}
           aria-label="Cancel edit"

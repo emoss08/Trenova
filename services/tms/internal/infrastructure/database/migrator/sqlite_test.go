@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/infrastructure/database/migrator"
 	sqlitemigrations "github.com/emoss08/trenova/internal/infrastructure/sqlite/migrations"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -68,6 +70,34 @@ func TestSQLiteCoreTablesExist(t *testing.T) {
 
 		require.Equalf(t, 1, count, "expected table %q to exist on SQLite", table)
 	}
+}
+
+func TestSQLiteResetRecreatesSchema(t *testing.T) {
+	ctx := t.Context()
+	db := newSQLiteDB(t)
+
+	m := migrator.NewMigrator(&common.DatabaseConfig{
+		DB:          db,
+		Environment: common.EnvDevelopment,
+	})
+	require.NoError(t, m.Initialize(ctx))
+
+	_, err := m.Migrate(ctx, common.OperationOptions{Force: true})
+	require.NoError(t, err)
+
+	result, err := m.Reset(ctx, common.OperationOptions{Force: true})
+	require.NoError(t, err, "reset must work on SQLite, not just PostgreSQL")
+	require.True(t, result.Success)
+
+	var applied int
+	require.NoError(t, db.NewRaw("SELECT count(*) FROM bun_migrations").Scan(ctx, &applied))
+	require.Positive(t, applied, "reset must leave the migration history populated")
+
+	var tables int
+	require.NoError(t, db.NewRaw(
+		"SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'",
+	).Scan(ctx, &tables))
+	require.Greater(t, tables, 200, "reset must rebuild the schema")
 }
 
 func newSQLiteDB(t *testing.T) *bun.DB {

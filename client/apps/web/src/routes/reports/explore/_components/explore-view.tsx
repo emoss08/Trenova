@@ -102,7 +102,7 @@ export function ExploreView({
   if (!ir) {
     return (
       <ExploreEmpty>
-        <CircleAlertIcon className="size-5 text-destructive" />
+        <CircleAlertIcon className="text-destructive size-5" />
         <p className="text-sm">This report&apos;s definition could not be read.</p>
       </ExploreEmpty>
     );
@@ -110,7 +110,7 @@ export function ExploreView({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
+      <header className="border-border flex h-12 shrink-0 items-center gap-2 border-b px-3">
         <Button
           variant="ghost"
           size="icon"
@@ -123,7 +123,7 @@ export function ExploreView({
         <div className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-medium">{name}</span>
           {description && (
-            <span className="truncate text-2xs text-muted-foreground">{description}</span>
+            <span className="text-2xs text-muted-foreground truncate">{description}</span>
           )}
         </div>
         <div className="flex-1" />
@@ -140,7 +140,7 @@ export function ExploreView({
       </header>
 
       {parameters.length > 0 && (
-        <div className="flex flex-wrap items-end gap-3 border-b border-border bg-muted/20 px-3 py-2">
+        <div className="border-border bg-muted/20 flex flex-wrap items-end gap-3 border-b px-3 py-2">
           {parameters.map((param) => (
             <div key={param.name} className="w-48">
               <ParameterField
@@ -154,7 +154,7 @@ export function ExploreView({
         </div>
       )}
 
-      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border px-3">
+      <div className="border-border flex h-9 shrink-0 items-center gap-2 border-b px-3">
         <button
           type="button"
           onClick={() => setView("table")}
@@ -171,7 +171,7 @@ export function ExploreView({
             type="button"
             onClick={() => setView(chart.id)}
             className={cn(
-              "max-w-32 truncate text-2xs font-medium tracking-wide uppercase transition-colors",
+              "text-2xs max-w-32 truncate font-medium tracking-wide uppercase transition-colors",
               view === chart.id ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -182,18 +182,18 @@ export function ExploreView({
           {rows.length} row{rows.length === 1 ? "" : "s"}
         </Badge>
         {preview.data?.truncated && (
-          <span className="rounded-sm bg-amber-500/10 px-1.5 py-px text-2xs text-amber-600 dark:text-amber-400">
+          <span className="text-2xs rounded-sm bg-amber-500/10 px-1.5 py-px text-amber-600 dark:text-amber-400">
             row limit reached
           </span>
         )}
         <div className="flex-1" />
-        {preview.isFetching && <Spinner className="size-3.5 text-muted-foreground" />}
+        {preview.isFetching && <Spinner className="text-muted-foreground size-3.5" />}
         {view === "table" && (
           <>
             <Input
               className="h-7 w-56 text-xs"
               placeholder="Filter these rows..."
-              leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+              leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
               value={quickFilter}
               onChange={(event) => setQuickFilter(event.target.value)}
             />
@@ -228,15 +228,15 @@ export function ExploreView({
         {missing.length > 0 ? (
           <ExploreEmpty>
             <p className="text-sm font-medium">This report needs a value first</p>
-            <p className="max-w-sm text-xs text-muted-foreground">
+            <p className="text-muted-foreground max-w-sm text-xs">
               Fill in {missing.map((param) => param.label || param.name).join(", ")} above to load
               the results.
             </p>
           </ExploreEmpty>
         ) : preview.isError ? (
           <ExploreEmpty>
-            <CircleAlertIcon className="size-5 text-destructive" />
-            <p className="max-w-lg text-xs whitespace-pre-wrap text-muted-foreground">
+            <CircleAlertIcon className="text-destructive size-5" />
+            <p className="text-muted-foreground max-w-lg text-xs whitespace-pre-wrap">
               {graphQLErrorMessage(preview.error, "This report could not be run")}
             </p>
           </ExploreEmpty>

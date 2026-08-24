@@ -85,7 +85,7 @@ export function JournalEntryDetailPage() {
                 <Badge variant="outline">{entry.entryType}</Badge>
                 <AccountingStatusBadge status={entry.status} />
               </div>
-              <span className="text-sm text-muted-foreground">{accountingDate}</span>
+              <span className="text-muted-foreground text-sm">{accountingDate}</span>
             </div>
             {entry.description && (
               <CardDescription>{entry.description}</CardDescription>
@@ -120,7 +120,7 @@ export function JournalEntryDetailPage() {
                   <dd className="mt-0.5">
                     <Link
                       to={`/accounting/journal-entries/${entry.reversalOfId}`}
-                      className="font-mono text-xs text-muted-foreground hover:text-foreground hover:underline"
+                      className="text-muted-foreground hover:text-foreground font-mono text-xs hover:underline"
                     >
                       {entry.reversalOfId}
                     </Link>
@@ -133,7 +133,7 @@ export function JournalEntryDetailPage() {
                   <dd className="mt-0.5">
                     <Link
                       to={`/accounting/journal-entries/${entry.reversedById}`}
-                      className="font-mono text-xs text-muted-foreground hover:text-foreground hover:underline"
+                      className="text-muted-foreground hover:text-foreground font-mono text-xs hover:underline"
                     >
                       {entry.reversedById}
                     </Link>
@@ -174,7 +174,7 @@ export function JournalEntryDetailPage() {
                 totalCredit={entry.totalCredit}
               />
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 No line items available.
               </p>
             )}

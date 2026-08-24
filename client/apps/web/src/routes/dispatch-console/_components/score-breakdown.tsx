@@ -31,7 +31,7 @@ export function ScoreBreakdown({
     <div className={cn("flex flex-col gap-2.5", className)}>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-baseline justify-between">
-          <span className="text-[10px] font-medium tracking-wider text-muted-foreground uppercase">
+          <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
             Match score
           </span>
           <span className="flex items-baseline gap-1">
@@ -40,12 +40,12 @@ export function ScoreBreakdown({
             >
               {score}
             </span>
-            <span className="text-[10px] text-muted-foreground">/ 100</span>
+            <span className="text-muted-foreground text-[10px]">/ 100</span>
           </span>
         </div>
-        <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+        <div className="bg-muted h-1 w-full overflow-hidden rounded-full">
           <motion.div
-            className="h-full rounded-full bg-brand"
+            className="bg-brand h-full rounded-full"
             initial={reducedMotion ? false : { width: 0 }}
             animate={{ width: `${score}%` }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
@@ -54,7 +54,7 @@ export function ScoreBreakdown({
       </div>
 
       {factors.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground">Not enough data to score this pairing.</p>
+        <p className="text-muted-foreground text-[11px]">Not enough data to score this pairing.</p>
       ) : (
         <>
           <ul className="flex flex-col gap-2">
@@ -73,7 +73,7 @@ export function ScoreBreakdown({
             <div className="flex flex-col gap-2">
               <button
                 type="button"
-                className="flex items-center gap-1 self-start text-[10.5px] text-muted-foreground transition-colors hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 self-start text-[10.5px] transition-colors"
                 onClick={() => setShowFlat((previous) => !previous)}
                 aria-expanded={showFlat}
               >
@@ -84,16 +84,16 @@ export function ScoreBreakdown({
                 {flat.length} factor{flat.length === 1 ? "" : "s"} contributed nothing
               </button>
               {showFlat ? (
-                <ul className="flex flex-col gap-1.5 border-l border-border pl-3">
+                <ul className="border-border flex flex-col gap-1.5 border-l pl-3">
                   {flat.map((factor) => (
                     <li key={factor.key} className="flex flex-col gap-px">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-[11px] text-muted-foreground">{factor.label}</span>
-                        <span className="text-[10px] tabular-nums text-muted-foreground/60">
+                        <span className="text-muted-foreground text-[11px]">{factor.label}</span>
+                        <span className="text-muted-foreground/60 text-[10px] tabular-nums">
                           +0.0
                         </span>
                       </div>
-                      <span className="text-[10px] leading-snug text-muted-foreground/70">
+                      <span className="text-muted-foreground/70 text-[10px] leading-snug">
                         {factor.detail}
                       </span>
                     </li>
@@ -125,19 +125,19 @@ function FactorRow({
     <li className="flex flex-col gap-0.5">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[11px] font-medium">{factor.label}</span>
-        <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
+        <span className="text-muted-foreground text-[11px] font-medium tabular-nums">
           +{factor.contribution.toFixed(1)}
         </span>
       </div>
-      <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+      <div className="bg-muted h-1 w-full overflow-hidden rounded-full">
         <motion.div
-          className="h-full rounded-full bg-brand/70"
+          className="bg-brand/70 h-full rounded-full"
           initial={reducedMotion ? false : { width: 0 }}
           animate={{ width: `${share}%` }}
           transition={{ duration: 0.4, delay: 0.05 * index, ease: [0.22, 1, 0.36, 1] }}
         />
       </div>
-      <span className="text-[10px] leading-snug text-muted-foreground">{factor.detail}</span>
+      <span className="text-muted-foreground text-[10px] leading-snug">{factor.detail}</span>
     </li>
   );
 }

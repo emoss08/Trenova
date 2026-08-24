@@ -6,7 +6,39 @@ var (
 	ErrInvalidServiceIncidentType        = errors.New("invalid service incident type")
 	ErrInvalidAutoAssignmentStrategy     = errors.New("invalid auto assignment strategy")
 	ErrInvalidComplianceEnforcementLevel = errors.New("invalid compliance enforcement level")
+	ErrInvalidPlanningMode               = errors.New("invalid planning mode")
 )
+
+type PlanningMode string
+
+const (
+	PlanningModeImmediate = PlanningMode("Immediate")
+	PlanningModeHorizon   = PlanningMode("Horizon")
+)
+
+func (p PlanningMode) String() string {
+	return string(p)
+}
+
+func (p PlanningMode) IsValid() bool {
+	switch p {
+	case PlanningModeImmediate, PlanningModeHorizon:
+		return true
+	default:
+		return false
+	}
+}
+
+func PlanningModeFromString(s string) (PlanningMode, error) {
+	switch s {
+	case "Immediate":
+		return PlanningModeImmediate, nil
+	case "Horizon":
+		return PlanningModeHorizon, nil
+	default:
+		return "", ErrInvalidPlanningMode
+	}
+}
 
 type ServiceIncidentType string
 

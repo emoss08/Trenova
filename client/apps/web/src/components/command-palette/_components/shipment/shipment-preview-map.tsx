@@ -115,11 +115,11 @@ function StopMarker({
     <div className="relative">
       <div className={cn("size-2.5 rounded-full ring-2 ring-white", color(point.stop.type))} />
       {activeIdx === idx && (
-        <div className="absolute -top-1.5 left-1/2 z-1 -translate-x-1/2 -translate-y-full rounded border border-border bg-popover px-2 py-1 text-2xs whitespace-nowrap text-popover-foreground shadow-md">
+        <div className="border-border bg-popover text-2xs text-popover-foreground absolute -top-1.5 left-1/2 z-1 -translate-x-1/2 -translate-y-full rounded border px-2 py-1 whitespace-nowrap shadow-md">
           <div className="max-w-[220px] truncate font-medium">
             {point.stop.location?.name || "Location"}
           </div>
-          <div className="max-w-[220px] truncate text-muted-foreground">
+          <div className="text-muted-foreground max-w-[220px] truncate">
             {point.stop.location
               ? formatLocation(point.stop.location)
               : `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}`}

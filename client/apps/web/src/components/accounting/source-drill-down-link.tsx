@@ -22,7 +22,7 @@ export function SourceDrillDownLink({ sourceType, sourceId, label }: SourceDrill
 
   if (!routeBuilder) {
     return (
-      <span className="text-xs text-muted-foreground">
+      <span className="text-muted-foreground text-xs">
         {label ?? sourceType}: {sourceId}
       </span>
     );
@@ -31,7 +31,7 @@ export function SourceDrillDownLink({ sourceType, sourceId, label }: SourceDrill
   return (
     <Link
       to={routeBuilder(sourceId)}
-      className="inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground hover:underline"
+      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5 text-xs hover:underline"
     >
       {label ?? sourceType}
       <ExternalLinkIcon className="size-2.5" />

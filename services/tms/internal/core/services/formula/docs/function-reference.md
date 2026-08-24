@@ -580,24 +580,26 @@ coalesce(0, 10, 20)              // 0
 coalesce(null, null)             // null
 ```
 
-## Rate Table Functions
+## Lookup Table Functions
 
-Rate tables are tenant-defined lookup tables (managed under Billing → Rate Tables) referenced
-by their key. Two lookup modes exist: **Exact** (string key → value) and **Range** (numeric key
-matched against bands; band minimum inclusive, maximum exclusive, open-ended final band allowed).
+A lookup table is a rate matrix with a single axis, managed under Billing → Rate Matrices and
+referenced by its code. Two match modes exist: **Exact** (string key → value) and **Range**
+(numeric key matched against bands; band minimum inclusive, maximum exclusive, open-ended final
+band allowed). Matrices with more than one axis cannot be addressed from a formula — lookup()
+supplies a single key, and a multi-axis grid needs one value per axis.
 
 #### lookup(table, key)
 
-Returns the value for `key` in the rate table identified by `table`.
+Returns the value for `key` in the single-axis matrix whose code is `table`.
 
 **Parameters:**
 
-- `table` (string): The rate table key (must exist and be active in your organization)
-- `key` (string | number): Exact match key or numeric value for range tables
+- `table` (string): The matrix code (must exist, be active, and have exactly one axis)
+- `key` (string | number): Exact match key or numeric value for range axes
 
 **Returns:** number
 
-**Errors:** unknown table, no matching entry, or a non-numeric key against a range table.
+**Errors:** unknown table, no matching cell, or a non-numeric key against a range axis.
 
 **Examples:**
 
@@ -618,7 +620,7 @@ lookupOr("lane_rate", laneCode, 0)       // 0 when the lane has no configured ra
 ```
 
 Template validation verifies that every string-literal table name referenced by
-`lookup`/`lookupOr` exists in your organization. `lookup` and `lookupOr` are reserved names —
+`lookup`/`lookupOr` names an active single-axis matrix in your organization. `lookup` and `lookupOr` are reserved names —
 variables and schema fields cannot use them.
 
 ## Function Composition

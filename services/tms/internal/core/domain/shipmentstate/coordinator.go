@@ -111,6 +111,17 @@ func (c *Coordinator) prepare( //nolint:gocognit // legacy workflow
 			move.Assignment = originalMove.Assignment
 		}
 
+		if move.CarrierAssignment == nil &&
+			move.Status != shipment.MoveStatusNew &&
+			originalMove != nil &&
+			originalMove.CarrierAssignment != nil {
+			move.CarrierAssignment = originalMove.CarrierAssignment
+		}
+
+		if move.CoverageType == "" && originalMove != nil {
+			move.CoverageType = originalMove.CoverageType
+		}
+
 		moveStops := originalStops[move.ID]
 		for stopIndex, stop := range move.Stops {
 			if stop == nil {
@@ -272,7 +283,7 @@ func (c *Coordinator) resolveMoveStatus(
 	if derived == shipment.MoveStatusNew &&
 		current == shipment.MoveStatusAssigned &&
 		requested == shipment.MoveStatusNew &&
-		move.Assignment == nil {
+		!move.HasCoverage() {
 		return shipment.MoveStatusNew
 	}
 
@@ -556,7 +567,7 @@ func deriveMoveStatus(move *shipment.ShipmentMove) shipment.MoveStatus {
 		return shipment.MoveStatusCompleted
 	case originCompleted || anyInTransit:
 		return shipment.MoveStatusInTransit
-	case move != nil && move.HasAssignment():
+	case move != nil && move.HasCoverage():
 		return shipment.MoveStatusAssigned
 	default:
 		return shipment.MoveStatusNew

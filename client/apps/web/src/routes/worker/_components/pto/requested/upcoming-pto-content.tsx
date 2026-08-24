@@ -139,7 +139,7 @@ function PTODateRange({ pto }: { pto: WorkerPTO }) {
 
 function PTODateRangeInner({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-0.5 flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+    <div className="text-muted-foreground mt-0.5 flex shrink-0 items-center gap-1 text-xs">
       {children}
     </div>
   );

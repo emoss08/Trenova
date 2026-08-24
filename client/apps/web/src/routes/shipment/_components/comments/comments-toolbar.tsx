@@ -65,7 +65,7 @@ function FilterToggleRow({
     <button
       type="button"
       className={cn(
-        "flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-accent",
+        "hover:bg-accent flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs",
         checked && "bg-accent",
       )}
       onClick={onToggle}
@@ -134,19 +134,19 @@ export function CommentsToolbar({
   }, [filters, onFiltersChange]);
 
   return (
-    <div className="border-b border-border px-4 py-2">
+    <div className="border-border border-b px-4 py-2">
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
           <Input
             value={filters.search}
             onChange={(event) => onFiltersChange({ ...filters, search: event.target.value })}
             placeholder="Search comments…"
-            leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
+            leftElement={<SearchIcon className="text-muted-foreground size-3.5" />}
             className="h-7 pl-7 text-xs"
             aria-label="Search comments"
           />
           {isFiltering && (
-            <span className="absolute top-1/2 right-2 size-3 -translate-y-1/2 animate-spin rounded-full border border-muted-foreground/40 border-t-transparent" />
+            <span className="border-muted-foreground/40 absolute top-1/2 right-2 size-3 -translate-y-1/2 animate-spin rounded-full border border-t-transparent" />
           )}
         </div>
         <Popover open={filterOpen} onOpenChange={setFilterOpen}>
@@ -161,15 +161,15 @@ export function CommentsToolbar({
                 <ListFilterIcon className="size-3.5" />
                 Filter
                 {activeCount > 0 && (
-                  <span className="rounded-full bg-brand px-1.5 text-2xs font-medium text-white">
+                  <span className="bg-brand text-2xs rounded-full px-1.5 font-medium text-white">
                     {activeCount}
                   </span>
                 )}
               </Button>
             }
           />
-          <PopoverContent align="end" className="max-h-80 w-52 gap-1 overflow-y-auto p-1 dark">
-            <div className="px-2 py-1 text-2xs font-medium text-muted-foreground">
+          <PopoverContent align="end" className="dark max-h-80 w-52 gap-1 overflow-y-auto p-1">
+            <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">
               Quick filters
             </div>
             <FilterToggleRow
@@ -189,7 +189,7 @@ export function CommentsToolbar({
               checked={filters.pinnedOnly}
               onToggle={() => onFiltersChange({ ...filters, pinnedOnly: !filters.pinnedOnly })}
             />
-            <div className="px-2 py-1 text-2xs font-medium text-muted-foreground">Priority</div>
+            <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">Priority</div>
             {commentPriorityChoices.map((choice) => (
               <FilterToggleRow
                 key={choice.value}
@@ -205,7 +205,7 @@ export function CommentsToolbar({
                 }
               />
             ))}
-            <div className="px-2 py-1 text-2xs font-medium text-muted-foreground">Type</div>
+            <div className="text-2xs text-muted-foreground px-2 py-1 font-medium">Type</div>
             {commentTypeChoices.map((choice) => (
               <FilterToggleRow
                 key={choice.value}
@@ -230,7 +230,7 @@ export function CommentsToolbar({
             <button
               key={pill.key}
               type="button"
-              className="flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-2xs transition-colors hover:bg-accent"
+              className="border-border bg-muted text-2xs hover:bg-accent flex items-center gap-1 rounded-full border px-2 py-0.5 transition-colors"
               onClick={pill.onRemove}
             >
               {pill.label}
@@ -241,7 +241,7 @@ export function CommentsToolbar({
             type="button"
             variant="ghost"
             size="xs"
-            className="h-5 px-1.5 text-2xs text-muted-foreground"
+            className="text-2xs text-muted-foreground h-5 px-1.5"
             onClick={() => onFiltersChange(EMPTY_TOOLBAR_FILTERS)}
           >
             Clear all

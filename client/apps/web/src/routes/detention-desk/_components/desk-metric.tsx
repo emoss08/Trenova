@@ -26,7 +26,7 @@ export function DeskMetric({
 }: DeskMetricProps) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-1", className)}>
-      <dt className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+      <dt className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
         {label}
       </dt>
       <dd
@@ -38,7 +38,7 @@ export function DeskMetric({
       >
         {value}
       </dd>
-      {sub ? <p className="truncate text-xs text-muted-foreground">{sub}</p> : null}
+      {sub ? <p className="text-muted-foreground truncate text-xs">{sub}</p> : null}
     </div>
   );
 }

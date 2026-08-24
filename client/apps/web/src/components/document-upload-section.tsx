@@ -41,10 +41,10 @@ function DocumentRow({
   return (
     <div className="flex items-center justify-between rounded-md border p-3">
       <div className="flex items-center gap-3">
-        <FileIcon className="size-5 text-muted-foreground" />
+        <FileIcon className="text-muted-foreground size-5" />
         <div>
           <p className="text-sm font-medium">{document.originalName}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             {formatFileSize(document.fileSize)} &bull;{" "}
             {formatUnixDate(document.createdAt)}
           </p>
@@ -66,7 +66,7 @@ function DocumentRow({
           disabled={isDeleting}
           aria-label="Delete document"
         >
-          <Trash2Icon className="size-4 text-destructive" />
+          <Trash2Icon className="text-destructive size-4" />
         </Button>
       </div>
     </div>
@@ -186,7 +186,7 @@ export function DocumentUploadSection({
   if (!resourceId) {
     return (
       <FormSection title="Documents" className="border-t pt-2">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Save the record to upload documents.
         </p>
       </FormSection>
@@ -210,17 +210,17 @@ export function DocumentUploadSection({
           tabIndex={disabled ? -1 : 0}
           aria-label="Upload documents"
           aria-disabled={disabled}
-          className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 transition-colors hover:border-muted-foreground/50 ${
+          className={`border-muted-foreground/25 hover:border-muted-foreground/50 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${
             isDragging ? "border-primary bg-primary/5" : ""
           } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
         >
-          <UploadCloudIcon className="mb-2 size-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
+          <UploadCloudIcon className="text-muted-foreground mb-2 size-10" />
+          <p className="text-muted-foreground text-sm">
             {uploadMutation.isPending
               ? "Uploading..."
               : "Drop files here or click to upload"}
           </p>
-          <p className="text-xs text-muted-foreground/70">
+          <p className="text-muted-foreground/70 text-xs">
             PDF, Images, Documents up to 50MB
           </p>
           <input
@@ -235,7 +235,7 @@ export function DocumentUploadSection({
         </div>
 
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading documents...</p>
+          <p className="text-muted-foreground text-sm">Loading documents...</p>
         ) : documents.length > 0 ? (
           <div className="space-y-2">
             {documents.map((doc) => (

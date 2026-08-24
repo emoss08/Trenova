@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/ratetable"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
@@ -169,7 +170,7 @@ func setupServiceWithRepo(
 		Resolver:      res,
 		Repo:          repo,
 		VersionRepo:   &stubVersionRepo{},
-		RateTableRepo: &stubRateTableRepo{},
+		RateMatrixRepo: &stubMatrixRepo{},
 	})
 }
 
@@ -185,31 +186,16 @@ func (s *stubVersionRepo) GetEffectiveVersion(
 	return s.effectiveVersion, nil
 }
 
-type stubRateTableRepo struct {
-	repositories.RateTableRepository
-	tables []*ratetable.RateTable
+type stubMatrixRepo struct {
+	repositories.RateMatrixRepository
+	data []*repositories.RateMatrixLookupData
 }
 
-func (s *stubRateTableRepo) GetLookupData(
+func (s *stubMatrixRepo) GetLookupData(
 	_ context.Context,
-	_ *repositories.GetRateTableLookupDataRequest,
-) ([]*ratetable.RateTable, error) {
-	return s.tables, nil
-}
-
-func (s *stubRateTableRepo) GetByKeys(
-	_ context.Context,
-	req *repositories.GetRateTablesByKeysRequest,
-) ([]*ratetable.RateTable, error) {
-	matched := make([]*ratetable.RateTable, 0, len(req.Keys))
-	for _, table := range s.tables {
-		for _, key := range req.Keys {
-			if table.Key == key {
-				matched = append(matched, table)
-			}
-		}
-	}
-	return matched, nil
+	_ *repositories.GetRateMatrixLookupDataRequest,
+) ([]*repositories.RateMatrixLookupData, error) {
+	return s.data, nil
 }
 
 func TestService_ValidateExpression(t *testing.T) {
@@ -907,6 +893,61 @@ func TestService_Calculate_UndeclaredVariableShadowsField(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 			assert.True(t, tt.want.Equal(resp.Amount), "expected %s, got %s", tt.want, resp.Amount)
+		})
+	}
+}
+
+func TestService_EvaluatePredicate(t *testing.T) {
+	t.Parallel()
+
+	svc := setupService(t)
+
+	entity := &shipment.Shipment{
+		Moves: []*shipment.ShipmentMove{
+			{
+				Stops: []*shipment.Stop{
+					{Type: shipment.StopTypePickup},
+					{Type: shipment.StopTypeDelivery},
+					{Type: shipment.StopTypeDelivery},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name       string
+		expression string
+		want       bool
+		wantErr    bool
+	}{
+		{name: "a true comparison", expression: "totalStops > 2", want: true},
+		{name: "a false comparison", expression: "totalStops > 5", want: false},
+		{name: "a bare boolean", expression: "true", want: true},
+		{name: "zero reads as false", expression: "0", want: false},
+		{name: "a non-zero number reads as true", expression: "totalStops", want: true},
+		{name: "a broken expression errors", expression: "invalid +++", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := svc.EvaluatePredicate(
+				context.Background(),
+				&services.EvaluatePredicateRequest{
+					Expression: tt.expression,
+					SchemaID:   "shipment",
+					Entity:     entity,
+				},
+			)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

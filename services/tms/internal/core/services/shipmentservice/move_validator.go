@@ -40,6 +40,8 @@ func createMoveValidationRule() validationframework.TenantedRule[*shipment.Shipm
 					continue
 				}
 
+				move.Validate(multiErr.WithIndex("moves", moveIndex))
+
 				ruleCtx := moveRuleContext{
 					moveIndex:     moveIndex,
 					move:          move,

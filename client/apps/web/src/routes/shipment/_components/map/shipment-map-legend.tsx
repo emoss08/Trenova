@@ -18,7 +18,7 @@ export function ShipmentMapLegend({ className }: { className?: string }) {
       {ENTRIES.map((e) => (
         <span
           key={e.label}
-          className="inline-flex items-center gap-1 rounded-md border border-border bg-background p-1 font-table text-2xs text-muted-foreground"
+          className="border-border bg-background font-table text-2xs text-muted-foreground inline-flex items-center gap-1 rounded-md border p-1"
         >
           <span
             aria-hidden

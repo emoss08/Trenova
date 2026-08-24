@@ -46,7 +46,7 @@ export function DataTableDescription({
         render={
           <span
             className={cn(
-              "cursor-help text-sm underline decoration-muted-foreground decoration-dashed",
+              "decoration-muted-foreground cursor-help text-sm underline decoration-dashed",
               className,
             )}
           >
@@ -73,7 +73,7 @@ export function DataTableLink({ text, href, onClick, className }: DataTableLinkP
     return (
       <a
         href={href}
-        className={cn("text-sm text-primary underline-offset-4 hover:underline", className)}
+        className={cn("text-primary text-sm underline-offset-4 hover:underline", className)}
         onClick={(e) => {
           if (onClick) {
             e.preventDefault();
@@ -89,7 +89,7 @@ export function DataTableLink({ text, href, onClick, className }: DataTableLinkP
   return (
     <button
       type="button"
-      className={cn("text-left text-sm text-primary underline-offset-4 hover:underline", className)}
+      className={cn("text-primary text-left text-sm underline-offset-4 hover:underline", className)}
       onClick={onClick}
     >
       {text}

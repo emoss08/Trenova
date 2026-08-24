@@ -55,6 +55,7 @@ import { TimelineToolbar } from "./timeline-toolbar";
 import { BarDetailPopover } from "./bar-detail-popover";
 import {
   barMatchesFocus,
+  isValidDropTarget,
   sortTimelineRows,
   UNASSIGNED_ROW_KEY,
   useTimelineData,
@@ -69,6 +70,7 @@ type PendingAssignment = {
   moveId: string;
   shipmentId: string | null;
   existingAssignment: TimelineBar["assignment"];
+  existingCarrierAssignment: TimelineBar["carrierAssignment"];
   prefill: Partial<AssignmentPayload> | null;
 };
 
@@ -282,17 +284,23 @@ export default function CommandCenterTimeline({
     const bar = event.active.data.current?.bar as TimelineBar | undefined;
     const row = event.over?.data.current?.row as TimelineRow | undefined;
     if (!bar || !row) return;
+    // Re-check validity even though invalid rows disable their droppable: it
+    // guards carrier rows (whose `carrier:` keys are not worker IDs) and
+    // carrier-covered bars against ever reaching the assignment dialog.
+    if (!isValidDropTarget(bar, row)) return;
 
     if (row.key === UNASSIGNED_ROW_KEY) {
-      if (bar.assignment) setPendingUnassign(bar);
+      // Carrier coverage cannot be dropped away: canceling it requires a recorded
+      // reason, which lives behind the bar's detail popover instead.
+      setPendingUnassign(bar);
       return;
     }
-    if (bar.assignment?.primaryWorker?.id === row.key) return;
 
     setPendingAssignment({
       moveId: bar.moveId,
       shipmentId: bar.shipment.id ?? null,
       existingAssignment: bar.assignment,
+      existingCarrierAssignment: bar.carrierAssignment,
       prefill: { primaryWorkerId: row.key },
     });
   }, []);
@@ -337,6 +345,7 @@ export default function CommandCenterTimeline({
       moveId: bar.moveId,
       shipmentId: bar.shipment.id ?? null,
       existingAssignment: bar.assignment,
+      existingCarrierAssignment: bar.carrierAssignment,
       prefill: null,
     });
   }, []);
@@ -464,7 +473,7 @@ export default function CommandCenterTimeline({
                     <div
                       key={day.start}
                       className={cn(
-                        "absolute inset-y-0 border-l border-border/60 first:border-l-0",
+                        "border-border/60 absolute inset-y-0 border-l first:border-l-0",
                         day.isWeekend && "bg-muted/40",
                         day.isToday && "bg-brand/[3%]",
                       )}
@@ -474,7 +483,7 @@ export default function CommandCenterTimeline({
                   {hourTicks.map((tick) => (
                     <div
                       key={tick.time}
-                      className="absolute inset-y-0 border-l border-border/25"
+                      className="border-border/25 absolute inset-y-0 border-l"
                       style={{ left: tick.x }}
                     />
                   ))}
@@ -512,10 +521,10 @@ export default function CommandCenterTimeline({
                 {nowInRange && (
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute inset-y-0 z-20 w-px bg-brand"
+                    className="bg-brand pointer-events-none absolute inset-y-0 z-20 w-px"
                     style={{ left: RAIL_WIDTH_PX + nowX }}
                   >
-                    <span className="absolute -top-0 -left-[3px] size-[7px] rounded-full bg-brand" />
+                    <span className="bg-brand absolute -top-0 -left-[3px] size-[7px] rounded-full" />
                   </div>
                 )}
               </div>
@@ -544,8 +553,10 @@ export default function CommandCenterTimeline({
           moveId={pendingAssignment.moveId}
           shipmentId={pendingAssignment.shipmentId}
           existingAssignment={pendingAssignment.existingAssignment}
+          existingCarrierAssignment={pendingAssignment.existingCarrierAssignment}
           prefill={pendingAssignment.prefill}
           onAssigned={() => setPendingAssignment(null)}
+          onCarrierAssigned={() => setPendingAssignment(null)}
         />
       )}
 
@@ -581,10 +592,10 @@ function DragGhost({ bar }: { bar: TimelineBar }) {
   const originCode = getOriginLocation(bar.shipment)?.code ?? "—";
   const destCode = getDestinationLocation(bar.shipment)?.code ?? "—";
   return (
-    <div className="flex h-6.5 cursor-grabbing items-center rounded border border-brand/50 bg-brand/15 px-2 shadow-lg backdrop-blur-sm">
+    <div className="border-brand/50 bg-brand/15 flex h-6.5 cursor-grabbing items-center rounded border px-2 shadow-lg backdrop-blur-sm">
       <span className="font-table text-[10px] font-semibold tabular-nums">
         {bar.shipment.proNumber ?? "—"}
-        <span className="ml-1.5 font-normal text-muted-foreground">
+        <span className="text-muted-foreground ml-1.5 font-normal">
           {originCode} → {destCode}
         </span>
       </span>
@@ -615,9 +626,9 @@ function TimelineSkeleton() {
 function TimelineEmptyState() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-      <CalendarClockIcon className="size-6 text-muted-foreground" />
+      <CalendarClockIcon className="text-muted-foreground size-6" />
       <p className="text-sm font-semibold">No scheduled activity in this window</p>
-      <p className="max-w-sm text-xs text-muted-foreground">
+      <p className="text-muted-foreground max-w-sm text-xs">
         No shipments have stops scheduled in the visible range with the current filters. Move the
         window, widen the zoom, or clear filters to see more.
       </p>
@@ -628,9 +639,9 @@ function TimelineEmptyState() {
 function TimelineErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-      <CircleAlertIcon className="size-6 text-destructive" />
+      <CircleAlertIcon className="text-destructive size-6" />
       <p className="text-sm font-semibold">Couldn&apos;t load the timeline</p>
-      <p className="max-w-sm text-xs text-muted-foreground">
+      <p className="text-muted-foreground max-w-sm text-xs">
         Something went wrong while fetching shipments for this window.
       </p>
       <Button type="button" variant="outline" size="xs" onClick={onRetry}>

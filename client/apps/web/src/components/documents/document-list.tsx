@@ -24,11 +24,11 @@ interface DocumentListProps {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="mb-4 rounded-full bg-muted p-4">
-        <FileIcon className="size-8 text-muted-foreground" />
+      <div className="bg-muted mb-4 rounded-full p-4">
+        <FileIcon className="text-muted-foreground size-8" />
       </div>
       <h3 className="text-sm font-medium">No documents</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="text-muted-foreground mt-1 text-sm">
         Upload documents using the drop zone above.
       </p>
     </div>
@@ -41,12 +41,12 @@ function LoadingStateList() {
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="flex items-center gap-3 rounded-lg border bg-card p-3"
+          className="bg-card flex items-center gap-3 rounded-lg border p-3"
         >
-          <div className="size-12 animate-pulse rounded-md bg-muted" />
+          <div className="bg-muted size-12 animate-pulse rounded-md" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-            <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+            <div className="bg-muted h-4 w-3/4 animate-pulse rounded" />
+            <div className="bg-muted h-3 w-1/2 animate-pulse rounded" />
           </div>
         </div>
       ))}
@@ -60,14 +60,14 @@ function LoadingStateGrid() {
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="flex flex-col overflow-hidden rounded-lg border bg-card"
+          className="bg-card flex flex-col overflow-hidden rounded-lg border"
         >
-          <div className="flex aspect-square items-center justify-center bg-muted/30 p-4">
-            <div className="size-16 animate-pulse rounded-lg bg-muted" />
+          <div className="bg-muted/30 flex aspect-square items-center justify-center p-4">
+            <div className="bg-muted size-16 animate-pulse rounded-lg" />
           </div>
           <div className="flex flex-col gap-1.5 border-t px-3 py-2.5">
-            <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-            <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+            <div className="bg-muted h-4 w-3/4 animate-pulse rounded" />
+            <div className="bg-muted h-3 w-1/2 animate-pulse rounded" />
           </div>
         </div>
       ))}

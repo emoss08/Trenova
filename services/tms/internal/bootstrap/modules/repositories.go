@@ -1,6 +1,8 @@
 package modules
 
 import (
+	"go.uber.org/fx"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountsreceivablerepository"
@@ -21,6 +23,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuefilterpresetrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierassignmentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierinvoicematchrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierledgerrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriersettlementcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/costingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
@@ -103,17 +111,26 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/manualjournalrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/modeprofilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/notificationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/orderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/permitrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pushsubscriptionrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratetablerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rateagreementrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rateconfirmationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rateimportrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratematrixrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratequoterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratesimulationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratezonerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recurringshipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/reportrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rolerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/routingguiderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/sequenceconfigrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicefailurereasoncoderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicefailurerepository"
@@ -138,6 +155,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/telematicsrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantprovisioningrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenantsyncrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tenderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tractorrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/trailerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userrepository"
@@ -146,7 +164,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerptorepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerrepository"
 	"github.com/emoss08/trenova/pkg/seqgen"
-	"go.uber.org/fx"
 )
 
 var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
@@ -159,7 +176,6 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	userrepository.New,
 	formulatemplaterepository.New,
 	formulatemplateversionrepository.New,
-	ratetablerepository.New,
 	tableconfigurationrepository.New,
 	pagefavoriterepository.New,
 	reportrepository.NewDefinitionRepository,
@@ -276,6 +292,17 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	pushsubscriptionrepository.New,
 	settlementcontrolrepository.New,
 	dashcontrolrepository.New,
+	carrierassignmentrepository.New,
+	carrierrepository.New,
+	carriersettlementrepository.NewSettlement,
+	carriersettlementrepository.NewBatch,
+	carriersettlementrepository.NewCostEvent,
+	carriersettlementcontrolrepository.New,
+	carrierledgerrepository.New,
+	carrierinvoicematchrepository.New,
+	rateconfirmationrepository.New,
+	routingguiderepository.New,
+	tenderrepository.New,
 	customerrepository.New,
 	accountingcontrolrepository.New,
 	accountsreceivablerepository.New,
@@ -310,11 +337,22 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	distanceprofilerepository.New,
 	storedmileagerepository.New,
 	exchangeraterepository.New,
+	permitrepository.New,
+	permitrepository.NewJurisdictionRuleRepository,
+	modeprofilerepository.NewProfileRepository,
+	modeprofilerepository.NewDeviationRepository,
 	detentionrepository.NewPolicyRepository,
 	detentionrepository.NewOccurrenceRepository,
 	detentionrepository.NewEvidenceRepository,
 	detentionrepository.NewNoticeRepository,
 	detentionrepository.NewAnalyticsRepository,
+	rateagreementrepository.New,
+	ratezonerepository.New,
+	ratematrixrepository.New,
+	ratesimulationrepository.New,
+	rateimportrepository.New,
+	ratematrixrepository.NewDensityScaleRepository,
+	ratequoterepository.New,
 	fuelsurchargerepository.NewIndexRepository,
 	fuelsurchargerepository.NewPriceRepository,
 	fuelsurchargerepository.NewProgramRepository,

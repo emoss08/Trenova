@@ -16,12 +16,12 @@ export function RequestsCard({ data }: Props) {
   const { total, sparkline } = data;
 
   return (
-    <Card className="group relative gap-0 overflow-hidden rounded-md border-border/80 pb-0 shadow-none transition-colors hover:border-border">
+    <Card className="group border-border/80 hover:border-border relative gap-0 overflow-hidden rounded-md pb-0 shadow-none transition-colors">
       <CardHeader className="relative flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+        <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
           Requests (30d)
         </CardTitle>
-        <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <span className="bg-muted text-muted-foreground inline-flex size-7 shrink-0 items-center justify-center rounded-md">
           <Activity className="size-4" />
         </span>
       </CardHeader>

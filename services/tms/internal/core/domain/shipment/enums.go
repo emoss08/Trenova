@@ -45,18 +45,6 @@ const (
 	BillingTransferCanceled       = BillingTransferStatus("Canceled")
 )
 
-type RatingMethod string
-
-const (
-	RatingMethodFlatRate        = RatingMethod("FlatRate")
-	RatingMethodPerMile         = RatingMethod("PerMile")
-	RatingMethodPerStop         = RatingMethod("PerStop")
-	RatingMethodPerPallet       = RatingMethod("PerPallet")
-	RatingMethodPerLinearFoot   = RatingMethod("PerLinearFeet")
-	RatingMethodOther           = RatingMethod("Other")
-	RatingMethodFormulaTemplate = RatingMethod("FormulaTemplate")
-)
-
 type MoveStatus string
 
 const (
@@ -198,8 +186,7 @@ func (v TenderStatus) IsValid() bool {
 
 func (v EntryMethod) IsValid() bool {
 	switch v {
-	case EntryMethodManual,
-		EntryMethodEDI:
+	case EntryMethodManual, EntryMethodEDI:
 		return true
 	default:
 		return false
@@ -216,21 +203,6 @@ func (v BillingTransferStatus) IsValid() bool {
 		BillingTransferSentBackToOps,
 		BillingTransferApproved,
 		BillingTransferCanceled:
-		return true
-	default:
-		return false
-	}
-}
-
-func (v RatingMethod) IsValid() bool {
-	switch v {
-	case RatingMethodFlatRate,
-		RatingMethodPerMile,
-		RatingMethodPerStop,
-		RatingMethodPerPallet,
-		RatingMethodPerLinearFoot,
-		RatingMethodOther,
-		RatingMethodFormulaTemplate:
 		return true
 	default:
 		return false
@@ -351,4 +323,86 @@ func (v CommentSource) IsValid() bool {
 	default:
 		return false
 	}
+}
+
+type MoveCoverageType string
+
+const (
+	MoveCoverageTypeUnassigned = MoveCoverageType("unassigned")
+	MoveCoverageTypeDriver     = MoveCoverageType("driver")
+	MoveCoverageTypeCarrier    = MoveCoverageType("carrier")
+)
+
+func (c MoveCoverageType) String() string {
+	return string(c)
+}
+
+func (c MoveCoverageType) IsValid() bool {
+	switch c {
+	case MoveCoverageTypeUnassigned, MoveCoverageTypeDriver, MoveCoverageTypeCarrier:
+		return true
+	}
+	return false
+}
+
+type HoldSource string
+
+const (
+	HoldSourceUser = HoldSource("User")
+	HoldSourceRule = HoldSource("Rule")
+	HoldSourceAPI  = HoldSource("API")
+	HoldSourceELD  = HoldSource("ELD")
+	HoldSourceEDI  = HoldSource("EDI")
+)
+
+type CarrierAssignmentStatus string
+
+const (
+	CarrierAssignmentStatusPending   = CarrierAssignmentStatus("Pending")
+	CarrierAssignmentStatusConfirmed = CarrierAssignmentStatus("Confirmed")
+	CarrierAssignmentStatusCanceled  = CarrierAssignmentStatus("Canceled")
+)
+
+func (s CarrierAssignmentStatus) String() string {
+	return string(s)
+}
+
+func (s CarrierAssignmentStatus) IsValid() bool {
+	switch s {
+	case CarrierAssignmentStatusPending,
+		CarrierAssignmentStatusConfirmed,
+		CarrierAssignmentStatusCanceled:
+		return true
+	}
+	return false
+}
+
+type CarrierRateMethod string
+
+const (
+	CarrierRateMethodFlat    = CarrierRateMethod("Flat")
+	CarrierRateMethodPerMile = CarrierRateMethod("PerMile")
+)
+
+func (m CarrierRateMethod) String() string {
+	return string(m)
+}
+
+func (m CarrierRateMethod) Label() string {
+	switch m {
+	case CarrierRateMethodPerMile:
+		return "Per Mile"
+	case CarrierRateMethodFlat:
+		return "Flat"
+	default:
+		return string(m)
+	}
+}
+
+func (m CarrierRateMethod) IsValid() bool {
+	switch m {
+	case CarrierRateMethodFlat, CarrierRateMethodPerMile:
+		return true
+	}
+	return false
 }

@@ -12,14 +12,20 @@ import { BillingControlService } from "./billing-control";
 import { BillingQueueService } from "./billing-queue";
 import { CommodityService } from "./commodity";
 import { CustomFieldService } from "./custom-field";
+import { CarrierService } from "./carrier";
+import { CarrierAssignmentService } from "./carrier-assignment";
 import { CustomerService } from "./customer";
 import { DataEntryControlService } from "./data-entry-control";
 import { DatabaseSessionService } from "./database-session";
+import { DetentionAnalyticsService, DetentionPolicyService, DetentionService } from "./detention";
 import {
-  DetentionAnalyticsService,
-  DetentionPolicyService,
-  DetentionService,
-} from "./detention";
+  RateAgreementService,
+  RateMatrixService,
+  RateImportService,
+  RateSimulationService,
+  RateQuoteService,
+  RateZoneService,
+} from "./rate";
 import { DispatchControlService } from "./dispatch-control";
 import { DistanceOverrideService } from "./distance-override";
 import { DistanceControlService } from "./distance-control";
@@ -56,7 +62,9 @@ import { NotificationService, notificationService } from "@trenova/shared/servic
 import { OrganizationService } from "./organization";
 import { PageFavoriteService } from "./page-favorite";
 import { PlatformBillingService } from "./platform-billing";
-import { RateTableService } from "./rate-table";
+import { RateConfirmationService } from "./rate-confirmation";
+import { RoutingGuideService } from "./routing-guide";
+import { TenderService } from "./tender";
 import { RealtimeService, realtimeService } from "@trenova/shared/services/realtime";
 import { SequenceConfigService } from "./sequence-config";
 import { ServiceFailureService } from "./service-failure";
@@ -98,6 +106,11 @@ class APIService {
   public hazardousMaterialService: HazardousMaterialService;
   public hazmatSegregationRuleService: HazmatSegregationRuleService;
   public commodityService: CommodityService;
+  public carrierService: CarrierService;
+  public carrierAssignmentService: CarrierAssignmentService;
+  public routingGuideService: RoutingGuideService;
+  public tenderService: TenderService;
+  public rateConfirmationService: RateConfirmationService;
   public customerService: CustomerService;
   public databaseSessionService: DatabaseSessionService;
   public googleMapsService: GoogleMapsService;
@@ -109,7 +122,6 @@ class APIService {
   public locationService: LocationService;
   public holdReasonService: HoldReasonService;
   public recurringShipmentService: RecurringShipmentService;
-  public rateTableService: RateTableService;
   public shipmentCommentService: ShipmentCommentService;
   public shipmentControlService: ShipmentControlService;
   public shipmentEventService: ShipmentEventService;
@@ -122,6 +134,12 @@ class APIService {
   public dataEntryControlService: DataEntryControlService;
   public detentionService: DetentionService;
   public detentionPolicyService: DetentionPolicyService;
+  public rateAgreementService: RateAgreementService;
+  public rateZoneService: RateZoneService;
+  public rateMatrixService: RateMatrixService;
+  public rateSimulationService: RateSimulationService;
+  public rateImportService: RateImportService;
+  public rateQuoteService: RateQuoteService;
   public detentionAnalyticsService: DetentionAnalyticsService;
   public dispatchControlService: DispatchControlService;
   public distanceOverrideService: DistanceOverrideService;
@@ -175,6 +193,11 @@ class APIService {
     this.hazardousMaterialService = new HazardousMaterialService();
     this.hazmatSegregationRuleService = new HazmatSegregationRuleService();
     this.commodityService = new CommodityService();
+    this.carrierService = new CarrierService();
+    this.carrierAssignmentService = new CarrierAssignmentService();
+    this.routingGuideService = new RoutingGuideService();
+    this.tenderService = new TenderService();
+    this.rateConfirmationService = new RateConfirmationService();
     this.customerService = new CustomerService();
     this.databaseSessionService = new DatabaseSessionService();
     this.googleMapsService = new GoogleMapsService();
@@ -186,7 +209,6 @@ class APIService {
     this.locationService = new LocationService();
     this.holdReasonService = new HoldReasonService();
     this.recurringShipmentService = new RecurringShipmentService();
-    this.rateTableService = new RateTableService();
     this.shipmentCommentService = new ShipmentCommentService();
     this.shipmentControlService = new ShipmentControlService();
     this.shipmentEventService = new ShipmentEventService();
@@ -199,6 +221,12 @@ class APIService {
     this.dataEntryControlService = new DataEntryControlService();
     this.detentionService = new DetentionService();
     this.detentionPolicyService = new DetentionPolicyService();
+    this.rateAgreementService = new RateAgreementService();
+    this.rateZoneService = new RateZoneService();
+    this.rateMatrixService = new RateMatrixService();
+    this.rateSimulationService = new RateSimulationService();
+    this.rateImportService = new RateImportService();
+    this.rateQuoteService = new RateQuoteService();
     this.detentionAnalyticsService = new DetentionAnalyticsService();
     this.dispatchControlService = new DispatchControlService();
     this.distanceOverrideService = new DistanceOverrideService();

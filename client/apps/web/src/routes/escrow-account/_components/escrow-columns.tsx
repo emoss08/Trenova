@@ -54,7 +54,7 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
               currency={row.original.currencyCode}
             />
           ) : (
-            <span className="text-xs text-muted-foreground">—</span>
+            <span className="text-muted-foreground text-xs">—</span>
           )}
         </div>
       ),
@@ -66,11 +66,11 @@ export function getColumns(): ColumnDef<EscrowAccountRow>[] {
       header: () => <div className="text-right">Funded</div>,
       cell: ({ row }) => {
         const target = row.original.targetAmountMinor;
-        if (target <= 0) return <div className="text-right text-xs text-muted-foreground">—</div>;
+        if (target <= 0) return <div className="text-muted-foreground text-right text-xs">—</div>;
         const pct = Math.min(100, Math.round((row.original.balanceMinor / target) * 100));
         return (
           <div className="flex items-center justify-end gap-2">
-            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+            <div className="bg-muted h-1.5 w-16 overflow-hidden rounded-full">
               <div className="h-full rounded-full bg-green-500" style={{ width: `${pct}%` }} />
             </div>
             <span className="text-xs tabular-nums">{pct}%</span>

@@ -69,6 +69,16 @@ type TabbedFormEditPanelProps<T extends FieldValues, TData extends Record<string
   formTabs?: FormTabConfig[];
   size?: PanelSize;
   useDock?: boolean;
+  /**
+   * Whether the form still holds only the bare table row.
+   *
+   * A panel whose record has children fetches them separately, and until they
+   * land the form has none. Saving in that window tells the server the record
+   * has no children, which it reads as the user having deleted them — so the
+   * panel refuses to submit rather than writing that emptiness back.
+   */
+  isRecordLoading?: boolean;
+  recordFailed?: boolean;
   mutationFn?: (values: T, row: TData) => Promise<T>;
 };
 
@@ -102,6 +112,8 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   formTabs = [],
   size = "md",
   useDock = false,
+  isRecordLoading = false,
+  recordFailed = false,
   mutationFn,
 }: TabbedFormEditPanelProps<T, TData>) {
   const user = useAuthStore((s) => s.user);
@@ -174,13 +186,20 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
     [mutateAsync],
   );
 
+  // The record has to be in the form before any of it can be written back.
+  const saveBlocked = isRecordLoading || recordFailed;
+
   const handleOptionSelect = (action: EditPanelSaveAction) => {
+    if (saveBlocked) return;
+
     pendingActionRef.current = action;
     setDefaultAction(action);
     void handleSubmit(onSubmit)();
   };
 
   const handleFormSubmit = (values: T) => {
+    if (saveBlocked) return;
+
     pendingActionRef.current = defaultAction;
     return onSubmit(values);
   };
@@ -189,6 +208,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
     options: SAVE_OPTIONS,
     selectedOption: defaultAction,
     onOptionSelect: handleOptionSelect,
+    disabled: saveBlocked,
     loadingText: "Saving...",
   };
 
@@ -202,6 +222,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
       if (
         open &&
         !activeTabHidesFooter &&
+        !saveBlocked &&
         (event.ctrlKey || event.metaKey) &&
         event.key === "Enter" &&
         !isSubmitting
@@ -214,7 +235,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, isSubmitting, handleSubmit, defaultAction, onSubmit, activeTabHidesFooter]);
+  }, [open, isSubmitting, handleSubmit, defaultAction, onSubmit, activeTabHidesFooter, saveBlocked]);
 
   const panelTitle = titleComponent
     ? row
@@ -241,14 +262,14 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
       <Dialog.Portal>
         <Dialog.Popup
           className={cn(
-            "fixed top-4 right-4 bottom-4 z-50 flex flex-col rounded-lg border border-border bg-background shadow-lg outline-none",
+            "border-border bg-background fixed top-4 right-4 bottom-4 z-50 flex flex-col rounded-lg border shadow-lg outline-none",
             "data-open:animate-in data-open:slide-in-from-right",
             "data-closed:animate-out data-closed:slide-out-to-right",
             "duration-200",
           )}
           style={{ width: PANEL_SIZES[size] }}
         >
-          <div className="flex flex-col border-b border-border px-4 py-3">
+          <div className="border-border flex flex-col border-b px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex flex-row gap-1">
                 <Dialog.Title className="text-2xl leading-none font-semibold">
@@ -275,7 +296,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
             {(panelDescription || descriptionExtra) && (
               <div className="mt-0.5 flex items-center justify-between">
                 {panelDescription && (
-                  <Dialog.Description className="text-xs text-muted-foreground">
+                  <Dialog.Description className="text-muted-foreground text-xs">
                     {panelDescription}
                   </Dialog.Description>
                 )}
@@ -284,17 +305,24 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
             )}
           </div>
 
-          {!row ? (
+          {!row || isRecordLoading ? (
             <div className="flex-1 p-4">
               <ComponentLoader message={`Loading ${title}...`} />
+            </div>
+          ) : recordFailed ? (
+            <div className="flex-1 p-4">
+              <p className="text-destructive text-sm">
+                This {title.toLowerCase()} could not be loaded, so it cannot be edited safely.
+                Close the panel and try again.
+              </p>
             </div>
           ) : hasFormTabs ? (
             <Tabs
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as string)}
-              className="flex flex-1 flex-col overflow-hidden gap-0"
+              className="flex flex-1 flex-col gap-0 overflow-hidden"
             >
-              <div className="border-b border-border px-4">
+              <div className="border-border border-b px-4">
                 <OverflowTabsList
                   items={formTabs.map((tab) => ({
                     value: tab.value,
@@ -330,9 +358,9 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
             <Tabs
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as string)}
-              className="flex flex-1 flex-col overflow-hidden gap-0"
+              className="flex flex-1 flex-col gap-0 overflow-hidden"
             >
-              <div className="border-b border-border px-4">
+              <div className="border-border border-b px-4">
                 <OverflowTabsList
                   items={[
                     { value: "details", label: "Details" },
@@ -411,7 +439,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
           <div
             className={cn(
-              "flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-4 py-3",
+              "border-border bg-muted/30 flex items-center justify-between gap-2 border-t px-4 py-3",
               (activeTabHidesFooter || useDock) && "hidden",
             )}
           >
@@ -423,6 +451,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
               selectedOption={defaultAction}
               onOptionSelect={handleOptionSelect}
               isLoading={isSubmitting}
+              disabled={saveBlocked}
               loadingText="Saving..."
               formId="panel-edit-form"
             />

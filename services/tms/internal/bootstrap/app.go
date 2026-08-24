@@ -12,12 +12,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/compliancejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/dispatchjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/distancemileagejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
@@ -27,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelpricejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/recurringshipmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
@@ -35,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/telematicsjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/anthropiccompletionservice"
@@ -66,6 +71,7 @@ func Options() fx.Option {
 		fx.Provide(telematicsinfra.NewFactory),
 		formula.Module,
 		formulatemplateservice.Module,
+		rateengine.Module,
 		editransport.Module,
 		temporaljobs.Module,
 		schedule.Module,
@@ -79,6 +85,7 @@ func Options() fx.Option {
 		emailjobs.Module,
 		exchangeratejobs.Module,
 		fuelpricejobs.Module,
+		ratesimjobs.Module,
 		thumbnailjobs.Module,
 		smsjobs.Module,
 		samsarajobs.Module,
@@ -89,7 +96,10 @@ func Options() fx.Option {
 		anthropiccompletionservice.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,
+		carriersettlementjobs.Module,
+		tenderjobs.Module,
 		compliancejobs.Module,
+		dispatchjobs.Module,
 		weatheralertjobs.Module,
 		fiscaljobs.Module,
 		invoiceadjustmentjobs.Module,

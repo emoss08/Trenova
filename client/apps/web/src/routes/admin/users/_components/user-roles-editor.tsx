@@ -98,7 +98,7 @@ export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorP
       </div>
 
       {roleAssignments.length === 0 ? (
-        <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+        <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
           No roles assigned to this user.
         </div>
       ) : (
@@ -152,9 +152,9 @@ function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmen
         <div className="flex-1">
           <p className="text-sm font-medium">{role?.name ?? "Unknown Role"}</p>
           {role?.description && (
-            <p className="mt-1 text-xs text-muted-foreground">{role.description}</p>
+            <p className="text-muted-foreground mt-1 text-xs">{role.description}</p>
           )}
-          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-2 flex items-center gap-3 text-xs">
             <span>{assignedText}</span>
             <span className="flex items-center gap-1">
               <CalendarIcon className="size-3" />

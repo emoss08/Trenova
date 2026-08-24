@@ -144,7 +144,7 @@ export function ImageCropUploadDialog({
 
         {previewUrl ? (
           <div className="space-y-3">
-            <div className="overflow-hidden rounded-lg border bg-muted/20">
+            <div className="bg-muted/20 overflow-hidden rounded-lg border">
               <ReactCrop
                 crop={crop}
                 onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -152,7 +152,7 @@ export function ImageCropUploadDialog({
                 aspect={aspect}
                 className="max-h-[65vh] w-full"
               >
-                <div className="flex min-h-[420px] w-full items-center justify-center bg-muted/30 sm:min-h-[460px]">
+                <div className="bg-muted/30 flex min-h-[420px] w-full items-center justify-center sm:min-h-[460px]">
                   <img
                     ref={imageRef}
                     src={previewUrl}
@@ -168,10 +168,10 @@ export function ImageCropUploadDialog({
               </ReactCrop>
             </div>
 
-            {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
+            {errorMessage ? <p className="text-destructive text-sm">{errorMessage}</p> : null}
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
             Select an image to continue.
           </div>
         )}

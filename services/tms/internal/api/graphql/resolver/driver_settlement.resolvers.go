@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -1123,7 +1124,7 @@ func (r *queryResolver) SettlementControl(ctx context.Context) (*tenant.Settleme
 }
 
 // CurrentSettlementPeriod is the resolver for the currentSettlementPeriod field.
-func (r *queryResolver) CurrentSettlementPeriod(ctx context.Context) (*driversettlementservice.PeriodBounds, error) {
+func (r *queryResolver) CurrentSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceDriverSettlement, permission.OpRead)
 	if err != nil {
 		return nil, err

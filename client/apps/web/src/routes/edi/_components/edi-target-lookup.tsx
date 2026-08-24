@@ -43,7 +43,7 @@ export function TargetLookup({ entityType, label, value, onChange }: TargetLooku
           <div className="flex size-full min-w-0 flex-col items-start pr-4">
             <span className="w-full truncate">{getTargetOptionLabel(option)}</span>
             {description && (
-              <span className="w-full truncate text-2xs text-muted-foreground">{description}</span>
+              <span className="text-2xs text-muted-foreground w-full truncate">{description}</span>
             )}
           </div>
         );

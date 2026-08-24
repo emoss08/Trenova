@@ -120,7 +120,7 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
                     {entry.occurrence.customerName || "Unknown customer"}
                   </span>
                 </span>
-                <span className="shrink-0 text-muted-foreground tabular-nums">
+                <span className="text-muted-foreground shrink-0 tabular-nums">
                   {formatCountdown(entry.minutesUntilNoticeDue)}
                 </span>
               </li>

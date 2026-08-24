@@ -18,23 +18,23 @@ export function SuccessPhase({ shipmentId, attachError, onDone }: SuccessPhasePr
         transition={{ duration: 0.3 }}
         className="flex max-w-xs flex-col items-center gap-6 text-center"
       >
-        <div className="flex size-10 items-center justify-center rounded-full bg-foreground text-background">
+        <div className="bg-foreground text-background flex size-10 items-center justify-center rounded-full">
           <CheckIcon className="size-5" />
         </div>
 
         <div className="space-y-1">
           <h3 className="text-base font-medium">Shipment created</h3>
-          <p className="text-xs text-muted-foreground tabular-nums">{shipmentId}</p>
+          <p className="text-muted-foreground text-xs tabular-nums">{shipmentId}</p>
         </div>
 
         {attachError && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Document could not be attached: {attachError}
           </p>
         )}
 
         {!attachError && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Source document attached successfully.
           </p>
         )}

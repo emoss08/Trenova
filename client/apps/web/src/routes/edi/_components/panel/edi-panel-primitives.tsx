@@ -4,7 +4,7 @@ export function EDIEmptyState({ message, className }: { message: string; classNa
   return (
     <div
       className={cn(
-        "rounded-md border border-dashed bg-muted/20 px-3 py-6 text-center text-sm text-muted-foreground",
+        "bg-muted/20 text-muted-foreground rounded-md border border-dashed px-3 py-6 text-center text-sm",
         className,
       )}
     >
@@ -23,7 +23,7 @@ export function DetailSection({
   fullWidth?: boolean;
 }) {
   return (
-    <section className="rounded-md border bg-muted/20 p-3">
+    <section className="bg-muted/20 rounded-md border p-3">
       <h3 className="mb-2 text-sm font-medium">{title}</h3>
       <div className={fullWidth ? "" : "grid grid-cols-2 gap-x-4 gap-y-2"}>{children}</div>
     </section>
@@ -41,7 +41,7 @@ export function DetailField({
 }) {
   return (
     <div className={fullWidth ? "col-span-2" : ""}>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-muted-foreground text-xs">{label}</div>
       <div className="text-sm">{children}</div>
     </div>
   );
@@ -75,8 +75,8 @@ export function InfoTile({
 }) {
   const emphasized = emphasizeWhenPositive && typeof value === "number" && value > 0;
   return (
-    <div className="rounded-md border bg-background p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
+    <div className="bg-background rounded-md border p-3">
+      <div className="text-muted-foreground text-xs">{label}</div>
       <div
         className={cn(
           "mt-1 font-semibold",
@@ -86,14 +86,14 @@ export function InfoTile({
       >
         {value}
       </div>
-      {hint && <div className="mt-0.5 text-[10px] text-muted-foreground">{hint}</div>}
+      {hint && <div className="text-muted-foreground mt-0.5 text-[10px]">{hint}</div>}
     </div>
   );
 }
 
 export function EDIRawContent({ content }: { content: string }) {
   return (
-    <pre className="max-h-72 overflow-auto rounded-md border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap">
+    <pre className="bg-muted/30 max-h-72 overflow-auto rounded-md border p-3 font-mono text-xs whitespace-pre-wrap">
       {content}
     </pre>
   );

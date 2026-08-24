@@ -125,7 +125,7 @@ export default function InvoiceDetailPane({
           </div>
           <div className="flex items-center gap-2">
             {invoice.status === "Posted" ? (
-              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <span className="text-muted-foreground flex items-center gap-1.5 text-sm">
                 <CheckIcon className="size-3.5 text-green-600" />
                 Posted
               </span>
@@ -143,7 +143,7 @@ export default function InvoiceDetailPane({
           <span className="text-2xl font-bold tabular-nums">
             {formatCurrency(totalAmount, invoice.currencyCode)}
           </span>
-          <span className="text-sm text-muted-foreground">{customerName}</span>
+          <span className="text-muted-foreground text-sm">{customerName}</span>
         </div>
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -165,7 +165,7 @@ export default function InvoiceDetailPane({
       ) : null}
 
       <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col">
-        <TabsList variant="underline" className="w-full border-b border-border">
+        <TabsList variant="underline" className="border-border w-full border-b">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="delivery">Delivery</TabsTrigger>
           <TabsTrigger value="charges">Charges</TabsTrigger>
@@ -190,9 +190,9 @@ export default function InvoiceDetailPane({
         <TabsContent value="charges" className="mt-0 min-h-0 flex-1">
           <ScrollArea className="h-full">
             <div className="p-4">
-              <div className="overflow-hidden rounded-xl border border-border">
+              <div className="border-border overflow-hidden rounded-xl border">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/50 text-left text-muted-foreground">
+                  <thead className="bg-muted/50 text-muted-foreground text-left">
                     <tr>
                       <th className="px-4 py-3 font-medium">Line</th>
                       <th className="px-4 py-3 font-medium">Description</th>
@@ -204,7 +204,7 @@ export default function InvoiceDetailPane({
                   </thead>
                   <tbody>
                     {invoice.lines.map((line) => (
-                      <tr key={line.id} className="border-t transition-colors hover:bg-muted/50">
+                      <tr key={line.id} className="hover:bg-muted/50 border-t transition-colors">
                         <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
                         <td className="px-4 py-3">{line.description}</td>
                         <td className="px-4 py-3">
@@ -222,11 +222,11 @@ export default function InvoiceDetailPane({
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="border-t bg-muted/30">
+                  <tfoot className="bg-muted/30 border-t">
                     <tr>
                       <td
                         colSpan={5}
-                        className="px-4 py-2.5 text-right text-sm text-muted-foreground"
+                        className="text-muted-foreground px-4 py-2.5 text-right text-sm"
                       >
                         Subtotal
                       </td>
@@ -237,7 +237,7 @@ export default function InvoiceDetailPane({
                     <tr>
                       <td
                         colSpan={5}
-                        className="px-4 py-2.5 text-right text-sm text-muted-foreground"
+                        className="text-muted-foreground px-4 py-2.5 text-right text-sm"
                       >
                         Other Charges
                       </td>
@@ -352,7 +352,7 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
     <div className="grid h-full min-h-0 gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <ScrollArea className="min-h-[20rem] lg:h-full lg:min-h-0" viewportClassName="pr-2">
         <div className="space-y-4">
-          <div className="rounded-md border border-border p-4">
+          <div className="border-border rounded-md border p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -361,7 +361,7 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
                     {invoice.sendStatus ?? "NotSent"}
                   </Badge>
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-sm">
                   {invoice.sentAt ? `Last sent ${formatUnixDate(invoice.sentAt)}` : "Not sent yet"}
                 </p>
               </div>
@@ -412,7 +412,7 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
             ) : null}
           </div>
 
-          <div className="rounded-md border border-border p-4">
+          <div className="border-border rounded-md border p-4">
             <h3 className="text-sm font-semibold">Send Plan</h3>
             {sendPlanQuery.isLoading ? (
               <Skeleton className="mt-3 h-24 w-full" />
@@ -429,7 +429,7 @@ function InvoiceDeliveryTab({ invoice }: { invoice: Invoice }) {
                 <DeliveryPackageList parts={sendPlan.parts} />
               </div>
             ) : (
-              <p className="mt-2 text-sm text-muted-foreground">Send plan unavailable.</p>
+              <p className="text-muted-foreground mt-2 text-sm">Send plan unavailable.</p>
             )}
           </div>
         </div>
@@ -475,10 +475,10 @@ function SendPlanSummaryCell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-w-0 rounded-md border bg-muted/20 p-2.5">
-      <p className="text-xs text-muted-foreground">{label}</p>
+    <div className="bg-muted/20 min-w-0 rounded-md border p-2.5">
+      <p className="text-muted-foreground text-xs">{label}</p>
       <div className="mt-1 min-w-0 text-sm font-medium">{children}</div>
-      {detail ? <p className="mt-1 truncate text-xs text-muted-foreground">{detail}</p> : null}
+      {detail ? <p className="text-muted-foreground mt-1 truncate text-xs">{detail}</p> : null}
     </div>
   );
 }
@@ -502,7 +502,7 @@ function RecipientPreview({ recipients }: { recipients: string[] }) {
           render={
             <button
               type="button"
-              className="shrink-0 rounded-sm text-xs font-medium text-blue-600 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none dark:text-blue-400"
+              className="focus-visible:ring-ring shrink-0 rounded-sm text-xs font-medium text-blue-600 underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none dark:text-blue-400"
               aria-label={`Show ${recipients.length} To recipients`}
             >
               +{remainingCount} more
@@ -518,12 +518,12 @@ function RecipientPreview({ recipients }: { recipients: string[] }) {
 function RecipientHoverList({ recipients }: { recipients: string[] }) {
   return (
     <HoverCardContent side="top" align="start" className="w-80 max-w-[calc(100vw-2rem)] p-3">
-      <p className="text-xs font-medium text-muted-foreground">To recipients</p>
+      <p className="text-muted-foreground text-xs font-medium">To recipients</p>
       <ul className="mt-2 max-h-60 space-y-1 overflow-y-auto text-sm">
         {recipients.map((recipient, index) => (
           <li
             key={`${recipient}-${index}`}
-            className="rounded-md bg-muted/40 px-2 py-1.5 font-mono text-xs break-all"
+            className="bg-muted/40 rounded-md px-2 py-1.5 font-mono text-xs break-all"
           >
             {recipient}
           </li>
@@ -535,11 +535,11 @@ function RecipientHoverList({ recipients }: { recipients: string[] }) {
 
 function MessagePreview({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
   return (
-    <div className="rounded-md border bg-muted/20 p-3">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+    <div className="bg-muted/20 rounded-md border p-3">
+      <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
         <span className="min-w-0">
           From{" "}
-          <span className="font-medium text-foreground">
+          <span className="text-foreground font-medium">
             {sendPlan.fromEmail || "Assigned profile"}
           </span>
         </span>
@@ -552,12 +552,12 @@ function MessagePreview({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
       </div>
       <div className="mt-3 space-y-2">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-muted-foreground">Subject</p>
+          <p className="text-muted-foreground text-xs font-medium">Subject</p>
           <p className="truncate text-sm font-semibold">{sendPlan.subject || "No subject"}</p>
         </div>
         <div>
-          <p className="text-xs font-medium text-muted-foreground">Body</p>
-          <p className="line-clamp-4 text-sm whitespace-pre-line text-muted-foreground">
+          <p className="text-muted-foreground text-xs font-medium">Body</p>
+          <p className="text-muted-foreground line-clamp-4 text-sm whitespace-pre-line">
             {sendPlan.body || "No body content"}
           </p>
         </div>
@@ -569,7 +569,7 @@ function MessagePreview({ sendPlan }: { sendPlan: InvoiceSendPlan }) {
 function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
   if (parts.length === 0) {
     return (
-      <div className="rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
+      <div className="bg-muted/20 text-muted-foreground rounded-md border p-3 text-sm">
         No delivery package parts.
       </div>
     );
@@ -581,7 +581,7 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
         const documentCount = part.attachments.length + part.links.length;
 
         return (
-          <div key={part.partNumber} className="rounded-md border bg-muted/20 p-3">
+          <div key={part.partNumber} className="bg-muted/20 rounded-md border p-3">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="text-sm font-semibold">Part {part.partNumber}</span>
@@ -610,7 +610,7 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
             ) : null}
 
             {documentCount > 0 ? (
-              <div className="mt-3 divide-y overflow-hidden rounded-md border bg-background/60">
+              <div className="bg-background/60 mt-3 divide-y overflow-hidden rounded-md border">
                 {part.attachments.map((attachment) => (
                   <DeliveryPackageDocument
                     key={attachment.documentId}
@@ -629,7 +629,7 @@ function DeliveryPackageList({ parts }: { parts: InvoiceSendPlan["parts"] }) {
                 ))}
               </div>
             ) : (
-              <p className="mt-3 text-xs text-muted-foreground">
+              <p className="text-muted-foreground mt-3 text-xs">
                 No attachments or links in this part.
               </p>
             )}
@@ -653,9 +653,9 @@ function DeliveryPackageDocument({
     <div className="flex min-w-0 items-center justify-between gap-3 px-2.5 py-2 text-sm">
       <div className="min-w-0">
         <p className="truncate font-medium">{fileName}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-muted-foreground text-xs">{label}</p>
       </div>
-      <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+      <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
         {formatFileSize(sizeBytes)}
       </span>
     </div>
@@ -735,7 +735,7 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
-    <div className="flex min-h-[20rem] flex-col rounded-md border border-border p-4 lg:h-full lg:min-h-0">
+    <div className="border-border flex min-h-[20rem] flex-col rounded-md border p-4 lg:h-full lg:min-h-0">
       <h3 className="text-sm font-semibold">Send History</h3>
       <ScrollArea className="mt-3 min-h-0 flex-1" viewportClassName="pr-2">
         {query.isLoading ? (
@@ -749,7 +749,7 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
             Send history could not be loaded.
           </p>
         ) : attempts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No email attempts recorded.</p>
+          <p className="text-muted-foreground text-sm">No email attempts recorded.</p>
         ) : (
           <div className="space-y-3">
             {attempts.map((attempt) => (
@@ -778,15 +778,15 @@ function InvoiceSendHistoryCard({ attempt }: { attempt: InvoiceEmailAttempt }) {
   const providerMessageId = attempt.email?.providerMessageId ?? attempt.providerMessageId;
 
   return (
-    <div className="rounded-md border bg-muted/20 p-3">
+    <div className="bg-muted/20 rounded-md border p-3">
       <div className="flex items-center justify-between gap-2">
         <Badge variant={SEND_STATUS_VARIANTS[status]}>{status}</Badge>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           Part {attempt.partNumber} of {attempt.totalParts}
         </span>
       </div>
       <p className="mt-2 truncate text-sm font-medium">{attempt.subject}</p>
-      <p className="mt-1 text-xs text-muted-foreground">
+      <p className="text-muted-foreground mt-1 text-xs">
         {sentAt
           ? formatUnixDate(sentAt)
           : failedAt
@@ -794,7 +794,7 @@ function InvoiceSendHistoryCard({ attempt }: { attempt: InvoiceEmailAttempt }) {
             : "Not sent"}
       </p>
       {providerMessageId ? (
-        <p className="mt-1 truncate text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 truncate text-xs">
           Provider ID: {providerMessageId}
         </p>
       ) : null}
@@ -868,7 +868,7 @@ function DeliveryNotice({ tone, message }: { tone: "error" | "warning"; message:
 function MetadataCell({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-muted-foreground text-xs">{label}</p>
       <p className="text-sm font-medium">{value}</p>
     </div>
   );

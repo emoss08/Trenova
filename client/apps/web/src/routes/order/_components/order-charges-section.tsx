@@ -77,7 +77,7 @@ export function OrderChargesSection() {
       title="Order Charges"
       titleCount={charges.length}
       description="Order-level charges not tied to a single leg (e.g. customs brokerage). These roll into the total and are billed exactly once on the first grouped invoice."
-      className="border-t border-border pt-4"
+      className="border-border border-t pt-4"
       action={
         charges.length > 0 &&
         !chargesLocked && (
@@ -90,7 +90,7 @@ export function OrderChargesSection() {
     >
       {charges.length > 0 ? (
         <div className="rounded-lg border">
-          <div className="grid grid-cols-12 gap-2 border-b border-border px-4 py-2 text-2xs text-muted-foreground uppercase">
+          <div className="border-border text-2xs text-muted-foreground grid grid-cols-12 gap-2 border-b px-4 py-2 uppercase">
             <span className="col-span-7">Description</span>
             <span className="col-span-3 text-right">Amount</span>
             <span className="col-span-2" />
@@ -136,7 +136,7 @@ export function OrderChargesSection() {
                           onClick={() => setChargePendingRemoval(charge)}
                           aria-label="Remove charge"
                         >
-                          <Trash2Icon className="size-3.5 text-destructive" />
+                          <Trash2Icon className="text-destructive size-3.5" />
                         </Button>
                       </>
                     )}
@@ -145,7 +145,7 @@ export function OrderChargesSection() {
               );
             })}
           </div>
-          <div className="grid grid-cols-12 gap-2 border-t border-border px-4 py-2 text-sm font-medium">
+          <div className="border-border grid grid-cols-12 gap-2 border-t px-4 py-2 text-sm font-medium">
             <span className="col-span-7">Charges subtotal</span>
             <span className="col-span-3 text-right tabular-nums">
               {formatCurrency(chargesSubtotal, currency)}

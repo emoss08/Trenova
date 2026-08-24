@@ -34,6 +34,11 @@ type GetReciprocalInternalPartnerRequest struct {
 	BusinessUnitID       pulid.ID `json:"businessUnitId"`
 }
 
+type ListEDIPartnersByCustomerIDsRequest struct {
+	CustomerIDs []pulid.ID            `json:"customerIds"`
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type EDIPartnerReadinessRow struct {
 	PartnerID             pulid.ID `bun:"partner_id"`
 	ContactEmail          string   `bun:"contact_email"`
@@ -86,4 +91,8 @@ type EDIPartnerRepository interface {
 		ctx context.Context,
 		req GetReciprocalInternalPartnerRequest,
 	) (*edi.EDIPartner, error)
+	ListInternalOutboundPartnersByCustomerIDs(
+		ctx context.Context,
+		req ListEDIPartnersByCustomerIDsRequest,
+	) ([]*edi.EDIPartner, error)
 }

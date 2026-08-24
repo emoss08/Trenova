@@ -63,7 +63,11 @@ func (r *repository) Create(
 	ctx context.Context,
 	entity *tenant.DocumentControl,
 ) (*tenant.DocumentControl, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 

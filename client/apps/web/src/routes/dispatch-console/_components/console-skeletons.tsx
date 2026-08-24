@@ -87,7 +87,7 @@ export function CapacityRailRowsSkeleton() {
 
 export function CapacityRailSkeleton() {
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
+    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
       <header className="flex flex-col gap-2 border-b p-2">
         <Skeleton className="h-8 w-full rounded-md" />
         <div className="flex flex-wrap gap-1">
@@ -118,7 +118,7 @@ export function CoverageKanbanSkeleton() {
       {URGENCY_ORDER.map((bucket, index) => (
         <div
           key={bucket}
-          className="flex min-h-0 w-60 shrink-0 flex-col rounded-md border bg-muted/30 xl:w-auto xl:flex-1"
+          className="bg-muted/30 flex min-h-0 w-60 shrink-0 flex-col rounded-md border xl:w-auto xl:flex-1"
         >
           <header className="flex items-center gap-1.5 border-b px-2 py-1.5">
             <Skeleton className="size-1.5 rounded-full" />
@@ -140,11 +140,11 @@ export function DispatchTimelineSkeleton() {
   return (
     <div className="relative h-full overflow-hidden">
       <div
-        className="flex border-b border-border bg-muted"
+        className="border-border bg-muted flex border-b"
         style={{ height: TIMELINE_HEADER_HEIGHT_PX }}
       >
         <div
-          className="flex shrink-0 items-center border-r border-border px-2.5"
+          className="border-border flex shrink-0 items-center border-r px-2.5"
           style={{ width: RAIL_WIDTH_PX }}
         >
           <Skeleton className="h-2.5 w-20" />
@@ -159,11 +159,11 @@ export function DispatchTimelineSkeleton() {
       {Array.from({ length: TIMELINE_ROW_COUNT }, (_, index) => (
         <div
           key={index}
-          className="flex border-b border-border/70"
+          className="border-border/70 flex border-b"
           style={{ height: TIMELINE_ROW_HEIGHT_PX }}
         >
           <div
-            className="flex shrink-0 items-center gap-1.5 border-r border-border px-2"
+            className="border-border flex shrink-0 items-center gap-1.5 border-r px-2"
             style={{ width: RAIL_WIDTH_PX }}
           >
             <Skeleton className="size-6 shrink-0 rounded-full" />
@@ -196,7 +196,7 @@ export function DispatchTimelineSkeleton() {
 
 export function InspectorSkeleton() {
   return (
-    <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card">
+    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
       <header className="flex items-center justify-between border-b px-2.5 py-1.5">
         <Skeleton className="h-2.5 w-20" />
       </header>

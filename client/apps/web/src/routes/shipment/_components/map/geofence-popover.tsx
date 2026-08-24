@@ -43,14 +43,14 @@ export function GeofencePopover({
   return (
     <AdvancedMarker position={center} zIndex={150} onClick={(e) => e.stopPropagation()}>
       <div className="relative mb-4">
-        <div className="relative z-10 flex w-72 flex-col gap-2.5 rounded-lg border bg-popover p-3 text-xs text-popover-foreground shadow-lg ring-1 ring-foreground/10">
+        <div className="bg-popover text-popover-foreground ring-foreground/10 relative z-10 flex w-72 flex-col gap-2.5 rounded-lg border p-3 text-xs shadow-lg ring-1">
           <div className="flex items-start justify-between gap-2">
             <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="truncate text-sm font-semibold text-foreground">
+              <span className="text-foreground truncate text-sm font-semibold">
                 {location?.name ?? geofence.locationName}
               </span>
               {location?.code && (
-                <span className="flex items-center gap-1 text-2xs text-muted-foreground">
+                <span className="text-2xs text-muted-foreground flex items-center gap-1">
                   <HashIcon className="size-3" />
                   {location.code}
                 </span>
@@ -59,7 +59,7 @@ export function GeofencePopover({
             <button
               type="button"
               onClick={onClose}
-              className="rounded text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground rounded"
               aria-label="Close geofence info"
             >
               <XIcon className="size-3.5" />
@@ -67,15 +67,15 @@ export function GeofencePopover({
           </div>
 
           {location?.description && (
-            <p className="text-2xs leading-relaxed text-muted-foreground">{location.description}</p>
+            <p className="text-2xs text-muted-foreground leading-relaxed">{location.description}</p>
           )}
 
           {location && (location.addressLine1 || addressTail) && (
             <>
               <Separator />
               <div className="flex items-start gap-2">
-                <MapPinIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-                <div className="flex min-w-0 flex-col text-2xs leading-relaxed text-foreground">
+                <MapPinIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
+                <div className="text-2xs text-foreground flex min-w-0 flex-col leading-relaxed">
                   {location.addressLine1 && <span>{location.addressLine1}</span>}
                   {location.addressLine2 && (
                     <span className="text-muted-foreground">{location.addressLine2}</span>
@@ -89,7 +89,7 @@ export function GeofencePopover({
           {(location?.latitude != null || location?.longitude != null) && (
             <>
               <Separator />
-              <div className="grid grid-cols-2 gap-2 text-2xs tabular-nums">
+              <div className="text-2xs grid grid-cols-2 gap-2 tabular-nums">
                 <div className="flex flex-col">
                   <span className="text-muted-foreground">Latitude</span>
                   <span className="text-foreground">

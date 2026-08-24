@@ -42,7 +42,7 @@ export function UserMenu() {
           render={
             <button
               type="button"
-              className="flex w-full items-center gap-2 rounded-md p-1.5 transition-colors hover:bg-accent/50"
+              className="hover:bg-accent/50 flex w-full items-center gap-2 rounded-md p-1.5 transition-colors"
             />
           }
         >
@@ -56,9 +56,9 @@ export function UserMenu() {
           />
           <span className="grid min-w-0 flex-1 text-left leading-tight">
             <span className="truncate text-sm font-medium">{displayName}</span>
-            <span className="truncate text-2xs text-muted-foreground">{user?.emailAddress}</span>
+            <span className="text-2xs text-muted-foreground truncate">{user?.emailAddress}</span>
           </span>
-          <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+          <ChevronsUpDown className="text-muted-foreground size-3.5 shrink-0" />
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="end" sideOffset={8} className="min-w-56 rounded-lg">
           <DropdownMenuGroup>
@@ -73,8 +73,8 @@ export function UserMenu() {
                   fallbackClassName="rounded-lg bg-gradient-to-br from-sidebar-accent to-sidebar-accent/80 text-xs font-semibold text-sidebar-accent-foreground"
                 />
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold text-foreground">{user?.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="text-foreground truncate font-semibold">{user?.name}</span>
+                  <span className="text-muted-foreground truncate text-xs">
                     {user?.emailAddress}
                   </span>
                 </div>

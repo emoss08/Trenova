@@ -343,14 +343,14 @@ export function ImportWorkspace() {
   return (
     <div className="flex h-full flex-col">
       {/* Top bar */}
-      <div className="flex shrink-0 items-center justify-between border-b bg-background px-4 py-2.5">
+      <div className="bg-background flex shrink-0 items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon-sm" onClick={handleBack}>
             <ArrowLeftIcon className="size-4" />
           </Button>
           <div>
             <h1 className="text-sm font-medium">Import from Rate Confirmation</h1>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {currentPhase === "upload" &&
                 "Upload a rate confirmation to extract shipment details."}
               {currentPhase === "processing" && "Extracting shipment details from your document..."}

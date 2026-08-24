@@ -28,7 +28,7 @@ export default function IndexSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           DOE indices ingest automatically each week via the EIA integration — custom indices take
           manually entered weekly prices (e.g. Canadian FCA or contract-specific pegs)
         </p>
@@ -42,11 +42,11 @@ export default function IndexSection() {
         <Skeleton className="h-64" />
       ) : !entries || entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <ListTree className="size-5 text-muted-foreground" />
+          <div className="bg-muted flex size-12 items-center justify-center rounded-full">
+            <ListTree className="text-muted-foreground size-5" />
           </div>
           <p className="mt-3 text-sm font-medium">No fuel indices</p>
-          <p className="mt-1 max-w-md text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 max-w-md text-xs">
             Enable the EIA Fuel Prices integration to auto-provision all 11 DOE diesel series, or
             create a custom index for manual weekly entry.
           </p>
@@ -55,7 +55,7 @@ export default function IndexSection() {
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
             <thead className="bg-muted/60">
-              <tr className="text-left text-xs text-muted-foreground">
+              <tr className="text-muted-foreground text-left text-xs">
                 <th className="px-4 py-2.5 font-medium">Code</th>
                 <th className="px-4 py-2.5 font-medium">Name</th>
                 <th className="px-4 py-2.5 font-medium">Region</th>
@@ -69,11 +69,11 @@ export default function IndexSection() {
             </thead>
             <tbody>
               {entries.map((entry) => (
-                <tr key={entry.index.id} className="border-t transition-colors hover:bg-muted/30">
+                <tr key={entry.index.id} className="hover:bg-muted/30 border-t transition-colors">
                   <td className="px-4 py-2.5 font-medium">{entry.index.code}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{entry.index.name}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{entry.index.region || "—"}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{entry.index.fuelType}</td>
+                  <td className="text-muted-foreground px-4 py-2.5">{entry.index.name}</td>
+                  <td className="text-muted-foreground px-4 py-2.5">{entry.index.region || "—"}</td>
+                  <td className="text-muted-foreground px-4 py-2.5">{entry.index.fuelType}</td>
                   <td className="px-4 py-2.5">
                     <Badge
                       variant={entry.index.source === "EIA" ? "secondary" : "outline"}
@@ -85,7 +85,7 @@ export default function IndexSection() {
                   <td className="px-4 py-2.5 tabular-nums">
                     {entry.latest ? `$${Number(entry.latest.price).toFixed(3)}` : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-muted-foreground tabular-nums">
+                  <td className="text-muted-foreground px-4 py-2.5 tabular-nums">
                     {entry.latest?.priceDate ?? "—"}
                   </td>
                   <td className="px-4 py-2.5">
@@ -93,7 +93,7 @@ export default function IndexSection() {
                       variant="outline"
                       className={
                         entry.index.isActive
-                          ? "border-emerald-500/40 text-2xs text-emerald-600 dark:text-emerald-400"
+                          ? "text-2xs border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
                           : "text-2xs text-muted-foreground"
                       }
                     >
@@ -107,7 +107,7 @@ export default function IndexSection() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setHistoryEntry(entry)}
-                        className="size-7 gap-1 p-0 text-muted-foreground hover:text-foreground"
+                        className="text-muted-foreground hover:text-foreground size-7 gap-1 p-0"
                         title="Price history"
                       >
                         <History className="size-3.5" />
@@ -118,7 +118,7 @@ export default function IndexSection() {
                           variant="ghost"
                           size="sm"
                           onClick={() => openEdit(entry)}
-                          className="size-7 p-0 text-muted-foreground hover:text-foreground"
+                          className="text-muted-foreground hover:text-foreground size-7 p-0"
                           title="Edit index"
                         >
                           <Pencil className="size-3.5" />

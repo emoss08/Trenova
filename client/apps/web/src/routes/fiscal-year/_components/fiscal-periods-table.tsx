@@ -51,8 +51,8 @@ export default function FiscalPeriodTable({
   if (!periods || periods.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-        <CalendarIcon className="size-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
+        <CalendarIcon className="text-muted-foreground size-8" />
+        <p className="text-muted-foreground text-sm">
           No fiscal periods found for this fiscal year.
         </p>
       </div>
@@ -64,7 +64,7 @@ export default function FiscalPeriodTable({
   );
 
   return (
-    <div className="rounded-lg border bg-card">
+    <div className="bg-card rounded-lg border">
       <Table containerClassName="max-h-[300px]">
         <TableHeader className="sticky top-0 z-30">
           <TableRow>

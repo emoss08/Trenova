@@ -274,8 +274,8 @@ function FixtureForm({
             <div className="space-y-2">
               {pageFields.length === 0 && (
                 <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center">
-                  <FileTextIcon className="size-5 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">
+                  <FileTextIcon className="text-muted-foreground size-5" />
+                  <p className="text-muted-foreground text-xs">
                     No page snapshots defined. Add pages if the document has
                     page-specific content.
                   </p>
@@ -293,7 +293,7 @@ function FixtureForm({
               {pageFields.map((pf, idx) => (
                 <Collapsible key={pf.id}>
                   <div className="rounded-md border">
-                    <CollapsibleTrigger className="flex w-full items-center justify-between p-3 text-sm hover:bg-muted/50">
+                    <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between p-3 text-sm">
                       <span>Page {pf.pageNumber || idx + 1}</span>
                       <div className="flex items-center gap-1">
                         <Button
@@ -306,7 +306,7 @@ function FixtureForm({
                             removePage(idx);
                           }}
                         >
-                          <TrashIcon className="size-3.5 text-destructive" />
+                          <TrashIcon className="text-destructive size-3.5" />
                         </Button>
                         <ChevronDownIcon className="size-4 transition-transform [[data-state=open]>&]:rotate-180" />
                       </div>

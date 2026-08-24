@@ -18,7 +18,7 @@ export function ValidationPanel() {
       <div className="flex items-center justify-between border-b p-3">
         <div>
           <div className="text-sm font-semibold">Validation Diagnostics</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             {diagnostics.length} diagnostics returned by backend validation
           </div>
         </div>

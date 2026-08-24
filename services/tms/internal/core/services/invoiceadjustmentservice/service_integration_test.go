@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -1119,7 +1120,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			assert.Equal(t, 1, batch.FailedCount)
 
 			temporalStarter := &fakeWorkflowStarter{enabled: true}
-			h.service = h.buildService(temporalStarter, decimal.NewFromInt(100))
+			h.service = h.buildService(t, temporalStarter, decimal.NewFromInt(100))
 			items := make([]*servicesports.InvoiceAdjustmentRequest, 0, batchInlineThreshold+1)
 			for i := range batchInlineThreshold + 1 {
 				items = append(items, &servicesports.InvoiceAdjustmentRequest{
@@ -1283,7 +1284,8 @@ func newIntegrationHarness(
 		AuditService:     noopAuditService{},
 		WorkflowStarter:  starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         &fakeFormulaCalculator{amount: formulaAmount},
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, &fakeFormulaCalculator{amount: formulaAmount}),
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
 		Generator:         &fakeGenerator{},
@@ -1294,9 +1296,12 @@ func newIntegrationHarness(
 }
 
 func (h *integrationHarness) buildService(
+	t *testing.T,
 	starter servicesports.WorkflowStarter,
 	formulaAmount decimal.Decimal,
 ) servicesports.InvoiceAdjustmentService {
+	t.Helper()
+
 	return New(Params{
 		Logger:      zap.NewNop(),
 		DB:          h.conn,
@@ -1332,7 +1337,8 @@ func (h *integrationHarness) buildService(
 		AuditService:    noopAuditService{},
 		WorkflowStarter: starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Formula:         &fakeFormulaCalculator{amount: formulaAmount},
+			Logger:          zap.NewNop(),
+			RateEngine:      rateengine.NewFallbackEngine(t, &fakeFormulaCalculator{amount: formulaAmount}),
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
 		Generator:         &fakeGenerator{},

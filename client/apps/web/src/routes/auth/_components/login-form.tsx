@@ -108,7 +108,7 @@ export function LoginForm({
           </Button>
         ))}
         {hasAnySso && tenantMetadata?.passwordEnabled && (
-          <div className="text-center text-xs tracking-[0.2em] text-muted-foreground uppercase">
+          <div className="text-muted-foreground text-center text-xs tracking-[0.2em] uppercase">
             Or use password
           </div>
         )}
@@ -155,7 +155,7 @@ function ProviderLogo({ provider }: { provider: string }) {
     return <OktaLogo className="h-4 w-auto" />;
   }
   return (
-    <span className="flex size-4 items-center justify-center rounded-sm bg-primary/10 text-2xs font-semibold text-primary">
+    <span className="bg-primary/10 text-2xs text-primary flex size-4 items-center justify-center rounded-sm font-semibold">
       SSO
     </span>
   );

@@ -49,15 +49,16 @@ const (
 )
 
 const (
-	WidgetAttention           = "attention"
-	WidgetUnassigned          = "unassigned"
-	WidgetExceptions          = "exceptions"
-	WidgetDetentionWatch      = "detention-watch"
-	WidgetTomorrowsPickups    = "tomorrows-pickups"
-	WidgetMyApprovals         = "my-approvals"
-	WidgetBillingQueue        = "billing-queue"
-	WidgetServiceFailures     = "service-failures"
-	WidgetEDIAttention        = "edi-attention"
+	WidgetAttention        = "attention"
+	WidgetUnassigned       = "unassigned"
+	WidgetExceptions       = "exceptions"
+	WidgetDetentionWatch   = "detention-watch"
+	WidgetTomorrowsPickups = "tomorrows-pickups"
+	WidgetMyApprovals      = "my-approvals"
+	WidgetBillingQueue     = "billing-queue"
+	WidgetServiceFailures  = "service-failures"
+	WidgetEDIAttention     = "edi-attention"
+	//nolint:gosec // G101: a dashboard widget identifier, not a credential
 	WidgetExpiringCredentials = "expiring-credentials"
 
 	WidgetKPI          = "kpi"
@@ -191,7 +192,12 @@ func workWidgets() []WidgetDefinition {
 			Resource:    permission.ResourceShipment,
 			Operation:   permission.OpRead,
 			ConfigKind:  ConfigKindQueue,
-			DefaultW:    4, DefaultH: 5, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
+			DefaultW:    4,
+			DefaultH:    5,
+			MinW:        3,
+			MinH:        3,
+			MaxW:        12,
+			MaxH:        10,
 		},
 		{
 			Key:         WidgetExceptions,
@@ -272,7 +278,12 @@ func workWidgets() []WidgetDefinition {
 			Resource:    permission.ResourceWorker,
 			Operation:   permission.OpRead,
 			ConfigKind:  ConfigKindQueue,
-			DefaultW:    4, DefaultH: 5, MinW: 3, MinH: 3, MaxW: 12, MaxH: 10,
+			DefaultW:    4,
+			DefaultH:    5,
+			MinW:        3,
+			MinH:        3,
+			MaxW:        12,
+			MaxH:        10,
 		},
 	}
 }
@@ -454,7 +465,12 @@ func commsWidgets() []WidgetDefinition {
 			Description: "A note from an administrator, pinned to everyone assigned this home screen",
 			Category:    CategoryComms,
 			ConfigKind:  ConfigKindText,
-			DefaultW:    12, DefaultH: 2, MinW: 3, MinH: 1, MaxW: 12, MaxH: 6,
+			DefaultW:    12,
+			DefaultH:    2,
+			MinW:        3,
+			MinH:        1,
+			MaxW:        12,
+			MaxH:        6,
 		},
 		{
 			Key:         WidgetMap,

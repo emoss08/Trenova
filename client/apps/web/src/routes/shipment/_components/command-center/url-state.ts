@@ -1,4 +1,9 @@
 import {
+  hasOrganizationCapability,
+  OrganizationCapability,
+  type OrganizationCapabilities,
+} from "@trenova/shared/types/organization-capability";
+import {
   parseAsArrayOf,
   parseAsInteger,
   parseAsString,
@@ -21,6 +26,29 @@ const TIMELINE_ZOOMS = ["day", "3day", "week"] as const;
 export type TimelineZoom = (typeof TIMELINE_ZOOMS)[number];
 const TIMELINE_SORTS = ["name", "exceptions", "loads"] as const;
 export type TimelineSort = (typeof TIMELINE_SORTS)[number];
+
+/**
+ * The timeline lays shipments out on rows that *are* employed drivers, and its
+ * only real interaction is dragging a load onto one of them. An organization
+ * without its own drivers has no rows to draw and no legal drop target, so the
+ * view is withheld rather than shown empty.
+ */
+export function isTimelineViewAvailable(capabilities: OrganizationCapabilities): boolean {
+  return hasOrganizationCapability(capabilities, OrganizationCapability.AssetOperations);
+}
+
+/**
+ * Resolves the requested view against what the organization can actually use.
+ * The URL is shareable and bookmarkable, so `?mode=timeline` can outlive the
+ * capability that justified it; it degrades to the table instead of mounting a
+ * view with nothing to show.
+ */
+export function resolveCommandCenterViewMode(
+  mode: CommandCenterViewMode,
+  capabilities: OrganizationCapabilities,
+): CommandCenterViewMode {
+  return mode === "timeline" && !isTimelineViewAvailable(capabilities) ? "table" : mode;
+}
 
 /**
  * URL state for the Shipments Command Center. Backing every cross-cutting bit

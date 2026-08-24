@@ -211,17 +211,17 @@ export function APIKeyPermissionsEditor() {
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-col gap-3 border-t border-border/70 pt-6">
+      <div className="border-border/70 flex flex-col gap-3 border-t pt-6">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-1">
             <h3 className="text-sm font-semibold">Permissions</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Apply a global preset, then narrow access by resource where needed.
             </p>
           </div>
           <div className="w-full xl:max-w-sm">
             <div className="relative">
-              <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <SearchIcon className="text-muted-foreground absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
@@ -232,7 +232,7 @@ export function APIKeyPermissionsEditor() {
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2"
                 >
                   <XIcon className="size-4" />
                 </button>
@@ -262,7 +262,7 @@ export function APIKeyPermissionsEditor() {
           >
             Clear All
           </Button>
-          <div className="ml-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <div className="text-muted-foreground ml-auto flex flex-wrap items-center gap-2 text-xs">
             <Badge variant="secondary">
               {selectionSummary.selectedResources}{" "}
               {pluralize("resource", selectionSummary.selectedResources)}
@@ -283,11 +283,11 @@ export function APIKeyPermissionsEditor() {
           <Skeleton className="h-40 w-full" />
         </div>
       ) : filteredCategories.length === 0 ? (
-        <div className="py-8 text-center text-sm text-muted-foreground">
+        <div className="text-muted-foreground py-8 text-center text-sm">
           No resources found matching &ldquo;{searchQuery}&rdquo;
         </div>
       ) : (
-        <div className="max-h-[500px] overflow-y-auto rounded-lg border bg-card p-1">
+        <div className="bg-card max-h-[500px] overflow-y-auto rounded-lg border p-1">
           <Accordion value={expandedCategories} onValueChange={handleExpandedChange} multiple>
             {filteredCategories.map((category) => (
               <CategorySection
@@ -332,11 +332,11 @@ function CategorySection({
   return (
     <AccordionItem value={category.category} className="border-none">
       <AccordionHeader>
-        <AccordionTrigger className="group flex w-full items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent">
+        <AccordionTrigger className="group hover:bg-accent flex w-full items-center justify-between rounded-md px-3 py-2 text-sm">
           <div className="flex items-center gap-2">
-            <ChevronDownIcon className="size-4 -rotate-90 text-muted-foreground transition-transform duration-200 group-data-panel-open:rotate-0" />
+            <ChevronDownIcon className="text-muted-foreground size-4 -rotate-90 transition-transform duration-200 group-data-panel-open:rotate-0" />
             <span className="font-medium">{category.category}</span>
-            <span className="text-xs text-muted-foreground">({category.resources.length})</span>
+            <span className="text-muted-foreground text-xs">({category.resources.length})</span>
           </div>
           <div className="flex items-center gap-2">
             {grantedInCategory > 0 && (
@@ -429,7 +429,7 @@ function ResourceRow({
   return (
     <div
       className={cn(
-        "rounded-md border bg-background transition-all",
+        "bg-background rounded-md border transition-all",
         isGranted && "border-primary/30 bg-primary/5",
       )}
     >
@@ -455,13 +455,13 @@ function ResourceRow({
               )}
             </div>
             {resource.description && (
-              <p className="truncate text-xs text-muted-foreground">{resource.description}</p>
+              <p className="text-muted-foreground truncate text-xs">{resource.description}</p>
             )}
           </div>
           {isGranted && (
             <ChevronDownIcon
               className={cn(
-                "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                "text-muted-foreground size-4 shrink-0 transition-transform duration-200",
                 showDetails ? "rotate-0" : "-rotate-90",
               )}
             />
@@ -527,7 +527,7 @@ function ResourceRow({
             })}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Scope:</span>
+            <span className="text-muted-foreground text-xs">Scope:</span>
             <Select
               value={permission.dataScope}
               onValueChange={(value) => onDataScopeChange(value as DataScope)}

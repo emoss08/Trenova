@@ -142,7 +142,7 @@ export default function EmailProfileTable() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
-            <label className="text-xs font-medium text-muted-foreground" htmlFor="test-recipient">
+            <label className="text-muted-foreground text-xs font-medium" htmlFor="test-recipient">
               Recipient Email
             </label>
             <Input

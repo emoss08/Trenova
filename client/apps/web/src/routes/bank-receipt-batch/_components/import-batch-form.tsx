@@ -81,11 +81,11 @@ export function ImportBatchForm() {
         title="Receipt Lines"
         description="Individual bank receipts to import in this batch"
         titleCount={fields.length}
-        className="border-t border-border pt-4"
+        className="border-border border-t pt-4"
       >
         <div className="overflow-hidden rounded-md border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-muted-foreground">
+            <thead className="bg-muted/50 text-muted-foreground text-left">
               <tr>
                 <th className="w-10 px-3 py-2 text-xs font-medium">#</th>
                 <th className="px-3 py-2 text-xs font-medium">Date</th>
@@ -98,7 +98,7 @@ export function ImportBatchForm() {
             <tbody>
               {fields.map((field, index) => (
                 <tr key={field.id} className="border-t">
-                  <td className="px-3 py-1.5 font-mono text-2xs text-muted-foreground">
+                  <td className="text-2xs text-muted-foreground px-3 py-1.5 font-mono">
                     {index + 1}
                   </td>
                   <td className="px-1.5 py-1.5">
@@ -170,13 +170,13 @@ export function ImportBatchForm() {
                       onClick={() => remove(index)}
                       disabled={fields.length <= 1}
                     >
-                      <Trash2Icon className="size-3.5 text-muted-foreground" />
+                      <Trash2Icon className="text-muted-foreground size-3.5" />
                     </Button>
                   </td>
                 </tr>
               ))}
             </tbody>
-            <tfoot className="border-t bg-muted/30">
+            <tfoot className="bg-muted/30 border-t">
               <tr>
                 <td colSpan={2} className="px-3 py-2 text-right text-xs font-medium">
                   Total

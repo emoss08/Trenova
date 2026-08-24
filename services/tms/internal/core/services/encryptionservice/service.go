@@ -103,8 +103,16 @@ type envelope struct {
 }
 
 type kmsClient interface {
-	Encrypt(context.Context, *kmspb.EncryptRequest, ...gax.CallOption) (*kmspb.EncryptResponse, error)
-	Decrypt(context.Context, *kmspb.DecryptRequest, ...gax.CallOption) (*kmspb.DecryptResponse, error)
+	Encrypt(
+		context.Context,
+		*kmspb.EncryptRequest,
+		...gax.CallOption,
+	) (*kmspb.EncryptResponse, error)
+	Decrypt(
+		context.Context,
+		*kmspb.DecryptRequest,
+		...gax.CallOption,
+	) (*kmspb.DecryptResponse, error)
 	Close() error
 }
 
@@ -518,7 +526,11 @@ type GCPAutokeyManager struct {
 	timeout   time.Duration
 }
 
-func NewGCPAutokeyManager(client kmsClient, activeKey string, timeout time.Duration) *GCPAutokeyManager {
+func NewGCPAutokeyManager(
+	client kmsClient,
+	activeKey string,
+	timeout time.Duration,
+) *GCPAutokeyManager {
 	if timeout <= 0 {
 		timeout = defaultKMSOpTimeout
 	}
@@ -550,11 +562,18 @@ func (m *GCPAutokeyManager) WrapKey(ctx context.Context, dek []byte, aad AAD) (*
 		Provider:  gcpAutokeyProvider,
 		KeyID:     m.activeKey,
 		Algorithm: gcpKMSWrappingAlg,
-		Bytes:     resp.Ciphertext,
+		Bytes:     resp.GetCiphertext(),
 	}, nil
 }
 
-func (m *GCPAutokeyManager) UnwrapKey(ctx context.Context, wrapped WrappedKey, aad AAD) ([]byte, error) {
+// which three implementations and both call sites share
+//
+//nolint:gocritic // hugeParam: WrappedKey is fixed by the KeyManager interface,
+func (m *GCPAutokeyManager) UnwrapKey(
+	ctx context.Context,
+	wrapped WrappedKey,
+	aad AAD,
+) ([]byte, error) {
 	if m == nil || m.client == nil {
 		return nil, ErrKeyManagerDisabled
 	}
@@ -573,10 +592,10 @@ func (m *GCPAutokeyManager) UnwrapKey(ctx context.Context, wrapped WrappedKey, a
 	if err != nil {
 		return nil, err
 	}
-	if len(resp.Plaintext) != dekSize {
+	if len(resp.GetPlaintext()) != dekSize {
 		return nil, ErrInvalidEnvelope
 	}
-	return resp.Plaintext, nil
+	return resp.GetPlaintext(), nil
 }
 
 func (m *GCPAutokeyManager) ActiveKeyID() string {
@@ -603,6 +622,9 @@ func newGCPAutokeyManager(cfg config.GCPKMSConfig) KeyManager {
 	ctx := context.Background()
 	opts := make([]option.ClientOption, 0, 1)
 	if cfg.CredentialsFile != "" {
+		//nolint:staticcheck // SA1019: the replacement pins the credential type at the
+		// call site, which would break deployments using authorized_user, impersonated
+		// or workload-identity credentials. Needs a config field first.
 		opts = append(opts, option.WithCredentialsFile(cfg.CredentialsFile))
 	}
 

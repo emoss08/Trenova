@@ -1,0 +1,1 @@
+Rate confirmation — shipment {{ .ShipmentProNumber }}{{ if .RevisionLabel }} ({{ .RevisionLabel }}){{ end }} — {{ .CompanyName }}

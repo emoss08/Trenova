@@ -105,7 +105,7 @@ function FilterRow({
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-border p-2">
+    <div className="border-border flex flex-wrap items-center gap-1.5 rounded-md border p-2">
       <FieldPickerButton
         index={index}
         ir={ir}
@@ -216,7 +216,7 @@ function GroupEditor({
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-border p-2">
+    <div className="border-border flex flex-col gap-2 rounded-md border p-2">
       <div className="flex items-center gap-2">
         <Select
           value={group.op}
@@ -270,7 +270,7 @@ function GroupEditor({
         )}
       </div>
       {filters.length === 0 && groups.length === 0 && (
-        <p className="px-1 text-xs text-muted-foreground">No conditions in this group.</p>
+        <p className="text-muted-foreground px-1 text-xs">No conditions in this group.</p>
       )}
       {filters.map((filter, filterIndex) => (
         <FilterRow

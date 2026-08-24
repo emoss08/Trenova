@@ -57,12 +57,12 @@ export function FieldRuleEditor() {
     >
       {fields.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
-          <TextCursorInputIcon className="size-8 text-muted-foreground/50" />
+          <TextCursorInputIcon className="text-muted-foreground/50 size-8" />
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
+            <p className="text-muted-foreground text-sm font-medium">
               No field rules defined
             </p>
-            <p className="mt-0.5 text-xs text-muted-foreground/70">
+            <p className="text-muted-foreground/70 mt-0.5 text-xs">
               Add fields to extract specific values like PRO numbers,
               reference IDs, or dates from documents.
             </p>
@@ -107,7 +107,7 @@ function FieldItem({
   return (
     <Collapsible defaultOpen={!defaultKey}>
       <div className="rounded-md border">
-        <CollapsibleTrigger className="flex w-full items-center justify-between p-3 text-sm font-medium hover:bg-muted/50">
+        <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between p-3 text-sm font-medium">
           <div className="flex items-center gap-2">
             <span>
               {defaultKey
@@ -130,7 +130,7 @@ function FieldItem({
                 onRemove();
               }}
             >
-              <TrashIcon className="size-3.5 text-destructive" />
+              <TrashIcon className="text-destructive size-3.5" />
             </Button>
             <ChevronDownIcon className="size-4 transition-transform [[data-state=open]>&]:rotate-180" />
           </div>

@@ -127,12 +127,12 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
   return (
     <>
       {isLoading && (
-        <div className="flex items-center gap-2 px-2 py-2 text-[10.5px] text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 px-2 py-2 text-[10.5px]">
           <Spinner className="size-3" /> Loading…
         </div>
       )}
       {!isLoading && visible.length === 0 && (
-        <p className="px-2 py-4 text-center text-[10.5px] text-muted-foreground">All clear ✓</p>
+        <p className="text-muted-foreground px-2 py-4 text-center text-[10.5px]">All clear ✓</p>
       )}
       {visible.map((it, i) => {
         const Icon = KIND_ICON[it.kind];
@@ -141,7 +141,7 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
         return (
           <div
             key={it.id}
-            className={cn("flex items-start gap-2 px-2.5 py-2", i > 0 && "border-t border-border")}
+            className={cn("flex items-start gap-2 px-2.5 py-2", i > 0 && "border-border border-t")}
           >
             <span
               className={cn(
@@ -156,11 +156,11 @@ export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: Exc
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="truncate text-[11px] font-semibold">{it.title}</span>
-                <span className="shrink-0 font-table text-[9.5px] text-muted-foreground tabular-nums">
+                <span className="font-table text-muted-foreground shrink-0 text-[9.5px] tabular-nums">
                   {it.time}
                 </span>
               </div>
-              <p className="truncate font-table text-[10px] text-muted-foreground tabular-nums">
+              <p className="font-table text-muted-foreground truncate text-[10px] tabular-nums">
                 {it.body}
               </p>
               <div className="mt-0.5 flex items-center gap-1">

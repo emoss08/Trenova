@@ -53,7 +53,7 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
         return (
           <div className="min-w-0">
             <div className="truncate font-medium">{payload.bol || "Load tender"}</div>
-            <div className="truncate text-xs text-muted-foreground">
+            <div className="text-muted-foreground truncate text-xs">
               {payload.customerLabel || payload.serviceTypeLabel || "No tender summary"}
             </div>
           </div>
@@ -88,7 +88,7 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
       cell: ({ row }) =>
         row.original.targetShipmentId ? (
           <Link
-            className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
+            className="text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline"
             to={`/shipment-management/shipments?item=${row.original.targetShipmentId}`}
           >
             <LinkIcon className="size-3.5" />
