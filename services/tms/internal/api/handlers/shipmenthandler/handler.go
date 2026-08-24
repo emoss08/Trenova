@@ -222,9 +222,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legac
 		h.uncancel,
 	)
 	api.POST(
-		"/:shipmentID/rate-override/",
+		"/:shipmentID/auto-rate/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpUpdate),
-		h.setRateOverride,
+		h.autoRate,
 	)
 	api.POST(
 		"/:shipmentID/transfer-ownership/",
@@ -991,15 +991,13 @@ func (h *Handler) cancel(c *gin.Context) {
 	c.JSON(http.StatusOK, entity)
 }
 
-// @Summary Set or clear a manual rate override
-// @Description Replaces the contract's rate with a hand-set amount, or clears one so the contract prices the shipment again. The shipment is re-rated immediately, and the quote records what the contract would have charged instead.
-// @ID setShipmentRateOverride
+// @Summary Re-rate a shipment from its contract
+// @Description Prices the shipment from the rate agreement covering its lane, overwriting its rating method, base rate and contract accessorials. Returns the shipment together with an account of what the contract applied.
+// @ID autoRateShipment
 // @Tags Shipments
-// @Accept json
 // @Produce json
 // @Param shipmentID path string true "Shipment ID"
-// @Param request body services.SetRateOverrideRequest true "The override, or clear=true to remove one"
-// @Success 200 {object} shipment.Shipment
+// @Success 200 {object} services.ContractRateApplication
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -1007,8 +1005,8 @@ func (h *Handler) cancel(c *gin.Context) {
 // @Failure 422 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
-// @Router /shipments/{shipmentID}/rate-override/ [post]
-func (h *Handler) setRateOverride(c *gin.Context) {
+// @Router /shipments/{shipmentID}/auto-rate/ [post]
+func (h *Handler) autoRate(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
 	if err != nil {
@@ -1016,25 +1014,25 @@ func (h *Handler) setRateOverride(c *gin.Context) {
 		return
 	}
 
-	req := &services.SetRateOverrideRequest{}
-	if err = c.ShouldBindJSON(req); err != nil && !errors.Is(err, io.EOF) {
-		h.eh.HandleError(c, err)
-		return
-	}
-	req.ShipmentID = shipmentID
-	req.TenantInfo = pagination.TenantInfo{
-		OrgID: authCtx.OrganizationID,
-		BuID:  authCtx.BusinessUnitID,
+	req := &services.AutoRateShipmentRequest{
+		ShipmentID: shipmentID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
 	}
 
 	actor := actorutil.FromAuthContext(authCtx)
-	entity, err := h.service.SetRateOverride(c.Request.Context(), req, actor)
+	entity, application, err := h.service.AutoRate(c.Request.Context(), req, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	c.JSON(http.StatusOK, gin.H{
+		"shipment":    entity,
+		"application": application,
+	})
 }
 
 // @Summary Uncancel a shipment

@@ -4,30 +4,37 @@ import {
   OrderAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { NumberField } from "@/components/fields/number-field";
-import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { TextareaField } from "@/components/fields/textarea-field";
+import { useShipmentAutoRate } from "@/hooks/use-shipment-auto-rate";
+import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
+import { queries } from "@/lib/queries";
+import { useQuery } from "@tanstack/react-query";
 import {
   CapabilityFields,
   type FieldDescriptor,
 } from "@trenova/shared/components/capability-form-section";
+import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
-import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
-import { queries } from "@/lib/queries";
-import { RateOverrideDialog } from "./rate-override-dialog";
-import { WhyThisRate } from "./why-this-rate";
 import { getProfile } from "@trenova/shared/lib/capability";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { CreditStatus } from "@trenova/shared/types/customer";
-import type { GetPreviousRatesRequest, Shipment } from "@trenova/shared/types/shipment";
-import { useQuery } from "@tanstack/react-query";
-import { AlertTriangleIcon, ShieldAlertIcon, ShieldIcon } from "lucide-react";
+import type {
+  ContractRate,
+  GetPreviousRatesRequest,
+  Shipment,
+} from "@trenova/shared/types/shipment";
+import { AlertTriangleIcon, ShieldAlertIcon, ShieldIcon, SparklesIcon } from "lucide-react";
 import type React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { FuelSurchargeChangeDialog } from "./additional-charges/fuel-surcharge-change-dialog";
+import { AutoRateDialog } from "./auto-rate-dialog";
 import { PreviousRatesButton } from "./previous-rates-dialog";
 import { ProfitabilitySummary } from "./profitability/profitability-summary";
+import { WhyThisRate } from "./why-this-rate";
 
 function Inner({ children }: { children: React.ReactNode }) {
   const { control, getValues } = useFormContext<Shipment>();
@@ -184,6 +191,82 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
   );
 }
 
+/**
+ * Says which contract just filled in the rating fields.
+ *
+ * The numbers appear in the form as ordinary values, so without this the rater
+ * has no way of telling a contract rate from something a colleague typed — and
+ * they are free to change any of it, which is worth saying plainly.
+ */
+function ContractRateAppliedAlert({
+  rate,
+  onDismiss,
+}: {
+  rate: ContractRate;
+  onDismiss: () => void;
+}) {
+  return (
+    <Alert variant="info" className="mb-3">
+      <SparklesIcon className="size-4" />
+      <AlertTitle>
+        Rated from {rate.agreementName || "a rate agreement"}
+        {rate.ruleLabel ? ` — ${rate.ruleLabel}` : ""}
+      </AlertTitle>
+      <AlertDescription>
+        <span>
+          The rating method and base rate below came from the contract
+          {rate.accessorials.length > 0
+            ? `, along with ${rate.accessorials.length} automatic ${
+                rate.accessorials.length === 1 ? "charge" : "charges"
+              }`
+            : ""}
+          . Change any of them and this shipment is priced by hand instead.
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="mt-1 h-6 px-1.5"
+          onClick={onDismiss}
+        >
+          <span className="text-2xs">Dismiss</span>
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+/**
+ * Asks why a shipment is priced at something other than its contract.
+ *
+ * It appears only once a shipment has actually departed, because that is the
+ * only moment the question means anything. The answer is what the audit trail
+ * explains the invoice with, and what the organization's billing policy can
+ * require before the shipment is allowed to bill.
+ */
+function RateDepartureReason() {
+  const { control } = useFormContext<Shipment>();
+  const autoRated = useWatch({ control, name: "autoRated" });
+  const agreementId = useWatch({ control, name: "rateAgreementId" });
+  const overrideAmount = useWatch({ control, name: "rateOverrideAmount" });
+
+  if (autoRated || !agreementId || !overrideAmount) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3">
+      <TextareaField
+        control={control}
+        name="rateOverrideReason"
+        label="Reason for the rate change"
+        placeholder="Why is this shipment priced differently from its contract?"
+        description="This shipment no longer charges what its rate agreement says. The reason is kept with the rating history and shown on the rate leakage report."
+      />
+    </div>
+  );
+}
+
 function RatingBreakdownCard() {
   const { control, getValues } = useFormContext<Shipment>();
   const ratingDetail = useWatch({ control, name: "ratingDetail" });
@@ -204,8 +287,14 @@ function RatingBreakdownCard() {
   return (
     <div className="bg-muted/50 mt-3 rounded-lg border p-2">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <div>
-          <span className="text-xs font-medium">Rating Breakdown</span>
+        <div className="flex flex-col gap-1 w-full">
+          <div className="flex justify-between items-center">
+            <div className="flex flex-row gap-1">
+              <span className="text-xs font-medium">Rating Breakdown</span>
+              <AutoRateDialog />
+            </div>
+            <WhyThisRate shipmentId={shipmentId} />
+          </div>
           <p className="text-2xs text-muted-foreground mt-0.5">
             {ratingDetail.ruleLabel
               ? `${source} — ${ratingDetail.ruleLabel}`
@@ -213,8 +302,6 @@ function RatingBreakdownCard() {
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <RateOverrideDialog />
-          <WhyThisRate shipmentId={shipmentId} />
           {ratingDetail.versionNumber ? (
             <Badge variant="outline" className="text-2xs font-mono">
               v{ratingDetail.versionNumber}
@@ -276,6 +363,11 @@ export default function ShipmentBillingDetails() {
     resolveFuelSurchargeChange,
   } = useShipmentTotalsPreview();
   const { data: shipmentUIPolicy } = useQuery({ ...queries.shipment.uiPolicy() });
+
+  // A contract prices a shipment once, while it is being typed. An existing
+  // one already carries a rate somebody may have negotiated, and replacing it
+  // on open is exactly what this design exists to stop.
+  const { appliedRate, dismissAppliedRate } = useShipmentAutoRate({ enabled: !shipmentId });
 
   const profile = getProfile(shipmentUIPolicy);
 
@@ -346,12 +438,16 @@ export default function ShipmentBillingDetails() {
         change={fuelSurchargeChange}
         onResolve={resolveFuelSurchargeChange}
       />
+      {appliedRate && (
+        <ContractRateAppliedAlert rate={appliedRate} onDismiss={dismissAppliedRate} />
+      )}
       {customerId && <CreditHoldAlert customerId={customerId} />}
       {shipmentId && <ProfitabilitySummary shipmentId={shipmentId} />}
       <CapabilityFields descriptors={descriptors} profile={profile} />
 
       <ChargeSummary isCalculating={isCalculating} error={totalsError} />
       <RatingBreakdownCard />
+      <RateDepartureReason />
     </Inner>
   );
 }

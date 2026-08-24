@@ -90,6 +90,12 @@ func (s *Service) RateShipment(
 		Inputs:        rateCtx.Inputs(),
 	}
 
+	// A formula-only rating never looks at a contract, so it never needs the
+	// zone membership or the lane candidates a contract is found by.
+	if req.FormulaOnly {
+		return s.rateFromFallbackTemplate(ctx, req, rateCtx, trace)
+	}
+
 	if err = s.resolveZones(ctx, rateCtx); err != nil {
 		log.Error("failed to resolve zone membership", zap.Error(err))
 		return nil, err
@@ -337,7 +343,7 @@ func (s *Service) finish(
 		quote = recorded
 	}
 
-	return &services.RatedShipment{
+	rated := &services.RatedShipment{
 		Amount:            fields.Amount,
 		Currency:          rateCtx.BillingCurrency,
 		Outcome:           fields.Outcome,
@@ -345,7 +351,44 @@ func (s *Service) finish(
 		AgreementID:       fields.AgreementID,
 		RuleID:            fields.RuleID,
 		FormulaTemplateID: fields.FormulaTemplateID,
-	}, nil
+	}
+
+	applyLinehaulPricing(rated, trace)
+
+	return rated, nil
+}
+
+// applyLinehaulPricing lifts the template and the rate that produced the
+// linehaul off the trace.
+//
+// The rule states neither directly in every case: a rule pricing through a
+// matrix names the matrix, and the template that gives its cells meaning
+// belongs to the matrix. The trace is where the two meet, because it records
+// what was actually evaluated rather than what was configured.
+func applyLinehaulPricing(rated *services.RatedShipment, trace *ratetypes.Trace) {
+	if trace == nil {
+		return
+	}
+
+	for i := range trace.Components {
+		component := &trace.Components[i]
+		if component.Kind != ratetypes.ComponentKindLinehaul {
+			continue
+		}
+
+		rated.BaseRate = component.Rate
+
+		if rated.FormulaTemplateID == nil || rated.FormulaTemplateID.IsNil() {
+			if id, ok := component.Detail["formulaTemplateId"].(string); ok && id != "" {
+				parsed, err := pulid.Parse(id)
+				if err == nil {
+					rated.FormulaTemplateID = &parsed
+				}
+			}
+		}
+
+		return
+	}
 }
 
 func (s *Service) buildQuote(

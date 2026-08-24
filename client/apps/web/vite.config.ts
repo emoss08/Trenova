@@ -12,15 +12,16 @@ const require = createRequire(import.meta.url);
 
 const pdfjsDistPath = path.dirname(require.resolve("pdfjs-dist/package.json"));
 const cMapsDir = normalizePath(path.join(pdfjsDistPath, "cmaps"));
+const dirname = import.meta.dirname;
 
 export default defineConfig({
-  envDir: path.resolve(__dirname, "../.."),
+  envDir: path.resolve(dirname, "../.."),
   environments: {
     client: {
       build: {
         rollupOptions: {
           input: {
-            main: path.resolve(__dirname, "index.html"),
+            main: path.resolve(dirname, "index.html"),
           },
         },
       },
@@ -50,8 +51,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@trenova/shared": path.resolve(__dirname, "../../packages/shared/src"),
+      "@": path.resolve(dirname, "./src"),
+      "@trenova/shared": path.resolve(dirname, "../../packages/shared/src"),
     },
   },
   optimizeDeps: {

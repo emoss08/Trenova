@@ -88,7 +88,8 @@
       "sourceId": "ft_per_mile_stub",
       "sourceName": "Per Mile",
       "detail": {
-        "expression": "baseRate * totalDistance"
+        "expression": "baseRate * totalDistance",
+        "formulaTemplateId": "ft_per_mile_stub"
       }
     },
     {

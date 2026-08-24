@@ -2,13 +2,13 @@
 import { EmptyState } from "@/components/empty-state";
 import { queries } from "@/lib/queries";
 import { OccurrenceDetailSheet } from "@/routes/detention-desk/_components/occurrence-detail-sheet";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { useQuery } from "@tanstack/react-query";
 import {
   BoxesIcon,
   FuelIcon,
@@ -148,7 +148,9 @@ export default function AdditionalChargesSection() {
                   ? (chargeObj?.code ??
                     charge?.fuelSurchargeDetail?.programCode ??
                     "Fuel Surcharge")
-                  : (chargeObj?.code ?? (occurrenceId ? "Detention" : "—"));
+                  : (chargeObj?.code ??
+                    chargeObj?.description ??
+                    (occurrenceId ? "Detention" : "—"));
                 const amt = Number(charge?.amount) || 0;
 
                 const chargeErrors = errors.additionalCharges?.[index];
@@ -269,7 +271,7 @@ export default function AdditionalChargesSection() {
             title="No Additional Charges"
             description="Shipment has no associated additional charges"
             icons={[ReceiptIcon, BoxesIcon, TruckIcon]}
-            className="border-bg-sidebar-border max-h-[200px] rounded-lg border p-4"
+            className="border-bg-sidebar-border max-h-50 rounded-lg border p-4"
             action={{
               label: "Add First Charge",
               onClick: handleAdd,

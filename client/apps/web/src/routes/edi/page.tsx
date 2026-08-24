@@ -1,6 +1,6 @@
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
-import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 import type { EDIPageKind } from "./_components/edi-types";
 

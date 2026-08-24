@@ -36,7 +36,18 @@ type RateShipmentRequest struct {
 	// Persist writes the quote. A what-if answers the question without leaving
 	// a record that competes with the shipment's real rate.
 	Persist bool
-	UserID  pulid.ID
+	// FormulaOnly prices the shipment through the formula template it already
+	// carries, without resolving an agreement for it.
+	//
+	// This is the routine recalculation: a stop moves, a commodity is added,
+	// the mileage changes, and the linehaul has to follow. A contract is
+	// applied to a shipment once, deliberately, and after that the shipment's
+	// own rating fields are what price it — so re-resolving the contract on
+	// every save would silently replace whatever a rater had since agreed with
+	// the customer. It also skips the zone and lane lookups, which are the only
+	// queries a recalculation would otherwise make.
+	FormulaOnly bool
+	UserID      pulid.ID
 
 	// SimulateAgreementID lets one agreement price this shipment whatever its
 	// status. It is what a simulation of a draft contract needs, and it must
@@ -64,6 +75,14 @@ type RatedShipment struct {
 	// FormulaTemplateID is set when the rule delegated to a formula, or when
 	// the rating fell back to one because no agreement covered the lane.
 	FormulaTemplateID *pulid.ID `json:"formulaTemplateId,omitempty"`
+	// BaseRate is the per-unit rate the template was priced with — the lane
+	// rate on the rule, or the value in the matrix cell that matched.
+	//
+	// It is what lets a contract's answer be seated on a shipment as its own
+	// rating method plus its own base rate, rather than as a total nobody can
+	// re-derive. A rule that binds no rate leaves this unset, and the
+	// shipment's existing base rate stands.
+	BaseRate decimal.NullDecimal `json:"baseRate,omitempty"`
 }
 
 // ShopStrategy is what "best" means for one shopping run.

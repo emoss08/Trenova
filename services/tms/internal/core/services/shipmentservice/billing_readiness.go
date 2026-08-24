@@ -396,6 +396,7 @@ func buildShipmentBillingReadiness(
 
 	if billingProfile == nil {
 		appendRateValidationFailure(entity, billingControl, readiness)
+		appendRateDepartureReasonFailure(entity, billingControl, readiness)
 		requirementIssues := hasShipmentRequirementIssues(readiness)
 		rateIssues := hasRateIssues(readiness)
 		readiness.CanMarkReadyToInvoice = entity.Status == shipment.StatusCompleted &&
@@ -431,6 +432,7 @@ func buildShipmentBillingReadiness(
 	}
 
 	appendRateValidationFailure(entity, billingControl, readiness)
+	appendRateDepartureReasonFailure(entity, billingControl, readiness)
 
 	requirementIssues := hasShipmentRequirementIssues(readiness)
 	rateIssues := hasRateIssues(readiness)
@@ -650,6 +652,38 @@ func appendRateValidationFailure(
 			Field:   result.Field,
 			Code:    result.Code,
 			Message: result.Message,
+		},
+	)
+}
+
+// appendRateDepartureReasonFailure holds a shipment priced away from its
+// contract to the organization's own policy.
+//
+// A rate that departs from the contract is set by editing the shipment's rating
+// fields, which is an ordinary save and cannot be made to demand an explanation
+// at the moment it happens. So the demand lands here instead, where it has to
+// be satisfied before the shipment can bill — which is the point at which the
+// reason is actually needed, since it is what the invoice is explained with.
+func appendRateDepartureReasonFailure(
+	entity *shipment.Shipment,
+	billingControl *tenant.BillingControl,
+	readiness *services.ShipmentBillingReadiness,
+) {
+	if billingControl == nil || !billingControl.RequireRateOverrideReason {
+		return
+	}
+
+	if entity == nil || entity.AutoRated || !entity.HasRateOverride() ||
+		entity.RateOverrideReason != "" {
+		return
+	}
+
+	readiness.ValidationFailures = append(
+		readiness.ValidationFailures,
+		services.ShipmentBillingValidation{
+			Field:   "rateOverrideReason",
+			Code:    "rate_departure_reason_missing",
+			Message: "Your organization requires a reason when a shipment is not billed at its contract rate",
 		},
 	)
 }

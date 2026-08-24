@@ -696,10 +696,7 @@ func (s *service) UpdateCharges(
 	if req.FormulaTemplateID != nil && !req.FormulaTemplateID.IsNil() {
 		shp.FormulaTemplateID = *req.FormulaTemplateID
 
-		control, _ := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
-			TenantInfo: req.TenantInfo,
-		})
-		if err = s.commercial.Recalculate(ctx, shp, control, actor.UserID); err != nil {
+		if err = s.rerateShipment(ctx, shp, req.TenantInfo, actor.UserID); err != nil {
 			return nil, errortypes.NewValidationError(
 				"formulaTemplateId",
 				errortypes.ErrInvalid,
@@ -709,10 +706,7 @@ func (s *service) UpdateCharges(
 	} else if req.BaseRate != nil {
 		shp.BaseRate = decimal.NewNullDecimal(*req.BaseRate)
 
-		control, _ := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
-			TenantInfo: req.TenantInfo,
-		})
-		if err = s.commercial.Recalculate(ctx, shp, control, actor.UserID); err != nil {
+		if err = s.rerateShipment(ctx, shp, req.TenantInfo, actor.UserID); err != nil {
 			return nil, errortypes.NewValidationError(
 				"baseRate",
 				errortypes.ErrInvalid,

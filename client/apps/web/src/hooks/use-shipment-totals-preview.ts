@@ -1,4 +1,5 @@
 import { useDebounce } from "@/hooks/use-debounce";
+import { isRatable, toRatingPreviewPayload } from "@/lib/shipment-rating-payload";
 import { apiService } from "@/services/api";
 import type {
   AdditionalCharge,
@@ -31,6 +32,8 @@ export function useShipmentTotalsPreview() {
   const abortRef = useRef<AbortController | null>(null);
 
   const customerId = useWatch({ control, name: "customerId" });
+  const serviceTypeId = useWatch({ control, name: "serviceTypeId" });
+  const shipmentTypeId = useWatch({ control, name: "shipmentTypeId" });
   const formulaTemplateId = useWatch({ control, name: "formulaTemplateId" });
   const baseRate = useWatch({ control, name: "baseRate" });
   const additionalCharges = useWatch({ control, name: "additionalCharges" });
@@ -49,6 +52,8 @@ export function useShipmentTotalsPreview() {
 
   const watchedFieldsHash = JSON.stringify({
     customerId,
+    serviceTypeId,
+    shipmentTypeId,
     formulaTemplateId,
     baseRate,
     additionalCharges: completeCharges,
@@ -182,8 +187,7 @@ export function useShipmentTotalsPreview() {
   );
 
   useEffect(() => {
-    const parsed = JSON.parse(debouncedHash);
-    if (!parsed.formulaTemplateId) {
+    if (!isRatable(getValues())) {
       lastHashRef.current = "";
       setIsCalculating(false);
       setError(null);
@@ -200,21 +204,10 @@ export function useShipmentTotalsPreview() {
     setIsCalculating(true);
     setError(null);
 
-    const values = getValues();
-    const payload = {
-      ...values,
-      additionalCharges: values.additionalCharges?.map(
-        // oxlint-disable-next-line no-unused-vars
-        ({ accessorialCharge, ...rest }) => rest,
-      ),
-      commodities: values.commodities?.map(
-        // oxlint-disable-next-line no-unused-vars
-        ({ commodity, ...rest }) => rest,
-      ),
-    };
+    const payload = toRatingPreviewPayload(getValues());
 
     apiService.shipmentService
-      .calculateTotals(payload as Shipment, controller.signal)
+      .calculateTotals(payload, controller.signal)
       .then((result) => {
         if (controller.signal.aborted) return;
         handleResult(result);

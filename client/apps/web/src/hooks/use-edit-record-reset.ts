@@ -13,6 +13,20 @@ type EditRecordSource<T> = {
   fetch: (id: string) => Promise<T>;
 };
 
+export type EditRecordState = {
+  /**
+   * Whether the form holds the full record rather than the bare table row.
+   *
+   * A panel must not submit until this is true. The row it opened from carries
+   * no children, so a save sent before the detail lands tells the server the
+   * record has none — and the server reads a child it was not sent as one the
+   * user deleted.
+   */
+  isSeated: boolean;
+  isLoading: boolean;
+  isError: boolean;
+};
+
 /**
  * Re-seats an edit panel's form from the full record rather than the table row
  * it was opened from.
@@ -27,10 +41,10 @@ type EditRecordSource<T> = {
 export function useEditRecordReset<T extends FieldValues>(
   form: UseFormReturn<T>,
   { open, mode, queryKey, id, version, fetch }: EditRecordSource<T>,
-) {
+): EditRecordState {
   const enabled = open && mode === "edit" && Boolean(id);
 
-  const { data } = useQuery({
+  const { data, isFetching, isError } = useQuery({
     queryKey: [queryKey, id, version],
     queryFn: () => fetch(id as string),
     enabled,
@@ -42,4 +56,13 @@ export function useEditRecordReset<T extends FieldValues>(
       reset(data);
     }
   }, [enabled, data, reset]);
+
+  return {
+    // A create panel has no record to wait for, and neither does a panel that
+    // is closed. Only an edit waits, and only for its own record: a fetch that
+    // failed is never seated, because the form is still holding the bare row.
+    isSeated: !enabled || Boolean(data),
+    isLoading: enabled && isFetching && !data,
+    isError: enabled && isError,
+  };
 }

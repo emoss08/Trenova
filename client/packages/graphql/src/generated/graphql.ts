@@ -2418,6 +2418,12 @@ export type ShipmentInput = {
   ownerId?: string | number | null | undefined;
   pieces?: number | null | undefined;
   proNumber?: string | null | undefined;
+  /**
+   * Why this shipment is billed at something other than its contract rate. It is
+   * the only rating field a caller may write: everything else the rater owns is
+   * an ordinary field, and everything else the system owns is restored on save.
+   */
+  rateOverrideReason?: string | null | undefined;
   ratingUnit?: number | null | undefined;
   serviceTypeId: string | number;
   shipmentTypeId: string | number;
@@ -5531,7 +5537,7 @@ export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitI
 
 export type ShipmentRatingDetailFieldsFragment = { formulaTemplateId: string, formulaTemplateName: string, expression: string, resolvedVariables: unknown, result: number, ratedAt: number, versionNumber: number, rateQuoteId: string, agreementId: string, agreementName: string, ruleId: string, ruleLabel: string, source: string, explanation: string, breakdown: Array<{ name: string, label: string, amount: number, error: string }>, guardrail: { applied: boolean, bound: string, rawResult: number, minCharge: number | null, maxCharge: number | null } | null } & { ' $fragmentName'?: 'ShipmentRatingDetailFieldsFragment' };
 
-export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, fuelSurchargeLocked: boolean, version: number, createdAt: number, updatedAt: number, profitabilityEstimate: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, costPerMile: string, estimatedCost: string, profit: string, marginPercent: string | null, breakEvenRpm: string | null, targetMarginPercent: string | null, missingDistance: boolean } | null, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number, ediPartner: { id: string, name: string, code: string } | null } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
+export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, orderId: string | null, orderNumber: string | null, orderStatus: OrderStatus | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, fuelSurchargeLocked: boolean, autoRated: boolean, autoRatedAt: number | null, rateAgreementId: string | null, rateAgreementRuleId: string | null, rateQuoteId: string | null, rateOverrideAmount: string | null, rateOverrideReason: string | null, rateOverrideAt: number | null, rateLocked: boolean, version: number, createdAt: number, updatedAt: number, profitabilityEstimate: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, costPerMile: string, estimatedCost: string, profit: string, marginPercent: string | null, breakEvenRpm: string | null, targetMarginPercent: string | null, missingDistance: boolean } | null, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number, ediPartner: { id: string, name: string, code: string } | null } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
 
 export type ShipmentPageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'ShipmentPageInfoFieldsFragment' };
 
@@ -5723,6 +5729,22 @@ export type CalculateShipmentTotalsMutationVariables = Exact<{
 
 
 export type CalculateShipmentTotalsMutation = { calculateShipmentTotals: { freightChargeAmount: string, otherChargeAmount: string, totalChargeAmount: string, fuelSurcharge: { accessorialChargeId: string, isSystemGenerated: boolean, method: string, amount: string, unit: number, fuelSurchargeProgramId: string | null, fuelSurchargeDetail: unknown } | null } };
+
+export type ShipmentContractRateFieldsFragment = { applied: boolean, outcome: string, agreementId: string | null, agreementName: string, ruleId: string | null, ruleLabel: string, formulaTemplateId: string | null, formulaTemplateName: string, baseRate: string | null, linehaulAmount: string, otherChargeAmount: string, totalChargeAmount: string, previousLinehaulAmount: string, explanation: string, accessorials: Array<{ accessorialChargeId: string, description: string, method: AccessorialMethod, amount: string, unit: number }> } & { ' $fragmentName'?: 'ShipmentContractRateFieldsFragment' };
+
+export type PreviewShipmentContractRateMutationVariables = Exact<{
+  input: ShipmentInput;
+}>;
+
+
+export type PreviewShipmentContractRateMutation = { previewShipmentContractRate: { ' $fragmentRefs'?: { 'ShipmentContractRateFieldsFragment': ShipmentContractRateFieldsFragment } } };
+
+export type AutoRateShipmentMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AutoRateShipmentMutation = { autoRateShipment: { shipment: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } }, contractRate: { ' $fragmentRefs'?: { 'ShipmentContractRateFieldsFragment': ShipmentContractRateFieldsFragment } } } };
 
 export type CalculateShipmentDistanceMutationVariables = Exact<{
   input: ShipmentInput;
@@ -9122,6 +9144,15 @@ export const ShipmentFieldsFragmentDoc = new TypedDocumentString(`
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -9653,6 +9684,31 @@ export const ShipmentEventFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ShipmentEventFields"}) as unknown as TypedDocumentString<ShipmentEventFieldsFragment, unknown>;
+export const ShipmentContractRateFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ShipmentContractRateFields on ShipmentContractRate {
+  applied
+  outcome
+  agreementId
+  agreementName
+  ruleId
+  ruleLabel
+  formulaTemplateId
+  formulaTemplateName
+  baseRate
+  linehaulAmount
+  otherChargeAmount
+  totalChargeAmount
+  previousLinehaulAmount
+  explanation
+  accessorials {
+    accessorialChargeId
+    description
+    method
+    amount
+    unit
+  }
+}
+    `, {"fragmentName":"ShipmentContractRateFields"}) as unknown as TypedDocumentString<ShipmentContractRateFieldsFragment, unknown>;
 export const StoredMileageStopKeyFieldsFragmentDoc = new TypedDocumentString(`
     fragment StoredMileageStopKeyFields on StopKey {
   method
@@ -19741,6 +19797,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -19815,7 +19880,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:af5e364dae17f332560144e3b03b995adc2d0c9335f791c2497f48808fff70f6"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
+}`, {"hash":"sha256:356e7217906daf570d096c1295bc01a1924376bee9aa67b20d4fb13401c1d241"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
 export const ShipmentDetailDocument = new TypedDocumentString(`
     query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
   shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {
@@ -20139,6 +20204,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -20209,7 +20283,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:cd5c575770e5c11e905c1f54e4cddfd7bcdf7b630f58c5b6d6afd67214f4661c"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
+}`, {"hash":"sha256:d8478c4de5838531f8e2ab5031ec571d956c6c852aee8f89329944503141e579"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentSavedViewCountsDocument = new TypedDocumentString(`
     query ShipmentSavedViewCounts($timezone: String!) {
   shipmentAnalytics(input: { include: "savedViewCounts", timezone: $timezone }) {
@@ -20700,6 +20774,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -20774,7 +20857,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:237c8634bd9f2610254a165cdfc81588219abe2cd1a5872f7142f9dce8774d43"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+}`, {"hash":"sha256:7f3cc26e6ecb02400d7031ee412e04e9e1b19e2ba711b1260ddfd47e433431b4"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
 export const ExceptionShipmentsDocument = new TypedDocumentString(`
     query ExceptionShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -21106,6 +21189,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -21180,7 +21272,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:43f782abf4cb9e05cc7b3e1fcd5dc86dcce41885cce2e6443d9a834c5354f6c5"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+}`, {"hash":"sha256:dad4d2061dde853d418386fb69882d3177ca131fd7ff1bd7342609891c1a7d27"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
 export const MapShipmentsDocument = new TypedDocumentString(`
     query MapShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
@@ -21512,6 +21604,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -21586,7 +21687,7 @@ fragment ShipmentFields on Shipment {
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:b624746d12733be9d3c3b56bad65a13480169e69effb2dbf43abd0cbc0e3f4fd"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+}`, {"hash":"sha256:b0c4c6e063ee02ad3619c6311c21f51246aad66c199b5f7aea39e91b23ea46ff"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
 export const ShipmentCommentsDocument = new TypedDocumentString(`
     query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String, $filter: ShipmentCommentsFilterInput) {
   shipmentComments(
@@ -22283,6 +22384,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -22353,7 +22463,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:25e04c27bce2b56f269b98324c1e77c4afe1572aaedac48210a0b58b9b8c01ca"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+}`, {"hash":"sha256:139044137e871fc8bbb8516bc7d081398965fa9ec043a85b1dc3d122d3065c3a"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
 export const UpdateShipmentDocument = new TypedDocumentString(`
     mutation UpdateShipment($id: ID!, $input: ShipmentInput!) {
   updateShipment(id: $id, input: $input) {
@@ -22677,6 +22787,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -22747,7 +22866,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:cef718ac41a722cf15f72d99a4ed50a6d8dde90b8977019409c0cee222a27c70"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+}`, {"hash":"sha256:019662c077905427d5c61a8e2356e29040259e294c809950f9bb7976de5c37da"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
 export const CancelShipmentDocument = new TypedDocumentString(`
     mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
   cancelShipment(id: $id, input: $input) {
@@ -23071,6 +23190,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -23141,7 +23269,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:928e5b1f62eb1e4052e6abd3b697a25680a37f3d516213f91f02ef10aa57f5c4"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+}`, {"hash":"sha256:8caac86e360152b31fbf382515084d43043d3a6cfa4ae8714bd0e1f3e89029ff"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
 export const UncancelShipmentDocument = new TypedDocumentString(`
     mutation UncancelShipment($id: ID!) {
   uncancelShipment(id: $id) {
@@ -23465,6 +23593,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -23535,7 +23672,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:7a5d4391326563e63e680ca92de580246966ee39eb23de0a182f6d021cc7fffe"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+}`, {"hash":"sha256:a1cfa490077521e9eed86fa9b287ca266730a37d6bfb21b2f130e92c1a36d964"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = new TypedDocumentString(`
     mutation DuplicateShipment($input: ShipmentDuplicateInput!) {
   duplicateShipment(input: $input) {
@@ -23870,6 +24007,15 @@ fragment ShipmentFields on Shipment {
   ratingDetail {
     ...ShipmentRatingDetailFields
   }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
   version
   createdAt
   updatedAt
@@ -23940,7 +24086,7 @@ fragment ShipmentFields on Shipment {
     createdAt
     updatedAt
   }
-}`, {"hash":"sha256:f1f35f4da8dc33f9e7c2f49136b0c94c23d8cc637da05293ac57274f43640b28"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+}`, {"hash":"sha256:9a6103656bdc65c8fc5c09f445ae0b982d3bcb71ff9a0a5c08b4f4594b13d0a9"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingDocument = new TypedDocumentString(`
     mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
   transferShipmentToBilling(input: $input) {
@@ -24007,6 +24153,466 @@ export const CalculateShipmentTotalsDocument = new TypedDocumentString(`
   }
 }
     `, {"hash":"sha256:675789448d139ef11053baf07c910d999193810b6acd81ae401229c1e1753a75"}) as unknown as TypedDocumentString<CalculateShipmentTotalsMutation, CalculateShipmentTotalsMutationVariables>;
+export const PreviewShipmentContractRateDocument = new TypedDocumentString(`
+    mutation PreviewShipmentContractRate($input: ShipmentInput!) {
+  previewShipmentContractRate(input: $input) {
+    ...ShipmentContractRateFields
+  }
+}
+    fragment ShipmentContractRateFields on ShipmentContractRate {
+  applied
+  outcome
+  agreementId
+  agreementName
+  ruleId
+  ruleLabel
+  formulaTemplateId
+  formulaTemplateName
+  baseRate
+  linehaulAmount
+  otherChargeAmount
+  totalChargeAmount
+  previousLinehaulAmount
+  explanation
+  accessorials {
+    accessorialChargeId
+    description
+    method
+    amount
+    unit
+  }
+}`, {"hash":"sha256:b3609be8eacbbcd92db634d5a0939e1cf3bd0d4c1635b56ac8a7e1082d7aaaff"}) as unknown as TypedDocumentString<PreviewShipmentContractRateMutation, PreviewShipmentContractRateMutationVariables>;
+export const AutoRateShipmentDocument = new TypedDocumentString(`
+    mutation AutoRateShipment($id: ID!) {
+  autoRateShipment(id: $id) {
+    shipment {
+      ...ShipmentFields
+    }
+    contractRate {
+      ...ShipmentContractRateFields
+    }
+  }
+}
+    fragment ShipmentUserFields on User {
+  id
+  name
+  username
+  emailAddress
+  timezone
+  status
+  profilePicUrl
+  thumbnailUrl
+}
+fragment ShipmentLocationFields on Location {
+  id
+  name
+  code
+  status
+  locationCategoryId
+  stateId
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  longitude
+  latitude
+}
+fragment ShipmentWorkerFields on Worker {
+  id
+  firstName
+  lastName
+  wholeName
+  profilePicUrl
+}
+fragment ShipmentTractorFields on Tractor {
+  id
+  code
+}
+fragment ShipmentTrailerFields on Trailer {
+  id
+  code
+  equipmentTypeId
+}
+fragment ShipmentAssignmentFields on ShipmentAssignment {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  primaryWorkerId
+  tractorId
+  trailerId
+  secondaryWorkerId
+  status
+  archivedAt
+  version
+  createdAt
+  updatedAt
+  tractor {
+    ...ShipmentTractorFields
+  }
+  trailer {
+    ...ShipmentTrailerFields
+  }
+  primaryWorker {
+    ...ShipmentWorkerFields
+  }
+  secondaryWorker {
+    ...ShipmentWorkerFields
+  }
+}
+fragment ShipmentStopFields on ShipmentStop {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  locationId
+  status
+  type
+  scheduleType
+  sequence
+  pieces
+  weight
+  scheduledWindowStart
+  scheduledWindowEnd
+  actualArrival
+  actualDeparture
+  countLateOverride
+  countDetentionOverride
+  addressLine
+  version
+  createdAt
+  updatedAt
+  location {
+    ...ShipmentLocationFields
+  }
+}
+fragment ShipmentMoveFields on ShipmentMove {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  status
+  loaded
+  sequence
+  distance
+  distanceSource
+  distanceProvider
+  distanceCalculatedAt
+  distanceRouteSignature
+  distanceDataVersion
+  distanceRoutingType
+  distanceUnits
+  distanceMetadata
+  version
+  createdAt
+  updatedAt
+  coverageType
+  stops {
+    ...ShipmentStopFields
+  }
+  assignment {
+    ...ShipmentAssignmentFields
+  }
+  carrierAssignment {
+    ...ShipmentCarrierAssignmentFields
+  }
+}
+fragment ShipmentCarrierAssignmentFields on CarrierAssignment {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  carrierId
+  status
+  rateMethod
+  baseRate
+  baseAmount
+  fuelSurcharge
+  accessorialTotal
+  totalCost
+  currencyCode
+  proNumber
+  externalDriverName
+  externalDriverPhone
+  externalTractorNumber
+  externalTrailerNumber
+  confirmedAt
+  canceledAt
+  cancellationReason
+  version
+  createdAt
+  updatedAt
+  carrier {
+    id
+    code
+    name
+    scac
+  }
+  accessorials {
+    id
+    carrierAssignmentId
+    accessorialChargeId
+    description
+    amount
+    version
+  }
+}
+fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  accessorialChargeId
+  isSystemGenerated
+  method
+  amount
+  unit
+  fuelSurchargeProgramId
+  fuelSurchargeDetail
+  detentionOccurrenceId
+  version
+  createdAt
+  updatedAt
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
+}
+fragment ShipmentCommodityFields on ShipmentCommodity {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  commodityId
+  pieces
+  weight
+  lengthFeet
+  widthFeet
+  heightFeet
+  version
+  createdAt
+  updatedAt
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
+}
+fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
+  formulaTemplateId
+  formulaTemplateName
+  expression
+  resolvedVariables
+  result
+  ratedAt
+  versionNumber
+  breakdown {
+    name
+    label
+    amount
+    error
+  }
+  guardrail {
+    applied
+    bound
+    rawResult
+    minCharge
+    maxCharge
+  }
+  rateQuoteId
+  agreementId
+  agreementName
+  ruleId
+  ruleLabel
+  source
+  explanation
+}
+fragment ShipmentFields on Shipment {
+  id
+  businessUnitId
+  organizationId
+  sourceDocumentId
+  serviceTypeId
+  shipmentTypeId
+  customerId
+  tractorTypeId
+  trailerTypeId
+  ownerId
+  enteredById
+  canceledById
+  formulaTemplateId
+  consolidationGroupId
+  orderId
+  orderNumber
+  orderStatus
+  status
+  tenderStatus
+  entryMethod
+  proNumber
+  bol
+  cancelReason
+  otherChargeAmount
+  freightChargeAmount
+  baseRate
+  totalChargeAmount
+  pieces
+  weight
+  temperatureMin
+  temperatureMax
+  actualDeliveryDate
+  actualShipDate
+  canceledAt
+  billingTransferStatus
+  transferredToBillingAt
+  markedReadyToBillAt
+  billedAt
+  ratingUnit
+  fuelSurchargeLocked
+  profitabilityEstimate {
+    shipmentId
+    loadedMiles
+    deadheadMiles
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    breakEvenRpm
+    targetMarginPercent
+    missingDistance
+  }
+  ratingDetail {
+    ...ShipmentRatingDetailFields
+  }
+  autoRated
+  autoRatedAt
+  rateAgreementId
+  rateAgreementRuleId
+  rateQuoteId
+  rateOverrideAmount
+  rateOverrideReason
+  rateOverrideAt
+  rateLocked
+  version
+  createdAt
+  updatedAt
+  moves {
+    ...ShipmentMoveFields
+  }
+  additionalCharges {
+    ...ShipmentAdditionalChargeFields
+  }
+  commodities {
+    ...ShipmentCommodityFields
+  }
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+    ediPartner {
+      id
+      name
+      code
+    }
+  }
+  owner {
+    ...ShipmentUserFields
+  }
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}
+fragment ShipmentContractRateFields on ShipmentContractRate {
+  applied
+  outcome
+  agreementId
+  agreementName
+  ruleId
+  ruleLabel
+  formulaTemplateId
+  formulaTemplateName
+  baseRate
+  linehaulAmount
+  otherChargeAmount
+  totalChargeAmount
+  previousLinehaulAmount
+  explanation
+  accessorials {
+    accessorialChargeId
+    description
+    method
+    amount
+    unit
+  }
+}`, {"hash":"sha256:0afeac8a383afc1ec96502ad9878cd88eaaa4aeb3ba477c4d4d49537be41c6c0"}) as unknown as TypedDocumentString<AutoRateShipmentMutation, AutoRateShipmentMutationVariables>;
 export const CalculateShipmentDistanceDocument = new TypedDocumentString(`
     mutation CalculateShipmentDistance($input: ShipmentInput!) {
   calculateShipmentDistance(input: $input) {

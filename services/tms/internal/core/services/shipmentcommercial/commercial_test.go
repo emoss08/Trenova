@@ -313,7 +313,8 @@ func TestCalculateTotals_IncludesFuelSurchargeEstimate(t *testing.T) {
 	})
 
 	resp, err := calculator.CalculateTotals(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -361,7 +362,8 @@ func TestCalculateTotals_ReplacesStaleFuelSurchargeFromPayload(t *testing.T) {
 	})
 
 	resp, err := calculator.CalculateTotals(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -399,7 +401,8 @@ func TestCalculateTotals_LockedFuelSurchargeIsPreserved(t *testing.T) {
 	})
 
 	resp, err := calculator.CalculateTotals(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
@@ -436,7 +439,12 @@ func TestRecalculate_GeneratesFuelSurchargeCharge(t *testing.T) {
 		FuelSurcharge:   resolver,
 	})
 
-	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+	err := calculator.Recalculate(
+		t.Context(),
+		entity,
+		&tenant.ShipmentControl{},
+		pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entity.AdditionalCharges, 1)
@@ -493,7 +501,12 @@ func TestRecalculate_ReplacesFuelSurchargeOnProgramSwap(t *testing.T) {
 		FuelSurcharge:   resolver,
 	})
 
-	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+	err := calculator.Recalculate(
+		t.Context(),
+		entity,
+		&tenant.ShipmentControl{},
+		pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entity.AdditionalCharges, 1)
@@ -545,7 +558,12 @@ func TestRecalculate_RemovesFuelSurchargeWhenNoLongerApplicable(t *testing.T) {
 		FuelSurcharge:   resolver,
 	})
 
-	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+	err := calculator.Recalculate(
+		t.Context(),
+		entity,
+		&tenant.ShipmentControl{},
+		pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entity.AdditionalCharges, 1)
@@ -590,7 +608,12 @@ func TestRecalculate_RemovesFuelSurchargeWhenAmountIsZero(t *testing.T) {
 		FuelSurcharge:   resolver,
 	})
 
-	err := calculator.Recalculate(t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"))
+	err := calculator.Recalculate(
+		t.Context(),
+		entity,
+		&tenant.ShipmentControl{},
+		pulid.MustNew("usr_"),
+	)
 
 	require.NoError(t, err)
 	assert.Empty(t, entity.AdditionalCharges)
@@ -625,9 +648,4 @@ func validShipment() *shipment.Shipment {
 			},
 		},
 	}
-}
-
-//go:fix inline
-func int16Ptr(value int16) *int16 {
-	return new(value)
 }

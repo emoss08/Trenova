@@ -1,6 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { ediTableGraphQLConfigs } from "@/lib/graphql/edi-table";
 import { apiService } from "@/services/api";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps, DockAction } from "@trenova/shared/types/data-table";
 import type {
@@ -13,30 +14,31 @@ import type {
   EDITransfer,
 } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheckIcon, CircleXIcon, RefreshCwIcon, RotateCcwIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { notifyEDIBulkOutcome } from "./edi-bulk-actions";
-
-const EDI_QUEUE_REFETCH_INTERVAL_MS = 30_000;
 import { getCommunicationProfileColumns } from "./edi-communication-profile-columns";
 import { DesignerWorkspace } from "./edi-designer-workspace";
 import { getInboundFileColumns } from "./edi-inbound-file-columns";
 import { getMappingProfileColumns } from "./edi-mapping-profile-columns";
 import { getMessageColumns } from "./edi-message-columns";
-import { EDIOverview } from "./overview/edi-overview";
 import { getPartnerColumns } from "./edi-partner-columns";
 import { getTestCaseColumns } from "./edi-test-case-columns";
 import { getTransferColumns } from "./edi-transfer-columns";
 import type { EDIPageKind } from "./edi-types";
+import { EDIOverview } from "./overview/edi-overview";
 import { CommunicationProfilePanel } from "./panel/edi-communication-profile-panel";
 import { InboundFilePanel, REPROCESSABLE_STATUSES } from "./panel/edi-inbound-file-panel";
-import { invalidateEDIInboundFiles, invalidateEDIMessages, invalidateEDITransfers } from "./panel/edi-panel-invalidation";
-import { EDIReasonDialog } from "./panel/edi-reason-dialog";
 import { MappingProfileTablePanel } from "./panel/edi-mapping-profile-panel";
 import { MessagePanel, RETRYABLE_DELIVERY_STATUSES } from "./panel/edi-message-panel";
+import {
+  invalidateEDIInboundFiles,
+  invalidateEDIMessages,
+  invalidateEDITransfers,
+} from "./panel/edi-panel-invalidation";
 import { PartnerPanel } from "./panel/edi-partner-panel";
+import { EDIReasonDialog } from "./panel/edi-reason-dialog";
 import { TestCasePanel } from "./panel/edi-test-case-panel";
 import {
   ACTIONABLE_TRANSFER_STATUSES,
@@ -44,9 +46,11 @@ import {
 } from "./panel/edi-transfer-review-panel";
 import { PendingConnectionsPanel } from "./panel/pending-connections-panel";
 
+const EDI_QUEUE_REFETCH_INTERVAL_MS = 30_000;
+
 export default function EdiTable({ kind }: { kind: EDIPageKind }) {
   return (
-    <>
+    <div className="fle flex-col pt-3">
       {kind === "overview" && <EDIOverview />}
       {kind === "partners" && <PartnersWorkspace />}
       {kind === "communication-profiles" && <CommunicationProfilesWorkspace />}
@@ -56,7 +60,7 @@ export default function EdiTable({ kind }: { kind: EDIPageKind }) {
       {kind === "messages" && <MessagesWorkspace />}
       {kind === "inbound-files" && <InboundFilesWorkspace />}
       {kind === "test-cases" && <TestCasesWorkspace />}
-    </>
+    </div>
   );
 }
 
