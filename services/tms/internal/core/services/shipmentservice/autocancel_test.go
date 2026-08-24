@@ -47,9 +47,12 @@ func TestServiceGetAutoCancelableShipments_UsesThreshold(t *testing.T) {
 		controlRepo: controlRepo,
 	}
 
-	entities, err := svc.GetAutoCancelableShipments(t.Context(), &repositories.GetAutoCancelableShipmentsRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-	})
+	entities, err := svc.GetAutoCancelableShipments(
+		t.Context(),
+		&repositories.GetAutoCancelableShipmentsRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, entities, 1)
@@ -145,10 +148,4 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, entities, 1)
-}
-
-//go:fix inline
-//go:fix inline
-func ptrInt8(v int8) *int8 {
-	return new(v)
 }

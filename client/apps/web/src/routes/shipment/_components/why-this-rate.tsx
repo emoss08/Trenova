@@ -58,7 +58,7 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
   const losers = (trace?.candidates ?? []).filter((candidate) => !candidate.won);
 
   return (
-    <div className="flex max-h-[32rem] flex-col overflow-y-auto">
+    <div className="flex max-h-128 flex-col overflow-y-auto">
       <div className="border-b p-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-medium">

@@ -27,13 +27,7 @@ import type {
   GetPreviousRatesRequest,
   Shipment,
 } from "@trenova/shared/types/shipment";
-import {
-  AlertTriangleIcon,
-  PencilRulerIcon,
-  ShieldAlertIcon,
-  ShieldIcon,
-  SparklesIcon,
-} from "lucide-react";
+import { AlertTriangleIcon, ShieldAlertIcon, ShieldIcon, SparklesIcon } from "lucide-react";
 import type React from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { FuelSurchargeChangeDialog } from "./additional-charges/fuel-surcharge-change-dialog";
@@ -270,35 +264,6 @@ function RateDepartureReason() {
         description="This shipment no longer charges what its rate agreement says. The reason is kept with the rating history and shown on the rate leakage report."
       />
     </div>
-  );
-}
-
-/**
- * Says whether the shipment still charges what its contract said to charge.
- *
- * It is the answer to the question a rater actually has in front of an invoice
- * — is this the contract rate, or did somebody change it — and the same flag is
- * what the contract usage report is counted from.
- */
-function AutoRatedBadge() {
-  const { control } = useFormContext<Shipment>();
-  const autoRated = useWatch({ control, name: "autoRated" });
-  const agreementId = useWatch({ control, name: "rateAgreementId" });
-
-  if (!agreementId) {
-    return null;
-  }
-
-  return autoRated ? (
-    <Badge variant="active" className="text-2xs gap-1">
-      <SparklesIcon className="size-2.5" />
-      Auto-rated
-    </Badge>
-  ) : (
-    <Badge variant="warning" className="text-2xs gap-1">
-      <PencilRulerIcon className="size-2.5" />
-      Edited
-    </Badge>
   );
 }
 

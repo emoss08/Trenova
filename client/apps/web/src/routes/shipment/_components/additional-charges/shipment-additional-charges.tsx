@@ -271,7 +271,7 @@ export default function AdditionalChargesSection() {
             title="No Additional Charges"
             description="Shipment has no associated additional charges"
             icons={[ReceiptIcon, BoxesIcon, TruckIcon]}
-            className="border-bg-sidebar-border max-h-[200px] rounded-lg border p-4"
+            className="border-bg-sidebar-border max-h-50 rounded-lg border p-4"
             action={{
               label: "Add First Charge",
               onClick: handleAdd,
