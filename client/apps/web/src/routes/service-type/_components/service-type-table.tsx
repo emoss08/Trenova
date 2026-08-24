@@ -2,6 +2,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { serviceTypeTableGraphQLConfig } from "@/lib/graphql/service-type-table";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
+import type { CellEditCommitFn } from "@trenova/shared/lib/cell-editing-feature";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { ServiceType } from "@/types/service-type";
@@ -11,6 +12,8 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./service-type-columns";
 import { ServiceTypePanel } from "./service-type-panel";
+
+const INLINE_EDITABLE_FIELDS = new Set<keyof ServiceType>(["code", "description"]);
 
 export default function EquipmentTypeTable() {
   const queryClient = useQueryClient();
@@ -36,6 +39,24 @@ export default function EquipmentTypeTable() {
           },
         },
       );
+    },
+    [queryClient],
+  );
+
+  const handleCellEditCommit = useCallback<CellEditCommitFn<ServiceType>>(
+    async ({ rowId, columnId, value }) => {
+      const field = columnId as keyof ServiceType;
+      if (!INLINE_EDITABLE_FIELDS.has(field)) return;
+      if (field === "code" && (value === null || value === "")) {
+        throw new Error("Code is required.");
+      }
+
+      await apiService.serviceTypeService.patch(rowId, { [field]: value });
+      await queryClient.invalidateQueries({
+        queryKey: ["service-type-list"],
+        refetchType: "all",
+      });
+      toast.success("Service type updated");
     },
     [queryClient],
   );
@@ -66,6 +87,7 @@ export default function EquipmentTypeTable() {
       dockActions={dockActions}
       TablePanel={ServiceTypePanel}
       enableRowSelection
+      onCellEditCommit={handleCellEditCommit}
     />
   );
 }

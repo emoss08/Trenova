@@ -58,6 +58,7 @@ export function getColumns(): ColumnDef<ServiceType>[] {
     {
       accessorKey: "code",
       header: "Code",
+      enableCellEditing: true,
       cell: ({ row }) => {
         const { code, color } = row.original;
         return <DataTableColorColumn text={code} color={color} />;
@@ -73,6 +74,7 @@ export function getColumns(): ColumnDef<ServiceType>[] {
     {
       accessorKey: "description",
       header: "Description",
+      enableCellEditing: true,
       cell: ({ row }) => (
         <DataTableDescription description={row.original.description} truncateLength={100} />
       ),

@@ -11,8 +11,10 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { DataTableBodyProps, RowAction, Row, Table } from "@trenova/shared/types/data-table";
 import type { ColumnPinningState, RowData, RowSelectionState } from "@tanstack/react-table";
 import { flexRender } from "@tanstack/react-table";
+import { PencilIcon } from "lucide-react";
 import { memo, useCallback, useRef } from "react";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { DataTableCellEditor } from "./data-table-cell-editor";
 import { DataTableContextMenu } from "./_components/data-table-context-menu";
 import { DataTableEmptyState } from "./data-table-empty-state";
 
@@ -31,6 +33,7 @@ type DataTableRowProps<TData extends RowData> = {
   table: Table<TData>;
   contextMenuActions?: RowAction<TData>[];
   onRowClick?: (row: Row<TData>) => void;
+  editingColumnId: string | null;
 };
 
 function DataTableRowInner<TData extends RowData>({
@@ -42,6 +45,7 @@ function DataTableRowInner<TData extends RowData>({
   table,
   contextMenuActions,
   onRowClick,
+  editingColumnId,
 }: DataTableRowProps<TData>) {
   const { openPanelEdit, hasPanel, canOpenPanel } = useDataTable<TData, unknown>();
 
@@ -91,6 +95,8 @@ function DataTableRowInner<TData extends RowData>({
     >
       {row.getVisibleCells().map((cell) => {
         const pinned = cell.column.getIsPinned();
+        const canEdit = cell.getCanEdit();
+        const isEditing = editingColumnId === cell.column.id;
         return (
           <TableCell
             className={cn(
@@ -98,17 +104,46 @@ function DataTableRowInner<TData extends RowData>({
               isLastRow && "border-b-0",
               pinned && pinnedCellClass(cell.column),
               pinned && "group-hover/row:bg-muted",
+              canEdit && "group/cell relative",
+              isEditing && "overflow-visible py-1",
             )}
             key={cell.id}
             role="cell"
             aria-label={`${cell.column.id} cell`}
+            onDoubleClick={
+              canEdit && !isEditing && !isClickable
+                ? (e) => {
+                    e.preventDefault();
+                    cell.startEditing();
+                  }
+                : undefined
+            }
             style={{
               width: `var(${columnSizeVar(cell.column.id)})`,
               maxWidth: `var(${columnSizeVar(cell.column.id)})`,
               ...pinnedCellStyle(cell.column),
             }}
           >
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            {isEditing ? (
+              <DataTableCellEditor cell={cell} />
+            ) : (
+              <>
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                {canEdit && (
+                  <button
+                    type="button"
+                    aria-label={`Edit ${cell.column.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      cell.startEditing();
+                    }}
+                    className="absolute top-1/2 right-1 -translate-y-1/2 rounded-sm border border-border bg-background p-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover/cell:opacity-100"
+                  >
+                    <PencilIcon className="size-3" />
+                  </button>
+                )}
+              </>
+            )}
           </TableCell>
         );
       })}
@@ -144,7 +179,7 @@ export function DataTableBody<TData extends Record<string, any>>({
   onClearFilters?: () => void;
 }) {
   const rows = table.getRowModel().rows;
-  const { columnVisibility, columnOrder, columnPinning } = table.state;
+  const { columnVisibility, columnOrder, columnPinning, cellEditing } = table.state;
   const enableSelection = table.options.enableRowSelection === true;
   const selectionAnchorRef = useRef<number | null>(null);
   const bodyRef = useRef<HTMLTableSectionElement>(null);
@@ -263,6 +298,7 @@ export function DataTableBody<TData extends Record<string, any>>({
             table={table}
             contextMenuActions={contextMenuActions}
             onRowClick={onRowClick}
+            editingColumnId={cellEditing?.rowId === row.id ? cellEditing.columnId : null}
           />
         ))
       ) : isLoading ? (
