@@ -2,13 +2,16 @@ package rateagreementrepository
 
 import (
 	"context"
+	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -209,10 +212,115 @@ func (r *repository) ListVersions(
 		return nil, err
 	}
 
+	if err = r.resolveAccessorialNames(ctx, req.TenantInfo, entities); err != nil {
+		log.Error("failed to resolve accessorial names for versions", zap.Error(err))
+		return nil, err
+	}
+
 	return &pagination.ListResult[*rateagreement.RateAgreementVersion]{
 		Items: entities,
 		Total: total,
 	}, nil
+}
+
+// resolveAccessorialNames patches each version's id → code map for every
+// accessorial charge its snapshot or change summary mentions. Names are looked
+// up at read time rather than stored, so a charge renamed after the fact still
+// reads under its current code — the terms themselves stay immutable, keyed by
+// id.
+func (r *repository) resolveAccessorialNames(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	versions []*rateagreement.RateAgreementVersion,
+) error {
+	chargeIDs := collectAccessorialChargeIDs(versions)
+	if len(chargeIDs) == 0 {
+		return nil
+	}
+
+	cols := buncolgen.AccessorialChargeColumns
+	charges := make([]*accessorialcharge.AccessorialCharge, 0, len(chargeIDs))
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&charges).
+		Column(cols.ID.String(), cols.Code.String()).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.AccessorialChargeScopeTenant(sq, tenantInfo).
+				Where(cols.ID.In(), bun.List(chargeIDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		return err
+	}
+
+	names := make(map[string]string, len(charges))
+	for _, charge := range charges {
+		names[charge.ID.String()] = charge.Code
+	}
+
+	for _, version := range versions {
+		versionNames := make(map[string]string)
+		for id := range version.AccessorialTerms {
+			if code, ok := names[id]; ok {
+				versionNames[id] = code
+			}
+		}
+		for _, id := range summaryAccessorialChargeIDs(version.ChangeSummary) {
+			if code, ok := names[id]; ok {
+				versionNames[id] = code
+			}
+		}
+		if len(versionNames) > 0 {
+			version.AccessorialNames = versionNames
+		}
+	}
+
+	return nil
+}
+
+func collectAccessorialChargeIDs(
+	versions []*rateagreement.RateAgreementVersion,
+) []string {
+	seen := make(map[string]struct{})
+	for _, version := range versions {
+		for id := range version.AccessorialTerms {
+			seen[id] = struct{}{}
+		}
+		for _, id := range summaryAccessorialChargeIDs(version.ChangeSummary) {
+			seen[id] = struct{}{}
+		}
+	}
+
+	ids := make([]string, 0, len(seen))
+	for id := range seen {
+		ids = append(ids, id)
+	}
+
+	return ids
+}
+
+const accessorialTermsPathPrefix = "accessorialTerms."
+
+// summaryAccessorialChargeIDs reads the charge ids out of a change summary's
+// paths — "accessorialTerms.<id>" or "accessorialTerms.<id>.<field>". A
+// removed accessorial appears only here: its id is gone from the snapshot but
+// its removal is still a change somebody will want named.
+func summaryAccessorialChargeIDs(
+	summary map[string]jsonutils.FieldChange,
+) []string {
+	ids := make([]string, 0, len(summary))
+	for path := range summary {
+		rest, ok := strings.CutPrefix(path, accessorialTermsPathPrefix)
+		if !ok {
+			continue
+		}
+		if id, _, _ := strings.Cut(rest, "."); id != "" {
+			ids = append(ids, id)
+		}
+	}
+
+	return ids
 }
 
 // GetEffectiveVersion returns the header terms that governed at a moment.

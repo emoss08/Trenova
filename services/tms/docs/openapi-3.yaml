@@ -5484,6 +5484,39 @@ components:
                 - StatusActive
                 - StatusExpired
                 - StatusVoid
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.AccessorialTermSnapshot:
+            properties:
+                amount:
+                    type: number
+                appliesFrom:
+                    type: integer
+                appliesTo:
+                    type: integer
+                applyCondition:
+                    type: string
+                autoApply:
+                    type: boolean
+                formulaTemplateId:
+                    type: string
+                freeUnits:
+                    type: integer
+                maxAmount:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                method:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.Method'
+                rateUnit:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.RateUnit'
+                serviceTypeIds:
+                    items:
+                        type: string
+                    type: array
+                shipmentTypeIds:
+                    items:
+                        type: string
+                    type: array
+                waived:
+                    type: boolean
+            type: object
         github_com_emoss08_trenova_internal_core_domain_rateagreement.AgreementType:
             enum:
                 - Contract
@@ -5516,6 +5549,19 @@ components:
                 - FreightClassSourceCommodity
                 - FreightClassSourceDensity
                 - FreightClassSourceFixed
+        github_com_emoss08_trenova_internal_core_domain_rateagreement.FuelTermSnapshot:
+            properties:
+                capAmount:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                fuelSurchargeProgramId:
+                    type: string
+                incrementRateOverride:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                pegPriceOverride:
+                    $ref: '#/components/schemas/decimal.NullDecimal'
+                waived:
+                    type: boolean
+            type: object
         github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType:
             enum:
                 - Customer
@@ -5923,9 +5969,39 @@ components:
             type: object
         github_com_emoss08_trenova_internal_core_domain_rateagreement.RateAgreementVersion:
             properties:
+                accessorialNames:
+                    additionalProperties:
+                        type: string
+                    description: |-
+                        Read-time only: accessorial charge id → code, resolved by the repository
+                        for every id the snapshot and change summary mention. Never persisted.
+                    type: object
+                accessorialTerms:
+                    additionalProperties:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.AccessorialTermSnapshot'
+                    description: |-
+                        The negotiated accessorial schedule keyed by accessorial charge id.
+                        Stored as ids only — names are patched on at read time into
+                        AccessorialNames, so a later rename of the charge cannot rewrite what
+                        the contract said.
+                    type: object
+                agreementEffectiveFrom:
+                    description: |-
+                        The agreement's own window, distinct from EffectiveFrom/EffectiveTo above,
+                        which say when this *version* of the terms governed. Moving the contract's
+                        dates is a renegotiation like any other and diffs under these names.
+                    type: integer
+                agreementEffectiveTo:
+                    type: integer
                 agreementType:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.AgreementType'
+                autoRenew:
+                    type: boolean
+                billToCustomerId:
+                    type: string
                 businessUnitId:
+                    type: string
+                carrierId:
                     type: string
                 changeMessage:
                     type: string
@@ -5933,6 +6009,8 @@ components:
                     additionalProperties:
                         $ref: '#/components/schemas/jsonutils.FieldChange'
                     type: object
+                code:
+                    type: string
                 contractRef:
                     type: string
                 createdAt:
@@ -5943,16 +6021,24 @@ components:
                     type: string
                 currency:
                     type: string
+                customerId:
+                    type: string
                 defaultMaxCharge:
                     $ref: '#/components/schemas/decimal.NullDecimal'
                 defaultMinCharge:
                     $ref: '#/components/schemas/decimal.NullDecimal'
                 description:
                     type: string
+                documentId:
+                    type: string
                 effectiveFrom:
                     type: integer
                 effectiveTo:
                     type: integer
+                fuelTerms:
+                    allOf:
+                        - $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.FuelTermSnapshot'
+                    description: The fuel binding's negotiated terms as they stood.
                 id:
                     type: string
                 marginFloorPercent:
@@ -5963,8 +6049,14 @@ components:
                     type: string
                 organizationId:
                     type: string
+                partyType:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_domain_rateagreement.PartyType'
+                priority:
+                    type: integer
                 rateAgreementId:
                     type: string
+                renewalNoticeDays:
+                    type: integer
                 roundingMode:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_ratetypes.RoundingMode'
                 roundingPrecision:

@@ -395,12 +395,51 @@ export const versionFieldChangeSchema = z.object({
   to: z.unknown().nullish(),
 });
 
+/** One accessorial's negotiated terms as a version recorded them. */
+export const versionAccessorialTermSchema = z.object({
+  method: z.string().nullish(),
+  rateUnit: z.string().nullish(),
+  amount: z.string().nullish(),
+  waived: z.boolean().nullish(),
+  autoApply: z.boolean().nullish(),
+  applyCondition: z.string().nullish(),
+  freeUnits: z.number().int().nullish(),
+  maxAmount: z.string().nullish(),
+  formulaTemplateId: z.string().nullish(),
+  serviceTypeIds: z.array(z.string()).nullish(),
+  shipmentTypeIds: z.array(z.string()).nullish(),
+  appliesFrom: z.number().int().nullish(),
+  appliesTo: z.number().int().nullish(),
+});
+export type VersionAccessorialTerm = z.infer<typeof versionAccessorialTermSchema>;
+
+/** The fuel binding's negotiated terms as a version recorded them. */
+export const versionFuelTermSchema = z.object({
+  fuelSurchargeProgramId: z.string().nullish(),
+  waived: z.boolean().nullish(),
+  pegPriceOverride: z.string().nullish(),
+  incrementRateOverride: z.string().nullish(),
+  capAmount: z.string().nullish(),
+});
+
 export const rateAgreementVersionSchema = z.object({
   id: optionalStringSchema,
   rateAgreementId: optionalStringSchema,
   versionNumber: z.number().int(),
   effectiveFrom: z.number().int(),
   effectiveTo: z.number().int().nullish(),
+  code: z.string().nullish(),
+  name: z.string().nullish(),
+  priority: z.number().int().nullish(),
+  agreementEffectiveFrom: z.number().int().nullish(),
+  agreementEffectiveTo: z.number().int().nullish(),
+  autoRenew: z.boolean().nullish(),
+  renewalNoticeDays: z.number().int().nullish(),
+  billToCustomerId: z.string().nullish(),
+  accessorialTerms: z.record(z.string(), versionAccessorialTermSchema).nullish(),
+  fuelTerms: versionFuelTermSchema.nullish(),
+  /** Accessorial charge id → code, resolved by the server at read time. */
+  accessorialNames: z.record(z.string(), z.string()).nullish(),
   changeMessage: z.string().default(""),
   changeSummary: z.record(z.string(), versionFieldChangeSchema).nullish(),
   createdById: z.string().nullish(),

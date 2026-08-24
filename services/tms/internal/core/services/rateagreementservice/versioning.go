@@ -11,6 +11,9 @@ import (
 
 // headerVersionIgnoreFields keeps the version diff to the negotiated terms:
 // identity and bookkeeping belong to the version row, not to the contract.
+// effectiveFrom/effectiveTo name the version row's own lifetime, so the diff
+// must ignore them at any depth — which is why the agreement's window snapshots
+// as agreementEffectiveFrom/To and an accessorial's as appliesFrom/To.
 var headerVersionIgnoreFields = []string{
 	"id",
 	"createdAt",
@@ -21,6 +24,7 @@ var headerVersionIgnoreFields = []string{
 	"changeMessage",
 	"changeSummary",
 	"status",
+	"accessorialNames",
 }
 
 // headerTermsChanged diffs two readings of the same agreement down to the
@@ -33,9 +37,13 @@ func headerTermsChanged(
 	before := rateagreement.NewVersionFromAgreement(original, 0, 0, pulid.Nil, "", nil)
 	after := rateagreement.NewVersionFromAgreement(updated, 0, 0, pulid.Nil, "", nil)
 
-	changes, err := jsonutils.JSONDiff(before, after, &jsonutils.DiffOptions{
-		IgnoreFields: headerVersionIgnoreFields,
-	})
+	// Built on the defaults for their MaxDepth: the snapshot nests — a term
+	// inside an accessorial inside the schedule — and a zero depth would stop
+	// the walk at the header fields.
+	opts := jsonutils.DefaultOptions()
+	opts.IgnoreFields = headerVersionIgnoreFields
+
+	changes, err := jsonutils.JSONDiff(before, after, opts)
 	if err != nil || len(changes) == 0 {
 		return nil, false
 	}
