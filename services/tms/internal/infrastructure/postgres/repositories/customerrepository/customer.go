@@ -182,7 +182,8 @@ func (r *repository) ListConnection(
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return r.applyCursorPageFilters(sq, req)
 			},
-		})
+		},
+	)
 	if err != nil {
 		log.Error("failed to scan customers", zap.Error(err))
 		return nil, err
@@ -440,9 +441,6 @@ func (r *repository) saveBillingProfile(
 		Set("auto_transfer = EXCLUDED.auto_transfer").
 		Set("auto_mark_ready_to_bill = EXCLUDED.auto_mark_ready_to_bill").
 		Set("auto_bill = EXCLUDED.auto_bill").
-		Set("detention_billing_enabled = EXCLUDED.detention_billing_enabled").
-		Set("detention_free_minutes = EXCLUDED.detention_free_minutes").
-		Set("detention_rate_per_hour = EXCLUDED.detention_rate_per_hour").
 		Set("auto_apply_accessorials = EXCLUDED.auto_apply_accessorials").
 		Set("billing_currency = EXCLUDED.billing_currency").
 		Set("require_po_number = EXCLUDED.require_po_number").

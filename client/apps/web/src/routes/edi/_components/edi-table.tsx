@@ -50,7 +50,7 @@ const EDI_QUEUE_REFETCH_INTERVAL_MS = 30_000;
 
 export default function EdiTable({ kind }: { kind: EDIPageKind }) {
   return (
-    <div className="fle flex-col pt-3">
+    <div className="fle flex-col gap-1">
       {kind === "overview" && <EDIOverview />}
       {kind === "partners" && <PartnersWorkspace />}
       {kind === "communication-profiles" && <CommunicationProfilesWorkspace />}
@@ -68,7 +68,7 @@ function PartnersWorkspace() {
   const columns = useMemo(() => getPartnerColumns(), []);
 
   return (
-    <div className="flex flex-col gap-4 px-3">
+    <div className="flex flex-col gap-4 px-3 pt-3">
       <PendingConnectionsPanel />
       <DataTable<EDIPartner>
         name="EDI Connection"
@@ -372,18 +372,20 @@ function TestCasesWorkspace() {
 
   return (
     <Outer>
-      <DataTable<EDITestCaseRow>
-        name="EDI Test Case"
-        queryKey="edi-test-case-list"
-        resource={Resource.EDI}
-        columns={columns}
-        TablePanel={TestCasePanel}
-        graphql={ediTableGraphQLConfigs.testCases}
-      />
+      <div className="flex flex-col p-1">
+        <DataTable<EDITestCaseRow>
+          name="EDI Test Case"
+          queryKey="edi-test-case-list"
+          resource={Resource.EDI}
+          columns={columns}
+          TablePanel={TestCasePanel}
+          graphql={ediTableGraphQLConfigs.testCases}
+        />
+      </div>
     </Outer>
   );
 }
 
 function Outer({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col px-3">{children}</div>;
+  return <div className="flex flex-col px-3 pt-3">{children}</div>;
 }
