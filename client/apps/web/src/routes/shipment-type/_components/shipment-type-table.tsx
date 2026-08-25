@@ -1,16 +1,19 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { shipmentTypeTableGraphQLConfig } from "@/lib/graphql/shipment-type-table";
 import { statusChoices } from "@/lib/choices";
+import { shipmentTypeTableGraphQLConfig } from "@/lib/graphql/shipment-type-table";
 import { apiService } from "@/services/api";
-import type { DockAction } from "@trenova/shared/types/data-table";
-import { Resource } from "@trenova/shared/types/permission";
 import type { ShipmentType } from "@/types/shipment-type";
 import { useQueryClient } from "@tanstack/react-query";
+import type { CellEditCommitFn } from "@trenova/shared/lib/cell-editing-feature";
+import type { DockAction } from "@trenova/shared/types/data-table";
+import { Resource } from "@trenova/shared/types/permission";
 import { CircleCheckIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./shipment-type-columns";
 import { ShipmentTypePanel } from "./shipment-type-panel";
+
+const INLINE_EDITABLE_FIELDS = new Set<keyof ShipmentType>(["code", "description"]);
 
 export default function ShipmentTypeTable() {
   const queryClient = useQueryClient();
@@ -36,6 +39,25 @@ export default function ShipmentTypeTable() {
           },
         },
       );
+    },
+    [queryClient],
+  );
+
+  const handleCellEditCommit = useCallback<CellEditCommitFn<ShipmentType>>(
+    async ({ rowId, columnId, value }) => {
+      const field = columnId as keyof ShipmentType;
+      if (!INLINE_EDITABLE_FIELDS.has(field)) return;
+      if (field === "code" && (value === null || value === "")) {
+        throw new Error("Code is required.");
+      }
+
+      await apiService.shipmentTypeService.patch(rowId, { [field]: value });
+      await queryClient.invalidateQueries({
+        queryKey: ["shipment-type-list"],
+        refetchType: "all",
+      });
+
+      toast.success("Shipment Type updated");
     },
     [queryClient],
   );
@@ -66,6 +88,7 @@ export default function ShipmentTypeTable() {
       dockActions={dockActions}
       TablePanel={ShipmentTypePanel}
       enableRowSelection
+      onCellEditCommit={handleCellEditCommit}
     />
   );
 }

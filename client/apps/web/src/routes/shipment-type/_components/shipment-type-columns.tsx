@@ -50,6 +50,7 @@ export function getColumns(): ColumnDef<ShipmentType>[] {
         apiField: "status",
         filterable: true,
         sortable: true,
+        label: "Status",
         filterType: "select",
         filterOptions: statusChoices,
         defaultFilterOperator: "eq",
@@ -62,10 +63,12 @@ export function getColumns(): ColumnDef<ShipmentType>[] {
         const { code, color } = row.original;
         return <DataTableColorColumn text={code} color={color} />;
       },
+      enableCellEditing: true,
       meta: {
         apiField: "code",
         filterable: true,
         sortable: true,
+        label: "Code",
         filterType: "text",
         defaultFilterOperator: "contains",
       },
@@ -79,10 +82,12 @@ export function getColumns(): ColumnDef<ShipmentType>[] {
       size: 400,
       minSize: 300,
       maxSize: 500,
+      enableCellEditing: true,
       meta: {
         apiField: "description",
         filterable: true,
         sortable: true,
+        label: "Description",
         filterType: "text",
         defaultFilterOperator: "contains",
       },
@@ -97,6 +102,7 @@ export function getColumns(): ColumnDef<ShipmentType>[] {
         apiField: "createdAt",
         filterable: false,
         sortable: true,
+        label: "Created At",
         filterType: "date",
         defaultFilterOperator: "daterange",
       },

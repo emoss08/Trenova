@@ -48,6 +48,7 @@ export function getColumns(): ColumnDef<ServiceType>[] {
       maxSize: 150,
       meta: {
         apiField: "status",
+        label: "Status",
         filterable: true,
         sortable: true,
         filterType: "select",
@@ -65,6 +66,7 @@ export function getColumns(): ColumnDef<ServiceType>[] {
       },
       meta: {
         apiField: "code",
+        label: "Code",
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -83,6 +85,7 @@ export function getColumns(): ColumnDef<ServiceType>[] {
       maxSize: 500,
       meta: {
         apiField: "description",
+        label: "Description",
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -97,6 +100,7 @@ export function getColumns(): ColumnDef<ServiceType>[] {
       },
       meta: {
         apiField: "createdAt",
+        label: "Created At",
         filterable: false,
         sortable: true,
         filterType: "date",

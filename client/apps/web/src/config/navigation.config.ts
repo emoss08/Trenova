@@ -10,11 +10,11 @@ import {
   HomeIcon,
   Package,
   ReceiptTextIcon,
-  WalletIcon,
   SettingsIcon,
   TimerIcon,
   TruckIcon,
   UsersIcon,
+  WalletIcon,
 } from "lucide-react";
 import type { ModuleId, NavigationConfig, NavModule } from "./navigation.types";
 
@@ -276,12 +276,6 @@ const billingModule: NavModule = {
           label: "Accessorial Charges",
           path: "/billing/configuration-files/accessorial-charges",
           resource: Resource.AccessorialCharge,
-        },
-        {
-          id: "charge-types",
-          label: "Charge Types",
-          path: "/billing/configuration-files/charge-types",
-          resource: Resource.ChargeType,
         },
         {
           id: "formula-templates",

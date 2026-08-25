@@ -1,4 +1,3 @@
-import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import {
   combineLoaders,
   createCapabilityLoader,
@@ -6,11 +5,12 @@ import {
 } from "@/lib/route-permission";
 import { AppLayout } from "@/routes/app-layout";
 import { RootLayout } from "@/routes/root-layout";
+import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
+import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
-import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
 import { AdminLayout } from "./routes/admin-layout";
 
 const protectedLoader: LoaderFunction = async () => {
