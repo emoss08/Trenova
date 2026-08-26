@@ -37,6 +37,15 @@ type CreateInternalEDIConnectionAcceptanceRequest struct {
 	TenantInfo    pagination.TenantInfo        `json:"tenantInfo"`
 }
 
+type EDIConnectionSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+}
+
+type GetEDIConnectionsByIDsRequest struct {
+	TenantInfo    pagination.TenantInfo `json:"-"`
+	ConnectionIDs []pulid.ID            `json:"connectionIds"`
+}
+
 type EDIConnectionRepository interface {
 	ListConnections(
 		ctx context.Context,
@@ -66,4 +75,12 @@ type EDIConnectionRepository interface {
 		ctx context.Context,
 		req *CreateInternalEDIConnectionAcceptanceRequest,
 	) (*edi.EDIConnection, error)
+	SelectOptions(
+		ctx context.Context,
+		req *EDIConnectionSelectOptionsRequest,
+	) (*pagination.ListResult[*edi.EDIConnection], error)
+	GetConnectionsByIDs(
+		ctx context.Context,
+		req GetEDIConnectionsByIDsRequest,
+	) ([]*edi.EDIConnection, error)
 }

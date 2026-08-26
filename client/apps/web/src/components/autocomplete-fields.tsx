@@ -16,7 +16,6 @@ import type { Document } from "@trenova/shared/types/document";
 import type { DocumentType } from "@trenova/shared/types/document-type";
 import type {
   EDICommunicationProfile,
-  EDIConnection,
   EDIDocumentType,
   EDIMappingProfile,
   EDIPartner,
@@ -220,6 +219,10 @@ const glAccountSelectOptionsGraphQL = {
 
 const fuelSurchargeProgramSelectOptionsGraphQL = {
   resource: "FUEL_SURCHARGE_PROGRAM",
+} satisfies GraphQLSelectOptionsConfig;
+
+const ediConnectionSelectOptionsGraphQL = {
+  resource: "EDI_CONNECTION",
 } satisfies GraphQLSelectOptionsConfig;
 
 function getDocumentLabel(option: Document) {
@@ -728,24 +731,19 @@ export function EDICommunicationProfileAutocompleteField<T extends FieldValues>(
   );
 }
 
-function ediConnectionDisplayLabel(option: EDIConnection) {
-  const source = option.sourceOrganization?.name ?? option.sourceOrganizationId;
-  const target = option.targetOrganization?.name ?? option.targetOrganizationId;
-  return `${source} → ${target}`;
-}
-
 export function EDIConnectionAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<EDIConnection, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<EDIConnection, T>
-      link="/edi/connections/"
+    <AutocompleteField<GraphQLSelectOption, T>
+      link="/edi/connections/select-options/"
+      graphql={ediConnectionSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => ediConnectionDisplayLabel(option)}
+      getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
         <EDIOptionStack
-          primary={ediConnectionDisplayLabel(option)}
-          secondary={`${option.method} · ${option.status}`}
+          primary={option.label || ""}
+          secondary={option.description || ""}
         />
       )}
       {...props}

@@ -2104,6 +2104,7 @@ export type SegregationType =
 export type SelectOptionResource =
   | 'CARRIER'
   | 'CUSTOMER'
+  | 'EDI_CONNECTION'
   | 'EDI_TRANSFER'
   | 'EQUIPMENT_MANUFACTURER'
   | 'EQUIPMENT_TYPE'

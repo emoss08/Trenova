@@ -51842,6 +51842,7 @@ extend type Query {
 	{Name: "../schema/select_options.graphqls", Input: `enum SelectOptionResource {
   CARRIER
   CUSTOMER
+  EDI_CONNECTION
   EQUIPMENT_TYPE
   EQUIPMENT_MANUFACTURER
   TRAILER

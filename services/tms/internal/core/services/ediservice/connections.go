@@ -31,6 +31,20 @@ func (s *Service) GetConnection(
 	return s.connectionRepo.GetConnectionByID(ctx, req)
 }
 
+func (s *Service) ConnectionSelectOptions(
+	ctx context.Context,
+	req *repositories.EDIConnectionSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDIConnection], error) {
+	return s.connectionRepo.SelectOptions(ctx, req)
+}
+
+func (s *Service) GetConnectionsByIDs(
+	ctx context.Context,
+	req repositories.GetEDIConnectionsByIDsRequest,
+) ([]*edi.EDIConnection, error) {
+	return s.connectionRepo.GetConnectionsByIDs(ctx, req)
+}
+
 func (s *Service) CreateConnection(
 	ctx context.Context,
 	req *CreateEDIConnectionRequest,

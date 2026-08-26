@@ -83,6 +83,9 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		gqlmodel.SelectOptionResourceCustomer: {
 			resolve: r.resolveCustomerSelectOptions,
 		},
+		gqlmodel.SelectOptionResourceEdiConnection: {
+			resolve: r.resolveEDIConnectionSelectOptions,
+		},
 		gqlmodel.SelectOptionResourceEquipmentType: {
 			resolve: r.resolveEquipmentTypeSelectOptions,
 		},
@@ -609,6 +612,48 @@ func selectOptionBoolFilter(filters map[string]any, key string) bool {
 	}
 }
 
+func (r *Resolver) resolveEDIConnectionSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		entities, err := r.ediService.GetConnectionsByIDs(
+			ctx,
+			repositories.GetEDIConnectionsByIDsRequest{
+				TenantInfo:    req.tenantInfo,
+				ConnectionIDs: req.ids,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		items := orderedSelectOptionItems(
+			req.ids,
+			entities,
+			ediConnectionID,
+			ediConnectionSelectOptionItem,
+		)
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.ediService.ConnectionSelectOptions(
+		ctx,
+		&repositories.EDIConnectionSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		ediConnectionSelectOptionItem,
+	)
+}
+
 func (r *Resolver) resolveEDITransferSelectOptions(
 	ctx context.Context,
 	req selectOptionsRequest,
@@ -982,6 +1027,54 @@ func ediTransferSelectOption(entity *edi.EDITransfer) *gqlmodel.SelectOption {
 		Description: stringPtr(description),
 		Meta:        meta,
 	}
+}
+
+func ediConnectionSelectOptionItem(entity *edi.EDIConnection) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		ediConnectionSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func ediConnectionSelectOption(entity *edi.EDIConnection) *gqlmodel.SelectOption {
+	source := ""
+	if entity.SourceOrganization != nil {
+		source = entity.SourceOrganization.Name
+	}
+	if source == "" {
+		source = entity.SourceOrganizationID.String()
+	}
+	target := ""
+	if entity.TargetOrganization != nil {
+		target = entity.TargetOrganization.Name
+	}
+	if target == "" {
+		target = entity.TargetOrganizationID.String()
+	}
+	label := source + " → " + target
+
+	description := string(entity.Method) + " \u00b7 " + string(entity.Status)
+
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       label,
+		Description: stringPtr(description),
+		Meta: map[string]any{
+			"method":                 string(entity.Method),
+			"status":                 string(entity.Status),
+			"sourceOrganizationId":   entity.SourceOrganizationID.String(),
+			"targetOrganizationId":   entity.TargetOrganizationID.String(),
+			"sourceOrganizationName": source,
+			"targetOrganizationName": target,
+			"sourcePartnerId":        optionalIDString(entity.SourcePartnerID),
+			"targetPartnerId":        optionalIDString(entity.TargetPartnerID),
+		},
+	}
+}
+
+func ediConnectionID(entity *edi.EDIConnection) pulid.ID {
+	return entity.ID
 }
 
 func shipmentID(entity *shipment.Shipment) pulid.ID {

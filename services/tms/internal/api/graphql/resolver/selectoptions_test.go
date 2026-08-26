@@ -12,11 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/ratezone"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
@@ -271,6 +273,118 @@ func TestSelectOptions_RateZoneByIDsResolvesNames(t *testing.T) {
 	assert.Equal(t, "SW", result.Edges[0].Node.Meta["code"])
 }
 
+func TestSelectOptions_EDIConnectionByIDsResolvesLabels(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	firstID := pulid.MustNew("edic_")
+	secondID := pulid.MustNew("edic_")
+	repo := mocks.NewMockEDIConnectionRepository(t)
+	repo.EXPECT().
+		GetConnectionsByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetEDIConnectionsByIDsRequest) bool {
+			return req.TenantInfo.OrgID == orgID &&
+				req.TenantInfo.BuID == buID &&
+				len(req.ConnectionIDs) == 2
+		})).
+		Return([]*edi.EDIConnection{
+			{
+				ID:                   secondID,
+				SourceOrganization:   &tenant.Organization{Name: "Beta LLC"},
+				TargetOrganization:   &tenant.Organization{Name: "Gamma Inc"},
+				SourceOrganizationID: pulid.MustNew("org_"),
+				TargetOrganizationID: pulid.MustNew("org_"),
+				Method:               edi.ConnectionMethodInternal,
+				Status:               edi.ConnectionStatusActive,
+				CreatedAt:            1780415884,
+			},
+			{
+				ID:                   firstID,
+				SourceOrganization:   &tenant.Organization{Name: "Acme Corp"},
+				TargetOrganization:   &tenant.Organization{Name: "Beta LLC"},
+				SourceOrganizationID: pulid.MustNew("org_"),
+				TargetOrganizationID: pulid.MustNew("org_"),
+				Method:               edi.ConnectionMethodInternal,
+				Status:               edi.ConnectionStatusActive,
+				CreatedAt:            1780415883,
+			},
+		}, nil).
+		Once()
+
+	resolver := &queryResolver{&Resolver{
+		ediService: ediservice.New(ediservice.Params{
+			Logger:         zap.NewNop(),
+			ConnectionRepo: repo,
+		}),
+	}}
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(orgID, buID, userID),
+	)
+
+	result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceEdiConnection,
+		Ids:      []string{firstID.String(), secondID.String()},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Edges, 2)
+	assert.Equal(t, "Acme Corp → Beta LLC", result.Edges[0].Node.Label)
+	assert.Equal(t, "Beta LLC → Gamma Inc", result.Edges[1].Node.Label)
+}
+
+func TestSelectOptions_EDIConnectionSelectOptionsFiltersActive(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	repo := mocks.NewMockEDIConnectionRepository(t)
+	repo.EXPECT().
+		SelectOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDIConnectionSelectOptionsRequest) bool {
+			return req.SelectQueryRequest.TenantInfo.OrgID == orgID &&
+				req.SelectQueryRequest.TenantInfo.BuID == buID
+		})).
+		Return(&pagination.ListResult[*edi.EDIConnection]{
+			Items: []*edi.EDIConnection{
+				{
+					ID:                   pulid.MustNew("edic_"),
+					SourceOrganization:   &tenant.Organization{Name: "Acme Corp"},
+					TargetOrganization:   &tenant.Organization{Name: "Beta LLC"},
+					SourceOrganizationID: orgID,
+					TargetOrganizationID: pulid.MustNew("org_"),
+					Method:               edi.ConnectionMethodInternal,
+					Status:               edi.ConnectionStatusActive,
+					CreatedAt:            1780415883,
+				},
+			},
+			Total: 1,
+		}, nil).
+		Once()
+
+	resolver := &queryResolver{&Resolver{
+		ediService: ediservice.New(ediservice.Params{
+			Logger:         zap.NewNop(),
+			ConnectionRepo: repo,
+		}),
+	}}
+	ctx := gqlctx.WithAuthContext(
+		t.Context(),
+		testGraphQLAuthContext(orgID, buID, userID),
+	)
+
+	result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceEdiConnection,
+		Query:    stringPtr("Acme"),
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Edges, 1)
+	assert.Equal(t, "Acme Corp → Beta LLC", result.Edges[0].Node.Label)
+	assert.Equal(t, "Internal \u00b7 Active", *result.Edges[0].Node.Description)
+}
+
 func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {
 	t.Parallel()
 
@@ -444,5 +558,43 @@ func TestSelectOptionMappers(t *testing.T) {
 		t,
 		"Load tender "+fallbackTransfer.ID.String(),
 		ediTransferSelectOption(fallbackTransfer).Label,
+	)
+
+	connectionEntity := &edi.EDIConnection{
+		ID:                   pulid.MustNew("edic_"),
+		SourceOrganizationID: pulid.MustNew("org_"),
+		TargetOrganizationID: pulid.MustNew("org_"),
+		Method:               edi.ConnectionMethodInternal,
+		Status:               edi.ConnectionStatusActive,
+		CreatedAt:            1780415700,
+		SourceOrganization:   &tenant.Organization{Name: "Acme Corp"},
+		TargetOrganization:   &tenant.Organization{Name: "Beta LLC"},
+	}
+	connectionOption := ediConnectionSelectOption(connectionEntity)
+	assert.Equal(t, "Acme Corp → Beta LLC", connectionOption.Label)
+	assert.Equal(t, "Internal \u00b7 Active", *connectionOption.Description)
+	assert.Equal(t, string(edi.ConnectionMethodInternal), connectionOption.Meta["method"])
+	assert.Equal(t, string(edi.ConnectionStatusActive), connectionOption.Meta["status"])
+	assert.Equal(t, "Acme Corp", connectionOption.Meta["sourceOrganizationName"])
+	assert.Equal(t, "Beta LLC", connectionOption.Meta["targetOrganizationName"])
+	assert.Equal(
+		t,
+		connectionEntity.CreatedAt,
+		ediConnectionSelectOptionItem(connectionEntity).cursor.CreatedAt,
+	)
+
+	fallbackConnection := &edi.EDIConnection{
+		ID:                   pulid.MustNew("edic_"),
+		SourceOrganizationID: pulid.MustNew("org_"),
+		TargetOrganizationID: pulid.MustNew("org_"),
+		Method:               edi.ConnectionMethodInternal,
+		Status:               edi.ConnectionStatusActive,
+		CreatedAt:            1780415800,
+	}
+	fallbackOption := ediConnectionSelectOption(fallbackConnection)
+	assert.Equal(
+		t,
+		fallbackConnection.SourceOrganizationID.String()+" → "+fallbackConnection.TargetOrganizationID.String(),
+		fallbackOption.Label,
 	)
 }

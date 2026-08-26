@@ -13,7 +13,8 @@ import (
 // A failed probe logs and continues rather than aborting startup: the API and
 // the worker both boot without a renderer today, and refusing to start would
 // take down shipment dispatch because nobody could print an invoice.
-var Module = fx.Module("pdf-renderer",
+var Module = fx.Module(
+	"pdf-renderer",
 	fx.Provide(
 		fx.Annotate(New, fx.As(new(services.PDFRenderer))),
 	),
@@ -26,7 +27,7 @@ func registerHealthProbe(lc fx.Lifecycle, renderer services.PDFRenderer, logger 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			if !renderer.Enabled() {
-				l.Warn(
+				l.Error(
 					"no PDF renderer configured; document generation will be unavailable",
 					zap.String("remedy", "set renderer.gotenbergUrl"),
 				)
@@ -34,7 +35,7 @@ func registerHealthProbe(lc fx.Lifecycle, renderer services.PDFRenderer, logger 
 			}
 
 			if err := renderer.Healthy(ctx); err != nil {
-				l.Warn(
+				l.Error(
 					"PDF renderer is not reachable; document generation will fail until it is",
 					zap.Error(err),
 				)

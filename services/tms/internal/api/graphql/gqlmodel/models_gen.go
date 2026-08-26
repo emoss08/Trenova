@@ -6336,6 +6336,7 @@ type SelectOptionResource string
 const (
 	SelectOptionResourceCarrier               SelectOptionResource = "CARRIER"
 	SelectOptionResourceCustomer              SelectOptionResource = "CUSTOMER"
+	SelectOptionResourceEdiConnection         SelectOptionResource = "EDI_CONNECTION"
 	SelectOptionResourceEquipmentType         SelectOptionResource = "EQUIPMENT_TYPE"
 	SelectOptionResourceEquipmentManufacturer SelectOptionResource = "EQUIPMENT_MANUFACTURER"
 	SelectOptionResourceTrailer               SelectOptionResource = "TRAILER"
@@ -6357,6 +6358,7 @@ const (
 var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceCarrier,
 	SelectOptionResourceCustomer,
+	SelectOptionResourceEdiConnection,
 	SelectOptionResourceEquipmentType,
 	SelectOptionResourceEquipmentManufacturer,
 	SelectOptionResourceTrailer,
@@ -6377,7 +6379,7 @@ var AllSelectOptionResource = []SelectOptionResource{
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceCarrier, SelectOptionResourceCustomer, SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceFiscalYear, SelectOptionResourceFiscalPeriod, SelectOptionResourceGlAccount, SelectOptionResourceLocation, SelectOptionResourceRateZone:
+	case SelectOptionResourceCarrier, SelectOptionResourceCustomer, SelectOptionResourceEdiConnection, SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceOrder, SelectOptionResourceEdiTransfer, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceFiscalYear, SelectOptionResourceFiscalPeriod, SelectOptionResourceGlAccount, SelectOptionResourceLocation, SelectOptionResourceRateZone:
 		return true
 	}
 	return false

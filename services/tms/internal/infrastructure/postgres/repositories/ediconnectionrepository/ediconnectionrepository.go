@@ -89,6 +89,82 @@ func filterConnectionsQuery(
 	})
 }
 
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *repositories.EDIConnectionSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDIConnection], error) {
+	entities := make([]*edi.EDIConnection, 0, req.SelectQueryRequest.Pagination.SafeLimit())
+	rel := buncolgen.EDIConnectionRelations
+	cols := buncolgen.EDIConnectionColumns
+	orgCols := buncolgen.OrganizationColumns
+
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Relation(rel.SourceOrganization).
+		Relation(rel.TargetOrganization).
+		Where(cols.BusinessUnitID.Eq(), req.SelectQueryRequest.TenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereOr(cols.SourceOrganizationID.Eq(), req.SelectQueryRequest.TenantInfo.OrgID).
+				WhereOr(cols.TargetOrganizationID.Eq(), req.SelectQueryRequest.TenantInfo.OrgID)
+		}).
+		Where(cols.Status.Eq(), edi.ConnectionStatusActive)
+
+	if req.SelectQueryRequest.Query != "" {
+		term := "%" + req.SelectQueryRequest.Query + "%"
+		query = query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereOr(cols.Method.TextILike(), term).
+				WhereOr(orgCols.Name.WithAlias("source_organization").ILike(), term).
+				WhereOr(orgCols.Name.WithAlias("target_organization").ILike(), term)
+		})
+	}
+
+	total, err := query.
+		Order(cols.CreatedAt.OrderDesc()).
+		Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+		Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+		ScanAndCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagination.ListResult[*edi.EDIConnection]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
+func (r *repository) GetConnectionsByIDs(
+	ctx context.Context,
+	req repositories.GetEDIConnectionsByIDsRequest,
+) ([]*edi.EDIConnection, error) {
+	if len(req.ConnectionIDs) == 0 {
+		return []*edi.EDIConnection{}, nil
+	}
+
+	entities := make([]*edi.EDIConnection, 0, len(req.ConnectionIDs))
+	cols := buncolgen.EDIConnectionColumns
+	rel := buncolgen.EDIConnectionRelations
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Relation(rel.SourceOrganization).
+		Relation(rel.TargetOrganization).
+		Where(cols.ID.In(), bun.List(req.ConnectionIDs)).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereOr(cols.SourceOrganizationID.Eq(), req.TenantInfo.OrgID).
+				WhereOr(cols.TargetOrganizationID.Eq(), req.TenantInfo.OrgID)
+		}).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) GetConnectionByID(
 	ctx context.Context,
 	req repositories.GetEDIConnectionByIDRequest,

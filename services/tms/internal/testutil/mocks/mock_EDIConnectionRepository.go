@@ -515,3 +515,139 @@ func (_c *MockEDIConnectionRepository_UpdateConnection_Call) RunAndReturn(run fu
 	_c.Call.Return(run)
 	return _c
 }
+
+// GetConnectionsByIDs provides a mock function for the type MockEDIConnectionRepository
+func (_mock *MockEDIConnectionRepository) GetConnectionsByIDs(ctx context.Context, req repositories.GetEDIConnectionsByIDsRequest) ([]*edi.EDIConnection, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetConnectionsByIDs")
+	}
+
+	var r0 []*edi.EDIConnection
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIConnectionsByIDsRequest) ([]*edi.EDIConnection, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIConnectionsByIDsRequest) []*edi.EDIConnection); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edi.EDIConnection)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetEDIConnectionsByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIConnectionRepository_GetConnectionsByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetConnectionsByIDs'
+type MockEDIConnectionRepository_GetConnectionsByIDs_Call struct {
+	*mock.Call
+}
+
+// GetConnectionsByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDIConnectionsByIDsRequest
+func (_e *MockEDIConnectionRepository_Expecter) GetConnectionsByIDs(ctx any, req any) *MockEDIConnectionRepository_GetConnectionsByIDs_Call {
+	return &MockEDIConnectionRepository_GetConnectionsByIDs_Call{Call: _e.mock.On("GetConnectionsByIDs", ctx, req)}
+}
+
+func (_c *MockEDIConnectionRepository_GetConnectionsByIDs_Call) Run(run func(ctx context.Context, req repositories.GetEDIConnectionsByIDsRequest)) *MockEDIConnectionRepository_GetConnectionsByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetEDIConnectionsByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetEDIConnectionsByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIConnectionRepository_GetConnectionsByIDs_Call) Return(eDIConnections []*edi.EDIConnection, err error) *MockEDIConnectionRepository_GetConnectionsByIDs_Call {
+	_c.Call.Return(eDIConnections, err)
+	return _c
+}
+
+func (_c *MockEDIConnectionRepository_GetConnectionsByIDs_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIConnectionsByIDsRequest) ([]*edi.EDIConnection, error)) *MockEDIConnectionRepository_GetConnectionsByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SelectOptions provides a mock function for the type MockEDIConnectionRepository
+func (_mock *MockEDIConnectionRepository) SelectOptions(ctx context.Context, req *repositories.EDIConnectionSelectOptionsRequest) (*pagination.ListResult[*edi.EDIConnection], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SelectOptions")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDIConnection]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDIConnectionSelectOptionsRequest) (*pagination.ListResult[*edi.EDIConnection], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDIConnectionSelectOptionsRequest) *pagination.ListResult[*edi.EDIConnection]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDIConnection])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.EDIConnectionSelectOptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIConnectionRepository_SelectOptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectOptions'
+type MockEDIConnectionRepository_SelectOptions_Call struct {
+	*mock.Call
+}
+
+// SelectOptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.EDIConnectionSelectOptionsRequest
+func (_e *MockEDIConnectionRepository_Expecter) SelectOptions(ctx any, req any) *MockEDIConnectionRepository_SelectOptions_Call {
+	return &MockEDIConnectionRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
+}
+
+func (_c *MockEDIConnectionRepository_SelectOptions_Call) Run(run func(ctx context.Context, req *repositories.EDIConnectionSelectOptionsRequest)) *MockEDIConnectionRepository_SelectOptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.EDIConnectionSelectOptionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.EDIConnectionSelectOptionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIConnectionRepository_SelectOptions_Call) Return(listResult *pagination.ListResult[*edi.EDIConnection], err error) *MockEDIConnectionRepository_SelectOptions_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIConnectionRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *repositories.EDIConnectionSelectOptionsRequest) (*pagination.ListResult[*edi.EDIConnection], error)) *MockEDIConnectionRepository_SelectOptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
