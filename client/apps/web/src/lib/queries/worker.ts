@@ -28,16 +28,12 @@ type WorkerPTOConnection = {
 function workerPTOConnectionToLimitOffset(
   connection: WorkerPTOConnection,
 ): GenericLimitOffsetResponse<WorkerPTO> {
-  const results = (connection.edges ?? []).map(
-    (edge) => edge.node as WorkerPTO,
-  );
+  const results = (connection.edges ?? []).map((edge) => edge.node as WorkerPTO);
 
   return {
     results,
     count: connection.totalCount ?? results.length,
-    next: connection.pageInfo?.hasNextPage
-      ? (connection.pageInfo.endCursor ?? null)
-      : null,
+    next: connection.pageInfo?.hasNextPage ? (connection.pageInfo.endCursor ?? null) : null,
     prev: null,
   };
 }
@@ -45,10 +41,7 @@ function workerPTOConnectionToLimitOffset(
 export async function fetchUpcomingWorkerPTO(
   req: ListUpcomingPTORequest,
 ): Promise<GenericLimitOffsetResponse<WorkerPTO>> {
-  const data = await requestGraphQL<
-    UpcomingWorkerPtoQuery,
-    UpcomingWorkerPtoQueryVariables
-  >({
+  const data = await requestGraphQL<UpcomingWorkerPtoQuery, UpcomingWorkerPtoQueryVariables>({
     document: UpcomingWorkerPtoDocument,
     operationName: "UpcomingWorkerPto",
     variables: {
@@ -66,9 +59,7 @@ export async function fetchUpcomingWorkerPTO(
     },
   });
 
-  return workerPTOConnectionToLimitOffset(
-    data.upcomingWorkerPTO as WorkerPTOConnection,
-  );
+  return workerPTOConnectionToLimitOffset(data.upcomingWorkerPTO as WorkerPTOConnection);
 }
 
 export const worker = createQueryKeys("worker", {
@@ -79,10 +70,7 @@ export const worker = createQueryKeys("worker", {
   ptoChartData: (req: PTOChartDataRequest) => ({
     queryKey: ["pto-chart-data", req],
     queryFn: async () => {
-      const data = await requestGraphQL<
-        WorkerPtoChartDataQuery,
-        WorkerPtoChartDataQueryVariables
-      >({
+      const data = await requestGraphQL<WorkerPtoChartDataQuery, WorkerPtoChartDataQueryVariables>({
         document: WorkerPtoChartDataDocument,
         operationName: "WorkerPtoChartData",
         variables: { input: req },

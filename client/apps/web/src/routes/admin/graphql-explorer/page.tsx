@@ -1,7 +1,11 @@
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@trenova/shared/components/ui/resizable";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@trenova/shared/components/ui/resizable";
 import type { CatalogFilter } from "./_components/catalog";
 import {
   catalog,

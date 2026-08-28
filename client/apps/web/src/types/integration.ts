@@ -73,7 +73,10 @@ export const integrationCatalogItemSchema = z.object({
   enabled: z.boolean(),
   configured: z.boolean(),
   status: integrationCatalogStatusSchema,
-  configSpec: z.array(configFieldSpecSchema).nullish().transform((value) => value ?? []),
+  configSpec: z
+    .array(configFieldSpecSchema)
+    .nullish()
+    .transform((value) => value ?? []),
   supportsTestConnect: z.boolean().optional(),
 });
 

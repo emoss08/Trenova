@@ -18,10 +18,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-type ExceptionTargetStatus = Extract<
-  BillingQueueItem["status"],
-  "Exception" | "SentBackToOps"
->;
+type ExceptionTargetStatus = Extract<BillingQueueItem["status"], "Exception" | "SentBackToOps">;
 
 type ExceptionFormValues = {
   exceptionReasonCode: ExceptionReasonCode | "";
@@ -48,8 +45,7 @@ function buildExceptionSchema(targetStatus: ExceptionTargetStatus) {
         });
       }
 
-      const notesRequired =
-        targetStatus === "Exception" || values.exceptionReasonCode === "Other";
+      const notesRequired = targetStatus === "Exception" || values.exceptionReasonCode === "Other";
 
       if (notesRequired && values.exceptionNotes.trim() === "") {
         ctx.addIssue({
@@ -176,12 +172,7 @@ export function BillingQueueExceptionPopover({
             </FormControl>
           </FormGroup>
           <div className="mt-3 flex justify-end">
-            <Button
-              type="submit"
-              size="sm"
-              isLoading={isSubmitting}
-              loadingText="Submitting..."
-            >
+            <Button type="submit" size="sm" isLoading={isSubmitting} loadingText="Submitting...">
               Submit
             </Button>
           </div>

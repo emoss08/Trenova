@@ -1,11 +1,6 @@
 import type { PixelCrop } from "react-image-crop";
 
-const ALLOWED_IMAGE_MIME_TYPES = new Set([
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-]);
+const ALLOWED_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
 
 const OUTPUT_MIME_TYPE = "image/webp";
 
@@ -76,7 +71,8 @@ export async function createCroppedWebPFile(
     : Math.max(
         1,
         Math.round(
-          cropWidth * Math.min(1, (options.maxDimension ?? cropWidth) / Math.max(cropWidth, cropHeight)),
+          cropWidth *
+            Math.min(1, (options.maxDimension ?? cropWidth) / Math.max(cropWidth, cropHeight)),
         ),
       );
   const targetHeight = options.targetHeight
@@ -84,7 +80,8 @@ export async function createCroppedWebPFile(
     : Math.max(
         1,
         Math.round(
-          cropHeight * Math.min(1, (options.maxDimension ?? cropHeight) / Math.max(cropWidth, cropHeight)),
+          cropHeight *
+            Math.min(1, (options.maxDimension ?? cropHeight) / Math.max(cropWidth, cropHeight)),
         ),
       );
 

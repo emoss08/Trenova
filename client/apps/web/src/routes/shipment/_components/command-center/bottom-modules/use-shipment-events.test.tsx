@@ -37,9 +37,7 @@ describe("useShipmentEventsInfinite", () => {
       id: `se_${index + 1}`,
       occurredAt: 1_800_000_000 - index,
     }));
-    listShipmentEventsMock
-      .mockResolvedValueOnce(firstPage)
-      .mockResolvedValueOnce([]);
+    listShipmentEventsMock.mockResolvedValueOnce(firstPage).mockResolvedValueOnce([]);
 
     const { result } = renderHook(
       () =>

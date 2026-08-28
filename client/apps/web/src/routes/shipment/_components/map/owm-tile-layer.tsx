@@ -1,15 +1,14 @@
 import { useMap } from "@vis.gl/react-google-maps";
 import { useEffect, useRef } from "react";
 
-export type OWMLayerId = "wind_new" | "clouds_new" | "temp_new" | "pressure_new" | "precipitation_new";
+export type OWMLayerId =
+  | "wind_new"
+  | "clouds_new"
+  | "temp_new"
+  | "pressure_new"
+  | "precipitation_new";
 
-export function OWMTileLayer({
-  layerId,
-  apiKey,
-}: {
-  layerId: OWMLayerId;
-  apiKey: string;
-}) {
+export function OWMTileLayer({ layerId, apiKey }: { layerId: OWMLayerId; apiKey: string }) {
   const map = useMap();
   const overlayRef = useRef<google.maps.ImageMapType | null>(null);
 

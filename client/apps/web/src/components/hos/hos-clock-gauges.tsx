@@ -76,7 +76,12 @@ export function HosClockGauge({
           <span className="text-muted-foreground text-[8.5px] leading-tight font-semibold tracking-wide uppercase">
             {label}
           </span>
-          <span className={cn("text-[10.5px] leading-tight font-semibold tabular-nums", SEVERITY_TEXT[tone])}>
+          <span
+            className={cn(
+              "text-[10.5px] leading-tight font-semibold tabular-nums",
+              SEVERITY_TEXT[tone],
+            )}
+          >
             {formatClockDurationMs(clamped)}
           </span>
         </div>

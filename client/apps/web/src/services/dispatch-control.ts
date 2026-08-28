@@ -1,9 +1,6 @@
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
-import {
-  dispatchControlSchema,
-  type DispatchControl,
-} from "@/types/dispatch-control";
+import { dispatchControlSchema, type DispatchControl } from "@/types/dispatch-control";
 
 export class DispatchControlService {
   public async get() {
@@ -12,10 +9,7 @@ export class DispatchControlService {
   }
 
   public async update(data: DispatchControl) {
-    const response = await api.put<DispatchControl>(
-      "/dispatch-controls/",
-      data,
-    );
+    const response = await api.put<DispatchControl>("/dispatch-controls/", data);
     return safeParse(dispatchControlSchema, response, "Dispatch Control");
   }
 }

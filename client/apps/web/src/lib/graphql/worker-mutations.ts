@@ -19,10 +19,7 @@ type RejectWorkerPTOResponse = {
   rejectWorkerPTO: unknown;
 };
 
-export async function patchWorker(
-  id: Worker["id"],
-  input: WorkerPatchInput,
-): Promise<Worker> {
+export async function patchWorker(id: Worker["id"], input: WorkerPatchInput): Promise<Worker> {
   const data = await requestGraphQL<PatchWorkerResponse>({
     document: PatchWorkerDocument,
     operationName: "PatchWorker",
@@ -47,10 +44,7 @@ export async function approveWorkerPTO(id: WorkerPTO["id"]): Promise<WorkerPTO> 
   return data.approveWorkerPTO as WorkerPTO;
 }
 
-export async function rejectWorkerPTO(
-  id: WorkerPTO["id"],
-  reason: string,
-): Promise<WorkerPTO> {
+export async function rejectWorkerPTO(id: WorkerPTO["id"], reason: string): Promise<WorkerPTO> {
   const data = await requestGraphQL<RejectWorkerPTOResponse>({
     document: RejectWorkerPtoDocument,
     operationName: "RejectWorkerPto",

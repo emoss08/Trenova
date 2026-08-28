@@ -17,7 +17,12 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatSplitDateTime } from "@trenova/shared/lib/date";
 import { apiService } from "@/services/api";
-import type { ShipmentMove, SplitMovePayload, SplitMoveResponse, StopType } from "@trenova/shared/types/shipment";
+import type {
+  ShipmentMove,
+  SplitMovePayload,
+  SplitMoveResponse,
+  StopType,
+} from "@trenova/shared/types/shipment";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InfoIcon } from "lucide-react";
 import { useCallback } from "react";

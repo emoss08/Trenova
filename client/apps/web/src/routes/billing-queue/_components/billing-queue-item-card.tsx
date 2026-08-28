@@ -59,9 +59,7 @@ export function BillingQueueItemCard({
               </div>
               <Tooltip>
                 <TooltipTrigger
-                  render={
-                    <span className="text-muted-foreground/70 text-[11px]">{age}</span>
-                  }
+                  render={<span className="text-muted-foreground/70 text-[11px]">{age}</span>}
                 />
                 <TooltipContent side="left" sideOffset={10}>
                   {generateDateTimeStringFromUnixTimestamp(item.createdAt)}

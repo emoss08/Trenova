@@ -5,10 +5,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import type {
-  AROpenItem,
-  ARStatementTransaction,
-} from "@/lib/graphql/accounts-receivable";
+import type { AROpenItem, ARStatementTransaction } from "@/lib/graphql/accounts-receivable";
 import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -107,7 +104,11 @@ export function CustomerStatementPage() {
     return options;
   }, [statementDate, startDate]);
 
-  const { data: statement, isLoading, isError } = useQuery({
+  const {
+    data: statement,
+    isLoading,
+    isError,
+  } = useQuery({
     ...queries.ar.customerStatement(customerId!, queryOptions),
     enabled: Boolean(customerId),
   });
@@ -136,9 +137,7 @@ export function CustomerStatementPage() {
 
   if (isLoading) {
     return (
-      <PageLayout
-        pageHeaderProps={{ title: "Customer Statement", description: "Loading..." }}
-      >
+      <PageLayout pageHeaderProps={{ title: "Customer Statement", description: "Loading..." }}>
         <div className="mx-4 mt-3 space-y-4">
           <Skeleton className="h-8 w-48" />
           <div className="grid gap-2.5 md:grid-cols-4">
@@ -155,9 +154,7 @@ export function CustomerStatementPage() {
 
   if (isError || !statement) {
     return (
-      <PageLayout
-        pageHeaderProps={{ title: "Customer Statement", description: "Failed to load." }}
-      >
+      <PageLayout pageHeaderProps={{ title: "Customer Statement", description: "Failed to load." }}>
         <div className="mx-4 mt-3 space-y-3">
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
             Could not load the statement. The customer may not exist or you may not have permission.
@@ -227,11 +224,7 @@ export function CustomerStatementPage() {
             value={statement.openingBalanceMinor}
             icon={CalendarIcon}
           />
-          <MetricCard
-            label="Charges"
-            value={statement.totalChargesMinor}
-            icon={FileTextIcon}
-          />
+          <MetricCard label="Charges" value={statement.totalChargesMinor} icon={FileTextIcon} />
           <MetricCard
             label="Payments"
             value={statement.totalPaymentsMinor}
@@ -327,9 +320,7 @@ export function CustomerStatementPage() {
                       <td className="px-4 py-2.5 font-mono text-xs font-medium">
                         {txn.documentNumber}
                       </td>
-                      <td className="text-muted-foreground px-4 py-2.5 text-xs">
-                        {txn.eventType}
-                      </td>
+                      <td className="text-muted-foreground px-4 py-2.5 text-xs">{txn.eventType}</td>
                       <td className="px-4 py-2.5 text-right">
                         {txn.chargeMinor > 0 ? (
                           <AmountDisplay value={txn.chargeMinor} className="text-xs" />

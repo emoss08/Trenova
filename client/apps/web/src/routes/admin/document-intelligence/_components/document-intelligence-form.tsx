@@ -22,12 +22,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
-import {
-  FormProvider,
-  useForm,
-  useFormContext,
-  useWatch,
-} from "react-hook-form";
+import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 
 const allowedResourceOptions: Array<{
   value: DocumentControlResource;
@@ -37,26 +32,22 @@ const allowedResourceOptions: Array<{
   {
     value: documentControlResourceSchema.enum.shipment,
     label: "Shipment",
-    description:
-      "Allow shipment drafts to be generated for shipment documents.",
+    description: "Allow shipment drafts to be generated for shipment documents.",
   },
   {
     value: documentControlResourceSchema.enum.trailer,
     label: "Trailer",
-    description:
-      "Allow shipment-draft style extraction on trailer-linked documents.",
+    description: "Allow shipment-draft style extraction on trailer-linked documents.",
   },
   {
     value: documentControlResourceSchema.enum.tractor,
     label: "Tractor",
-    description:
-      "Allow shipment-draft style extraction on tractor-linked documents.",
+    description: "Allow shipment-draft style extraction on tractor-linked documents.",
   },
   {
     value: documentControlResourceSchema.enum.worker,
     label: "Worker",
-    description:
-      "Allow shipment-draft style extraction on worker-linked documents.",
+    description: "Allow shipment-draft style extraction on worker-linked documents.",
   },
 ];
 
@@ -74,8 +65,7 @@ export default function DocumentIntelligenceForm() {
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.documentControl.get._def,
-    mutationFn: async (values: DocumentControl) =>
-      apiService.documentControlService.update(values),
+    mutationFn: async (values: DocumentControl) => apiService.documentControlService.update(values),
     resourceName: "Document Intelligence",
     resetForm: reset,
     form,
@@ -116,9 +106,9 @@ function PlatformAvailabilityCard() {
       <CardHeader>
         <CardTitle>Platform Availability</CardTitle>
         <CardDescription>
-          Control whether document intelligence is active for this tenant. When
-          this is disabled, extraction and shipment-draft workflows remain off
-          even if the OpenAI integration is configured.
+          Control whether document intelligence is active for this tenant. When this is disabled,
+          extraction and shipment-draft workflows remain off even if the OpenAI integration is
+          configured.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -160,9 +150,8 @@ function ClassificationAndExtractionCard() {
       <CardHeader>
         <CardTitle>Classification And Extraction</CardTitle>
         <CardDescription>
-          Manage automatic routing, document type assignment, and optional
-          AI-assisted extraction. AI toggles here depend on a configured and
-          enabled OpenAI integration.
+          Manage automatic routing, document type assignment, and optional AI-assisted extraction.
+          AI toggles here depend on a configured and enabled OpenAI integration.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -258,9 +247,8 @@ function ShipmentDraftCard() {
       <CardHeader>
         <CardTitle>Shipment Draft Extraction</CardTitle>
         <CardDescription>
-          Limit structured shipment-draft generation to the resources where
-          operators should be able to review a draft and create a shipment from
-          it.
+          Limit structured shipment-draft generation to the resources where operators should be able
+          to review a draft and create a shipment from it.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -287,16 +275,12 @@ function ShipmentDraftCard() {
                   <Checkbox
                     checked={checked}
                     disabled={!enabled || !shipmentDraftEnabled}
-                    onCheckedChange={(value) =>
-                      toggleResource(option.value, value === true)
-                    }
+                    onCheckedChange={(value) => toggleResource(option.value, value === true)}
                     className="mt-0.5"
                   />
                   <div className="grid gap-1">
                     <Label>{option.label}</Label>
-                    <p className="text-2xs text-muted-foreground">
-                      {option.description}
-                    </p>
+                    <p className="text-2xs text-muted-foreground">{option.description}</p>
                   </div>
                 </div>
               );
@@ -320,8 +304,7 @@ function SearchCard() {
       <CardHeader>
         <CardTitle>Search And Retrieval</CardTitle>
         <CardDescription>
-          Control whether extracted text is indexed for document search and
-          retrieval experiences.
+          Control whether extracted text is indexed for document search and retrieval experiences.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">

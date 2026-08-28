@@ -22,9 +22,7 @@ export default function BillingQueueDocumentPreview({
     return (
       <div className="bg-muted/20 text-muted-foreground flex h-full flex-col items-center justify-center gap-2 p-4">
         <FileSearchIcon className="size-10" />
-        <p className="text-center text-sm">
-          Select a document to preview it here
-        </p>
+        <p className="text-center text-sm">Select a document to preview it here</p>
       </div>
     );
   }

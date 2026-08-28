@@ -1,12 +1,7 @@
 import { apiService } from "@/services/api";
 import type { Document } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  DownloadIcon,
-  FileIcon,
-  Trash2Icon,
-  UploadCloudIcon,
-} from "lucide-react";
+import { DownloadIcon, FileIcon, Trash2Icon, UploadCloudIcon } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -45,8 +40,7 @@ function DocumentRow({
         <div>
           <p className="text-sm font-medium">{document.originalName}</p>
           <p className="text-muted-foreground text-xs">
-            {formatFileSize(document.fileSize)} &bull;{" "}
-            {formatUnixDate(document.createdAt)}
+            {formatFileSize(document.fileSize)} &bull; {formatUnixDate(document.createdAt)}
           </p>
         </div>
       </div>
@@ -88,7 +82,9 @@ export function DocumentUploadSection({
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId, undefined, { includeDocumentType: "true" }),
+      apiService.documentService.getByResource(resourceType, resourceId, undefined, {
+        includeDocumentType: "true",
+      }),
     enabled: !!resourceId,
   });
 
@@ -109,8 +105,7 @@ export function DocumentUploadSection({
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (documentId: string) =>
-      apiService.documentService.delete(documentId),
+    mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
       toast.success("Document deleted successfully");
@@ -186,9 +181,7 @@ export function DocumentUploadSection({
   if (!resourceId) {
     return (
       <FormSection title="Documents" className="border-t pt-2">
-        <p className="text-muted-foreground text-sm">
-          Save the record to upload documents.
-        </p>
+        <p className="text-muted-foreground text-sm">Save the record to upload documents.</p>
       </FormSection>
     );
   }
@@ -216,13 +209,9 @@ export function DocumentUploadSection({
         >
           <UploadCloudIcon className="text-muted-foreground mb-2 size-10" />
           <p className="text-muted-foreground text-sm">
-            {uploadMutation.isPending
-              ? "Uploading..."
-              : "Drop files here or click to upload"}
+            {uploadMutation.isPending ? "Uploading..." : "Drop files here or click to upload"}
           </p>
-          <p className="text-muted-foreground/70 text-xs">
-            PDF, Images, Documents up to 50MB
-          </p>
+          <p className="text-muted-foreground/70 text-xs">PDF, Images, Documents up to 50MB</p>
           <input
             ref={fileInputRef}
             type="file"

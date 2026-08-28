@@ -17,12 +17,7 @@ import { cn } from "@trenova/shared/lib/utils";
 type TabsProps = TabsPrimitiveProps;
 
 function Tabs({ className, ...props }: TabsProps) {
-  return (
-    <TabsPrimitive
-      className={cn("flex flex-col gap-2", className)}
-      {...props}
-    />
-  );
+  return <TabsPrimitive className={cn("flex flex-col gap-2", className)} {...props} />;
 }
 
 type TabsListProps = TabsListPrimitiveProps;
@@ -66,12 +61,7 @@ function TabsPanels(props: TabsPanelsProps) {
 type TabsPanelProps = TabsPanelPrimitiveProps;
 
 function TabsPanel({ className, ...props }: TabsPanelProps) {
-  return (
-    <TabsPanelPrimitive
-      className={cn("flex-1 outline-none", className)}
-      {...props}
-    />
-  );
+  return <TabsPanelPrimitive className={cn("flex-1 outline-none", className)} {...props} />;
 }
 
 export {

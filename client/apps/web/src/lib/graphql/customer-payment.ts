@@ -17,9 +17,7 @@ import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-t
 export type CustomerPaymentRow = NonNullable<
   CustomerPaymentTableQuery["customerPayments"]["edges"]
 >[number]["node"];
-export type CustomerPaymentDetail = NonNullable<
-  CustomerPaymentDetailQuery["customerPayment"]
->;
+export type CustomerPaymentDetail = NonNullable<CustomerPaymentDetailQuery["customerPayment"]>;
 export type CustomerPaymentDetailApplication = NonNullable<
   CustomerPaymentDetail["applications"]
 >[number];

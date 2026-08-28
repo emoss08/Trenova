@@ -9,9 +9,9 @@ import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 
 export class ServiceFailureReasonCodeService {
   async getAll(params?: string) {
-    const response = await api.get<
-      GenericLimitOffsetResponse<ServiceFailureReasonCode>
-    >(`/service-failure-reason-codes/${params ? `?${params}` : ""}`);
+    const response = await api.get<GenericLimitOffsetResponse<ServiceFailureReasonCode>>(
+      `/service-failure-reason-codes/${params ? `?${params}` : ""}`,
+    );
 
     const results = await safeParse(
       serviceFailureReasonCodeSchema.array(),
@@ -29,11 +29,7 @@ export class ServiceFailureReasonCodeService {
     const response = await api.get<ServiceFailureReasonCode>(
       `/service-failure-reason-codes/${id}/`,
     );
-    return safeParse(
-      serviceFailureReasonCodeSchema,
-      response,
-      "ServiceFailureReasonCode",
-    );
+    return safeParse(serviceFailureReasonCodeSchema, response, "ServiceFailureReasonCode");
   }
 
   async create(data: ServiceFailureReasonCode) {
@@ -41,11 +37,7 @@ export class ServiceFailureReasonCodeService {
       "/service-failure-reason-codes/",
       data,
     );
-    return safeParse(
-      serviceFailureReasonCodeSchema,
-      response,
-      "ServiceFailureReasonCode",
-    );
+    return safeParse(serviceFailureReasonCodeSchema, response, "ServiceFailureReasonCode");
   }
 
   async update(id: string, data: ServiceFailureReasonCode) {
@@ -53,33 +45,21 @@ export class ServiceFailureReasonCodeService {
       `/service-failure-reason-codes/${id}/`,
       data,
     );
-    return safeParse(
-      serviceFailureReasonCodeSchema,
-      response,
-      "ServiceFailureReasonCode",
-    );
+    return safeParse(serviceFailureReasonCodeSchema, response, "ServiceFailureReasonCode");
   }
 
   async archive(id: string) {
     const response = await api.post<ServiceFailureReasonCode>(
       `/service-failure-reason-codes/${id}/archive/`,
     );
-    return safeParse(
-      serviceFailureReasonCodeSchema,
-      response,
-      "ServiceFailureReasonCode",
-    );
+    return safeParse(serviceFailureReasonCodeSchema, response, "ServiceFailureReasonCode");
   }
 
   async activate(id: string) {
     const response = await api.post<ServiceFailureReasonCode>(
       `/service-failure-reason-codes/${id}/activate/`,
     );
-    return safeParse(
-      serviceFailureReasonCodeSchema,
-      response,
-      "ServiceFailureReasonCode",
-    );
+    return safeParse(serviceFailureReasonCodeSchema, response, "ServiceFailureReasonCode");
   }
 
   async reorder(reasonIds: string[]) {
@@ -87,11 +67,7 @@ export class ServiceFailureReasonCodeService {
       "/service-failure-reason-codes/reorder/",
       { reasonIds },
     );
-    return safeParse(
-      serviceFailureReasonCodeSchema.array(),
-      response,
-      "ServiceFailureReasonCodes",
-    );
+    return safeParse(serviceFailureReasonCodeSchema.array(), response, "ServiceFailureReasonCodes");
   }
 
   async selectOptions(params?: {
@@ -106,12 +82,8 @@ export class ServiceFailureReasonCodeService {
     if (params?.offset) search.set("offset", String(params.offset));
     if (params?.appliesTo) search.set("appliesTo", params.appliesTo);
 
-    const response = await api.get<
-      GenericLimitOffsetResponse<ServiceFailureReasonCode>
-    >(
-      `/service-failure-reason-codes/select-options/${
-        search.size ? `?${search.toString()}` : ""
-      }`,
+    const response = await api.get<GenericLimitOffsetResponse<ServiceFailureReasonCode>>(
+      `/service-failure-reason-codes/select-options/${search.size ? `?${search.toString()}` : ""}`,
     );
     const results = await safeParse(
       serviceFailureReasonCodeSchema.array(),

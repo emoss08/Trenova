@@ -46,7 +46,8 @@ export function AdditionalChargeDialog({
       const metaAmount = option.meta?.["amount"] ?? legacy.amount;
       if (lastAppliedChargeIdRef.current !== option.id) {
         if (metaMethod) setValue(`additionalCharges.${index}.method`, metaMethod as never, opts);
-        if (metaAmount != null) setValue(`additionalCharges.${index}.amount`, metaAmount as never, opts);
+        if (metaAmount != null)
+          setValue(`additionalCharges.${index}.amount`, metaAmount as never, opts);
         lastAppliedChargeIdRef.current = option.id ?? null;
       }
       setValue(`additionalCharges.${index}.accessorialCharge`, option as never);

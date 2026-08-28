@@ -16,7 +16,10 @@ import {
 } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { IdentityProvider, IdentityProviderFormValues } from "@trenova/shared/types/iam";
-import { identityProviderCreateFormSchema, identityProviderFormSchema } from "@trenova/shared/types/iam";
+import {
+  identityProviderCreateFormSchema,
+  identityProviderFormSchema,
+} from "@trenova/shared/types/iam";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon, PlusIcon, Trash2Icon } from "lucide-react";
@@ -70,13 +73,16 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
     });
   }, [setPanelParams]);
 
-  const openEditPanel = useCallback((provider: IdentityProvider) => {
-    void setPanelParams({
-      panelMode: "edit",
-      editingProvider: provider.id,
-      panelOpen: true,
-    });
-  }, [setPanelParams]);
+  const openEditPanel = useCallback(
+    (provider: IdentityProvider) => {
+      void setPanelParams({
+        panelMode: "edit",
+        editingProvider: provider.id,
+        panelOpen: true,
+      });
+    },
+    [setPanelParams],
+  );
 
   return (
     <div className="space-y-3">

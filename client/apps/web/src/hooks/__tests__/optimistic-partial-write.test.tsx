@@ -65,22 +65,24 @@ describe("a partially-failed write must not commit its optimistic update", () =>
 
     const { result } = renderHook(
       () =>
-        useOptimisticMutation<{ updateManualJournalDraft: { id: string } }, { reason: string }, typeof COMMITTED>(
-          {
-            queryKey: [...JOURNAL_KEY],
-            resourceName: "manual journal",
-            mutationFn: (data) =>
-              requestGraphQL({
-                document:
-                  "mutation UpdateManualJournalDraft($reason: String!) { updateManualJournalDraft(reason: $reason) { id } submitManualJournal { id } }",
-                operationName: "UpdateManualJournalDraft",
-                variables: data,
-              }),
-            optimisticUpdate: () => OPTIMISTIC,
-            onSuccess,
-            onError,
-          },
-        ),
+        useOptimisticMutation<
+          { updateManualJournalDraft: { id: string } },
+          { reason: string },
+          typeof COMMITTED
+        >({
+          queryKey: [...JOURNAL_KEY],
+          resourceName: "manual journal",
+          mutationFn: (data) =>
+            requestGraphQL({
+              document:
+                "mutation UpdateManualJournalDraft($reason: String!) { updateManualJournalDraft(reason: $reason) { id } submitManualJournal { id } }",
+              operationName: "UpdateManualJournalDraft",
+              variables: data,
+            }),
+          optimisticUpdate: () => OPTIMISTIC,
+          onSuccess,
+          onError,
+        }),
       { wrapper: wrapper(queryClient) },
     );
 
@@ -104,10 +106,10 @@ describe("a partially-failed write must not commit its optimistic update", () =>
 
   it("commits normally when the write fully succeeds", async () => {
     fetchMock.mockResolvedValue(
-      new Response(
-        JSON.stringify({ data: { updateManualJournalDraft: { id: "mj_1" } } }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      ),
+      new Response(JSON.stringify({ data: { updateManualJournalDraft: { id: "mj_1" } } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
     );
     const { result, onSuccess, onError } = renderJournalMutation();
 

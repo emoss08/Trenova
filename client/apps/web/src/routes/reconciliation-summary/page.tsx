@@ -14,9 +14,7 @@ export function ReconciliationSummaryPage() {
   });
 
   const matchRate =
-    data && data.importedCount > 0
-      ? Math.round((data.matchedCount / data.importedCount) * 100)
-      : 0;
+    data && data.importedCount > 0 ? Math.round((data.matchedCount / data.importedCount) * 100) : 0;
 
   return (
     <PageLayout
@@ -58,9 +56,7 @@ export function ReconciliationSummaryPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-semibold tracking-tight tabular-nums">
-                    {matchRate}%
-                  </p>
+                  <p className="text-3xl font-semibold tracking-tight tabular-nums">{matchRate}%</p>
                 </CardContent>
               </Card>
             </div>
@@ -180,9 +176,7 @@ function SummaryKPICard({
         >
           {count}
         </p>
-        <p className="text-muted-foreground text-xs tabular-nums">
-          {formatCurrency(amount / 100)}
-        </p>
+        <p className="text-muted-foreground text-xs tabular-nums">{formatCurrency(amount / 100)}</p>
       </CardContent>
     </Card>
   );

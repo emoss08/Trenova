@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { optionalStringSchema, timestampSchema, versionSchema } from "@trenova/shared/types/helpers";
+import {
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "@trenova/shared/types/helpers";
 
 export const sequenceTypes = [
   "pro_number",
@@ -48,7 +52,8 @@ function normalizeLocationCodeStrategy(value: unknown) {
     typeof input.sequenceDigits === "number" && input.sequenceDigits > 0
       ? input.sequenceDigits
       : defaultLocationCodeStrategy.sequenceDigits;
-  const separator = typeof input.separator === "string" ? input.separator : defaultLocationCodeStrategy.separator;
+  const separator =
+    typeof input.separator === "string" ? input.separator : defaultLocationCodeStrategy.separator;
   const casing = input.casing === "lower" ? "lower" : defaultLocationCodeStrategy.casing;
   const fallbackPrefix =
     typeof input.fallbackPrefix === "string" && input.fallbackPrefix.trim()
@@ -66,15 +71,17 @@ function normalizeLocationCodeStrategy(value: unknown) {
 }
 
 export const locationCodeStrategySchema = z
-  .preprocess(normalizeLocationCodeStrategy, z
-  .object({
-    components: z.array(locationCodeComponentSchema).min(1),
-    componentWidth: z.number().int().min(1).max(10),
-    sequenceDigits: z.number().int().min(1).max(10),
-    separator: z.string().max(2),
-    casing: z.enum(["upper", "lower"]),
-    fallbackPrefix: z.string().min(1).max(32),
-  }))
+  .preprocess(
+    normalizeLocationCodeStrategy,
+    z.object({
+      components: z.array(locationCodeComponentSchema).min(1),
+      componentWidth: z.number().int().min(1).max(10),
+      sequenceDigits: z.number().int().min(1).max(10),
+      separator: z.string().max(2),
+      casing: z.enum(["upper", "lower"]),
+      fallbackPrefix: z.string().min(1).max(32),
+    }),
+  )
   .refine((data) => !data.separator || ["-", "_", "/", "."].includes(data.separator), {
     path: ["separator"],
     message: "Separator must be one of '-', '_', '/', '.', or blank",

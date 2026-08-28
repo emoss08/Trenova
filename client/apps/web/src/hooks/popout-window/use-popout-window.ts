@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  getPopoutWindowManager,
-  type PopoutWindowOptions,
-} from "./popout-window";
+import { getPopoutWindowManager, type PopoutWindowOptions } from "./popout-window";
 
 type UsePopoutWindowOptions = {
   onReady?: (windowId: string) => void;
@@ -30,8 +27,7 @@ export function usePopoutWindow(options?: UsePopoutWindowOptions) {
     if (options?.onError) manager.on("onError", options.onError);
     if (options?.onFocus) manager.on("onFocus", options.onFocus);
     if (options?.onBlur) manager.on("onBlur", options.onBlur);
-    if (options?.onStateChange)
-      manager.on("onStateChange", options.onStateChange);
+    if (options?.onStateChange) manager.on("onStateChange", options.onStateChange);
 
     const handleWindowsChange = (windowIds: string[]) => {
       setActiveWindows(windowIds);
@@ -46,30 +42,18 @@ export function usePopoutWindow(options?: UsePopoutWindowOptions) {
 
   useEffect(() => {
     if (popoutId) {
-      window.opener?.postMessage(
-        { type: "popout-ready", popoutId },
-        window.location.origin,
-      );
+      window.opener?.postMessage({ type: "popout-ready", popoutId }, window.location.origin);
 
       const handleBeforeUnload = () => {
-        window.opener?.postMessage(
-          { type: "popout-closed", popoutId },
-          window.location.origin,
-        );
+        window.opener?.postMessage({ type: "popout-closed", popoutId }, window.location.origin);
       };
 
       const handleFocus = () => {
-        window.opener?.postMessage(
-          { type: "popout-focus", popoutId },
-          window.location.origin,
-        );
+        window.opener?.postMessage({ type: "popout-focus", popoutId }, window.location.origin);
       };
 
       const handleBlur = () => {
-        window.opener?.postMessage(
-          { type: "popout-blur", popoutId },
-          window.location.origin,
-        );
+        window.opener?.postMessage({ type: "popout-blur", popoutId }, window.location.origin);
       };
 
       window.addEventListener("beforeunload", handleBeforeUnload);
@@ -118,13 +102,10 @@ export function usePopoutWindow(options?: UsePopoutWindowOptions) {
     manager.focusWindow(windowId);
   }, []);
 
-  const sendMessage = useCallback(
-    (windowId: string, type: string, data?: unknown) => {
-      const manager = managerRef.current;
-      manager.sendMessage(windowId, type as any, data);
-    },
-    [],
-  );
+  const sendMessage = useCallback((windowId: string, type: string, data?: unknown) => {
+    const manager = managerRef.current;
+    manager.sendMessage(windowId, type as any, data);
+  }, []);
 
   const broadcastMessage = useCallback((type: string, data?: unknown) => {
     const manager = managerRef.current;

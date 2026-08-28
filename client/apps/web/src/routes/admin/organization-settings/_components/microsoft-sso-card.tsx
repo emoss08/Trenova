@@ -4,7 +4,11 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { EntraLogo } from "@/components/logos/entra";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@trenova/shared/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@trenova/shared/components/ui/collapsible";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";

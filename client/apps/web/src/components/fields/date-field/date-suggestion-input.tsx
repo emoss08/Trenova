@@ -45,8 +45,10 @@ function buildSuggestions(
   return [toSuggestion(trimmed)].filter(isSuggestion);
 }
 
-export interface DateSuggestionInputProps
-  extends Omit<React.ComponentProps<"input">, "value" | "defaultValue" | "onChange"> {
+export interface DateSuggestionInputProps extends Omit<
+  React.ComponentProps<"input">,
+  "value" | "defaultValue" | "onChange"
+> {
   value: Date | undefined;
   onValueChange: (date: Date | undefined) => void;
   formatValue: (date: Date) => string;
@@ -327,7 +329,8 @@ export function DateSuggestionInput({
               </ul>
             ) : (
               <p className="text-muted-foreground px-3 py-1.5 text-xs">
-                No matching date. Try &quot;t+2&quot;, &quot;next friday&quot;, or &quot;07/15&quot;.
+                No matching date. Try &quot;t+2&quot;, &quot;next friday&quot;, or
+                &quot;07/15&quot;.
               </p>
             )}
           </div>,

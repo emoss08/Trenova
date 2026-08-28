@@ -6,7 +6,11 @@ import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import type { Location, LocationGeofenceType, LocationGeofenceVertex } from "@trenova/shared/types/location";
+import type {
+  Location,
+  LocationGeofenceType,
+  LocationGeofenceVertex,
+} from "@trenova/shared/types/location";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import {

@@ -63,8 +63,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
     unknown,
     ImportBatchFormValues
   >({
-    mutationFn: async (data: CreateBatchRequest) =>
-      apiService.bankReceiptBatchService.create(data),
+    mutationFn: async (data: CreateBatchRequest) => apiService.bankReceiptBatchService.create(data),
     form,
     resourceName: "Import Batch",
     onSuccess: (result) => {

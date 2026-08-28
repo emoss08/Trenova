@@ -15,14 +15,15 @@ export class ShipmentTypeService {
       request,
     );
 
-    return safeParse(bulkUpdateShipmentTypeStatusResponseSchema, response, "Bulk Update Shipment Type Status");
+    return safeParse(
+      bulkUpdateShipmentTypeStatusResponseSchema,
+      response,
+      "Bulk Update Shipment Type Status",
+    );
   }
 
   public async patch(id: ShipmentType["id"], data: Partial<ShipmentType>) {
-    const response = await api.patch<ShipmentType>(
-      `/shipment-types/${id}/`,
-      data,
-    );
+    const response = await api.patch<ShipmentType>(`/shipment-types/${id}/`, data);
 
     return safeParse(shipmentTypeSchema, response, "Shipment Type");
   }

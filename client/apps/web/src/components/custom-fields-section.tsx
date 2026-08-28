@@ -124,8 +124,7 @@ export function CustomFieldsSection<T extends FieldValues>({
 }: CustomFieldsSectionProps<T>) {
   const { data: customFields, isLoading } = useQuery({
     queryKey: ["custom-fields", resourceType],
-    queryFn: () =>
-      apiService.customFieldService.getByResourceType(resourceType),
+    queryFn: () => apiService.customFieldService.getByResourceType(resourceType),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -148,10 +147,7 @@ export function CustomFieldsSection<T extends FieldValues>({
     <FormSection title="Custom Fields" className="border-t pt-2">
       <FormGroup cols={2}>
         {sortedFields.map((definition) => (
-          <FormControl
-            key={definition.id}
-            cols={definition.fieldType === "boolean" ? "full" : 1}
-          >
+          <FormControl key={definition.id} cols={definition.fieldType === "boolean" ? "full" : 1}>
             <CustomFieldRenderer
               definition={definition}
               control={control}

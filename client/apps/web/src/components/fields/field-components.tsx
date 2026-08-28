@@ -65,9 +65,7 @@ export function FieldLabel({ label, required }: { label?: React.ReactNode; requi
   }
 
   if (React.isValidElement(label)) {
-    return (
-      <div className={cn("block text-xs font-medium", required && "required")}>{label}</div>
-    );
+    return <div className={cn("block text-xs font-medium", required && "required")}>{label}</div>;
   }
 
   return <Label className={cn("block text-xs font-medium", required && "required")}>{label}</Label>;

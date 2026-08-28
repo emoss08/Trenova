@@ -44,10 +44,7 @@ export function CashApplicationEditor({
   const watchedRows = useWatch({ control, name: "applications" });
   const rows = useMemo(() => watchedRows ?? [], [watchedRows]);
 
-  const totals = useMemo(
-    () => computeApplicationTotals(rows, budgetMinor),
-    [rows, budgetMinor],
-  );
+  const totals = useMemo(() => computeApplicationTotals(rows, budgetMinor), [rows, budgetMinor]);
 
   return (
     <div className="space-y-3">
@@ -116,9 +113,7 @@ export function CashApplicationEditor({
                     </TableCell>
                     <TableCell className="py-1.5">
                       <div className="flex flex-col">
-                        <span className="font-mono text-xs font-medium">
-                          {row.invoiceNumber}
-                        </span>
+                        <span className="font-mono text-xs font-medium">{row.invoiceNumber}</span>
                         <span className="text-muted-foreground text-[11px]">
                           {formatDate(row.invoiceDate)}
                         </span>
@@ -181,9 +176,7 @@ export function CashApplicationEditor({
           <SummaryStat
             label="Unapplied"
             value={totals.unappliedMinor}
-            className={
-              totals.unappliedMinor > 0 ? "text-amber-600 dark:text-amber-400" : undefined
-            }
+            className={totals.unappliedMinor > 0 ? "text-amber-600 dark:text-amber-400" : undefined}
           />
         </div>
         {totals.isOverBudget ? (

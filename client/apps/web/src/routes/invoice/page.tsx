@@ -12,9 +12,7 @@ import { lazy, useCallback, useState } from "react";
 import { InvoiceSidebar } from "./_components/invoice-sidebar";
 import { invoiceSelectionSearchParamsParser } from "./use-invoice-state";
 
-const InvoiceDetailPane = lazy(
-  () => import("./_components/invoice-detail-pane"),
-);
+const InvoiceDetailPane = lazy(() => import("./_components/invoice-detail-pane"));
 const BillingQueueDocumentPreview = lazy(
   () => import("../billing-queue/_components/billing-queue-document-preview"),
 );
@@ -22,12 +20,8 @@ const BillingQueueDocumentPreview = lazy(
 export function InvoicesPage() {
   const [searchParams, setSearchParams] = useQueryStates(invoiceSelectionSearchParamsParser);
   const selectedInvoiceId = searchParams.item;
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
-    null,
-  );
-  const [selectedDocumentName, setSelectedDocumentName] = useState<
-    string | null
-  >(null);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
+  const [selectedDocumentName, setSelectedDocumentName] = useState<string | null>(null);
 
   const handleSelectInvoice = useCallback(
     (id: string) => {
@@ -38,21 +32,17 @@ export function InvoicesPage() {
     [setSearchParams],
   );
 
-  const handleDocumentSelect = useCallback(
-    (docId: string, fileName: string) => {
-      setSelectedDocumentId(docId);
-      setSelectedDocumentName(fileName);
-    },
-    [],
-  );
+  const handleDocumentSelect = useCallback((docId: string, fileName: string) => {
+    setSelectedDocumentId(docId);
+    setSelectedDocumentName(fileName);
+  }, []);
 
   return (
     <>
       <BillingWorkspaceLayout
         pageHeaderProps={{
           title: "Invoices",
-          description:
-            "Review draft invoices, confirm billing details, and post completed charges",
+          description: "Review draft invoices, confirm billing details, and post completed charges",
         }}
         sidebar={
           <InvoiceSidebar
@@ -80,14 +70,9 @@ export function InvoicesPage() {
           }
         }}
       >
-        <SheetContent
-          side="right"
-          className="w-[min(92vw,1100px)] p-0 sm:max-w-none"
-        >
+        <SheetContent side="right" className="w-[min(92vw,1100px)] p-0 sm:max-w-none">
           <SheetHeader className="border-border border-b pr-12">
-            <SheetTitle>
-              {selectedDocumentName || "Document Preview"}
-            </SheetTitle>
+            <SheetTitle>{selectedDocumentName || "Document Preview"}</SheetTitle>
             <SheetDescription>
               Review the supporting shipment document attached to this invoice.
             </SheetDescription>

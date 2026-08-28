@@ -43,8 +43,18 @@ export function HazmatZoneOverlay({
               strokeWidth={1.5}
               strokeDasharray="4 3"
             />
-            <circle cx={aCenter} cy={y} r={3} className={satisfied ? "fill-emerald-500" : "fill-destructive"} />
-            <circle cx={bCenter} cy={y} r={3} className={satisfied ? "fill-emerald-500" : "fill-destructive"} />
+            <circle
+              cx={aCenter}
+              cy={y}
+              r={3}
+              className={satisfied ? "fill-emerald-500" : "fill-destructive"}
+            />
+            <circle
+              cx={bCenter}
+              cy={y}
+              r={3}
+              className={satisfied ? "fill-emerald-500" : "fill-destructive"}
+            />
             <rect
               x={midX - 32}
               y={y - 8}

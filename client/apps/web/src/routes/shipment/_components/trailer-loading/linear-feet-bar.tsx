@@ -71,15 +71,15 @@ export function LinearFeetBar({
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
           {commodities.slice(0, 4).map((c) => (
             <div key={c.name} className="text-2xs flex items-center gap-1">
-              <div className={cn("size-2 rounded-sm border", c.palette.dotBg, c.palette.dotBorder)} />
+              <div
+                className={cn("size-2 rounded-sm border", c.palette.dotBg, c.palette.dotBorder)}
+              />
               <span className="text-foreground">{c.name}</span>
               <span className="text-muted-foreground">{c.lengthFeet.toFixed(1)}ft</span>
             </div>
           ))}
           {commodities.length > 4 && (
-            <span className="text-2xs text-muted-foreground">
-              +{commodities.length - 4} more
-            </span>
+            <span className="text-2xs text-muted-foreground">+{commodities.length - 4} more</span>
           )}
         </div>
       )}

@@ -132,7 +132,9 @@ export function PendingConnectionsPanel() {
         placeholder="Reason shared with the requesting organization"
         confirmLabel="Reject Connection"
         isPending={rejectMutation.isPending}
-        onConfirm={(reason) => rejecting && rejectMutation.mutate({ connection: rejecting, reason })}
+        onConfirm={(reason) =>
+          rejecting && rejectMutation.mutate({ connection: rejecting, reason })
+        }
       />
     </div>
   );

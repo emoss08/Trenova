@@ -7,4 +7,3 @@ export const distanceControl = createQueryKeys("distanceControl", {
     queryFn: async () => apiService.distanceControlService.get(),
   }),
 });
-

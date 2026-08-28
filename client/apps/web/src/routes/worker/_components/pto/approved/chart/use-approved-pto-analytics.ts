@@ -3,10 +3,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { PTOChartDataPoint, PTOType, Worker } from "@trenova/shared/types/worker";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import {
-  buildApprovedPTOMetrics,
-  type ApprovedPTOMetrics,
-} from "./approved-pto-metrics";
+import { buildApprovedPTOMetrics, type ApprovedPTOMetrics } from "./approved-pto-metrics";
 
 type Params = {
   startDate: number;

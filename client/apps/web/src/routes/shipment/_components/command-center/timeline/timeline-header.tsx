@@ -1,9 +1,5 @@
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  DAY_LABEL_HEIGHT_PX,
-  HOUR_TICK_HEIGHT_PX,
-  RAIL_WIDTH_PX,
-} from "./constants";
+import { DAY_LABEL_HEIGHT_PX, HOUR_TICK_HEIGHT_PX, RAIL_WIDTH_PX } from "./constants";
 import { secondsToX, type DayColumn, type HourTick, type TimeRange } from "./time-scale";
 import type { TimelineZoom } from "../url-state";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";

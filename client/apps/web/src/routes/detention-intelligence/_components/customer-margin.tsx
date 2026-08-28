@@ -24,10 +24,7 @@ const SORT_OPTIONS: { value: CustomerSort; label: string }[] = [
   { value: "billed", label: "Most billed" },
 ];
 
-function sortCustomers(
-  rows: CustomerDetentionStat[],
-  sort: CustomerSort,
-): CustomerDetentionStat[] {
+function sortCustomers(rows: CustomerDetentionStat[], sort: CustomerSort): CustomerDetentionStat[] {
   const sorted = [...rows];
 
   return sort === "billed"
@@ -70,9 +67,8 @@ function CustomerRow({
           ) : null}
         </div>
         <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
-          {formatCurrency(row.billedAmount)} billed ·{" "}
-          {formatCurrency(row.driverPayAmount)} paid out · {row.stopCount}{" "}
-          {row.stopCount === 1 ? "stop" : "stops"}
+          {formatCurrency(row.billedAmount)} billed · {formatCurrency(row.driverPayAmount)} paid out
+          · {row.stopCount} {row.stopCount === 1 ? "stop" : "stops"}
         </p>
       </div>
 
@@ -116,10 +112,7 @@ export function CustomerMargin({
     () => sorted.reduce((max, row) => Math.max(max, Math.abs(row.netMargin)), 0),
     [sorted],
   );
-  const losingCount = useMemo(
-    () => rows.filter((row) => row.netMargin < 0).length,
-    [rows],
-  );
+  const losingCount = useMemo(() => rows.filter((row) => row.netMargin < 0).length, [rows]);
 
   const visible = expanded ? sorted : sorted.slice(0, COLLAPSED_ROWS);
   const hidden = sorted.length - visible.length;
@@ -172,12 +165,7 @@ export function CustomerMargin({
       ) : (
         <div key={sort} className="divide-border divide-y">
           {visible.map((row, rowIndex) => (
-            <CustomerRow
-              key={row.customerId}
-              row={row}
-              index={rowIndex}
-              scale={scale}
-            />
+            <CustomerRow key={row.customerId} row={row} index={rowIndex} scale={scale} />
           ))}
         </div>
       )}

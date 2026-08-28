@@ -34,17 +34,11 @@ export function SuccessPhase({ shipmentId, attachError, onDone }: SuccessPhasePr
         )}
 
         {!attachError && (
-          <p className="text-muted-foreground text-xs">
-            Source document attached successfully.
-          </p>
+          <p className="text-muted-foreground text-xs">Source document attached successfully.</p>
         )}
 
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            render={<Link to="/shipment-management/shipments" />}
-          >
+          <Button variant="outline" size="sm" render={<Link to="/shipment-management/shipments" />}>
             <ExternalLinkIcon className="size-3" />
             Open shipments
           </Button>

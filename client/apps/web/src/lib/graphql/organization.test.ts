@@ -5,10 +5,7 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { OrganizationSettings } from "@trenova/shared/types/organization";
-import {
-  getOrganizationSettingsGraphQL,
-  updateOrganizationSettingsGraphQL,
-} from "./organization";
+import { getOrganizationSettingsGraphQL, updateOrganizationSettingsGraphQL } from "./organization";
 
 vi.mock("@trenova/shared/lib/graphql", () => ({
   requestGraphQL: vi.fn(),
@@ -117,8 +114,11 @@ describe("organization GraphQL helpers", () => {
   });
 
   it("reads a response that predates the capability flags as fully enabled", async () => {
-    const { brokerageEnabled: _brokerage, assetOperationsEnabled: _assets, ...legacy } =
-      organization;
+    const {
+      brokerageEnabled: _brokerage,
+      assetOperationsEnabled: _assets,
+      ...legacy
+    } = organization;
     requestGraphQLMock.mockResolvedValueOnce({ organization: legacy });
 
     const response = await getOrganizationSettingsGraphQL("org_1");

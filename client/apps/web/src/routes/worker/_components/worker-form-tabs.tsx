@@ -174,10 +174,7 @@ export function GeneralTab() {
         </FormGroup>
       </FormSection>
 
-      <FormSection
-        title="Contact Information"
-        description="Contact information for the worker."
-      >
+      <FormSection title="Contact Information" description="Contact information for the worker.">
         <FormGroup cols={2}>
           <FormControl>
             <InputField

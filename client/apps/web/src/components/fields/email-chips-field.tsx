@@ -80,7 +80,11 @@ export function EmailChipsField<T extends FieldValues>({
             label={label}
             required={!!rules?.required}
             description={description}
-            error={invalidDraft ? `"${invalidDraft}" is not a valid email address` : fieldState.error?.message}
+            error={
+              invalidDraft
+                ? `"${invalidDraft}" is not a valid email address`
+                : fieldState.error?.message
+            }
             className={className}
           >
             <label

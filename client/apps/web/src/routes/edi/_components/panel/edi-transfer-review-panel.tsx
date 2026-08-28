@@ -6,7 +6,11 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import type { EDIMappingProfileItem, EDITransfer, EDITransferStatus } from "@trenova/shared/types/edi";
+import type {
+  EDIMappingProfileItem,
+  EDITransfer,
+  EDITransferStatus,
+} from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightIcon, CheckIcon, PackageIcon, RouteIcon, XIcon } from "lucide-react";
@@ -63,8 +67,7 @@ export function EDITransferReviewPanel({
   });
 
   const rejectMutation = useApiMutation({
-    mutationFn: (reason: string) =>
-      apiService.ediService.rejectTransfer(transfer!.id, { reason }),
+    mutationFn: (reason: string) => apiService.ediService.rejectTransfer(transfer!.id, { reason }),
     onSuccess: async () => {
       toast.success("EDI transfer rejected");
       setRejectDialogOpen(false);

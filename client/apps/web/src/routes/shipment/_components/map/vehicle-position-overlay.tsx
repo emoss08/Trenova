@@ -76,9 +76,7 @@ export function VehiclePositionOverlay({ enabled = true }: { enabled?: boolean }
   if (positions.length === 0) return null;
 
   const openId = pinnedId ?? hoveredId;
-  const openPosition = openId
-    ? (positions.find((p) => p.tractorId === openId) ?? null)
-    : null;
+  const openPosition = openId ? (positions.find((p) => p.tractorId === openId) ?? null) : null;
 
   return (
     <>

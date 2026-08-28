@@ -18,13 +18,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-export function OpenAIIntegrationForm({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export function OpenAIIntegrationForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
@@ -43,8 +37,7 @@ export function OpenAIIntegrationForm({
   const { control, reset, handleSubmit } = form;
 
   const response = configQuery.data;
-  const hasApiKey =
-    response?.fields?.some((f) => f.key === "apiKey" && f.hasValue) ?? false;
+  const hasApiKey = response?.fields?.some((f) => f.key === "apiKey" && f.hasValue) ?? false;
 
   useEffect(() => {
     if (!open || !response) {
@@ -84,15 +77,11 @@ export function OpenAIIntegrationForm({
         <SparklesIcon className="size-4" />
         <AlertTitle>Document AI requires two layers</AlertTitle>
         <AlertDescription>
-          This integration stores the organization OpenAI credential.
-          AI-assisted classification and extraction are still controlled
-          separately in Document Controls.
+          This integration stores the organization OpenAI credential. AI-assisted classification and
+          extraction are still controlled separately in Document Controls.
         </AlertDescription>
       </Alert>
-      <Form
-        onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))}
-        className="space-y-4"
-      >
+      <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
         <FormGroup cols={1}>
           <FormControl cols="full">
             <SwitchField
@@ -148,13 +137,8 @@ function OpenAIFormHeader() {
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">Connect with OpenAI</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-muted-foreground text-xs">
-            Create an API key in the
-          </p>
-          <ExternalLink
-            href="https://platform.openai.com/api-keys"
-            className="text-xs"
-          >
+          <p className="text-muted-foreground text-xs">Create an API key in the</p>
+          <ExternalLink href="https://platform.openai.com/api-keys" className="text-xs">
             OpenAI dashboard.
           </ExternalLink>
         </div>

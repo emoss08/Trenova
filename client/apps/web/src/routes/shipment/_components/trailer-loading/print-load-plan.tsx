@@ -68,10 +68,14 @@ function esc(s: string) {
 
 function buildHandlingNotes(p: LoadingOptimizationResult["placements"][0]): string {
   const notes: string[] = [];
-  if (p.isHazmat) notes.push(`<span style="color:#b45309;font-weight:700">\u2623 HAZMAT (${esc(p.hazmatClass ?? "")})</span>`);
+  if (p.isHazmat)
+    notes.push(
+      `<span style="color:#b45309;font-weight:700">\u2623 HAZMAT (${esc(p.hazmatClass ?? "")})</span>`,
+    );
   if (p.fragile) notes.push('<span style="color:#dc2626;font-weight:600">\u26a0 FRAGILE</span>');
   if (p.stackable) notes.push("Stackable");
-  if (p.minTemp != null && p.maxTemp != null) notes.push(`\u2744 ${p.minTemp}\u2013${p.maxTemp}\u00b0F`);
+  if (p.minTemp != null && p.maxTemp != null)
+    notes.push(`\u2744 ${p.minTemp}\u2013${p.maxTemp}\u00b0F`);
   if (p.loadingInstructions) notes.push(esc(p.loadingInstructions));
   return notes.join(" &bull; ") || "\u2014";
 }
@@ -119,11 +123,13 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
     )
     .join("");
 
-  const warningItems = allWarnings.map((warn) => {
-    const color = warn.severity === "error" ? "#dc2626" : "#d97706";
-    const icon = warn.severity === "error" ? "\u26d4" : "\u26a0";
-    return `<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:4px"><span style="color:${color}">${icon}</span><span style="font-size:11px">${esc(warn.message)}</span></div>`;
-  }).join("");
+  const warningItems = allWarnings
+    .map((warn) => {
+      const color = warn.severity === "error" ? "#dc2626" : "#d97706";
+      const icon = warn.severity === "error" ? "\u26d4" : "\u26a0";
+      return `<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:4px"><span style="color:${color}">${icon}</span><span style="font-size:11px">${esc(warn.message)}</span></div>`;
+    })
+    .join("");
 
   const hasOriginDest = meta.originName || meta.destinationName;
 
@@ -194,7 +200,9 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
     </div>
   </div>
 
-  ${hasOriginDest ? `
+  ${
+    hasOriginDest
+      ? `
   <div class="route-bar">
     <div class="route-point">
       <div class="label">Origin</div>
@@ -207,12 +215,18 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
       <div class="name">${esc(meta.destinationName)}</div>
       ${meta.destinationAddress ? `<div class="addr">${esc(meta.destinationAddress)}</div>` : ""}
     </div>
-    ${meta.trailerCode || meta.driverName ? `
+    ${
+      meta.trailerCode || meta.driverName
+        ? `
     <div class="route-info">
       ${meta.trailerCode ? `<div><strong>Trailer:</strong> ${esc(meta.trailerCode)}</div>` : ""}
       ${meta.driverName ? `<div><strong>Driver:</strong> ${esc(meta.driverName)}</div>` : ""}
-    </div>` : ""}
-  </div>` : ""}
+    </div>`
+        : ""
+    }
+  </div>`
+      : ""
+  }
 
   <div class="metrics">
     <div class="metric${data.linearFeetUtil > 100 ? " alert" : ""}">
@@ -251,17 +265,26 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
     </table>
   </div>
 
-  ${recs.length > 0 ? `
+  ${
+    recs.length > 0
+      ? `
   <div class="section">
     <div class="section-title">Recommendations</div>
-    ${recs.map((r) => {
-      const priorityLabel = r.priority === "critical" ? "\u26d4 CRITICAL" : r.priority === "suggested" ? "\u26a0 SUGGESTED" : "\u2139 TIP";
-      const priorityStyle = r.priority === "critical"
-        ? "color:#991b1b;background:#fee2e2;border:1px solid #fecaca"
-        : r.priority === "suggested"
-          ? "color:#92400e;background:#fef3c7;border:1px solid #fde68a"
-          : "color:#1e40af;background:#dbeafe;border:1px solid #bfdbfe";
-      return `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;padding:6px 10px;border-radius:4px;${priorityStyle}">
+    ${recs
+      .map((r) => {
+        const priorityLabel =
+          r.priority === "critical"
+            ? "\u26d4 CRITICAL"
+            : r.priority === "suggested"
+              ? "\u26a0 SUGGESTED"
+              : "\u2139 TIP";
+        const priorityStyle =
+          r.priority === "critical"
+            ? "color:#991b1b;background:#fee2e2;border:1px solid #fecaca"
+            : r.priority === "suggested"
+              ? "color:#92400e;background:#fef3c7;border:1px solid #fde68a"
+              : "color:#1e40af;background:#dbeafe;border:1px solid #bfdbfe";
+        return `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;padding:6px 10px;border-radius:4px;${priorityStyle}">
         <span style="font-size:9px;font-weight:700;white-space:nowrap;margin-top:1px">${priorityLabel}</span>
         <div style="font-size:11px">
           <strong>${esc(r.title)}</strong>
@@ -269,19 +292,26 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
           ${r.impact ? `<div style="margin-top:2px;font-weight:600;font-size:10px">${esc(r.impact)}</div>` : ""}
         </div>
       </div>`;
-    }).join("")}
-  </div>` : ""}
+      })
+      .join("")}
+  </div>`
+      : ""
+  }
 
   <div class="two-col">
     <div class="section">
-      ${warningItems ? `
+      ${
+        warningItems
+          ? `
       <div class="section-title">Compliance Alerts</div>
       <div class="warnings-box">${warningItems}</div>
-      ` : `
+      `
+          : `
       <div style="display:flex;align-items:center;gap:6px;color:#166534;font-size:11px;margin-top:4px">
         <span style="font-size:14px">\u2705</span> No compliance issues detected
       </div>
-      `}
+      `
+      }
     </div>
     <div class="section">
       <div class="section-title">Axle Weights</div>
@@ -294,9 +324,13 @@ function buildLoadPlanHTML(data: LoadingOptimizationResult, meta: ShipmentMeta):
     </div>
   </div>
 
-  ${placements.some((p) => p.estimatedLength) ? `
+  ${
+    placements.some((p) => p.estimatedLength)
+      ? `
   <div style="font-size:9px;color:#9ca3af;margin-top:8px">* Length estimated from weight \u2014 configure linear feet per unit in commodity settings for accuracy.</div>
-  ` : ""}
+  `
+      : ""
+  }
 
   <div class="footer">
     <span>Generated by Trenova Load Planner</span>

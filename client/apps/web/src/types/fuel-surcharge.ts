@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { decimalStringSchema, optionalStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
+import {
+  decimalStringSchema,
+  optionalStringSchema,
+  tenantInfoSchema,
+} from "@trenova/shared/types/helpers";
 
 export const fuelIndexSourceSchema = z.enum(["EIA", "Custom"]);
 export type FuelIndexSource = z.infer<typeof fuelIndexSourceSchema>;
@@ -49,10 +53,7 @@ export const fuelIndexSchema = z.object({
   fuelType: fuelTypeSchema.default("Diesel"),
   region: optionalStringSchema,
   eiaSeriesId: optionalStringSchema,
-  currency: z
-    .string()
-    .length(3, { message: "Currency must be 3 characters" })
-    .default("USD"),
+  currency: z.string().length(3, { message: "Currency must be 3 characters" }).default("USD"),
   isActive: z.boolean().default(true),
 });
 

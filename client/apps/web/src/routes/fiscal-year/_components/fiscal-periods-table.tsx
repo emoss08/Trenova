@@ -30,17 +30,10 @@ import { FiscalPeriodStatusActions } from "./fiscal-period-dialog-content";
 
 export type FiscalPeriodAction = "close" | "reopen" | "lock" | "unlock";
 
-export default function FiscalPeriodTable({
-  periods,
-}: {
-  periods: FiscalPeriod[];
-}) {
+export default function FiscalPeriodTable({ periods }: { periods: FiscalPeriod[] }) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<FiscalPeriod | null>(
-    null,
-  );
-  const [selectedAction, setSelectedAction] =
-    useState<FiscalPeriodAction | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<FiscalPeriod | null>(null);
+  const [selectedAction, setSelectedAction] = useState<FiscalPeriodAction | null>(null);
 
   const handleAction = (period: FiscalPeriod, action: FiscalPeriodAction) => {
     setSelectedPeriod(period);
@@ -59,9 +52,7 @@ export default function FiscalPeriodTable({
     );
   }
 
-  const sortedPeriods = [...periods].sort(
-    (a, b) => a.periodNumber - b.periodNumber,
-  );
+  const sortedPeriods = [...periods].sort((a, b) => a.periodNumber - b.periodNumber);
 
   return (
     <div className="bg-card rounded-lg border">
@@ -82,35 +73,23 @@ export default function FiscalPeriodTable({
           }}
         >
           {sortedPeriods.map((period) => {
-            const statusChoice = fiscalPeriodStatusChoices.find(
-              (c) => c.value === period.status,
-            );
-            const typeChoice = periodTypeChoices.find(
-              (c) => c.value === period.periodType,
-            );
+            const statusChoice = fiscalPeriodStatusChoices.find((c) => c.value === period.status);
+            const typeChoice = periodTypeChoices.find((c) => c.value === period.periodType);
             const actions = getAvailableActions(period.status);
 
             return (
               <TableRow key={period.id}>
                 <TableCell>
                   {statusChoice ? (
-                    <DataTableColorColumn
-                      text={statusChoice.label}
-                      color={statusChoice.color}
-                    />
+                    <DataTableColorColumn text={statusChoice.label} color={statusChoice.color} />
                   ) : (
                     period.status
                   )}
                 </TableCell>
-                <TableCell className="text-sm font-medium">
-                  {period.name}
-                </TableCell>
+                <TableCell className="text-sm font-medium">{period.name}</TableCell>
                 <TableCell>
                   {typeChoice ? (
-                    <DataTableColorColumn
-                      text={typeChoice.label}
-                      color={typeChoice.color}
-                    />
+                    <DataTableColorColumn text={typeChoice.label} color={typeChoice.color} />
                   ) : (
                     period.periodType
                   )}

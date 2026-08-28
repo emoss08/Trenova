@@ -78,10 +78,7 @@ function LineageNode({
       {hasChildren && (
         <div className="border-border mt-2 ml-6 border-l pl-4">
           {node.forkedTemplates!.map((child, index) => (
-            <div
-              key={child.templateId}
-              className={index > 0 ? "mt-2" : undefined}
-            >
+            <div key={child.templateId} className={index > 0 ? "mt-2" : undefined}>
               <LineageNode
                 node={child}
                 currentTemplateId={currentTemplateId}
@@ -133,8 +130,8 @@ export function ForkLineageDialog({
             Fork Lineage
           </DialogTitle>
           <DialogDescription>
-            View the fork history and ancestry of this template. Click on a
-            template to navigate to it.
+            View the fork history and ancestry of this template. Click on a template to navigate to
+            it.
           </DialogDescription>
         </DialogHeader>
 

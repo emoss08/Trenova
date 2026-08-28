@@ -1,6 +1,12 @@
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { EmptyState } from "@/components/empty-state";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@trenova/shared/components/ui/card";
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {

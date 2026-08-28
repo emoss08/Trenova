@@ -149,11 +149,7 @@ export function RequestedPTOOverview() {
   );
 }
 
-function RequestedPTOOverviewOuter({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function RequestedPTOOverviewOuter({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-1 flex-col gap-1">{children}</div>;
 }
 

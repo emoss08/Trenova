@@ -31,11 +31,7 @@ export async function getOrganizationSettingsGraphQL(
     },
   });
 
-  return safeParse(
-    organizationSettingsSchema,
-    data.organization,
-    "OrganizationSettings",
-  );
+  return safeParse(organizationSettingsSchema, data.organization, "OrganizationSettings");
 }
 
 export async function updateOrganizationSettingsGraphQL(
@@ -51,11 +47,7 @@ export async function updateOrganizationSettingsGraphQL(
     },
   });
 
-  return safeParse(
-    organizationSettingsSchema,
-    data.updateOrganization,
-    "OrganizationSettings",
-  );
+  return safeParse(organizationSettingsSchema, data.updateOrganization, "OrganizationSettings");
 }
 
 function toOrganizationInput(values: OrganizationSettings): OrganizationInput {

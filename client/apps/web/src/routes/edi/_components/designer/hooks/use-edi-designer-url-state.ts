@@ -66,8 +66,7 @@ export function getChangedTemplateUrlStatePatch(
   patch: TemplateDesignerUrlStatePatch,
 ): TemplateDesignerUrlStatePatch | null {
   const changedEntries = Object.entries(patch).filter(
-    ([key, value]) =>
-      value !== undefined && state[key as keyof TemplateDesignerUrlState] !== value,
+    ([key, value]) => value !== undefined && state[key as keyof TemplateDesignerUrlState] !== value,
   );
   return changedEntries.length > 0
     ? (Object.fromEntries(changedEntries) as TemplateDesignerUrlStatePatch)
@@ -91,32 +90,20 @@ export function getTemplateDesignerSelectionPatch({
 }): TemplateDesignerSelectionPatch | null {
   const patch: TemplateDesignerSelectionPatch = {};
   const firstTemplate = templates[0];
-  if (
-    firstTemplate &&
-    (!templateId || !templates.some((template) => template.id === templateId))
-  ) {
+  if (firstTemplate && (!templateId || !templates.some((template) => template.id === templateId))) {
     patch.templateId = firstTemplate.id;
     patch.versionId = "";
     patch.segmentId = "";
     patch.elementPosition = 0;
-    return getChangedSelectionPatch(
-      { templateId, versionId, segmentId, elementPosition },
-      patch,
-    );
+    return getChangedSelectionPatch({ templateId, versionId, segmentId, elementPosition }, patch);
   }
 
   const firstVersion = versions[0];
-  if (
-    firstVersion &&
-    (!versionId || !versions.some((version) => version.id === versionId))
-  ) {
+  if (firstVersion && (!versionId || !versions.some((version) => version.id === versionId))) {
     patch.versionId = firstVersion.id;
     patch.segmentId = "";
     patch.elementPosition = 0;
-    return getChangedSelectionPatch(
-      { templateId, versionId, segmentId, elementPosition },
-      patch,
-    );
+    return getChangedSelectionPatch({ templateId, versionId, segmentId, elementPosition }, patch);
   }
 
   if (!segmentsReady) {
@@ -126,10 +113,7 @@ export function getTemplateDesignerSelectionPatch({
   if (segments.length === 0) {
     patch.segmentId = "";
     patch.elementPosition = 0;
-    return getChangedSelectionPatch(
-      { templateId, versionId, segmentId, elementPosition },
-      patch,
-    );
+    return getChangedSelectionPatch({ templateId, versionId, segmentId, elementPosition }, patch);
   }
 
   const selectedSegment = segments.find((segment) => segment.id === segmentId) ?? segments[0];
@@ -141,10 +125,7 @@ export function getTemplateDesignerSelectionPatch({
   );
   patch.elementPosition = selectedElement ? elementPosition : firstElementPosition;
 
-  return getChangedSelectionPatch(
-    { templateId, versionId, segmentId, elementPosition },
-    patch,
-  );
+  return getChangedSelectionPatch({ templateId, versionId, segmentId, elementPosition }, patch);
 }
 
 function getChangedSelectionPatch(

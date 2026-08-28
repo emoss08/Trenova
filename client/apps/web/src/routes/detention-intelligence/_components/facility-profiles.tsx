@@ -95,8 +95,8 @@ function FacilityRow({
             {row.locationName || row.locationId}
           </p>
           <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
-            {row.stopCount} {row.stopCount === 1 ? "stop" : "stops"} ·{" "}
-            {row.breachCount} past free time
+            {row.stopCount} {row.stopCount === 1 ? "stop" : "stops"} · {row.breachCount} past free
+            time
             {row.disputeCount > 0 ? ` · ${row.disputeCount} disputed` : ""}
           </p>
         </div>
@@ -129,12 +129,7 @@ function FacilityRow({
           <p className="truncate text-sm leading-tight font-medium tabular-nums">
             {formatCurrency(row.billedAmount)}
           </p>
-          <p
-            className={cn(
-              "text-2xs mt-0.5 truncate tabular-nums",
-              deltaToneClass(row.netMargin),
-            )}
-          >
+          <p className={cn("text-2xs mt-0.5 truncate tabular-nums", deltaToneClass(row.netMargin))}>
             {formatSignedCurrency(row.netMargin)} net
           </p>
         </div>
@@ -170,9 +165,7 @@ function FacilityRow({
                 value={formatCurrency(row.driverPayAmount)}
                 detail={
                   row.billedAmount > 0
-                    ? `${Math.round(
-                        (row.driverPayAmount / row.billedAmount) * 100,
-                      )}% of billed`
+                    ? `${Math.round((row.driverPayAmount / row.billedAmount) * 100)}% of billed`
                     : "nothing billed"
                 }
               />

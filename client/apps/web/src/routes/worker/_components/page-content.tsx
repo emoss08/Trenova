@@ -21,7 +21,11 @@ export default function WorkersContent() {
   );
 
   return (
-    <Tabs value={tab} className="gap-1" onValueChange={(value) => setTab(value as "workers" | "pto")}>
+    <Tabs
+      value={tab}
+      className="gap-1"
+      onValueChange={(value) => setTab(value as "workers" | "pto")}
+    >
       <TabsList variant="underline">
         <TabsTab value="workers">
           <UsersIcon size={16} aria-hidden="true" />

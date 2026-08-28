@@ -6,11 +6,7 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import * as React from "react";
-import {
-  display12HourValue,
-  setDateByType,
-  type Period,
-} from "./time-picker-utils";
+import { display12HourValue, setDateByType, type Period } from "./time-picker-utils";
 
 export interface PeriodSelectorProps {
   period: Period;
@@ -44,23 +40,13 @@ export function TimePeriodSelect({
     if (date) {
       const tempDate = new Date(date);
       const hours = display12HourValue(date.getHours());
-      setDate(
-        setDateByType(
-          tempDate,
-          hours.toString(),
-          "12hours",
-          period === "AM" ? "PM" : "AM",
-        ),
-      );
+      setDate(setDateByType(tempDate, hours.toString(), "12hours", period === "AM" ? "PM" : "AM"));
     }
   };
 
   return (
     <div className="flex h-7 items-center">
-      <Select
-        value={period}
-        onValueChange={(value) => handleValueChange(value as Period)}
-      >
+      <Select value={period} onValueChange={(value) => handleValueChange(value as Period)}>
         <SelectTrigger
           id="period"
           className="focus:bg-muted focus:text-accent-foreground w-[65px]"

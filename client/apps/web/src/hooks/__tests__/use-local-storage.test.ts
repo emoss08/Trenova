@@ -56,11 +56,9 @@ describe("useLocalStorage", () => {
   });
 
   it("keeps in-memory state when localStorage writes fail", () => {
-    const setItemSpy = vi
-      .spyOn(Storage.prototype, "setItem")
-      .mockImplementation(() => {
-        throw new Error("storage unavailable");
-      });
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("storage unavailable");
+    });
     const { result } = renderHook(() => useLocalStorage("key", "init"));
 
     act(() => {

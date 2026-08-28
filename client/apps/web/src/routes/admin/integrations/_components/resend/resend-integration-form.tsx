@@ -247,8 +247,8 @@ function ResendWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
             </div>
           </div>
           <p className="text-muted-foreground">
-            Paste Resend&apos;s signing secret here to verify incoming webhook calls. The integration
-            can be saved before the webhook is configured.
+            Paste Resend&apos;s signing secret here to verify incoming webhook calls. The
+            integration can be saved before the webhook is configured.
           </p>
           <Button
             type="button"

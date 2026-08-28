@@ -24,9 +24,7 @@ function RefreshAction() {
       className="h-7"
       disabled={isFetching}
       aria-label="Recalculate detention intelligence"
-      onClick={() =>
-        void queryClient.invalidateQueries({ queryKey: queries.detention._def })
-      }
+      onClick={() => void queryClient.invalidateQueries({ queryKey: queries.detention._def })}
     >
       <RotateCwIcon className={cn("mr-1.5 size-3.5", isFetching && "animate-spin")} />
       {isFetching ? "Recalculating…" : "Refresh"}

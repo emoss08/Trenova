@@ -8,20 +8,13 @@ import {
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
 
-export const segregationTypeSchema = z.enum([
-  "Prohibited",
-  "Separated",
-  "Distance",
-  "Barrier",
-]);
+export const segregationTypeSchema = z.enum(["Prohibited", "Separated", "Distance", "Barrier"]);
 
 export type SegregationType = z.infer<typeof segregationTypeSchema>;
 
 export const segregationDistanceUnitSchema = z.enum(["FT", "M", "IN", "CM"]);
 
-export type SegregationDistanceUnit = z.infer<
-  typeof segregationDistanceUnitSchema
->;
+export type SegregationDistanceUnit = z.infer<typeof segregationDistanceUnitSchema>;
 
 export const hazmatSegregationRuleSchema = z
   .object({
@@ -62,8 +55,7 @@ export const hazmatSegregationRuleSchema = z
   .refine(
     (data) =>
       !data.hasExceptions ||
-      (typeof data.exceptionNotes === "string" &&
-        data.exceptionNotes.length > 0),
+      (typeof data.exceptionNotes === "string" && data.exceptionNotes.length > 0),
     {
       message: "Exception notes are required when has exceptions is true",
       path: ["exceptionNotes"],

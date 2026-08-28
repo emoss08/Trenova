@@ -17,11 +17,7 @@ import { COMMODITY_PALETTE } from "./constants";
 import { LinearFeetBar } from "./linear-feet-bar";
 import { LoadingRecommendations } from "./loading-recommendations";
 import { LoadingWarnings } from "./loading-warnings";
-import {
-  buildLoadPlanBlob,
-  printLoadPlan,
-  useShipmentMeta,
-} from "./print-load-plan";
+import { buildLoadPlanBlob, printLoadPlan, useShipmentMeta } from "./print-load-plan";
 import { TrailerTopView } from "./trailer-top-view";
 import { useLoadingOptimization } from "./use-loading-optimization";
 import { AxleWeightDisplay } from "./weight-distribution-bar";
@@ -40,8 +36,7 @@ export default function LoadPlannerDialog({
   open: boolean;
   onOpenChange: (open: boolean | null) => void;
 }) {
-  const { data, revenue, calculate, isPending, hasCommodities } =
-    useLoadingOptimization();
+  const { data, revenue, calculate, isPending, hasCommodities } = useLoadingOptimization();
   const shipmentMeta = useShipmentMeta();
   const [saving, setSaving] = useState(false);
 
@@ -88,10 +83,7 @@ export default function LoadPlannerDialog({
           </div>
         </DialogHeader>
 
-        <ScrollArea
-          className="flex-1"
-          viewportClassName="max-h-[calc(85vh-140px)]"
-        >
+        <ScrollArea className="flex-1" viewportClassName="max-h-[calc(85vh-140px)]">
           <div className="flex flex-col gap-3 px-5 pb-4">
             {data ? (
               <>
@@ -134,9 +126,7 @@ export default function LoadPlannerDialog({
                     <span className="text-2xs text-muted-foreground mb-1.5 block font-medium tracking-wider uppercase">
                       Recommendations
                     </span>
-                    <LoadingRecommendations
-                      recommendations={data.recommendations}
-                    />
+                    <LoadingRecommendations recommendations={data.recommendations} />
                   </div>
                 )}
 
@@ -155,9 +145,7 @@ export default function LoadPlannerDialog({
                   <ContainerIcon className="text-muted-foreground/40 size-7" />
                 </div>
                 <div className="text-center">
-                  <p className="text-foreground text-sm font-medium">
-                    No loading plan yet
-                  </p>
+                  <p className="text-foreground text-sm font-medium">No loading plan yet</p>
                   <p className="text-2xs text-muted-foreground mt-1">
                     Click below to calculate optimal placement
                   </p>
@@ -193,11 +181,7 @@ export default function LoadPlannerDialog({
               </Button>
             </>
           )}
-          <Button
-            type="button"
-            onClick={calculate}
-            disabled={isPending || !hasCommodities}
-          >
+          <Button type="button" onClick={calculate} disabled={isPending || !hasCommodities}>
             {isPending && <LoaderIcon className="size-3.5 animate-spin" />}
             {data ? "Recalculate" : "Calculate Optimal Loading"}
           </Button>

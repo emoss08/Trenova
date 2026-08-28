@@ -7,7 +7,11 @@ type JournalLineItemsTableProps = {
   totalCredit: number;
 };
 
-export function JournalLineItemsTable({ lines, totalDebit, totalCredit }: JournalLineItemsTableProps) {
+export function JournalLineItemsTable({
+  lines,
+  totalDebit,
+  totalCredit,
+}: JournalLineItemsTableProps) {
   return (
     <div className="overflow-hidden rounded-md border">
       <table className="w-full text-sm">

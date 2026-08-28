@@ -1,9 +1,6 @@
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
-import {
-  sequenceConfigDocumentSchema,
-  type SequenceConfigDocument,
-} from "@/types/sequence-config";
+import { sequenceConfigDocumentSchema, type SequenceConfigDocument } from "@/types/sequence-config";
 
 export class SequenceConfigService {
   public async get() {

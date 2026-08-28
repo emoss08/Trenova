@@ -7,7 +7,12 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { StatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
-import { Command, CommandGroup, CommandList, SelectCommandItem } from "@trenova/shared/components/ui/command";
+import {
+  Command,
+  CommandGroup,
+  CommandList,
+  SelectCommandItem,
+} from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 

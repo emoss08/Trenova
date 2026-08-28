@@ -3,12 +3,7 @@ import {
   type FilterGroup,
   type SortField,
 } from "@trenova/shared/types/data-table";
-import {
-  createParser,
-  parseAsInteger,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs";
+import { createParser, parseAsInteger, parseAsString, parseAsStringLiteral } from "nuqs";
 
 export const parseAsSortFields = createParser<SortField[]>({
   parse: (value) => {

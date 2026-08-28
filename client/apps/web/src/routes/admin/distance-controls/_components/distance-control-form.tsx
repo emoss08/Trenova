@@ -2,7 +2,13 @@ import { DistanceProfileAutocompleteField } from "@/components/autocomplete-fiel
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@trenova/shared/components/ui/card";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { distanceProfileDistanceUnitChoices } from "@/lib/choices";
@@ -191,4 +197,3 @@ function ProfileAssignmentsCard() {
     </Card>
   );
 }
-

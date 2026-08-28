@@ -29,13 +29,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
-import {
-  FormProvider,
-  useForm,
-  useFormContext,
-  useWatch,
-  type Resolver,
-} from "react-hook-form";
+import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 
 export default function DispatchControlForm() {
   const { data } = useSuspenseQuery({
@@ -51,8 +45,7 @@ export default function DispatchControlForm() {
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.dispatchControl.get._def,
-    mutationFn: async (values: DispatchControl) =>
-      apiService.dispatchControlService.update(values),
+    mutationFn: async (values: DispatchControl) => apiService.dispatchControlService.update(values),
     resourceName: "Dispatch Control",
     resetForm: reset,
     form,
@@ -104,9 +97,8 @@ function AutoAssignmentForm() {
       <CardHeader>
         <CardTitle>Automated Resource Assignment</CardTitle>
         <CardDescription>
-          Configure how the system chooses workers and equipment for shipments.
-          These controls influence assignment consistency, utilization, and
-          dispatch throughput.
+          Configure how the system chooses workers and equipment for shipments. These controls
+          influence assignment consistency, utilization, and dispatch throughput.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -176,17 +168,15 @@ function ServiceFailureForm() {
     name: "recordServiceFailures",
   });
 
-  const showFailureFields =
-    recordServiceFailures !== serviceIncidentTypeSchema.enum.Never;
+  const showFailureFields = recordServiceFailures !== serviceIncidentTypeSchema.enum.Never;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Service Failure Monitoring</CardTitle>
         <CardDescription>
-          Define which service failures to track and when they should be
-          recorded. These settings drive operational reporting and exception
-          visibility.
+          Define which service failures to track and when they should be recorded. These settings
+          drive operational reporting and exception visibility.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -266,8 +256,8 @@ function ComplianceForm() {
       <CardHeader>
         <CardTitle>DOT Compliance Enforcement</CardTitle>
         <CardDescription>
-          Configure dispatch-time compliance checks for worker qualification,
-          medical certification, hazmat eligibility, and testing requirements.
+          Configure dispatch-time compliance checks for worker qualification, medical certification,
+          hazmat eligibility, and testing requirements.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">

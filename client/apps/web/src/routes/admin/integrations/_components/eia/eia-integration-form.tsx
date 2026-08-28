@@ -109,11 +109,7 @@ export function EIAFuelPricesForm({ open, onClose }: { open: boolean; onClose: (
                 name="enabled"
                 control={control}
                 render={({ field }) => (
-                  <Switch
-                    id="eia-enabled"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
+                  <Switch id="eia-enabled" checked={field.value} onCheckedChange={field.onChange} />
                 )}
               />
             </div>

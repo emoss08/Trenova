@@ -8,10 +8,7 @@ type UseAnimatedPanelOptions = {
   onOpenChange: (open: boolean) => void;
 };
 
-export function useAnimatedPanel({
-  open,
-  onOpenChange,
-}: UseAnimatedPanelOptions) {
+export function useAnimatedPanel({ open, onOpenChange }: UseAnimatedPanelOptions) {
   const [isVisible, setIsVisible] = useState(open);
   const [isAnimating, setIsAnimating] = useState(false);
 

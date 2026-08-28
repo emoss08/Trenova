@@ -54,10 +54,7 @@ export const replacementInvoiceReviewPolicySchema = z.enum([
 ]);
 export type ReplacementInvoiceReviewPolicy = z.infer<typeof replacementInvoiceReviewPolicySchema>;
 
-export const customerCreditBalancePolicySchema = z.enum([
-  "Disallow",
-  "AllowUnappliedCredit",
-]);
+export const customerCreditBalancePolicySchema = z.enum(["Disallow", "AllowUnappliedCredit"]);
 export type CustomerCreditBalancePolicy = z.infer<typeof customerCreditBalancePolicySchema>;
 
 export const overCreditPolicySchema = z.enum(["Block", "AllowWithApproval"]);

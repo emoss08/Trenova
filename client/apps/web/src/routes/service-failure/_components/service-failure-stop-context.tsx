@@ -106,7 +106,7 @@ function formatStopTitle(summary: ServiceFailureStopSummary) {
       ? "Stop"
       : "Shipment";
   const typeLabel = summary.stopType
-    ? findChoice(stopTypeChoices, summary.stopType)?.label ?? summary.stopType
+    ? (findChoice(stopTypeChoices, summary.stopType)?.label ?? summary.stopType)
     : "";
 
   return typeLabel ? `${stopLabel} - ${typeLabel}` : stopLabel;

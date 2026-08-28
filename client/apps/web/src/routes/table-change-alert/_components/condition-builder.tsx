@@ -73,18 +73,20 @@ function ConditionRow({
           </FormControl>
         )}
       </div>
-      <Button type="button" variant="ghost" size="icon-xs" onClick={onRemove} aria-label="Remove condition">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        onClick={onRemove}
+        aria-label="Remove condition"
+      >
         <TrashIcon className="size-3.5" />
       </Button>
     </div>
   );
 }
 
-export function ConditionBuilder({
-  control,
-}: {
-  control: Control<TCASubscriptionFormValues>;
-}) {
+export function ConditionBuilder({ control }: { control: Control<TCASubscriptionFormValues> }) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "conditions",

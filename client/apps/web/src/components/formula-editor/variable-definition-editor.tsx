@@ -2,17 +2,10 @@ import { SelectField } from "@/components/fields/select-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Input } from "@trenova/shared/components/ui/input";
-import type {
-  VariableDefinition,
-  VariableValueType,
-} from "@trenova/shared/types/formula-template";
+import type { VariableDefinition, VariableValueType } from "@trenova/shared/types/formula-template";
 import { Plus, Trash2, Variable } from "lucide-react";
 import { useCallback } from "react";
-import {
-  useFieldArray,
-  type Control,
-  type UseFormRegister,
-} from "react-hook-form";
+import { useFieldArray, type Control, type UseFormRegister } from "react-hook-form";
 
 type FormWithVariables = {
   variableDefinitions: VariableDefinition[];
@@ -62,21 +55,13 @@ export function VariableDefinitionEditor({
             <Variable className="text-primary size-4" />
           </div>
           <div>
-            <CardTitle className="text-sm font-medium">
-              Custom Variables
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Custom Variables</CardTitle>
             <p className="text-muted-foreground text-xs">
               Define additional variables for your formula
             </p>
           </div>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleAdd}
-          className="gap-1.5"
-        >
+        <Button type="button" variant="outline" size="sm" onClick={handleAdd} className="gap-1.5">
           <Plus className="size-3.5" />
           Add
         </Button>

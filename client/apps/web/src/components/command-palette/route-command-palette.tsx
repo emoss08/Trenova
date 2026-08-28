@@ -191,18 +191,18 @@ export function RouteCommandPalette() {
   const remoteResultGroups =
     remoteQueryReady && !remoteSearchQuery.isFetching && !remoteSearchQuery.isError
       ? remoteGroups.map((group) => (
-        <CommandGroup key={group.entityType} heading={group.label}>
-          {group.hits.map((hit) => (
-            <SearchResultItem
-              key={`${group.entityType}:${hit.id}`}
-              hit={hit}
-              searchValue={searchValue}
-              onSelect={() => handleNavigate(hit.href)}
-              onPreview={hit.entityType === "shipment" ? handleShipmentPreview : undefined}
-            />
-          ))}
-        </CommandGroup>
-      ))
+          <CommandGroup key={group.entityType} heading={group.label}>
+            {group.hits.map((hit) => (
+              <SearchResultItem
+                key={`${group.entityType}:${hit.id}`}
+                hit={hit}
+                searchValue={searchValue}
+                onSelect={() => handleNavigate(hit.href)}
+                onPreview={hit.entityType === "shipment" ? handleShipmentPreview : undefined}
+              />
+            ))}
+          </CommandGroup>
+        ))
       : null;
 
   const remoteStatusIndicator = (() => {

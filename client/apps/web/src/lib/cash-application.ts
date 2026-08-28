@@ -5,10 +5,7 @@ export function toMinor(amount: number): number {
   return Math.round((Number.isFinite(amount) ? amount : 0) * 100);
 }
 
-export function openItemToApplicationRow(
-  item: AROpenItem,
-  checked: boolean,
-): CashApplicationRow {
+export function openItemToApplicationRow(item: AROpenItem, checked: boolean): CashApplicationRow {
   return {
     invoiceId: item.invoiceId,
     invoiceNumber: item.invoiceNumber,

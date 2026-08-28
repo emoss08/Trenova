@@ -4,10 +4,7 @@ import { FormCreatePanel } from "@/components/form-create-panel";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
-import {
-  SplitButton,
-  type SplitButtonOption,
-} from "@trenova/shared/components/ui/split-button";
+import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useEditPanelActionPreference,
@@ -50,14 +47,7 @@ export function DocumentTypePanel({
   });
 
   if (mode === "edit") {
-    return (
-      <DocumentTypeEditPanel
-        open={open}
-        onOpenChange={onOpenChange}
-        row={row}
-        form={form}
-      />
-    );
+    return <DocumentTypeEditPanel open={open} onOpenChange={onOpenChange} row={row} form={form} />;
   }
 
   return (
@@ -80,12 +70,7 @@ type DocumentTypeEditPanelProps = Pick<
   form: ReturnType<typeof useForm<DocumentType>>;
 };
 
-function DocumentTypeEditPanel({
-  open,
-  onOpenChange,
-  row,
-  form,
-}: DocumentTypeEditPanelProps) {
+function DocumentTypeEditPanel({ open, onOpenChange, row, form }: DocumentTypeEditPanelProps) {
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
 
@@ -112,17 +97,9 @@ function DocumentTypeEditPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, row?.id, reset]);
 
-  const { mutateAsync } = useApiMutation<
-    DocumentType,
-    EditSubmitPayload,
-    unknown,
-    DocumentType
-  >({
+  const { mutateAsync } = useApiMutation<DocumentType, EditSubmitPayload, unknown, DocumentType>({
     mutationFn: async ({ values }) => {
-      const response = await api.put<DocumentType>(
-        `/document-types/${row?.id}/`,
-        values,
-      );
+      const response = await api.put<DocumentType>(`/document-types/${row?.id}/`, values);
       return response;
     },
     onMutate: async (newValues) => {
@@ -167,12 +144,7 @@ function DocumentTypeEditPanel({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        open &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key === "Enter" &&
-        !isSubmitting
-      ) {
+      if (open && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
         event.preventDefault();
         void handleSubmit((values) => onSubmit(values, defaultAction))();
       }
@@ -231,10 +203,7 @@ function DocumentTypeEditPanel({
             </Alert>
           )}
           <FormProvider {...form}>
-            <Form
-              id="panel-edit-form"
-              onSubmit={handleSubmit(handleFormSubmit)}
-            >
+            <Form id="panel-edit-form" onSubmit={handleSubmit(handleFormSubmit)}>
               <DocumentTypeForm disabled={isSystem} />
             </Form>
           </FormProvider>

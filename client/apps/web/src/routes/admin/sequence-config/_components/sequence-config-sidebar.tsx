@@ -2,11 +2,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { SequenceType } from "@/types/sequence-config";
 import { memo } from "react";
 import { useFormState } from "react-hook-form";
-import {
-  sequenceIcons,
-  sequenceTitles,
-  sidebarGroups,
-} from "./sequence-config-constants";
+import { sequenceIcons, sequenceTitles, sidebarGroups } from "./sequence-config-constants";
 
 type SidebarProps = {
   value: SequenceType;
@@ -22,23 +18,23 @@ export function SequenceConfigSidebar({ value, onChange, indexByType }: SidebarP
     >
       <div className="border-border bg-card rounded-md border p-3">
         <ul className="flex flex-col gap-5">
-        {sidebarGroups.map((group) => (
-          <li key={group.label}>
-            <div className="text-muted-foreground mb-1.5 px-2 text-[11px] font-medium tracking-wide uppercase">
-              {group.label}
-            </div>
-            <ul className="flex flex-col gap-0.5">
-              {group.items.map((type) => (
-                <SidebarItem
-                  key={type}
-                  type={type}
-                  index={indexByType[type]}
-                  active={value === type}
-                  onSelect={onChange}
-                />
-              ))}
-            </ul>
-          </li>
+          {sidebarGroups.map((group) => (
+            <li key={group.label}>
+              <div className="text-muted-foreground mb-1.5 px-2 text-[11px] font-medium tracking-wide uppercase">
+                {group.label}
+              </div>
+              <ul className="flex flex-col gap-0.5">
+                {group.items.map((type) => (
+                  <SidebarItem
+                    key={type}
+                    type={type}
+                    index={indexByType[type]}
+                    active={value === type}
+                    onSelect={onChange}
+                  />
+                ))}
+              </ul>
+            </li>
           ))}
         </ul>
       </div>
@@ -53,17 +49,10 @@ type SidebarItemProps = {
   onSelect: (next: SequenceType) => void;
 };
 
-const SidebarItem = memo(function SidebarItem({
-  type,
-  index,
-  active,
-  onSelect,
-}: SidebarItemProps) {
+const SidebarItem = memo(function SidebarItem({ type, index, active, onSelect }: SidebarItemProps) {
   const Icon = sequenceIcons[type];
   const { dirtyFields } = useFormState({ name: `configs.${index}` });
-  const isDirty = Boolean(
-    (dirtyFields as { configs?: unknown[] })?.configs?.[index],
-  );
+  const isDirty = Boolean((dirtyFields as { configs?: unknown[] })?.configs?.[index]);
 
   return (
     <li>

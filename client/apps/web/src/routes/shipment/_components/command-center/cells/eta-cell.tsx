@@ -1,10 +1,6 @@
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  getDestinationStop,
-  getShipmentEtaTone,
-  type ShipmentEtaTone,
-} from "@/lib/shipment-utils";
+import { getDestinationStop, getShipmentEtaTone, type ShipmentEtaTone } from "@/lib/shipment-utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
 
 const TONE_CLASS: Record<ShipmentEtaTone, string> = {
@@ -31,12 +27,7 @@ export function EtaCell({ shipment }: { shipment: Shipment }) {
 
   return (
     <div className="flex flex-col gap-0.5">
-      <span
-        className={cn(
-          "font-table text-[11.5px] font-medium tabular-nums",
-          TONE_CLASS[tone],
-        )}
-      >
+      <span className={cn("font-table text-[11.5px] font-medium tabular-nums", TONE_CLASS[tone])}>
         {eta}
       </span>
     </div>

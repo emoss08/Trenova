@@ -55,9 +55,7 @@ function SectionHeader({
       className="text-2xs text-muted-foreground/60 hover:text-muted-foreground flex w-full items-center gap-2 px-2 py-1.5 font-medium tracking-wider uppercase transition-colors"
       onClick={onToggle}
     >
-      <ChevronDownIcon
-        className={cn("size-3 transition-transform", collapsed && "-rotate-90")}
-      />
+      <ChevronDownIcon className={cn("size-3 transition-transform", collapsed && "-rotate-90")} />
       <span>{label}</span>
       {issueCount > 0 && (
         <span className="text-2xs flex size-4 items-center justify-center rounded-full bg-amber-500/15 font-medium text-amber-500">
@@ -94,7 +92,8 @@ export function FieldReconciliationList({
 
       const filtered = showIssuesOnly
         ? groupFields.filter(
-            (f) => f.status === "needs-review" || f.status === "missing" || f.status === "conflicting",
+            (f) =>
+              f.status === "needs-review" || f.status === "missing" || f.status === "conflicting",
           )
         : groupFields;
 
@@ -159,9 +158,14 @@ export function FieldReconciliationList({
         <div className="mb-1">
           <SectionHeader
             label="Other"
-            issueCount={ungroupedFields.filter(
-              (f) => f.status === "needs-review" || f.status === "missing" || f.status === "conflicting",
-            ).length}
+            issueCount={
+              ungroupedFields.filter(
+                (f) =>
+                  f.status === "needs-review" ||
+                  f.status === "missing" ||
+                  f.status === "conflicting",
+              ).length
+            }
             collapsed={collapsedSections.has("Other")}
             onToggle={() => toggleSection("Other")}
           />

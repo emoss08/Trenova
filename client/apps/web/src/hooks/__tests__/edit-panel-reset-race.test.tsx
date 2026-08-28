@@ -202,7 +202,9 @@ describe("edit panel reset race", () => {
     const fetch = vi.fn();
 
     render(
-      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
         <CreatePanel fetch={fetch} />
       </QueryClientProvider>,
     );

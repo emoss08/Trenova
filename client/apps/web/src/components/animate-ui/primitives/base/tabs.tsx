@@ -1,12 +1,7 @@
 "use client";
 
 import { Tabs as TabsPrimitive } from "@base-ui/react";
-import {
-  AnimatePresence,
-  m,
-  type HTMLMotionProps,
-  type Transition,
-} from "motion/react";
+import { AnimatePresence, m, type HTMLMotionProps, type Transition } from "motion/react";
 import * as React from "react";
 
 import {
@@ -27,8 +22,7 @@ type TabsContextType = {
   setValue: TabsProps["onValueChange"];
 };
 
-const [TabsProvider, useTabs] =
-  getStrictContext<TabsContextType>("TabsContext");
+const [TabsProvider, useTabs] = getStrictContext<TabsContextType>("TabsContext");
 
 type TabsProps = React.ComponentProps<typeof TabsPrimitive.Root>;
 
@@ -41,11 +35,7 @@ function Tabs(props: TabsProps) {
 
   return (
     <TabsProvider value={{ value, setValue }}>
-      <TabsPrimitive.Root
-        data-slot="tabs"
-        {...props}
-        onValueChange={setValue}
-      />
+      <TabsPrimitive.Root data-slot="tabs" {...props} onValueChange={setValue} />
     </TabsProvider>
   );
 }
@@ -90,8 +80,7 @@ function TabsTab(props: TabsTabProps) {
   return <TabsPrimitive.Tab data-slot="tabs-tab" {...props} />;
 }
 
-type TabsPanelProps = React.ComponentProps<typeof TabsPrimitive.Panel> &
-  HTMLMotionProps<"div">;
+type TabsPanelProps = React.ComponentProps<typeof TabsPrimitive.Panel> & HTMLMotionProps<"div">;
 
 function TabsPanel({
   value,
@@ -152,23 +141,13 @@ function TabsPanels(props: TabsPanelsProps) {
     const { children, transition = defaultTransition, ...autoProps } = props;
 
     return (
-      <AutoHeight
-        data-slot="tabs-panels"
-        deps={[value]}
-        transition={transition}
-        {...autoProps}
-      >
+      <AutoHeight data-slot="tabs-panels" deps={[value]} transition={transition} {...autoProps}>
         <React.Fragment key={value}>{children}</React.Fragment>
       </AutoHeight>
     );
   }
 
-  const {
-    children,
-    style,
-    transition = defaultTransition,
-    ...layoutProps
-  } = props;
+  const { children, style, transition = defaultTransition, ...layoutProps } = props;
 
   return (
     <m.div

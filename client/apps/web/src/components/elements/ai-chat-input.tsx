@@ -68,29 +68,23 @@ export function AiChatInput({
         handleSubmit();
       }
     },
-    [handleSubmit]
+    [handleSubmit],
   );
 
-  const handleFileChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files || []);
-      setAttachments((prev) => [...prev, ...files]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    },
-    []
-  );
+  const handleFileChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setAttachments((prev) => [...prev, ...files]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
 
   const removeAttachment = React.useCallback((index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   return (
-    <div
-      data-slot="ai-chat-input"
-      className={cn("w-full font-mono", className)}
-    >
+    <div data-slot="ai-chat-input" className={cn("w-full font-mono", className)}>
       {attachments.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-2">
           {attachments.map((file, index) => (
@@ -99,9 +93,7 @@ export function AiChatInput({
               className="bg-muted flex items-center gap-1.5 border px-2 py-1 text-xs"
             >
               <Paperclip className="text-muted-foreground size-3" />
-              <span className="max-w-[150px] truncate tracking-wider uppercase">
-                {file.name}
-              </span>
+              <span className="max-w-[150px] truncate tracking-wider uppercase">{file.name}</span>
               <button
                 type="button"
                 onClick={() => removeAttachment(index)}
@@ -150,7 +142,7 @@ export function AiChatInput({
           aria-label="Chat message input"
           className={cn(
             "placeholder:text-muted-foreground/50 flex-1 resize-none bg-transparent text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50",
-            "min-h-[72px] px-3 py-2.5"
+            "min-h-[72px] px-3 py-2.5",
           )}
         />
 

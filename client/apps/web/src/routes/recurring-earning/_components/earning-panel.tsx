@@ -15,7 +15,10 @@ import {
 } from "@/lib/graphql/driver-settlement";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { recurringEarningFormSchema, type RecurringEarningFormValues } from "@trenova/shared/types/driver-pay";
+import {
+  recurringEarningFormSchema,
+  type RecurringEarningFormValues,
+} from "@trenova/shared/types/driver-pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm, useFormContext, useWatch, type Control, type Resolver } from "react-hook-form";

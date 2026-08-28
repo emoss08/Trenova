@@ -43,9 +43,7 @@ export function AiThinkingIndicator({
         return <Brain className="size-5 animate-pulse will-change-[opacity]" />;
 
       case "sparkles":
-        return (
-          <Sparkles className="size-5 animate-pulse will-change-[opacity]" />
-        );
+        return <Sparkles className="size-5 animate-pulse will-change-[opacity]" />;
 
       default:
         return null;
@@ -58,10 +56,7 @@ export function AiThinkingIndicator({
       role="status"
       aria-live="polite"
       aria-label={message}
-      className={cn(
-        "text-muted-foreground inline-flex items-center gap-2",
-        className,
-      )}
+      className={cn("text-muted-foreground inline-flex items-center gap-2", className)}
     >
       {renderIndicator()}
       {showLabel && (

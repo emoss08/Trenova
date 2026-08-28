@@ -15,9 +15,7 @@ import {
   updateSortField,
 } from "../data-table";
 
-function makeFilter(
-  overrides: Partial<SingleFilterItem> = {},
-): SingleFilterItem {
+function makeFilter(overrides: Partial<SingleFilterItem> = {}): SingleFilterItem {
   return {
     type: "filter",
     id: "test-1",
@@ -147,10 +145,7 @@ describe("sanitizeFilterValue", () => {
   });
 
   it("filters nulls from arrays", () => {
-    expect(sanitizeFilterValue(["a", null, "b", undefined])).toEqual([
-      "a",
-      "b",
-    ]);
+    expect(sanitizeFilterValue(["a", null, "b", undefined])).toEqual(["a", "b"]);
   });
 
   it("passes other types through unchanged", () => {

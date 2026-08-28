@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  generateBreadcrumbSegments,
-  generateFallbackTitle,
-  getPageTitle,
-} from "../route-utils";
+import { generateBreadcrumbSegments, generateFallbackTitle, getPageTitle } from "../route-utils";
 
 describe("generateBreadcrumbSegments", () => {
   it("produces cumulative paths and Title Case labels", () => {

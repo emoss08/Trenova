@@ -92,9 +92,7 @@ export function AssertionsEditor() {
     }
     const legacyFieldCount = Object.keys(expectedFields ?? {}).length;
     if (legacyFieldCount > 0) {
-      parts.push(
-        `${legacyFieldCount} legacy exact match${legacyFieldCount !== 1 ? "es" : ""}`,
-      );
+      parts.push(`${legacyFieldCount} legacy exact match${legacyFieldCount !== 1 ? "es" : ""}`);
     }
     const roleCount = (requiredStopRoles ?? []).length;
     if (roleCount > 0) {
@@ -201,10 +199,7 @@ function FieldAssertionsEditor<T extends FieldValues>({
       name={name}
       render={({ field, fieldState }) => (
         <FieldAssertionsEditorInner
-          value={
-            (field.value as Record<string, FixtureFieldAssertion[]> | undefined) ??
-            {}
-          }
+          value={(field.value as Record<string, FixtureFieldAssertion[]> | undefined) ?? {}}
           onChange={field.onChange}
           label={label}
           description={description}
@@ -307,11 +302,7 @@ function FieldAssertionsEditorInner({
   );
 
   const updateAssertion = useCallback(
-    (
-      fieldKey: string,
-      index: number,
-      nextAssertion: FixtureFieldAssertion,
-    ) => {
+    (fieldKey: string, index: number, nextAssertion: FixtureFieldAssertion) => {
       const nextAssertions = [...(value[fieldKey] ?? [])];
       nextAssertions[index] = nextAssertion;
       onChange({
@@ -328,8 +319,8 @@ function FieldAssertionsEditorInner({
       <div className="space-y-3">
         {entries.length === 0 && (
           <div className="text-muted-foreground rounded-md border border-dashed px-3 py-4 text-xs">
-            No field assertions yet. Add rules for things like “referenceNumber
-            is not empty” or “rate matches a currency pattern.”
+            No field assertions yet. Add rules for things like “referenceNumber is not empty” or
+            “rate matches a currency pattern.”
           </div>
         )}
 
@@ -361,9 +352,7 @@ function FieldAssertionsEditorInner({
                 <FieldAssertionRow
                   key={`${fieldKey}-${index}`}
                   assertion={assertion}
-                  onChange={(nextAssertion) =>
-                    updateAssertion(fieldKey, index, nextAssertion)
-                  }
+                  onChange={(nextAssertion) => updateAssertion(fieldKey, index, nextAssertion)}
                   onRemove={() => removeAssertion(fieldKey, index)}
                   disabled={disabled}
                 />
@@ -386,25 +375,14 @@ function FieldAssertionsEditorInner({
         ))}
 
         {!disabled && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-1"
-            onClick={addField}
-          >
+          <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addField}>
             <PlusIcon className="size-3.5" />
             Add Field Assertion
           </Button>
         )}
       </div>
       {(error || description) && (
-        <p
-          className={cn(
-            "text-2xs",
-            error ? "text-destructive" : "text-muted-foreground",
-          )}
-        >
+        <p className={cn("text-2xs", error ? "text-destructive" : "text-muted-foreground")}>
           {error || description}
         </p>
       )}
@@ -430,10 +408,9 @@ function FieldAssertionRow({
   const handleOperatorChange = (nextOperator: FixtureFieldAssertionOperator) => {
     onChange({
       operator: nextOperator,
-      value: nextOperator === "equals" ? assertion.value ?? "" : "",
-      values: nextOperator === "one_of" ? assertion.values ?? [] : [],
-      pattern:
-        nextOperator === "matches_regex" ? assertion.pattern ?? "" : "",
+      value: nextOperator === "equals" ? (assertion.value ?? "") : "",
+      values: nextOperator === "one_of" ? (assertion.values ?? []) : [],
+      pattern: nextOperator === "matches_regex" ? (assertion.pattern ?? "") : "",
     });
   };
 
@@ -442,15 +419,11 @@ function FieldAssertionRow({
       <div className="flex items-start gap-2">
         <div className="grid flex-1 gap-2 md:grid-cols-[180px_minmax(0,1fr)]">
           <div className="space-y-1">
-            <label className="text-2xs text-muted-foreground font-medium uppercase">
-              Operator
-            </label>
+            <label className="text-2xs text-muted-foreground font-medium uppercase">Operator</label>
             <select
               value={assertion.operator}
               onChange={(event) =>
-                handleOperatorChange(
-                  event.target.value as FixtureFieldAssertionOperator,
-                )
+                handleOperatorChange(event.target.value as FixtureFieldAssertionOperator)
               }
               disabled={disabled}
               className="border-input bg-background flex h-9 w-full rounded-md border px-3 text-sm outline-none"
@@ -476,9 +449,7 @@ function FieldAssertionRow({
             {assertion.operator === "equals" && (
               <Input
                 value={assertion.value}
-                onChange={(event) =>
-                  onChange({ ...assertion, value: event.target.value })
-                }
+                onChange={(event) => onChange({ ...assertion, value: event.target.value })}
                 placeholder="Expected exact value"
                 disabled={disabled}
               />
@@ -486,9 +457,7 @@ function FieldAssertionRow({
             {assertion.operator === "matches_regex" && (
               <Input
                 value={assertion.pattern}
-                onChange={(event) =>
-                  onChange({ ...assertion, pattern: event.target.value })
-                }
+                onChange={(event) => onChange({ ...assertion, pattern: event.target.value })}
                 placeholder="e.g. ^\\$[0-9]+(?:\\.[0-9]{2})$"
                 disabled={disabled}
                 className="font-mono text-xs"
@@ -510,8 +479,7 @@ function FieldAssertionRow({
                 disabled={disabled}
               />
             )}
-            {(assertion.operator === "exists" ||
-              assertion.operator === "not_empty") && (
+            {(assertion.operator === "exists" || assertion.operator === "not_empty") && (
               <div className="text-muted-foreground flex h-9 items-center rounded-md border border-dashed px-3 text-xs">
                 {operatorMeta?.description}
               </div>
@@ -533,9 +501,7 @@ function FieldAssertionRow({
       </div>
 
       {operatorMeta && (
-        <p className="text-2xs text-muted-foreground mt-2">
-          {operatorMeta.description}
-        </p>
+        <p className="text-2xs text-muted-foreground mt-2">{operatorMeta.description}</p>
       )}
     </div>
   );

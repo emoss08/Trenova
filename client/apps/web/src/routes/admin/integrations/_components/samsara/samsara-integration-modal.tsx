@@ -1,4 +1,9 @@
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@trenova/shared/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@trenova/shared/components/ui/dialog";
 import {
   Sidebar,
   SidebarContent,

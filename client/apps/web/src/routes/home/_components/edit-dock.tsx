@@ -40,10 +40,7 @@ export function HomeEditDock({
       animated
       indicator={
         dirty ? (
-          <ActionDockIndicator
-            title="Unsaved layout"
-            description="You have unsaved changes."
-          />
+          <ActionDockIndicator title="Unsaved layout" description="You have unsaved changes." />
         ) : (
           <ActionDockIndicator
             icon={
@@ -61,7 +58,9 @@ export function HomeEditDock({
         variant="outline"
         onClick={onAdd}
         disabled={addDisabled || saving}
-        title={addDisabled ? `This home screen has reached the ${maxWidgets}-widget limit.` : undefined}
+        title={
+          addDisabled ? `This home screen has reached the ${maxWidgets}-widget limit.` : undefined
+        }
         className={ACTION_DOCK_SECONDARY_BUTTON}
       >
         <PlusIcon className="size-3.5" />

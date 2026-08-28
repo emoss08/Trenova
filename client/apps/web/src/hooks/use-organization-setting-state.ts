@@ -24,9 +24,7 @@ export const identityProviderSearchParser = parseAsString
   .withDefault("")
   .withOptions({ history: "replace" });
 export const editingProviderParser = parseAsString.withOptions({ history: "replace" });
-export const identityProviderPanelModeParser = parseAsStringLiteral(
-  identityProviderPanelModeValues,
-)
+export const identityProviderPanelModeParser = parseAsStringLiteral(identityProviderPanelModeValues)
   .withDefault("create")
   .withOptions({ history: "replace" });
 export const identityProviderPanelOpenParser = parseAsBoolean

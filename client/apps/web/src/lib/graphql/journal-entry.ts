@@ -9,11 +9,8 @@ import {
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type JournalEntryDetail = NonNullable<JournalEntryDetailQuery["journalEntry"]>;
-export type JournalEntryBySource =
-  JournalEntriesBySourceQuery["journalEntriesBySource"][number];
-export type JournalSourceInfo = NonNullable<
-  JournalSourceByObjectQuery["journalSourceByObject"]
->;
+export type JournalEntryBySource = JournalEntriesBySourceQuery["journalEntriesBySource"][number];
+export type JournalSourceInfo = NonNullable<JournalSourceByObjectQuery["journalSourceByObject"]>;
 
 export async function fetchJournalEntry(id: string) {
   const data = await requestGraphQL({

@@ -41,10 +41,7 @@ describe("buildCsv", () => {
   });
 
   it("serializes arrays and objects as JSON", () => {
-    const csv = buildCsv<TestRow>(
-      [{ id: "1", name: "A", amount: 0, tags: ["x", "y"] }],
-      columns,
-    );
+    const csv = buildCsv<TestRow>([{ id: "1", name: "A", amount: 0, tags: ["x", "y"] }], columns);
 
     expect(csv.split("\r\n")[1]).toBe('1,A,0,"[""x"",""y""]",');
   });

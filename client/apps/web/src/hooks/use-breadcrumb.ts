@@ -8,9 +8,7 @@ export function useBreadcrumbs() {
 
   // Get matches with explicit crumbs from route handles
   const explicitCrumbs = matches
-    .filter(
-      (match) => match.handle?.crumb && match.handle?.showBreadcrumbs !== false,
-    )
+    .filter((match) => match.handle?.crumb && match.handle?.showBreadcrumbs !== false)
     .map((match) => ({
       id: match.id,
       pathname: match.pathname,
@@ -25,9 +23,7 @@ export function useBreadcrumbs() {
 
   // Merge explicit and implicit crumbs, preferring explicit ones
   const allCrumbs = segments.map((segment, index) => {
-    const explicitCrumb = explicitCrumbs.find(
-      (c) => c.pathname === segment.path,
-    );
+    const explicitCrumb = explicitCrumbs.find((c) => c.pathname === segment.path);
 
     const isLastSegment = index === segments.length - 1;
     return (

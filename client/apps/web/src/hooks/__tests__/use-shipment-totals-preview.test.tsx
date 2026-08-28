@@ -57,13 +57,7 @@ function baseShipment(overrides: Partial<Shipment> = {}): Shipment {
   } as unknown as Shipment;
 }
 
-function Harness({
-  defaultValues,
-  children,
-}: {
-  defaultValues: Shipment;
-  children: ReactNode;
-}) {
+function Harness({ defaultValues, children }: { defaultValues: Shipment; children: ReactNode }) {
   const form = useForm<Shipment>({ defaultValues });
   return <FormProvider {...form}>{children}</FormProvider>;
 }

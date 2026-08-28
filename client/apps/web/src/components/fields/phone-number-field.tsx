@@ -9,8 +9,8 @@ type BasePhoneNumberFieldProps = Omit<PhoneInputProps, "name"> & {
   inputClassProps?: string;
 };
 
-export type PhoneNumberFieldProps<T extends FieldValues> =
-  BasePhoneNumberFieldProps & FormControlProps<T>;
+export type PhoneNumberFieldProps<T extends FieldValues> = BasePhoneNumberFieldProps &
+  FormControlProps<T>;
 
 export function PhoneNumberField<T extends FieldValues>({
   label,

@@ -235,7 +235,15 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, isSubmitting, handleSubmit, defaultAction, onSubmit, activeTabHidesFooter, saveBlocked]);
+  }, [
+    open,
+    isSubmitting,
+    handleSubmit,
+    defaultAction,
+    onSubmit,
+    activeTabHidesFooter,
+    saveBlocked,
+  ]);
 
   const panelTitle = titleComponent
     ? row
@@ -247,12 +255,12 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
   const panelDescription = row?.updatedAt
     ? `Last updated on ${formatToUserTimezone(
-      row.updatedAt as number,
-      {
-        timeFormat: user?.timeFormat || "24-hour",
-      },
-      user?.timezone,
-    )}`
+        row.updatedAt as number,
+        {
+          timeFormat: user?.timeFormat || "24-hour",
+        },
+        user?.timezone,
+      )}`
     : undefined;
 
   const rowId = row !== null && row !== undefined ? String(row.id) : "unable to retrieve ID";
@@ -312,8 +320,8 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
           ) : recordFailed ? (
             <div className="flex-1 p-4">
               <p className="text-destructive text-sm">
-                This {title.toLowerCase()} could not be loaded, so it cannot be edited safely.
-                Close the panel and try again.
+                This {title.toLowerCase()} could not be loaded, so it cannot be edited safely. Close
+                the panel and try again.
               </p>
             </div>
           ) : hasFormTabs ? (

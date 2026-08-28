@@ -75,7 +75,12 @@ export function DateTimePickerPopover({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger render={children} />
       <PopoverContent align="center" side="right" className="w-auto p-0">
-        <Calendar mode="single" selected={dateTime} defaultMonth={dateTime} onSelect={onSelectDay} />
+        <Calendar
+          mode="single"
+          selected={dateTime}
+          defaultMonth={dateTime}
+          onSelect={onSelectDay}
+        />
         <div className="border-border border-t p-3">
           <TimePicker date={dateTime} setDate={setDateTime} />
         </div>

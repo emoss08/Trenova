@@ -1,4 +1,8 @@
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@trenova/shared/components/ui/hover-card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@trenova/shared/components/ui/hover-card";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { queries } from "@/lib/queries";
 import { truncateText } from "@trenova/shared/lib/utils";

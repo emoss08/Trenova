@@ -38,8 +38,7 @@ const StarIcon = forwardRef<StarIconHandle, StarIconProps>(
     useImperativeHandle(ref, () => {
       isControlled.current = true;
       return {
-        startAnimation: () =>
-          reduced ? controls.start("normal") : controls.start("animate"),
+        startAnimation: () => (reduced ? controls.start("normal") : controls.start("animate")),
         stopAnimation: () => controls.start("normal"),
       };
     });

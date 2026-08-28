@@ -47,9 +47,7 @@ export function Panel({
           </span>
           <div className="min-w-0">
             <h3 className="text-sm leading-tight font-medium">{title}</h3>
-            <p className="text-2xs text-muted-foreground mt-1 leading-snug">
-              {description}
-            </p>
+            <p className="text-2xs text-muted-foreground mt-1 leading-snug">{description}</p>
           </div>
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
@@ -57,20 +55,12 @@ export function Panel({
 
       <div className="min-w-0 flex-1">{children}</div>
 
-      {footer ? (
-        <footer className="border-border border-t px-3 py-2">{footer}</footer>
-      ) : null}
+      {footer ? <footer className="border-border border-t px-3 py-2">{footer}</footer> : null}
     </m.section>
   );
 }
 
-export function PanelEmpty({
-  icon: Icon,
-  message,
-}: {
-  icon: IconComponent;
-  message: string;
-}) {
+export function PanelEmpty({ icon: Icon, message }: { icon: IconComponent; message: string }) {
   return (
     <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
       <Icon className="text-muted-foreground/50 size-5" />
@@ -84,8 +74,7 @@ export function PanelError({ onRetry }: { onRetry: () => void }) {
     <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
       <TriangleAlertIcon className="size-5 text-amber-500" />
       <p className="text-muted-foreground max-w-[20rem] text-xs">
-        These figures could not be loaded. The window may be too wide, or the
-        aggregation timed out.
+        These figures could not be loaded. The window may be too wide, or the aggregation timed out.
       </p>
       <Button type="button" size="sm" variant="outline" className="h-7" onClick={onRetry}>
         <RotateCwIcon className="mr-1.5 size-3.5" />
@@ -126,16 +115,12 @@ export function MetricCell({
 }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-        {label}
-      </p>
+      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
       <p className={cn("mt-1 truncate text-sm font-medium tabular-nums", valueClassName)}>
         {value}
       </p>
       {detail ? (
-        <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
-          {detail}
-        </p>
+        <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">{detail}</p>
       ) : null}
     </div>
   );

@@ -15,14 +15,15 @@ export class AccountTypeService {
       request,
     );
 
-    return safeParse(bulkUpdateAccountTypeStatusResponseSchema, response, "Bulk Update Account Type Status");
+    return safeParse(
+      bulkUpdateAccountTypeStatusResponseSchema,
+      response,
+      "Bulk Update Account Type Status",
+    );
   }
 
   public async patch(id: AccountType["id"], data: Partial<AccountType>) {
-    const response = await api.patch<AccountType>(
-      `/account-types/${id}/`,
-      data,
-    );
+    const response = await api.patch<AccountType>(`/account-types/${id}/`, data);
 
     return safeParse(accountTypeSchema, response, "Account Type");
   }

@@ -8,12 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
-import {
-  ChevronDownIcon,
-  PlusIcon,
-  TrashIcon,
-  LayoutListIcon,
-} from "lucide-react";
+import { ChevronDownIcon, PlusIcon, TrashIcon, LayoutListIcon } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { TagInput } from "../shared/tag-input";
 import type { RuleVersionFormValues } from "@/types/document-parsing-rule";
@@ -56,12 +51,10 @@ export function SectionRuleEditor() {
           <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
             <LayoutListIcon className="text-muted-foreground/50 size-8" />
             <div>
-              <p className="text-muted-foreground text-sm font-medium">
-                No sections defined
-              </p>
+              <p className="text-muted-foreground text-sm font-medium">No sections defined</p>
               <p className="text-muted-foreground/70 mt-0.5 text-xs">
-                Sections are optional. Add them to scope field and stop
-                extraction to specific document regions.
+                Sections are optional. Add them to scope field and stop extraction to specific
+                document regions.
               </p>
             </div>
           </div>

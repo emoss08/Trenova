@@ -22,9 +22,7 @@ const PRIORITY_OPTIONS: SelectOption[] = [
 export function SubscriptionForm() {
   const { control } = useFormContext<TCASubscriptionFormValues>();
 
-  const { data: allowlistedTables } = useQuery(
-    queries.tableChangeAlert.allowlistedTables(),
-  );
+  const { data: allowlistedTables } = useQuery(queries.tableChangeAlert.allowlistedTables());
 
   const tableOptions = useMemo<SelectOption[]>(
     () =>
@@ -82,14 +80,11 @@ export function SubscriptionForm() {
             name="eventTypes"
             control={control}
             rules={{
-              validate: (v) =>
-                (v && v.length > 0) || "At least one event type is required",
+              validate: (v) => (v && v.length > 0) || "At least one event type is required",
             }}
             render={({ field, fieldState }) => (
               <div className="space-y-2">
-                <Label className={fieldState.error ? "text-destructive" : ""}>
-                  Event Types *
-                </Label>
+                <Label className={fieldState.error ? "text-destructive" : ""}>Event Types *</Label>
                 <div className="flex gap-6">
                   {(["INSERT", "UPDATE", "DELETE"] as const).map((et) => (
                     <label key={et} className="flex items-center gap-2 text-sm">
@@ -98,9 +93,7 @@ export function SubscriptionForm() {
                         onCheckedChange={(checked) => {
                           const current = field.value ?? [];
                           field.onChange(
-                            checked
-                              ? [...current, et]
-                              : current.filter((v: string) => v !== et),
+                            checked ? [...current, et] : current.filter((v: string) => v !== et),
                           );
                         }}
                       />
@@ -109,9 +102,7 @@ export function SubscriptionForm() {
                   ))}
                 </div>
                 {fieldState.error && (
-                  <p className="text-2xs text-destructive">
-                    {fieldState.error.message}
-                  </p>
+                  <p className="text-2xs text-destructive">{fieldState.error.message}</p>
                 )}
               </div>
             )}
@@ -139,7 +130,10 @@ export function SubscriptionForm() {
                       const val = (e.target as HTMLInputElement).value;
                       field.onChange(
                         val
-                          ? val.split(",").map((s) => s.trim()).filter(Boolean)
+                          ? val
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter(Boolean)
                           : [],
                       );
                     }}

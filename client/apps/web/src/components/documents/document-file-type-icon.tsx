@@ -1,11 +1,5 @@
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  FileCodeIcon,
-  FileIcon,
-  FileSpreadsheetIcon,
-  FileTextIcon,
-  ImageIcon,
-} from "lucide-react";
+import { FileCodeIcon, FileIcon, FileSpreadsheetIcon, FileTextIcon, ImageIcon } from "lucide-react";
 import { getFileCategory } from "./document-utils";
 
 type IconSize = "sm" | "md" | "lg" | "xl";
@@ -24,10 +18,7 @@ const sizeClasses: Record<IconSize, { container: string; icon: string }> = {
   xl: { container: "size-16", icon: "size-8" },
 };
 
-const categoryStyles: Record<
-  string,
-  { bg: string; text: string; icon: typeof FileIcon }
-> = {
+const categoryStyles: Record<string, { bg: string; text: string; icon: typeof FileIcon }> = {
   pdf: {
     bg: "bg-red-100 dark:bg-red-950/50",
     text: "text-red-600 dark:text-red-400",

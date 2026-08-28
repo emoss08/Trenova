@@ -22,19 +22,29 @@ export function CreateTemplateForm({
     const direction = (option.meta?.direction as string) || "";
     const transactionSet = (option.meta?.transactionSet as string) || "";
     const defaultVersion = (option.meta?.defaultVersion as string) || "";
-    if (direction) setValue("direction", direction as TemplateFormValues["direction"], { shouldDirty: true, shouldValidate: true });
-    if (transactionSet) setValue("transactionSet", transactionSet as TemplateFormValues["transactionSet"], {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
+    if (direction)
+      setValue("direction", direction as TemplateFormValues["direction"], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    if (transactionSet)
+      setValue("transactionSet", transactionSet as TemplateFormValues["transactionSet"], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     setValue("x12Version", defaultVersion || getValues("x12Version"), {
       shouldDirty: true,
       shouldValidate: true,
     });
-    if (transactionSet) setValue("functionalGroupId", functionalGroupForTransactionSet(transactionSet as TemplateFormValues["transactionSet"]), {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
+    if (transactionSet)
+      setValue(
+        "functionalGroupId",
+        functionalGroupForTransactionSet(transactionSet as TemplateFormValues["transactionSet"]),
+        {
+          shouldDirty: true,
+          shouldValidate: true,
+        },
+      );
   };
 
   return (

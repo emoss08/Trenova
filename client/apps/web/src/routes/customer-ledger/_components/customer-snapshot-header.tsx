@@ -91,8 +91,7 @@ export function CustomerSnapshotHeader({
             {formatCurrency(snapshot.totalOpenMinor / 100)}
           </p>
           <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">
-            {formatCurrency(snapshot.overdueMinor / 100)} overdue ·{" "}
-            {snapshot.openInvoiceCount} open
+            {formatCurrency(snapshot.overdueMinor / 100)} overdue · {snapshot.openInvoiceCount} open
           </p>
         </SnapshotTile>
         <SnapshotTile index={1} label="Credit Utilization">
@@ -158,11 +157,7 @@ export function CustomerSnapshotHeader({
                     fontSize={10}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar
-                    dataKey="collected"
-                    fill="var(--color-collected)"
-                    radius={[3, 3, 0, 0]}
-                  />
+                  <Bar dataKey="collected" fill="var(--color-collected)" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ChartContainer>
             )}

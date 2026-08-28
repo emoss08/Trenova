@@ -8,12 +8,7 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { statusChoices } from "@/lib/choices";
 import type { Customer } from "@trenova/shared/types/customer";
-import {
-  BuildingIcon,
-  LinkIcon,
-  PackageIcon,
-  UserIcon,
-} from "lucide-react";
+import { BuildingIcon, LinkIcon, PackageIcon, UserIcon } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 
 function SectionHeader({
@@ -31,9 +26,7 @@ function SectionHeader({
         <Icon className="size-4" />
       </div>
       <div>
-        <h3 className="text-sm leading-none font-semibold tracking-tight">
-          {title}
-        </h3>
+        <h3 className="text-sm leading-none font-semibold tracking-tight">{title}</h3>
         <p className="text-muted-foreground mt-1 text-xs">{description}</p>
       </div>
     </div>

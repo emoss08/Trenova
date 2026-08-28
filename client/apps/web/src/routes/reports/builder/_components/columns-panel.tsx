@@ -106,9 +106,7 @@ function ComputedOperandField({
         onValueChange={(next) => {
           if (!next) return;
           onChange(
-            next === TARGET_OPTION
-              ? { value: operand.value ?? defaultTarget }
-              : { columnId: next },
+            next === TARGET_OPTION ? { value: operand.value ?? defaultTarget } : { columnId: next },
           );
         }}
         items={choices}

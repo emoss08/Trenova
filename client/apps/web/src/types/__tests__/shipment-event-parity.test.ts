@@ -1,6 +1,4 @@
-import type {
-  ShipmentEventType as GraphQLShipmentEventType,
-} from "@trenova/graphql/generated/graphql";
+import type { ShipmentEventType as GraphQLShipmentEventType } from "@trenova/graphql/generated/graphql";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { type ShipmentEventType, shipmentEventTypeSchema } from "../shipment-event";
 

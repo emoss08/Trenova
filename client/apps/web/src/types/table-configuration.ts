@@ -6,28 +6,15 @@ import {
 } from "@trenova/shared/types/data-table";
 import { createLimitOffsetResponse } from "@trenova/shared/types/server";
 
-export const configurationVisibilitySchema = z.enum([
-  "Private",
-  "Public",
-  "Shared",
-]);
+export const configurationVisibilitySchema = z.enum(["Private", "Public", "Shared"]);
 
-export type ConfigurationVisibility = z.infer<
-  typeof configurationVisibilitySchema
->;
+export type ConfigurationVisibility = z.infer<typeof configurationVisibilitySchema>;
 
 export const tableDensitySchema = z.enum(["compact", "comfortable"]);
 
 export type TableDensity = z.infer<typeof tableDensitySchema>;
 
-export const formatRuleColorSchema = z.enum([
-  "red",
-  "amber",
-  "green",
-  "blue",
-  "purple",
-  "gray",
-]);
+export const formatRuleColorSchema = z.enum(["red", "amber", "green", "blue", "purple", "gray"]);
 
 export type FormatRuleColor = z.infer<typeof formatRuleColorSchema>;
 
@@ -101,9 +88,7 @@ export const tableConfigSchema = z.object({
     .record(z.string(), z.number())
     .nullish()
     .transform((v) => v ?? {}),
-  columnPinning: tableColumnPinningSchema
-    .nullish()
-    .transform((v) => v ?? { left: [], right: [] }),
+  columnPinning: tableColumnPinningSchema.nullish().transform((v) => v ?? { left: [], right: [] }),
   density: tableDensitySchema.catch("comfortable"),
   formatRules: z
     .array(tableFormatRuleSchema)
@@ -131,9 +116,7 @@ export const tableConfigurationFormSchema = z.object({
   isDefault: z.boolean().default(false),
 });
 
-export type TableConfigurationFormValues = z.input<
-  typeof tableConfigurationFormSchema
->;
+export type TableConfigurationFormValues = z.input<typeof tableConfigurationFormSchema>;
 
 export const tableConfigurationUserSchema = z.object({
   id: z.string(),
@@ -166,10 +149,6 @@ export const tableConfigurationSchema = z.object({
 
 export type TableConfiguration = z.infer<typeof tableConfigurationSchema>;
 
-export const tableConfigurationResponseSchema = createLimitOffsetResponse(
-  tableConfigurationSchema,
-);
+export const tableConfigurationResponseSchema = createLimitOffsetResponse(tableConfigurationSchema);
 
-export type TableConfigurationResponse = z.infer<
-  typeof tableConfigurationResponseSchema
->;
+export type TableConfigurationResponse = z.infer<typeof tableConfigurationResponseSchema>;

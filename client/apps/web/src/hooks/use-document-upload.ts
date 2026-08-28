@@ -300,9 +300,7 @@ export function useDocumentUpload({
       };
 
       await Promise.all(
-        Array.from({ length: Math.min(MAX_PART_CONCURRENCY, partNumbers.length) }, () =>
-          worker(),
-        ),
+        Array.from({ length: Math.min(MAX_PART_CONCURRENCY, partNumbers.length) }, () => worker()),
       );
     },
     [setUploadState, uploadPartWithRetry],
@@ -359,10 +357,7 @@ export function useDocumentUpload({
               : undefined,
         }));
 
-        if (
-          state.session.status === "Available" ||
-          state.session.status === "Completed"
-        ) {
+        if (state.session.status === "Available" || state.session.status === "Completed") {
           if (!state.session.documentId) {
             throw new Error("Upload finalized without a document record");
           }
@@ -375,7 +370,9 @@ export function useDocumentUpload({
           state.session.status === "Canceled" ||
           state.session.status === "Quarantined"
         ) {
-          throw new Error(state.session.failureMessage || `Upload ${state.session.status.toLowerCase()}`);
+          throw new Error(
+            state.session.failureMessage || `Upload ${state.session.status.toLowerCase()}`,
+          );
         }
 
         await sleep(1500);
@@ -455,7 +452,10 @@ export function useDocumentUpload({
         }
 
         if (state.session.strategy === "single") {
-          const [target] = await apiService.documentService.getUploadPartTargets(state.session.id, [1]);
+          const [target] = await apiService.documentService.getUploadPartTargets(
+            state.session.id,
+            [1],
+          );
           await api.putFileWithProgress(
             target.url,
             uploadState.file,
@@ -485,7 +485,9 @@ export function useDocumentUpload({
           progress: 100,
         }));
 
-        const completionSession = await apiService.documentService.completeUploadSession(state.session.id);
+        const completionSession = await apiService.documentService.completeUploadSession(
+          state.session.id,
+        );
         sessionByUploadIdRef.current.set(uploadState.id, completionSession);
         await syncSessionToStore(uploadState.id, uploadState.file);
         const document = await waitForSessionFinalization(
@@ -559,10 +561,7 @@ export function useDocumentUpload({
   );
 
   const processQueue = useCallback(() => {
-    while (
-      activeUploadsRef.current < MAX_FILE_CONCURRENCY &&
-      pendingQueueRef.current.length > 0
-    ) {
+    while (activeUploadsRef.current < MAX_FILE_CONCURRENCY && pendingQueueRef.current.length > 0) {
       const next = pendingQueueRef.current.shift();
       if (next) {
         void startUpload(next);
@@ -589,27 +588,24 @@ export function useDocumentUpload({
     [processQueue, uploadMetadata],
   );
 
-  const cancelUpload = useCallback(
-    (id: string) => {
-      const controller = abortControllersRef.current.get(id);
-      const session = sessionByUploadIdRef.current.get(id);
+  const cancelUpload = useCallback((id: string) => {
+    const controller = abortControllersRef.current.get(id);
+    const session = sessionByUploadIdRef.current.get(id);
 
-      if (controller) {
-        controller.abort();
-      }
+    if (controller) {
+      controller.abort();
+    }
 
-      if (session?.id) {
-        restoredSessionIdsRef.current.delete(session.id);
-        void apiService.documentService.cancelUploadSession(session.id).catch(() => undefined);
-        void removeDocumentUploadSession(session.id);
-      }
+    if (session?.id) {
+      restoredSessionIdsRef.current.delete(session.id);
+      void apiService.documentService.cancelUploadSession(session.id).catch(() => undefined);
+      void removeDocumentUploadSession(session.id);
+    }
 
-      sessionByUploadIdRef.current.delete(id);
-      pendingQueueRef.current = pendingQueueRef.current.filter((upload) => upload.id !== id);
-      setUploads((prev) => prev.filter((upload) => upload.id !== id));
-    },
-    [],
-  );
+    sessionByUploadIdRef.current.delete(id);
+    pendingQueueRef.current = pendingQueueRef.current.filter((upload) => upload.id !== id);
+    setUploads((prev) => prev.filter((upload) => upload.id !== id));
+  }, []);
 
   const retryUpload = useCallback(
     (id: string) => {
@@ -635,18 +631,15 @@ export function useDocumentUpload({
     [discardSession, processQueue, uploads],
   );
 
-  const removeUpload = useCallback(
-    (id: string) => {
-      const session = sessionByUploadIdRef.current.get(id);
-      if (session?.id) {
-        restoredSessionIdsRef.current.delete(session.id);
-        void removeDocumentUploadSession(session.id);
-      }
-      sessionByUploadIdRef.current.delete(id);
-      setUploads((prev) => prev.filter((upload) => upload.id !== id));
-    },
-    [],
-  );
+  const removeUpload = useCallback((id: string) => {
+    const session = sessionByUploadIdRef.current.get(id);
+    if (session?.id) {
+      restoredSessionIdsRef.current.delete(session.id);
+      void removeDocumentUploadSession(session.id);
+    }
+    sessionByUploadIdRef.current.delete(id);
+    setUploads((prev) => prev.filter((upload) => upload.id !== id));
+  }, []);
 
   const clearCompleted = useCallback(() => {
     setUploads((prev) => {
@@ -754,9 +747,15 @@ export function useDocumentUpload({
   }, [resourceId, resourceType]);
 
   const isUploading = uploads.some((upload) =>
-    ["pending", "uploading", "processing", "uploaded", "verifying", "retrying", "completing"].includes(
-      upload.status,
-    ),
+    [
+      "pending",
+      "uploading",
+      "processing",
+      "uploaded",
+      "verifying",
+      "retrying",
+      "completing",
+    ].includes(upload.status),
   );
 
   return {

@@ -39,7 +39,7 @@ export function ResolvedUserAvatar({
     retry: false,
   });
 
-  const imageSrc = isAbsoluteUrl(preferredSource) ? preferredSource : resolvedUrl ?? undefined;
+  const imageSrc = isAbsoluteUrl(preferredSource) ? preferredSource : (resolvedUrl ?? undefined);
 
   return (
     <Avatar {...avatarProps}>

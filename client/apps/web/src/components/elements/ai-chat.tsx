@@ -48,10 +48,7 @@ function AiChatHeader({ children, className }: AiChatHeaderProps) {
   return (
     <div
       data-slot="ai-chat-header"
-      className={cn(
-        "flex items-center justify-between border-b px-4 py-3",
-        className
-      )}
+      className={cn("flex items-center justify-between border-b px-4 py-3", className)}
     >
       {children}
     </div>
@@ -65,10 +62,7 @@ interface AiChatBodyProps {
 
 function AiChatBody({ children, className }: AiChatBodyProps) {
   return (
-    <div
-      data-slot="ai-chat-body"
-      className={cn("relative flex-1 overflow-hidden", className)}
-    >
+    <div data-slot="ai-chat-body" className={cn("relative flex-1 overflow-hidden", className)}>
       {children}
     </div>
   );
@@ -81,10 +75,7 @@ interface AiChatFooterProps {
 
 function AiChatFooter({ children, className }: AiChatFooterProps) {
   return (
-    <div
-      data-slot="ai-chat-footer"
-      className={cn("bg-background border-t px-4 py-3", className)}
-    >
+    <div data-slot="ai-chat-footer" className={cn("bg-background border-t px-4 py-3", className)}>
       {children}
     </div>
   );

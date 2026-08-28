@@ -40,9 +40,7 @@ export function EditableDateField({
 
   const formattedDate = toUserWallClock(date);
 
-  const displayDate = formattedDate
-    ? generateDateOnlyString(formattedDate)
-    : "No date";
+  const displayDate = formattedDate ? generateDateOnlyString(formattedDate) : "No date";
 
   const variant = date ? "active" : "inactive";
 
@@ -71,20 +69,12 @@ export function EditableDateField({
             render={<button type="button" disabled={isLoading} />}
           >
             {displayDate}
-            {isLoading ? (
-              <Spinner className="size-3" />
-            ) : (
-              <ChevronDownIcon className="size-3" />
-            )}
+            {isLoading ? <Spinner className="size-3" /> : <ChevronDownIcon className="size-3" />}
           </Badge>
         }
       />
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={formattedDate}
-          onSelect={handleDateSelect}
-        />
+        <Calendar mode="single" selected={formattedDate} onSelect={handleDateSelect} />
       </PopoverContent>
     </Popover>
   );

@@ -150,11 +150,7 @@ export class DetentionService {
       variables: { id },
     })) as DetentionOccurrenceDetailQuery;
 
-    return safeParse(
-      occurrenceDetailSchema,
-      response.detentionOccurrence,
-      "Detention Occurrence",
-    );
+    return safeParse(occurrenceDetailSchema, response.detentionOccurrence, "Detention Occurrence");
   }
 
   public async byShipment(shipmentId: string): Promise<DetentionOccurrence[]> {
@@ -214,10 +210,7 @@ export class DetentionService {
     );
   }
 
-  public async dispute(
-    id: string,
-    payload: { note: string },
-  ): Promise<DetentionOccurrence> {
+  public async dispute(id: string, payload: { note: string }): Promise<DetentionOccurrence> {
     const response = (await requestGraphQL({
       document: DisputeDetentionOccurrenceDocument,
       operationName: "DisputeDetentionOccurrence",
@@ -313,10 +306,7 @@ export class DetentionAnalyticsService {
     );
   }
 
-  public async waivers(params: {
-    from: number;
-    to: number;
-  }): Promise<WaiverLeakageStat[]> {
+  public async waivers(params: { from: number; to: number }): Promise<WaiverLeakageStat[]> {
     const response = (await requestGraphQL({
       document: DetentionWaiverStatsDocument,
       operationName: "DetentionWaiverStats",
@@ -349,11 +339,7 @@ export class DetentionPolicyService {
       variables: { input: toDetentionPolicyInput(data) },
     })) as CreateDetentionPolicyMutation;
 
-    return safeParse(
-      detentionPolicySchema,
-      response.createDetentionPolicy,
-      "Detention Policy",
-    );
+    return safeParse(detentionPolicySchema, response.createDetentionPolicy, "Detention Policy");
   }
 
   public async update(id: string, data: DetentionPolicy): Promise<DetentionPolicy> {
@@ -363,11 +349,7 @@ export class DetentionPolicyService {
       variables: { id, input: toDetentionPolicyInput(data) },
     })) as UpdateDetentionPolicyMutation;
 
-    return safeParse(
-      detentionPolicySchema,
-      response.updateDetentionPolicy,
-      "Detention Policy",
-    );
+    return safeParse(detentionPolicySchema, response.updateDetentionPolicy, "Detention Policy");
   }
 
   public async delete(id: string): Promise<boolean> {
@@ -385,10 +367,7 @@ export class DetentionPolicyService {
    * builder shows what the configured terms would actually charge. The math is
    * never re-derived on the client.
    */
-  public async preview(
-    policy: DetentionPolicy,
-    scenario: PreviewScenario,
-  ): Promise<PreviewResult> {
+  public async preview(policy: DetentionPolicy, scenario: PreviewScenario): Promise<PreviewResult> {
     const response = (await requestGraphQL({
       document: DetentionPolicyPreviewDocument,
       operationName: "DetentionPolicyPreview",
@@ -407,10 +386,6 @@ export class DetentionPolicyService {
       },
     })) as DetentionPolicyPreviewQuery;
 
-    return safeParse(
-      previewResultSchema,
-      response.detentionPolicyPreview,
-      "Detention Preview",
-    );
+    return safeParse(previewResultSchema, response.detentionPolicyPreview, "Detention Preview");
   }
 }

@@ -2,7 +2,10 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import type { SwitchOrganizationRequest, SwitchOrganizationResponse } from "@trenova/shared/types/organization";
+import type {
+  SwitchOrganizationRequest,
+  SwitchOrganizationResponse,
+} from "@trenova/shared/types/organization";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";

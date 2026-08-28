@@ -35,8 +35,14 @@ function getSteps(
     const failAt = doc?.contentStatus === "Failed" ? 0 : draft?.status === "Failed" ? 2 : 1;
     return [
       { label: "Extracting text", state: failAt === 0 ? "error" : "complete" },
-      { label: "Classifying document", state: failAt <= 1 ? (failAt === 1 ? "error" : "pending") : "complete" },
-      { label: "Building shipment draft", state: failAt <= 2 ? (failAt === 2 ? "error" : "pending") : "complete" },
+      {
+        label: "Classifying document",
+        state: failAt <= 1 ? (failAt === 1 ? "error" : "pending") : "complete",
+      },
+      {
+        label: "Building shipment draft",
+        state: failAt <= 2 ? (failAt === 2 ? "error" : "pending") : "complete",
+      },
     ];
   }
 
@@ -113,11 +119,17 @@ function StepDot({ state }: { state: StepState }) {
         )}
       >
         {state === "complete" && (
-          <m.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 25 }}>
+          <m.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+          >
             <CheckIcon className="size-2.5 stroke-[3] text-white" />
           </m.div>
         )}
-        {state === "active" && <LoaderCircleIcon className="text-foreground/70 size-2.5 animate-spin" />}
+        {state === "active" && (
+          <LoaderCircleIcon className="text-foreground/70 size-2.5 animate-spin" />
+        )}
         {state === "error" && <AlertCircleIcon className="text-destructive size-2.5" />}
       </div>
       {/* Pulse ring on active */}
@@ -131,7 +143,6 @@ function StepDot({ state }: { state: StepState }) {
     </div>
   );
 }
-
 
 export function ProcessingPhase({
   document: doc,
@@ -199,7 +210,10 @@ export function ProcessingPhase({
                         <m.div
                           className="min-h-4 w-px flex-1 rounded-full"
                           animate={{
-                            backgroundColor: step.state === "complete" ? "var(--color-emerald-400)" : "var(--color-border)",
+                            backgroundColor:
+                              step.state === "complete"
+                                ? "var(--color-emerald-400)"
+                                : "var(--color-border)",
                           }}
                           transition={{ duration: 0.4 }}
                         />
@@ -226,10 +240,19 @@ export function ProcessingPhase({
 
             {/* Error */}
             {errorMessage && (
-              <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-5 space-y-3 border-t pt-4">
+              <m.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-5 space-y-3 border-t pt-4"
+              >
                 <p className="text-muted-foreground text-xs">{errorMessage}</p>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={onRetryExtraction} disabled={isRetrying}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onRetryExtraction}
+                    disabled={isRetrying}
+                  >
                     {isRetrying && <LoaderCircleIcon className="size-3.5 animate-spin" />}
                     Retry
                   </Button>

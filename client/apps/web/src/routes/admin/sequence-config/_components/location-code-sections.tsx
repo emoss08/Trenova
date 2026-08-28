@@ -63,9 +63,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
                 const selected = field.value ?? [];
                 return (
                   <div className="space-y-2">
-                    <Label className={fieldState.error ? "text-destructive" : ""}>
-                      Components
-                    </Label>
+                    <Label className={fieldState.error ? "text-destructive" : ""}>Components</Label>
                     <div className="grid gap-2 sm:grid-cols-2">
                       {locationCodeComponents.map((component) => {
                         const Icon = componentIcons[component];

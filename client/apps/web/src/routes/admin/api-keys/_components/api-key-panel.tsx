@@ -500,13 +500,11 @@ function toRequestPayload(values: ApiKeyPanelFormValues): CreateApiKeyRequest {
     expiresAt: values.expiresAtInput
       ? Math.floor(new Date(values.expiresAtInput).getTime() / 1000)
       : 0,
-    permissions: values.permissions.map(
-      (permission): ApiKeyPermissionInput => ({
-        resource: permission.resource,
-        operations: permission.operations,
-        dataScope: permission.dataScope,
-      }),
-    ),
+    permissions: values.permissions.map((permission): ApiKeyPermissionInput => ({
+      resource: permission.resource,
+      operations: permission.operations,
+      dataScope: permission.dataScope,
+    })),
   };
 }
 

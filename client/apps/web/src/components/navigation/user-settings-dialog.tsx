@@ -16,10 +16,7 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { timeFormatChoices, timezoneChoices } from "@/lib/choices";
 import { validateCroppableImage } from "@/lib/images/crop-image";
-import {
-  IMAGE_UPLOAD_ACCEPT,
-  profilePictureCropConfig,
-} from "@/lib/images/upload-config";
+import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -128,19 +125,22 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
     setIsCropOpen(false);
   }, [onOpenChange, passwordForm]);
 
-  const syncUserSettings = useCallback(async (updatedUser: User) => {
-    useAuthStore.getState().setUser(updatedUser);
-    if (updatedUser.id) {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: queries.user.profilePicture(updatedUser.id, "thumbnail").queryKey,
-        }),
-        queryClient.invalidateQueries({
-          queryKey: queries.user.profilePicture(updatedUser.id, "full").queryKey,
-        }),
-      ]);
-    }
-  }, [queryClient]);
+  const syncUserSettings = useCallback(
+    async (updatedUser: User) => {
+      useAuthStore.getState().setUser(updatedUser);
+      if (updatedUser.id) {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: queries.user.profilePicture(updatedUser.id, "thumbnail").queryKey,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: queries.user.profilePicture(updatedUser.id, "full").queryKey,
+          }),
+        ]);
+      }
+    },
+    [queryClient],
+  );
 
   const handleFileSelection = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -155,16 +155,20 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
       setIsCropOpen(true);
     } catch (error) {
       toast.error("Unsupported profile picture", {
-        description: error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
+        description:
+          error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
       });
     }
   }, []);
 
-  const handleProfilePictureUpload = useCallback(async (file: File) => {
-    const updatedUser = await apiService.userService.uploadMyProfilePicture(file);
-    await syncUserSettings(updatedUser);
-    toast.success("Profile picture updated");
-  }, [syncUserSettings]);
+  const handleProfilePictureUpload = useCallback(
+    async (file: File) => {
+      const updatedUser = await apiService.userService.uploadMyProfilePicture(file);
+      await syncUserSettings(updatedUser);
+      toast.success("Profile picture updated");
+    },
+    [syncUserSettings],
+  );
 
   const handleRemoveProfilePicture = useCallback(async () => {
     if (isRemovingProfilePicture) {

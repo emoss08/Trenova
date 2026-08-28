@@ -10,11 +10,7 @@ export const holdTypeSchema = z.enum([
 
 export type HoldType = z.infer<typeof holdTypeSchema>;
 
-export const holdSeveritySchema = z.enum([
-  "Informational",
-  "Advisory",
-  "Blocking",
-]);
+export const holdSeveritySchema = z.enum(["Informational", "Advisory", "Blocking"]);
 
 export type HoldSeverity = z.infer<typeof holdSeveritySchema>;
 

@@ -72,8 +72,10 @@ export function BillingQueueChargeDialog({
         if (metaAmount != null) setValue("amount", Number(metaAmount), { shouldDirty: true });
         // Fallback for legacy AccessorialCharge shape
         const legacy = option as unknown as AccessorialCharge;
-        if (!metaMethod && legacy.method) setValue("method", legacy.method as never, { shouldDirty: true });
-        if (metaAmount == null && legacy.amount != null) setValue("amount", Number(legacy.amount), { shouldDirty: true });
+        if (!metaMethod && legacy.method)
+          setValue("method", legacy.method as never, { shouldDirty: true });
+        if (metaAmount == null && legacy.amount != null)
+          setValue("amount", Number(legacy.amount), { shouldDirty: true });
       }
     },
     [setValue],
@@ -90,8 +92,7 @@ export function BillingQueueChargeDialog({
       onSave({
         ...values,
         id: defaultValues?.id,
-        accessorialCharge:
-          accessorialRef.current ?? defaultValues?.accessorialCharge,
+        accessorialCharge: accessorialRef.current ?? defaultValues?.accessorialCharge,
       });
       handleClose();
     },

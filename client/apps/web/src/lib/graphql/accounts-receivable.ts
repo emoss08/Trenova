@@ -39,10 +39,8 @@ export type ARDashboardKpis = ArDashboardKpisQuery["arDashboardKpis"];
 export type ARDsoTrendPoint = ArDsoTrendQuery["arDsoTrend"][number];
 export type ARAgingTrendPoint = ArAgingTrendQuery["arAgingTrend"][number];
 export type ARCashFlowPoint = ArCashFlowForecastQuery["arCashFlowForecast"][number];
-export type ARCollectionPerformance =
-  ArCollectionPerformanceQuery["arCollectionPerformance"];
-export type ARTopOverdueCustomer =
-  ArTopOverdueCustomersQuery["arTopOverdueCustomers"][number];
+export type ARCollectionPerformance = ArCollectionPerformanceQuery["arCollectionPerformance"];
+export type ARTopOverdueCustomer = ArTopOverdueCustomersQuery["arTopOverdueCustomers"][number];
 export type ARWorklistItem = ArCollectionsWorklistQuery["arCollectionsWorklist"][number];
 export type ARCustomerProfile = ArCustomerProfileQuery["arCustomerProfile"];
 export type ARPaymentStats = ArPaymentStatsQuery["arPaymentStats"];
@@ -57,10 +55,7 @@ export async function fetchArAgingSummary(asOfDate?: number) {
   return data.arAgingSummary;
 }
 
-export async function fetchArOpenItems(options?: {
-  customerId?: string;
-  asOfDate?: number;
-}) {
+export async function fetchArOpenItems(options?: { customerId?: string; asOfDate?: number }) {
   const data = await requestGraphQL({
     document: ArOpenItemsDocument,
     operationName: "ArOpenItems",

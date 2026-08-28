@@ -68,7 +68,8 @@ export function ApplyUnappliedForm({
     mutationFn: async (values: ApplyUnappliedFormValues) => {
       const applications = values.applications
         .filter(
-          (row) => row.checked && (toMinor(row.appliedAmount) > 0 || toMinor(row.shortPayAmount) > 0),
+          (row) =>
+            row.checked && (toMinor(row.appliedAmount) > 0 || toMinor(row.shortPayAmount) > 0),
         )
         .map((row) => ({
           invoiceId: row.invoiceId,

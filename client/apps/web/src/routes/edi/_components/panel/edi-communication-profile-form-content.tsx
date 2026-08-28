@@ -10,7 +10,10 @@ import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/
 import { statusChoices } from "@/lib/choices";
 import type { EDICommunicationProfile } from "@trenova/shared/types/edi";
 import { useFormContext, useWatch } from "react-hook-form";
-import { communicationProfileMethodOptions, type CommunicationProfileFormValues } from "../edi-schemas";
+import {
+  communicationProfileMethodOptions,
+  type CommunicationProfileFormValues,
+} from "../edi-schemas";
 import {
   SecretProfileFields,
   TransportProfileFields,
@@ -141,7 +144,12 @@ export function SecretsTab({ profile }: { profile: EDICommunicationProfile | nul
 
   return (
     <div className="space-y-3">
-      <SecretProfileFields control={control} method={method} profile={profile} authMode={authMode} />
+      <SecretProfileFields
+        control={control}
+        method={method}
+        profile={profile}
+        authMode={authMode}
+      />
     </div>
   );
 }

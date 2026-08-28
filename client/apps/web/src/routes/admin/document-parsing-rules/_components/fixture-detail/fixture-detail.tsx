@@ -25,21 +25,11 @@ import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import {
-  fixtureSchema,
-  type Fixture,
-  type FixtureFormValues,
-} from "@/types/document-parsing-rule";
+import { fixtureSchema, type Fixture, type FixtureFormValues } from "@/types/document-parsing-rule";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeftIcon,
-  ChevronDownIcon,
-  FileTextIcon,
-  PlusIcon,
-  TrashIcon,
-} from "lucide-react";
+import { ArrowLeftIcon, ChevronDownIcon, FileTextIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -52,26 +42,14 @@ type FixtureDetailProps = {
   onDeleted: () => void;
 };
 
-export function FixtureDetail({
-  fixtureId,
-  ruleSetId,
-  onBack,
-  onDeleted,
-}: FixtureDetailProps) {
+export function FixtureDetail({ fixtureId, ruleSetId, onBack, onDeleted }: FixtureDetailProps) {
   const { data } = useQuery({
     ...queries.documentParsingRule.fixture(fixtureId),
   });
 
   if (!data) return null;
 
-  return (
-    <FixtureForm
-      fixture={data}
-      ruleSetId={ruleSetId}
-      onBack={onBack}
-      onDeleted={onDeleted}
-    />
-  );
+  return <FixtureForm fixture={data} ruleSetId={ruleSetId} onBack={onBack} onDeleted={onDeleted} />;
 }
 
 function FixtureForm({
@@ -85,10 +63,7 @@ function FixtureForm({
   onDeleted: () => void;
 }) {
   const queryClient = useQueryClient();
-  const { allowed: canDelete } = usePermission(
-    Resource.DocumentParsingRule,
-    Operation.Delete,
-  );
+  const { allowed: canDelete } = usePermission(Resource.DocumentParsingRule, Operation.Delete);
 
   const form = useForm<FixtureFormValues, unknown, Fixture>({
     resolver: zodResolver(fixtureSchema),
@@ -96,8 +71,11 @@ function FixtureForm({
   });
 
   const { handleSubmit, reset, control } = form;
-  const { fields: pageFields, append: appendPage, remove: removePage } =
-    useFieldArray({ control, name: "pageSnapshots" });
+  const {
+    fields: pageFields,
+    append: appendPage,
+    remove: removePage,
+  } = useFieldArray({ control, name: "pageSnapshots" });
 
   const textSnapshot = useWatch({ control, name: "textSnapshot" });
 
@@ -120,8 +98,7 @@ function FixtureForm({
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () =>
-      apiService.documentParsingRuleService.deleteFixture(fixture.id!),
+    mutationFn: () => apiService.documentParsingRuleService.deleteFixture(fixture.id!),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queries.documentParsingRule.fixtures._def,
@@ -144,12 +121,7 @@ function FixtureForm({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={onBack}
-              >
+              <Button type="button" variant="ghost" size="icon" onClick={onBack}>
                 <ArrowLeftIcon className="size-4" />
               </Button>
               <h3 className="text-base font-semibold">{fixture.name}</h3>
@@ -158,12 +130,7 @@ function FixtureForm({
               <AlertDialog>
                 <AlertDialogTrigger
                   render={
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive"
-                    >
+                    <Button type="button" variant="ghost" size="icon" className="text-destructive">
                       <TrashIcon className="size-4" />
                     </Button>
                   }
@@ -195,12 +162,7 @@ function FixtureForm({
           >
             <FormGroup cols={2}>
               <FormControl>
-                <InputField
-                  control={control}
-                  name="name"
-                  label="Name"
-                  rules={{ required: true }}
-                />
+                <InputField control={control} name="name" label="Name" rules={{ required: true }} />
               </FormControl>
               <FormControl>
                 <InputField
@@ -219,11 +181,7 @@ function FixtureForm({
                 />
               </FormControl>
               <FormControl cols={2}>
-                <TextareaField
-                  control={control}
-                  name="description"
-                  label="Description"
-                />
+                <TextareaField control={control} name="description" label="Description" />
               </FormControl>
             </FormGroup>
           </FormSection>
@@ -276,8 +234,7 @@ function FixtureForm({
                 <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center">
                   <FileTextIcon className="text-muted-foreground size-5" />
                   <p className="text-muted-foreground text-xs">
-                    No page snapshots defined. Add pages if the document has
-                    page-specific content.
+                    No page snapshots defined. Add pages if the document has page-specific content.
                   </p>
                 </div>
               )}

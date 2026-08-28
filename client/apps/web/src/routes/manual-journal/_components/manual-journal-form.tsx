@@ -32,13 +32,7 @@ function mapToJournalEntryLines(lines: ManualJournalLine[]): JournalEntryLine[] 
   }));
 }
 
-function BalanceSummary({
-  totalDebit,
-  totalCredit,
-}: {
-  totalDebit: number;
-  totalCredit: number;
-}) {
+function BalanceSummary({ totalDebit, totalCredit }: { totalDebit: number; totalCredit: number }) {
   const difference = totalDebit - totalCredit;
   const hasAmounts = totalDebit + totalCredit > 0;
   const isBalanced = difference === 0 && totalDebit > 0;

@@ -1,5 +1,9 @@
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@trenova/shared/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@trenova/shared/components/ui/collapsible";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";

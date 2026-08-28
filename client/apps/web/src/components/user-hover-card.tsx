@@ -8,13 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { LazyImage } from "./image";
 
-export function UserHoverCard({
-  userId,
-  username,
-}: {
-  userId?: string;
-  username: string;
-}) {
+export function UserHoverCard({ userId, username }: { userId?: string; username: string }) {
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null);
 
   const { data: hoveredUserData } = useQuery({
@@ -49,18 +43,14 @@ export function UserHoverCard({
                 className="size-8 rounded-full"
               />
               <div className="flex flex-col text-xs">
-                <h4 className="font-semibold">
-                  {hoveredUserData?.name || "Loading..."}
-                </h4>
+                <h4 className="font-semibold">{hoveredUserData?.name || "Loading..."}</h4>
                 <p className="text-blue-600 dark:text-blue-400">
                   @{hoveredUserData?.username || username}
                 </p>
               </div>
             </div>
             {hoveredUserData?.emailAddress && (
-              <div className="text-muted-foreground text-xs">
-                {hoveredUserData.emailAddress}
-              </div>
+              <div className="text-muted-foreground text-xs">{hoveredUserData.emailAddress}</div>
             )}
           </div>
         ) : (

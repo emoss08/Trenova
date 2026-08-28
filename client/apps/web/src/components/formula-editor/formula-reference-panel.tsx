@@ -26,9 +26,7 @@ export function FormulaReferencePanel({ className }: { className?: string }) {
           </div>
           <div>
             <CardTitle className="text-sm font-medium">Reference</CardTitle>
-            <p className="text-muted-foreground text-xs">
-              Available variables and functions
-            </p>
+            <p className="text-muted-foreground text-xs">Available variables and functions</p>
           </div>
         </div>
         <ChevronDown
@@ -74,9 +72,7 @@ export function FormulaReferencePanel({ className }: { className?: string }) {
             {activeTab === "variables" && (
               <div className="space-y-3">
                 {VARIABLE_CATEGORIES.map((category) => {
-                  const categoryVars = SHIPMENT_VARIABLES.filter(
-                    (v) => v.category === category.id,
-                  );
+                  const categoryVars = SHIPMENT_VARIABLES.filter((v) => v.category === category.id);
                   if (categoryVars.length === 0) return null;
 
                   return (
@@ -106,9 +102,8 @@ export function FormulaReferencePanel({ className }: { className?: string }) {
                       </div>
                       {category.id === "computed" && (
                         <p className="text-muted-foreground mt-2 px-2 text-[10px] italic">
-                          Commodity data (weight, pieces, hazmat) is available
-                          through computed rollup variables. Direct commodity
-                          iteration is not supported in formulas.
+                          Commodity data (weight, pieces, hazmat) is available through computed
+                          rollup variables. Direct commodity iteration is not supported in formulas.
                         </p>
                       )}
                     </div>
@@ -128,9 +123,7 @@ export function FormulaReferencePanel({ className }: { className?: string }) {
                       {func.signature}
                     </code>
                     <div className="min-w-0 flex-1">
-                      <p className="text-muted-foreground text-xs">
-                        {func.description}
-                      </p>
+                      <p className="text-muted-foreground text-xs">{func.description}</p>
                     </div>
                   </div>
                 ))}

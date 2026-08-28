@@ -39,19 +39,13 @@ const removeConnection = (
 export function useOnlineUsers() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const [connectionsByUser, setConnectionsByUser] = useState<
-    Map<string, Set<string>>
-  >(new Map());
+  const [connectionsByUser, setConnectionsByUser] = useState<Map<string, Set<string>>>(new Map());
   const hasTenantContext = Boolean(
     isAuthenticated && user?.currentOrganizationId && user.businessUnitId,
   );
 
   useEffect(() => {
-    if (
-      !user?.currentOrganizationId ||
-      !user.businessUnitId ||
-      !isAuthenticated
-    ) {
+    if (!user?.currentOrganizationId || !user.businessUnitId || !isAuthenticated) {
       return;
     }
 
@@ -105,8 +99,7 @@ export function useOnlineUsers() {
   }, [isAuthenticated, user?.businessUnitId, user?.currentOrganizationId]);
 
   const onlineUserIDs = useMemo(
-    () =>
-      hasTenantContext ? new Set(connectionsByUser.keys()) : new Set<string>(),
+    () => (hasTenantContext ? new Set(connectionsByUser.keys()) : new Set<string>()),
     [connectionsByUser, hasTenantContext],
   );
 

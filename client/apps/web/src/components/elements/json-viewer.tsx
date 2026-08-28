@@ -4,13 +4,7 @@ import * as React from "react";
 
 import { cn } from "@trenova/shared/lib/utils";
 
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 interface JsonViewerProps {
   data: JsonValue;
@@ -51,16 +45,14 @@ function matchesSearch(value: JsonValue, query: string): boolean {
   if (!query) return true;
   const lowerQuery = query.toLowerCase();
 
-  if (typeof value === "string")
-    return value.toLowerCase().includes(lowerQuery);
+  if (typeof value === "string") return value.toLowerCase().includes(lowerQuery);
   if (typeof value === "number") return String(value).includes(lowerQuery);
   if (typeof value === "boolean") return String(value).includes(lowerQuery);
   if (value === null) return "null".includes(lowerQuery);
   if (Array.isArray(value)) return value.some((v) => matchesSearch(v, query));
   if (typeof value === "object") {
     return Object.entries(value).some(
-      ([k, v]) =>
-        k.toLowerCase().includes(lowerQuery) || matchesSearch(v, query),
+      ([k, v]) => k.toLowerCase().includes(lowerQuery) || matchesSearch(v, query),
     );
   }
   return false;
@@ -77,9 +69,7 @@ function JsonNode({
   searchQuery,
 }: JsonNodeProps) {
   const shouldDefaultCollapse =
-    typeof defaultCollapsed === "number"
-      ? depth >= defaultCollapsed
-      : defaultCollapsed;
+    typeof defaultCollapsed === "number" ? depth >= defaultCollapsed : defaultCollapsed;
 
   const [isCollapsed, setIsCollapsed] = React.useState(shouldDefaultCollapse);
   const [copied, setCopied] = React.useState(false);
@@ -129,20 +119,14 @@ function JsonNode({
       return <span className="text-muted-foreground italic">null</span>;
     }
     if (type === "boolean") {
-      return (
-        <span className="text-amber-500">
-          {value === true ? "true" : "false"}
-        </span>
-      );
+      return <span className="text-amber-500">{value === true ? "true" : "false"}</span>;
     }
     if (type === "number") {
       return <span className="text-blue-500">{value as number}</span>;
     }
     if (type === "string") {
       return (
-        <span className="text-green-600 dark:text-green-400">
-          &quot;{value as string}&quot;
-        </span>
+        <span className="text-green-600 dark:text-green-400">&quot;{value as string}&quot;</span>
       );
     }
     return null;
@@ -181,18 +165,14 @@ function JsonNode({
             <span className="text-muted-foreground">:</span>
           </>
         )}
-        <span className="text-muted-foreground italic">
-          {getPreview(value)}
-        </span>
+        <span className="text-muted-foreground italic">{getPreview(value)}</span>
       </div>
     );
   }
 
   const entries =
     type === "array"
-      ? (value as JsonValue[]).map(
-          (v, i) => [String(i), v] as [string, JsonValue],
-        )
+      ? (value as JsonValue[]).map((v, i) => [String(i), v] as [string, JsonValue])
       : Object.entries(value as Record<string, JsonValue>);
 
   const brackets = type === "array" ? ["[", "]"] : ["{", "}"];

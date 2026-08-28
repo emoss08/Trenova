@@ -74,32 +74,20 @@ function addressLine(stop: {
 export function useReconciliationState() {
   const [state, dispatch] = useReducer(reconciliationReducer, EMPTY_STATE);
 
-  const initialize = useCallback(
-    (data: DocumentIntelligence, missingRequired: string[]) => {
-      dispatch({ type: "INIT", data, missingRequired });
-    },
-    [],
-  );
+  const initialize = useCallback((data: DocumentIntelligence, missingRequired: string[]) => {
+    dispatch({ type: "INIT", data, missingRequired });
+  }, []);
 
-  const acceptField = useCallback(
-    (key: string) => dispatch({ type: "ACCEPT_FIELD", key }),
-    [],
-  );
+  const acceptField = useCallback((key: string) => dispatch({ type: "ACCEPT_FIELD", key }), []);
 
   const editField = useCallback(
     (key: string, value: unknown) => dispatch({ type: "EDIT_FIELD", key, value }),
     [],
   );
 
-  const resetField = useCallback(
-    (key: string) => dispatch({ type: "RESET_FIELD", key }),
-    [],
-  );
+  const resetField = useCallback((key: string) => dispatch({ type: "RESET_FIELD", key }), []);
 
-  const acceptAllConfident = useCallback(
-    () => dispatch({ type: "ACCEPT_ALL_CONFIDENT" }),
-    [],
-  );
+  const acceptAllConfident = useCallback(() => dispatch({ type: "ACCEPT_ALL_CONFIDENT" }), []);
 
   const acceptStopField = useCallback(
     (stopIndex: number, fieldKey: string) =>
@@ -159,9 +147,7 @@ export function useReconciliationState() {
                     : ("Open" as const),
                   locationId: stop.locationId || "",
                   sequence: index,
-                  scheduledWindowStart: parseTimestamp(
-                    toStr(getEffectiveValue(stop.date)),
-                  ),
+                  scheduledWindowStart: parseTimestamp(toStr(getEffectiveValue(stop.date))),
                   scheduledWindowEnd: null,
                   addressLine: addressLine(stop),
                   weight: weight ?? null,

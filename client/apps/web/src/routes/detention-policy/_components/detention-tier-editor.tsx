@@ -50,8 +50,8 @@ export function DetentionTierEditor() {
     <div className="flex flex-col gap-3">
       {fields.length === 0 && (
         <p className="text-muted-foreground text-sm">
-          No tiers yet. A ladder must start at minute 0 of billable detention and
-          run contiguously; the final rung may be open-ended.
+          No tiers yet. A ladder must start at minute 0 of billable detention and run contiguously;
+          the final rung may be open-ended.
         </p>
       )}
 
@@ -63,9 +63,7 @@ export function DetentionTierEditor() {
               {tiers[index] && (
                 <span className="text-muted-foreground ml-2 font-normal">
                   {formatDetentionMinutes(tiers[index].fromMinute)} –{" "}
-                  {tiers[index].toMinute
-                    ? formatDetentionMinutes(tiers[index].toMinute)
-                    : "beyond"}
+                  {tiers[index].toMinute ? formatDetentionMinutes(tiers[index].toMinute) : "beyond"}
                 </span>
               )}
             </p>
@@ -150,8 +148,7 @@ export function DetentionTierEditor() {
         </Button>
         {lastIsOpenEnded && (
           <p className="text-muted-foreground mt-1 text-xs">
-            Close the final tier before adding another; only the last rung may be
-            open-ended.
+            Close the final tier before adding another; only the last rung may be open-ended.
           </p>
         )}
       </div>

@@ -27,8 +27,8 @@ export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
           summary.total === 0
             ? "Nothing on a dock"
             : `${summary.total} ${pluralize("stop", summary.total)} · avg ${formatDetentionMinutes(
-              floor.averageOnSiteMinutes,
-            )} on site`
+                floor.averageOnSiteMinutes,
+              )} on site`
         }
         className="sm:pr-6"
       />

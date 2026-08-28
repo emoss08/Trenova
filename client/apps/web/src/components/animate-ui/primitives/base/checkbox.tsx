@@ -13,13 +13,9 @@ type CheckboxContextType = {
   isIndeterminate: boolean | undefined;
 };
 
-const [CheckboxProvider, useCheckbox] =
-  getStrictContext<CheckboxContextType>("CheckboxContext");
+const [CheckboxProvider, useCheckbox] = getStrictContext<CheckboxContextType>("CheckboxContext");
 
-type CheckboxProps = Omit<
-  React.ComponentProps<typeof CheckboxPrimitive.Root>,
-  "render"
-> &
+type CheckboxProps = Omit<React.ComponentProps<typeof CheckboxPrimitive.Root>, "render"> &
   HTMLMotionProps<"button">;
 
 function Checkbox({
@@ -45,9 +41,7 @@ function Checkbox({
   });
 
   return (
-    <CheckboxProvider
-      value={{ isChecked, setIsChecked, isIndeterminate: indeterminate }}
-    >
+    <CheckboxProvider value={{ isChecked, setIsChecked, isIndeterminate: indeterminate }}>
       <CheckboxPrimitive.Root
         name={name}
         defaultChecked={defaultChecked}

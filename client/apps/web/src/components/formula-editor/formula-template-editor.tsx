@@ -82,10 +82,7 @@ export function FormulaTemplateEditor({
   });
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className={cn("space-y-6", className)}
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className={cn("space-y-6", className)}>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card>
@@ -94,9 +91,7 @@ export function FormulaTemplateEditor({
                 <FileCode2 className="text-primary size-4" />
               </div>
               <div>
-                <CardTitle className="text-sm font-medium">
-                  Template Details
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Template Details</CardTitle>
                 <p className="text-muted-foreground text-xs">
                   Basic information about your formula template
                 </p>
@@ -104,11 +99,7 @@ export function FormulaTemplateEditor({
             </CardHeader>
             <CardContent className="space-y-4 p-4">
               <div className="grid grid-cols-2 gap-4">
-                <FieldWrapper
-                  label="Name"
-                  required
-                  error={errors.name?.message}
-                >
+                <FieldWrapper label="Name" required error={errors.name?.message}>
                   <Input
                     {...register("name")}
                     placeholder="e.g., Standard Mileage Rate"
@@ -118,11 +109,7 @@ export function FormulaTemplateEditor({
                 </FieldWrapper>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <FieldWrapper
-                    label="Type"
-                    required
-                    error={errors.type?.message}
-                  >
+                  <FieldWrapper label="Type" required error={errors.type?.message}>
                     <select
                       {...register("type")}
                       className={cn(
@@ -138,11 +125,7 @@ export function FormulaTemplateEditor({
                     </select>
                   </FieldWrapper>
 
-                  <FieldWrapper
-                    label="Status"
-                    required
-                    error={errors.status?.message}
-                  >
+                  <FieldWrapper label="Status" required error={errors.status?.message}>
                     <select
                       {...register("status")}
                       className={cn(
@@ -181,12 +164,10 @@ export function FormulaTemplateEditor({
                   <FileCode2 className="text-chart-2 size-4" />
                 </div>
                 <div>
-                  <CardTitle className="text-sm font-medium">
-                    Expression
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium">Expression</CardTitle>
                   <p className="text-muted-foreground text-xs">
-                    Write your formula using variables and functions. Press
-                    Ctrl+Space for autocomplete.
+                    Write your formula using variables and functions. Press Ctrl+Space for
+                    autocomplete.
                   </p>
                 </div>
               </div>
@@ -208,10 +189,7 @@ export function FormulaTemplateEditor({
             </CardContent>
           </Card>
 
-          <VariableDefinitionEditor
-            control={control as never}
-            register={register as never}
-          />
+          <VariableDefinitionEditor control={control as never} register={register as never} />
         </div>
 
         <div className="space-y-6">

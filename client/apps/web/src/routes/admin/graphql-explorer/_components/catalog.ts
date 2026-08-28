@@ -10,7 +10,9 @@ import type {
 export const catalog = catalogData as OperationCatalog;
 
 export const operationsByName = new Map(catalog.operations.map((op) => [op.name, op]));
-export const fragmentsByName = new Map(catalog.fragments.map((fragment) => [fragment.name, fragment]));
+export const fragmentsByName = new Map(
+  catalog.fragments.map((fragment) => [fragment.name, fragment]),
+);
 
 export type CatalogFilter = "all" | "query" | "mutation" | "fragment";
 
@@ -54,11 +56,15 @@ export function searchCatalog(query: string, filter: CatalogFilter): CatalogSear
   if (needle) {
     operations = operations
       .filter((op) => operationHaystack(op).includes(needle))
-      .sort((a, b) => scoreName(a.name, needle) - scoreName(b.name, needle) || a.name.localeCompare(b.name));
+      .sort(
+        (a, b) =>
+          scoreName(a.name, needle) - scoreName(b.name, needle) || a.name.localeCompare(b.name),
+      );
     fragments = fragments
       .filter((fragment) => fragmentHaystack(fragment).includes(needle))
       .sort(
-        (a, b) => scoreName(a.name, needle) - scoreName(b.name, needle) || a.name.localeCompare(b.name),
+        (a, b) =>
+          scoreName(a.name, needle) - scoreName(b.name, needle) || a.name.localeCompare(b.name),
       );
   }
 

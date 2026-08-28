@@ -24,10 +24,7 @@ type AccordionItemProps = AccordionItemPrimitiveProps;
 
 function AccordionItem({ className, ...props }: AccordionItemProps) {
   return (
-    <AccordionItemPrimitive
-      className={cn("border-b last:border-b-0", className)}
-      {...props}
-    />
+    <AccordionItemPrimitive className={cn("border-b last:border-b-0", className)} {...props} />
   );
 }
 
@@ -63,11 +60,7 @@ type AccordionPanelProps = AccordionPanelPrimitiveProps & {
   children: React.ReactNode;
 };
 
-function AccordionPanel({
-  className,
-  children,
-  ...props
-}: AccordionPanelProps) {
+function AccordionPanel({ className, children, ...props }: AccordionPanelProps) {
   return (
     <AccordionPanelPrimitive {...props}>
       <div className={cn("pt-0 pb-4 text-sm", className)}>{children}</div>

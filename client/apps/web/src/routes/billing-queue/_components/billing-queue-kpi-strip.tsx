@@ -37,10 +37,7 @@ export function BillingQueueKPIStrip({
     {
       key: "Exception",
       label: "Exceptions",
-      value:
-        (stats?.onHold ?? 0) +
-        (stats?.exception ?? 0) +
-        (stats?.sentBackToOps ?? 0),
+      value: (stats?.onHold ?? 0) + (stats?.exception ?? 0) + (stats?.sentBackToOps ?? 0),
     },
     {
       key: "Approved",

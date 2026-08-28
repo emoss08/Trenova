@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
-import { bankReceiptWorkItemSchema, type BankReceiptWorkItem } from "@/types/bank-receipt-work-item";
+import {
+  bankReceiptWorkItemSchema,
+  type BankReceiptWorkItem,
+} from "@/types/bank-receipt-work-item";
 
 const workItemListSchema = z.array(bankReceiptWorkItemSchema);
 
@@ -19,16 +22,13 @@ export class BankReceiptWorkItemService {
   }
 
   async assign(id: string, userId: string) {
-    return api.post<BankReceiptWorkItem>(
-      `/accounting/bank-receipt-work-items/${id}/assign/`,
-      { userId },
-    );
+    return api.post<BankReceiptWorkItem>(`/accounting/bank-receipt-work-items/${id}/assign/`, {
+      userId,
+    });
   }
 
   async startReview(id: string) {
-    return api.post<BankReceiptWorkItem>(
-      `/accounting/bank-receipt-work-items/${id}/start-review/`,
-    );
+    return api.post<BankReceiptWorkItem>(`/accounting/bank-receipt-work-items/${id}/start-review/`);
   }
 
   async resolve(id: string, data: { resolutionType: string; resolutionNote: string }) {

@@ -1,7 +1,4 @@
-import {
-  AGING_BUCKETS,
-  agingChartConfig,
-} from "@/components/accounting/aging-buckets";
+import { AGING_BUCKETS, agingChartConfig } from "@/components/accounting/aging-buckets";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import {
@@ -166,13 +163,7 @@ function AgingTrend() {
       <ChartContainer config={agingChartConfig} className="h-[196px] w-full">
         <AreaChart data={chartData} margin={{ left: 4, right: 12, top: 8 }}>
           <CartesianGrid vertical={false} strokeDasharray="3 3" />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            minTickGap={32}
-          />
+          <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} />
           <YAxis
             tickLine={false}
             axisLine={false}

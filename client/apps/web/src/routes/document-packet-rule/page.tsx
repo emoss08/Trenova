@@ -9,8 +9,7 @@ export function DocumentPacketRulesPage() {
     <PageLayout
       pageHeaderProps={{
         title: "Document Packet Rules",
-        description:
-          "Configure which document types are required for each resource type",
+        description: "Configure which document types are required for each resource type",
       }}
     >
       <DataTableLazyComponent>

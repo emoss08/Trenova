@@ -120,7 +120,10 @@ const defaultPrefixes: Record<SequenceType, string> = {
 
 export function defaultConfigForType(
   type: SequenceType,
-  base: Pick<SequenceConfig, "id" | "organizationId" | "businessUnitId" | "version" | "createdAt" | "updatedAt">,
+  base: Pick<
+    SequenceConfig,
+    "id" | "organizationId" | "businessUnitId" | "version" | "createdAt" | "updatedAt"
+  >,
 ): SequenceConfig {
   return {
     ...base,

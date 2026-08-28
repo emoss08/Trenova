@@ -24,15 +24,7 @@ function formatTimestamp(unix: number): string {
   return formatUnixDateTimeMedium(unix);
 }
 
-function SummaryCard({
-  label,
-  value,
-  amount,
-}: {
-  label: string;
-  value: string;
-  amount?: number;
-}) {
+function SummaryCard({ label, value, amount }: { label: string; value: string; amount?: number }) {
   return (
     <div className="bg-card rounded-lg border px-3 py-2.5">
       <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
@@ -52,7 +44,11 @@ export function BankReceiptBatchPage() {
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: batches, isLoading, isError } = useQuery({
+  const {
+    data: batches,
+    isLoading,
+    isError,
+  } = useQuery({
     ...queries.bankReceiptBatch.list(),
   });
 

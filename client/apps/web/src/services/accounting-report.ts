@@ -9,9 +9,7 @@ export class AccountingReportService {
   }
 
   async getIncomeStatement(fiscalPeriodId: string) {
-    return api.get<IncomeStatement>(
-      `/accounting/statements/income-statement/${fiscalPeriodId}/`,
-    );
+    return api.get<IncomeStatement>(`/accounting/statements/income-statement/${fiscalPeriodId}/`);
   }
 
   async getBalanceSheet(fiscalPeriodId: string) {

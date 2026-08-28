@@ -1,12 +1,12 @@
-import * as React from 'react';
+import * as React from "react";
 
 import {
   Switch as SwitchPrimitive,
   SwitchThumb as SwitchThumbPrimitive,
   SwitchIcon as SwitchIconPrimitive,
   type SwitchProps as SwitchPrimitiveProps,
-} from '@/components/animate-ui/primitives/base/switch';
-import { cn } from '@trenova/shared/lib/utils';
+} from "@/components/animate-ui/primitives/base/switch";
+import { cn } from "@trenova/shared/lib/utils";
 
 type SwitchProps = SwitchPrimitiveProps & {
   pressedWidth?: number;
@@ -26,15 +26,15 @@ function Switch({
   return (
     <SwitchPrimitive
       className={cn(
-        'peer focus-visible:border-ring focus-visible:ring-ring/50 relative flex h-5 w-8 shrink-0 items-center justify-start rounded-full border border-transparent px-px shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50',
-        'data-[checked]:bg-primary data-[unchecked]:bg-input dark:data-[unchecked]:bg-input/80 data-[checked]:justify-end',
+        "peer focus-visible:border-ring focus-visible:ring-ring/50 relative flex h-5 w-8 shrink-0 items-center justify-start rounded-full border border-transparent px-px shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        "data-[checked]:bg-primary data-[unchecked]:bg-input dark:data-[unchecked]:bg-input/80 data-[checked]:justify-end",
         className,
       )}
       {...props}
     >
       <SwitchThumbPrimitive
         className={cn(
-          'bg-background dark:data-[checked]:bg-primary-foreground dark:data-[unchecked]:bg-foreground pointer-events-none relative z-10 block size-4 rounded-full ring-0',
+          "bg-background dark:data-[checked]:bg-primary-foreground dark:data-[unchecked]:bg-foreground pointer-events-none relative z-10 block size-4 rounded-full ring-0",
         )}
         pressedAnimation={{ width: pressedWidth }}
       >

@@ -280,11 +280,7 @@ function EditPanel({
                     Approve
                   </Button>
                   {!showRejectInput ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowRejectInput(true)}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => setShowRejectInput(true)}>
                       <XIcon className="mr-1.5 size-3.5" />
                       Reject
                     </Button>

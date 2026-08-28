@@ -20,15 +20,12 @@ export function CustomFieldDefinitionForm() {
     queryFn: () => apiService.customFieldService.getResourceTypes(),
   });
 
-  const resourceTypeChoices = (resourceTypes?.resourceTypes || []).map(
-    (rt) => ({
-      value: rt,
-      label: rt.charAt(0).toUpperCase() + rt.slice(1),
-    }),
-  );
+  const resourceTypeChoices = (resourceTypes?.resourceTypes || []).map((rt) => ({
+    value: rt,
+    label: rt.charAt(0).toUpperCase() + rt.slice(1),
+  }));
 
-  const showOptionsField =
-    fieldType === "select" || fieldType === "multiSelect";
+  const showOptionsField = fieldType === "select" || fieldType === "multiSelect";
 
   return (
     <FormGroup cols={2}>

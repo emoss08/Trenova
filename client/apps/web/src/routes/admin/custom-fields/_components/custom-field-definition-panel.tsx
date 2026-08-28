@@ -1,9 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import {
-  customFieldDefinitionSchema,
-  type CustomFieldDefinition,
-} from "@/types/custom-field";
+import { customFieldDefinitionSchema, type CustomFieldDefinition } from "@/types/custom-field";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

@@ -13,11 +13,7 @@ interface AiSuggestedActionsProps {
   className?: string;
 }
 
-function AiSuggestedActions({
-  suggestions,
-  onSelect,
-  className,
-}: AiSuggestedActionsProps) {
+function AiSuggestedActions({ suggestions, onSelect, className }: AiSuggestedActionsProps) {
   return (
     <div
       data-slot="ai-suggested-actions"

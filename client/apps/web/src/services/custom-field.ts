@@ -11,16 +11,11 @@ import {
 
 export class CustomFieldService {
   public async getResourceTypes(): Promise<ResourceTypesResponse> {
-    const response = await api.get<ResourceTypesResponse>(
-      "/custom-fields/resource-types/",
-    );
+    const response = await api.get<ResourceTypesResponse>("/custom-fields/resource-types/");
     return safeParse(resourceTypesResponseSchema, response, "Custom Field Resource Types");
   }
 
-  public async patch(
-    id: CustomFieldDefinition["id"],
-    data: Partial<CustomFieldDefinition>,
-  ) {
+  public async patch(id: CustomFieldDefinition["id"], data: Partial<CustomFieldDefinition>) {
     const response = await api.patch<CustomFieldDefinition>(
       `/custom-fields/definitions/${id}/`,
       data,
@@ -36,9 +31,7 @@ export class CustomFieldService {
   }
 
   public async getUsageStats(id: string): Promise<DefinitionUsageStats> {
-    const response = await api.get<DefinitionUsageStats>(
-      `/custom-fields/definitions/${id}/usage/`,
-    );
+    const response = await api.get<DefinitionUsageStats>(`/custom-fields/definitions/${id}/usage/`);
     return safeParse(definitionUsageStatsSchema, response, "Custom Field Usage Stats");
   }
 

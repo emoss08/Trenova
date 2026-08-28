@@ -87,9 +87,7 @@ export function JournalEntryDetailPage() {
               </div>
               <span className="text-muted-foreground text-sm">{accountingDate}</span>
             </div>
-            {entry.description && (
-              <CardDescription>{entry.description}</CardDescription>
-            )}
+            {entry.description && <CardDescription>{entry.description}</CardDescription>}
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
@@ -150,18 +148,11 @@ export function JournalEntryDetailPage() {
               <CardTitle>Line Items</CardTitle>
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-muted-foreground">
-                  Total Debit:{" "}
-                  <AmountDisplay
-                    value={entry.totalDebit}
-                    className="font-semibold"
-                  />
+                  Total Debit: <AmountDisplay value={entry.totalDebit} className="font-semibold" />
                 </span>
                 <span className="text-muted-foreground">
                   Total Credit:{" "}
-                  <AmountDisplay
-                    value={entry.totalCredit}
-                    className="font-semibold"
-                  />
+                  <AmountDisplay value={entry.totalCredit} className="font-semibold" />
                 </span>
               </div>
             </div>
@@ -174,9 +165,7 @@ export function JournalEntryDetailPage() {
                 totalCredit={entry.totalCredit}
               />
             ) : (
-              <p className="text-muted-foreground text-sm">
-                No line items available.
-              </p>
+              <p className="text-muted-foreground text-sm">No line items available.</p>
             )}
           </CardContent>
         </Card>

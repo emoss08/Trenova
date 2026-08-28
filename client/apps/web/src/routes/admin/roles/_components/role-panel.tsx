@@ -19,12 +19,7 @@ import { RoleForm } from "./role-form";
 import { RolePermissionBuilder } from "./role-permission-builder";
 import { RolePermissionsEditor } from "./role-permissions-editor";
 
-export function RolePanel({
-  open,
-  onOpenChange,
-  mode,
-  row,
-}: DataTablePanelProps<Role>) {
+export function RolePanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Role>) {
   if (mode === "edit") {
     return <RoleEditPanel open={open} onOpenChange={onOpenChange} row={row} />;
   }
@@ -32,10 +27,7 @@ export function RolePanel({
   return <RoleCreatePanel open={open} onOpenChange={onOpenChange} />;
 }
 
-type RoleCreatePanelProps = Pick<
-  DataTablePanelProps<Role>,
-  "open" | "onOpenChange"
->;
+type RoleCreatePanelProps = Pick<DataTablePanelProps<Role>, "open" | "onOpenChange">;
 
 function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
   const queryClient = useQueryClient();
@@ -74,26 +66,24 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
     [onOpenChange, reset],
   );
 
-  const { mutateAsync } = useApiMutation<CreateRole, Role, unknown, CreateRole>(
-    {
-      mutationFn: async (values: CreateRole) => {
-        const payload = { ...values, permissions };
-        const response = await api.post<Role>("/roles/", payload);
-        return response;
-      },
-      onSuccess: () => {
-        toast.success("Changes have been saved", {
-          description: "Role created successfully",
-        });
-        reset();
-        setPermissions([]);
-        onOpenChange(false);
-        void queryClient.invalidateQueries({ queryKey: ["role-list"] });
-      },
-      form,
-      resourceName: "Role",
+  const { mutateAsync } = useApiMutation<CreateRole, Role, unknown, CreateRole>({
+    mutationFn: async (values: CreateRole) => {
+      const payload = { ...values, permissions };
+      const response = await api.post<Role>("/roles/", payload);
+      return response;
     },
-  );
+    onSuccess: () => {
+      toast.success("Changes have been saved", {
+        description: "Role created successfully",
+      });
+      reset();
+      setPermissions([]);
+      onOpenChange(false);
+      void queryClient.invalidateQueries({ queryKey: ["role-list"] });
+    },
+    form,
+    resourceName: "Role",
+  });
 
   const onSubmit = useCallback(
     async (values: CreateRole) => {
@@ -104,12 +94,7 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        open &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key === "Enter" &&
-        !isSubmitting
-      ) {
+      if (open && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
         event.preventDefault();
         void handleSubmit(onSubmit)();
       }
@@ -119,12 +104,9 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, isSubmitting, handleSubmit, onSubmit]);
 
-  const handlePermissionsChange = useCallback(
-    (newPermissions: AddPermission[]) => {
-      setPermissions(newPermissions);
-    },
-    [],
-  );
+  const handlePermissionsChange = useCallback((newPermissions: AddPermission[]) => {
+    setPermissions(newPermissions);
+  }, []);
 
   return (
     <DataTablePanelContainer
@@ -166,10 +148,7 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
   );
 }
 
-type RoleEditPanelProps = Pick<
-  DataTablePanelProps<Role>,
-  "open" | "onOpenChange" | "row"
->;
+type RoleEditPanelProps = Pick<DataTablePanelProps<Role>, "open" | "onOpenChange" | "row">;
 
 function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
   const queryClient = useQueryClient();
@@ -232,12 +211,7 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        open &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key === "Enter" &&
-        !isSubmitting
-      ) {
+      if (open && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
         event.preventDefault();
         void handleSubmit(onSubmit)();
       }
@@ -295,10 +269,7 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
             </Form>
           </FormProvider>
           <div className="border-t pt-4">
-            <RolePermissionsEditor
-              roleId={row.id!}
-              isSystemRole={isSystemRole}
-            />
+            <RolePermissionsEditor roleId={row.id!} isSystemRole={isSystemRole} />
           </div>
         </div>
       )}

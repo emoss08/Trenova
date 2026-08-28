@@ -147,8 +147,7 @@ function ReversalDetailPanel({
   });
 
   const { mutateAsync: reject, isPending: isRejecting } = useApiMutation({
-    mutationFn: () =>
-      apiService.journalReversalService.reject(reversal!.id!, rejectionReason),
+    mutationFn: () => apiService.journalReversalService.reject(reversal!.id!, rejectionReason),
     onSuccess: () => {
       toast.success("Reversal rejected");
       setShowRejectInput(false);
@@ -159,8 +158,7 @@ function ReversalDetailPanel({
   });
 
   const { mutateAsync: cancel, isPending: isCancelling } = useApiMutation({
-    mutationFn: () =>
-      apiService.journalReversalService.cancel(reversal!.id!, cancelReason),
+    mutationFn: () => apiService.journalReversalService.cancel(reversal!.id!, cancelReason),
     onSuccess: () => {
       toast.success("Reversal cancelled");
       setShowCancelInput(false);
@@ -217,9 +215,7 @@ function ReversalDetailPanel({
         ) : null}
       </dl>
 
-      {reversal.status === "PendingApproval" ||
-      reversal.status === "Approved" ||
-      canCancel ? (
+      {reversal.status === "PendingApproval" || reversal.status === "Approved" || canCancel ? (
         <>
           <Separator />
           <div className="space-y-3">
@@ -227,11 +223,7 @@ function ReversalDetailPanel({
             <div className="flex flex-wrap items-center gap-2">
               {reversal.status === "PendingApproval" ? (
                 <>
-                  <Button
-                    size="sm"
-                    onClick={() => void approve(undefined)}
-                    disabled={isApproving}
-                  >
+                  <Button size="sm" onClick={() => void approve(undefined)} disabled={isApproving}>
                     <CheckIcon className="mr-1.5 size-3.5" />
                     {isApproving ? "Approving..." : "Approve"}
                   </Button>
@@ -247,11 +239,7 @@ function ReversalDetailPanel({
                 </>
               ) : null}
               {reversal.status === "Approved" ? (
-                <Button
-                  size="sm"
-                  onClick={() => void postReversal(undefined)}
-                  disabled={isPosting}
-                >
+                <Button size="sm" onClick={() => void postReversal(undefined)} disabled={isPosting}>
                   <SendIcon className="mr-1.5 size-3.5" />
                   {isPosting ? "Posting..." : "Post"}
                 </Button>

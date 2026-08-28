@@ -114,7 +114,10 @@ export function OrderLegsSection() {
             </div>
             <div className="divide-y">
               {legs.map((leg) => (
-                <div key={leg.id} className="grid grid-cols-12 items-center gap-2 px-4 py-2 text-sm">
+                <div
+                  key={leg.id}
+                  className="grid grid-cols-12 items-center gap-2 px-4 py-2 text-sm"
+                >
                   <span className="col-span-3 font-mono">
                     <Link
                       to={`/shipment-management/shipments?item=${leg.id}`}
@@ -193,8 +196,8 @@ export function OrderLegsSection() {
             </Button>
             {!canCreateInvoice && (
               <p className="text-2xs text-muted-foreground">
-                Every active leg must be ready to invoice or completed before a grouped invoice
-                can be created. Canceled legs are excluded.
+                Every active leg must be ready to invoice or completed before a grouped invoice can
+                be created. Canceled legs are excluded.
               </p>
             )}
           </div>
@@ -209,8 +212,8 @@ export function OrderLegsSection() {
           <AlertDialogHeader>
             <AlertDialogTitle>Detach leg {legPendingDetach?.proNumber}?</AlertDialogTitle>
             <AlertDialogDescription>
-              The shipment moves onto its own new single-leg order and this order&apos;s status
-              and total are recalculated. The only leg of an order cannot be detached.
+              The shipment moves onto its own new single-leg order and this order&apos;s status and
+              total are recalculated. The only leg of an order cannot be detached.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

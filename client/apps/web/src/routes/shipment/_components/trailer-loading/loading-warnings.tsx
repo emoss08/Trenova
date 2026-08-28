@@ -22,9 +22,7 @@ export function LoadingWarnings({ warnings }: { warnings: LoadingWarning[] }) {
             className="border-border bg-card flex items-start gap-2 rounded-md border px-3 py-2"
           >
             <Icon className={cn("mt-0.5 size-3.5 shrink-0", config.color)} />
-            <span className="text-muted-foreground text-xs leading-relaxed">
-              {warning.message}
-            </span>
+            <span className="text-muted-foreground text-xs leading-relaxed">{warning.message}</span>
           </div>
         );
       })}

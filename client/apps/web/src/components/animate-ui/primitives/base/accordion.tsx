@@ -29,9 +29,7 @@ function Accordion(props: AccordionProps) {
   const [value, setValue] = useControlledState<string | string[] | undefined>({
     value: props?.value as string | string[] | undefined,
     defaultValue: props?.defaultValue as string | string[] | undefined,
-    onChange: props?.onValueChange as (
-      value: string | string[] | undefined,
-    ) => void,
+    onChange: props?.onValueChange as (value: string | string[] | undefined) => void,
   });
 
   return (
@@ -49,9 +47,7 @@ type AccordionItemProps = React.ComponentProps<typeof AccordionPrimitive.Item>;
 
 function AccordionItem(props: AccordionItemProps) {
   const { value } = useAccordion();
-  const [isOpen, setIsOpen] = React.useState(
-    value?.includes(props?.value) ?? false,
-  );
+  const [isOpen, setIsOpen] = React.useState(value?.includes(props?.value) ?? false);
 
   React.useEffect(() => {
     setIsOpen(value?.includes(props?.value) ?? false);
@@ -64,22 +60,16 @@ function AccordionItem(props: AccordionItemProps) {
   );
 }
 
-type AccordionHeaderProps = React.ComponentProps<
-  typeof AccordionPrimitive.Header
->;
+type AccordionHeaderProps = React.ComponentProps<typeof AccordionPrimitive.Header>;
 
 function AccordionHeader(props: AccordionHeaderProps) {
   return <AccordionPrimitive.Header data-slot="accordion-header" {...props} />;
 }
 
-type AccordionTriggerProps = React.ComponentProps<
-  typeof AccordionPrimitive.Trigger
->;
+type AccordionTriggerProps = React.ComponentProps<typeof AccordionPrimitive.Trigger>;
 
 function AccordionTrigger(props: AccordionTriggerProps) {
-  return (
-    <AccordionPrimitive.Trigger data-slot="accordion-trigger" {...props} />
-  );
+  return <AccordionPrimitive.Trigger data-slot="accordion-trigger" {...props} />;
 }
 
 type AccordionPanelProps = Omit<
@@ -117,8 +107,7 @@ function AccordionPanel({
               }
               transition={transition}
               style={{
-                maskImage:
-                  "linear-gradient(black var(--mask-stop), transparent var(--mask-stop))",
+                maskImage: "linear-gradient(black var(--mask-stop), transparent var(--mask-stop))",
                 WebkitMaskImage:
                   "linear-gradient(black var(--mask-stop), transparent var(--mask-stop))",
                 overflow: "hidden",

@@ -379,9 +379,7 @@ function WorkItemDetail({
           <SectionLabel>Bank Receipt Info</SectionLabel>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
             <PropertyCell label="Receipt Date">
-              <span className="text-xs font-medium">
-                {formatUnixDate(receipt.receiptDate)}
-              </span>
+              <span className="text-xs font-medium">{formatUnixDate(receipt.receiptDate)}</span>
             </PropertyCell>
             <PropertyCell label="Amount">
               <span className="text-xs font-medium tabular-nums">

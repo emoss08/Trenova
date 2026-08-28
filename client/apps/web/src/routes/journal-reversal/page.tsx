@@ -2,9 +2,7 @@ import { DataTableLazyComponent } from "@trenova/shared/components/error-boundar
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
 
-const Table = lazy(
-  () => import("./_components/journal-reversal-table"),
-);
+const Table = lazy(() => import("./_components/journal-reversal-table"));
 
 export function JournalReversalsPage() {
   return (

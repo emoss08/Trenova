@@ -1,14 +1,7 @@
 import { useTheme } from "@trenova/shared/components/theme-provider";
-import {
-  darkTheme,
-  lightTheme,
-} from "@/components/formula-editor/editor-theme";
+import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@trenova/shared/components/ui/tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   ruleDocumentSchema,
@@ -19,13 +12,7 @@ import { json } from "@codemirror/lang-json";
 import { linter, type Diagnostic } from "@codemirror/lint";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
-import {
-  CheckIcon,
-  AlertTriangleIcon,
-  RefreshCwIcon,
-  UploadIcon,
-  InfoIcon,
-} from "lucide-react";
+import { CheckIcon, AlertTriangleIcon, RefreshCwIcon, UploadIcon, InfoIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -113,10 +100,7 @@ export function JsonEditor() {
     [],
   );
 
-  const extensions = useMemo(
-    () => [json(), jsonLinter, EditorView.lineWrapping],
-    [jsonLinter],
-  );
+  const extensions = useMemo(() => [json(), jsonLinter, EditorView.lineWrapping], [jsonLinter]);
 
   const lineCount = localValue.split("\n").length;
   const charCount = localValue.length;
@@ -126,10 +110,9 @@ export function JsonEditor() {
       <div className="border-muted bg-muted/30 flex items-start gap-2 rounded-md border p-2.5">
         <InfoIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
         <p className="text-muted-foreground text-xs">
-          The JSON editor and the Rule Builder share the same underlying data.
-          Edits made here must be applied to take effect in the builder, and
-          vice versa. Use &ldquo;Refresh from Builder&rdquo; to pull the latest builder
-          state into this editor.
+          The JSON editor and the Rule Builder share the same underlying data. Edits made here must
+          be applied to take effect in the builder, and vice versa. Use &ldquo;Refresh from
+          Builder&rdquo; to pull the latest builder state into this editor.
         </p>
       </div>
 
@@ -138,12 +121,7 @@ export function JsonEditor() {
           <Tooltip>
             <TooltipTrigger
               render={
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleApply}
-                  className="gap-1"
-                >
+                <Button type="button" size="sm" onClick={handleApply} className="gap-1">
                   {applied ? (
                     <>
                       <CheckIcon className="size-3.5" />
@@ -159,8 +137,7 @@ export function JsonEditor() {
               }
             />
             <TooltipContent>
-              Validate the JSON and push it into the form. This overwrites the
-              Rule Builder state.
+              Validate the JSON and push it into the form. This overwrites the Rule Builder state.
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -179,8 +156,7 @@ export function JsonEditor() {
               }
             />
             <TooltipContent>
-              Discard any unapplied JSON edits and reload from the current Rule
-              Builder state.
+              Discard any unapplied JSON edits and reload from the current Rule Builder state.
             </TooltipContent>
           </Tooltip>
         </div>
@@ -196,12 +172,7 @@ export function JsonEditor() {
         </div>
       )}
 
-      <div
-        className={cn(
-          "overflow-hidden rounded-md border",
-          parseError && "border-destructive",
-        )}
-      >
+      <div className={cn("overflow-hidden rounded-md border", parseError && "border-destructive")}>
         <CodeMirror
           value={localValue}
           onChange={setLocalValue}

@@ -11,10 +11,7 @@ import { Form } from "@trenova/shared/components/ui/form";
 import type { ApiRequestError } from "@trenova/shared/lib/api";
 import { rejectWorkerPTO } from "@/lib/graphql/worker-mutations";
 import type { TableSheetProps } from "@trenova/shared/types/data-table";
-import {
-  ptoRejectionRequestSchema,
-  type PTORejectionRequest,
-} from "@trenova/shared/types/worker";
+import { ptoRejectionRequestSchema, type PTORejectionRequest } from "@trenova/shared/types/worker";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -59,8 +56,7 @@ export function PTORejectionDialog({
     onError: (error: ApiRequestError) => {
       if (error.isRateLimitError()) {
         toast.error("Rate limit exceeded", {
-          description:
-            "You have exceeded the rate limit. Please try again later.",
+          description: "You have exceeded the rate limit. Please try again later.",
         });
       }
     },
@@ -92,11 +88,7 @@ export function PTORejectionDialog({
           >
             <PTORejectionForm />
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button

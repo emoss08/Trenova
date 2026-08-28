@@ -45,10 +45,7 @@ type RolePermissionsEditorProps = {
   isSystemRole?: boolean;
 };
 
-export function RolePermissionsEditor({
-  roleId,
-  isSystemRole,
-}: RolePermissionsEditorProps) {
+export function RolePermissionsEditor({ roleId, isSystemRole }: RolePermissionsEditorProps) {
   const queryClient = useQueryClient();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -155,12 +152,7 @@ export function RolePermissionsEditor({
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Permissions</h3>
         {!isSystemRole && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => setAddDialogOpen(true)}
-          >
+          <Button type="button" size="sm" variant="outline" onClick={() => setAddDialogOpen(true)}>
             <PlusIcon className="mr-1 size-3.5" />
             Add
           </Button>
@@ -180,9 +172,7 @@ export function RolePermissionsEditor({
               resourceDef={resourceMap.get(permission.resource)}
               isSystemRole={isSystemRole}
               onOperationToggle={(op) => handleOperationToggle(permission, op)}
-              onDataScopeChange={(scope) =>
-                handleDataScopeChange(permission, scope)
-              }
+              onDataScopeChange={(scope) => handleDataScopeChange(permission, scope)}
               onRemove={() => handleRemovePermission(permission.id!)}
             />
           ))}
@@ -229,9 +219,7 @@ function PermissionRow({
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium">{resourceLabel}</p>
             {resourceDef?.category && (
-              <span className="text-muted-foreground text-xs">
-                ({resourceDef.category})
-              </span>
+              <span className="text-muted-foreground text-xs">({resourceDef.category})</span>
             )}
           </div>
           <div className="mt-2 flex flex-wrap gap-3">
@@ -242,12 +230,8 @@ function PermissionRow({
                 title={opDef.description}
               >
                 <Checkbox
-                  checked={permission.operations.includes(
-                    opDef.operation as Operation,
-                  )}
-                  onCheckedChange={() =>
-                    onOperationToggle(opDef.operation as Operation)
-                  }
+                  checked={permission.operations.includes(opDef.operation as Operation)}
+                  onCheckedChange={() => onOperationToggle(opDef.operation as Operation)}
                   disabled={isSystemRole}
                 />
                 {opDef.displayName}
@@ -311,16 +295,12 @@ function AddPermissionDialog({
 }: AddPermissionDialogProps) {
   const queryClient = useQueryClient();
   const [selectedResource, setSelectedResource] = useState<string>("");
-  const [selectedOperations, setSelectedOperations] = useState<Operation[]>([
-    "read",
-  ]);
+  const [selectedOperations, setSelectedOperations] = useState<Operation[]>(["read"]);
   const [selectedScope, setSelectedScope] = useState<DataScope>("organization");
 
   const selectedResourceDef = useMemo(() => {
     for (const category of resourceCategories) {
-      const resource = category.resources.find(
-        (r) => r.resource === selectedResource,
-      );
+      const resource = category.resources.find((r) => r.resource === selectedResource);
       if (resource) return resource;
     }
     return null;
@@ -373,9 +353,7 @@ function AddPermissionDialog({
   };
 
   const selectAllOperations = () => {
-    setSelectedOperations(
-      availableOperations.map((op) => op.operation as Operation),
-    );
+    setSelectedOperations(availableOperations.map((op) => op.operation as Operation));
   };
 
   const clearAllOperations = () => {
@@ -409,10 +387,7 @@ function AddPermissionDialog({
                     <SelectGroup key={category.category}>
                       <SelectLabel>{category.category}</SelectLabel>
                       {availableInCategory.map((resource) => (
-                        <SelectItem
-                          key={resource.resource}
-                          value={resource.resource}
-                        >
+                        <SelectItem key={resource.resource} value={resource.resource}>
                           {resource.displayName}
                         </SelectItem>
                       ))}
@@ -456,12 +431,8 @@ function AddPermissionDialog({
                     title={opDef.description}
                   >
                     <Checkbox
-                      checked={selectedOperations.includes(
-                        opDef.operation as Operation,
-                      )}
-                      onCheckedChange={() =>
-                        toggleOperation(opDef.operation as Operation)
-                      }
+                      checked={selectedOperations.includes(opDef.operation as Operation)}
+                      onCheckedChange={() => toggleOperation(opDef.operation as Operation)}
                     />
                     {opDef.displayName}
                   </label>
@@ -490,21 +461,13 @@ function AddPermissionDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={
-              isSubmitting ||
-              !selectedResource ||
-              selectedOperations.length === 0
-            }
+            disabled={isSubmitting || !selectedResource || selectedOperations.length === 0}
           >
             Add Permission
           </Button>
@@ -586,12 +549,7 @@ export function CreateRolePermissionsEditor({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Permissions</h3>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => setAddDialogOpen(true)}
-        >
+        <Button type="button" size="sm" variant="outline" onClick={() => setAddDialogOpen(true)}>
           <PlusIcon className="mr-1 size-3.5" />
           Add
         </Button>
@@ -599,8 +557,7 @@ export function CreateRolePermissionsEditor({
 
       {permissions.length === 0 ? (
         <div className="text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm">
-          No permissions configured. Add permissions to define what this role
-          can do.
+          No permissions configured. Add permissions to define what this role can do.
         </div>
       ) : (
         <div className="space-y-3">
@@ -609,12 +566,8 @@ export function CreateRolePermissionsEditor({
               key={`${permission.resource}-${index}`}
               permission={permission}
               resourceDef={resourceMap.get(permission.resource)}
-              onOperationToggle={(op) =>
-                handleOperationToggle(index, permission, op)
-              }
-              onDataScopeChange={(scope) =>
-                handleDataScopeChange(index, permission, scope)
-              }
+              onOperationToggle={(op) => handleOperationToggle(index, permission, op)}
+              onDataScopeChange={(scope) => handleDataScopeChange(index, permission, scope)}
               onRemove={() => onRemovePermission(index)}
             />
           ))}
@@ -657,9 +610,7 @@ function CreatePermissionRow({
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium">{resourceLabel}</p>
             {resourceDef?.category && (
-              <span className="text-muted-foreground text-xs">
-                ({resourceDef.category})
-              </span>
+              <span className="text-muted-foreground text-xs">({resourceDef.category})</span>
             )}
           </div>
           <div className="mt-2 flex flex-wrap gap-3">
@@ -670,12 +621,8 @@ function CreatePermissionRow({
                 title={opDef.description}
               >
                 <Checkbox
-                  checked={permission.operations.includes(
-                    opDef.operation as Operation,
-                  )}
-                  onCheckedChange={() =>
-                    onOperationToggle(opDef.operation as Operation)
-                  }
+                  checked={permission.operations.includes(opDef.operation as Operation)}
+                  onCheckedChange={() => onOperationToggle(opDef.operation as Operation)}
                 />
                 {opDef.displayName}
               </label>
@@ -730,16 +677,12 @@ function CreateAddPermissionDialog({
   onAdd,
 }: CreateAddPermissionDialogProps) {
   const [selectedResource, setSelectedResource] = useState<string>("");
-  const [selectedOperations, setSelectedOperations] = useState<Operation[]>([
-    "read",
-  ]);
+  const [selectedOperations, setSelectedOperations] = useState<Operation[]>(["read"]);
   const [selectedScope, setSelectedScope] = useState<DataScope>("organization");
 
   const selectedResourceDef = useMemo(() => {
     for (const category of resourceCategories) {
-      const resource = category.resources.find(
-        (r) => r.resource === selectedResource,
-      );
+      const resource = category.resources.find((r) => r.resource === selectedResource);
       if (resource) return resource;
     }
     return null;
@@ -780,9 +723,7 @@ function CreateAddPermissionDialog({
   };
 
   const selectAllOperations = () => {
-    setSelectedOperations(
-      availableOperations.map((op) => op.operation as Operation),
-    );
+    setSelectedOperations(availableOperations.map((op) => op.operation as Operation));
   };
 
   const clearAllOperations = () => {
@@ -816,10 +757,7 @@ function CreateAddPermissionDialog({
                     <SelectGroup key={category.category}>
                       <SelectLabel>{category.category}</SelectLabel>
                       {availableInCategory.map((resource) => (
-                        <SelectItem
-                          key={resource.resource}
-                          value={resource.resource}
-                        >
+                        <SelectItem key={resource.resource} value={resource.resource}>
                           {resource.displayName}
                         </SelectItem>
                       ))}
@@ -863,12 +801,8 @@ function CreateAddPermissionDialog({
                     title={opDef.description}
                   >
                     <Checkbox
-                      checked={selectedOperations.includes(
-                        opDef.operation as Operation,
-                      )}
-                      onCheckedChange={() =>
-                        toggleOperation(opDef.operation as Operation)
-                      }
+                      checked={selectedOperations.includes(opDef.operation as Operation)}
+                      onCheckedChange={() => toggleOperation(opDef.operation as Operation)}
                     />
                     {opDef.displayName}
                   </label>
@@ -897,11 +831,7 @@ function CreateAddPermissionDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button

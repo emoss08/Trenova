@@ -2,7 +2,13 @@ import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@trenova/shared/components/ui/card";
 import { MagicCard } from "@trenova/shared/components/ui/magic-card";
 import {
   Select,
@@ -353,7 +359,8 @@ export function IntegrationCatalogCard() {
                       {group.label}
                     </h2>
                     <span className="text-muted-foreground/70 text-xs">
-                      {group.items.length} {group.items.length === 1 ? "integration" : "integrations"}
+                      {group.items.length}{" "}
+                      {group.items.length === 1 ? "integration" : "integrations"}
                     </span>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

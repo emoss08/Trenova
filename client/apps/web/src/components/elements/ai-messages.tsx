@@ -12,21 +12,14 @@ interface AiMessagesProps {
   autoScroll?: boolean;
 }
 
-function AiMessages({
-  children,
-  className,
-  autoScroll = true,
-}: AiMessagesProps) {
+function AiMessages({ children, className, autoScroll = true }: AiMessagesProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const endRef = React.useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = React.useState(true);
 
-  const scrollToBottom = React.useCallback(
-    (behavior: ScrollBehavior = "smooth") => {
-      endRef.current?.scrollIntoView({ behavior, block: "end" });
-    },
-    []
-  );
+  const scrollToBottom = React.useCallback((behavior: ScrollBehavior = "smooth") => {
+    endRef.current?.scrollIntoView({ behavior, block: "end" });
+  }, []);
 
   React.useEffect(() => {
     const container = containerRef.current;
@@ -49,14 +42,8 @@ function AiMessages({
   });
 
   return (
-    <div
-      data-slot="ai-messages"
-      className={cn("relative h-full font-mono", className)}
-    >
-      <div
-        ref={containerRef}
-        className="absolute inset-0 touch-pan-y overflow-y-auto"
-      >
+    <div data-slot="ai-messages" className={cn("relative h-full font-mono", className)}>
+      <div ref={containerRef} className="absolute inset-0 touch-pan-y overflow-y-auto">
         <div className="mx-auto flex max-w-3xl min-w-0 flex-col gap-6 px-4 py-8">
           {children}
           <div ref={endRef} className="min-h-6 shrink-0" />
@@ -71,7 +58,7 @@ function AiMessages({
           "bg-background hover:bg-muted absolute bottom-4 left-1/2 z-10 flex size-8 -translate-x-1/2 items-center justify-center border transition-all",
           isAtBottom
             ? "pointer-events-none scale-0 opacity-0"
-            : "pointer-events-auto scale-100 opacity-100"
+            : "pointer-events-auto scale-100 opacity-100",
         )}
       >
         <ArrowDown className="size-4" />

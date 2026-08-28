@@ -6,12 +6,7 @@ import {
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
 
-export const equipmentClassSchema = z.enum([
-  "Tractor",
-  "Trailer",
-  "Container",
-  "Other",
-]);
+export const equipmentClassSchema = z.enum(["Tractor", "Trailer", "Container", "Other"]);
 
 export type EquipmentClass = z.infer<typeof equipmentClassSchema>;
 
@@ -51,8 +46,7 @@ export type BulkUpdateEquipmentTypeStatusRequest = z.infer<
   typeof bulkUpdateEquipmentTypeStatusRequestSchema
 >;
 
-export const bulkUpdateEquipmentTypeStatusResponseSchema =
-  z.array(equipmentTypeSchema);
+export const bulkUpdateEquipmentTypeStatusResponseSchema = z.array(equipmentTypeSchema);
 
 export type BulkUpdateEquipmentTypeStatusResponse = z.infer<
   typeof bulkUpdateEquipmentTypeStatusResponseSchema

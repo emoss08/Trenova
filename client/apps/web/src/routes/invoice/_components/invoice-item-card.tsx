@@ -1,5 +1,8 @@
 import { BillingRecordCard } from "@/components/billing/billing-record-card";
-import { PlainInvoiceStatusBadge, PlainSettlementStatusBadge } from "@trenova/shared/components/status-badge";
+import {
+  PlainInvoiceStatusBadge,
+  PlainSettlementStatusBadge,
+} from "@trenova/shared/components/status-badge";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -46,9 +49,7 @@ export function InvoiceItemCard({
               </div>
               <Tooltip>
                 <TooltipTrigger
-                  render={
-                    <span className="text-muted-foreground/70 text-[11px]">{age}</span>
-                  }
+                  render={<span className="text-muted-foreground/70 text-[11px]">{age}</span>}
                 />
                 <TooltipContent side="left" sideOffset={10}>
                   {generateDateTimeStringFromUnixTimestamp(invoice.createdAt)}

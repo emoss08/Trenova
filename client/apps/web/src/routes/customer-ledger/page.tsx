@@ -27,10 +27,7 @@ type FilterValues = {
 
 export function CustomerLedgerPage() {
   const navigate = useNavigate();
-  const { allowed: canRecordPayment } = usePermission(
-    Resource.CustomerPayment,
-    Operation.Create,
-  );
+  const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCustomerId = searchParams.get("customerId") ?? "";
 
@@ -108,9 +105,7 @@ export function CustomerLedgerPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                void navigate(`/accounting/ar/customer-statement/${customerId}`)
-              }
+              onClick={() => void navigate(`/accounting/ar/customer-statement/${customerId}`)}
             >
               <FileTextIcon className="size-4" />
               Statement
@@ -119,9 +114,7 @@ export function CustomerLedgerPage() {
               <Button
                 size="sm"
                 onClick={() =>
-                  void navigate(
-                    `/accounting/ar/payments?panelType=create&customerId=${customerId}`,
-                  )
+                  void navigate(`/accounting/ar/payments?panelType=create&customerId=${customerId}`)
                 }
               >
                 <HandCoinsIcon className="size-4" />
@@ -134,9 +127,7 @@ export function CustomerLedgerPage() {
     >
       <div className="mx-4 mt-3 mb-4 space-y-4">
         <div className="w-[300px]">
-          <label className="text-2xs text-muted-foreground mb-1 block font-medium">
-            Customer
-          </label>
+          <label className="text-2xs text-muted-foreground mb-1 block font-medium">Customer</label>
           <CustomerAutocompleteField
             control={filterForm.control}
             name="customerId"

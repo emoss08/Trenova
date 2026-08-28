@@ -1,10 +1,6 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@trenova/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { CheckCheckIcon, Trash2Icon, XIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 

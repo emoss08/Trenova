@@ -76,10 +76,7 @@ export function RecommendedBadge({
       >
         {/* Gradient background */}
         <div
-          className={cn(
-            "absolute inset-0 bg-gradient-to-r opacity-90",
-            variantClasses[variant],
-          )}
+          className={cn("absolute inset-0 bg-gradient-to-r opacity-90", variantClasses[variant])}
         />
 
         {/* Shimmer effect */}

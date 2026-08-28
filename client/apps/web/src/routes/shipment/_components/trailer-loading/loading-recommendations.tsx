@@ -36,23 +36,13 @@ export function LoadingRecommendations({
         const config = priorityConfig[rec.priority];
         const Icon = config.icon;
         return (
-          <div
-            key={idx}
-            className="border-border bg-card flex gap-2.5 rounded-md border px-3 py-2"
-          >
-            <Icon
-              className={cn("mt-0.5 size-3.5 shrink-0", config.iconColor)}
-            />
+          <div key={idx} className="border-border bg-card flex gap-2.5 rounded-md border px-3 py-2">
+            <Icon className={cn("mt-0.5 size-3.5 shrink-0", config.iconColor)} />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-foreground text-xs font-semibold">
-                  {rec.title}
-                </span>
+                <span className="text-foreground text-xs font-semibold">{rec.title}</span>
                 <span
-                  className={cn(
-                    "rounded-full px-1.5 py-px text-[9px] font-medium",
-                    config.badge,
-                  )}
+                  className={cn("rounded-full px-1.5 py-px text-[9px] font-medium", config.badge)}
                 >
                   {config.label}
                 </span>
@@ -61,9 +51,7 @@ export function LoadingRecommendations({
                 {rec.description}
               </p>
               {rec.impact && (
-                <p className="text-2xs text-foreground/60 mt-0.5 font-medium">
-                  {rec.impact}
-                </p>
+                <p className="text-2xs text-foreground/60 mt-0.5 font-medium">{rec.impact}</p>
               )}
             </div>
           </div>

@@ -1,10 +1,17 @@
 import AuditTab from "@/components/audit-tab";
 import { EmptyState } from "@/components/empty-state";
-import { PlainInvoiceStatusBadge, PlainSettlementStatusBadge } from "@trenova/shared/components/status-badge";
+import {
+  PlainInvoiceStatusBadge,
+  PlainSettlementStatusBadge,
+} from "@trenova/shared/components/status-badge";
 import { formatFileSize } from "@/components/documents/document-upload-zone";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@trenova/shared/components/ui/hover-card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@trenova/shared/components/ui/hover-card";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";

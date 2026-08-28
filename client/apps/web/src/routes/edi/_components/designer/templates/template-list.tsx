@@ -11,7 +11,11 @@ import {
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
 import { useTemplateDesignerStore } from "@/stores/template-designer-store";
-import { ediTemplateSchema, type EDITemplate, type UpdateEDITemplateRequest } from "@trenova/shared/types/edi";
+import {
+  ediTemplateSchema,
+  type EDITemplate,
+  type UpdateEDITemplateRequest,
+} from "@trenova/shared/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { PencilIcon } from "lucide-react";

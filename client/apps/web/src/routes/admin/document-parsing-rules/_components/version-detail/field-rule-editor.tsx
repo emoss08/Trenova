@@ -9,12 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
-import {
-  ChevronDownIcon,
-  PlusIcon,
-  TrashIcon,
-  TextCursorInputIcon,
-} from "lucide-react";
+import { ChevronDownIcon, PlusIcon, TrashIcon, TextCursorInputIcon } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { TagInput } from "../shared/tag-input";
 import type { RuleVersionFormValues } from "@/types/document-parsing-rule";
@@ -59,12 +54,10 @@ export function FieldRuleEditor() {
         <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
           <TextCursorInputIcon className="text-muted-foreground/50 size-8" />
           <div>
-            <p className="text-muted-foreground text-sm font-medium">
-              No field rules defined
-            </p>
+            <p className="text-muted-foreground text-sm font-medium">No field rules defined</p>
             <p className="text-muted-foreground/70 mt-0.5 text-xs">
-              Add fields to extract specific values like PRO numbers,
-              reference IDs, or dates from documents.
+              Add fields to extract specific values like PRO numbers, reference IDs, or dates from
+              documents.
             </p>
           </div>
         </div>
@@ -109,11 +102,7 @@ function FieldItem({
       <div className="rounded-md border">
         <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between p-3 text-sm font-medium">
           <div className="flex items-center gap-2">
-            <span>
-              {defaultKey
-                ? `${defaultKey} — ${defaultLabel}`
-                : `Field ${index + 1}`}
-            </span>
+            <span>{defaultKey ? `${defaultKey} — ${defaultLabel}` : `Field ${index + 1}`}</span>
             {isRequired && <Badge variant="active">Required</Badge>}
             {typeof confidence === "number" && confidence > 0 && (
               <Badge variant="outline">{Math.round(confidence * 100)}%</Badge>

@@ -1,9 +1,6 @@
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
-import {
-  documentControlSchema,
-  type DocumentControl,
-} from "@/types/document-control";
+import { documentControlSchema, type DocumentControl } from "@/types/document-control";
 
 export class DocumentControlService {
   public async get() {
@@ -13,10 +10,7 @@ export class DocumentControlService {
   }
 
   public async update(data: DocumentControl) {
-    const response = await api.put<DocumentControl>(
-      "/document-controls/",
-      data,
-    );
+    const response = await api.put<DocumentControl>("/document-controls/", data);
 
     return safeParse(documentControlSchema, response, "Document Control");
   }

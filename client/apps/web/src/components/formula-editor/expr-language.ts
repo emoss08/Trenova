@@ -13,9 +13,7 @@ import {
 import { tags as t } from "@lezer/highlight";
 
 const KEYWORDS = new Set(["true", "false", "nil", "in", "not", "and", "or"]);
-const BUILTIN_FUNCTIONS = new Set<string>(
-  AVAILABLE_FUNCTIONS.map((f) => f.name),
-);
+const BUILTIN_FUNCTIONS = new Set<string>(AVAILABLE_FUNCTIONS.map((f) => f.name));
 const BUILTIN_VARIABLES = new Set<string>(
   SHIPMENT_VARIABLES.map((v) => {
     const dot = v.name.indexOf(".");
@@ -63,10 +61,7 @@ const exprLanguage = StreamLanguage.define<ExprState>({
       return "string";
     }
 
-    if (
-      stream.match(/\d+\.?\d*([eE][+-]?\d+)?/) ||
-      stream.match(/\.\d+([eE][+-]?\d+)?/)
-    ) {
+    if (stream.match(/\d+\.?\d*([eE][+-]?\d+)?/) || stream.match(/\.\d+([eE][+-]?\d+)?/)) {
       return "number";
     }
 
@@ -182,9 +177,7 @@ function createCompletions(customVariables: VariableDefinitionInput[] = []) {
   ];
 }
 
-export function exprLanguageSupport(
-  customVariables: VariableDefinitionInput[] = [],
-) {
+export function exprLanguageSupport(customVariables: VariableDefinitionInput[] = []) {
   const options = createCompletions(customVariables);
 
   const completionSource = (context: CompletionContext) => {

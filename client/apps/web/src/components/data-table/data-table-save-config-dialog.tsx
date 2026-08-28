@@ -191,11 +191,7 @@ export function DataTableSaveConfigDialog({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-              loadingText="Saving..."
-            >
+            <Button type="submit" isLoading={isSubmitting} loadingText="Saving...">
               Save View
             </Button>
           </DialogFooter>

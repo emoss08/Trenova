@@ -44,8 +44,7 @@ interface UploadPanelProps {
 const MAX_RETRIES = 3;
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
-const ACCEPTED_TYPES =
-  ".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.xls,.xlsx,.txt,.csv";
+const ACCEPTED_TYPES = ".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.xls,.xlsx,.txt,.csv";
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -97,16 +96,9 @@ function getErrorIcon(errorType?: string) {
   }
 }
 
-function getErrorMessage(
-  error?: string,
-  errorType?: string,
-  retryCount?: number,
-) {
+function getErrorMessage(error?: string, errorType?: string, retryCount?: number) {
   const baseMessage = error || "Failed";
-  const retryText =
-    retryCount && retryCount > 0
-      ? ` (attempt ${retryCount}/${MAX_RETRIES})`
-      : "";
+  const retryText = retryCount && retryCount > 0 ? ` (attempt ${retryCount}/${MAX_RETRIES})` : "";
 
   if (errorType === "network") {
     return `Network error${retryText}`;
@@ -143,10 +135,7 @@ function UploadItem({
       />
 
       <div className="min-w-0 flex-1">
-        <p
-          className="text-foreground truncate text-sm font-medium"
-          title={file.name}
-        >
+        <p className="text-foreground truncate text-sm font-medium" title={file.name}>
           {file.name}
         </p>
         <div className="flex items-center gap-2">
@@ -162,9 +151,7 @@ function UploadItem({
             </>
           )}
           {status === "processing" && (
-            <span className="text-muted-foreground text-xs">
-              Compressing...
-            </span>
+            <span className="text-muted-foreground text-xs">Compressing...</span>
           )}
           {status === "uploaded" && (
             <span className="text-muted-foreground text-xs">Uploaded, waiting...</span>
@@ -172,29 +159,21 @@ function UploadItem({
           {status === "verifying" && (
             <span className="text-muted-foreground text-xs">Verifying...</span>
           )}
-          {status === "paused" && (
-            <span className="text-muted-foreground text-xs">Paused</span>
-          )}
+          {status === "paused" && <span className="text-muted-foreground text-xs">Paused</span>}
           {status === "retrying" && (
             <span className="text-muted-foreground text-xs">Retrying...</span>
           )}
           {status === "completing" && (
             <span className="text-muted-foreground text-xs">Finalizing...</span>
           )}
-          {status === "quarantined" && (
-            <span className="text-xs text-red-400">Quarantined</span>
-          )}
+          {status === "quarantined" && <span className="text-xs text-red-400">Quarantined</span>}
           {status === "pending" && (
             <span className="text-muted-foreground text-xs">
-              {retryCount && retryCount > 0
-                ? `Retrying (${retryCount})...`
-                : "Waiting..."}
+              {retryCount && retryCount > 0 ? `Retrying (${retryCount})...` : "Waiting..."}
             </span>
           )}
           {status === "success" && (
-            <span className="text-muted-foreground text-xs">
-              {formatFileSize(file.size)}
-            </span>
+            <span className="text-muted-foreground text-xs">{formatFileSize(file.size)}</span>
           )}
           {status === "error" && (
             <span className="truncate text-xs text-red-400">
@@ -205,30 +184,14 @@ function UploadItem({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
-        {status === "uploading" && (
-          <Loader2Icon className="size-4 animate-spin text-blue-400" />
-        )}
-        {status === "processing" && (
-          <Loader2Icon className="size-4 animate-spin text-blue-400" />
-        )}
-        {status === "uploaded" && (
-          <Loader2Icon className="size-4 animate-spin text-blue-400" />
-        )}
-        {status === "verifying" && (
-          <Loader2Icon className="size-4 animate-spin text-blue-400" />
-        )}
-        {status === "paused" && (
-          <AlertCircleIcon className="size-4 text-amber-400" />
-        )}
-        {status === "retrying" && (
-          <Loader2Icon className="size-4 animate-spin text-blue-400" />
-        )}
-        {status === "completing" && (
-          <Loader2Icon className="size-4 animate-spin text-blue-400" />
-        )}
-        {status === "success" && (
-          <CheckCircleIcon className="size-4 text-green-400" />
-        )}
+        {status === "uploading" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
+        {status === "processing" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
+        {status === "uploaded" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
+        {status === "verifying" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
+        {status === "paused" && <AlertCircleIcon className="size-4 text-amber-400" />}
+        {status === "retrying" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
+        {status === "completing" && <Loader2Icon className="size-4 animate-spin text-blue-400" />}
+        {status === "success" && <CheckCircleIcon className="size-4 text-green-400" />}
         {(status === "error" || status === "paused" || status === "quarantined") && (
           <>
             {status === "error" ? getErrorIcon(errorType) : null}
@@ -378,9 +341,7 @@ function FullDropzone({
       >
         Select files
       </Button>
-      <p className="text-muted-foreground mt-2 text-sm">
-        or drag and drop them here
-      </p>
+      <p className="text-muted-foreground mt-2 text-sm">or drag and drop them here</p>
       <p className="text-muted-foreground mt-3 text-xs">
         {supportedFormatsLabel}, up to {maxFileSizeLabel}
       </p>
@@ -444,10 +405,7 @@ export function UploadPanel({
   }, [uploads, filter]);
 
   const activeCount = uploads.filter(
-    (u) =>
-      u.status === "uploading" ||
-      u.status === "pending" ||
-      u.status === "processing",
+    (u) => u.status === "uploading" || u.status === "pending" || u.status === "processing",
   ).length;
 
   const hasUploads = uploads.length > 0;
@@ -542,9 +500,7 @@ export function UploadPanel({
         >
           {isDraggingOver && (
             <div className="border-primary bg-primary/10 absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed">
-              <p className="text-primary text-sm font-medium">
-                Drop files to add
-              </p>
+              <p className="text-primary text-sm font-medium">Drop files to add</p>
             </div>
           )}
 
@@ -621,9 +577,7 @@ export function UploadPanel({
                           )}
                         >
                           {tab.label}
-                          {tab.count > 0 && (
-                            <span className="ml-1">({tab.count})</span>
-                          )}
+                          {tab.count > 0 && <span className="ml-1">({tab.count})</span>}
                         </button>
                       ))}
                     </div>

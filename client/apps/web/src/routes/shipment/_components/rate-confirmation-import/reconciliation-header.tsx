@@ -29,7 +29,9 @@ export function ReconciliationHeader({
           <span className="text-muted-foreground/30">|</span>
           <div className="flex items-center gap-1.5">
             <div className="size-1.5 rounded-full bg-emerald-500" />
-            <span className="text-muted-foreground">{counts.accepted + counts.edited} accepted</span>
+            <span className="text-muted-foreground">
+              {counts.accepted + counts.edited} accepted
+            </span>
           </div>
           {counts.needsReview > 0 && (
             <div className="flex items-center gap-1.5">
@@ -58,7 +60,12 @@ export function ReconciliationHeader({
             </Button>
           )}
           {counts.needsReview > 0 && (
-            <Button variant="outline" size="sm" onClick={onAcceptAllConfident} className="h-7 text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onAcceptAllConfident}
+              className="h-7 text-xs"
+            >
               <ZapIcon className="size-3" />
               Accept confident
             </Button>

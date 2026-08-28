@@ -42,9 +42,7 @@ export function NavigationProgress() {
       setProgress(INITIAL_PROGRESS);
 
       const trickle = () => {
-        setProgress((current) =>
-          Math.min(current + trickleAmount(current), MAX_TRICKLE_PROGRESS),
-        );
+        setProgress((current) => Math.min(current + trickleAmount(current), MAX_TRICKLE_PROGRESS));
         timers.trickle = window.setTimeout(
           trickle,
           TRICKLE_MIN_INTERVAL_MS + Math.random() * TRICKLE_JITTER_MS,
@@ -82,7 +80,11 @@ export function NavigationProgress() {
         className="bg-brand relative h-full will-change-transform"
         style={{
           transform: `translateX(${(progress - 1) * 100}%)`,
-          transition: isAtStart ? "none" : phase === "done" ? COMPLETE_TRANSITION : TRICKLE_TRANSITION,
+          transition: isAtStart
+            ? "none"
+            : phase === "done"
+              ? COMPLETE_TRANSITION
+              : TRICKLE_TRANSITION,
           opacity: phase === "done" ? 0 : 1,
         }}
       >

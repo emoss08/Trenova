@@ -321,12 +321,15 @@ export default function CommoditiesSection() {
             <div className="divide-y">
               {fields.map((field, index) => {
                 const item = commodities[index];
-                const commodityObj = item?.commodity as unknown as Record<string, unknown> | undefined;
+                const commodityObj = item?.commodity as unknown as
+                  | Record<string, unknown>
+                  | undefined;
                 const displayName =
                   (commodityObj as unknown as { name?: string })?.name ??
                   (commodityObj as unknown as { label?: string })?.label ??
                   "—";
-                const hasHazmat = !!(commodityObj as unknown as { hazardousMaterialId?: string })?.hazardousMaterialId;
+                const hasHazmat = !!(commodityObj as unknown as { hazardousMaterialId?: string })
+                  ?.hazardousMaterialId;
                 const stackable = (commodityObj as unknown as { stackable?: boolean })?.stackable;
                 const fragile = (commodityObj as unknown as { fragile?: boolean })?.fragile;
                 const isDuplicate =

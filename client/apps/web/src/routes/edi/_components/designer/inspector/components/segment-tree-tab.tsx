@@ -10,7 +10,11 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@trenova/shared/lib/utils";
-import type { EDIInspectionDiagnostic, EDIX12Inspection, EDIX12Segment } from "@trenova/shared/types/edi";
+import type {
+  EDIInspectionDiagnostic,
+  EDIX12Inspection,
+  EDIX12Segment,
+} from "@trenova/shared/types/edi";
 import { CopyIcon } from "lucide-react";
 
 export default function SegmentTreeTab({
@@ -145,8 +149,7 @@ function SegmentDetail({
                       <div className="text-muted-foreground mt-1">
                         {element.components
                           .map(
-                            (component) =>
-                              `${component.position}: ${component.value || "[empty]"}`,
+                            (component) => `${component.position}: ${component.value || "[empty]"}`,
                           )
                           .join(" | ")}
                       </div>
@@ -202,10 +205,7 @@ function isControlSegment(segment: EDIX12Segment) {
   return ["interchange", "group", "transaction"].includes(segment.type);
 }
 
-function diagnosticsForX12Segment(
-  diagnostics: EDIInspectionDiagnostic[],
-  segment: EDIX12Segment,
-) {
+function diagnosticsForX12Segment(diagnostics: EDIInspectionDiagnostic[], segment: EDIX12Segment) {
   return diagnostics.filter((diagnostic) => diagnostic.segmentIndex === segment.index);
 }
 

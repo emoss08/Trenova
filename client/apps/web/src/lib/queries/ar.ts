@@ -28,10 +28,7 @@ export const ar = createQueryKeys("ar", {
     queryKey: ["customerLedger", customerId],
     queryFn: async () => fetchArCustomerLedger(customerId),
   }),
-  customerStatement: (
-    customerId: string,
-    options?: { startDate?: number; asOfDate?: number },
-  ) => ({
+  customerStatement: (customerId: string, options?: { startDate?: number; asOfDate?: number }) => ({
     queryKey: ["customerStatement", customerId, options],
     queryFn: async () => fetchArCustomerStatement(customerId, options),
   }),

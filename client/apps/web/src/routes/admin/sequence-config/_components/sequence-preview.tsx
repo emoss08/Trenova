@@ -17,10 +17,7 @@ type PreviewProps = {
   showTokens: boolean;
 };
 
-export const SequencePreview = memo(function SequencePreview({
-  index,
-  showTokens,
-}: PreviewProps) {
+export const SequencePreview = memo(function SequencePreview({ index, showTokens }: PreviewProps) {
   const config = useWatch<SequenceConfigDocument, `configs.${number}`>({
     name: `configs.${index}` as const,
   }) as SequenceConfig | undefined;
@@ -88,11 +85,7 @@ export const SequencePreview = memo(function SequencePreview({
           </Button>
         </div>
       </div>
-      <code
-        className={cn(
-          "text-foreground block font-mono text-xl font-semibold tracking-tight",
-        )}
-      >
+      <code className={cn("text-foreground block font-mono text-xl font-semibold tracking-tight")}>
         {preview || "—"}
       </code>
       <p className="text-muted-foreground mt-1.5 text-xs">

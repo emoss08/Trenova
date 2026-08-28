@@ -24,10 +24,7 @@ export function FinancialReportSection({ section, className }: FinancialReportSe
           </thead>
           <tbody>
             {section.lines.map((line) => (
-              <tr
-                key={line.accountCode}
-                className="hover:bg-muted/50 border-t transition-colors"
-              >
+              <tr key={line.accountCode} className="hover:bg-muted/50 border-t transition-colors">
                 <td className="px-3 py-2 font-mono text-xs">{line.accountCode}</td>
                 <td className="px-3 py-2 text-xs">{line.accountName}</td>
                 <td className="px-3 py-2 text-right">

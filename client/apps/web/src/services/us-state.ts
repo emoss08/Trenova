@@ -9,8 +9,7 @@ import {
 
 export class UsStateService {
   public async options() {
-    const response =
-      await api.get<UsStateSelectOptionResponse>("/us-states/options");
+    const response = await api.get<UsStateSelectOptionResponse>("/us-states/options");
 
     return safeParse(usStateSelectOptionResponseSchema, response, "US State Options");
   }

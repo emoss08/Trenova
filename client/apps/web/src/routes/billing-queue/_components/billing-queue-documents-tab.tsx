@@ -2,11 +2,7 @@ import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields"
 import { UploadPanel } from "@/components/documents/upload-panel";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@trenova/shared/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
@@ -56,9 +52,7 @@ export function BillingQueueDocumentsTab({
   context?: "billing-queue" | "invoice";
 }) {
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [replacingLineageId, setReplacingLineageId] = useState<string | null>(
-    null,
-  );
+  const [replacingLineageId, setReplacingLineageId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const docTypeForm = useForm<{ documentTypeId: string }>({
     defaultValues: { documentTypeId: "" },
@@ -68,12 +62,7 @@ export function BillingQueueDocumentsTab({
     name: "documentTypeId",
   });
 
-  const queryKey = [
-    "documents",
-    "shipment",
-    shipmentId,
-    "includeDocumentType",
-  ] as const;
+  const queryKey = ["documents", "shipment", shipmentId, "includeDocumentType"] as const;
 
   const billingReadinessQuery = queries.shipment.billingReadiness(shipmentId);
   const { data: billingReadiness } = useQuery({
@@ -84,14 +73,9 @@ export function BillingQueueDocumentsTab({
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource(
-        "shipment",
-        shipmentId,
-        undefined,
-        {
-          includeDocumentType: "true",
-        },
-      ),
+      apiService.documentService.getByResource("shipment", shipmentId, undefined, {
+        includeDocumentType: "true",
+      }),
     enabled: !!shipmentId,
   });
 
@@ -114,8 +98,7 @@ export function BillingQueueDocumentsTab({
   };
 
   const { mutate: deleteDocument } = useMutation({
-    mutationFn: (documentId: string) =>
-      apiService.documentService.delete(documentId),
+    mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
     onSuccess: () => {
       invalidateAll();
       toast.success("Document deleted");
@@ -125,44 +108,31 @@ export function BillingQueueDocumentsTab({
     },
   });
 
-  const {
-    uploads,
-    uploadFiles,
-    cancelUpload,
-    retryUpload,
-    removeUpload,
-    clearCompleted,
-  } = useDocumentUpload({
-    resourceId: shipmentId,
-    resourceType: "shipment",
-    uploadMetadata,
-    invalidateQueryKey: queryKey,
-    onSuccess: () => {
-      docTypeForm.setValue("documentTypeId", "");
-      setReplacingLineageId(null);
-      void queryClient.invalidateQueries({
-        queryKey: billingReadinessQuery.queryKey,
-      });
-    },
-  });
+  const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearCompleted } =
+    useDocumentUpload({
+      resourceId: shipmentId,
+      resourceType: "shipment",
+      uploadMetadata,
+      invalidateQueryKey: queryKey,
+      onSuccess: () => {
+        docTypeForm.setValue("documentTypeId", "");
+        setReplacingLineageId(null);
+        void queryClient.invalidateQueries({
+          queryKey: billingReadinessQuery.queryKey,
+        });
+      },
+    });
 
-  const handleUploadForRequirement = (
-    requirement: ShipmentBillingRequirement,
-  ) => {
+  const handleUploadForRequirement = (requirement: ShipmentBillingRequirement) => {
     docTypeForm.setValue("documentTypeId", requirement.documentTypeId);
     setUploadOpen(true);
   };
 
-  const requirementTitle =
-    context === "invoice" ? "Supporting Requirements" : "Required Documents";
+  const requirementTitle = context === "invoice" ? "Supporting Requirements" : "Required Documents";
   const loadingLabel =
-    context === "invoice"
-      ? "Loading supporting documents..."
-      : "Loading documents...";
+    context === "invoice" ? "Loading supporting documents..." : "Loading documents...";
   const emptyLabel =
-    context === "invoice"
-      ? "No supporting documents attached"
-      : "No documents attached";
+    context === "invoice" ? "No supporting documents attached" : "No documents attached";
 
   return (
     <div className="flex h-full flex-col">
@@ -173,9 +143,8 @@ export function BillingQueueDocumentsTab({
               {requirementTitle}
             </span>
             <span className="text-muted-foreground text-[11px] tabular-nums">
-              {billingReadiness.requirements.length -
-                billingReadiness.missingRequirements.length}
-              /{billingReadiness.requirements.length}
+              {billingReadiness.requirements.length - billingReadiness.missingRequirements.length}/
+              {billingReadiness.requirements.length}
             </span>
           </div>
           <div className="flex flex-col gap-1">
@@ -223,11 +192,7 @@ export function BillingQueueDocumentsTab({
               clearable
             />
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setUploadOpen(true)}
-          >
+          <Button size="sm" variant="outline" onClick={() => setUploadOpen(true)}>
             <UploadIcon className="size-3.5" />
             Upload
           </Button>
@@ -262,8 +227,7 @@ export function BillingQueueDocumentsTab({
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter")
-                      onDocumentSelect(doc.id, doc.originalName);
+                    if (e.key === "Enter") onDocumentSelect(doc.id, doc.originalName);
                   }}
                 >
                   <Icon className="text-muted-foreground size-4 shrink-0" />
@@ -273,12 +237,9 @@ export function BillingQueueDocumentsTab({
                       <span>{formatSize(doc.fileSize)}</span>
                       <span>&middot;</span>
                       <span>
-                        {formatDistanceToNowStrict(
-                          fromUnixTime(doc.createdAt),
-                          {
-                            addSuffix: true,
-                          },
-                        )}
+                        {formatDistanceToNowStrict(fromUnixTime(doc.createdAt), {
+                          addSuffix: true,
+                        })}
                       </span>
                       {doc.documentType && (
                         <>

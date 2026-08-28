@@ -75,9 +75,7 @@ export function ShareBreakdown({
             onPointerLeave={() => setHovered(null)}
             onFocus={() => setHovered(segment.key)}
             onBlur={() => setHovered(null)}
-            onClick={() =>
-              setPinned((current) => (current === segment.key ? null : segment.key))
-            }
+            onClick={() => setPinned((current) => (current === segment.key ? null : segment.key))}
             className={cn(
               "text-2xs hover:text-foreground focus-visible:ring-ring/50 inline-flex items-center gap-1.5 rounded-sm transition-colors outline-none focus-visible:ring-[3px]",
               pinned === segment.key ? "text-foreground" : "text-muted-foreground",
@@ -85,9 +83,7 @@ export function ShareBreakdown({
           >
             <span className={cn("size-2 shrink-0 rounded-full", segment.className)} />
             <span className="font-medium">{segment.label}</span>
-            {segment.caption ? (
-              <span className="tabular-nums">{segment.caption}</span>
-            ) : null}
+            {segment.caption ? <span className="tabular-nums">{segment.caption}</span> : null}
             <span className="tabular-nums opacity-60">
               {Math.round((segment.value / total) * 100)}%
             </span>
@@ -178,16 +174,10 @@ export function DwellSpreadRail({
   className?: string;
   delay?: number;
 }) {
-  const share = (value: number) =>
-    scale <= 0 ? 0 : Math.min(Math.max(value / scale, 0), 1) * 100;
+  const share = (value: number) => (scale <= 0 ? 0 : Math.min(Math.max(value / scale, 0), 1) * 100);
 
   return (
-    <div
-      className={cn(
-        "bg-muted relative h-1.5 w-full overflow-hidden rounded-full",
-        className,
-      )}
-    >
+    <div className={cn("bg-muted relative h-1.5 w-full overflow-hidden rounded-full", className)}>
       <m.span
         className="bg-foreground/25 absolute inset-y-0 left-0 rounded-full"
         initial={{ width: 0 }}

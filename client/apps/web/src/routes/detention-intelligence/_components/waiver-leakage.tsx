@@ -1,8 +1,4 @@
-import {
-  Meter,
-  ShareBreakdown,
-  type ShareSegment,
-} from "@/components/detention/detention-charts";
+import { Meter, ShareBreakdown, type ShareSegment } from "@/components/detention/detention-charts";
 import { detentionWaiverReasonChoices, findChoice } from "@/lib/choices";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { WaiverLeakageStat } from "@trenova/shared/types/detention";
@@ -63,13 +59,9 @@ function LeakageRow({
           )}
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm leading-tight font-medium">
-            {reasonLabel(row.reason)}
-          </p>
+          <p className="truncate text-sm leading-tight font-medium">{reasonLabel(row.reason)}</p>
           {description ? (
-            <p className="text-2xs text-muted-foreground mt-0.5 truncate">
-              {description}
-            </p>
+            <p className="text-2xs text-muted-foreground mt-0.5 truncate">{description}</p>
           ) : null}
         </div>
         <div className="w-24 shrink-0 text-right">
@@ -90,9 +82,8 @@ function LeakageRow({
           delay={Math.min(index, 10) * 0.04}
         />
         <p className="text-2xs text-muted-foreground shrink-0 tabular-nums">
-          {row.waiverCount} {row.waiverCount === 1 ? "waiver" : "waivers"} ·{" "}
-          {row.approverCount} {row.approverCount === 1 ? "approver" : "approvers"} ·{" "}
-          {formatCurrency(perWaiver)} each
+          {row.waiverCount} {row.waiverCount === 1 ? "waiver" : "waivers"} · {row.approverCount}{" "}
+          {row.approverCount === 1 ? "approver" : "approvers"} · {formatCurrency(perWaiver)} each
         </p>
       </div>
     </m.div>
@@ -112,15 +103,9 @@ export function WaiverLeakage({
   onRetry: () => void;
   index: number;
 }) {
-  const sorted = useMemo(
-    () => [...rows].sort((a, b) => b.waivedAmount - a.waivedAmount),
-    [rows],
-  );
+  const sorted = useMemo(() => [...rows].sort((a, b) => b.waivedAmount - a.waivedAmount), [rows]);
 
-  const total = useMemo(
-    () => sorted.reduce((sum, row) => sum + row.waivedAmount, 0),
-    [sorted],
-  );
+  const total = useMemo(() => sorted.reduce((sum, row) => sum + row.waivedAmount, 0), [sorted]);
 
   const segments = useMemo<ShareSegment[]>(
     () =>
@@ -147,9 +132,7 @@ export function WaiverLeakage({
       footer={
         leader ? (
           <p className="text-2xs text-muted-foreground">
-            <span className="text-foreground font-medium">
-              {reasonLabel(leader.reason)}
-            </span>{" "}
+            <span className="text-foreground font-medium">{reasonLabel(leader.reason)}</span>{" "}
             accounts for {Math.round(leaderShare * 100)}% of everything forgiven —{" "}
             {formatCurrency(leader.waivedAmount)} across {leader.waiverCount}{" "}
             {leader.waiverCount === 1 ? "waiver" : "waivers"}.
@@ -174,8 +157,8 @@ export function WaiverLeakage({
                 {formatCurrency(total)}
               </p>
               <p className="text-2xs text-muted-foreground shrink-0 tabular-nums">
-                {waiverCount} {waiverCount === 1 ? "waiver" : "waivers"} ·{" "}
-                {sorted.length} {sorted.length === 1 ? "reason" : "reasons"}
+                {waiverCount} {waiverCount === 1 ? "waiver" : "waivers"} · {sorted.length}{" "}
+                {sorted.length === 1 ? "reason" : "reasons"}
               </p>
             </div>
             <ShareBreakdown segments={segments} className="mt-3" />

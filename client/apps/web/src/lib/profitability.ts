@@ -32,9 +32,7 @@ export type CompactProfitabilityEstimate = {
   missingDistance: boolean;
 };
 
-export function resolveTargetMarginPct(
-  targetMarginPercent: string | null | undefined,
-): number {
+export function resolveTargetMarginPct(targetMarginPercent: string | null | undefined): number {
   if (targetMarginPercent === null || targetMarginPercent === undefined) {
     return DEFAULT_TARGET_MARGIN_PCT;
   }

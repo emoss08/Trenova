@@ -32,11 +32,7 @@ export function VersionCompareDialog({
   const { data, isLoading, error } = useQuery({
     queryKey: ["formula-template-compare", templateId, fromVersion, toVersion],
     queryFn: () =>
-      apiService.formulaTemplateService.compareVersions(
-        templateId,
-        fromVersion,
-        toVersion,
-      ),
+      apiService.formulaTemplateService.compareVersions(templateId, fromVersion, toVersion),
     enabled: open,
   });
 
@@ -51,8 +47,7 @@ export function VersionCompareDialog({
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            {data?.changeCount ?? 0} change{data?.changeCount !== 1 ? "s" : ""}{" "}
-            detected
+            {data?.changeCount ?? 0} change{data?.changeCount !== 1 ? "s" : ""} detected
           </DialogDescription>
         </DialogHeader>
 
@@ -61,16 +56,12 @@ export function VersionCompareDialog({
             <ComparisonSkeleton />
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-muted-foreground">
-                Failed to load comparison. Please try again.
-              </p>
+              <p className="text-muted-foreground">Failed to load comparison. Please try again.</p>
             </div>
           ) : data?.changeCount === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <RefreshCwIcon className="text-muted-foreground mb-4 size-12" />
-              <p className="text-muted-foreground">
-                No changes between versions
-              </p>
+              <p className="text-muted-foreground">No changes between versions</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -142,26 +133,20 @@ function ChangeItem({ path, change }: ChangeItemProps) {
       <div className="bg-muted/50 flex items-center gap-2 border-b px-3 py-2">
         {getChangeIcon()}
         <span className="font-mono text-sm font-medium">{formattedPath}</span>
-        <Badge className={cn("ml-auto text-xs", getChangeBadgeVariant())}>
-          {change.type}
-        </Badge>
+        <Badge className={cn("ml-auto text-xs", getChangeBadgeVariant())}>{change.type}</Badge>
       </div>
 
       <div className="p-3">
         {change.type === "updated" ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-muted-foreground mb-1 block text-xs font-medium">
-                Before
-              </span>
+              <span className="text-muted-foreground mb-1 block text-xs font-medium">Before</span>
               <pre className="overflow-x-auto rounded bg-red-50 p-2 font-mono text-xs whitespace-pre-wrap text-red-800 dark:bg-red-900/20 dark:text-red-200">
                 {formatValue(change.from)}
               </pre>
             </div>
             <div>
-              <span className="text-muted-foreground mb-1 block text-xs font-medium">
-                After
-              </span>
+              <span className="text-muted-foreground mb-1 block text-xs font-medium">After</span>
               <pre className="overflow-x-auto rounded bg-green-50 p-2 font-mono text-xs whitespace-pre-wrap text-green-800 dark:bg-green-900/20 dark:text-green-200">
                 {formatValue(change.to)}
               </pre>
@@ -169,18 +154,14 @@ function ChangeItem({ path, change }: ChangeItemProps) {
           </div>
         ) : change.type === "created" ? (
           <div>
-            <span className="text-muted-foreground mb-1 block text-xs font-medium">
-              Added
-            </span>
+            <span className="text-muted-foreground mb-1 block text-xs font-medium">Added</span>
             <pre className="overflow-x-auto rounded bg-green-50 p-2 font-mono text-xs whitespace-pre-wrap text-green-800 dark:bg-green-900/20 dark:text-green-200">
               {formatValue(change.to)}
             </pre>
           </div>
         ) : (
           <div>
-            <span className="text-muted-foreground mb-1 block text-xs font-medium">
-              Removed
-            </span>
+            <span className="text-muted-foreground mb-1 block text-xs font-medium">Removed</span>
             <pre className="overflow-x-auto rounded bg-red-50 p-2 font-mono text-xs whitespace-pre-wrap text-red-800 dark:bg-red-900/20 dark:text-red-200">
               {formatValue(change.from)}
             </pre>

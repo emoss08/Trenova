@@ -79,10 +79,7 @@ function StatTile({
             {label}
           </p>
           <p
-            className={cn(
-              "mt-1 text-xl font-semibold tracking-tight tabular-nums",
-              valueClassName,
-            )}
+            className={cn("mt-1 text-xl font-semibold tracking-tight tabular-nums", valueClassName)}
           >
             {value}
           </p>

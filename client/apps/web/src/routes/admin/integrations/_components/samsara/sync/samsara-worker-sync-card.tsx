@@ -14,7 +14,10 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { usePermissions } from "@/hooks/use-permission";
 import { ApiRequestError } from "@trenova/shared/lib/api";
-import { formatToUserTimezone, generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
+import {
+  formatToUserTimezone,
+  generateDateTimeStringFromUnixTimestamp,
+} from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useSamsaraSyncStore } from "@/stores/samsara-sync";

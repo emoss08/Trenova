@@ -1,9 +1,6 @@
 import { api } from "@trenova/shared/lib/api";
 import type { Document } from "@trenova/shared/types/document";
-import type {
-  UploadErrorType,
-  UploadState,
-} from "@/types/upload";
+import type { UploadErrorType, UploadState } from "@/types/upload";
 import { documentSchema } from "@trenova/shared/types/document";
 import { useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
@@ -55,10 +52,7 @@ export function useUploadWithProgress({
   const pendingQueueRef = useRef<UploadState[]>([]);
 
   const processQueue = useCallback(() => {
-    while (
-      activeUploadsRef.current < maxConcurrent &&
-      pendingQueueRef.current.length > 0
-    ) {
+    while (activeUploadsRef.current < maxConcurrent && pendingQueueRef.current.length > 0) {
       const nextUpload = pendingQueueRef.current.shift();
       if (nextUpload) {
         void startUpload(nextUpload);
@@ -75,23 +69,16 @@ export function useUploadWithProgress({
 
       if (transformFile) {
         setUploads((prev) =>
-          prev.map((u) =>
-            u.id === uploadState.id
-              ? { ...u, status: "processing" as const }
-              : u,
-          ),
+          prev.map((u) => (u.id === uploadState.id ? { ...u, status: "processing" as const } : u)),
         );
 
         try {
           uploadFile = await transformFile(uploadState.file);
           setUploads((prev) =>
-            prev.map((u) =>
-              u.id === uploadState.id ? { ...u, file: uploadFile } : u,
-            ),
+            prev.map((u) => (u.id === uploadState.id ? { ...u, file: uploadFile } : u)),
           );
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Failed to process file";
+          const errorMessage = error instanceof Error ? error.message : "Failed to process file";
           setUploads((prev) =>
             prev.map((u) =>
               u.id === uploadState.id
@@ -105,10 +92,7 @@ export function useUploadWithProgress({
                 : u,
             ),
           );
-          onError?.(
-            error instanceof Error ? error : new Error(errorMessage),
-            uploadState.file,
-          );
+          onError?.(error instanceof Error ? error : new Error(errorMessage), uploadState.file);
           activeUploadsRef.current--;
           processQueue();
           return;
@@ -116,9 +100,7 @@ export function useUploadWithProgress({
       }
 
       setUploads((prev) =>
-        prev.map((u) =>
-          u.id === uploadState.id ? { ...u, status: "uploading" as const } : u,
-        ),
+        prev.map((u) => (u.id === uploadState.id ? { ...u, status: "uploading" as const } : u)),
       );
 
       const abortController = new AbortController();
@@ -139,9 +121,7 @@ export function useUploadWithProgress({
           formData,
           (percent) => {
             setUploads((prev) =>
-              prev.map((u) =>
-                u.id === uploadState.id ? { ...u, progress: percent } : u,
-              ),
+              prev.map((u) => (u.id === uploadState.id ? { ...u, progress: percent } : u)),
             );
           },
           abortController.signal,
@@ -151,18 +131,12 @@ export function useUploadWithProgress({
 
         setUploads((prev) =>
           prev.map((u) =>
-            u.id === uploadState.id
-              ? { ...u, status: "success" as const, progress: 100 }
-              : u,
+            u.id === uploadState.id ? { ...u, status: "success" as const, progress: 100 } : u,
           ),
         );
 
         void queryClient.invalidateQueries({
-          queryKey: invalidateQueryKey || [
-            "documents",
-            resourceType,
-            resourceId,
-          ],
+          queryKey: invalidateQueryKey || ["documents", resourceType, resourceId],
         });
 
         onSuccess?.(parsed);
@@ -170,8 +144,7 @@ export function useUploadWithProgress({
         if (error instanceof DOMException && error.name === "AbortError") {
           setUploads((prev) => prev.filter((u) => u.id !== uploadState.id));
         } else {
-          const errorMessage =
-            error instanceof Error ? error.message : "Upload failed";
+          const errorMessage = error instanceof Error ? error.message : "Upload failed";
 
           let errorType: UploadErrorType = "unknown";
           if (
@@ -209,10 +182,7 @@ export function useUploadWithProgress({
                 : u,
             ),
           );
-          onError?.(
-            error instanceof Error ? error : new Error(errorMessage),
-            uploadState.file,
-          );
+          onError?.(error instanceof Error ? error : new Error(errorMessage), uploadState.file);
         }
       } finally {
         activeUploadsRef.current--;
@@ -257,9 +227,7 @@ export function useUploadWithProgress({
     if (controller) {
       controller.abort();
     }
-    pendingQueueRef.current = pendingQueueRef.current.filter(
-      (u) => u.id !== id,
-    );
+    pendingQueueRef.current = pendingQueueRef.current.filter((u) => u.id !== id);
     setUploads((prev) => prev.filter((u) => u.id !== id));
   }, []);
 
@@ -296,16 +264,12 @@ export function useUploadWithProgress({
     if (controller) {
       controller.abort();
     }
-    pendingQueueRef.current = pendingQueueRef.current.filter(
-      (u) => u.id !== id,
-    );
+    pendingQueueRef.current = pendingQueueRef.current.filter((u) => u.id !== id);
     setUploads((prev) => prev.filter((u) => u.id !== id));
   }, []);
 
   const clearCompleted = useCallback(() => {
-    setUploads((prev) =>
-      prev.filter((u) => u.status !== "success" && u.status !== "error"),
-    );
+    setUploads((prev) => prev.filter((u) => u.status !== "success" && u.status !== "error"));
   }, []);
 
   const clearAll = useCallback(() => {
@@ -317,10 +281,7 @@ export function useUploadWithProgress({
   }, []);
 
   const isUploading = uploads.some(
-    (u) =>
-      u.status === "uploading" ||
-      u.status === "pending" ||
-      u.status === "processing",
+    (u) => u.status === "uploading" || u.status === "pending" || u.status === "processing",
   );
 
   return {

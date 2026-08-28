@@ -16,12 +16,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { invalidateEDIMessages } from "./edi-panel-invalidation";
-import {
-  DetailField,
-  DetailSection,
-  EDIPartnerRef,
-  EDIRawContent,
-} from "./edi-panel-primitives";
+import { DetailField, DetailSection, EDIPartnerRef, EDIRawContent } from "./edi-panel-primitives";
 
 export const RETRYABLE_DELIVERY_STATUSES = new Set<EDIMessageDeliveryStatus>([
   "Queued",

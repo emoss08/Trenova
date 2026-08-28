@@ -3,16 +3,9 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "types": [
-      "vite/client",
-      "google.maps",
-    ],
+    "types": ["vite/client", "google.maps"],
     "plugins": [
       {
         "name": "@0no-co/graphqlsp",
@@ -22,12 +15,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@trenova/shared/*": [
-        "../../packages/shared/src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@trenova/shared/*": ["../../packages/shared/src/*"]
     },
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -44,7 +33,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": [
-    "src",
-  ]
+  "include": ["src"]
 }

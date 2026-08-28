@@ -5,11 +5,7 @@ import {
   useResetHomeLayout,
   useUpdateHomeLayout,
 } from "@/hooks/use-home-layout";
-import {
-  DEFAULT_HOME_LAYOUT,
-  toWidgetInput,
-  type HomeWidget,
-} from "@/lib/graphql/home-layout";
+import { DEFAULT_HOME_LAYOUT, toWidgetInput, type HomeWidget } from "@/lib/graphql/home-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";

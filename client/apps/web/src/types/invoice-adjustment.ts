@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { invoiceAdjustmentSupportingDocumentPolicySchema } from "@trenova/shared/types/customer";
 import { documentSchema } from "@trenova/shared/types/document";
-import { decimalStringSchema, nullableStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
+import {
+  decimalStringSchema,
+  nullableStringSchema,
+  tenantInfoSchema,
+} from "@trenova/shared/types/helpers";
 import { invoiceLineSchema, invoiceSchema } from "@trenova/shared/types/invoice";
 
 export const invoiceAdjustmentKindSchema = z.enum([

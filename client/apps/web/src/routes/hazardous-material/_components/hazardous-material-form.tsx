@@ -8,16 +8,9 @@ import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/
 import { Input } from "@trenova/shared/components/ui/input";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useDebounce } from "@/hooks/use-debounce";
-import {
-  hazardousClassChoices,
-  packingGroupChoices,
-  statusChoices,
-} from "@/lib/choices";
+import { hazardousClassChoices, packingGroupChoices, statusChoices } from "@/lib/choices";
 import type { DotHazmatReference } from "@/types/dot-hazmat-reference";
-import type {
-  HazardousClass,
-  HazardousMaterial,
-} from "@/types/hazardous-material";
+import type { HazardousClass, HazardousMaterial } from "@/types/hazardous-material";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
@@ -51,11 +44,7 @@ function mapDotClassToEnum(dotClass: string): HazardousClass | undefined {
   return dotClassToHazardClass[trimmed];
 }
 
-function DotHazmatNameField({
-  onSelect,
-}: {
-  onSelect: (option: DotHazmatReference) => void;
-}) {
+function DotHazmatNameField({ onSelect }: { onSelect: (option: DotHazmatReference) => void }) {
   const { control } = useFormContext<HazardousMaterial>();
   const [focused, setFocused] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -149,9 +138,7 @@ function DotHazmatNameField({
                       </span>
                       <span className="text-2xs text-muted-foreground">
                         Class {option.hazardClass}
-                        {option.packingGroup
-                          ? ` | PG ${option.packingGroup}`
-                          : ""}
+                        {option.packingGroup ? ` | PG ${option.packingGroup}` : ""}
                       </span>
                     </button>
                   ))}
@@ -184,10 +171,7 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
     setValue("properShippingName", option.properShippingName);
     const descParts = [`UN${option.unNumber} ${option.properShippingName}`];
     if (option.hazardClass) descParts.push(`Class ${option.hazardClass}`);
-    if (
-      option.subsidiaryHazard &&
-      option.subsidiaryHazard !== option.hazardClass
-    )
+    if (option.subsidiaryHazard && option.subsidiaryHazard !== option.hazardClass)
       descParts.push(`Subsidiary hazard: ${option.subsidiaryHazard}`);
     if (option.packingGroup) descParts.push(`PG ${option.packingGroup}`);
     if (option.ergGuide) descParts.push(`ERG Guide ${option.ergGuide}`);
@@ -220,14 +204,8 @@ export function HazardousMaterialForm({ isEditing }: { isEditing?: boolean }) {
     }
 
     setValue("placardRequired", !!option.hazardClass);
-    setValue(
-      "isReportableQuantity",
-      !!option.symbols && option.symbols.includes("RQ"),
-    );
-    setValue(
-      "inhalationHazard",
-      option.hazardClass === "2.3" || option.hazardClass === "6.1",
-    );
+    setValue("isReportableQuantity", !!option.symbols && option.symbols.includes("RQ"));
+    setValue("inhalationHazard", option.hazardClass === "2.3" || option.hazardClass === "6.1");
   }
 
   return (

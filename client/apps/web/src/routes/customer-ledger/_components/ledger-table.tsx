@@ -61,9 +61,7 @@ export function LedgerTable({ entries }: { entries: ARLedgerEntry[] }) {
         <TableBody>
           {rows.map((entry) => (
             <TableRow key={entry.key} className="transition-colors">
-              <TableCell className="py-2 text-xs">
-                {formatDate(entry.transactionDate)}
-              </TableCell>
+              <TableCell className="py-2 text-xs">{formatDate(entry.transactionDate)}</TableCell>
               <TableCell className="py-2 font-mono text-xs">
                 {entry.documentNumber || "—"}
               </TableCell>

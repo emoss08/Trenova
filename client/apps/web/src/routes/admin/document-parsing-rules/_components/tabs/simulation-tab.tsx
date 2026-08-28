@@ -1,6 +1,12 @@
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@trenova/shared/components/ui/card";
 import {
   Command,
   CommandEmpty,

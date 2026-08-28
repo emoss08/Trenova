@@ -110,12 +110,7 @@ export function OrderSummarySection() {
             </Button>
           )}
           {canCancel && (
-            <Button
-              type="button"
-              variant="outline"
-              size="xxs"
-              onClick={() => setCancelOpen(true)}
-            >
+            <Button type="button" variant="outline" size="xxs" onClick={() => setCancelOpen(true)}>
               <BanIcon className="text-destructive size-3" />
               Cancel Order
             </Button>

@@ -11,12 +11,7 @@ import {
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
 import { Separator } from "@trenova/shared/components/ui/separator";
-import {
-  ChevronDownIcon,
-  PlusIcon,
-  TrashIcon,
-  MapPinIcon,
-} from "lucide-react";
+import { ChevronDownIcon, PlusIcon, TrashIcon, MapPinIcon } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { TagInput } from "../shared/tag-input";
 import type { RuleVersionFormValues } from "@/types/document-parsing-rule";
@@ -94,12 +89,9 @@ export function StopRuleEditor() {
         <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-center">
           <MapPinIcon className="text-muted-foreground/50 size-8" />
           <div>
-            <p className="text-muted-foreground text-sm font-medium">
-              No stop rules defined
-            </p>
+            <p className="text-muted-foreground text-sm font-medium">No stop rules defined</p>
             <p className="text-muted-foreground/70 mt-0.5 text-xs">
-              Add stops to extract pickup and delivery locations from the
-              document.
+              Add stops to extract pickup and delivery locations from the document.
             </p>
           </div>
         </div>
@@ -134,8 +126,7 @@ function StopItem({
 
   const currentRole = role || defaultRole || "stop";
   const badgeVariant =
-    ROLE_BADGE_VARIANT[currentRole as keyof typeof ROLE_BADGE_VARIANT] ??
-    "secondary";
+    ROLE_BADGE_VARIANT[currentRole as keyof typeof ROLE_BADGE_VARIANT] ?? "secondary";
 
   return (
     <Collapsible defaultOpen>
@@ -259,12 +250,9 @@ function StopExtractorEditor({ stopIndex }: { stopIndex: number }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-sm font-medium">
-            Extractors ({fields.length})
-          </h4>
+          <h4 className="text-sm font-medium">Extractors ({fields.length})</h4>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            Each extractor pulls a specific piece of data (name, address, date)
-            from this stop.
+            Each extractor pulls a specific piece of data (name, address, date) from this stop.
           </p>
         </div>
         <Button

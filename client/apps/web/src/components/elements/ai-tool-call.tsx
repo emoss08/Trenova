@@ -16,13 +16,7 @@ import {
 
 import { cn } from "@trenova/shared/lib/utils";
 
-type ToolCallState =
-  | "pending"
-  | "running"
-  | "completed"
-  | "error"
-  | "awaiting-approval"
-  | "denied";
+type ToolCallState = "pending" | "running" | "completed" | "error" | "awaiting-approval" | "denied";
 
 interface AiToolCallContextValue {
   name: string;
@@ -30,9 +24,7 @@ interface AiToolCallContextValue {
   isOpen: boolean;
 }
 
-const AiToolCallContext = React.createContext<AiToolCallContextValue | null>(
-  null,
-);
+const AiToolCallContext = React.createContext<AiToolCallContextValue | null>(null);
 
 function useToolCallContext() {
   const context = React.useContext(AiToolCallContext);
@@ -82,10 +74,7 @@ function AiToolCall({
     }
   }, [state, handleOpenChange]);
 
-  const contextValue = React.useMemo(
-    () => ({ name, state, isOpen }),
-    [name, state, isOpen],
-  );
+  const contextValue = React.useMemo(() => ({ name, state, isOpen }), [name, state, isOpen]);
 
   return (
     <AiToolCallContext.Provider value={contextValue}>
@@ -125,14 +114,12 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
       running: {
         icon: <Loader2 className="size-3.5 animate-spin" />,
         label: "Running",
-        className:
-          "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+        className: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
       },
       completed: {
         icon: <Check className="size-3.5" />,
         label: "Completed",
-        className:
-          "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
+        className: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
       },
       error: {
         icon: <X className="size-3.5" />,
@@ -142,14 +129,12 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
       "awaiting-approval": {
         icon: <ShieldQuestion className="size-3.5" />,
         label: "Awaiting Approval",
-        className:
-          "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+        className: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
       },
       denied: {
         icon: <AlertTriangle className="size-3.5" />,
         label: "Denied",
-        className:
-          "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+        className: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
       },
     };
     return configs[state];
@@ -214,16 +199,10 @@ interface AiToolCallInputProps {
 }
 
 function AiToolCallInput({ input, className }: AiToolCallInputProps) {
-  const formattedJson = React.useMemo(
-    () => JSON.stringify(input, null, 2),
-    [input],
-  );
+  const formattedJson = React.useMemo(() => JSON.stringify(input, null, 2), [input]);
 
   return (
-    <div
-      data-slot="ai-tool-call-input"
-      className={cn("space-y-1.5", className)}
-    >
+    <div data-slot="ai-tool-call-input" className={cn("space-y-1.5", className)}>
       <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
         Input
       </span>
@@ -241,16 +220,11 @@ interface AiToolCallOutputProps {
 
 function AiToolCallOutput({ children, className }: AiToolCallOutputProps) {
   return (
-    <div
-      data-slot="ai-tool-call-output"
-      className={cn("space-y-1.5", className)}
-    >
+    <div data-slot="ai-tool-call-output" className={cn("space-y-1.5", className)}>
       <span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
         Output
       </span>
-      <div className="bg-muted/50 overflow-x-auto rounded-md p-3 text-sm">
-        {children}
-      </div>
+      <div className="bg-muted/50 overflow-x-auto rounded-md p-3 text-sm">{children}</div>
     </div>
   );
 }
@@ -262,10 +236,7 @@ interface AiToolCallErrorProps {
 
 function AiToolCallError({ error, className }: AiToolCallErrorProps) {
   return (
-    <div
-      data-slot="ai-tool-call-error"
-      className={cn("space-y-1.5", className)}
-    >
+    <div data-slot="ai-tool-call-error" className={cn("space-y-1.5", className)}>
       <span className="text-xs font-medium tracking-wider text-red-600 uppercase dark:text-red-400">
         Error
       </span>

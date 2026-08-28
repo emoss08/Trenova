@@ -80,9 +80,7 @@ function TableChangeDetails({ notification }: { notification: Notification }) {
   const operation = notificationDataString(notification, "operation");
   const tableName = notificationDataString(notification, "tableName");
   const changedFields = Array.isArray(notification.data?.changedFields)
-    ? notification.data.changedFields.filter(
-        (field): field is string => typeof field === "string",
-      )
+    ? notification.data.changedFields.filter((field): field is string => typeof field === "string")
     : [];
 
   if (!operation && !tableName && changedFields.length === 0) return null;
@@ -114,7 +112,15 @@ function TableChangeDetails({ notification }: { notification: Notification }) {
   );
 }
 
-function AmountRow({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) {
+function AmountRow({
+  label,
+  value,
+  emphasis,
+}: {
+  label: string;
+  value: string;
+  emphasis?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-2xs text-muted-foreground">{label}</span>

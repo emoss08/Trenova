@@ -31,8 +31,8 @@ export function DuplicateAlertDialog({
             Duplicate {rowCount} {pluralize("row", rowCount)}?
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to duplicate {rowCount}{" "}
-            {pluralize("row", rowCount)}? This action cannot be undone.
+            Are you sure you want to duplicate {rowCount} {pluralize("row", rowCount)}? This action
+            cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

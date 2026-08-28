@@ -5,11 +5,7 @@ import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import {
-  allocateBudget,
-  openItemToApplicationRow,
-  toMinor,
-} from "@/lib/cash-application";
+import { allocateBudget, openItemToApplicationRow, toMinor } from "@/lib/cash-application";
 import { paymentMethodChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import type { RecordPaymentFormValues } from "@trenova/shared/types/customer-payment";
@@ -18,11 +14,7 @@ import { useEffect, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CashApplicationEditor } from "./cash-application-editor";
 
-export function RecordPaymentForm({
-  prefilledInvoiceIds,
-}: {
-  prefilledInvoiceIds: string[];
-}) {
+export function RecordPaymentForm({ prefilledInvoiceIds }: { prefilledInvoiceIds: string[] }) {
   const { control, setValue, getValues } = useFormContext<RecordPaymentFormValues>();
   const customerId = useWatch({ control, name: "customerId" });
   const amount = useWatch({ control, name: "amount" });

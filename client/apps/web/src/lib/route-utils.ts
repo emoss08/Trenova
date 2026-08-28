@@ -16,10 +16,7 @@ function formatSegmentLabel(segment: string): string {
   return segment
     .replace(/[-_]/g, " ")
     .replace(/([A-Z])/g, " $1")
-    .replace(
-      /\w\S*/g,
-      (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
-    )
+    .replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase())
     .trim();
 }
 
@@ -92,10 +89,7 @@ export function normalizePath(path: string): string | null {
   return normalized === "" ? "/" : normalized;
 }
 
-function collectNavItemEntries(
-  entries: RouteTitleEntry[],
-  items: (NavItem | NavGroup)[],
-): void {
+function collectNavItemEntries(entries: RouteTitleEntry[], items: (NavItem | NavGroup)[]): void {
   for (const item of items) {
     if ("items" in item) {
       collectNavItemEntries(entries, item.items);
@@ -181,19 +175,13 @@ export function getPageTitleFromRoute(pathname: string): string | null {
  * Generates a fallback title from pathname when no route title is found
  */
 export function generateFallbackTitle(pathname: string): string {
-  const pathSegments = pathname
-    .replace(/^\//, "")
-    .replace(/\/$/, "")
-    .split("/")
-    .filter(Boolean);
+  const pathSegments = pathname.replace(/^\//, "").replace(/\/$/, "").split("/").filter(Boolean);
 
   if (pathSegments.length === 0) return "Home";
 
   // Take the last segment as the page title
   const lastSegment = pathSegments[pathSegments.length - 1];
-  return lastSegment
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (l) => l.toUpperCase());
+  return lastSegment.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
 /**

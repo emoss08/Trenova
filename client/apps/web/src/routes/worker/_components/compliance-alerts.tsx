@@ -219,10 +219,7 @@ function AlertCard({
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem title="View Worker" onClick={() => {}} />
-                  <DropdownMenuItem
-                    title="Mark as Resolved"
-                    onClick={() => {}}
-                  />
+                  <DropdownMenuItem title="Mark as Resolved" onClick={() => {}} />
                   {smsEnabled && hasPhone && (
                     <DropdownMenuItem
                       title="Send SMS Reminder"
@@ -254,9 +251,7 @@ function AlertCard({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium">{config.label}</span>
-              <span className="text-muted-foreground text-xs">
-                {alert.message}
-              </span>
+              <span className="text-muted-foreground text-xs">{alert.message}</span>
             </div>
           </div>
         </div>
@@ -273,9 +268,7 @@ function EmptyState() {
       </div>
       <div className="text-center">
         <p className="font-medium">All Clear</p>
-        <p className="text-muted-foreground text-sm">
-          No compliance issues at this time
-        </p>
+        <p className="text-muted-foreground text-sm">No compliance issues at this time</p>
       </div>
     </div>
   );
@@ -285,10 +278,7 @@ function LoadingSkeleton() {
   return (
     <div className="flex flex-col gap-3 p-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <div
-          key={i}
-          className="flex animate-pulse items-start gap-3 rounded-lg border p-3"
-        >
+        <div key={i} className="flex animate-pulse items-start gap-3 rounded-lg border p-3">
           <div className="bg-muted size-10 rounded-full" />
           <div className="flex-1 space-y-2">
             <div className="bg-muted h-4 w-32 rounded" />
@@ -301,9 +291,7 @@ function LoadingSkeleton() {
   );
 }
 
-async function fetchWorkersForCompliance(): Promise<
-  GenericLimitOffsetResponse<Worker>
-> {
+async function fetchWorkersForCompliance(): Promise<GenericLimitOffsetResponse<Worker>> {
   const url = new URL(`${API_BASE_URL}/workers/`, window.location.origin);
   url.searchParams.set("limit", "100");
   url.searchParams.set("offset", "0");
@@ -353,13 +341,7 @@ export function ComplianceAlerts() {
       );
       if (medicalAlert) allAlerts.push(medicalAlert);
 
-      const mvrAlert = checkDateAlert(
-        worker,
-        profile.mvrDueDate,
-        "mvr_due",
-        "mvr_due",
-        14,
-      );
+      const mvrAlert = checkDateAlert(worker, profile.mvrDueDate, "mvr_due", "mvr_due", 14);
       if (mvrAlert) allAlerts.push(mvrAlert);
 
       if (profile.endorsement === "H" || profile.endorsement === "X") {

@@ -26,9 +26,7 @@ export const toggleFavoriteRequestSchema = z.object({
 
 export type ToggleFavoriteRequest = z.infer<typeof toggleFavoriteRequestSchema>;
 
-export type ToggleFavoriteResponse = z.infer<
-  typeof toggleFavoriteResponseSchema
->;
+export type ToggleFavoriteResponse = z.infer<typeof toggleFavoriteResponseSchema>;
 
 export const checkFavoriteResponseSchema = z.object({
   favorited: z.boolean(),

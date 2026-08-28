@@ -4,7 +4,11 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { OktaLogo } from "@/components/logos/okta";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@trenova/shared/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@trenova/shared/components/ui/collapsible";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -190,183 +194,182 @@ export function OktaSSOCard({ organizationId }: { organizationId: string }) {
           <Separator />
           <div className="px-5 py-5">
             <FormProvider {...form}>
-            <Form onSubmit={handleSubmit((values) => mutation.mutate(values))}>
-              <div className="space-y-6">
-                <Alert variant="info">
-                  <InfoIcon />
-                  <AlertDescription>
-                    <p>
-                      To configure SSO, create an OIDC application in the{" "}
-                      <a
-                        href="https://login.okta.com/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium underline underline-offset-2"
-                      >
-                        Okta Admin Console
-                      </a>
-                      , copy the redirect URL below into the app&apos;s sign-in redirect URIs, then
-                      paste the credentials here.
-                    </p>
-                  </AlertDescription>
-                </Alert>
+              <Form onSubmit={handleSubmit((values) => mutation.mutate(values))}>
+                <div className="space-y-6">
+                  <Alert variant="info">
+                    <InfoIcon />
+                    <AlertDescription>
+                      <p>
+                        To configure SSO, create an OIDC application in the{" "}
+                        <a
+                          href="https://login.okta.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium underline underline-offset-2"
+                        >
+                          Okta Admin Console
+                        </a>
+                        , copy the redirect URL below into the app&apos;s sign-in redirect URIs,
+                        then paste the credentials here.
+                      </p>
+                    </AlertDescription>
+                  </Alert>
 
-                <Separator />
+                  <Separator />
 
-                <div className="space-y-3">
-                  <SectionHeader
-                    title="Authentication Policy"
-                    description="Control how users authenticate to this tenant."
-                  />
-                  <FormGroup cols={1}>
-                    <FormControl cols="full">
-                      <SwitchField
-                        control={control}
-                        name="enabled"
-                        label="Enable Okta sign-in"
-                        description='Allow users to sign in with a "Continue with Okta" button.'
-                        outlined
-                      />
-                    </FormControl>
-                    {enabled && (
+                  <div className="space-y-3">
+                    <SectionHeader
+                      title="Authentication Policy"
+                      description="Control how users authenticate to this tenant."
+                    />
+                    <FormGroup cols={1}>
                       <FormControl cols="full">
                         <SwitchField
                           control={control}
-                          name="enforceSso"
-                          label="Require Okta SSO"
-                          description="Disable password login and require all users to sign in with Okta."
+                          name="enabled"
+                          label="Enable Okta sign-in"
+                          description='Allow users to sign in with a "Continue with Okta" button.'
                           outlined
-                          warning={{
-                            show: Boolean(enforceSso),
-                            message: "All users will be required to sign in with Okta.",
-                          }}
                         />
                       </FormControl>
-                    )}
-                  </FormGroup>
-                  {enabled && enforceSso && (
-                    <Alert variant="warning">
-                      <AlertTriangleIcon />
-                      <AlertTitle>Password login will be disabled</AlertTitle>
-                      <AlertDescription>
-                        Users without an Okta account linked to an allowed domain will be locked out.
-                        Ensure all users have Okta accounts before enabling this.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-
-                {enabled && (
-                  <>
-                    <Separator />
-
-                    <div className="space-y-3">
-                      <SectionHeader
-                        title="Service Provider"
-                        description="Copy this value into your Okta application configuration."
-                      />
-                      <Alert variant="info">
-                        <LinkIcon />
+                      {enabled && (
+                        <FormControl cols="full">
+                          <SwitchField
+                            control={control}
+                            name="enforceSso"
+                            label="Require Okta SSO"
+                            description="Disable password login and require all users to sign in with Okta."
+                            outlined
+                            warning={{
+                              show: Boolean(enforceSso),
+                              message: "All users will be required to sign in with Okta.",
+                            }}
+                          />
+                        </FormControl>
+                      )}
+                    </FormGroup>
+                    {enabled && enforceSso && (
+                      <Alert variant="warning">
+                        <AlertTriangleIcon />
+                        <AlertTitle>Password login will be disabled</AlertTitle>
                         <AlertDescription>
-                          Add this redirect URL to your Okta app under Sign-in redirect URIs.
+                          Users without an Okta account linked to an allowed domain will be locked
+                          out. Ensure all users have Okta accounts before enabling this.
                         </AlertDescription>
                       </Alert>
-                      <CopyableInput value={redirectUrl} label="Redirect URL (OAuth Callback)" />
-                    </div>
+                    )}
+                  </div>
 
-                    <Separator />
+                  {enabled && (
+                    <>
+                      <Separator />
 
-                    <div className="space-y-3">
-                      <SectionHeader
-                        title="Identity Provider"
-                        description="Paste these values from your Okta application settings."
-                      />
-                      <FormGroup cols={1}>
-                        <FormControl cols="full">
-                          <InputField
-                            control={control}
-                            name="issuerUrl"
-                            label="Okta Domain"
-                            placeholder="https://your-domain.okta.com"
-                            rules={{ required: enabled }}
-                          />
-                        </FormControl>
-                        <FormControl cols="full">
-                          <InputField
-                            control={control}
-                            name="clientId"
-                            label="Client ID"
-                            placeholder="0oa..."
-                            rules={{ required: enabled }}
-                          />
-                        </FormControl>
-                        <FormControl cols="full">
-                          <SensitiveField
-                            control={control}
-                            name="clientSecret"
-                            label="Client Secret"
-                            placeholder="Paste a new client secret"
-                            description={
-                              configQuery.data?.secretConfigured
-                                ? "A secret is already stored. Leave blank to keep it."
-                                : "Required the first time you configure SSO."
-                            }
-                          />
-                        </FormControl>
-                        <FormControl cols="full">
-                          <InputField
-                            control={control}
-                            name="scopesText"
-                            label="Scopes"
-                            placeholder="openid, profile, email"
-                            description="Comma-separated list of OIDC scopes."
-                          />
-                        </FormControl>
-                      </FormGroup>
-                    </div>
+                      <div className="space-y-3">
+                        <SectionHeader
+                          title="Service Provider"
+                          description="Copy this value into your Okta application configuration."
+                        />
+                        <Alert variant="info">
+                          <LinkIcon />
+                          <AlertDescription>
+                            Add this redirect URL to your Okta app under Sign-in redirect URIs.
+                          </AlertDescription>
+                        </Alert>
+                        <CopyableInput value={redirectUrl} label="Redirect URL (OAuth Callback)" />
+                      </div>
 
-                    <Separator />
+                      <Separator />
 
-                    <div className="space-y-3">
-                      <SectionHeader
-                        title="Domain Restrictions"
-                        description="Limit which email domains can sign in with Okta."
-                      />
-                      <FormGroup cols={1}>
-                        <FormControl cols="full">
-                          <InputField
-                            control={control}
-                            name="allowedDomainsText"
-                            label="Allowed Email Domains"
-                            placeholder="company.com, contractor.com"
-                            description="Comma-separated list. Leave blank to allow all Okta account domains."
-                          />
-                        </FormControl>
-                      </FormGroup>
-                    </div>
+                      <div className="space-y-3">
+                        <SectionHeader
+                          title="Identity Provider"
+                          description="Paste these values from your Okta application settings."
+                        />
+                        <FormGroup cols={1}>
+                          <FormControl cols="full">
+                            <InputField
+                              control={control}
+                              name="issuerUrl"
+                              label="Okta Domain"
+                              placeholder="https://your-domain.okta.com"
+                              rules={{ required: enabled }}
+                            />
+                          </FormControl>
+                          <FormControl cols="full">
+                            <InputField
+                              control={control}
+                              name="clientId"
+                              label="Client ID"
+                              placeholder="0oa..."
+                              rules={{ required: enabled }}
+                            />
+                          </FormControl>
+                          <FormControl cols="full">
+                            <SensitiveField
+                              control={control}
+                              name="clientSecret"
+                              label="Client Secret"
+                              placeholder="Paste a new client secret"
+                              description={
+                                configQuery.data?.secretConfigured
+                                  ? "A secret is already stored. Leave blank to keep it."
+                                  : "Required the first time you configure SSO."
+                              }
+                            />
+                          </FormControl>
+                          <FormControl cols="full">
+                            <InputField
+                              control={control}
+                              name="scopesText"
+                              label="Scopes"
+                              placeholder="openid, profile, email"
+                              description="Comma-separated list of OIDC scopes."
+                            />
+                          </FormControl>
+                        </FormGroup>
+                      </div>
 
-                    <Separator />
+                      <Separator />
 
-                    <div className="space-y-3">
-                      <SectionHeader
-                        title="Tenant Login URL"
-                        description="Share this URL with your users for Okta SSO sign-in."
-                      />
-                      <CopyableInput value={tenantLoginUrl} label="Login URL" />
-                      <p className="text-muted-foreground text-xs">
-                        Replace{" "}
-                        <code className="bg-muted rounded px-1 py-0.5 font-mono text-[11px]">
-                          {"{loginSlug}"}
-                        </code>{" "}
-                        with your organization&apos;s login slug from General settings.
-                      </p>
-                    </div>
-                  </>
-                )}
+                      <div className="space-y-3">
+                        <SectionHeader
+                          title="Domain Restrictions"
+                          description="Limit which email domains can sign in with Okta."
+                        />
+                        <FormGroup cols={1}>
+                          <FormControl cols="full">
+                            <InputField
+                              control={control}
+                              name="allowedDomainsText"
+                              label="Allowed Email Domains"
+                              placeholder="company.com, contractor.com"
+                              description="Comma-separated list. Leave blank to allow all Okta account domains."
+                            />
+                          </FormControl>
+                        </FormGroup>
+                      </div>
 
-              </div>
-              <FormSaveDock />
-            </Form>
+                      <Separator />
+
+                      <div className="space-y-3">
+                        <SectionHeader
+                          title="Tenant Login URL"
+                          description="Share this URL with your users for Okta SSO sign-in."
+                        />
+                        <CopyableInput value={tenantLoginUrl} label="Login URL" />
+                        <p className="text-muted-foreground text-xs">
+                          Replace{" "}
+                          <code className="bg-muted rounded px-1 py-0.5 font-mono text-[11px]">
+                            {"{loginSlug}"}
+                          </code>{" "}
+                          with your organization&apos;s login slug from General settings.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <FormSaveDock />
+              </Form>
             </FormProvider>
           </div>
         </CollapsibleContent>

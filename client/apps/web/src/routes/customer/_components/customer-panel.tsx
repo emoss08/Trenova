@@ -83,12 +83,7 @@ const DEFAULT_VALUES: Customer = {
   },
 };
 
-export function CustomerPanel({
-  open,
-  onOpenChange,
-  mode,
-  row,
-}: DataTablePanelProps<Customer>) {
+export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Customer>) {
   const user = useAuthStore((s) => s.user);
   const panelDescription = row?.updatedAt
     ? `Last updated on ${formatToUserTimezone(

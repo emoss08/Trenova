@@ -28,8 +28,7 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { FuelIndex, FuelSurchargeProgramFormValues } from "@/types/fuel-surcharge";
 
 export type FuelDashboardEntry = FuelDashboardQuery["fuelDashboard"][number];
-export type FuelPriceHistoryEntry =
-  FuelIndexPriceHistoryQuery["fuelIndexPriceHistory"][number];
+export type FuelPriceHistoryEntry = FuelIndexPriceHistoryQuery["fuelIndexPriceHistory"][number];
 export type FuelProgramCurrentRate =
   FuelProgramCurrentRatesQuery["fuelProgramCurrentRates"][number];
 export type FuelSurchargeProgramDetail = NonNullable<

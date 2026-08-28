@@ -20,8 +20,7 @@ export const lightTheme = EditorView.theme(
     },
     ".cm-theme[aria-invalid='true'] &.cm-editor": {
       borderColor: "var(--destructive)",
-      backgroundColor:
-        "color-mix(in oklab, var(--destructive) 20%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
     },
     ".cm-content": {
       caretColor: "var(--primary)",
@@ -37,14 +36,11 @@ export const lightTheme = EditorView.theme(
       borderLeftColor: "var(--foreground)",
       borderLeftWidth: "2px",
     },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
-      {
-        backgroundColor:
-          "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-      },
+    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
+    },
     ".cm-activeLine": {
-      backgroundColor:
-        "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
     },
     ".cm-gutters": {
       backgroundColor: "var(--muted)",
@@ -57,15 +53,13 @@ export const lightTheme = EditorView.theme(
     ".cm-theme[aria-invalid='true'] & .cm-gutters": {
       borderColor: "var(--destructive)",
       color: "var(--destructive)",
-      backgroundColor:
-        "color-mix(in oklab, var(--destructive) 20%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
     },
     ".cm-theme[aria-invalid='true'] & .cm-placeholder": {
       color: "var(--destructive)",
     },
     ".cm-activeLineGutter": {
-      backgroundColor:
-        "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
       color: "var(--foreground)",
     },
     ".cm-lineNumbers .cm-gutterElement": {
@@ -76,10 +70,8 @@ export const lightTheme = EditorView.theme(
       outline: "none",
     },
     ".cm-matchingBracket": {
-      backgroundColor:
-        "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-      outline:
-        "1px solid color-mix(in oklab, var(--muted-foreground) 60%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
+      outline: "1px solid color-mix(in oklab, var(--muted-foreground) 60%, transparent)",
     },
     ".cm-placeholder": {
       color: "var(--muted-foreground)",
@@ -108,8 +100,7 @@ export const lightTheme = EditorView.theme(
       gap: "8px",
     },
     ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]": {
-      backgroundColor:
-        "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
       color: "var(--foreground)",
     },
     ".cm-completionIcon": {
@@ -126,19 +117,17 @@ export const lightTheme = EditorView.theme(
       marginLeft: "auto",
       paddingLeft: "12px",
     },
-    ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail":
-      {
-        color: "var(--foreground)",
-      },
+    ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail": {
+      color: "var(--foreground)",
+    },
     ".cm-completionMatchedText": {
       textDecoration: "none",
       fontWeight: "600",
       color: "var(--color-highlight)",
     },
-    ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionMatchedText":
-      {
-        color: "var(--color-highlight)",
-      },
+    ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionMatchedText": {
+      color: "var(--color-highlight)",
+    },
   },
   { dark: false },
 );
@@ -163,8 +152,7 @@ export const darkTheme = EditorView.theme(
     },
     ".cm-theme[aria-invalid='true'] &.cm-editor": {
       borderColor: "var(--destructive)",
-      backgroundColor:
-        "color-mix(in oklab, var(--destructive) 20%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
     },
     ".cm-content": {
       caretColor: "oklch(0.7 0.18 260)",
@@ -180,14 +168,11 @@ export const darkTheme = EditorView.theme(
       borderLeftColor: "var(--foreground)",
       borderLeftWidth: "2px",
     },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
-      {
-        backgroundColor:
-          "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-      },
+    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
+    },
     ".cm-activeLine": {
-      backgroundColor:
-        "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
     },
     ".cm-gutters": {
       backgroundColor: "var(--muted)",
@@ -200,15 +185,13 @@ export const darkTheme = EditorView.theme(
     ".cm-theme[aria-invalid='true'] & .cm-gutters": {
       borderColor: "var(--destructive)",
       color: "var(--destructive)",
-      backgroundColor:
-        "color-mix(in oklab, var(--destructive) 20%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
     },
     ".cm-theme[aria-invalid='true'] & .cm-placeholder": {
       color: "var(--destructive)",
     },
     ".cm-activeLineGutter": {
-      backgroundColor:
-        "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
       color: "var(--foreground)",
     },
     ".cm-lineNumbers .cm-gutterElement": {
@@ -219,10 +202,8 @@ export const darkTheme = EditorView.theme(
       outline: "none",
     },
     ".cm-matchingBracket": {
-      backgroundColor:
-        "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-      outline:
-        "1px solid color-mix(in oklab, var(--muted-foreground) 60%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
+      outline: "1px solid color-mix(in oklab, var(--muted-foreground) 60%, transparent)",
     },
     ".cm-placeholder": {
       color: "var(--muted-foreground)",
@@ -251,8 +232,7 @@ export const darkTheme = EditorView.theme(
       gap: "8px",
     },
     ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected]": {
-      backgroundColor:
-        "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
+      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
       color: "var(--foreground)",
     },
     ".cm-completionIcon": {
@@ -269,19 +249,17 @@ export const darkTheme = EditorView.theme(
       marginLeft: "auto",
       paddingLeft: "12px",
     },
-    ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail":
-      {
-        color: "var(--foreground)",
-      },
+    ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionDetail": {
+      color: "var(--foreground)",
+    },
     ".cm-completionMatchedText": {
       textDecoration: "none",
       fontWeight: "600",
       color: "var(--color-highlight)",
     },
-    ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionMatchedText":
-      {
-        color: "var(--color-highlight)",
-      },
+    ".cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] .cm-completionMatchedText": {
+      color: "var(--color-highlight)",
+    },
   },
   { dark: true },
 );

@@ -57,8 +57,7 @@ export function MentionReply({
 
     // Attach the mention automatically: prepend the @token so it renders and
     // highlights in the thread, while the compose box stays clean.
-    const comment =
-      mentionToken && !text.includes(mentionToken) ? `${mentionToken} ${text}` : text;
+    const comment = mentionToken && !text.includes(mentionToken) ? `${mentionToken} ${text}` : text;
 
     reply.mutate(
       { shipmentId, comment, mentionUserId: authorId },

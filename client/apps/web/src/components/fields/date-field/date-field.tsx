@@ -167,8 +167,10 @@ export function DateField<T extends FieldValues>({
   );
 }
 
-export interface DatePickerProps
-  extends Omit<React.ComponentProps<"input">, "value" | "defaultValue" | "onChange"> {
+export interface DatePickerProps extends Omit<
+  React.ComponentProps<"input">,
+  "value" | "defaultValue" | "onChange"
+> {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   isInvalid?: boolean;

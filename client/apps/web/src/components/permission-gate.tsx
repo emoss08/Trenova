@@ -42,9 +42,7 @@ export function AnyPermissionGate({
   children,
   fallback = null,
 }: AnyPermissionGateProps) {
-  const hasAnyPermission = usePermissionStore(
-    (state) => state.hasAnyPermission,
-  );
+  const hasAnyPermission = usePermissionStore((state) => state.hasAnyPermission);
   const manifest = usePermissionStore((state) => state.manifest);
 
   if (!manifest) {
@@ -71,9 +69,7 @@ export function AllPermissionsGate({
   children,
   fallback = null,
 }: AllPermissionsGateProps) {
-  const hasAllPermissions = usePermissionStore(
-    (state) => state.hasAllPermissions,
-  );
+  const hasAllPermissions = usePermissionStore((state) => state.hasAllPermissions);
   const manifest = usePermissionStore((state) => state.manifest);
 
   if (!manifest) {

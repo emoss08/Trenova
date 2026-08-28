@@ -40,13 +40,7 @@ import type { CustomerPaymentStatus } from "@trenova/shared/types/customer-payme
 import type { SettlementStatus } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckIcon,
-  CopyIcon,
-  ExternalLinkIcon,
-  HandCoinsIcon,
-  Undo2Icon,
-} from "lucide-react";
+import { CheckIcon, CopyIcon, ExternalLinkIcon, HandCoinsIcon, Undo2Icon } from "lucide-react";
 import { m } from "motion/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -54,13 +48,7 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 import { ApplyUnappliedForm } from "./apply-unapplied-form";
 
-export function PaymentDetail({
-  paymentId,
-  onClose,
-}: {
-  paymentId: string;
-  onClose: () => void;
-}) {
+export function PaymentDetail({ paymentId, onClose }: { paymentId: string; onClose: () => void }) {
   const [view, setView] = useState<"detail" | "apply">("detail");
   const { data: payment, isLoading } = useQuery(queries.customerPayment.detail(paymentId));
 
@@ -70,11 +58,7 @@ export function PaymentDetail({
 
   if (view === "apply") {
     return (
-      <ApplyUnappliedForm
-        payment={payment}
-        onBack={() => setView("detail")}
-        onDone={onClose}
-      />
+      <ApplyUnappliedForm payment={payment} onBack={() => setView("detail")} onDone={onClose} />
     );
   }
 
@@ -104,9 +88,7 @@ function PaymentDetailView({
             <span className="text-2xl font-semibold tracking-tight tabular-nums">
               {formatCurrency(payment.amountMinor / 100)}
             </span>
-            <PlainCustomerPaymentStatusBadge
-              status={payment.status as CustomerPaymentStatus}
-            />
+            <PlainCustomerPaymentStatusBadge status={payment.status as CustomerPaymentStatus} />
           </div>
           <Link
             to={`/accounting/ar/customer-ledger?customerId=${payment.customerId}`}
@@ -153,10 +135,7 @@ function PaymentDetailView({
 
       <div className="bg-muted/30 grid grid-cols-2 gap-x-6 gap-y-2.5 rounded-md border p-3 text-xs md:grid-cols-3">
         <DetailItem label="Payment date" value={formatAccountingDate(payment.paymentDate)} />
-        <DetailItem
-          label="Accounting date"
-          value={formatAccountingDate(payment.accountingDate)}
-        />
+        <DetailItem label="Accounting date" value={formatAccountingDate(payment.accountingDate)} />
         <DetailItem label="Method" value={payment.paymentMethod} />
         <DetailItem label="Reference" value={payment.referenceNumber || "—"} />
         <DetailItem label="Currency" value={payment.currencyCode} />

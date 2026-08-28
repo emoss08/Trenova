@@ -9,6 +9,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "preview": "pnpm run build && wrangler dev",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

@@ -125,14 +125,9 @@ export function BillingQueuePage() {
           }
         }}
       >
-        <SheetContent
-          side="right"
-          className="w-[min(92vw,1100px)] p-0 sm:max-w-none"
-        >
+        <SheetContent side="right" className="w-[min(92vw,1100px)] p-0 sm:max-w-none">
           <SheetHeader className="border-border border-b pr-12">
-            <SheetTitle>
-              {selectedDocumentName || "Document Preview"}
-            </SheetTitle>
+            <SheetTitle>{selectedDocumentName || "Document Preview"}</SheetTitle>
             <SheetDescription>
               Review the supporting shipment document attached to this billing queue item.
             </SheetDescription>

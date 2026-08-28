@@ -1,8 +1,4 @@
-export type EDIScriptPresetCategory =
-  | "elementValue"
-  | "repeatItem"
-  | "condition"
-  | "scriptLibrary";
+export type EDIScriptPresetCategory = "elementValue" | "repeatItem" | "condition" | "scriptLibrary";
 
 export type EDIScriptPreset = {
   id: string;

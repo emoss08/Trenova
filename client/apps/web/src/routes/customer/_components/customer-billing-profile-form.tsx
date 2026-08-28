@@ -53,9 +53,7 @@ function SectionHeader({
         <Icon className="size-4" />
       </div>
       <div>
-        <h3 className="text-sm leading-none font-semibold tracking-tight">
-          {title}
-        </h3>
+        <h3 className="text-sm leading-none font-semibold tracking-tight">{title}</h3>
         <p className="text-muted-foreground mt-1 text-xs">{description}</p>
       </div>
     </div>
@@ -87,10 +85,8 @@ export function CustomerBillingProfileForm() {
   });
   const taxExempt = useWatch({ control, name: "billingProfile.taxExempt" });
   const fuelSurchargeMode = useWatch({ control, name: "billingProfile.fuelSurchargeMode" });
-  const showDayOfWeek =
-    billingCycleType === "Weekly" || billingCycleType === "BiWeekly";
-  const showCreditHoldReason =
-    creditStatus === "Hold" || creditStatus === "Suspended";
+  const showDayOfWeek = billingCycleType === "Weekly" || billingCycleType === "BiWeekly";
+  const showCreditHoldReason = creditStatus === "Hold" || creditStatus === "Suspended";
   const showCustomPrefix = invoiceNumberFormat === "CustomPrefix";
 
   return (

@@ -6,7 +6,13 @@ import { NumberField } from "@/components/fields/number-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@trenova/shared/components/ui/card";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Separator } from "@trenova/shared/components/ui/separator";
@@ -28,13 +34,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
-import {
-  FormProvider,
-  type Resolver,
-  useForm,
-  useFormContext,
-  useWatch,
-} from "react-hook-form";
+import { FormProvider, type Resolver, useForm, useFormContext, useWatch } from "react-hook-form";
 
 function toFormValues(control: CostingControl): CostControlFormValues {
   return {
@@ -161,8 +161,8 @@ export default function CostControlForm() {
         <div className="flex flex-col gap-4 pb-14">
           <CostBasisCard />
           <CategoryRatesCard
-        title="Variable Costs"
-        description="Per-mile costs that scale with miles driven. Each category uses its industry benchmark unless you override it or map it to GL actuals."
+            title="Variable Costs"
+            description="Per-mile costs that scale with miles driven. Each category uses its industry benchmark unless you override it or map it to GL actuals."
             behavior="Variable"
           />
           <CategoryRatesCard
@@ -417,8 +417,8 @@ function GLActualsCard() {
       <CardHeader>
         <CardTitle>GL Actuals</CardTitle>
         <CardDescription>
-          When enabled, categories mapped to GL accounts derive their per-mile rate from real
-          posted expenses over a rolling window, replacing benchmarks as your ledger fills in.
+          When enabled, categories mapped to GL accounts derive their per-mile rate from real posted
+          expenses over a rolling window, replacing benchmarks as your ledger fills in.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">

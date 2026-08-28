@@ -1,4 +1,7 @@
-import { RecentActivityDocument, type RecentActivityQuery } from "@trenova/graphql/generated/graphql";
+import {
+  RecentActivityDocument,
+  type RecentActivityQuery,
+} from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { queries } from "@/lib/queries";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -42,6 +45,7 @@ export function useRecentActivityInfinite(pageSize = RECENT_ACTIVITY_DEFAULT_PAG
     refetchOnWindowFocus: false,
     retry: false,
     enabled: canReadAuditLog,
-    select: (data) => data.pages.flatMap((page) => page.auditEntries.edges.map((edge) => edge.node)),
+    select: (data) =>
+      data.pages.flatMap((page) => page.auditEntries.edges.map((edge) => edge.node)),
   });
 }

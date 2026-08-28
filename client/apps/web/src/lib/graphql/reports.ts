@@ -115,11 +115,7 @@ export async function exportDashboard(
     method: "POST",
     credentials: "include",
     body: JSON.stringify(body),
-    headers: await withCsrfHeader(
-      "POST",
-      { "Content-Type": "application/json" },
-      endpoint,
-    ),
+    headers: await withCsrfHeader("POST", { "Content-Type": "application/json" }, endpoint),
   });
 
   if (!response.ok) {

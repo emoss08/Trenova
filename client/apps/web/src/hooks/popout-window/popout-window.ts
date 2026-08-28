@@ -43,13 +43,7 @@ type PopoutWindowState = {
   isMinimized?: boolean;
 };
 
-type WindowFeature =
-  | "toolbar"
-  | "location"
-  | "directories"
-  | "status"
-  | "menubar"
-  | "copyhistory";
+type WindowFeature = "toolbar" | "location" | "directories" | "status" | "menubar" | "copyhistory";
 
 type MessageType =
   | "popout-ready"
@@ -67,13 +61,7 @@ type PopoutMessage = {
 };
 
 type MessageHandler = (event: MessageEvent<PopoutMessage>) => void;
-type WindowEventType =
-  | "load"
-  | "unload"
-  | "focus"
-  | "blur"
-  | "resize"
-  | "beforeunload";
+type WindowEventType = "load" | "unload" | "focus" | "blur" | "resize" | "beforeunload";
 
 interface PopoutWindowEvents {
   onReady?: (windowId: string) => void;
@@ -105,10 +93,7 @@ const DEFAULT_OPTIONS: Partial<ProcessedPopoutWindowOptions> = {
   features: [],
 };
 
-const DEFAULT_WINDOW_FEATURES: Record<
-  WindowFeature | "scrollbars" | "resizable",
-  string
-> = {
+const DEFAULT_WINDOW_FEATURES: Record<WindowFeature | "scrollbars" | "resizable", string> = {
   toolbar: "toolbar=no",
   location: "location=no",
   directories: "directories=no",
@@ -168,10 +153,7 @@ class PopoutWindowManager {
       window.addEventListener("blur", this.boundHandleParentBlur);
 
       // Periodic cleanup of stale windows
-      this.cleanupInterval = setInterval(
-        this.cleanupStaleWindows.bind(this),
-        CLEANUP_INTERVAL,
-      );
+      this.cleanupInterval = setInterval(this.cleanupStaleWindows.bind(this), CLEANUP_INTERVAL);
 
       this.isInitialized = true;
 
@@ -179,10 +161,7 @@ class PopoutWindowManager {
         console.debug("[Trenova] PopoutWindowManager initialized");
       }
     } catch (error) {
-      console.error(
-        "[Trenova] Failed to initialize PopoutWindowManager:",
-        error,
-      );
+      console.error("[Trenova] Failed to initialize PopoutWindowManager:", error);
       throw new Error("PopoutWindowManager initialization failed");
     }
   }
@@ -296,10 +275,7 @@ class PopoutWindowManager {
     return undefined;
   }
 
-  on<K extends keyof PopoutWindowEvents>(
-    event: K,
-    handler: PopoutWindowEvents[K],
-  ): void {
+  on<K extends keyof PopoutWindowEvents>(event: K, handler: PopoutWindowEvents[K]): void {
     this.events[event] = handler;
   }
 
@@ -344,24 +320,15 @@ class PopoutWindowManager {
     this.events.onWindowsChange?.(activeWindows);
   }
 
-  private processOptions(
-    options: PopoutWindowOptions,
-    path: string,
-  ): ProcessedPopoutWindowOptions {
+  private processOptions(options: PopoutWindowOptions, path: string): ProcessedPopoutWindowOptions {
     const width = options.width ?? DEFAULT_OPTIONS.width!;
     const height = options.height ?? DEFAULT_OPTIONS.height!;
 
     let position: { left: number; top: number };
     const storedPosition =
-      options.rememberPosition !== false
-        ? this.storedPositions.get(path)
-        : undefined;
+      options.rememberPosition !== false ? this.storedPositions.get(path) : undefined;
 
-    if (
-      storedPosition &&
-      options.left === undefined &&
-      options.top === undefined
-    ) {
+    if (storedPosition && options.left === undefined && options.top === undefined) {
       position = {
         left: storedPosition.left,
         top: storedPosition.top,
@@ -393,8 +360,7 @@ class PopoutWindowManager {
       panelType: options.panelType ?? DEFAULT_OPTIONS.panelType!,
       resizable: options.resizable ?? DEFAULT_OPTIONS.resizable!,
       scrollable: options.scrollable ?? DEFAULT_OPTIONS.scrollable!,
-      rememberPosition:
-        options.rememberPosition ?? DEFAULT_OPTIONS.rememberPosition!,
+      rememberPosition: options.rememberPosition ?? DEFAULT_OPTIONS.rememberPosition!,
       features: options.features ?? DEFAULT_OPTIONS.features!,
     };
   }
@@ -413,10 +379,7 @@ class PopoutWindowManager {
     };
   }
 
-  private createWindowParams(
-    id: string,
-    options: ProcessedPopoutWindowOptions,
-  ) {
+  private createWindowParams(id: string, options: ProcessedPopoutWindowOptions) {
     return {
       panelType: options.panelType,
       popoutId: id,
@@ -429,10 +392,7 @@ class PopoutWindowManager {
     };
   }
 
-  private buildWindowUrl(
-    path: string,
-    queryParams: Record<string, string>,
-  ): string {
+  private buildWindowUrl(path: string, queryParams: Record<string, string>): string {
     const searchParams = new URLSearchParams(queryParams);
     const fullPath = `${path}?${searchParams.toString()}`;
 
@@ -516,14 +476,7 @@ class PopoutWindowManager {
       }
     };
 
-    const events: WindowEventType[] = [
-      "load",
-      "unload",
-      "focus",
-      "blur",
-      "resize",
-      "beforeunload",
-    ];
+    const events: WindowEventType[] = ["load", "unload", "focus", "blur", "resize", "beforeunload"];
     events.forEach((eventType) => {
       window.addEventListener(eventType, () => handleEvent(eventType));
     });
@@ -609,8 +562,7 @@ class PopoutWindowManager {
     for (const [id, state] of this.windows.entries()) {
       if (
         state.window?.closed ||
-        (state.lastActive &&
-          now.getTime() - state.lastActive.getTime() > STALE_WINDOW_TIMEOUT)
+        (state.lastActive && now.getTime() - state.lastActive.getTime() > STALE_WINDOW_TIMEOUT)
       ) {
         this.closeWindow(id);
         hasChanges = true;
@@ -677,10 +629,7 @@ class PopoutWindowManager {
     try {
       const stored = localStorage.getItem(POSITION_STORAGE_KEY);
       if (stored) {
-        const positions = JSON.parse(stored) as Record<
-          string,
-          StoredWindowPosition
-        >;
+        const positions = JSON.parse(stored) as Record<string, StoredWindowPosition>;
         Object.entries(positions).forEach(([path, position]) => {
           this.storedPositions.set(path, position);
         });

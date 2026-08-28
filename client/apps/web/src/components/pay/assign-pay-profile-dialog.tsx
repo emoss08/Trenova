@@ -21,7 +21,10 @@ import {
   fetchPayProfileDetail,
   fetchPayProfileOptions,
 } from "@/lib/graphql/driver-settlement";
-import { assignPayProfileFormSchema, type AssignPayProfileFormValues } from "@trenova/shared/types/driver-pay";
+import {
+  assignPayProfileFormSchema,
+  type AssignPayProfileFormValues,
+} from "@trenova/shared/types/driver-pay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";

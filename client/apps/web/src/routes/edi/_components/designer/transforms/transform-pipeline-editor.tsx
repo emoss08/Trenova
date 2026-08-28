@@ -15,11 +15,7 @@ import {
   PathInsertField,
   PathReferenceField,
 } from "../components/designer-fields";
-import {
-  InputBlock,
-  TextareaBlock,
-  formatArgumentValue,
-} from "../components/designer-shared";
+import { InputBlock, TextareaBlock, formatArgumentValue } from "../components/designer-shared";
 import { transformBaseSourceOptions } from "../utils/edi-designer-options";
 
 const transformOperationOptions = transformOperationDefinitions.map((definition) => ({
@@ -56,11 +52,7 @@ export function TransformPipelineEditor({
         disabled={disabled}
         options={transformBaseSourceOptions}
       />
-      <BaseSourceValueEditor
-        source={baseSource}
-        disabled={disabled}
-        onChange={updateBase}
-      />
+      <BaseSourceValueEditor source={baseSource} disabled={disabled} onChange={updateBase} />
       <div className="space-y-2">
         {element.transformPipeline.map((step, index) => (
           <TransformStepEditor

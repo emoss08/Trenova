@@ -68,9 +68,7 @@ export function ActivityFeed({
           events={events}
           emptyLabel={emptyLabel}
         />
-        {hasNextPage && (
-          <div ref={sentinelRef} className="h-4" aria-hidden />
-        )}
+        {hasNextPage && <div ref={sentinelRef} className="h-4" aria-hidden />}
         {isFetchingNextPage && (
           <p className="text-muted-foreground px-3 py-1 text-center font-mono text-[10px]">
             Loading more…

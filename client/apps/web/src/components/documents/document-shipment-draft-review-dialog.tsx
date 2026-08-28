@@ -35,10 +35,7 @@ interface DocumentShipmentDraftReviewDialogProps {
   sourceResourceType: string;
   sourceResourceId: string;
   embedded?: boolean;
-  onShipmentCreated?: (result: {
-    shipmentId: string;
-    attachError: Error | null;
-  }) => void;
+  onShipmentCreated?: (result: { shipmentId: string; attachError: Error | null }) => void;
 }
 
 function parseInteger(value: unknown): number | undefined {
@@ -289,9 +286,7 @@ export function DocumentShipmentDraftReviewDialog({
               <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 Source Document
               </div>
-              <div className="mt-1 text-sm font-medium">
-                {document?.originalName ?? "Document"}
-              </div>
+              <div className="mt-1 text-sm font-medium">{document?.originalName ?? "Document"}</div>
               {document?.detectedKind ? (
                 <div className="mt-2">
                   <Badge variant="info">{document.detectedKind}</Badge>
@@ -408,8 +403,8 @@ export function DocumentShipmentDraftReviewDialog({
               )}
             </div>
             <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-xs">
-              Location, customer, service type, shipment type, and formula template still need to
-              be confirmed before the shipment can be created.
+              Location, customer, service type, shipment type, and formula template still need to be
+              confirmed before the shipment can be created.
             </div>
           </div>
         </ScrollArea>
@@ -426,8 +421,8 @@ export function DocumentShipmentDraftReviewDialog({
                 <div className="p-6">
                   {isAttached ? (
                     <div className="text-muted-foreground mb-4 rounded-lg border border-dashed p-3 text-sm">
-                      Shipment creation from this draft is disabled because the source document
-                      has already been linked to shipment {draft?.attachedShipmentId}.
+                      Shipment creation from this draft is disabled because the source document has
+                      already been linked to shipment {draft?.attachedShipmentId}.
                     </div>
                   ) : null}
                   <ShipmentForm />

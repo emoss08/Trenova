@@ -82,12 +82,10 @@ export function ForkTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            Fork Template
-          </DialogTitle>
+          <DialogTitle className="flex items-center gap-2">Fork Template</DialogTitle>
           <DialogDescription>
-            Create a new template based on &ldquo;{template?.name}&rdquo;. The
-            forked template will start with its own version history.
+            Create a new template based on &ldquo;{template?.name}&rdquo;. The forked template will
+            start with its own version history.
           </DialogDescription>
         </DialogHeader>
 

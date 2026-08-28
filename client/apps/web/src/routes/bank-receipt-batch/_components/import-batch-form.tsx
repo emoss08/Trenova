@@ -190,12 +190,7 @@ export function ImportBatchForm() {
           </table>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => append({ ...EMPTY_LINE })}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={() => append({ ...EMPTY_LINE })}>
           <PlusIcon className="mr-1.5 size-3.5" />
           Add Line
         </Button>

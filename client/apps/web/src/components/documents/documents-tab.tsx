@@ -171,7 +171,9 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId, deferredSearchQuery, { includeDocumentType: "true" }),
+      apiService.documentService.getByResource(resourceType, resourceId, deferredSearchQuery, {
+        includeDocumentType: "true",
+      }),
     enabled: !!resourceId,
     refetchInterval: (query) => {
       const docs = query.state.data;

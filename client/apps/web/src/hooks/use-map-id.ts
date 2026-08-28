@@ -7,9 +7,7 @@ export function useMapId() {
 
   return useMemo(() => {
     if (theme === "system") {
-      const prefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)",
-      ).matches;
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       return prefersDark ? MAP_ID_DARK : MAP_ID_LIGHT;
     }
     return theme === "dark" ? MAP_ID_DARK : MAP_ID_LIGHT;

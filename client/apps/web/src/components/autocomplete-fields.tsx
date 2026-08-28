@@ -593,17 +593,11 @@ export function FleetCodeAutocompleteField<T extends FieldValues>({
       popoutLink="/dispatch/configuration-files/fleet-codes"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
-        <ColorOptionValue
-          color={selectOptionMetaString(option, "color")}
-          value={option.label}
-        />
+        <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
       )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue
-            color={selectOptionMetaString(option, "color")}
-            value={option.label}
-          />
+          <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
@@ -626,17 +620,11 @@ export function ShipmentTypeAutocompleteField<T extends FieldValues>({
       popoutLink="/shipment-management/configuration-files/shipment-types"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
-        <ColorOptionValue
-          color={selectOptionMetaString(option, "color")}
-          value={option.label}
-        />
+        <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
       )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue
-            color={selectOptionMetaString(option, "color")}
-            value={option.label}
-          />
+          <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
@@ -659,17 +647,11 @@ export function ServiceTypeAutocompleteField<T extends FieldValues>({
       popoutLink="/shipment-management/configuration-files/service-types"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
-        <ColorOptionValue
-          color={selectOptionMetaString(option, "color")}
-          value={option.label}
-        />
+        <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
       )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue
-            color={selectOptionMetaString(option, "color")}
-            value={option.label}
-          />
+          <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
@@ -855,10 +837,7 @@ export function EDIConnectionAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack
-          primary={option.label || ""}
-          secondary={option.description || ""}
-        />
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || ""} />
       )}
       {...props}
     />
@@ -876,10 +855,7 @@ export function EDIMappingProfileAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack
-          primary={option.label || ""}
-          secondary={option.description || undefined}
-        />
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || undefined} />
       )}
       {...props}
     />
@@ -951,17 +927,11 @@ export function AccountTypeAutocompleteField<T extends FieldValues>({
       popoutLink="/billing/configuration-files/account-types"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
-        <ColorOptionValue
-          color={selectOptionMetaString(option, "color")}
-          value={option.label}
-        />
+        <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
       )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue
-            color={selectOptionMetaString(option, "color")}
-            value={option.label}
-          />
+          <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
           {selectOptionMetaString(option, "name") && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {selectOptionMetaString(option, "name")}
@@ -1025,9 +995,7 @@ export function OrganizationAutocompleteField<T extends FieldValues>({
         return (
           <div className="flex size-full flex-col items-start">
             <span>{scac ? `${scac} - ${option.label}` : option.label}</span>
-            {city && (
-              <span className="text-2xs text-muted-foreground w-full truncate">{city}</span>
-            )}
+            {city && <span className="text-2xs text-muted-foreground w-full truncate">{city}</span>}
           </div>
         );
       }}
@@ -1048,7 +1016,10 @@ export function EDIPartnerAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || selectOptionMetaString(option, "code") || undefined} />
+        <EDIOptionStack
+          primary={option.label || ""}
+          secondary={option.description || selectOptionMetaString(option, "code") || undefined}
+        />
       )}
       {...props}
     />
@@ -1102,7 +1073,10 @@ export function EDITemplateAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || selectOptionMetaString(option, "status") || undefined} />
+        <EDIOptionStack
+          primary={option.label || ""}
+          secondary={option.description || selectOptionMetaString(option, "status") || undefined}
+        />
       )}
       {...props}
     />
@@ -1200,7 +1174,10 @@ export function ControlledEDIPartnerAutocompleteField({
       initialLimit={50}
       placeholder={placeholder}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || selectOptionMetaString(option, "code") || undefined} />
+        <EDIOptionStack
+          primary={option.label || ""}
+          secondary={option.description || selectOptionMetaString(option, "code") || undefined}
+        />
       )}
       getOptionValue={(option) => option.id}
       getDisplayValue={(option) => option.label || ""}
@@ -1316,7 +1293,10 @@ export function ControlledEDITemplateAutocompleteField({
         ...extraSearchParams,
       }}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.label || ""} secondary={option.description || selectOptionMetaString(option, "status") || undefined} />
+        <EDIOptionStack
+          primary={option.label || ""}
+          secondary={option.description || selectOptionMetaString(option, "status") || undefined}
+        />
       )}
       getOptionValue={(option) => option.id}
       getDisplayValue={(option) => option.label || ""}
@@ -1413,17 +1393,11 @@ export function LocationCategoryAutocompleteField<T extends FieldValues>({
       popoutLink="/dispatch/configuration-files/location-categories"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
-        <ColorOptionValue
-          color={selectOptionMetaString(option, "color")}
-          value={option.label}
-        />
+        <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
       )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue
-            color={selectOptionMetaString(option, "color")}
-            value={option.label}
-          />
+          <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
@@ -1472,17 +1446,11 @@ export function DocumentTypeAutocompleteField<T extends FieldValues>({
       popoutLink="/billing/configuration-files/document-types"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
-        <ColorOptionValue
-          color={selectOptionMetaString(option, "color")}
-          value={option.label}
-        />
+        <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
       )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue
-            color={selectOptionMetaString(option, "color")}
-            value={option.label}
-          />
+          <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
           {selectOptionMetaString(option, "name") && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {selectOptionMetaString(option, "name")}
@@ -1507,10 +1475,7 @@ export function DocumentTypeMultiSelectField<T extends FieldValues>({
       getDisplayValue={(option) => selectOptionMetaString(option, "name") || option.label || ""}
       getOptionLabel={(option) => selectOptionMetaString(option, "name") || option.label || ""}
       renderOption={(option) => (
-        <ColorOptionValue
-          color={selectOptionMetaString(option, "color")}
-          value={option.label}
-        />
+        <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
       )}
       {...props}
     />

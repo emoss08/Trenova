@@ -1,7 +1,4 @@
-import type {
-  DocumentPacketItem,
-  DocumentPacketSummary,
-} from "@trenova/shared/types/document";
+import type { DocumentPacketItem, DocumentPacketSummary } from "@trenova/shared/types/document";
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
@@ -22,13 +19,7 @@ interface PacketCompletenessPanelProps {
   summary: DocumentPacketSummary;
 }
 
-type BadgeVariant =
-  | "teal"
-  | "inactive"
-  | "pink"
-  | "warning"
-  | "purple"
-  | "outline";
+type BadgeVariant = "teal" | "inactive" | "pink" | "warning" | "purple" | "outline";
 
 function getStatusBadgeVariant(
   status: DocumentPacketItem["status"] | DocumentPacketSummary["status"],
@@ -102,12 +93,8 @@ function PacketItem({ item }: { item: DocumentPacketItem }) {
         {getStatusIcon(item.status)}
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-medium">
-              {item.documentTypeName}
-            </span>
-            <span className="text-muted-foreground text-xs">
-              {item.documentTypeCode}
-            </span>
+            <span className="truncate text-sm font-medium">{item.documentTypeName}</span>
+            <span className="text-muted-foreground text-xs">{item.documentTypeCode}</span>
           </div>
         </div>
       </div>
@@ -141,9 +128,7 @@ function PacketItem({ item }: { item: DocumentPacketItem }) {
   );
 }
 
-export function PacketCompletenessPanel({
-  summary,
-}: PacketCompletenessPanelProps) {
+export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const grouped = groupByStatus(summary.items);
 

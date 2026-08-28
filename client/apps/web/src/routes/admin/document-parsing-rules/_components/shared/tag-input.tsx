@@ -2,12 +2,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { cn } from "@trenova/shared/lib/utils";
 import { XIcon } from "lucide-react";
 import { type KeyboardEvent, useCallback, useRef, useState } from "react";
-import {
-  Controller,
-  type Control,
-  type FieldValues,
-  type Path,
-} from "react-hook-form";
+import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 
 type TagInputProps<T extends FieldValues> = {
   control: Control<T>;
@@ -102,9 +97,7 @@ function TagInputInner({
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      {label && (
-        <label className="text-sm leading-none font-medium">{label}</label>
-      )}
+      {label && <label className="text-sm leading-none font-medium">{label}</label>}
       <div
         className={cn(
           "border-input bg-muted flex min-h-9 flex-wrap items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm transition-[border-color,box-shadow] duration-200 ease-in-out",
@@ -143,12 +136,7 @@ function TagInputInner({
         />
       </div>
       {(error || description) && (
-        <p
-          className={cn(
-            "text-2xs",
-            error ? "text-destructive" : "text-muted-foreground",
-          )}
-        >
+        <p className={cn("text-2xs", error ? "text-destructive" : "text-muted-foreground")}>
           {error || description}
         </p>
       )}

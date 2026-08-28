@@ -219,9 +219,7 @@ export function BankReceiptBatchDetailPage() {
                       <td className="px-4 py-2.5 font-mono text-xs font-medium">
                         {receipt.referenceNumber}
                       </td>
-                      <td className="px-4 py-2.5 text-xs">
-                        {formatDate(receipt.receiptDate)}
-                      </td>
+                      <td className="px-4 py-2.5 text-xs">{formatDate(receipt.receiptDate)}</td>
                       <td className="px-4 py-2.5 text-right">
                         <AmountDisplay
                           value={receipt.amountMinor}

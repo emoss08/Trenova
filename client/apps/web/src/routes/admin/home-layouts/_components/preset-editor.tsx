@@ -6,11 +6,7 @@ import {
   useUpdateHomeLayoutPreset,
 } from "@/hooks/use-home-layout";
 import { coreResponsibilityChoices } from "@/lib/choices";
-import {
-  toWidgetInput,
-  type HomeLayoutPreset,
-  type HomeWidget,
-} from "@/lib/graphql/home-layout";
+import { toWidgetInput, type HomeLayoutPreset, type HomeWidget } from "@/lib/graphql/home-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Input } from "@trenova/shared/components/ui/input";

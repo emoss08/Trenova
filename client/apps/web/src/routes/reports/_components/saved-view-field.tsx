@@ -11,11 +11,7 @@ import {
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import {
-  useCreateReportView,
-  useDeleteReportView,
-  useReportViews,
-} from "@/hooks/use-reports";
+import { useCreateReportView, useDeleteReportView, useReportViews } from "@/hooks/use-reports";
 import { BookmarkIcon, TrashIcon, XIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useMemo, useState } from "react";

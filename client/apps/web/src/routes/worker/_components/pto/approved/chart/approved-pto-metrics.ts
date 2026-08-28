@@ -28,9 +28,7 @@ function formatPeakDate(date: string): string {
   return format(parseISO(date), "MMM dd");
 }
 
-export function buildApprovedPTOMetrics(
-  chartData: PTOChartDataPoint[],
-): ApprovedPTOMetrics {
+export function buildApprovedPTOMetrics(chartData: PTOChartDataPoint[]): ApprovedPTOMetrics {
   const workerIDs = new Set<string>();
 
   let approvedPtoDays = 0;

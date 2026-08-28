@@ -6,12 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { FleetCodeForm } from "./fleet-code-form";
 
-export function FleetCodePanel({
-  open,
-  onOpenChange,
-  mode,
-  row,
-}: DataTablePanelProps<FleetCode>) {
+export function FleetCodePanel({ open, onOpenChange, mode, row }: DataTablePanelProps<FleetCode>) {
   const form = useForm({
     resolver: zodResolver(fleetCodeSchema),
     defaultValues: {

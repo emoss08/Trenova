@@ -54,13 +54,7 @@ export function SequenceConfigPanel({ index, sequenceType }: PanelProps) {
             {sequenceDescriptions[sequenceType]}
           </p>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={handleReset}
-          className="gap-1.5"
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={handleReset} className="gap-1.5">
           <RotateCcwIcon className="size-3.5" />
           Reset to default
         </Button>

@@ -55,7 +55,8 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
     (e: React.KeyboardEvent) => {
       if (e.key === "Enter") {
         if (isEditing) handleSaveEdit();
-        else if (field.status === "needs-review" || field.status === "conflicting") onAccept(field.key);
+        else if (field.status === "needs-review" || field.status === "conflicting")
+          onAccept(field.key);
       }
       if (e.key === "Escape") {
         if (isEditing) setIsEditing(false);
@@ -153,7 +154,9 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
                 className="text-2xs text-muted-foreground/50 hover:text-muted-foreground flex items-center gap-1 transition-colors"
                 onClick={() => setShowAlts(!showAlts)}
               >
-                <ChevronDownIcon className={cn("size-2.5 transition-transform", showAlts && "rotate-180")} />
+                <ChevronDownIcon
+                  className={cn("size-2.5 transition-transform", showAlts && "rotate-180")}
+                />
                 {field.alternativeValues.length} alternatives
               </button>
               {showAlts && (

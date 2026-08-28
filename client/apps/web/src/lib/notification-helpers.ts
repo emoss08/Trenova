@@ -1,11 +1,6 @@
 import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { formatDistanceToNowStrict, isToday, isYesterday } from "date-fns";
-import {
-  CircleAlertIcon,
-  CircleCheckIcon,
-  InfoIcon,
-  TriangleAlertIcon,
-} from "lucide-react";
+import { CircleAlertIcon, CircleCheckIcon, InfoIcon, TriangleAlertIcon } from "lucide-react";
 import { createElement } from "react";
 
 export function formatTimestamp(unixSeconds: number): string {

@@ -21,9 +21,7 @@ export function FilterChipRow() {
   const [{ chips }, setUrl] = useCommandCenterUrl();
 
   const toggle = (chip: ChipFilterId) => {
-    const next = chips.includes(chip)
-      ? chips.filter((c) => c !== chip)
-      : [...chips, chip];
+    const next = chips.includes(chip) ? chips.filter((c) => c !== chip) : [...chips, chip];
     void setUrl({ chips: next.length === 0 ? null : next, page: 1, expanded: null });
   };
 

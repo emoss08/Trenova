@@ -15,9 +15,7 @@ import {
 export class DocumentParsingRuleService {
   async list(documentKind?: string): Promise<RuleSet[]> {
     const params = documentKind ? `?documentKind=${documentKind}` : "";
-    const response = await api.get<RuleSet[]>(
-      `/document-parsing-rules/${params}`,
-    );
+    const response = await api.get<RuleSet[]>(`/document-parsing-rules/${params}`);
     return safeParse(ruleSetSchema.array(), response, "Rule Sets");
   }
 
@@ -32,10 +30,7 @@ export class DocumentParsingRuleService {
   }
 
   async update(id: string, data: RuleSet): Promise<RuleSet> {
-    const response = await api.put<RuleSet>(
-      `/document-parsing-rules/${id}/`,
-      data,
-    );
+    const response = await api.put<RuleSet>(`/document-parsing-rules/${id}/`, data);
     return safeParse(ruleSetSchema, response, "Rule Set");
   }
 
@@ -44,16 +39,11 @@ export class DocumentParsingRuleService {
   }
 
   async listVersions(ruleSetId: string): Promise<RuleVersion[]> {
-    const response = await api.get<RuleVersion[]>(
-      `/document-parsing-rules/${ruleSetId}/versions/`,
-    );
+    const response = await api.get<RuleVersion[]>(`/document-parsing-rules/${ruleSetId}/versions/`);
     return safeParse(ruleVersionSchema.array(), response, "Rule Versions");
   }
 
-  async createVersion(
-    ruleSetId: string,
-    data: Partial<RuleVersion>,
-  ): Promise<RuleVersion> {
+  async createVersion(ruleSetId: string, data: Partial<RuleVersion>): Promise<RuleVersion> {
     const response = await api.post<RuleVersion>(
       `/document-parsing-rules/${ruleSetId}/versions/`,
       data,
@@ -62,16 +52,11 @@ export class DocumentParsingRuleService {
   }
 
   async getVersion(versionId: string): Promise<RuleVersion> {
-    const response = await api.get<RuleVersion>(
-      `/document-parsing-rules/versions/${versionId}/`,
-    );
+    const response = await api.get<RuleVersion>(`/document-parsing-rules/versions/${versionId}/`);
     return safeParse(ruleVersionSchema, response, "Rule Version");
   }
 
-  async updateVersion(
-    versionId: string,
-    data: RuleVersion,
-  ): Promise<RuleVersion> {
+  async updateVersion(versionId: string, data: RuleVersion): Promise<RuleVersion> {
     const response = await api.put<RuleVersion>(
       `/document-parsing-rules/versions/${versionId}/`,
       data,
@@ -86,10 +71,7 @@ export class DocumentParsingRuleService {
     return safeParse(ruleVersionSchema, response, "Rule Version");
   }
 
-  async simulate(
-    versionId: string,
-    data: SimulationRequest,
-  ): Promise<SimulationResult> {
+  async simulate(versionId: string, data: SimulationRequest): Promise<SimulationResult> {
     const response = await api.post<SimulationResult>(
       `/document-parsing-rules/versions/${versionId}/simulate/`,
       data,
@@ -98,16 +80,11 @@ export class DocumentParsingRuleService {
   }
 
   async listFixtures(ruleSetId: string): Promise<Fixture[]> {
-    const response = await api.get<Fixture[]>(
-      `/document-parsing-rules/${ruleSetId}/fixtures/`,
-    );
+    const response = await api.get<Fixture[]>(`/document-parsing-rules/${ruleSetId}/fixtures/`);
     return safeParse(fixtureSchema.array(), response, "Fixtures");
   }
 
-  async createFixture(
-    ruleSetId: string,
-    data: Partial<Fixture>,
-  ): Promise<Fixture> {
+  async createFixture(ruleSetId: string, data: Partial<Fixture>): Promise<Fixture> {
     const response = await api.post<Fixture>(
       `/document-parsing-rules/${ruleSetId}/fixtures/`,
       data,
@@ -116,17 +93,12 @@ export class DocumentParsingRuleService {
   }
 
   async getFixture(fixtureId: string): Promise<Fixture> {
-    const response = await api.get<Fixture>(
-      `/document-parsing-rules/fixtures/${fixtureId}/`,
-    );
+    const response = await api.get<Fixture>(`/document-parsing-rules/fixtures/${fixtureId}/`);
     return safeParse(fixtureSchema, response, "Fixture");
   }
 
   async updateFixture(fixtureId: string, data: Fixture): Promise<Fixture> {
-    const response = await api.put<Fixture>(
-      `/document-parsing-rules/fixtures/${fixtureId}/`,
-      data,
-    );
+    const response = await api.put<Fixture>(`/document-parsing-rules/fixtures/${fixtureId}/`, data);
     return safeParse(fixtureSchema, response, "Fixture");
   }
 

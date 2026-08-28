@@ -31,23 +31,17 @@ export interface PdfDocumentInfo {
  * @param filename - Optional filename (defaults to extracted from URL or "document.pdf")
  * @returns File object containing the PDF data
  */
-export async function fetchPdfAsFile(
-  url: string,
-  filename?: string,
-): Promise<File> {
+export async function fetchPdfAsFile(url: string, filename?: string): Promise<File> {
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to fetch PDF: ${response.status} ${response.statusText}`,
-    );
+    throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
   }
 
   const blob = await response.blob();
 
   // Extract filename from URL if not provided
-  const finalFilename =
-    filename || url.split("/").pop()?.split("?")[0] || "document.pdf";
+  const finalFilename = filename || url.split("/").pop()?.split("?")[0] || "document.pdf";
 
   return new File([blob], finalFilename, { type: "application/pdf" });
 }
@@ -98,17 +92,12 @@ export async function getPdfInfo(file: File): Promise<PdfDocumentInfo> {
  * @param pageNumber - Page number (1-indexed)
  * @returns Page dimensions and rotation
  */
-export async function getPageInfo(
-  file: File,
-  pageNumber: number,
-): Promise<PdfPageInfo> {
+export async function getPageInfo(file: File, pageNumber: number): Promise<PdfPageInfo> {
   const pdfDoc = await loadPdfLibDocument(file);
   const pageCount = pdfDoc.getPageCount();
 
   if (pageNumber < 1 || pageNumber > pageCount) {
-    throw new Error(
-      `Page number ${pageNumber} is out of range (1-${pageCount})`,
-    );
+    throw new Error(`Page number ${pageNumber} is out of range (1-${pageCount})`);
   }
 
   const page = pdfDoc.getPage(pageNumber - 1); // pdf-lib uses 0-indexed
@@ -130,17 +119,12 @@ export async function getPageInfo(
  * @param pageNumber - Page number to extract (1-indexed)
  * @returns Blob containing single-page PDF
  */
-export async function extractPage(
-  file: File,
-  pageNumber: number,
-): Promise<Blob> {
+export async function extractPage(file: File, pageNumber: number): Promise<Blob> {
   const pdfDoc = await loadPdfLibDocument(file);
   const pageCount = pdfDoc.getPageCount();
 
   if (pageNumber < 1 || pageNumber > pageCount) {
-    throw new Error(
-      `Page number ${pageNumber} is out of range (1-${pageCount})`,
-    );
+    throw new Error(`Page number ${pageNumber} is out of range (1-${pageCount})`);
   }
 
   const newPdf = await PDFDocument.create();
@@ -169,16 +153,11 @@ export async function extractPageRange(
   const pageCount = pdfDoc.getPageCount();
 
   if (startPage < 1 || endPage > pageCount || startPage > endPage) {
-    throw new Error(
-      `Invalid page range ${startPage}-${endPage} (document has ${pageCount} pages)`,
-    );
+    throw new Error(`Invalid page range ${startPage}-${endPage} (document has ${pageCount} pages)`);
   }
 
   const newPdf = await PDFDocument.create();
-  const pageIndices = Array.from(
-    { length: endPage - startPage + 1 },
-    (_, i) => startPage - 1 + i,
-  );
+  const pageIndices = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage - 1 + i);
   const copiedPages = await newPdf.copyPages(pdfDoc, pageIndices);
 
   for (const page of copiedPages) {
@@ -199,16 +178,11 @@ export async function extractPageRange(
  * @param pageNumber - Page number (1-indexed)
  * @returns Text content of the page
  */
-export async function getPageText(
-  file: File,
-  pageNumber: number,
-): Promise<string> {
+export async function getPageText(file: File, pageNumber: number): Promise<string> {
   const pdf = await loadPdfJsDocument(file);
 
   if (pageNumber < 1 || pageNumber > pdf.numPages) {
-    throw new Error(
-      `Page number ${pageNumber} is out of range (1-${pdf.numPages})`,
-    );
+    throw new Error(`Page number ${pageNumber} is out of range (1-${pdf.numPages})`);
   }
 
   const page = await pdf.getPage(pageNumber);
@@ -233,18 +207,14 @@ export async function searchText(
   const pdf = await loadPdfJsDocument(file);
   const foundPages: number[] = [];
 
-  const normalizedSearch = caseSensitive
-    ? searchText
-    : searchText.toLowerCase();
+  const normalizedSearch = caseSensitive ? searchText : searchText.toLowerCase();
 
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const textContent = await page.getTextContent();
     const pageText = textContent.items.map((item: any) => item.str).join(" ");
 
-    const normalizedPageText = caseSensitive
-      ? pageText
-      : pageText.toLowerCase();
+    const normalizedPageText = caseSensitive ? pageText : pageText.toLowerCase();
 
     if (normalizedPageText.includes(normalizedSearch)) {
       foundPages.push(pageNum);
@@ -262,11 +232,7 @@ export async function searchText(
  * @param scale - Scale factor (default: 2 for high DPI)
  * @returns Base64-encoded PNG image
  */
-export async function screenshotPage(
-  file: File,
-  pageNumber: number,
-  scale = 2,
-): Promise<string> {
+export async function screenshotPage(file: File, pageNumber: number, scale = 2): Promise<string> {
   // Check if we're in a browser environment
   if (typeof document === "undefined") {
     throw new Error(
@@ -277,9 +243,7 @@ export async function screenshotPage(
   const pdf = await loadPdfJsDocument(file);
 
   if (pageNumber < 1 || pageNumber > pdf.numPages) {
-    throw new Error(
-      `Page number ${pageNumber} is out of range (1-${pdf.numPages})`,
-    );
+    throw new Error(`Page number ${pageNumber} is out of range (1-${pdf.numPages})`);
   }
 
   const page = await pdf.getPage(pageNumber);
@@ -312,10 +276,7 @@ export async function screenshotPage(
  * @param scale - Scale factor for thumbnails (default: 0.5)
  * @returns Array of base64-encoded PNG images
  */
-export async function getAllPageThumbnails(
-  file: File,
-  scale = 0.5,
-): Promise<string[]> {
+export async function getAllPageThumbnails(file: File, scale = 0.5): Promise<string[]> {
   const info = await getPdfInfo(file);
   const thumbnails: string[] = [];
 
@@ -328,8 +289,4 @@ export async function getAllPageThumbnails(
 }
 
 // Re-export types from PDF.js for compatibility
-export type {
-  PDFDocumentProxy,
-  PDFPageProxy,
-  TextContent,
-} from "pdfjs-dist/types/src/display/api";
+export type { PDFDocumentProxy, PDFPageProxy, TextContent } from "pdfjs-dist/types/src/display/api";

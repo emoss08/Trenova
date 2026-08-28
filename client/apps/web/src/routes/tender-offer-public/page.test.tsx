@@ -233,9 +233,7 @@ describe("TenderOfferPublicPage", () => {
 
   it("offers a retry that resubmits the same action after a transient failure", async () => {
     mocks.getPublicOffer.mockResolvedValue(publicOffer());
-    mocks.declinePublicOffer
-      .mockRejectedValueOnce(apiError(503))
-      .mockResolvedValueOnce(undefined);
+    mocks.declinePublicOffer.mockRejectedValueOnce(apiError(503)).mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
 
     renderPage("/tender-offer/tok_123/decline");

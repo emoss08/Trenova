@@ -1,7 +1,7 @@
-import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { MetricSkeleton } from "@/components/metric-skeleton";
 import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
+import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { lazy, Suspense } from "react";
 
 const ApiKeyAnalytics = lazy(() => import("./_components/analytics/api-key-analytics"));
@@ -15,7 +15,9 @@ export function APIKeysPage() {
         description="Provision bearer credentials for third-party systems with direct, tenant-scoped permissions."
       />
       <div className="p-4">
-        <Suspense fallback={<MetricSkeleton cardClassName="h-[125px]" />}>
+        <Suspense
+          fallback={<MetricSkeleton cardClassName="h-[125px]" className="grid xl:grid-cols-2" />}
+        >
           <ApiKeyAnalytics />
         </Suspense>
         <DataTableLazyComponent>

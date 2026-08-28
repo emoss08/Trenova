@@ -12,7 +12,13 @@ import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-o
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2Icon, CircleCheckBigIcon, GitBranchIcon, HandshakeIcon, ListChecksIcon } from "lucide-react";
+import {
+  Building2Icon,
+  CircleCheckBigIcon,
+  GitBranchIcon,
+  HandshakeIcon,
+  ListChecksIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";

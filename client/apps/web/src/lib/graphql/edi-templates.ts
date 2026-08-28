@@ -65,8 +65,6 @@ export async function listEdiTemplatesGraphQL(
   );
 }
 
-export function flattenEdiTemplatePages(
-  pages: EdiTemplateListPage[] | undefined,
-): EDITemplate[] {
+export function flattenEdiTemplatePages(pages: EdiTemplateListPage[] | undefined): EDITemplate[] {
   return pages?.flatMap((page) => page.results) ?? [];
 }

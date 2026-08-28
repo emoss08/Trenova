@@ -7,27 +7,15 @@ import {
   CardTitle,
 } from "@trenova/shared/components/ui/card";
 import { Separator } from "@trenova/shared/components/ui/separator";
-import type {
-  DocumentParsingAnalysis,
-  SimulationResult,
-} from "@/types/document-parsing-rule";
-import {
-  AlertTriangleIcon,
-  CheckCircle2Icon,
-  MapPinIcon,
-  XCircleIcon,
-} from "lucide-react";
+import type { DocumentParsingAnalysis, SimulationResult } from "@/types/document-parsing-rule";
+import { AlertTriangleIcon, CheckCircle2Icon, MapPinIcon, XCircleIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import ReactDiffViewer, { DiffMethod } from "react-diff-viewer-continued";
 
 type SortKey = "key" | "confidence" | "source";
 type SortDir = "asc" | "desc";
 
-export function SimulationResultViewer({
-  result,
-}: {
-  result: SimulationResult;
-}) {
+export function SimulationResultViewer({ result }: { result: SimulationResult }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -51,14 +39,11 @@ export function SimulationResultViewer({
           ) : (
             <XCircleIcon className="size-3.5" />
           )}
-          {result.validationPassed
-            ? "Validation Passed"
-            : "Validation Failed"}
+          {result.validationPassed ? "Validation Passed" : "Validation Failed"}
         </Badge>
         {result.candidate?.overallConfidence != null && (
           <Badge variant="info" className="gap-1.5 px-3 py-1 text-sm">
-            {(result.candidate.overallConfidence * 100).toFixed(1)}% overall
-            confidence
+            {(result.candidate.overallConfidence * 100).toFixed(1)}% overall confidence
           </Badge>
         )}
       </div>
@@ -85,9 +70,7 @@ export function SimulationResultViewer({
         <Card>
           <CardHeader>
             <CardTitle>Rule Metadata</CardTitle>
-            <CardDescription>
-              Details about which rule version matched and how.
-            </CardDescription>
+            <CardDescription>Details about which rule version matched and how.</CardDescription>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
@@ -104,36 +87,22 @@ export function SimulationResultViewer({
                 <dd className="font-medium">{result.metadata.parserMode}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground text-xs">
-                  Provider Matched
-                </dt>
-                <dd className="font-medium">
-                  {result.metadata.providerMatched || "\u2014"}
-                </dd>
+                <dt className="text-muted-foreground text-xs">Provider Matched</dt>
+                <dd className="font-medium">{result.metadata.providerMatched || "\u2014"}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground text-xs">
-                  Match Specificity
-                </dt>
-                <dd className="font-medium">
-                  {result.metadata.matchSpecificity}
-                </dd>
+                <dt className="text-muted-foreground text-xs">Match Specificity</dt>
+                <dd className="font-medium">{result.metadata.matchSpecificity}</dd>
               </div>
             </dl>
           </CardContent>
         </Card>
       )}
 
-      {result.candidate && (
-        <AnalysisCard title="Candidate Analysis" analysis={result.candidate} />
-      )}
+      {result.candidate && <AnalysisCard title="Candidate Analysis" analysis={result.candidate} />}
 
       {result.diff && (
-        <DiffCard
-          diff={result.diff}
-          baseline={result.baseline}
-          candidate={result.candidate}
-        />
+        <DiffCard diff={result.diff} baseline={result.baseline} candidate={result.candidate} />
       )}
     </div>
   );
@@ -145,13 +114,7 @@ function confidenceVariant(confidence: number) {
   return "inactive";
 }
 
-function AnalysisCard({
-  title,
-  analysis,
-}: {
-  title: string;
-  analysis: DocumentParsingAnalysis;
-}) {
+function AnalysisCard({ title, analysis }: { title: string; analysis: DocumentParsingAnalysis }) {
   const fieldEntries = Object.entries(analysis.fields ?? {});
 
   return (
@@ -166,9 +129,7 @@ function AnalysisCard({
       <CardContent className="space-y-4">
         {fieldEntries.length > 0 && (
           <div>
-            <h4 className="mb-2 text-sm font-medium">
-              Fields ({fieldEntries.length})
-            </h4>
+            <h4 className="mb-2 text-sm font-medium">Fields ({fieldEntries.length})</h4>
             <FieldsTable fieldEntries={fieldEntries} />
           </div>
         )}
@@ -177,34 +138,23 @@ function AnalysisCard({
           <>
             <Separator />
             <div>
-              <h4 className="mb-2 text-sm font-medium">
-                Stops ({analysis.stops?.length ?? 0})
-              </h4>
+              <h4 className="mb-2 text-sm font-medium">Stops ({analysis.stops?.length ?? 0})</h4>
               <div className="space-y-2">
                 {analysis.stops?.map((stop, i) => (
-                  <div
-                    key={i}
-                    className="rounded-md border p-3"
-                  >
+                  <div key={i} className="rounded-md border p-3">
                     <div className="mb-2 flex items-center gap-2">
                       <MapPinIcon className="text-muted-foreground size-3.5" />
                       <Badge variant="info" className="capitalize">
                         {stop.role}
                       </Badge>
-                      <span className="text-muted-foreground text-xs">
-                        Seq {stop.sequence}
-                      </span>
+                      <span className="text-muted-foreground text-xs">Seq {stop.sequence}</span>
                       <Badge variant={confidenceVariant(stop.confidence)}>
                         {(stop.confidence * 100).toFixed(0)}%
                       </Badge>
-                      {stop.reviewRequired && (
-                        <Badge variant="warning">Review</Badge>
-                      )}
+                      {stop.reviewRequired && <Badge variant="warning">Review</Badge>}
                     </div>
                     <div className="space-y-0.5 text-sm">
-                      {stop.name && (
-                        <p className="font-medium">{stop.name}</p>
-                      )}
+                      {stop.name && <p className="font-medium">{stop.name}</p>}
                       {stop.addressLine1 && <p>{stop.addressLine1}</p>}
                       {stop.addressLine2 && <p>{stop.addressLine2}</p>}
                       <p>
@@ -234,8 +184,7 @@ function AnalysisCard({
               <ul className="space-y-1 text-sm">
                 {analysis.conflicts?.map((c, i) => (
                   <li key={i} className="text-destructive">
-                    <span className="font-medium">{c.label}:</span>{" "}
-                    {c.values.join(" vs ")}
+                    <span className="font-medium">{c.label}:</span> {c.values.join(" vs ")}
                   </li>
                 ))}
               </ul>
@@ -247,9 +196,7 @@ function AnalysisCard({
           <>
             <Separator />
             <div>
-              <h4 className="text-warning mb-2 text-sm font-medium">
-                Missing Fields
-              </h4>
+              <h4 className="text-warning mb-2 text-sm font-medium">Missing Fields</h4>
               <div className="flex flex-wrap gap-1">
                 {analysis.missingFields?.map((f) => (
                   <Badge key={f} variant="warning">
@@ -282,7 +229,17 @@ function AnalysisCard({
 function FieldsTable({
   fieldEntries,
 }: {
-  fieldEntries: [string, { key: string; label: string; value: string; confidence: number; source: string; reviewRequired: boolean }][];
+  fieldEntries: [
+    string,
+    {
+      key: string;
+      label: string;
+      value: string;
+      confidence: number;
+      source: string;
+      reviewRequired: boolean;
+    },
+  ][];
 }) {
   const [sortKey, setSortKey] = useState<SortKey>("key");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
@@ -322,10 +279,7 @@ function FieldsTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="text-muted-foreground border-b text-left">
-            <th
-              className="cursor-pointer pr-4 pb-2 select-none"
-              onClick={() => toggleSort("key")}
-            >
+            <th className="cursor-pointer pr-4 pb-2 select-none" onClick={() => toggleSort("key")}>
               Key{sortIndicator("key")}
             </th>
             <th className="pr-4 pb-2">Value</th>
@@ -350,10 +304,7 @@ function FieldsTable({
               <td className="py-1.5 pr-4 font-mono text-xs">{field.key}</td>
               <td className="py-1.5 pr-4">{field.value}</td>
               <td className="py-1.5 pr-4">
-                <Badge
-                  variant={confidenceVariant(field.confidence)}
-                  className="font-mono"
-                >
+                <Badge variant={confidenceVariant(field.confidence)} className="font-mono">
                   {(field.confidence * 100).toFixed(0)}%
                 </Badge>
               </td>
@@ -361,9 +312,7 @@ function FieldsTable({
                 <Badge variant="secondary">{field.source}</Badge>
               </td>
               <td className="py-1.5">
-                {field.reviewRequired && (
-                  <Badge variant="warning">Review</Badge>
-                )}
+                {field.reviewRequired && <Badge variant="warning">Review</Badge>}
               </td>
             </tr>
           ))}

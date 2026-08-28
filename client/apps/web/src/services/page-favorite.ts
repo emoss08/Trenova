@@ -15,19 +15,14 @@ export class PageFavoriteService {
   }
 
   public async togglePageFavorite(req: ToggleFavoriteRequest) {
-    const response = await api.post<ToggleFavoriteResponse>(
-      "/page-favorites/toggle",
-      req,
-    );
+    const response = await api.post<ToggleFavoriteResponse>("/page-favorites/toggle", req);
 
     return safeParse(toggleFavoriteResponseSchema, response, "ToggleFavoriteResponse");
   }
 
   public async checkPageFavorite(pageUrl: string) {
     const params = new URLSearchParams({ pageUrl });
-    const response = await api.get<CheckFavoriteResponse>(
-      `/page-favorites/check?${params}`,
-    );
+    const response = await api.get<CheckFavoriteResponse>(`/page-favorites/check?${params}`);
 
     return safeParse(checkFavoriteResponseSchema, response, "CheckFavoriteResponse");
   }

@@ -46,12 +46,7 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
         return (
           <div className="flex w-full flex-col gap-1.5">
             <Label htmlFor={groupId}>{label}</Label>
-            <div
-              id={groupId}
-              className="grid grid-cols-2 gap-1.5"
-              role="group"
-              aria-label={label}
-            >
+            <div id={groupId} className="grid grid-cols-2 gap-1.5" role="group" aria-label={label}>
               {options.map((option) => {
                 const checked = selected.has(option.value);
                 const optionId = `${groupId}-${option.value}`;

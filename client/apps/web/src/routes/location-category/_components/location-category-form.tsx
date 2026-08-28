@@ -4,10 +4,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import {
-  facilityTypeChoices,
-  locationCategoryTypeChoices,
-} from "@/lib/choices";
+import { facilityTypeChoices, locationCategoryTypeChoices } from "@/lib/choices";
 import type { LocationCategory } from "@/types/location-category";
 import { useFormContext } from "react-hook-form";
 

@@ -165,14 +165,22 @@ function computeStopStatus(stop: DocumentIntelligenceStop): FieldStatus {
   return "missing";
 }
 
-function stopFieldFromValue(key: string, value: string | undefined, confidence: number): ReconciliationField {
+function stopFieldFromValue(
+  key: string,
+  value: string | undefined,
+  confidence: number,
+): ReconciliationField {
   const hasValue = !!value && value.trim() !== "";
   return {
     key,
     label: FIELD_LABELS[key] || key,
     value: value ?? "",
     confidence: hasValue ? confidence : 0,
-    status: hasValue ? (confidence >= HIGH_CONFIDENCE_THRESHOLD ? "accepted" : "needs-review") : "missing",
+    status: hasValue
+      ? confidence >= HIGH_CONFIDENCE_THRESHOLD
+        ? "accepted"
+        : "needs-review"
+      : "missing",
     originalValue: value ?? "",
   };
 }

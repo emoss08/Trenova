@@ -12,8 +12,8 @@ export function APIKeyForm() {
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Key Details</h3>
         <p className="text-muted-foreground text-sm">
-          Name the credential, document its intended use, and define an
-          expiration if the integration should rotate automatically.
+          Name the credential, document its intended use, and define an expiration if the
+          integration should rotate automatically.
         </p>
       </div>
 

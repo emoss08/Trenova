@@ -5,7 +5,13 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { fetchAgentControl, updateAgentControl } from "@/lib/graphql/agent-control";
 import { agentControlSchema, type AgentControlFormValues } from "@/types/agent-control";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@trenova/shared/components/ui/card";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";

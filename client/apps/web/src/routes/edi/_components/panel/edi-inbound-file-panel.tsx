@@ -17,23 +17,14 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { invalidateEDIInboundFiles } from "./edi-panel-invalidation";
-import {
-  DetailField,
-  DetailSection,
-  EDIPartnerRef,
-  EDIRawContent,
-} from "./edi-panel-primitives";
+import { DetailField, DetailSection, EDIPartnerRef, EDIRawContent } from "./edi-panel-primitives";
 
 export const REPROCESSABLE_STATUSES = new Set<EDIInboundFileStatus>([
   "Quarantined",
   "PartiallyProcessed",
 ]);
 
-export function InboundFilePanel({
-  open,
-  onOpenChange,
-  row,
-}: DataTablePanelProps<EDIInboundFile>) {
+export function InboundFilePanel({ open, onOpenChange, row }: DataTablePanelProps<EDIInboundFile>) {
   const queryClient = useQueryClient();
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),

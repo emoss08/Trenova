@@ -143,7 +143,11 @@ function mountNestedArray(): UseFormReturn<any> {
 
 const SHAPES: Shape[] = [
   { name: "form owning its own useForm", leaf: "reason", mount: mountOwnUseForm },
-  { name: "fields registered through a parent FormProvider", leaf: "reason", mount: mountParentProvider },
+  {
+    name: "fields registered through a parent FormProvider",
+    leaf: "reason",
+    mount: mountParentProvider,
+  },
   {
     name: "form with a nested field array",
     leaf: "reason",

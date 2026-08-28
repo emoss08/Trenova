@@ -2,13 +2,7 @@
 import { cn } from "@trenova/shared/lib/utils";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { DriverType } from "@trenova/shared/types/worker";
-import {
-  ChevronDownIcon,
-  MapPinIcon,
-  RouteIcon,
-  TruckIcon,
-  UsersIcon,
-} from "lucide-react";
+import { ChevronDownIcon, MapPinIcon, RouteIcon, TruckIcon, UsersIcon } from "lucide-react";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -97,19 +91,12 @@ export function EditableDriverTypeBadge({
         render={
           <Badge
             variant={variant}
-            className={cn(
-              "w-fit shrink-0 cursor-pointer text-left capitalize",
-              className,
-            )}
+            className={cn("w-fit shrink-0 cursor-pointer text-left capitalize", className)}
             render={<button type="button" disabled={isLoading} />}
           >
             {icon}
             {label}
-            {isLoading ? (
-              <Spinner className="size-3" />
-            ) : (
-              <ChevronDownIcon className="size-3" />
-            )}
+            {isLoading ? <Spinner className="size-3" /> : <ChevronDownIcon className="size-3" />}
           </Badge>
         }
       />
@@ -121,9 +108,7 @@ export function EditableDriverTypeBadge({
                 <SelectCommandItem
                   key={option.value}
                   value={option.value}
-                  onSelect={(currentValue) =>
-                    handleTypeChange(currentValue as DriverType)
-                  }
+                  onSelect={(currentValue) => handleTypeChange(currentValue as DriverType)}
                   className="text-xs"
                   label={option.label}
                   color={option.color}

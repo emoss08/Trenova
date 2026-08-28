@@ -107,20 +107,14 @@ export function PopoutWindowExample() {
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() =>
-                      sendMessage(windowId, "test-message", { hello: "world" })
-                    }
+                    onClick={() => sendMessage(windowId, "test-message", { hello: "world" })}
                   >
                     Send Message
                   </Button>
                 </div>
               </div>
             ))}
-            <Button
-              onClick={closeAllPopouts}
-              variant="destructive"
-              className="mt-2"
-            >
+            <Button onClick={closeAllPopouts} variant="destructive" className="mt-2">
               Close All Windows
             </Button>
           </div>

@@ -11,10 +11,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
-import {
-  locateTrailerPayloadSchema,
-  type LocateTrailerPayload,
-} from "@/types/trailer";
+import { locateTrailerPayloadSchema, type LocateTrailerPayload } from "@/types/trailer";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
@@ -90,8 +87,8 @@ export function LocateTrailerDialog({
         <DialogHeader>
           <DialogTitle>Locate Trailer</DialogTitle>
           <DialogDescription>
-            Set the trailer&apos;s new location. The system will create and
-            complete an empty reposition move automatically.
+            Set the trailer&apos;s new location. The system will create and complete an empty
+            reposition move automatically.
           </DialogDescription>
         </DialogHeader>
         <Form
@@ -115,11 +112,7 @@ export function LocateTrailerDialog({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-              loadingText="Locating..."
-            >
+            <Button type="submit" isLoading={isSubmitting} loadingText="Locating...">
               Locate Trailer
             </Button>
           </DialogFooter>

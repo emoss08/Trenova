@@ -5,11 +5,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermission } from "@/hooks/use-permission";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type {
-  TableConfig,
-  TableConfiguration,
-  TableViewSource,
-} from "@/types/table-configuration";
+import type { TableConfig, TableConfiguration, TableViewSource } from "@/types/table-configuration";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { BookmarkIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";

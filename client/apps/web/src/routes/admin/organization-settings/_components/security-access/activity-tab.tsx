@@ -18,7 +18,12 @@ import { activityViewParser, type ActivityViewValue } from "@/hooks/use-organiza
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { queries } from "@/lib/queries";
 import { cn, formatIdentityProviderName, toTitleCase } from "@trenova/shared/lib/utils";
-import type { AuthEvent, ExternalIdentity, MFAAuthenticator, RiskDecision } from "@trenova/shared/types/iam";
+import type {
+  AuthEvent,
+  ExternalIdentity,
+  MFAAuthenticator,
+  RiskDecision,
+} from "@trenova/shared/types/iam";
 import { useQuery } from "@tanstack/react-query";
 import {
   ActivityIcon,

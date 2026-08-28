@@ -181,10 +181,7 @@ export function HomeCanvas({
                     />
                   </div>
                 )}
-                <div
-                  className="flex min-h-0 flex-1 flex-col"
-                  inert={editing || undefined}
-                >
+                <div className="flex min-h-0 flex-1 flex-col" inert={editing || undefined}>
                   <WidgetBody widget={widget} data={data} />
                 </div>
               </m.div>

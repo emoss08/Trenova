@@ -4,7 +4,13 @@ import { cn } from "@trenova/shared/lib/utils";
 import { SHIPMENT_VARIABLES, VARIABLE_CATEGORIES } from "@trenova/shared/types/formula-template";
 import { ChevronDown, ChevronUp, Database, RotateCcw } from "lucide-react";
 import { useCallback, useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@trenova/shared/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@trenova/shared/components/ui/select";
 
 export const DEFAULT_TEST_VALUES: Record<string, unknown> = {
   // Shipment Fields
@@ -77,11 +83,7 @@ export function TestDataEditor({ values, onChange, className }: TestDataEditorPr
     if (value === null || value === undefined) {
       return "";
     }
-    if (
-      typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "bigint"
-    ) {
+    if (typeof value === "string" || typeof value === "number" || typeof value === "bigint") {
       return String(value);
     }
     return JSON.stringify(value);

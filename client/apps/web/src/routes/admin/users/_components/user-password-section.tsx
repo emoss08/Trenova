@@ -8,13 +8,7 @@ import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 
-export function EditModePassword({
-  userId,
-  isLocked,
-}: {
-  userId: string;
-  isLocked?: boolean;
-}) {
+export function EditModePassword({ userId, isLocked }: { userId: string; isLocked?: boolean }) {
   const queryClient = useQueryClient();
   const [isResetting, setIsResetting] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -41,12 +35,9 @@ export function EditModePassword({
         <div className="border-destructive/30 bg-destructive/10 flex items-start gap-3 rounded-lg border p-3">
           <LockIcon className="text-destructive size-4 shrink-0" />
           <div>
-            <p className="text-destructive text-sm font-medium">
-              Account Locked
-            </p>
+            <p className="text-destructive text-sm font-medium">Account Locked</p>
             <p className="text-destructive/80 text-xs">
-              This account has been locked due to too many failed login
-              attempts.
+              This account has been locked due to too many failed login attempts.
             </p>
           </div>
         </div>
@@ -54,11 +45,7 @@ export function EditModePassword({
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
-          <Button
-            type="button"
-            onClick={handleResetPassword}
-            disabled={isResetting}
-          >
+          <Button type="button" onClick={handleResetPassword} disabled={isResetting}>
             {isResetting ? "Sending..." : "Send Reset Email"}
           </Button>
           <Button

@@ -1,9 +1,6 @@
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
-import {
-  billingControlSchema,
-  type BillingControl,
-} from "@/types/billing-control";
+import { billingControlSchema, type BillingControl } from "@/types/billing-control";
 
 export class BillingControlService {
   public async get() {

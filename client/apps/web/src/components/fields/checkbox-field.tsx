@@ -33,10 +33,7 @@ export function CheckboxField<T extends FieldValues>({
       name={name}
       control={control}
       rules={rules}
-      render={({
-        field: { value, onChange, disabled, onBlur, name, ref },
-        fieldState,
-      }) => (
+      render={({ field: { value, onChange, disabled, onBlur, name, ref }, fieldState }) => (
         <div
           className={cn(
             "relative flex w-full items-start gap-2 rounded-md p-2.5",
@@ -63,10 +60,7 @@ export function CheckboxField<T extends FieldValues>({
           />
           <div className="grid grow gap-2">
             <Label htmlFor={inputId}>{label}</Label>
-            <p
-              id={`${inputId}-description`}
-              className="text-2xs text-muted-foreground"
-            >
+            <p id={`${inputId}-description`} className="text-2xs text-muted-foreground">
               {description}
             </p>
           </div>

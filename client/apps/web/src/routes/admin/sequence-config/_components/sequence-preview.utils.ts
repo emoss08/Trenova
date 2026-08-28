@@ -48,7 +48,10 @@ export function buildLocationCodePreview(cfg: SequenceConfig): string {
     postal_code: "75201",
   } as const;
   const width = Math.max(1, strategy.componentWidth || 1);
-  const fallback = normalizeToken(strategy.fallbackPrefix || "LOC", strategy.casing).slice(0, width);
+  const fallback = normalizeToken(strategy.fallbackPrefix || "LOC", strategy.casing).slice(
+    0,
+    width,
+  );
   const parts: string[] = [];
   let lastWasFallback = false;
 

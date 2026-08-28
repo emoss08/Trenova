@@ -16,16 +16,11 @@ import { toast } from "sonner";
 
 export type FiscalYearAction = "activate" | "close" | "lock" | "unlock";
 
-export function FiscalYearActivateAlertDialogContent({
-  record,
-}: {
-  record: FiscalYear;
-}) {
+export function FiscalYearActivateAlertDialogContent({ record }: { record: FiscalYear }) {
   const queryClient = useQueryClient();
 
   const { mutateAsync } = useApiMutation({
-    mutationFn: async (id: FiscalYear["id"]) =>
-      apiService.fiscalYearService.activate(id),
+    mutationFn: async (id: FiscalYear["id"]) => apiService.fiscalYearService.activate(id),
     onSuccess: () => {
       toast.success("Activated successfully", {
         description: `Successfully set ${record?.year} as current`,
@@ -43,40 +38,26 @@ export function FiscalYearActivateAlertDialogContent({
   return (
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle>
-          Set Fiscal Year {record?.year} as Current?
-        </AlertDialogTitle>
+        <AlertDialogTitle>Set Fiscal Year {record?.year} as Current?</AlertDialogTitle>
         <div className="text-muted-foreground flex flex-col space-y-2 text-sm">
-          <p>
-            This will mark this fiscal year as the active year for transaction
-            posting.
-          </p>
-          <p>
-            Any currently active fiscal year will be automatically deactivated.
-          </p>
+          <p>This will mark this fiscal year as the active year for transaction posting.</p>
+          <p>Any currently active fiscal year will be automatically deactivated.</p>
         </div>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction onClick={handleFiscalYearActivate}>
-          Set as Current
-        </AlertDialogAction>
+        <AlertDialogAction onClick={handleFiscalYearActivate}>Set as Current</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   );
 }
 
-export function FiscalYearCloseAlertDialogContent({
-  record,
-}: {
-  record: FiscalYear;
-}) {
+export function FiscalYearCloseAlertDialogContent({ record }: { record: FiscalYear }) {
   const queryClient = useQueryClient();
   const today = getTodayDate();
 
   const { mutateAsync } = useApiMutation({
-    mutationFn: async (id: FiscalYear["id"]) =>
-      apiService.fiscalYearService.close(id),
+    mutationFn: async (id: FiscalYear["id"]) => apiService.fiscalYearService.close(id),
     onSuccess: () => {
       toast.success("Closed successfully", {
         description: `Successfully closed ${record?.year}`,
@@ -102,18 +83,13 @@ export function FiscalYearCloseAlertDialogContent({
                 <p className="text-sm font-medium">Early Close Warning</p>
                 <div className="flex flex-col gap-1 text-xs dark:text-yellow-100">
                   <div className="flex flex-row gap-0.5">
-                    <p>
-                      This fiscal year does not end until{" "}
-                      {formatUnixDate(record.endDate)}
-                    </p>
+                    <p>This fiscal year does not end until {formatUnixDate(record.endDate)}</p>
                     <p className="font-semibold">
-                      ({Math.ceil((record.endDate - today) / 86400)} days
-                      remaining).
+                      ({Math.ceil((record.endDate - today) / 86400)} days remaining).
                     </p>
                   </div>
                   <p>
-                    Closing early will prevent posting transactions for the
-                    remainder of the period.
+                    Closing early will prevent posting transactions for the remainder of the period.
                   </p>
                 </div>
               </div>
@@ -121,10 +97,7 @@ export function FiscalYearCloseAlertDialogContent({
           </div>
         )}
         <div className="text-muted-foreground flex flex-col text-sm">
-          <p>
-            This prevent new transactions. Only adjusting entries will be
-            allowed.
-          </p>
+          <p>This prevent new transactions. Only adjusting entries will be allowed.</p>
           <ul className="list-inside list-disc">
             <li>All shipments are billed</li>
             <li>Depreciation is posted</li>
@@ -135,10 +108,7 @@ export function FiscalYearCloseAlertDialogContent({
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction
-          variant="destructive"
-          onClick={handleFiscalYearClose}
-        >
+        <AlertDialogAction variant="destructive" onClick={handleFiscalYearClose}>
           Close Fiscal Year
         </AlertDialogAction>
       </AlertDialogFooter>
@@ -146,16 +116,11 @@ export function FiscalYearCloseAlertDialogContent({
   );
 }
 
-export function FiscalYearLockAlertDialogContent({
-  record,
-}: {
-  record: FiscalYear;
-}) {
+export function FiscalYearLockAlertDialogContent({ record }: { record: FiscalYear }) {
   const queryClient = useQueryClient();
 
   const { mutateAsync } = useApiMutation({
-    mutationFn: async (id: FiscalYear["id"]) =>
-      apiService.fiscalYearService.lock(id),
+    mutationFn: async (id: FiscalYear["id"]) => apiService.fiscalYearService.lock(id),
     onSuccess: () => {
       toast.success("Locked successfully", {
         description: `Successfully locked ${record?.year}`,
@@ -176,8 +141,8 @@ export function FiscalYearLockAlertDialogContent({
         <AlertDialogTitle>Lock Fiscal Year {record?.year}?</AlertDialogTitle>
         <div className="text-muted-foreground flex flex-col space-y-2 text-sm">
           <p>
-            Locking this fiscal year will make it completely read-only. No
-            transactions or adjustments will be allowed.
+            Locking this fiscal year will make it completely read-only. No transactions or
+            adjustments will be allowed.
           </p>
           <p>This is typically done after:</p>
           <ul className="list-inside list-disc">
@@ -192,24 +157,17 @@ export function FiscalYearLockAlertDialogContent({
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction onClick={handleFiscalYearLock}>
-          Lock Fiscal Year
-        </AlertDialogAction>
+        <AlertDialogAction onClick={handleFiscalYearLock}>Lock Fiscal Year</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   );
 }
 
-export function FiscalYearUnlockAlertDialogContent({
-  record,
-}: {
-  record: FiscalYear;
-}) {
+export function FiscalYearUnlockAlertDialogContent({ record }: { record: FiscalYear }) {
   const queryClient = useQueryClient();
 
   const { mutateAsync } = useApiMutation({
-    mutationFn: async (id: FiscalYear["id"]) =>
-      apiService.fiscalYearService.unlock(id),
+    mutationFn: async (id: FiscalYear["id"]) => apiService.fiscalYearService.unlock(id),
     onSuccess: () => {
       toast.success("Unlocked successfully", {
         description: `Successfully unlocked ${record?.year}`,
@@ -232,13 +190,10 @@ export function FiscalYearUnlockAlertDialogContent({
         <div className="flex w-full items-center justify-between rounded-md border border-red-600/50 bg-red-500/10 p-4">
           <div className="flex w-full items-center gap-3 text-red-600">
             <div className="flex flex-col">
-              <p className="text-sm font-semibold">
-                Administrative Action Required!
-              </p>
+              <p className="text-sm font-semibold">Administrative Action Required!</p>
               <p className="text-xs dark:text-red-100">
-                Unlocking a fiscal year is typically only done in exceptional
-                circumstances with proper authorization. This action will be
-                logged for audit purposes.
+                Unlocking a fiscal year is typically only done in exceptional circumstances with
+                proper authorization. This action will be logged for audit purposes.
               </p>
             </div>
           </div>
@@ -246,14 +201,12 @@ export function FiscalYearUnlockAlertDialogContent({
 
         <div className="flex flex-col space-y-3 text-sm">
           <p className="text-muted-foreground">
-            This will change the fiscal year status from <strong>Locked</strong>{" "}
-            to <strong>Closed</strong>, allowing limited modifications.
+            This will change the fiscal year status from <strong>Locked</strong> to{" "}
+            <strong>Closed</strong>, allowing limited modifications.
           </p>
 
           <div className="space-y-2">
-            <p className="text-foreground font-semibold">
-              Typical reasons for unlocking:
-            </p>
+            <p className="text-foreground font-semibold">Typical reasons for unlocking:</p>
             <ul className="text-muted-foreground ml-2 list-inside list-disc space-y-1">
               <li>Audit adjustments required after lock</li>
               <li>Correction of material accounting errors</li>
@@ -274,18 +227,15 @@ export function FiscalYearUnlockAlertDialogContent({
 
           <div className="bg-muted mt-4 rounded-md p-3">
             <p className="text-muted-foreground text-xs">
-              <strong>Note:</strong> This action requires administrator
-              privileges and will be recorded in the audit log with your user ID
-              and timestamp.
+              <strong>Note:</strong> This action requires administrator privileges and will be
+              recorded in the audit log with your user ID and timestamp.
             </p>
           </div>
         </div>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction onClick={handleFiscalYearUnlock}>
-          Unlock Fiscal Year
-        </AlertDialogAction>
+        <AlertDialogAction onClick={handleFiscalYearUnlock}>Unlock Fiscal Year</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   );

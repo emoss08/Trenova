@@ -12,22 +12,18 @@ export const documentParsingRule = createQueryKeys("documentParsingRule", {
   }),
   versions: (ruleSetId: string) => ({
     queryKey: ["versions", ruleSetId],
-    queryFn: async () =>
-      apiService.documentParsingRuleService.listVersions(ruleSetId),
+    queryFn: async () => apiService.documentParsingRuleService.listVersions(ruleSetId),
   }),
   version: (versionId: string) => ({
     queryKey: ["version", versionId],
-    queryFn: async () =>
-      apiService.documentParsingRuleService.getVersion(versionId),
+    queryFn: async () => apiService.documentParsingRuleService.getVersion(versionId),
   }),
   fixtures: (ruleSetId: string) => ({
     queryKey: ["fixtures", ruleSetId],
-    queryFn: async () =>
-      apiService.documentParsingRuleService.listFixtures(ruleSetId),
+    queryFn: async () => apiService.documentParsingRuleService.listFixtures(ruleSetId),
   }),
   fixture: (fixtureId: string) => ({
     queryKey: ["fixture", fixtureId],
-    queryFn: async () =>
-      apiService.documentParsingRuleService.getFixture(fixtureId),
+    queryFn: async () => apiService.documentParsingRuleService.getFixture(fixtureId),
   }),
 });

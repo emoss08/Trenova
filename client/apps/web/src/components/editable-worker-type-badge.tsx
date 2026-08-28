@@ -85,19 +85,12 @@ export function EditableWorkerTypeBadge({
         render={
           <Badge
             variant={variant}
-            className={cn(
-              "w-fit shrink-0 cursor-pointer text-left capitalize",
-              className,
-            )}
+            className={cn("w-fit shrink-0 cursor-pointer text-left capitalize", className)}
             render={<button type="button" disabled={isLoading} />}
           >
             {icon}
             {label}
-            {isLoading ? (
-              <Spinner className="size-3" />
-            ) : (
-              <ChevronDownIcon className="size-3" />
-            )}
+            {isLoading ? <Spinner className="size-3" /> : <ChevronDownIcon className="size-3" />}
           </Badge>
         }
       />
@@ -109,9 +102,7 @@ export function EditableWorkerTypeBadge({
                 <SelectCommandItem
                   key={option.value}
                   value={option.value}
-                  onSelect={(currentValue) =>
-                    handleTypeChange(currentValue as WorkerType)
-                  }
+                  onSelect={(currentValue) => handleTypeChange(currentValue as WorkerType)}
                   className="text-xs"
                   label={option.label}
                   color={option.color}

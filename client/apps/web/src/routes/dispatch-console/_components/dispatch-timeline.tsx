@@ -531,7 +531,11 @@ export function DispatchTimeline({
                 className="bg-brand font-table text-brand-foreground absolute bottom-0 z-10 -translate-x-1/2 rounded-t px-1 py-px text-[8.5px] font-semibold tabular-nums"
                 style={{ left: nowX }}
               >
-                {formatUnixInUserTimezone(now, { hour: "2-digit", minute: "2-digit", hour12: false })}
+                {formatUnixInUserTimezone(now, {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
               </span>
             )}
           </div>

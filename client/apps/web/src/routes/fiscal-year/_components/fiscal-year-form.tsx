@@ -227,11 +227,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
       )}
 
       {isEdit && (
-        <FormSection
-          title="Fiscal Periods"
-          description="Manage fiscal periods"
-          className="py-2"
-        >
+        <FormSection title="Fiscal Periods" description="Manage fiscal periods" className="py-2">
           <LazyLoadComponent>
             <FiscalPeriodTable periods={periods} />
           </LazyLoadComponent>

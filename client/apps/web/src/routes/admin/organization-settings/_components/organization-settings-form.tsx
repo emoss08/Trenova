@@ -5,7 +5,13 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@trenova/shared/components/ui/card";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import {
   SegmentedControl,
@@ -30,20 +36,17 @@ import {
   resolveOrganizationCapabilityPreset,
   type OrganizationCapabilityPreset,
 } from "@trenova/shared/types/organization-capability";
-import { organizationSettingsSchema, type OrganizationSettings } from "@trenova/shared/types/organization";
+import {
+  organizationSettingsSchema,
+  type OrganizationSettings,
+} from "@trenova/shared/types/organization";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2Icon, CircleXIcon, CreditCardIcon, ShieldIcon, UploadIcon } from "lucide-react";
 import { useQueryState } from "nuqs";
 import type { ChangeEvent } from "react";
 import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  FormProvider,
-  useForm,
-  useFormContext,
-  useWatch,
-  type Resolver,
-} from "react-hook-form";
+import { FormProvider, useForm, useFormContext, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { BillingUsageTab } from "./billing-usage-tab";
 import { SecurityAccessWorkspace } from "./security-access-workspace";

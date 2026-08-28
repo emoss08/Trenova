@@ -47,19 +47,13 @@ export function DocumentThumbnail({
   const iconType = fileType.toLowerCase();
   const [imageError, setImageError] = useState(false);
   const canHaveThumbnail = supportsThumbnail(fileType);
-  const showThumbnail =
-    canHaveThumbnail && previewStatus === "Ready" && previewUrl && !imageError;
-  const isGenerating =
-    canHaveThumbnail && previewStatus === "Pending";
+  const showThumbnail = canHaveThumbnail && previewStatus === "Ready" && previewUrl && !imageError;
+  const isGenerating = canHaveThumbnail && previewStatus === "Pending";
 
   if (showThumbnail) {
     return (
       <div
-        className={cn(
-          "bg-muted relative overflow-hidden rounded-md",
-          sizeClasses[size],
-          className,
-        )}
+        className={cn("bg-muted relative overflow-hidden rounded-md", sizeClasses[size], className)}
       >
         <img
           src={previewUrl}
@@ -81,9 +75,7 @@ export function DocumentThumbnail({
         )}
         title="Generating thumbnail..."
       >
-        <LoaderCircleIcon
-          className={cn("text-muted-foreground animate-spin", iconSizes[size])}
-        />
+        <LoaderCircleIcon className={cn("text-muted-foreground animate-spin", iconSizes[size])} />
       </div>
     );
   }
@@ -104,23 +96,17 @@ export function DocumentThumbnail({
         <VideoIcon className={cn("text-muted-foreground", iconSizes[size])} />
       )}
       {(iconType === "application/pdf" || iconType.includes("pdf")) && (
-        <FileTextIcon
-          className={cn("text-muted-foreground", iconSizes[size])}
-        />
+        <FileTextIcon className={cn("text-muted-foreground", iconSizes[size])} />
       )}
       {(iconType.includes("spreadsheet") ||
         iconType.includes("excel") ||
         iconType === "text/csv") && (
-        <FileSpreadsheetIcon
-          className={cn("text-muted-foreground", iconSizes[size])}
-        />
+        <FileSpreadsheetIcon className={cn("text-muted-foreground", iconSizes[size])} />
       )}
       {(iconType.includes("document") ||
         iconType.includes("word") ||
         iconType === "text/plain") && (
-        <FileTextIcon
-          className={cn("text-muted-foreground", iconSizes[size])}
-        />
+        <FileTextIcon className={cn("text-muted-foreground", iconSizes[size])} />
       )}
       {!iconType.startsWith("image/") &&
         !iconType.startsWith("video/") &&
@@ -134,9 +120,7 @@ export function DocumentThumbnail({
           iconType.includes("document") ||
           iconType.includes("word") ||
           iconType === "text/plain"
-        ) && (
-          <FileIcon className={cn("text-muted-foreground", iconSizes[size])} />
-        )}
+        ) && <FileIcon className={cn("text-muted-foreground", iconSizes[size])} />}
     </div>
   );
 }

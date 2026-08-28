@@ -9,10 +9,7 @@ import {
 } from "motion/react";
 import * as React from "react";
 
-import {
-  Slot,
-  type WithAsChild,
-} from "@/components/animate-ui/primitives/animate/slot";
+import { Slot, type WithAsChild } from "@/components/animate-ui/primitives/animate/slot";
 
 type AutoHeightProps = WithAsChild<
   {

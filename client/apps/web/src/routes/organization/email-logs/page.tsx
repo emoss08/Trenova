@@ -10,7 +10,9 @@ export function EmailLogsPage() {
     <div className="flex h-full flex-col gap-4 p-4">
       <div>
         <h1 className="text-lg font-semibold">Email Logs</h1>
-        <p className="text-muted-foreground text-sm">Transactional email send and delivery history.</p>
+        <p className="text-muted-foreground text-sm">
+          Transactional email send and delivery history.
+        </p>
       </div>
       <section className="overflow-hidden rounded-md border">
         <table className="w-full text-sm">

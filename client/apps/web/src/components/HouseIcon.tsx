@@ -16,15 +16,7 @@ interface HouseProps extends HTMLMotionProps<"div"> {
 
 const HouseIcon = forwardRef<HouseHandle, HouseProps>(
   (
-    {
-      onMouseEnter,
-      onMouseLeave,
-      className,
-      size = 24,
-      duration = 1,
-      isAnimated = true,
-      ...props
-    },
+    { onMouseEnter, onMouseLeave, className, size = 24, duration = 1, isAnimated = true, ...props },
     ref,
   ) => {
     const controls = useAnimation();
@@ -34,8 +26,7 @@ const HouseIcon = forwardRef<HouseHandle, HouseProps>(
     useImperativeHandle(ref, () => {
       isControlled.current = true;
       return {
-        startAnimation: () =>
-          reduced ? controls.start("normal") : controls.start("animate"),
+        startAnimation: () => (reduced ? controls.start("normal") : controls.start("animate")),
         stopAnimation: () => controls.start("normal"),
       };
     });
@@ -100,14 +91,8 @@ const HouseIcon = forwardRef<HouseHandle, HouseProps>(
           initial="normal"
         >
           <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10" />
-          <m.path
-            d="M21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9"
-            variants={baseVariants}
-          />
-          <m.path
-            d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
-            variants={doorVariants}
-          />
+          <m.path d="M21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9" variants={baseVariants} />
+          <m.path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" variants={doorVariants} />
         </m.svg>
       </m.div>
     );

@@ -14,7 +14,10 @@ import {
   type PayProfileComponentFormValues,
   type PayProfileFormValues,
 } from "@trenova/shared/types/driver-pay";
-import type { CreatePayProfileInput, PayProfileComponentInput } from "@trenova/graphql/generated/graphql";
+import type {
+  CreatePayProfileInput,
+  PayProfileComponentInput,
+} from "@trenova/graphql/generated/graphql";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { UserPlus, UsersIcon, WalletIcon } from "lucide-react";
@@ -256,9 +259,7 @@ function AssignedDriversSection({ profileId }: { profileId: string }) {
                       ? `${assignment.worker.firstName} ${assignment.worker.lastName}`.trim()
                       : "—"}
                   </td>
-                  <td className="px-3 py-2">
-                    {formatUnixDateMedium(assignment.effectiveFrom)}
-                  </td>
+                  <td className="px-3 py-2">{formatUnixDateMedium(assignment.effectiveFrom)}</td>
                   <td className="px-3 py-2 text-right tabular-nums">
                     {Number(assignment.splitPercent)}%
                   </td>

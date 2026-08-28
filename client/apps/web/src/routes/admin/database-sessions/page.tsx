@@ -21,7 +21,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@trenova/shared/components/ui/card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@trenova/shared/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@trenova/shared/components/ui/collapsible";
 import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";

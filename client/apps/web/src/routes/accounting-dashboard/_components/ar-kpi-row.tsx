@@ -61,9 +61,7 @@ export function ARKpiRow() {
         icon={AlertTriangleIcon}
         label="Overdue"
         value={`${kpis.overduePercent.toFixed(1)}%`}
-        valueClassName={
-          kpis.overduePercent >= 25 ? "text-red-600 dark:text-red-400" : undefined
-        }
+        valueClassName={kpis.overduePercent >= 25 ? "text-red-600 dark:text-red-400" : undefined}
         detail={`${formatCurrency(kpis.overview.overdueMinor / 100)} past due`}
         to="/accounting/ar/open-items"
       />
@@ -96,11 +94,7 @@ function DsoKpiCard({ kpis }: { kpis: ARDashboardKpis }) {
               isDown && "text-emerald-600 dark:text-emerald-400",
             )}
           >
-            {isUp ? (
-              <TrendingUpIcon className="size-3" />
-            ) : (
-              <TrendingDownIcon className="size-3" />
-            )}
+            {isUp ? <TrendingUpIcon className="size-3" /> : <TrendingDownIcon className="size-3" />}
             {delta > 0 ? "+" : ""}
             {delta.toFixed(1)}d
           </span>
@@ -199,12 +193,7 @@ function KpiCard({
 }) {
   return (
     <KpiShell index={index} icon={icon} label={label} to={to}>
-      <p
-        className={cn(
-          "text-2xl font-semibold tracking-tight tabular-nums",
-          valueClassName,
-        )}
-      >
+      <p className={cn("text-2xl font-semibold tracking-tight tabular-nums", valueClassName)}>
         {value}
       </p>
       {detail ? <p className="text-muted-foreground text-[11px]">{detail}</p> : null}

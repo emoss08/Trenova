@@ -38,8 +38,7 @@ export const shipmentControlSchema = z
     (data) => {
       if (
         data.autoDelayShipments &&
-        (!data.autoDelayShipmentsThreshold ||
-          data.autoDelayShipmentsThreshold <= 0)
+        (!data.autoDelayShipmentsThreshold || data.autoDelayShipmentsThreshold <= 0)
       ) {
         return false;
       }
@@ -47,8 +46,7 @@ export const shipmentControlSchema = z
     },
     {
       path: ["autoDelayShipmentsThreshold"],
-      message:
-        "Delay threshold must be greater than 0 when auto delay is enabled",
+      message: "Delay threshold must be greater than 0 when auto delay is enabled",
     },
   )
   .refine(
@@ -65,26 +63,21 @@ export const shipmentControlSchema = z
   )
   .refine(
     (data) => {
-      if (
-        data.trackDetentionTime &&
-        (!data.detentionThreshold || data.detentionThreshold <= 0)
-      ) {
+      if (data.trackDetentionTime && (!data.detentionThreshold || data.detentionThreshold <= 0)) {
         return false;
       }
       return true;
     },
     {
       path: ["detentionThreshold"],
-      message:
-        "Detention threshold must be greater than 0 when tracking detention time",
+      message: "Detention threshold must be greater than 0 when tracking detention time",
     },
   )
   .refine(
     (data) => {
       if (
         data.autoCancelShipments &&
-        (!data.autoCancelShipmentsThreshold ||
-          data.autoCancelShipmentsThreshold <= 0)
+        (!data.autoCancelShipmentsThreshold || data.autoCancelShipmentsThreshold <= 0)
       ) {
         return false;
       }
@@ -92,8 +85,7 @@ export const shipmentControlSchema = z
     },
     {
       path: ["autoCancelShipmentsThreshold"],
-      message:
-        "Auto cancel threshold must be greater than 0 when auto cancel is enabled",
+      message: "Auto cancel threshold must be greater than 0 when auto cancel is enabled",
     },
   );
 

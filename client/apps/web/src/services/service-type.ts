@@ -15,14 +15,15 @@ export class ServiceTypeService {
       request,
     );
 
-    return safeParse(bulkUpdateServiceTypeStatusResponseSchema, response, "BulkUpdateServiceTypeStatus");
+    return safeParse(
+      bulkUpdateServiceTypeStatusResponseSchema,
+      response,
+      "BulkUpdateServiceTypeStatus",
+    );
   }
 
   public async patch(id: ServiceType["id"], data: Partial<ServiceType>) {
-    const response = await api.patch<ServiceType>(
-      `/service-types/${id}/`,
-      data,
-    );
+    const response = await api.patch<ServiceType>(`/service-types/${id}/`, data);
 
     return safeParse(serviceTypeSchema, response, "ServiceType");
   }

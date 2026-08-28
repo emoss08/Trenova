@@ -128,48 +128,56 @@ export function AutocompleteCommandContent<TOption>({
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, preload ? 0 : 300);
 
-  const { data, isLoading, isError, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
-    useInfiniteQuery({
-      queryKey: [
-        "autocomplete-search",
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: [
+      "autocomplete-search",
+      link,
+      debouncedSearchTerm,
+      extraSearchParams,
+      graphql,
+      initialLimit,
+    ],
+    queryFn: async ({ pageParam }) => {
+      if (graphql) {
+        return (await fetchGraphQLSelectOptions({
+          resource: graphql.resource,
+          query: debouncedSearchTerm,
+          page: pageParam,
+          initialLimit,
+          filters: {
+            ...selectOptionFiltersFromSearchParams(extraSearchParams),
+            ...graphql.filters,
+          },
+        })) as GenericLimitOffsetResponse<TOption>;
+      }
+
+      return fetchOptions<TOption>(
         link,
         debouncedSearchTerm,
-        extraSearchParams,
-        graphql,
+        pageParam,
         initialLimit,
-      ],
-      queryFn: async ({ pageParam }) => {
-        if (graphql) {
-          return (await fetchGraphQLSelectOptions({
-            resource: graphql.resource,
-            query: debouncedSearchTerm,
-            page: pageParam,
-            initialLimit,
-            filters: {
-              ...selectOptionFiltersFromSearchParams(extraSearchParams),
-              ...graphql.filters,
-            },
-          })) as GenericLimitOffsetResponse<TOption>;
-        }
-
-        return fetchOptions<TOption>(
-          link,
-          debouncedSearchTerm,
-          pageParam,
-          initialLimit,
-          extraSearchParams,
-        );
-      },
-      initialPageParam: 1,
-      getNextPageParam: (lastPage, allPages) => (lastPage.next ? allPages.length + 1 : undefined),
-      placeholderData: keepPreviousData,
-      enabled: open,
-      staleTime: 2 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      retry: 1,
-    });
+        extraSearchParams,
+      );
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => (lastPage.next ? allPages.length + 1 : undefined),
+    placeholderData: keepPreviousData,
+    enabled: open,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 
   const options = useMemo(() => {
     const aggregatedOptions = data?.pages.flatMap((page) => page.results ?? []) ?? [];

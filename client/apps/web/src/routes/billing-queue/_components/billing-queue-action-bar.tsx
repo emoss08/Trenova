@@ -59,8 +59,7 @@ export function BillingQueueActionBar({
   });
 
   const { mutate: assignAndReview, isPending: isAssignPending } = useApiMutation({
-    mutationFn: (billerId: string) =>
-      assignBillingQueueBillerGraphQL(item.id, { billerId }),
+    mutationFn: (billerId: string) => assignBillingQueueBillerGraphQL(item.id, { billerId }),
     resourceName: "BillingQueueItem",
     onSuccess: () => {
       invalidate();

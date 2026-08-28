@@ -14,11 +14,7 @@ import {
 import type { HazmatSegregationRule } from "@/types/hazmat-segregation-rule";
 import { useFormContext, useWatch } from "react-hook-form";
 
-export function HazmatSegregationRuleForm({
-  disabled,
-}: {
-  disabled?: boolean;
-}) {
+export function HazmatSegregationRuleForm({ disabled }: { disabled?: boolean }) {
   const { control } = useFormContext<HazmatSegregationRule>();
 
   const [hasExceptions, segregationType] = useWatch({

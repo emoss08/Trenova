@@ -1,7 +1,4 @@
-import {
-  TextareaField,
-  type TextareaPreset,
-} from "@/components/fields/textarea-field";
+import { TextareaField, type TextareaPreset } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useFormContext } from "react-hook-form";
 

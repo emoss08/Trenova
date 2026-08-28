@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { optionalStringSchema, timestampSchema, versionSchema } from "@trenova/shared/types/helpers";
+import {
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "@trenova/shared/types/helpers";
 
 export const serviceIncidentTypeSchema = z.enum([
   "Never",

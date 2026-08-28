@@ -66,10 +66,7 @@ export function EDICertificateField({
         placeholder="-----BEGIN CERTIFICATE-----"
       />
       <div className="flex items-start justify-between gap-2">
-        <CertificateSummaryLine
-          hasValue={debouncedValue.length > 0}
-          inspection={inspection}
-        />
+        <CertificateSummaryLine hasValue={debouncedValue.length > 0} inspection={inspection} />
         <Button
           type="button"
           variant="outline"

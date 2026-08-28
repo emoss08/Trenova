@@ -16,13 +16,17 @@ import { formatUnixDateTimeShort, formatUnixInUserTimezone } from "@trenova/shar
 
 function formatUnixTimestamp(unix: number | null | undefined): string {
   if (!unix) return "—";
-  return formatUnixInUserTimezone(unix, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZoneName: "short",
-  }, "—");
+  return formatUnixInUserTimezone(
+    unix,
+    {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    },
+    "—",
+  );
 }
 
 function formatActivityTime(unix: number): string {

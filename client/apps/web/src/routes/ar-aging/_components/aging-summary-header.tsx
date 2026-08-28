@@ -49,9 +49,7 @@ export function AgingSummaryHeader({
           label="Overdue"
           value={`${overdueShare.toFixed(1)}%`}
           detail={formatCurrency((totalOpen - totals.currentMinor) / 100)}
-          valueClassName={
-            overdueShare > 0 ? "text-red-600 dark:text-red-400" : undefined
-          }
+          valueClassName={overdueShare > 0 ? "text-red-600 dark:text-red-400" : undefined}
         />
         <SummaryTile
           index={3}

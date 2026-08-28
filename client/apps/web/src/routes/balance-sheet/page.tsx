@@ -48,10 +48,7 @@ export function BalanceSheetPage() {
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
               <span className="text-sm font-semibold">Total Assets</span>
-              <AmountDisplay
-                value={data.totalAssetsMinor}
-                className="text-lg font-bold"
-              />
+              <AmountDisplay value={data.totalAssetsMinor} className="text-lg font-bold" />
             </div>
 
             <Separator />
@@ -60,10 +57,7 @@ export function BalanceSheetPage() {
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
               <span className="text-sm font-semibold">Total Liabilities</span>
-              <AmountDisplay
-                value={data.totalLiabilitiesMinor}
-                className="text-lg font-bold"
-              />
+              <AmountDisplay value={data.totalLiabilitiesMinor} className="text-lg font-bold" />
             </div>
 
             <FinancialReportSection section={data.equity} />
@@ -81,10 +75,7 @@ export function BalanceSheetPage() {
 
             <div className="bg-muted/30 flex items-center justify-between rounded-md border px-4 py-3">
               <span className="text-sm font-semibold">Total Equity</span>
-              <AmountDisplay
-                value={data.totalEquityMinor}
-                className="text-lg font-bold"
-              />
+              <AmountDisplay value={data.totalEquityMinor} className="text-lg font-bold" />
             </div>
 
             <Separator />

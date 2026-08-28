@@ -11,11 +11,7 @@ import {
 import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
 import { useFormContext } from "react-hook-form";
 
-export function ServiceFailureReasonCodeForm({
-  disabled,
-}: {
-  disabled?: boolean;
-}) {
+export function ServiceFailureReasonCodeForm({ disabled }: { disabled?: boolean }) {
   const { control } = useFormContext<ServiceFailureReasonCode>();
 
   return (

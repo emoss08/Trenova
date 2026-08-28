@@ -15,13 +15,7 @@ interface EmptyStateProps {
   className?: string;
 }
 
-export function EmptyState({
-  title,
-  description,
-  icons = [],
-  action,
-  className,
-}: EmptyStateProps) {
+export function EmptyState({ title, description, icons = [], action, className }: EmptyStateProps) {
   return (
     <div
       className={cn(
@@ -60,18 +54,10 @@ export function EmptyState({
         )}
       </div>
       <h2 className="text-foreground mt-6 font-medium">{title}</h2>
-      <p className="text-muted-foreground mt-1 text-sm whitespace-pre-line">
-        {description}
-      </p>
+      <p className="text-muted-foreground mt-1 text-sm whitespace-pre-line">{description}</p>
       {action && (
-        <Button
-          onClick={action.onClick}
-          variant="outline"
-          size="sm"
-          className="mt-4"
-        >
-          {action.icon &&
-            React.createElement(action.icon, { className: "size-4" })}
+        <Button onClick={action.onClick} variant="outline" size="sm" className="mt-4">
+          {action.icon && React.createElement(action.icon, { className: "size-4" })}
           {action.label}
         </Button>
       )}

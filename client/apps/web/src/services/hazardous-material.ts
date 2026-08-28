@@ -15,14 +15,15 @@ export class HazardousMaterialService {
       request,
     );
 
-    return safeParse(bulkUpdateHazardousMaterialStatusResponseSchema, response, "BulkUpdateHazardousMaterialStatus");
+    return safeParse(
+      bulkUpdateHazardousMaterialStatusResponseSchema,
+      response,
+      "BulkUpdateHazardousMaterialStatus",
+    );
   }
 
   public async patch(id: HazardousMaterial["id"], data: Partial<HazardousMaterial>) {
-    const response = await api.patch<HazardousMaterial>(
-      `/hazardous-materials/${id}/`,
-      data,
-    );
+    const response = await api.patch<HazardousMaterial>(`/hazardous-materials/${id}/`, data);
 
     return safeParse(hazardousMaterialSchema, response, "HazardousMaterial");
   }

@@ -5,12 +5,7 @@ import {
   versionSchema,
 } from "@trenova/shared/types/helpers";
 
-export const documentControlResourceSchema = z.enum([
-  "shipment",
-  "trailer",
-  "tractor",
-  "worker",
-]);
+export const documentControlResourceSchema = z.enum(["shipment", "trailer", "tractor", "worker"]);
 
 export const documentControlSchema = z.object({
   id: optionalStringSchema,
@@ -32,6 +27,4 @@ export const documentControlSchema = z.object({
 });
 
 export type DocumentControl = z.infer<typeof documentControlSchema>;
-export type DocumentControlResource = z.infer<
-  typeof documentControlResourceSchema
->;
+export type DocumentControlResource = z.infer<typeof documentControlResourceSchema>;

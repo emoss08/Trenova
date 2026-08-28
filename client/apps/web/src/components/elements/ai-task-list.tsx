@@ -30,9 +30,7 @@ interface AiTaskListContextValue {
   totalCount: number;
 }
 
-const AiTaskListContext = React.createContext<AiTaskListContextValue | null>(
-  null,
-);
+const AiTaskListContext = React.createContext<AiTaskListContextValue | null>(null);
 
 function useTaskListContext() {
   const context = React.useContext(AiTaskListContext);
@@ -134,11 +132,7 @@ function AiTaskList({
             {hasChildren
               ? children
               : tasks.map((task) => (
-                  <AiTaskListItem
-                    key={task.id}
-                    status={task.status}
-                    description={task.description}
-                  >
+                  <AiTaskListItem key={task.id} status={task.status} description={task.description}>
                     {task.title}
                   </AiTaskListItem>
                 ))}
@@ -156,17 +150,9 @@ interface AiTaskListItemProps {
   className?: string;
 }
 
-function AiTaskListItem({
-  status,
-  description,
-  children,
-  className,
-}: AiTaskListItemProps) {
+function AiTaskListItem({ status, description, children, className }: AiTaskListItemProps) {
   const statusConfig = React.useMemo(() => {
-    const configs: Record<
-      TaskStatus,
-      { icon: React.ReactNode; className: string }
-    > = {
+    const configs: Record<TaskStatus, { icon: React.ReactNode; className: string }> = {
       pending: {
         icon: <Circle className="size-4" />,
         className: "text-muted-foreground",
@@ -198,9 +184,7 @@ function AiTaskListItem({
         className,
       )}
     >
-      <div className={cn("mt-0.5 shrink-0", statusConfig.className)}>
-        {statusConfig.icon}
-      </div>
+      <div className={cn("mt-0.5 shrink-0", statusConfig.className)}>{statusConfig.icon}</div>
       <div className="min-w-0 flex-1">
         <div
           className={cn(
@@ -210,9 +194,7 @@ function AiTaskListItem({
         >
           {children}
         </div>
-        {description && (
-          <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>
-        )}
+        {description && <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>}
       </div>
     </div>
   );
@@ -224,11 +206,7 @@ interface AiTaskListFileProps {
   className?: string;
 }
 
-function AiTaskListFile({
-  filename,
-  language,
-  className,
-}: AiTaskListFileProps) {
+function AiTaskListFile({ filename, language, className }: AiTaskListFileProps) {
   return (
     <div
       data-slot="ai-task-list-file"
@@ -257,10 +235,7 @@ function AiTaskListProgress({ className }: AiTaskListProgressProps) {
   }, [completedCount, totalCount]);
 
   return (
-    <div
-      data-slot="ai-task-list-progress"
-      className={cn("space-y-1", className)}
-    >
+    <div data-slot="ai-task-list-progress" className={cn("space-y-1", className)}>
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">Progress</span>
         <span className="font-medium">

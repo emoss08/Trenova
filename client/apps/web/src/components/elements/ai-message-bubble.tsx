@@ -30,10 +30,7 @@ type Provider =
   | "cohere"
   | "meta";
 
-const PROVIDER_LOGOS: Record<
-  Provider,
-  React.ComponentType<{ className?: string }>
-> = {
+const PROVIDER_LOGOS: Record<Provider, React.ComponentType<{ className?: string }>> = {
   openai: OpenAILogo,
   anthropic: AnthropicLogo,
   google: GeminiLogo,
@@ -111,18 +108,14 @@ export function AiMessageBubble({
       data-slot="ai-message-bubble"
       role="article"
       aria-label={isUser ? "Your message" : "AI response"}
-      className={cn(
-        "group flex gap-3 font-mono",
-        isUser && "flex-row-reverse",
-        className
-      )}
+      className={cn("group flex gap-3 font-mono", isUser && "flex-row-reverse", className)}
     >
       <div className="shrink-0">{avatar || defaultAvatar}</div>
 
       <div
         className={cn(
           "relative max-w-[80%] px-3 py-2",
-          isUser ? "bg-foreground text-background border" : "text-foreground"
+          isUser ? "bg-foreground text-background border" : "text-foreground",
         )}
       >
         <div aria-live={isStreaming ? "polite" : undefined}>
@@ -131,9 +124,7 @@ export function AiMessageBubble({
               {children}
             </div>
           ) : (
-            <p className="m-0 text-[13px] leading-relaxed whitespace-pre-wrap">
-              {content}
-            </p>
+            <p className="m-0 text-[13px] leading-relaxed whitespace-pre-wrap">{content}</p>
           )}
           {isStreaming && (
             <span className="ml-1 inline-block h-3.5 w-[2px] animate-pulse bg-current" />
@@ -152,11 +143,7 @@ export function AiMessageBubble({
             className="bg-background hover:bg-muted absolute top-0.5 -right-8 flex size-6 items-center justify-center border opacity-0 transition-opacity group-hover:opacity-100"
             onClick={handleCopy}
           >
-            {copied ? (
-              <Check className="size-3" />
-            ) : (
-              <Copy className="size-3" />
-            )}
+            {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
             <span className="sr-only">Copy message</span>
           </button>
         )}

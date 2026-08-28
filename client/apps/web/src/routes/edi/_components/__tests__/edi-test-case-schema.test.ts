@@ -104,10 +104,7 @@ describe("EDI test case form helpers", () => {
       version: 5,
     });
 
-    expect(request.expectedWarningCodes).toEqual([
-      "missing_optional_element",
-      "value_truncated",
-    ]);
+    expect(request.expectedWarningCodes).toEqual(["missing_optional_element", "value_truncated"]);
     expect(request.expectedErrorCodes).toEqual([]);
     expect(request.partnerDocumentProfileId).toBe("edidp_1");
     expect(request.description).toBeUndefined();

@@ -1,9 +1,4 @@
-const ALLOWED_LOGO_MIME_TYPES = new Set([
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-]);
+const ALLOWED_LOGO_MIME_TYPES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
 
 const OUTPUT_MIME_TYPE = "image/webp";
 const DEFAULT_MAX_DIMENSION = 1024;
@@ -32,11 +27,7 @@ async function loadImage(file: File): Promise<HTMLImageElement> {
   }
 }
 
-function getTargetDimensions(
-  width: number,
-  height: number,
-  maxDimension: number,
-) {
+function getTargetDimensions(width: number, height: number, maxDimension: number) {
   if (width <= maxDimension && height <= maxDimension) {
     return { width, height };
   }
@@ -48,10 +39,7 @@ function getTargetDimensions(
   };
 }
 
-function canvasToBlob(
-  canvas: HTMLCanvasElement,
-  quality: number,
-): Promise<Blob> {
+function canvasToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -80,11 +68,7 @@ export async function convertOrganizationLogoToWebP(
   const quality = options.quality ?? DEFAULT_QUALITY;
 
   const image = await loadImage(file);
-  const target = getTargetDimensions(
-    image.naturalWidth,
-    image.naturalHeight,
-    maxDimension,
-  );
+  const target = getTargetDimensions(image.naturalWidth, image.naturalHeight, maxDimension);
   const canvas = document.createElement("canvas");
   canvas.width = target.width;
   canvas.height = target.height;

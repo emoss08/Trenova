@@ -2,6 +2,7 @@
 Copyright 2025 Eric Moss
 Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
 Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md-->
+
 # Popout Window Manager
 
 An enterprise-grade popout window management system for React applications with advanced features like window position memory, focus management, and state synchronization.
@@ -22,7 +23,7 @@ An enterprise-grade popout window management system for React applications with 
 ### Basic Example
 
 ```tsx
-import { usePopoutWindow } from '@/hooks/popout-window/use-popout-window';
+import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 
 function MyComponent() {
   const { openPopout, closePopout, isPopout } = usePopoutWindow();
@@ -31,29 +32,19 @@ function MyComponent() {
     return <div>This is displayed in a popout window!</div>;
   }
 
-  return (
-    <button onClick={() => openPopout('/my-route', { id: '123' })}>
-      Open Popout
-    </button>
-  );
+  return <button onClick={() => openPopout("/my-route", { id: "123" })}>Open Popout</button>;
 }
 ```
 
 ### Advanced Example with Events
 
 ```tsx
-const {
-  activeWindows,
-  openPopout,
-  focusPopout,
-  sendMessage,
-  broadcastMessage,
-} = usePopoutWindow({
-  onReady: (windowId) => console.log('Window ready:', windowId),
-  onClose: (windowId) => console.log('Window closed:', windowId),
-  onFocus: (windowId) => console.log('Window focused:', windowId),
-  onBlur: (windowId) => console.log('Window blurred:', windowId),
-  onError: (error, windowId) => console.error('Window error:', error),
+const { activeWindows, openPopout, focusPopout, sendMessage, broadcastMessage } = usePopoutWindow({
+  onReady: (windowId) => console.log("Window ready:", windowId),
+  onClose: (windowId) => console.log("Window closed:", windowId),
+  onFocus: (windowId) => console.log("Window focused:", windowId),
+  onBlur: (windowId) => console.log("Window blurred:", windowId),
+  onError: (error, windowId) => console.error("Window error:", error),
 });
 ```
 
@@ -113,15 +104,15 @@ Send messages between windows:
 
 ```tsx
 // Send to specific window
-sendMessage(windowId, 'update-data', { value: 42 });
+sendMessage(windowId, "update-data", { value: 42 });
 
 // Broadcast to all windows
-broadcastMessage('theme-changed', { theme: 'dark' });
+broadcastMessage("theme-changed", { theme: "dark" });
 
 // Listen for messages (in popout window)
-window.addEventListener('message', (event) => {
-  if (event.data.type === 'update-data') {
-    console.log('Received data:', event.data.data);
+window.addEventListener("message", (event) => {
+  if (event.data.type === "update-data") {
+    console.log("Received data:", event.data.data);
   }
 });
 ```

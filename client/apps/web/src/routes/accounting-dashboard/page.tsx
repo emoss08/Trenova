@@ -36,10 +36,7 @@ function Section({
 }
 
 export function AccountingDashboardPage() {
-  const { allowed: canRecordPayment } = usePermission(
-    Resource.CustomerPayment,
-    Operation.Create,
-  );
+  const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
 
   return (
     <PageLayout

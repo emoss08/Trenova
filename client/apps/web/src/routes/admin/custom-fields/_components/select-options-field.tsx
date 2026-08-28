@@ -25,9 +25,7 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
           type="button"
           variant="outline"
           size="xxs"
-          onClick={() =>
-            append({ value: "", label: "", color: "", description: "" })
-          }
+          onClick={() => append({ value: "", label: "", color: "", description: "" })}
         >
           <PlusIcon className="size-3" />
           Add Option
@@ -41,10 +39,7 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
       )}
       <div className="space-y-2">
         {fields.map((field, index) => (
-          <div
-            key={field.id}
-            className="grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-2"
-          >
+          <div key={field.id} className="grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-2">
             <InputField
               control={control}
               name={`options.${index}.value`}
@@ -57,18 +52,9 @@ export function SelectOptionsField({ control }: SelectOptionsFieldProps) {
               label="Label"
               placeholder="Display Label"
             />
-            <ColorField
-              control={control}
-              name={`options.${index}.color`}
-              label="Color"
-            />
+            <ColorField control={control} name={`options.${index}.color`} label="Color" />
             <div className="pb-0.5">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => remove(index)}
-              >
+              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                 <TrashIcon className="text-destructive size-4" />
               </Button>
             </div>

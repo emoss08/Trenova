@@ -15,7 +15,11 @@ export class FleetCodeService {
       request,
     );
 
-    return safeParse(bulkUpdateFleetCodeStatusResponseSchema, response, "BulkUpdateFleetCodeStatus");
+    return safeParse(
+      bulkUpdateFleetCodeStatusResponseSchema,
+      response,
+      "BulkUpdateFleetCodeStatus",
+    );
   }
 
   public async patch(id: FleetCode["id"], data: Partial<FleetCode>) {

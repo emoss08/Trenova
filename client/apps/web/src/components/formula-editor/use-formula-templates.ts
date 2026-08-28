@@ -47,13 +47,8 @@ export function useUpdateFormulaTemplate() {
   const queryClient = useQueryClient();
 
   return useApiMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<FormulaTemplate>;
-    }) => updateFormulaTemplate(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<FormulaTemplate> }) =>
+      updateFormulaTemplate(id, data),
     resourceName: "Formula Template",
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
@@ -92,14 +87,9 @@ export function useToggleFormulaTemplateStatus() {
     resourceName: "Formula Template",
     onSuccess: (updated) => {
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
-      toast.success(
-        updated.status === "Active"
-          ? "Template activated"
-          : "Template deactivated",
-        {
-          description: `"${updated.name}" is now ${updated.status.toLowerCase()}.`,
-        },
-      );
+      toast.success(updated.status === "Active" ? "Template activated" : "Template deactivated", {
+        description: `"${updated.name}" is now ${updated.status.toLowerCase()}.`,
+      });
     },
   });
 }

@@ -259,58 +259,58 @@ export function NotificationSheet() {
         </div>
 
         <ScrollArea className="min-h-0 flex-1" maskHeight={24}>
-            {isLoading && <FeedSkeleton />}
+          {isLoading && <FeedSkeleton />}
 
-            {isError && !isLoading && (
-              <div className="flex flex-col items-center justify-center gap-3 py-16">
-                <CircleAlertIcon className="text-destructive/60 size-5" />
-                <p className="text-2xs text-muted-foreground">
-                  Notifications couldn&apos;t be loaded.
+          {isError && !isLoading && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16">
+              <CircleAlertIcon className="text-destructive/60 size-5" />
+              <p className="text-2xs text-muted-foreground">
+                Notifications couldn&apos;t be loaded.
+              </p>
+              <Button type="button" variant="outline" size="xs" onClick={() => void refetch()}>
+                Try again
+              </Button>
+            </div>
+          )}
+
+          {!isLoading && !isError && notifications.length === 0 && (
+            <FeedEmptyState state={tab} unreadOnly={filters.unreadOnly} />
+          )}
+
+          {!isLoading &&
+            groups.map((group) => (
+              <div key={group.label}>
+                <p className="text-2xs text-muted-foreground/70 px-4 pt-3 pb-1 font-medium tracking-wider uppercase">
+                  {group.label}
                 </p>
-                <Button type="button" variant="outline" size="xs" onClick={() => void refetch()}>
-                  Try again
-                </Button>
+                <AnimatePresence initial={false}>
+                  {group.items.map((notification) => (
+                    <motion.div
+                      key={notification.id}
+                      layout="position"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
+                      className="overflow-hidden"
+                    >
+                      <NotificationItem
+                        notification={notification}
+                        actions={actions}
+                        onNavigate={handleNavigate}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
-            )}
+            ))}
 
-            {!isLoading && !isError && notifications.length === 0 && (
-              <FeedEmptyState state={tab} unreadOnly={filters.unreadOnly} />
-            )}
-
-            {!isLoading &&
-              groups.map((group) => (
-                <div key={group.label}>
-                  <p className="text-2xs text-muted-foreground/70 px-4 pt-3 pb-1 font-medium tracking-wider uppercase">
-                    {group.label}
-                  </p>
-                  <AnimatePresence initial={false}>
-                    {group.items.map((notification) => (
-                      <motion.div
-                        key={notification.id}
-                        layout="position"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.18, ease: "easeOut" }}
-                        className="overflow-hidden"
-                      >
-                        <NotificationItem
-                          notification={notification}
-                          actions={actions}
-                          onNavigate={handleNavigate}
-                        />
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              ))}
-
-            {hasNextPage && <div ref={sentinelRef} className="h-px w-full" />}
-            {isFetchingNextPage && (
-              <div className="flex items-center justify-center py-3">
-                <Spinner className="text-muted-foreground size-3.5" />
-              </div>
-            )}
+          {hasNextPage && <div ref={sentinelRef} className="h-px w-full" />}
+          {isFetchingNextPage && (
+            <div className="flex items-center justify-center py-3">
+              <Spinner className="text-muted-foreground size-3.5" />
+            </div>
+          )}
         </ScrollArea>
       </SheetContent>
     </Sheet>

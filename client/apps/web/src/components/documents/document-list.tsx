@@ -39,10 +39,7 @@ function LoadingStateList() {
   return (
     <div className="space-y-2">
       {[1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="bg-card flex items-center gap-3 rounded-lg border p-3"
-        >
+        <div key={i} className="bg-card flex items-center gap-3 rounded-lg border p-3">
           <div className="bg-muted size-12 animate-pulse rounded-md" />
           <div className="flex-1 space-y-2">
             <div className="bg-muted h-4 w-3/4 animate-pulse rounded" />
@@ -58,10 +55,7 @@ function LoadingStateGrid() {
   return (
     <div className="grid grid-cols-2 gap-4">
       {[1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          className="bg-card flex flex-col overflow-hidden rounded-lg border"
-        >
+        <div key={i} className="bg-card flex flex-col overflow-hidden rounded-lg border">
           <div className="bg-muted/30 flex aspect-square items-center justify-center p-4">
             <div className="bg-muted size-16 animate-pulse rounded-lg" />
           </div>
@@ -114,9 +108,7 @@ export function DocumentList({
             isSelected={selectedIds?.has(document.id)}
             onSelect={onSelectDocument}
             documentTypeName={
-              document.documentTypeId
-                ? documentTypeMap?.get(document.documentTypeId)
-                : undefined
+              document.documentTypeId ? documentTypeMap?.get(document.documentTypeId) : undefined
             }
           />
         ))}
@@ -139,9 +131,7 @@ export function DocumentList({
           isSelected={selectedIds?.has(document.id)}
           onSelect={onSelectDocument}
           documentTypeName={
-            document.documentTypeId
-              ? documentTypeMap?.get(document.documentTypeId)
-              : undefined
+            document.documentTypeId ? documentTypeMap?.get(document.documentTypeId) : undefined
           }
         />
       ))}

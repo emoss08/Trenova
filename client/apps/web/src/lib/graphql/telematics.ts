@@ -209,9 +209,7 @@ export async function listTelematicsFormMappingsGraphQL(): Promise<TelematicsFor
   return data.telematicsFormMappings;
 }
 
-export async function saveTelematicsFormMappingGraphQL(
-  input: SaveTelematicsFormMappingInput,
-) {
+export async function saveTelematicsFormMappingGraphQL(input: SaveTelematicsFormMappingInput) {
   const data = await requestGraphQL({
     document: SaveTelematicsFormMappingDocument,
     operationName: "SaveTelematicsFormMapping",

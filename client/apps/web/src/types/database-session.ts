@@ -21,7 +21,10 @@ export const databaseSessionChainSchema = z.object({
 });
 
 export const listDatabaseSessionsResponseSchema = z.object({
-  items: z.array(databaseSessionChainSchema).nullable().transform((v) => v ?? []),
+  items: z
+    .array(databaseSessionChainSchema)
+    .nullable()
+    .transform((v) => v ?? []),
 });
 
 export const terminateDatabaseSessionResponseSchema = z.object({
@@ -31,9 +34,7 @@ export const terminateDatabaseSessionResponseSchema = z.object({
 });
 
 export type DatabaseSessionChain = z.infer<typeof databaseSessionChainSchema>;
-export type ListDatabaseSessionsResponse = z.infer<
-  typeof listDatabaseSessionsResponseSchema
->;
+export type ListDatabaseSessionsResponse = z.infer<typeof listDatabaseSessionsResponseSchema>;
 export type TerminateDatabaseSessionResponse = z.infer<
   typeof terminateDatabaseSessionResponseSchema
 >;

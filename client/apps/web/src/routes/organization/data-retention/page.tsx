@@ -16,18 +16,12 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const dataRetentionFormSchema = z.object({
-  auditRetentionPeriod: z
-    .number()
-    .int()
-    .min(1, "Audit retention must be at least 1 day"),
+  auditRetentionPeriod: z.number().int().min(1, "Audit retention must be at least 1 day"),
   ediInboundFileRetentionPeriod: z
     .number()
     .int()
     .min(0, "EDI inbound file retention cannot be negative"),
-  ediMessageRetentionPeriod: z
-    .number()
-    .int()
-    .min(0, "EDI message retention cannot be negative"),
+  ediMessageRetentionPeriod: z.number().int().min(0, "EDI message retention cannot be negative"),
 });
 
 type DataRetentionFormValues = z.infer<typeof dataRetentionFormSchema>;
@@ -92,10 +86,7 @@ export function DataRetentionPage() {
               void handleSubmit((values) => mutation.mutate(values))(event);
             }}
           >
-            <FormSection
-              title="Retention Windows"
-              className="bg-muted/20 rounded-md border p-3"
-            >
+            <FormSection title="Retention Windows" className="bg-muted/20 rounded-md border p-3">
               <FormGroup cols={1}>
                 <FormControl>
                   <NumberField

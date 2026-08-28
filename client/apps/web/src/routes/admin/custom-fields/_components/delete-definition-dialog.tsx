@@ -11,10 +11,7 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { CustomFieldService } from "@/services/custom-field";
-import type {
-  CustomFieldDefinition,
-  DefinitionUsageStats,
-} from "@/types/custom-field";
+import type { CustomFieldDefinition, DefinitionUsageStats } from "@/types/custom-field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, Loader2Icon, TrashIcon } from "lucide-react";
 import { useState } from "react";
@@ -68,10 +65,7 @@ export function DeleteDefinitionDialog({
         }
       } else {
         toast.error("Failed to delete custom field", {
-          description:
-            error instanceof Error
-              ? error.message
-              : "An unexpected error occurred",
+          description: error instanceof Error ? error.message : "An unexpected error occurred",
         });
       }
     },
@@ -95,35 +89,29 @@ export function DeleteDefinitionDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogMedia
-            className={
-              hasExistingValues ? "bg-destructive/10 text-destructive" : ""
-            }
+            className={hasExistingValues ? "bg-destructive/10 text-destructive" : ""}
           >
             {hasExistingValues ? <AlertTriangleIcon /> : <TrashIcon />}
           </AlertDialogMedia>
           <AlertDialogTitle>
-            {hasExistingValues
-              ? "Cannot Delete Custom Field"
-              : "Delete Custom Field"}
+            {hasExistingValues ? "Cannot Delete Custom Field" : "Delete Custom Field"}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {hasExistingValues ? (
               <span className="space-y-2">
                 <span className="block">
-                  This custom field has{" "}
-                  <strong>{usageStats.totalValueCount} values</strong> across{" "}
+                  This custom field has <strong>{usageStats.totalValueCount} values</strong> across{" "}
                   <strong>{usageStats.resourceCount} resources</strong>.
                 </span>
                 <span className="block font-medium">
-                  To remove this field, deactivate it instead. This will hide
-                  the field from forms while preserving existing data.
+                  To remove this field, deactivate it instead. This will hide the field from forms
+                  while preserving existing data.
                 </span>
               </span>
             ) : (
               <span>
                 Are you sure you want to delete the custom field &quot;
-                <strong>{definition.label}</strong>&quot;? This action cannot be
-                undone.
+                <strong>{definition.label}</strong>&quot;? This action cannot be undone.
               </span>
             )}
           </AlertDialogDescription>
@@ -138,9 +126,7 @@ export function DeleteDefinitionDialog({
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending && (
-                <Loader2Icon className="mr-2 size-4 animate-spin" />
-              )}
+              {deleteMutation.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
               Delete
             </AlertDialogAction>
           )}

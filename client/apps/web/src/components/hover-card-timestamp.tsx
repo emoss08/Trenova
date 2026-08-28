@@ -63,16 +63,10 @@ export function HoverCardTimestamp({
         }
       />
       <HoverCardPortal>
-        <HoverCardContent
-          className="w-auto p-2"
-          {...{ side, align, alignOffset, sideOffset }}
-        >
+        <HoverCardContent className="w-auto p-2" {...{ side, align, alignOffset, sideOffset }}>
           <dl className="flex flex-col gap-1">
             <Row value={String(date.getTime())} label="Timestamp" />
-            <Row
-              value={format(new UTCDate(date), "LLL dd, y HH:mm:ss")}
-              label="UTC"
-            />
+            <Row value={format(new UTCDate(date), "LLL dd, y HH:mm:ss")} label="UTC" />
             <Row
               value={formatToUserTimezone(timestamp, {
                 showSeconds: showTime,
@@ -108,11 +102,7 @@ function Row({ value, label }: { value: string; label: string }) {
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="flex items-center gap-1 truncate font-mono">
         <span className="invisible group-hover:visible">
-          {!isCopied ? (
-            <CopyIcon className="size-3" />
-          ) : (
-            <CheckIcon className="size-3" />
-          )}
+          {!isCopied ? <CopyIcon className="size-3" /> : <CheckIcon className="size-3" />}
         </span>
         {value}
       </dd>

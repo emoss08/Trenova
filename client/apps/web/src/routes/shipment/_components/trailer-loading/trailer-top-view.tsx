@@ -4,7 +4,13 @@ import type { LoadingOptimizationResult } from "@/types/loading-optimization";
 import { COMMODITY_PALETTE } from "./constants";
 import { HazmatZoneOverlay } from "./hazmat-zone-overlay";
 
-export function TrailerTopView({ data, scoreBadge }: { data: LoadingOptimizationResult; scoreBadge?: React.ReactNode }) {
+export function TrailerTopView({
+  data,
+  scoreBadge,
+}: {
+  data: LoadingOptimizationResult;
+  scoreBadge?: React.ReactNode;
+}) {
   const trailerLenFt = data.trailerLengthFeet;
   const W = 640;
   const H = 110;
@@ -55,21 +61,48 @@ export function TrailerTopView({ data, scoreBadge }: { data: LoadingOptimization
               />
 
               {/* Door lines (right) */}
-              <line x1={innerW} y1={4} x2={innerW} y2={innerH * 0.44} className="stroke-foreground/50" strokeWidth={3} strokeLinecap="round" />
-              <line x1={innerW} y1={innerH * 0.56} x2={innerW} y2={innerH - 4} className="stroke-foreground/50" strokeWidth={3} strokeLinecap="round" />
+              <line
+                x1={innerW}
+                y1={4}
+                x2={innerW}
+                y2={innerH * 0.44}
+                className="stroke-foreground/50"
+                strokeWidth={3}
+                strokeLinecap="round"
+              />
+              <line
+                x1={innerW}
+                y1={innerH * 0.56}
+                x2={innerW}
+                y2={innerH - 4}
+                className="stroke-foreground/50"
+                strokeWidth={3}
+                strokeLinecap="round"
+              />
 
               {/* Hatched empty area */}
               <defs>
-                <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <pattern
+                  id="hatch"
+                  width="6"
+                  height="6"
+                  patternUnits="userSpaceOnUse"
+                  patternTransform="rotate(45)"
+                >
                   <line x1="0" y1="0" x2="0" y2="6" className="stroke-border" strokeWidth={1} />
                 </pattern>
               </defs>
               {(() => {
-                const usedEnd = data.placements.reduce((m, p) => Math.max(m, p.positionFeet + p.lengthFeet), 0);
+                const usedEnd = data.placements.reduce(
+                  (m, p) => Math.max(m, p.positionFeet + p.lengthFeet),
+                  0,
+                );
                 const emptyX = ftToX(usedEnd);
                 const emptyW = innerW - emptyX;
                 if (emptyW < 4) return null;
-                return <rect x={emptyX} y={0} width={emptyW} height={innerH} fill="url(#hatch)" rx={2} />;
+                return (
+                  <rect x={emptyX} y={0} width={emptyW} height={innerH} fill="url(#hatch)" rx={2} />
+                );
               })()}
 
               {/* Clip for overflow */}
@@ -142,15 +175,41 @@ export function TrailerTopView({ data, scoreBadge }: { data: LoadingOptimization
                       {/* Hazmat badge */}
                       {p.isHazmat && (
                         <g>
-                          <circle cx={bx + m + 14} cy={m + 18} r={8} className="fill-amber-400 dark:fill-amber-600" />
-                          <text x={bx + m + 14} y={m + 19} textAnchor="middle" dominantBaseline="middle" className="text-[10px]">{"\u2623"}</text>
+                          <circle
+                            cx={bx + m + 14}
+                            cy={m + 18}
+                            r={8}
+                            className="fill-amber-400 dark:fill-amber-600"
+                          />
+                          <text
+                            x={bx + m + 14}
+                            y={m + 19}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            className="text-[10px]"
+                          >
+                            {"\u2623"}
+                          </text>
                         </g>
                       )}
                       {/* Fragile badge */}
                       {p.fragile && !p.isHazmat && (
                         <g>
-                          <circle cx={bx + m + 14} cy={m + 18} r={8} className="fill-red-400 dark:fill-red-600" />
-                          <text x={bx + m + 14} y={m + 19} textAnchor="middle" dominantBaseline="middle" className="text-[10px]">{"\u26a0"}</text>
+                          <circle
+                            cx={bx + m + 14}
+                            cy={m + 18}
+                            r={8}
+                            className="fill-red-400 dark:fill-red-600"
+                          />
+                          <text
+                            x={bx + m + 14}
+                            y={m + 19}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            className="text-[10px]"
+                          >
+                            {"\u26a0"}
+                          </text>
                         </g>
                       )}
                     </g>
@@ -163,9 +222,29 @@ export function TrailerTopView({ data, scoreBadge }: { data: LoadingOptimization
                 const dx = ftToX(divider.positionFeet);
                 return (
                   <g key={divider.stopNumber}>
-                    <line x1={dx} y1={-4} x2={dx} y2={innerH + 4} className="stroke-primary/60" strokeWidth={2} strokeDasharray="6 4" />
-                    <rect x={dx - 40} y={-16} width={80} height={14} rx={3} className="fill-primary/15" />
-                    <text x={dx} y={-7} textAnchor="middle" className="fill-primary text-[8px] font-semibold">
+                    <line
+                      x1={dx}
+                      y1={-4}
+                      x2={dx}
+                      y2={innerH + 4}
+                      className="stroke-primary/60"
+                      strokeWidth={2}
+                      strokeDasharray="6 4"
+                    />
+                    <rect
+                      x={dx - 40}
+                      y={-16}
+                      width={80}
+                      height={14}
+                      rx={3}
+                      className="fill-primary/15"
+                    />
+                    <text
+                      x={dx}
+                      y={-7}
+                      textAnchor="middle"
+                      className="fill-primary text-[8px] font-semibold"
+                    >
                       {divider.label}
                     </text>
                   </g>
@@ -175,36 +254,104 @@ export function TrailerTopView({ data, scoreBadge }: { data: LoadingOptimization
               {/* Overflow indicator */}
               {data.totalLinearFeet > trailerLenFt && (
                 <g>
-                  <line x1={innerW} y1={-4} x2={innerW} y2={innerH + 4} className="stroke-destructive" strokeWidth={2} strokeDasharray="6 3" />
-                  <text x={innerW - 4} y={innerH + 12} textAnchor="end" className="fill-destructive text-[8px] font-semibold">OVER</text>
+                  <line
+                    x1={innerW}
+                    y1={-4}
+                    x2={innerW}
+                    y2={innerH + 4}
+                    className="stroke-destructive"
+                    strokeWidth={2}
+                    strokeDasharray="6 3"
+                  />
+                  <text
+                    x={innerW - 4}
+                    y={innerH + 12}
+                    textAnchor="end"
+                    className="fill-destructive text-[8px] font-semibold"
+                  >
+                    OVER
+                  </text>
                 </g>
               )}
 
               {/* Hazmat overlay */}
               {data.hazmatZones.length > 0 && (
-                <HazmatZoneOverlay zones={data.hazmatZones} placements={data.placements} trailerLengthFeet={trailerLenFt} innerW={innerW} innerH={innerH} />
+                <HazmatZoneOverlay
+                  zones={data.hazmatZones}
+                  placements={data.placements}
+                  trailerLengthFeet={trailerLenFt}
+                  innerW={innerW}
+                  innerH={innerH}
+                />
               )}
 
               {/* Labels */}
-              <text x={-6} y={-8} textAnchor="middle" className="fill-muted-foreground text-[8px] font-semibold">NOSE</text>
-              <text x={innerW + 4} y={-8} textAnchor="middle" className="fill-muted-foreground text-[8px] font-semibold">DOORS</text>
+              <text
+                x={-6}
+                y={-8}
+                textAnchor="middle"
+                className="fill-muted-foreground text-[8px] font-semibold"
+              >
+                NOSE
+              </text>
+              <text
+                x={innerW + 4}
+                y={-8}
+                textAnchor="middle"
+                className="fill-muted-foreground text-[8px] font-semibold"
+              >
+                DOORS
+              </text>
 
               {/* Ruler */}
               <g transform={`translate(0, ${innerH + 6})`}>
-                <line x1={0} y1={0} x2={innerW} y2={0} className="stroke-border" strokeWidth={0.5} />
+                <line
+                  x1={0}
+                  y1={0}
+                  x2={innerW}
+                  y2={0}
+                  className="stroke-border"
+                  strokeWidth={0.5}
+                />
                 <line x1={0} y1={-2} x2={0} y2={2} className="stroke-border" strokeWidth={1} />
-                <line x1={innerW} y1={-2} x2={innerW} y2={2} className="stroke-border" strokeWidth={1} />
+                <line
+                  x1={innerW}
+                  y1={-2}
+                  x2={innerW}
+                  y2={2}
+                  className="stroke-border"
+                  strokeWidth={1}
+                />
                 {Array.from({ length: Math.floor(trailerLenFt / 10) }, (_, i) => {
                   const tick = (i + 1) * 10;
                   const tx = ftToX(tick);
                   return (
                     <g key={tick}>
-                      <line x1={tx} y1={-2} x2={tx} y2={2} className="stroke-border" strokeWidth={0.5} />
-                      <text x={tx} y={11} textAnchor="middle" className="fill-muted-foreground text-[7px]">{tick}</text>
+                      <line
+                        x1={tx}
+                        y1={-2}
+                        x2={tx}
+                        y2={2}
+                        className="stroke-border"
+                        strokeWidth={0.5}
+                      />
+                      <text
+                        x={tx}
+                        y={11}
+                        textAnchor="middle"
+                        className="fill-muted-foreground text-[7px]"
+                      >
+                        {tick}
+                      </text>
                     </g>
                   );
                 })}
-                <text x={innerW / 2} y={20} textAnchor="middle" className="fill-muted-foreground text-[8px]">
+                <text
+                  x={innerW / 2}
+                  y={20}
+                  textAnchor="middle"
+                  className="fill-muted-foreground text-[8px]"
+                >
                   {trailerLenFt} ft total
                 </text>
               </g>

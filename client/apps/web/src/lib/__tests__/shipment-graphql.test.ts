@@ -36,12 +36,12 @@ describe("shipment GraphQL helpers", () => {
       after: "cursor-0",
       query: "SHP",
       fieldFilters: [{ field: "status", operator: "eq", value: "InTransit" }],
-			filterGroups: [
-				{
-					filters: [{ field: "customerId", operator: "eq", value: "cus_1" }],
-				},
-			],
-		});
+      filterGroups: [
+        {
+          filters: [{ field: "customerId", operator: "eq", value: "cus_1" }],
+        },
+      ],
+    });
 
     expect(requestGraphQLMock).toHaveBeenCalledWith({
       document: ShipmentCommandCenterTableDocument,

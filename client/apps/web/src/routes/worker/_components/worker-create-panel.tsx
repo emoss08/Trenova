@@ -71,17 +71,10 @@ interface WorkerCreatePanelProps {
   form: UseFormReturn<Worker>;
 }
 
-export function WorkerCreatePanel({
-  open,
-  onOpenChange,
-  form,
-}: WorkerCreatePanelProps) {
+export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePanelProps) {
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useQueryState(
-    "tab",
-    parseAsString.withDefault("general"),
-  );
+  const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
 
   const {
     formState: { isSubmitting, errors },
@@ -125,12 +118,7 @@ export function WorkerCreatePanel({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        open &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key === "Enter" &&
-        !isSubmitting
-      ) {
+      if (open && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
         event.preventDefault();
         void handleSubmit(onSubmit)();
       }
@@ -140,14 +128,9 @@ export function WorkerCreatePanel({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, isSubmitting, handleSubmit, onSubmit]);
 
-  const hasGeneralErrors =
-    checkSectionErrors(errors, [...GENERAL_FIELDS]) || !!errors.customFields;
-  const hasEmploymentErrors = checkSectionErrors(errors, [
-    ...EMPLOYMENT_FIELDS,
-  ]);
-  const hasComplianceErrors = checkSectionErrors(errors, [
-    ...COMPLIANCE_FIELDS,
-  ]);
+  const hasGeneralErrors = checkSectionErrors(errors, [...GENERAL_FIELDS]) || !!errors.customFields;
+  const hasEmploymentErrors = checkSectionErrors(errors, [...EMPLOYMENT_FIELDS]);
+  const hasComplianceErrors = checkSectionErrors(errors, [...COMPLIANCE_FIELDS]);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -197,10 +180,7 @@ export function WorkerCreatePanel({
               >
                 <div className="border-border border-b px-4">
                   <TabsList variant="underline">
-                    <TabsTab
-                      value="general"
-                      className={cn(hasGeneralErrors && "text-destructive")}
-                    >
+                    <TabsTab value="general" className={cn(hasGeneralErrors && "text-destructive")}>
                       <UserIcon className="size-4" />
                       General Information
                     </TabsTab>
@@ -239,11 +219,7 @@ export function WorkerCreatePanel({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              form="worker-create-form"
-              disabled={isSubmitting}
-            >
+            <Button type="submit" form="worker-create-form" disabled={isSubmitting}>
               {isSubmitting ? "Creating..." : "Create Worker"}
             </Button>
           </div>

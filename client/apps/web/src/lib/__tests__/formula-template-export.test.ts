@@ -6,7 +6,10 @@ import {
   getExportFilename,
   getBulkExportFilename,
 } from "../formula-template-export";
-import type { FormulaTemplate, FormulaTemplateVersion } from "@trenova/shared/types/formula-template";
+import type {
+  FormulaTemplate,
+  FormulaTemplateVersion,
+} from "@trenova/shared/types/formula-template";
 
 function makeTemplate(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate {
   return {

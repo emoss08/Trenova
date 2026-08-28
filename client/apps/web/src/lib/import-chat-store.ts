@@ -41,8 +41,7 @@ function openDB(): Promise<IDBDatabase> {
     };
 
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () =>
-      reject(request.error ?? new Error("Failed to open chat persistence"));
+    request.onerror = () => reject(request.error ?? new Error("Failed to open chat persistence"));
   });
 }
 
@@ -58,10 +57,8 @@ async function withStore<T>(
     const request = run(store);
 
     tx.oncomplete = () => resolve(request?.result);
-    tx.onerror = () =>
-      reject(tx.error ?? new Error("IndexedDB transaction failed"));
-    tx.onabort = () =>
-      reject(tx.error ?? new Error("IndexedDB transaction aborted"));
+    tx.onerror = () => reject(tx.error ?? new Error("IndexedDB transaction failed"));
+    tx.onabort = () => reject(tx.error ?? new Error("IndexedDB transaction aborted"));
   }).finally(() => db.close());
 }
 

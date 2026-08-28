@@ -1,7 +1,11 @@
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import type { EDIInspectionDiagnostic, EDIX12Inspection, EDIX12Segment } from "@trenova/shared/types/edi";
+import type {
+  EDIInspectionDiagnostic,
+  EDIX12Inspection,
+  EDIX12Segment,
+} from "@trenova/shared/types/edi";
 import { CopyIcon } from "lucide-react";
 
 export default function FormattedViewTab({
@@ -98,10 +102,7 @@ function isControlSegment(segment: EDIX12Segment) {
   return ["interchange", "group", "transaction"].includes(segment.type);
 }
 
-function diagnosticsForX12Segment(
-  diagnostics: EDIInspectionDiagnostic[],
-  segment: EDIX12Segment,
-) {
+function diagnosticsForX12Segment(diagnostics: EDIInspectionDiagnostic[], segment: EDIX12Segment) {
   return diagnostics.filter((diagnostic) => diagnostic.segmentIndex === segment.index);
 }
 

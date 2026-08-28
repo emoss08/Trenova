@@ -19,4 +19,3 @@ export const email = createQueryKeys("email", {
     queryFn: () => apiService.emailService.listSuppressions(params),
   }),
 });
-

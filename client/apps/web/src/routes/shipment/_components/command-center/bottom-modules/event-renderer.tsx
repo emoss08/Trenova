@@ -198,9 +198,9 @@ export function renderEvent(event: ShipmentEvent): RenderedEvent {
           `could not deliver the offer to ${carrierFrom(meta)} for`,
           target,
         ),
-        detail: deliveryError
-          ? <span className="text-destructive">{deliveryError}</span>
-          : undefined,
+        detail: deliveryError ? (
+          <span className="text-destructive">{deliveryError}</span>
+        ) : undefined,
         actorHandle: actorHandle(event),
       };
     }
@@ -270,19 +270,10 @@ export function renderEvent(event: ShipmentEvent): RenderedEvent {
   }
 }
 
-function composeHeadline(
-  actor: string,
-  verb: string,
-  target: ReactNode,
-  trail = "",
-): ReactNode {
+function composeHeadline(actor: string, verb: string, target: ReactNode, trail = ""): ReactNode {
   return (
     <>
-      <span className="text-foreground font-medium">{actor}</span>
-      {" "}
-      {verb}
-      {" "}
-      {target}
+      <span className="text-foreground font-medium">{actor}</span> {verb} {target}
       {trail}
     </>
   );

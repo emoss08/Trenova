@@ -35,13 +35,7 @@ export const shipmentEventTypeSchema = z.enum([
 ]);
 export type ShipmentEventType = z.infer<typeof shipmentEventTypeSchema>;
 
-export const shipmentEventSeveritySchema = z.enum([
-  "danger",
-  "success",
-  "brand",
-  "info",
-  "muted",
-]);
+export const shipmentEventSeveritySchema = z.enum(["danger", "success", "brand", "info", "muted"]);
 export type ShipmentEventSeverity = z.infer<typeof shipmentEventSeveritySchema>;
 
 export const shipmentEventActorTypeSchema = z.enum(["user", "apikey", "system", "edi"]);

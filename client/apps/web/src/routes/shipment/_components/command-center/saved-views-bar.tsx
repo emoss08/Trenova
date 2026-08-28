@@ -33,9 +33,7 @@ function ViewTab({
       <span
         className={cn(
           "font-table inline-flex min-w-[20px] justify-center rounded-full px-1.5 py-px text-[10px] tabular-nums",
-          isActive
-            ? "bg-brand/15 text-brand"
-            : "bg-muted text-muted-foreground",
+          isActive ? "bg-brand/15 text-brand" : "bg-muted text-muted-foreground",
         )}
       >
         {count ?? "—"}

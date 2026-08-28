@@ -95,21 +95,58 @@ export function StopReconciliationCard({
 
   // Build address string for display
   const nameVal = toStr(stop.name);
-  const addr = [toStr(stop.addressLine1), toStr(stop.city), toStr(stop.state), toStr(stop.postalCode)]
+  const addr = [
+    toStr(stop.addressLine1),
+    toStr(stop.city),
+    toStr(stop.state),
+    toStr(stop.postalCode),
+  ]
     .filter(Boolean)
     .join(", ");
   const dateVal = toStr(stop.date);
   const timeVal = toStr(stop.timeWindow);
 
   // Collect non-empty fields for inline editing
-  const editableFields: Array<{ key: string; label: string; value: string; field: ReconciliationField }> = [];
-  if (nameVal) editableFields.push({ key: "name", label: "Name", value: nameVal, field: stop.name });
-  if (toStr(stop.addressLine1)) editableFields.push({ key: "addressLine1", label: "Address", value: toStr(stop.addressLine1), field: stop.addressLine1 });
-  if (toStr(stop.city)) editableFields.push({ key: "city", label: "City", value: toStr(stop.city), field: stop.city });
-  if (toStr(stop.state)) editableFields.push({ key: "state", label: "State", value: toStr(stop.state), field: stop.state });
-  if (toStr(stop.postalCode)) editableFields.push({ key: "postalCode", label: "Zip", value: toStr(stop.postalCode), field: stop.postalCode });
-  if (dateVal) editableFields.push({ key: "date", label: "Date", value: dateVal, field: stop.date });
-  if (timeVal) editableFields.push({ key: "timeWindow", label: "Window", value: timeVal, field: stop.timeWindow });
+  const editableFields: Array<{
+    key: string;
+    label: string;
+    value: string;
+    field: ReconciliationField;
+  }> = [];
+  if (nameVal)
+    editableFields.push({ key: "name", label: "Name", value: nameVal, field: stop.name });
+  if (toStr(stop.addressLine1))
+    editableFields.push({
+      key: "addressLine1",
+      label: "Address",
+      value: toStr(stop.addressLine1),
+      field: stop.addressLine1,
+    });
+  if (toStr(stop.city))
+    editableFields.push({ key: "city", label: "City", value: toStr(stop.city), field: stop.city });
+  if (toStr(stop.state))
+    editableFields.push({
+      key: "state",
+      label: "State",
+      value: toStr(stop.state),
+      field: stop.state,
+    });
+  if (toStr(stop.postalCode))
+    editableFields.push({
+      key: "postalCode",
+      label: "Zip",
+      value: toStr(stop.postalCode),
+      field: stop.postalCode,
+    });
+  if (dateVal)
+    editableFields.push({ key: "date", label: "Date", value: dateVal, field: stop.date });
+  if (timeVal)
+    editableFields.push({
+      key: "timeWindow",
+      label: "Window",
+      value: timeVal,
+      field: stop.timeWindow,
+    });
 
   return (
     <div className="rounded-lg border p-3">
@@ -132,7 +169,9 @@ export function StopReconciliationCard({
         </div>
         <div className="flex items-center gap-1.5">
           {stop.appointmentRequired && (
-            <Badge variant="outline" className="text-2xs h-4 px-1">Appt</Badge>
+            <Badge variant="outline" className="text-2xs h-4 px-1">
+              Appt
+            </Badge>
           )}
         </div>
       </div>

@@ -84,11 +84,17 @@ export function useLoadingOptimization() {
     },
   });
 
-  const chargeNum = typeof totalChargeAmount === "number" ? totalChargeAmount : Number(totalChargeAmount) || 0;
+  const chargeNum =
+    typeof totalChargeAmount === "number" ? totalChargeAmount : Number(totalChargeAmount) || 0;
   const distNum = typeof distance === "number" ? distance : Number(distance) || 0;
 
   const revenue = mutation.data
-    ? computeRevenue(chargeNum, distNum, mutation.data.totalLinearFeet, mutation.data.trailerLengthFeet)
+    ? computeRevenue(
+        chargeNum,
+        distNum,
+        mutation.data.totalLinearFeet,
+        mutation.data.trailerLengthFeet,
+      )
     : null;
 
   return {

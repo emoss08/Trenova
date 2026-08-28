@@ -59,12 +59,8 @@ export function RestoreVersionDialog({
             <tbody className="divide-border divide-y">
               <tr>
                 <td className="text-muted-foreground py-1.5 pr-3">File</td>
-                <td className="py-1.5 pr-3 font-medium">
-                  {versionToRestore.originalName}
-                </td>
-                <td className="text-muted-foreground py-1.5">
-                  {currentVersion.originalName}
-                </td>
+                <td className="py-1.5 pr-3 font-medium">{versionToRestore.originalName}</td>
+                <td className="text-muted-foreground py-1.5">{currentVersion.originalName}</td>
               </tr>
               <tr>
                 <td className="text-muted-foreground py-1.5 pr-3">Size</td>

@@ -34,9 +34,7 @@ export type ListTableConfigurationsParams = {
   query?: string;
 };
 
-function toTableConfigurationInput(
-  data: TableConfigurationFormValues,
-): TableConfigurationInput {
+function toTableConfigurationInput(data: TableConfigurationFormValues): TableConfigurationInput {
   return {
     name: data.name,
     description: data.description ?? "",
@@ -84,11 +82,7 @@ export class TableConfigurationService {
       variables: { id },
     })) as TableConfigurationDetailQuery;
 
-    return safeParse(
-      tableConfigurationSchema,
-      response.tableConfiguration,
-      "Table Configuration",
-    );
+    return safeParse(tableConfigurationSchema, response.tableConfiguration, "Table Configuration");
   }
 
   public async getDefault(resource: TableConfiguration["resource"]) {
@@ -121,10 +115,7 @@ export class TableConfigurationService {
     );
   }
 
-  public async update(
-    id: TableConfiguration["id"],
-    data: TableConfigurationFormValues,
-  ) {
+  public async update(id: TableConfiguration["id"], data: TableConfigurationFormValues) {
     const response = (await requestGraphQL({
       document: UpdateTableConfigurationDocument,
       operationName: "UpdateTableConfiguration",

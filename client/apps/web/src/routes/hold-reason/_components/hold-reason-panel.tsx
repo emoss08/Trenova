@@ -3,10 +3,7 @@ import { DataTablePanelContainer } from "@/components/data-table/data-table-pane
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
-import {
-  SplitButton,
-  type SplitButtonOption,
-} from "@trenova/shared/components/ui/split-button";
+import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   useEditPanelActionPreference,
@@ -53,14 +50,7 @@ export function HoldReasonPanel({
   });
 
   if (mode === "edit") {
-    return (
-      <HoldReasonEditPanel
-        open={open}
-        onOpenChange={onOpenChange}
-        row={row}
-        form={form}
-      />
-    );
+    return <HoldReasonEditPanel open={open} onOpenChange={onOpenChange} row={row} form={form} />;
   }
 
   return (
@@ -83,12 +73,7 @@ type HoldReasonEditPanelProps = Pick<
   form: ReturnType<typeof useForm<HoldReason>>;
 };
 
-function HoldReasonEditPanel({
-  open,
-  onOpenChange,
-  row,
-  form,
-}: HoldReasonEditPanelProps) {
+function HoldReasonEditPanel({ open, onOpenChange, row, form }: HoldReasonEditPanelProps) {
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
 
@@ -115,17 +100,9 @@ function HoldReasonEditPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, row?.id, reset]);
 
-  const { mutateAsync } = useApiMutation<
-    HoldReason,
-    EditSubmitPayload,
-    unknown,
-    HoldReason
-  >({
+  const { mutateAsync } = useApiMutation<HoldReason, EditSubmitPayload, unknown, HoldReason>({
     mutationFn: async ({ values }) => {
-      const response = await api.put<HoldReason>(
-        `/hold-reasons/${row?.id}/`,
-        values,
-      );
+      const response = await api.put<HoldReason>(`/hold-reasons/${row?.id}/`, values);
       return response;
     },
     onMutate: async (newValues) => {
@@ -170,12 +147,7 @@ function HoldReasonEditPanel({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        open &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key === "Enter" &&
-        !isSubmitting
-      ) {
+      if (open && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
         event.preventDefault();
         void handleSubmit((values) => onSubmit(values, defaultAction))();
       }

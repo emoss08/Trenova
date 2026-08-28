@@ -4,7 +4,13 @@ import { Metadata } from "@/components/metadata";
 import { SidebarLayout } from "@/components/navigation";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@trenova/shared/components/ui/card";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { useUserDatePreferenceKey } from "@trenova/shared/hooks/use-user-date-preferences";
 import { usePermissionPolling } from "@/hooks/use-permission-polling";
@@ -104,7 +110,9 @@ function RoleActivationGate({ manifest }: { manifest: PermissionManifest }) {
                           transition={{ duration: 0.2, ease: "easeOut", delay: 0.04 * index }}
                           className={cn(
                             "hover:bg-muted flex min-h-13 w-full cursor-pointer items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors",
-                            isSelected ? "border-primary bg-primary/5" : "border-border bg-background",
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-border bg-background",
                           )}
                           disabled={isActivating}
                           onClick={() => toggleRole(role.id)}

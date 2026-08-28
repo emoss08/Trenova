@@ -113,9 +113,7 @@ export function FuelSurchargeAuditPopover({ detail }: { detail: FuelSurchargeDet
           <DetailRow label="Fuel price" value={money(detail.price ?? null, 3)} />
           <DetailRow
             label="Basis"
-            value={
-              detail.basisDate ? `${detail.basisDate} (${detail.dateBasis ?? ""})` : null
-            }
+            value={detail.basisDate ? `${detail.basisDate} (${detail.dateBasis ?? ""})` : null}
           />
         </div>
 

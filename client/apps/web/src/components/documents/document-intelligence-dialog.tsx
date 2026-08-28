@@ -22,12 +22,7 @@ import type {
   DocumentShipmentDraft,
 } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertCircleIcon,
-  LoaderCircleIcon,
-  RefreshCcwIcon,
-  SparklesIcon,
-} from "lucide-react";
+import { AlertCircleIcon, LoaderCircleIcon, RefreshCcwIcon, SparklesIcon } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -63,9 +58,7 @@ function formatValue(value: unknown): string {
     return String(value);
   }
   if (Array.isArray(value)) {
-    return value.length === 0
-      ? "Not available"
-      : value.map(formatValue).join(", ");
+    return value.length === 0 ? "Not available" : value.map(formatValue).join(", ");
   }
   return JSON.stringify(value, null, 2);
 }
@@ -125,9 +118,7 @@ function formatStopSummary(stop: DocumentIntelligenceStop) {
     stop.addressLine2,
     [stop.city, stop.state, stop.postalCode].filter(Boolean).join(" "),
   ].filter(Boolean);
-  return addressParts.length > 0
-    ? addressParts.join(", ")
-    : "Address not extracted";
+  return addressParts.length > 0 ? addressParts.join(", ") : "Address not extracted";
 }
 
 function formatAIAcceptanceStatus(status?: string) {
@@ -165,11 +156,7 @@ function formatDiagnosticReason(reason?: string) {
     .join(" ");
 }
 
-function ConflictSection({
-  conflicts,
-}: {
-  conflicts: DocumentIntelligenceConflict[];
-}) {
+function ConflictSection({ conflicts }: { conflicts: DocumentIntelligenceConflict[] }) {
   if (conflicts.length === 0) return null;
 
   return (
@@ -189,9 +176,7 @@ function ConflictSection({
                 {conflict.label || conflict.key || "Conflict"}
               </span>
               {conflict.pageNumbers.length > 0 ? (
-                <Badge variant="outline">
-                  Pages {conflict.pageNumbers.join(", ")}
-                </Badge>
+                <Badge variant="outline">Pages {conflict.pageNumbers.join(", ")}</Badge>
               ) : null}
             </div>
             {conflict.values.length > 0 ? (
@@ -237,8 +222,7 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
                 {stop.role} stop #{stop.sequence}
               </div>
               <div className="mt-1 text-sm font-medium">
-                {stop.name ||
-                  `${stop.role === "pickup" ? "Pickup" : "Delivery"} location`}
+                {stop.name || `${stop.role === "pickup" ? "Pickup" : "Delivery"} location`}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -247,12 +231,8 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
                   {formatConfidence(stop.confidence)}
                 </Badge>
               ) : null}
-              {stop.reviewRequired ? (
-                <Badge variant="outline">Review</Badge>
-              ) : null}
-              {stop.pageNumber ? (
-                <Badge variant="secondary">Page {stop.pageNumber}</Badge>
-              ) : null}
+              {stop.reviewRequired ? <Badge variant="outline">Review</Badge> : null}
+              {stop.pageNumber ? <Badge variant="secondary">Page {stop.pageNumber}</Badge> : null}
             </div>
           </div>
           <div className="mt-3 grid gap-2 md:grid-cols-2">
@@ -267,8 +247,7 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
                 Timing
               </div>
               <div className="mt-1 text-sm">
-                {[stop.date, stop.timeWindow].filter(Boolean).join(" · ") ||
-                  "Not extracted"}
+                {[stop.date, stop.timeWindow].filter(Boolean).join(" · ") || "Not extracted"}
               </div>
             </div>
           </div>
@@ -298,43 +277,33 @@ function IntelligenceSummary({
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Classification
         </div>
-        <div className="mt-1 text-sm">
-          {intelligence?.kind || fallbackKind || "Other"}
-        </div>
+        <div className="mt-1 text-sm">{intelligence?.kind || fallbackKind || "Other"}</div>
       </div>
       <div className="rounded-lg border p-3">
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Confidence
         </div>
         <div className="mt-1 text-sm">
-          {formatConfidence(
-            intelligence?.overallConfidence ?? fallbackConfidence,
-          )}
+          {formatConfidence(intelligence?.overallConfidence ?? fallbackConfidence)}
         </div>
       </div>
       <div className="rounded-lg border p-3">
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Review Status
         </div>
-        <div className="mt-1 text-sm">
-          {intelligence?.reviewStatus || "NeedsReview"}
-        </div>
+        <div className="mt-1 text-sm">{intelligence?.reviewStatus || "NeedsReview"}</div>
       </div>
       <div className="rounded-lg border p-3">
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Classifier Source
         </div>
-        <div className="mt-1 text-sm">
-          {intelligence?.classifierSource || "deterministic"}
-        </div>
+        <div className="mt-1 text-sm">{intelligence?.classifierSource || "deterministic"}</div>
       </div>
       <div className="rounded-lg border p-3">
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Provider Fingerprint
         </div>
-        <div className="mt-1 text-sm">
-          {intelligence?.providerFingerprint || "None"}
-        </div>
+        <div className="mt-1 text-sm">{intelligence?.providerFingerprint || "None"}</div>
       </div>
       <div className="rounded-lg border p-3">
         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -351,9 +320,7 @@ function IntelligenceSummary({
           <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Classification Reason
           </div>
-          <div className="mt-1 text-sm">
-            {intelligence.classificationReason}
-          </div>
+          <div className="mt-1 text-sm">{intelligence.classificationReason}</div>
         </div>
       ) : null}
     </div>
@@ -384,9 +351,7 @@ function AnalysisSnapshotCard({
           <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             {title}
           </div>
-          <div className="mt-1 text-sm font-medium">
-            {analysis.kind || "Other"}
-          </div>
+          <div className="mt-1 text-sm font-medium">{analysis.kind || "Other"}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={confidenceVariant(analysis.overallConfidence)}>
@@ -459,8 +424,8 @@ function AIDiagnosticsSection({
       <div>
         <h3 className="text-sm font-medium">AI Extraction Diagnostics</h3>
         <p className="text-muted-foreground text-xs">
-          Compare the non-AI fallback result with the AI candidate and see why
-          the AI output was accepted, rejected, or skipped.
+          Compare the non-AI fallback result with the AI candidate and see why the AI output was
+          accepted, rejected, or skipped.
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -483,20 +448,12 @@ function AIDiagnosticsSection({
           <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Rejection Reason
           </div>
-          <div className="mt-1 text-sm">
-            {formatDiagnosticReason(diagnostics.rejectionReason)}
-          </div>
+          <div className="mt-1 text-sm">{formatDiagnosticReason(diagnostics.rejectionReason)}</div>
         </div>
       </div>
       <div className="grid gap-3 lg:grid-cols-2">
-        <AnalysisSnapshotCard
-          title="Fallback Analysis"
-          analysis={diagnostics.fallbackAnalysis}
-        />
-        <AnalysisSnapshotCard
-          title="AI Candidate"
-          analysis={diagnostics.candidateAnalysis}
-        />
+        <AnalysisSnapshotCard title="Fallback Analysis" analysis={diagnostics.fallbackAnalysis} />
+        <AnalysisSnapshotCard title="AI Candidate" analysis={diagnostics.candidateAnalysis} />
       </div>
     </div>
   );
@@ -514,13 +471,10 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
   if (draft.status === "Failed") {
     return (
       <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
-        <div className="text-foreground font-medium">
-          Shipment draft extraction failed.
-        </div>
+        <div className="text-foreground font-medium">Shipment draft extraction failed.</div>
         <div className="mt-1">
-          {[draft.failureCode, draft.failureMessage]
-            .filter(Boolean)
-            .join(" · ") || "No failure details were recorded."}
+          {[draft.failureCode, draft.failureMessage].filter(Boolean).join(" · ") ||
+            "No failure details were recorded."}
         </div>
       </div>
     );
@@ -535,8 +489,8 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
   if (entries.length === 0) {
     return (
       <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
-        The system classified this as a rate confirmation, but no structured
-        shipment fields were extracted.
+        The system classified this as a rate confirmation, but no structured shipment fields were
+        extracted.
       </div>
     );
   }
@@ -549,18 +503,14 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
             Draft Confidence
           </div>
           <div className="mt-1 text-sm font-medium">
-            {formatConfidence(
-              draft.draftData?.overallConfidence ?? draft.confidence,
-            )}
+            {formatConfidence(draft.draftData?.overallConfidence ?? draft.confidence)}
           </div>
         </div>
         <div className="rounded-lg border p-3">
           <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Review Status
           </div>
-          <div className="mt-1 text-sm">
-            {draft.draftData?.reviewStatus || "NeedsReview"}
-          </div>
+          <div className="mt-1 text-sm">{draft.draftData?.reviewStatus || "NeedsReview"}</div>
         </div>
         <div className="rounded-lg border p-3">
           <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -576,12 +526,10 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
         <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="font-medium">
-                This document is already attached to a shipment.
-              </div>
+              <div className="font-medium">This document is already attached to a shipment.</div>
               <div className="mt-1 text-emerald-900/80">
-                Shipment {draft.attachedShipmentId} attached{" "}
-                {formatUnixTimestamp(draft.attachedAt)}.
+                Shipment {draft.attachedShipmentId} attached {formatUnixTimestamp(draft.attachedAt)}
+                .
               </div>
             </div>
             <Button
@@ -648,23 +596,15 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
                   {formatConfidence(field.confidence)}
                 </Badge>
               ) : null}
-              {field.reviewRequired ? (
-                <Badge variant="outline">Review</Badge>
-              ) : null}
-              {field.conflict ? (
-                <Badge variant="outline">Conflict</Badge>
-              ) : null}
+              {field.reviewRequired ? <Badge variant="outline">Review</Badge> : null}
+              {field.conflict ? <Badge variant="outline">Conflict</Badge> : null}
             </div>
           </div>
-          <div className="mt-2 text-sm whitespace-pre-wrap">
-            {formatValue(field.value)}
-          </div>
+          <div className="mt-2 text-sm whitespace-pre-wrap">{formatValue(field.value)}</div>
           {field.excerpt ? (
             <div className="bg-muted/40 text-muted-foreground mt-2 rounded-md px-2 py-1 font-mono text-[11px]">
               {field.pageNumber ? (
-                <div className="mb-1 font-sans text-[10px] uppercase">
-                  Page {field.pageNumber}
-                </div>
+                <div className="mb-1 font-sans text-[10px] uppercase">Page {field.pageNumber}</div>
               ) : null}
               {field.excerpt}
             </div>
@@ -696,9 +636,7 @@ function ContentSection({
               Classification Confidence
             </div>
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <Badge
-                variant={confidenceVariant(intelligence.overallConfidence)}
-              >
+              <Badge variant={confidenceVariant(intelligence.overallConfidence)}>
                 {formatConfidence(intelligence.overallConfidence)}
               </Badge>
               {intelligence.reviewStatus !== "Ready" ? (
@@ -726,10 +664,7 @@ function ContentSection({
           <StopsSection stops={intelligence?.stops ?? []} />
         </div>
 
-        <ScrollArea
-          className="bg-muted/20 h-80 rounded-lg border p-3"
-          viewportClassName="p-3"
-        >
+        <ScrollArea className="bg-muted/20 h-80 rounded-lg border p-3" viewportClassName="p-3">
           <pre className="text-foreground font-mono text-xs whitespace-pre-wrap">
             {content.contentText}
           </pre>
@@ -737,14 +672,9 @@ function ContentSection({
         {content.pages.length > 0 ? (
           <div className="grid gap-2 md:grid-cols-2">
             {content.pages.slice(0, 6).map((page) => (
-              <div
-                key={page.id}
-                className="text-muted-foreground rounded-lg border p-3 text-xs"
-              >
+              <div key={page.id} className="text-muted-foreground rounded-lg border p-3 text-xs">
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="text-foreground font-medium">
-                    Page {page.pageNumber}
-                  </span>
+                  <span className="text-foreground font-medium">Page {page.pageNumber}</span>
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">{page.sourceKind}</Badge>
                     {page.preprocessingApplied ? (
@@ -753,9 +683,7 @@ function ContentSection({
                   </div>
                 </div>
                 {page.ocrConfidence > 0 ? (
-                  <div className="mb-1">
-                    OCR confidence: {formatConfidence(page.ocrConfidence)}
-                  </div>
+                  <div className="mb-1">OCR confidence: {formatConfidence(page.ocrConfidence)}</div>
                 ) : null}
                 <div className="line-clamp-4 font-mono text-[11px] whitespace-pre-wrap">
                   {page.extractedText?.trim() || "No extracted text"}
@@ -853,8 +781,7 @@ export function DocumentIntelligenceDialog({
     shipmentDraft.status !== "Unavailable" &&
     shipmentDraft.status !== "Failed" &&
     !shipmentDraft.attachedShipmentId;
-  const supportsTargetedReextract =
-    document?.processingProfile === "rate_confirmation_import";
+  const supportsTargetedReextract = document?.processingProfile === "rate_confirmation_import";
 
   return (
     <>
@@ -867,10 +794,7 @@ export function DocumentIntelligenceDialog({
           }
         }}
       >
-        <DialogContent
-          className="gap-0 overflow-hidden p-0 sm:max-w-4xl"
-          showCloseButton
-        >
+        <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-4xl" showCloseButton>
           {document ? (
             <>
               <DialogHeader className="border-b px-6 pt-6 pb-4">
@@ -879,8 +803,7 @@ export function DocumentIntelligenceDialog({
                   <Badge variant={statusBadgeVariant(document.contentStatus)}>
                     {document.contentStatus}
                   </Badge>
-                  {document.detectedKind &&
-                  document.detectedKind !== "Other" ? (
+                  {document.detectedKind && document.detectedKind !== "Other" ? (
                     <Badge variant="info">{document.detectedKind}</Badge>
                   ) : null}
                   {document.shipmentDraftStatus === "Ready" ? (
@@ -891,8 +814,8 @@ export function DocumentIntelligenceDialog({
                   ) : null}
                 </div>
                 <DialogDescription>
-                  Review extracted text, document classification, and any
-                  structured shipment draft fields.
+                  Review extracted text, document classification, and any structured shipment draft
+                  fields.
                 </DialogDescription>
               </DialogHeader>
 
@@ -900,12 +823,9 @@ export function DocumentIntelligenceDialog({
                 <div className="grid gap-6 p-4">
                   <section className="grid gap-3">
                     <div>
-                      <h3 className="text-sm font-medium">
-                        Document Intelligence
-                      </h3>
+                      <h3 className="text-sm font-medium">Document Intelligence</h3>
                       <p className="text-muted-foreground text-xs">
-                        Extraction status, classification, and structured
-                        output.
+                        Extraction status, classification, and structured output.
                       </p>
                     </div>
                     <div className="grid gap-3">
@@ -917,9 +837,7 @@ export function DocumentIntelligenceDialog({
                       ) : null}
                       <IntelligenceSummary
                         intelligence={content?.structuredData?.intelligence}
-                        fallbackKind={
-                          content?.detectedDocumentKind || document.detectedKind
-                        }
+                        fallbackKind={content?.detectedDocumentKind || document.detectedKind}
                         fallbackConfidence={content?.classificationConfidence}
                       />
                       <div className="grid gap-3 md:grid-cols-2">
@@ -947,8 +865,7 @@ export function DocumentIntelligenceDialog({
                     <div>
                       <h3 className="text-sm font-medium">Shipment Draft</h3>
                       <p className="text-muted-foreground text-xs">
-                        Review structured fields extracted from supported
-                        shipment documents.
+                        Review structured fields extracted from supported shipment documents.
                       </p>
                     </div>
                     {isDraftLoading ? (
@@ -959,14 +876,12 @@ export function DocumentIntelligenceDialog({
                     ) : (
                       <>
                         <DraftSection draft={shipmentDraft ?? null} />
-                        {(!shipmentDraft ||
-                          shipmentDraft.status === "Unavailable") &&
+                        {(!shipmentDraft || shipmentDraft.status === "Unavailable") &&
                         document.detectedKind &&
                         document.detectedKind !== "RateConfirmation" ? (
                           <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
-                            This document is available for classification,
-                            search, and extracted-text review, but it does not
-                            produce a shipment draft.
+                            This document is available for classification, search, and
+                            extracted-text review, but it does not produce a shipment draft.
                           </div>
                         ) : null}
                       </>
@@ -977,8 +892,7 @@ export function DocumentIntelligenceDialog({
                     <div>
                       <h3 className="text-sm font-medium">Extracted Text</h3>
                       <p className="text-muted-foreground text-xs">
-                        Full extracted text used for search and document
-                        classification.
+                        Full extracted text used for search and document classification.
                       </p>
                     </div>
                     {isContentLoading ? (
@@ -999,27 +913,17 @@ export function DocumentIntelligenceDialog({
 
               <DialogFooter className="m-0" showCloseButton>
                 {canReviewShipmentDraft ? (
-                  <Button
-                    variant="secondary"
-                    onClick={() => setReviewShipmentOpen(true)}
-                  >
+                  <Button variant="secondary" onClick={() => setReviewShipmentOpen(true)}>
                     Create Shipment
                   </Button>
                 ) : null}
                 {shipmentDraft?.attachedShipmentId ? (
-                  <Button
-                    variant="secondary"
-                    render={<Link to="/shipment-management/shipments" />}
-                  >
+                  <Button variant="secondary" render={<Link to="/shipment-management/shipments" />}>
                     Open Shipments
                   </Button>
                 ) : null}
                 {supportsTargetedReextract ? (
-                  <Button
-                    variant="outline"
-                    onClick={() => reextract()}
-                    disabled={isReextracting}
-                  >
+                  <Button variant="outline" onClick={() => reextract()} disabled={isReextracting}>
                     {isReextracting ? (
                       <LoaderCircleIcon className="size-4 animate-spin" />
                     ) : (

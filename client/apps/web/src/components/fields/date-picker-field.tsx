@@ -2,11 +2,7 @@
 
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@trenova/shared/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { fromUserWallClock } from "@trenova/shared/lib/date";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";

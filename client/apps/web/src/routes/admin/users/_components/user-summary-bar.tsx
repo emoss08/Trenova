@@ -27,9 +27,7 @@ export function UserSummaryBar({
           <span className="text-muted-foreground">Status:</span>
           <Badge
             variant={status === "Active" ? "default" : "secondary"}
-            className={
-              status === "Active" ? "bg-green-600 hover:bg-green-700" : ""
-            }
+            className={status === "Active" ? "bg-green-600 hover:bg-green-700" : ""}
           >
             {status || "Active"}
           </Badge>
@@ -40,9 +38,7 @@ export function UserSummaryBar({
         <div className="flex items-center gap-2">
           <ShieldIcon className="text-muted-foreground size-4" />
           <span className="font-medium tabular-nums">{roleCount}</span>
-          <span className="text-muted-foreground">
-            role{roleCount !== 1 ? "s" : ""} assigned
-          </span>
+          <span className="text-muted-foreground">role{roleCount !== 1 ? "s" : ""} assigned</span>
         </div>
       </div>
 
@@ -50,12 +46,7 @@ export function UserSummaryBar({
         <Button type="button" variant="outline" size="sm" onClick={onCancel}>
           Cancel
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          onClick={onSubmit}
-          disabled={isSubmitting}
-        >
+        <Button type="button" size="sm" onClick={onSubmit} disabled={isSubmitting}>
           {isSubmitting && <Loader2Icon className="mr-2 size-4 animate-spin" />}
           {submitLabel}
         </Button>

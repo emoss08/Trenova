@@ -77,4 +77,3 @@ export class EmailService {
     await api.delete(`/email-suppressions/${id}/`);
   }
 }
-

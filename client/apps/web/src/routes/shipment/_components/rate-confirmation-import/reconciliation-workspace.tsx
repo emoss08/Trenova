@@ -1,6 +1,10 @@
 import { SuspenseLoader } from "@trenova/shared/components/component-loader";
 import { Button } from "@trenova/shared/components/ui/button";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@trenova/shared/components/ui/resizable";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@trenova/shared/components/ui/resizable";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { LoaderCircleIcon } from "lucide-react";
 import { lazy, useState } from "react";

@@ -1,6 +1,10 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { formatDurationFromSeconds, formatToUserTimezone } from "@trenova/shared/lib/date";
-import { getDestinationLocation, getOriginLocation, type ShipmentEtaTone } from "@/lib/shipment-utils";
+import {
+  getDestinationLocation,
+  getOriginLocation,
+  type ShipmentEtaTone,
+} from "@/lib/shipment-utils";
 import { cn } from "@trenova/shared/lib/utils";
 import { useDraggable } from "@dnd-kit/core";
 import { ChevronLeftIcon, ChevronRightIcon, TimerIcon } from "lucide-react";
@@ -153,8 +157,8 @@ export function TimelineBarItem({
           />
         )}
         {bar.stops.map((stop) => {
-          const offset = ((Math.min(Math.max(stop.time, bar.start), bar.end) - bar.start) /
-            barSpanSeconds) *
+          const offset =
+            ((Math.min(Math.max(stop.time, bar.start), bar.end) - bar.start) / barSpanSeconds) *
             100;
           return (
             <span
@@ -162,7 +166,9 @@ export function TimelineBarItem({
               aria-hidden
               className={cn(
                 "border-background absolute bottom-0.5 size-1.5 -translate-x-1/2 rounded-full border",
-                stop.status === "Completed" ? BAR_PROGRESS_CLASS[bar.tone] : "bg-muted-foreground/40",
+                stop.status === "Completed"
+                  ? BAR_PROGRESS_CLASS[bar.tone]
+                  : "bg-muted-foreground/40",
               )}
               style={{ left: `${offset}%` }}
             />
@@ -171,7 +177,10 @@ export function TimelineBarItem({
         {progress > 0 && !bar.isCanceled && (
           <span
             aria-hidden
-            className={cn("absolute inset-x-0 top-0 h-0.5 origin-left", BAR_PROGRESS_CLASS[bar.tone])}
+            className={cn(
+              "absolute inset-x-0 top-0 h-0.5 origin-left",
+              BAR_PROGRESS_CLASS[bar.tone],
+            )}
             style={{ transform: `scaleX(${progress})` }}
           />
         )}

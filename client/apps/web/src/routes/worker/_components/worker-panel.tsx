@@ -5,12 +5,7 @@ import { useForm, type UseFormReturn } from "react-hook-form";
 import { WorkerCreatePanel } from "./worker-create-panel";
 import { WorkerEditPanel } from "./worker-edit-panel";
 
-export function WorkerPanel({
-  open,
-  onOpenChange,
-  mode,
-  row,
-}: DataTablePanelProps<Worker>) {
+export function WorkerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Worker>) {
   const form = useForm({
     resolver: zodResolver(workerSchema),
     defaultValues: {

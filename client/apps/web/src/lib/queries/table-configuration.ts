@@ -14,7 +14,6 @@ export const tableConfiguration = createQueryKeys("tableConfiguration", {
   }),
   default: (resource: TableConfiguration["resource"]) => ({
     queryKey: [resource],
-    queryFn: async () =>
-      apiService.tableConfigurationService.getDefault(resource),
+    queryFn: async () => apiService.tableConfigurationService.getDefault(resource),
   }),
 });

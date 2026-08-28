@@ -2,13 +2,7 @@
 import { cn } from "@trenova/shared/lib/utils";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { EquipmentStatus } from "@trenova/shared/types/helpers";
-import {
-  CheckCheckIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  ClockIcon,
-  XIcon,
-} from "lucide-react";
+import { CheckCheckIcon, CheckIcon, ChevronDownIcon, ClockIcon, XIcon } from "lucide-react";
 import type React from "react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -97,19 +91,12 @@ export function EditableEquipmentStatusBadge({
         render={
           <Badge
             variant={variant}
-            className={cn(
-              "w-fit shrink-0 cursor-pointer text-left capitalize",
-              className,
-            )}
+            className={cn("w-fit shrink-0 cursor-pointer text-left capitalize", className)}
             render={<button type="button" disabled={isLoading} />}
           >
             {icon}
             {label}
-            {isLoading ? (
-              <Spinner className="size-3" />
-            ) : (
-              <ChevronDownIcon className="size-3" />
-            )}
+            {isLoading ? <Spinner className="size-3" /> : <ChevronDownIcon className="size-3" />}
           </Badge>
         }
       />
@@ -121,9 +108,7 @@ export function EditableEquipmentStatusBadge({
                 <SelectCommandItem
                   key={option.value}
                   value={option.value}
-                  onSelect={(currentValue) =>
-                    handleStatusChange(currentValue as EquipmentStatus)
-                  }
+                  onSelect={(currentValue) => handleStatusChange(currentValue as EquipmentStatus)}
                   className="text-xs"
                   label={option.label}
                   color={option.color}

@@ -64,9 +64,7 @@ export function TopOverdueCustomersCard() {
                           initial={{ width: 0 }}
                           animate={{
                             width:
-                              maxOverdue > 0
-                                ? `${(row.overdueMinor / maxOverdue) * 100}%`
-                                : "0%",
+                              maxOverdue > 0 ? `${(row.overdueMinor / maxOverdue) * 100}%` : "0%",
                           }}
                           transition={{ duration: 0.5, delay: index * 0.03, ease: "easeOut" }}
                         />

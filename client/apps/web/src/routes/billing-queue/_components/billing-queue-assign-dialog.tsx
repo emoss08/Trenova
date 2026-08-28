@@ -11,7 +11,10 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
-import { billingQueueAssignSchema, type BillingQueueAssignInput } from "@trenova/shared/types/billing-queue";
+import {
+  billingQueueAssignSchema,
+  type BillingQueueAssignInput,
+} from "@trenova/shared/types/billing-queue";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";

@@ -73,8 +73,9 @@ export function buildMessageInspectorContext({
       [
         "Template",
         message.template?.name ??
-        message.partnerDocumentProfile?.template?.name ??
-        message.templateId ?? "-",
+          message.partnerDocumentProfile?.template?.name ??
+          message.templateId ??
+          "-",
       ],
       ["Template Version", messageVersionLabel(message) ?? "-"],
       ["Validation Mode", message.validationMode],

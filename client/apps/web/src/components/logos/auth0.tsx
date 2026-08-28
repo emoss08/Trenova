@@ -9,19 +9,11 @@ const COLORS = {
   light: "#EB5424",
 };
 
-export function Auth0Logo({
-  className,
-  mode = "dark",
-}: LogoProps) {
+export function Auth0Logo({ className, mode = "dark" }: LogoProps) {
   const color = COLORS[mode];
 
   return (
-    <svg
-      role="img"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-    >
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className={className}>
       <title>Auth0</title>
       <path
         fill={color}

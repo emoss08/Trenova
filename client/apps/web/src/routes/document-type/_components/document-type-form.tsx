@@ -3,10 +3,7 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import {
-  documentCategoryChoices,
-  documentClassificationChoices,
-} from "@/lib/choices";
+import { documentCategoryChoices, documentClassificationChoices } from "@/lib/choices";
 import type { DocumentType } from "@trenova/shared/types/document-type";
 import { useFormContext } from "react-hook-form";
 

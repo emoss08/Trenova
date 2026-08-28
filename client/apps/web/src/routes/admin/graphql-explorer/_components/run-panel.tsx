@@ -3,7 +3,11 @@ import { JsonViewer, type JsonValue } from "@/components/elements/json-viewer";
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@trenova/shared/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@trenova/shared/components/ui/collapsible";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";

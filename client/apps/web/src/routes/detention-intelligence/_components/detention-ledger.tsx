@@ -32,15 +32,11 @@ function LedgerStat({
 }) {
   return (
     <div className="min-w-0 px-3.5 py-2.5">
-      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">
-        {label}
-      </p>
+      <p className="text-2xs text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
       <p className={cn("mt-1 truncate text-sm font-medium tabular-nums", valueClassName)}>
         {value}
       </p>
-      <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">
-        {detail}
-      </p>
+      <p className="text-2xs text-muted-foreground mt-0.5 truncate tabular-nums">{detail}</p>
     </div>
   );
 }
@@ -118,9 +114,8 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
             <NumberFlow value={netMargin} format={CURRENCY_FORMAT} />
           </p>
           <p className="text-2xs text-muted-foreground mt-2 tabular-nums">
-            {stopCount.toLocaleString()} settled{" "}
-            {stopCount === 1 ? "stop" : "stops"} across {rollup.facilityCount}{" "}
-            {rollup.facilityCount === 1 ? "facility" : "facilities"} ·{" "}
+            {stopCount.toLocaleString()} settled {stopCount === 1 ? "stop" : "stops"} across{" "}
+            {rollup.facilityCount} {rollup.facilityCount === 1 ? "facility" : "facilities"} ·{" "}
             {Math.round(breachRate * 100)}% ran past free time
             {rollup.truncated ? " · top facilities only" : ""}
           </p>
@@ -131,9 +126,8 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
 
           {overrun ? (
             <p className="text-2xs mt-3 text-red-600 dark:text-red-400">
-              Driver detention pay exceeded what was billed — the free-time
-              concessions granted to customers are wider than the driver contract
-              allows for.
+              Driver detention pay exceeded what was billed — the free-time concessions granted to
+              customers are wider than the driver contract allows for.
             </p>
           ) : null}
         </div>

@@ -66,11 +66,7 @@ export default function SequenceConfigForm() {
     <FormProvider {...form}>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex gap-6 pb-20">
-          <SequenceConfigSidebar
-            value={section}
-            onChange={setSection}
-            indexByType={indexByType}
-          />
+          <SequenceConfigSidebar value={section} onChange={setSection} indexByType={indexByType} />
 
           {activeIndex >= 0 ? (
             <SequenceConfigPanel index={activeIndex} sequenceType={section} />

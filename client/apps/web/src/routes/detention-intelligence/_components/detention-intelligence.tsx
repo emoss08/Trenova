@@ -14,11 +14,7 @@ import { WaiverLeakage } from "./waiver-leakage";
  * unprofitable once driver pay is netted off, and where discretionary revenue
  * is going.
  */
-export function DetentionIntelligence({
-  windowValue,
-}: {
-  windowValue: DetentionWindowValue;
-}) {
+export function DetentionIntelligence({ windowValue }: { windowValue: DetentionWindowValue }) {
   const { facilities, customers, waivers, rollup } = useDetentionIntelligence(
     detentionWindowDays(windowValue),
   );

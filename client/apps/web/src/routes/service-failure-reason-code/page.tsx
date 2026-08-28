@@ -3,9 +3,7 @@ import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
 import { lazy } from "react";
 
-const Table = lazy(
-  () => import("./_components/service-failure-reason-code-table"),
-);
+const Table = lazy(() => import("./_components/service-failure-reason-code-table"));
 
 export function ServiceFailureReasonCodesPage() {
   return (

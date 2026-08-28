@@ -7,12 +7,7 @@ import { parseAsString, useQueryState } from "nuqs";
 import { useForm } from "react-hook-form";
 import { UserForm } from "./user-form";
 
-export function UserPanel({
-  open,
-  onOpenChange,
-  mode,
-  row,
-}: DataTablePanelProps<User>) {
+export function UserPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<User>) {
   const [panelEntityId] = useQueryState("panelEntityId", parseAsString);
   const editUserId = row?.id ?? panelEntityId ?? undefined;
 

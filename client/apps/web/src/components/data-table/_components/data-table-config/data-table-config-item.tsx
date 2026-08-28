@@ -12,11 +12,7 @@ import {
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type {
-  TableConfig,
-  TableConfiguration,
-  TableViewSource,
-} from "@/types/table-configuration";
+import type { TableConfig, TableConfiguration, TableViewSource } from "@/types/table-configuration";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Building2Icon,

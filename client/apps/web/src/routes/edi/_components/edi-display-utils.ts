@@ -1,5 +1,9 @@
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
-import type { EDIMappingEntityType, EDIMappingResolution, EDITransfer } from "@trenova/shared/types/edi";
+import type {
+  EDIMappingEntityType,
+  EDIMappingResolution,
+  EDITransfer,
+} from "@trenova/shared/types/edi";
 
 type LoadTenderStop = EDITransfer["tenderPayload"]["moves"][number]["stops"][number];
 type LoadTenderCommodity = EDITransfer["tenderPayload"]["commodities"][number];

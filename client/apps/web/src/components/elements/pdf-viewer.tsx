@@ -21,12 +21,7 @@ interface PdfViewerProps {
   className?: string;
 }
 
-export function PdfViewer({
-  file,
-  mode = "single",
-  initialZoom = 1.0,
-  className,
-}: PdfViewerProps) {
+export function PdfViewer({ file, mode = "single", initialZoom = 1.0, className }: PdfViewerProps) {
   const [numPages, setNumPages] = React.useState<number>(0);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [viewMode, setViewMode] = React.useState<ViewMode>(mode);
@@ -46,8 +41,7 @@ export function PdfViewer({
     const updateWidth = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.clientWidth;
-        const baseWidth =
-          viewMode === "book" ? containerWidth / 2 - 40 : containerWidth - 40;
+        const baseWidth = viewMode === "book" ? containerWidth / 2 - 40 : containerWidth - 40;
         setPageWidth(baseWidth * zoom);
       }
     };
@@ -63,10 +57,7 @@ export function PdfViewer({
 
   const goToNextPage = () => {
     setCurrentPage((prev) =>
-      Math.min(
-        prev + (viewMode === "book" ? 2 : 1),
-        viewMode === "book" ? numPages - 1 : numPages,
-      ),
+      Math.min(prev + (viewMode === "book" ? 2 : 1), viewMode === "book" ? numPages - 1 : numPages),
     );
   };
 
@@ -213,9 +204,7 @@ export function PdfViewer({
           onLoadSuccess={onDocumentLoadSuccess}
           loading={
             <div className="flex items-center justify-center p-8">
-              <div className="text-muted-foreground text-sm">
-                Loading PDF...
-              </div>
+              <div className="text-muted-foreground text-sm">Loading PDF...</div>
             </div>
           }
           error={
@@ -225,10 +214,7 @@ export function PdfViewer({
               </div>
             </div>
           }
-          className={cn(
-            viewMode === "scroll" && "space-y-4",
-            viewMode === "book" && "flex gap-4",
-          )}
+          className={cn(viewMode === "scroll" && "space-y-4", viewMode === "book" && "flex gap-4")}
         >
           {viewMode === "scroll" && (
             <>
@@ -253,9 +239,7 @@ export function PdfViewer({
                 pageNumber={currentPage}
                 width={pageWidth}
                 className="shadow-lg"
-                loading={
-                  <div className="bg-background h-[800px] w-full animate-pulse rounded" />
-                }
+                loading={<div className="bg-background h-[800px] w-full animate-pulse rounded" />}
               />
             </div>
           )}
@@ -267,25 +251,21 @@ export function PdfViewer({
                   pageNumber={currentPage}
                   width={pageWidth}
                   className="shadow-lg"
-                  loading={
-                    <div className="bg-background h-[800px] w-full animate-pulse rounded" />
-                  }
+                  loading={<div className="bg-background h-[800px] w-full animate-pulse rounded" />}
                 />
               </div>
-              {!showCoverAlone &&
-                bookSecondPage &&
-                bookSecondPage <= numPages && (
-                  <div className="flex justify-start">
-                    <Page
-                      pageNumber={bookSecondPage}
-                      width={pageWidth}
-                      className="shadow-lg"
-                      loading={
-                        <div className="bg-background h-[800px] w-full animate-pulse rounded" />
-                      }
-                    />
-                  </div>
-                )}
+              {!showCoverAlone && bookSecondPage && bookSecondPage <= numPages && (
+                <div className="flex justify-start">
+                  <Page
+                    pageNumber={bookSecondPage}
+                    width={pageWidth}
+                    className="shadow-lg"
+                    loading={
+                      <div className="bg-background h-[800px] w-full animate-pulse rounded" />
+                    }
+                  />
+                </div>
+              )}
             </>
           )}
         </Document>

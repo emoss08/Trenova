@@ -33,8 +33,7 @@ export function useAutoHeight<T extends HTMLElement = HTMLDivElement>(
     if (includeParentBox && el.parentElement) {
       const cs = getComputedStyle(el.parentElement);
       const paddingY =
-        (parseFloat(cs.paddingTop || "0") || 0) +
-        (parseFloat(cs.paddingBottom || "0") || 0);
+        (parseFloat(cs.paddingTop || "0") || 0) + (parseFloat(cs.paddingBottom || "0") || 0);
       const borderY =
         (parseFloat(cs.borderTopWidth || "0") || 0) +
         (parseFloat(cs.borderBottomWidth || "0") || 0);
@@ -47,8 +46,7 @@ export function useAutoHeight<T extends HTMLElement = HTMLDivElement>(
     if (includeSelfBox) {
       const cs = getComputedStyle(el);
       const paddingY =
-        (parseFloat(cs.paddingTop || "0") || 0) +
-        (parseFloat(cs.paddingBottom || "0") || 0);
+        (parseFloat(cs.paddingTop || "0") || 0) + (parseFloat(cs.paddingBottom || "0") || 0);
       const borderY =
         (parseFloat(cs.borderTopWidth || "0") || 0) +
         (parseFloat(cs.borderBottomWidth || "0") || 0);
@@ -58,8 +56,7 @@ export function useAutoHeight<T extends HTMLElement = HTMLDivElement>(
       }
     }
 
-    const dpr =
-      typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
     const total = Math.ceil((base + extra) * dpr) / dpr;
 
     return total;

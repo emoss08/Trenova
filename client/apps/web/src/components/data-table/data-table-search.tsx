@@ -1,11 +1,7 @@
 "use no memo";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@trenova/shared/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { HelpCircleIcon, SearchIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 
@@ -43,11 +39,7 @@ const SEARCH_SYNTAX_EXAMPLES = [
   },
 ];
 
-export default function DataTableSearch({
-  value,
-  onChange,
-  placeholder,
-}: DataTableSearchProps) {
+export default function DataTableSearch({ value, onChange, placeholder }: DataTableSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -83,9 +75,7 @@ export default function DataTableSearch({
       onChange={(e) => handleChange(e.target.value)}
       placeholder={placeholder ?? "Search..."}
       className="h-7 w-48 text-sm"
-      leftElement={
-        <SearchIcon className="text-muted-foreground size-3.5 shrink-0" />
-      }
+      leftElement={<SearchIcon className="text-muted-foreground size-3.5 shrink-0" />}
       rightElement={<SearchSyntaxHelper />}
     />
   );
@@ -115,10 +105,7 @@ function SearchSyntaxHelper() {
           </div>
           <div className="space-y-2">
             {SEARCH_SYNTAX_EXAMPLES.map((item) => (
-              <div
-                key={item.syntax}
-                className="grid grid-cols-[100px_1fr] gap-2 text-sm"
-              >
+              <div key={item.syntax} className="grid grid-cols-[100px_1fr] gap-2 text-sm">
                 <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
                   {item.syntax}
                 </code>

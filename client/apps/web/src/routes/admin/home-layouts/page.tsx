@@ -18,7 +18,14 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { LayoutGridIcon, Loader2Icon, LockIcon, PlusIcon, Trash2Icon, TrashIcon } from "lucide-react";
+import {
+  LayoutGridIcon,
+  Loader2Icon,
+  LockIcon,
+  PlusIcon,
+  Trash2Icon,
+  TrashIcon,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";

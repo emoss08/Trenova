@@ -22,7 +22,13 @@ export function DataTableEmptyState({
               : "Try adjusting your filters or search query"}
           </p>
           {hasActiveFilters && onClearFilters && (
-            <Button type="button" variant="outline" size="xs" className="mt-2" onClick={onClearFilters}>
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              className="mt-2"
+              onClick={onClearFilters}
+            >
               Clear filters
             </Button>
           )}

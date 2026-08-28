@@ -29,9 +29,7 @@ export function UserBuilderLayout({
           </Link>
           <div>
             <h1 className="text-lg font-semibold">{title}</h1>
-            {subtitle && (
-              <p className="text-muted-foreground text-sm">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-muted-foreground text-sm">{subtitle}</p>}
           </div>
         </div>
       </header>
@@ -68,9 +66,7 @@ export function UserBuilderSection({
     <section className={cn("flex flex-col", className)}>
       <div className="mb-4">
         <h2 className="text-sm font-medium">{title}</h2>
-        {description && (
-          <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>
-        )}
+        {description && <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>}
       </div>
       <div className="flex-1">{children}</div>
     </section>

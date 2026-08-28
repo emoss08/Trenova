@@ -1,10 +1,7 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import {
-  hazardousMaterialSchema,
-  type HazardousMaterial,
-} from "@/types/hazardous-material";
+import { hazardousMaterialSchema, type HazardousMaterial } from "@/types/hazardous-material";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { HazardousMaterialForm } from "./hazardous-material-form";

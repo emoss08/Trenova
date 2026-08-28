@@ -8,8 +8,10 @@ const defaultSuggestions = ["t 0800", "t 1200", "t 1700", "t+1 0800", "t+1 1200"
 
 const formatDateTime = (date: Date) => generateDateTimeString(date);
 
-export interface DateTimePickerProps
-  extends Omit<React.ComponentProps<"input">, "value" | "defaultValue" | "onChange"> {
+export interface DateTimePickerProps extends Omit<
+  React.ComponentProps<"input">,
+  "value" | "defaultValue" | "onChange"
+> {
   dateTime: Date | undefined;
   setDateTime: (date: Date | undefined) => void;
   isInvalid?: boolean;

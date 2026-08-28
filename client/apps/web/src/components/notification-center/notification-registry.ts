@@ -139,10 +139,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     iconClass: "text-warning",
     tileClass: "bg-warning/10",
     getLink: (n) =>
-      entityPanelLink(
-        "/shipment-management/shipments",
-        notificationRelatedId(n, "shipmentId"),
-      ),
+      entityPanelLink("/shipment-management/shipments", notificationRelatedId(n, "shipmentId")),
   },
   bank_receipt_reconciliation_exception: {
     category: "Accounting",

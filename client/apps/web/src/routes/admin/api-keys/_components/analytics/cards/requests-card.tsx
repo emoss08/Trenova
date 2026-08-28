@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
+import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
 import { ChartContainer, type ChartConfig } from "@trenova/shared/components/ui/chart";
 import { Activity } from "lucide-react";
 import { Area, AreaChart } from "recharts";
@@ -16,22 +16,15 @@ export function RequestsCard({ data }: Props) {
   const { total, sparkline } = data;
 
   return (
-    <Card className="group border-border/80 hover:border-border relative gap-0 overflow-hidden rounded-md pb-0 shadow-none transition-colors">
-      <CardHeader className="relative flex flex-row items-start justify-between space-y-0 pb-2">
-        <CardTitle className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
-          Requests (30d)
-        </CardTitle>
-        <span className="bg-muted text-muted-foreground inline-flex size-7 shrink-0 items-center justify-center rounded-md">
-          <Activity className="size-4" />
-        </span>
-      </CardHeader>
+    <KpiCard span={2}>
+      <KpiHeader icon={<Activity className="size-[11px]" />} label="Requests (30d)" />
       <div className="relative px-4">
         <p className="text-3xl leading-none font-semibold tracking-tight">
           {total.toLocaleString()}
         </p>
       </div>
       {sparkline.length > 1 ? (
-        <ChartContainer config={chartConfig} className="mt-auto aspect-auto! h-[40px] w-full">
+        <ChartContainer config={chartConfig} className="mt-auto aspect-auto! h-4 w-full">
           <AreaChart data={sparkline} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="requestsFill" x1="0" y1="0" x2="0" y2="1">
@@ -53,6 +46,6 @@ export function RequestsCard({ data }: Props) {
       ) : (
         <div className="mt-auto h-[40px]" />
       )}
-    </Card>
+    </KpiCard>
   );
 }

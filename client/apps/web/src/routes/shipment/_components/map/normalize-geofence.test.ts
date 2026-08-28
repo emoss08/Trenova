@@ -70,17 +70,13 @@ describe("normalizeGeofence", () => {
   });
 
   it("auto resolves to circle when no vertices and lat/lng/radius present", () => {
-    const result = normalizeGeofence(
-      baseInput({ geofenceType: "auto", geofenceVertices: [] }),
-    );
+    const result = normalizeGeofence(baseInput({ geofenceType: "auto", geofenceVertices: [] }));
     expect(result?.kind).toBe("circle");
   });
 
   it("returns null when circle has no radius", () => {
     expect(
-      normalizeGeofence(
-        baseInput({ geofenceType: "circle", geofenceRadiusMeters: null }),
-      ),
+      normalizeGeofence(baseInput({ geofenceType: "circle", geofenceRadiusMeters: null })),
     ).toBeNull();
   });
 
@@ -100,9 +96,7 @@ describe("normalizeGeofence", () => {
 
   it("rejects NaN coordinates", () => {
     expect(
-      normalizeGeofence(
-        baseInput({ geofenceType: "circle", latitude: Number.NaN }),
-      ),
+      normalizeGeofence(baseInput({ geofenceType: "circle", latitude: Number.NaN })),
     ).toBeNull();
   });
 

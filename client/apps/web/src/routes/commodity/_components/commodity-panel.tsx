@@ -6,12 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CommodityForm } from "./commodity-form";
 
-export function CommodityPanel({
-  open,
-  onOpenChange,
-  mode,
-  row,
-}: DataTablePanelProps<Commodity>) {
+export function CommodityPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Commodity>) {
   const form = useForm({
     resolver: zodResolver(commoditySchema),
     defaultValues: {

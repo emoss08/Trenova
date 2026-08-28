@@ -28,10 +28,7 @@ const calculateDelay = (attempt: number) =>
 
 const logDebug = (message: string, color: string = "#a742f5") => {
   if (APP_ENV === "development") {
-    console.debug(
-      `%c[Trenova] ${message}`,
-      `color: ${color}; font-weight: bold`,
-    );
+    console.debug(`%c[Trenova] ${message}`, `color: ${color}; font-weight: bold`);
   }
 };
 
@@ -53,10 +50,7 @@ export const useQueryInvalidationListener = () => {
   const handleInvalidation: MessageHandler = useCallback(
     async (message) => {
       try {
-        logDebug(
-          `Processing invalidation for keys: ${message.queryKeys.join(", ")}`,
-          "#87f542",
-        );
+        logDebug(`Processing invalidation for keys: ${message.queryKeys.join(", ")}`, "#87f542");
 
         const queryKeys = Array.isArray(message.queryKeys)
           ? message.queryKeys
@@ -68,9 +62,7 @@ export const useQueryInvalidationListener = () => {
             void queryClient.invalidateQueries({
               predicate: (query) =>
                 query.queryKey.some(
-                  (keyPart) =>
-                    typeof keyPart === "string" &&
-                    keyPart.includes(String(keyPattern)),
+                  (keyPart) => typeof keyPart === "string" && keyPart.includes(String(keyPattern)),
                 ),
               refetchType: config.refetchType || "all",
               exact: config.exact || false,
@@ -103,9 +95,7 @@ export const useQueryInvalidationListener = () => {
       try {
         if (!isInvalidationMessage(event.data)) return;
 
-        logDebug(
-          `Received invalidation message: ${event.data.queryKeys.join(", ")}`,
-        );
+        logDebug(`Received invalidation message: ${event.data.queryKeys.join(", ")}`);
         await handleInvalidation(event.data);
       } catch (error) {
         console.error("[Trenova] Message handling failed:", error);
@@ -133,9 +123,7 @@ export const useQueryInvalidationListener = () => {
         const delay = calculateDelay(retryAttemptRef.current);
         retryAttemptRef.current += 1;
 
-        logDebug(
-          `Retrying channel initialization (attempt ${retryAttemptRef.current})`,
-        );
+        logDebug(`Retrying channel initialization (attempt ${retryAttemptRef.current})`);
         retryTimeoutRef.current = window.setTimeout(
           () => void initializeChannelRef.current?.(),
           delay,
@@ -162,7 +150,6 @@ export const useQueryInvalidationListener = () => {
       }
     };
   }, [initializeChannel, messageHandler]);
-
 };
 
 export const broadcastQueryInvalidation = async ({

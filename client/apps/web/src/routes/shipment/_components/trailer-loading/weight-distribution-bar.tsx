@@ -33,7 +33,9 @@ export function AxleWeightDisplay({
         <span className="text-2xs text-muted-foreground font-medium tracking-wider uppercase">
           Axle Weights
         </span>
-        <span className={cn("text-xs font-semibold tabular-nums", isOverweight && "text-destructive")}>
+        <span
+          className={cn("text-xs font-semibold tabular-nums", isOverweight && "text-destructive")}
+        >
           {totalWeight.toLocaleString()} / {maxWeight.toLocaleString()} lbs
         </span>
       </div>
@@ -47,7 +49,9 @@ export function AxleWeightDisplay({
             )}
           >
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-2xs text-muted-foreground font-medium">{axleLabel(axle.axle)}</span>
+              <span className="text-2xs text-muted-foreground font-medium">
+                {axleLabel(axle.axle)}
+              </span>
               {!axle.compliant && (
                 <span className="bg-destructive/15 text-destructive rounded-full px-1.5 py-px text-[9px] font-semibold">
                   OVER
@@ -64,10 +68,17 @@ export function AxleWeightDisplay({
               />
             </div>
             <div className="flex items-baseline justify-between">
-              <span className={cn("text-xs font-semibold tabular-nums", !axle.compliant && "text-destructive")}>
+              <span
+                className={cn(
+                  "text-xs font-semibold tabular-nums",
+                  !axle.compliant && "text-destructive",
+                )}
+              >
                 {axle.weight.toLocaleString()}
               </span>
-              <span className="text-2xs text-muted-foreground">/ {axle.limit.toLocaleString()} lbs</span>
+              <span className="text-2xs text-muted-foreground">
+                / {axle.limit.toLocaleString()} lbs
+              </span>
             </div>
           </div>
         ))}
@@ -78,11 +89,13 @@ export function AxleWeightDisplay({
         <div className="border-border mt-2.5 flex items-center gap-4 border-t pt-2.5">
           <span className="text-2xs text-muted-foreground font-medium">Revenue</span>
           <span className="text-foreground text-xs font-semibold tabular-nums">
-            ${revenue.revenuePerFoot.toFixed(0)}<span className="text-2xs text-muted-foreground font-normal">/ft</span>
+            ${revenue.revenuePerFoot.toFixed(0)}
+            <span className="text-2xs text-muted-foreground font-normal">/ft</span>
           </span>
           {revenue.revenuePerMile > 0 && (
             <span className="text-foreground text-xs font-semibold tabular-nums">
-              ${revenue.revenuePerMile.toFixed(2)}<span className="text-2xs text-muted-foreground font-normal">/mi</span>
+              ${revenue.revenuePerMile.toFixed(2)}
+              <span className="text-2xs text-muted-foreground font-normal">/mi</span>
             </span>
           )}
           {revenue.emptySpaceFeet > 0 && (

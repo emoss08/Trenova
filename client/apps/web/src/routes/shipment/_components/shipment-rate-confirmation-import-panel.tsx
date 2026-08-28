@@ -100,7 +100,8 @@ function processingSummary(
   if (document.contentStatus === "Failed") {
     return {
       title: "Extraction failed",
-      description: document.contentError || "We could not extract text from this rate confirmation.",
+      description:
+        document.contentError || "We could not extract text from this rate confirmation.",
       progress: 100,
       variant: "error" as const,
     };
@@ -109,7 +110,8 @@ function processingSummary(
   if (draft?.status === "Failed") {
     return {
       title: "Draft generation failed",
-      description: draft.failureMessage || "We extracted text but could not build a shipment draft.",
+      description:
+        draft.failureMessage || "We extracted text but could not build a shipment draft.",
       progress: 100,
       variant: "error" as const,
     };
@@ -149,7 +151,8 @@ function processingSummary(
   if (document.contentStatus === "Extracting") {
     return {
       title: "Extracting shipment details",
-      description: "We are extracting text, classifying the document, and assembling the shipment draft.",
+      description:
+        "We are extracting text, classifying the document, and assembling the shipment draft.",
       progress: 70,
       variant: "default" as const,
     };
@@ -182,25 +185,19 @@ export function ShipmentRateConfirmationImportPanel({
   const [createdShipmentId, setCreatedShipmentId] = useState<string | null>(null);
   const [attachErrorMessage, setAttachErrorMessage] = useState<string | null>(null);
 
-  const {
-    uploads,
-    uploadFiles,
-    cancelUpload,
-    retryUpload,
-    removeUpload,
-    clearAll,
-  } = useDocumentUpload({
-    resourceId: importResourceId,
-    resourceType: IMPORT_RESOURCE_TYPE,
-    processingProfile: "rate_confirmation_import",
-    invalidateQueryKey: ["documents", IMPORT_RESOURCE_TYPE, importResourceId],
-    onSuccess: (document) => {
-      setUploadedDocumentId(document.id);
-    },
-    onError: (error) => {
-      toast.error(`Rate confirmation upload failed: ${error.message}`);
-    },
-  });
+  const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearAll } =
+    useDocumentUpload({
+      resourceId: importResourceId,
+      resourceType: IMPORT_RESOURCE_TYPE,
+      processingProfile: "rate_confirmation_import",
+      invalidateQueryKey: ["documents", IMPORT_RESOURCE_TYPE, importResourceId],
+      onSuccess: (document) => {
+        setUploadedDocumentId(document.id);
+      },
+      onError: (error) => {
+        toast.error(`Rate confirmation upload failed: ${error.message}`);
+      },
+    });
 
   const resetFlow = useCallback(() => {
     clearAll();
@@ -293,10 +290,15 @@ export function ShipmentRateConfirmationImportPanel({
 
   const processingFailure = useMemo(() => {
     if (importedDocument?.contentStatus === "Failed") {
-      return importedDocument.contentError || "We could not extract text from this rate confirmation.";
+      return (
+        importedDocument.contentError || "We could not extract text from this rate confirmation."
+      );
     }
     if (importedDraft?.status === "Failed") {
-      return importedDraft.failureMessage || "We extracted the document but could not create a shipment draft.";
+      return (
+        importedDraft.failureMessage ||
+        "We extracted the document but could not create a shipment draft."
+      );
     }
     if (
       importedDocument &&
@@ -313,7 +315,11 @@ export function ShipmentRateConfirmationImportPanel({
     if (createdShipmentId) {
       return "success";
     }
-    if (uploadedDocumentId && importedDraft?.status === "Ready" && !importedDraft.attachedShipmentId) {
+    if (
+      uploadedDocumentId &&
+      importedDraft?.status === "Ready" &&
+      !importedDraft.attachedShipmentId
+    ) {
       return "review";
     }
     if (uploadedDocumentId) {
@@ -495,10 +501,7 @@ export function ShipmentRateConfirmationImportPanel({
                           </Button>
                         ) : null}
                         {currentUpload.status !== "success" ? (
-                          <Button
-                            variant="outline"
-                            onClick={() => cancelUpload(currentUpload.id)}
-                          >
+                          <Button variant="outline" onClick={() => cancelUpload(currentUpload.id)}>
                             Cancel Upload
                           </Button>
                         ) : null}
@@ -631,9 +634,7 @@ export function ShipmentRateConfirmationImportPanel({
                   <CheckCircle2Icon className="size-5 text-emerald-600" />
                   <CardTitle>Shipment created</CardTitle>
                 </div>
-                <CardDescription>
-                  The rate confirmation workflow is complete.
-                </CardDescription>
+                <CardDescription>The rate confirmation workflow is complete.</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
                 <div className="bg-background/80 rounded-lg border border-emerald-200 p-4">
@@ -653,10 +654,7 @@ export function ShipmentRateConfirmationImportPanel({
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    render={<Link to="/shipment-management/shipments" />}
-                  >
+                  <Button variant="outline" render={<Link to="/shipment-management/shipments" />}>
                     Open Shipments
                   </Button>
                   <Button onClick={closeAndReset}>Done</Button>

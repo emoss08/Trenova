@@ -26,4 +26,3 @@ export const autocompleteLocationRequestSchema = z.object({
 });
 
 export type AutocompleteLocationRequest = z.infer<typeof autocompleteLocationRequestSchema>;
-

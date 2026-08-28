@@ -3,12 +3,7 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { cn } from "@trenova/shared/lib/utils";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useCallback } from "react";
-import {
-  Controller,
-  type Control,
-  type FieldValues,
-  type Path,
-} from "react-hook-form";
+import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 
 type KeyValueEditorProps<T extends FieldValues> = {
   control: Control<T>;
@@ -111,9 +106,7 @@ function KeyValueEditorInner({
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      {label && (
-        <label className="text-sm leading-none font-medium">{label}</label>
-      )}
+      {label && <label className="text-sm leading-none font-medium">{label}</label>}
       <div className="space-y-2">
         {entries.map(([key, val]) => (
           <div key={key} className="flex items-center gap-2">
@@ -132,37 +125,21 @@ function KeyValueEditorInner({
               className="flex-1"
             />
             {!disabled && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeEntry(key)}
-              >
+              <Button type="button" variant="ghost" size="icon" onClick={() => removeEntry(key)}>
                 <XIcon className="size-4" />
               </Button>
             )}
           </div>
         ))}
         {!disabled && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addEntry}
-            className="gap-1"
-          >
+          <Button type="button" variant="outline" size="sm" onClick={addEntry} className="gap-1">
             <PlusIcon className="size-3.5" />
             Add Entry
           </Button>
         )}
       </div>
       {(error || description) && (
-        <p
-          className={cn(
-            "text-2xs",
-            error ? "text-destructive" : "text-muted-foreground",
-          )}
-        >
+        <p className={cn("text-2xs", error ? "text-destructive" : "text-muted-foreground")}>
           {error || description}
         </p>
       )}

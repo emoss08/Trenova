@@ -20,11 +20,7 @@ import { useLocation } from "react-router";
 
 function NavItemRow({ item, activePath }: { item: NavItem; activePath: string | null }) {
   return (
-    <SidebarNavLink
-      to={item.path}
-      active={item.path === activePath}
-      disabled={item.disabled}
-    >
+    <SidebarNavLink to={item.path} active={item.path === activePath} disabled={item.disabled}>
       <span className="truncate">{item.label}</span>
       {item.badge ? (
         <span className="ml-auto flex items-center gap-1">
@@ -72,7 +68,13 @@ function NavGroupSection({ group, activePath }: { group: NavGroup; activePath: s
   );
 }
 
-function AdminLinkGroups({ links, activePath }: { links: SidebarLink[]; activePath: string | null }) {
+function AdminLinkGroups({
+  links,
+  activePath,
+}: {
+  links: SidebarLink[];
+  activePath: string | null;
+}) {
   const grouped = useMemo(() => {
     const groups = new Map<string, SidebarLink[]>();
     for (const link of links) {
@@ -205,7 +207,12 @@ export function BrowseSection() {
         if (module.id === "home") {
           const Icon = module.icon;
           return (
-            <SidebarNavLink key={module.id} to={module.basePath} active={pathname === "/"} className="h-7">
+            <SidebarNavLink
+              key={module.id}
+              to={module.basePath}
+              active={pathname === "/"}
+              className="h-7"
+            >
               <Icon className="text-muted-foreground size-4 shrink-0" strokeWidth={1.75} />
               <span className="truncate">{module.label}</span>
             </SidebarNavLink>

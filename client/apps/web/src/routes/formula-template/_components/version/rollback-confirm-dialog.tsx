@@ -20,10 +20,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
-import type {
-  FieldChange,
-  TemplateUsageResponse,
-} from "@trenova/shared/types/formula-template";
+import type { FieldChange, TemplateUsageResponse } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
@@ -82,15 +79,10 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
 
   const categorizedChanges = {
     expression: changeEntries.filter(([k]) => k === "expression"),
-    variables: changeEntries.filter(([k]) =>
-      k.startsWith("variableDefinitions"),
-    ),
+    variables: changeEntries.filter(([k]) => k.startsWith("variableDefinitions")),
     status: changeEntries.filter(([k]) => k === "status"),
     other: changeEntries.filter(
-      ([k]) =>
-        k !== "expression" &&
-        k !== "status" &&
-        !k.startsWith("variableDefinitions"),
+      ([k]) => k !== "expression" && k !== "status" && !k.startsWith("variableDefinitions"),
     ),
   };
 
@@ -117,11 +109,7 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
           <div className="flex items-center gap-2">
             <div className="flex flex-wrap gap-1">
               {summaryParts.slice(0, 3).map((part) => (
-                <Badge
-                  key={part}
-                  variant="secondary"
-                  className="text-[10px] font-normal"
-                >
+                <Badge key={part} variant="secondary" className="text-[10px] font-normal">
                   {part}
                 </Badge>
               ))}
@@ -146,15 +134,8 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
                 key={path}
                 className="hover:bg-muted flex items-center justify-between gap-2 rounded px-2 py-1 text-xs"
               >
-                <span className="text-foreground font-medium">
-                  {formatFieldName(path)}
-                </span>
-                <Badge
-                  className={cn(
-                    "text-[10px]",
-                    getChangeBadgeStyle(change.type),
-                  )}
-                >
+                <span className="text-foreground font-medium">{formatFieldName(path)}</span>
+                <Badge className={cn("text-[10px]", getChangeBadgeStyle(change.type))}>
                   {change.type}
                 </Badge>
               </div>
@@ -194,19 +175,9 @@ export function RollbackConfirmDialog({
   const [confirmed, setConfirmed] = useState(false);
 
   const { data: diff, isLoading: isLoadingDiff } = useQuery({
-    queryKey: [
-      "formulaTemplate",
-      "compare",
-      templateId,
-      targetVersion,
-      currentVersion,
-    ],
+    queryKey: ["formulaTemplate", "compare", templateId, targetVersion, currentVersion],
     queryFn: () =>
-      apiService.formulaTemplateService.compareVersions(
-        templateId,
-        targetVersion,
-        currentVersion,
-      ),
+      apiService.formulaTemplateService.compareVersions(templateId, targetVersion, currentVersion),
     enabled: open && !!templateId && currentVersion > 0 && targetVersion > 0,
   });
 
@@ -217,22 +188,19 @@ export function RollbackConfirmDialog({
     onOpenChange(newOpen);
   };
 
-  const totalUsageCount =
-    usageData?.usages.reduce((sum, u) => sum + u.count, 0) ?? 0;
+  const totalUsageCount = usageData?.usages.reduce((sum, u) => sum + u.count, 0) ?? 0;
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            Rollback to Version {targetVersion}
-          </AlertDialogTitle>
+          <AlertDialogTitle>Rollback to Version {targetVersion}</AlertDialogTitle>
           <AlertDialogDescription
             render={
               <div className="space-y-3">
                 <span className="text-muted-foreground block text-sm">
-                  This will restore the template to version {targetVersion},
-                  creating a new version (v{currentVersion + 1}).
+                  This will restore the template to version {targetVersion}, creating a new version
+                  (v{currentVersion + 1}).
                 </span>
 
                 {isLoadingDiff ? (
@@ -260,13 +228,10 @@ export function RollbackConfirmDialog({
                   <Checkbox
                     id="rollback-confirm"
                     checked={confirmed}
-                    onCheckedChange={(checked) =>
-                      setConfirmed(checked === true)
-                    }
+                    onCheckedChange={(checked) => setConfirmed(checked === true)}
                   />
                   <span className="text-sm">
-                    I understand this will create a new version and cannot be
-                    undone
+                    I understand this will create a new version and cannot be undone
                   </span>
                 </Label>
               </div>

@@ -72,9 +72,7 @@ describe("ShipmentEventService", () => {
         proNumber: "SHP-100",
       },
     };
-    listShipmentEventsGraphQLMock.mockResolvedValueOnce([
-      event,
-    ] as unknown as ShipmentEvent[]);
+    listShipmentEventsGraphQLMock.mockResolvedValueOnce([event] as unknown as ShipmentEvent[]);
 
     const response = await new ShipmentEventService().list();
 

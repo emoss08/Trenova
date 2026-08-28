@@ -27,10 +27,7 @@ export function ExpressionEditor<T extends FieldValues>({
 }: ExpressionEditorProps<T>) {
   const { theme } = useTheme();
 
-  const extensions = [
-    exprLanguageSupport(customVariables),
-    EditorView.lineWrapping,
-  ];
+  const extensions = [exprLanguageSupport(customVariables), EditorView.lineWrapping];
 
   return (
     <Controller<T>

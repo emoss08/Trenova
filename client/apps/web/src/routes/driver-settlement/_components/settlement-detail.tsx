@@ -1,5 +1,8 @@
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
-import { DriverSettlementStatusBadge, PayeeClassificationBadge } from "@trenova/shared/components/status-badge";
+import {
+  DriverSettlementStatusBadge,
+  PayeeClassificationBadge,
+} from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,

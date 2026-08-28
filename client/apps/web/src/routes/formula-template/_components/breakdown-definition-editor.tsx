@@ -2,7 +2,10 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { MAX_BREAKDOWN_DEFINITIONS, type BreakdownDefinitionInput } from "@trenova/shared/types/formula-template";
+import {
+  MAX_BREAKDOWN_DEFINITIONS,
+  type BreakdownDefinitionInput,
+} from "@trenova/shared/types/formula-template";
 import { ListTreeIcon, Plus, Trash2 } from "lucide-react";
 import { useCallback } from "react";
 import { useFieldArray, useFormState, type Control, type UseFormRegister } from "react-hook-form";

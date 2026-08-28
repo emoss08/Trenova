@@ -60,9 +60,7 @@ export function ExceptionStrip({
   onFocusChange,
   onStep,
 }: ExceptionStripProps) {
-  const visibleChips = CHIP_CONFIG.filter(
-    (chip) => exceptions[chip.id] > 0 || chip.id === focus,
-  );
+  const visibleChips = CHIP_CONFIG.filter((chip) => exceptions[chip.id] > 0 || chip.id === focus);
   const allClear = visibleChips.length === 0;
 
   return (

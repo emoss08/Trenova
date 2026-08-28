@@ -3,9 +3,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { User } from "@trenova/shared/types/user";
 
 function HeaderOuter({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-[42px] items-center justify-between">{children}</div>
-  );
+  return <div className="flex h-[42px] items-center justify-between">{children}</div>;
 }
 
 function HeaderInner({ children }: { children: React.ReactNode }) {
@@ -13,19 +11,10 @@ function HeaderInner({ children }: { children: React.ReactNode }) {
 }
 
 function getUserTimezoneLabel({ user }: { user: NonNullable<User> }) {
-  return (
-    timezoneChoices.find((choice) => choice.value === user.timezone)?.label ||
-    "Auto-detect"
-  );
+  return timezoneChoices.find((choice) => choice.value === user.timezone)?.label || "Auto-detect";
 }
 
-export function HeaderContent({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+export function HeaderContent({ title, children }: { title: string; children: React.ReactNode }) {
   const user = useAuthStore((state) => state.user);
   const userTimezoneLabel = getUserTimezoneLabel({ user: user! });
 
