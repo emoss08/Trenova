@@ -18,7 +18,7 @@ export default function ApiKeyAnalytics() {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 pb-3">
       <TotalKeysCard data={data.totalKeys} />
       <ActiveKeysCard data={data.activeKeys} />
       <RevokedKeysCard data={data.revokedKeys} />
