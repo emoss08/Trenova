@@ -13,7 +13,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { accessorialChargeMethodChoices } from "@/lib/choices";
-import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
+import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
@@ -38,15 +38,18 @@ export function AdditionalChargeDialog({
     isEditing ? (getValues(`additionalCharges.${index}.accessorialChargeId`) ?? null) : null,
   );
 
-  function handleChargeSelected(option: AccessorialCharge | null) {
+  function handleChargeSelected(option: GraphQLSelectOption | null) {
     if (option) {
       const opts = { shouldDirty: true, shouldValidate: true };
+      const legacy = option as unknown as { id?: string; method?: string; amount?: unknown };
+      const metaMethod = (option.meta?.["method"] as string) ?? legacy.method;
+      const metaAmount = option.meta?.["amount"] ?? legacy.amount;
       if (lastAppliedChargeIdRef.current !== option.id) {
-        setValue(`additionalCharges.${index}.method`, option.method, opts);
-        setValue(`additionalCharges.${index}.amount`, option.amount, opts);
+        if (metaMethod) setValue(`additionalCharges.${index}.method`, metaMethod as never, opts);
+        if (metaAmount != null) setValue(`additionalCharges.${index}.amount`, metaAmount as never, opts);
         lastAppliedChargeIdRef.current = option.id ?? null;
       }
-      setValue(`additionalCharges.${index}.accessorialCharge`, option);
+      setValue(`additionalCharges.${index}.accessorialCharge`, option as never);
     }
   }
 

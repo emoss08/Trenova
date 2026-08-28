@@ -8,7 +8,7 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { CreateEDIConnectionRequest, EDIPartner } from "@trenova/shared/types/edi";
-import type { OrganizationSelectOption } from "@trenova/shared/types/organization";
+import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -106,15 +106,19 @@ function CreatePartnerPanel({
     setValue("targetName", currentOrganization.name, { shouldDirty: true });
   }, [currentOrganization, setValue]);
   const handleTargetOrganizationChange = useCallback(
-    (organization: OrganizationSelectOption | null) => {
+    (organization: GraphQLSelectOption | null) => {
       if (!organization) {
         setValue("sourceCode", "", { shouldDirty: true });
         setValue("sourceName", "", { shouldDirty: true });
         return;
       }
 
-      setValue("sourceCode", organization.scacCode ?? "", { shouldDirty: true });
-      setValue("sourceName", organization.name, { shouldDirty: true });
+      const scacCode =
+        typeof organization.meta?.["scacCode"] === "string"
+          ? (organization.meta["scacCode"] as string)
+          : "";
+      setValue("sourceCode", scacCode, { shouldDirty: true });
+      setValue("sourceName", organization.label, { shouldDirty: true });
       fillCurrentOrganizationPartner();
     },
     [fillCurrentOrganizationPartner, setValue],

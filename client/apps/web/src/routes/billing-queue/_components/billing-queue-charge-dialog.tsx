@@ -16,6 +16,7 @@ import {
   accessorialChargeMethodSchema,
   type AccessorialCharge,
 } from "@trenova/shared/types/accessorial-charge";
+import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
@@ -32,7 +33,7 @@ type ChargeFormValues = z.infer<typeof chargeFormSchema>;
 
 export type ChargeDialogResult = ChargeFormValues & {
   id?: string;
-  accessorialCharge?: AccessorialCharge | null;
+  accessorialCharge?: AccessorialCharge | GraphQLSelectOption | null;
 };
 
 export function BillingQueueChargeDialog({
@@ -47,7 +48,7 @@ export function BillingQueueChargeDialog({
   defaultValues?: Partial<ChargeDialogResult>;
 }) {
   const isEditing = !!defaultValues?.accessorialChargeId;
-  const accessorialRef = useRef<AccessorialCharge | null>(null);
+  const accessorialRef = useRef<AccessorialCharge | GraphQLSelectOption | null>(null);
 
   const form = useForm({
     resolver: zodResolver(chargeFormSchema),
@@ -62,11 +63,17 @@ export function BillingQueueChargeDialog({
   const { control, handleSubmit, setValue, reset } = form;
 
   const handleChargeSelected = useCallback(
-    (option: AccessorialCharge | null) => {
+    (option: GraphQLSelectOption | null) => {
       if (option) {
-        accessorialRef.current = option;
-        setValue("method", option.method, { shouldDirty: true });
-        setValue("amount", Number(option.amount), { shouldDirty: true });
+        accessorialRef.current = option as unknown as AccessorialCharge;
+        const metaMethod = (option.meta?.["method"] as string) ?? undefined;
+        const metaAmount = option.meta?.["amount"];
+        if (metaMethod) setValue("method", metaMethod as never, { shouldDirty: true });
+        if (metaAmount != null) setValue("amount", Number(metaAmount), { shouldDirty: true });
+        // Fallback for legacy AccessorialCharge shape
+        const legacy = option as unknown as AccessorialCharge;
+        if (!metaMethod && legacy.method) setValue("method", legacy.method as never, { shouldDirty: true });
+        if (metaAmount == null && legacy.amount != null) setValue("amount", Number(legacy.amount), { shouldDirty: true });
       }
     },
     [setValue],

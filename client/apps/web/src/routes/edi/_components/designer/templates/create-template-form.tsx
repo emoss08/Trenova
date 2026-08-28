@@ -2,7 +2,8 @@ import { EDIDocumentTypeAutocompleteField } from "@/components/autocomplete-fiel
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { type EDIDocumentType, type TemplateFormValues } from "@trenova/shared/types/edi";
+import { type TemplateFormValues } from "@trenova/shared/types/edi";
+import type { SelectOption } from "@/lib/graphql/select-options";
 import { useFormContext } from "react-hook-form";
 import { functionalGroupForTransactionSet } from "../utils/edi-designer-utils";
 import { templateStatusOptions } from "../utils/edi-designer-options";
@@ -16,18 +17,21 @@ export function CreateTemplateForm({
 }) {
   const { control, getValues, setValue } = useFormContext<TemplateFormValues>();
 
-  const handleDocumentTypeChange = (documentType: EDIDocumentType | null) => {
-    if (!documentType) return;
-    setValue("direction", documentType.direction, { shouldDirty: true, shouldValidate: true });
-    setValue("transactionSet", documentType.transactionSet, {
+  const handleDocumentTypeChange = (option: SelectOption | null) => {
+    if (!option) return;
+    const direction = (option.meta?.direction as string) || "";
+    const transactionSet = (option.meta?.transactionSet as string) || "";
+    const defaultVersion = (option.meta?.defaultVersion as string) || "";
+    if (direction) setValue("direction", direction as TemplateFormValues["direction"], { shouldDirty: true, shouldValidate: true });
+    if (transactionSet) setValue("transactionSet", transactionSet as TemplateFormValues["transactionSet"], {
       shouldDirty: true,
       shouldValidate: true,
     });
-    setValue("x12Version", documentType.defaultVersion || getValues("x12Version"), {
+    setValue("x12Version", defaultVersion || getValues("x12Version"), {
       shouldDirty: true,
       shouldValidate: true,
     });
-    setValue("functionalGroupId", functionalGroupForTransactionSet(documentType.transactionSet), {
+    if (transactionSet) setValue("functionalGroupId", functionalGroupForTransactionSet(transactionSet as TemplateFormValues["transactionSet"]), {
       shouldDirty: true,
       shouldValidate: true,
     });

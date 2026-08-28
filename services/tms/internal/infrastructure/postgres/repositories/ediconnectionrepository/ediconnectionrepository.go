@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -93,55 +94,53 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.EDIConnectionSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
-	entities := make([]*edi.EDIConnection, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-	rel := buncolgen.EDIConnectionRelations
 	cols := buncolgen.EDIConnectionColumns
 	orgCols := buncolgen.OrganizationColumns
+	rel := buncolgen.EDIConnectionRelations
 
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Relation(rel.SourceOrganization).
-		Relation(rel.TargetOrganization).
-		Where(cols.BusinessUnitID.Eq(), req.SelectQueryRequest.TenantInfo.BuID).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.WhereOr(cols.SourceOrganizationID.Eq(), req.SelectQueryRequest.TenantInfo.OrgID).
-				WhereOr(cols.TargetOrganizationID.Eq(), req.SelectQueryRequest.TenantInfo.OrgID)
-		}).
-		Where(cols.Status.Eq(), edi.ConnectionStatusActive)
+	return dbhelper.SelectOptions[*edi.EDIConnection](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Method,
+				cols.SourceOrganizationID,
+				cols.TargetOrganizationID,
+				cols.Status,
+				cols.SourcePartnerID,
+				cols.TargetPartnerID,
+				cols.Version,
+				cols.CreatedAt,
+				cols.UpdatedAt,
+			},
+			OrgColumnRef: &cols.SourceOrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			EntityName:   "EDI Connection",
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				q = q.Relation(rel.SourceOrganization).Relation(rel.TargetOrganization)
 
-	if req.SelectQueryRequest.Query != "" {
-		term := "%" + req.SelectQueryRequest.Query + "%"
-		query = query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.WhereOr(cols.Method.TextILike(), term).
-				WhereOr(orgCols.Name.WithAlias("source_organization").ILike(), term).
-				WhereOr(orgCols.Name.WithAlias("target_organization").ILike(), term)
-		})
-	}
+				if req.SelectQueryRequest.Query != "" {
+					term := "%" + req.SelectQueryRequest.Query + "%"
+					q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+						return sq.WhereOr(cols.Method.TextILike(), term).
+							WhereOr(orgCols.Name.WithAlias("source_organization").ILike(), term).
+							WhereOr(orgCols.Name.WithAlias("target_organization").ILike(), term)
+					})
+				}
 
-	total, err := query.
-		Order(cols.CreatedAt.OrderDesc()).
-		Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-		Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pagination.ListResult[*edi.EDIConnection]{
-		Items: entities,
-		Total: total,
-	}, nil
+				return q.Where(cols.Status.Eq(), edi.ConnectionStatusActive).
+					Order(cols.CreatedAt.OrderDesc())
+			},
+		},
+	)
 }
 
 func (r *repository) GetConnectionsByIDs(
 	ctx context.Context,
 	req repositories.GetEDIConnectionsByIDsRequest,
 ) ([]*edi.EDIConnection, error) {
-	if len(req.ConnectionIDs) == 0 {
-		return []*edi.EDIConnection{}, nil
-	}
-
 	entities := make([]*edi.EDIConnection, 0, len(req.ConnectionIDs))
 	cols := buncolgen.EDIConnectionColumns
 	rel := buncolgen.EDIConnectionRelations
@@ -159,7 +158,7 @@ func (r *repository) GetConnectionsByIDs(
 		}).
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, dberror.HandleNotFoundError(err, "EDIConnection")
 	}
 
 	return entities, nil

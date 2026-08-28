@@ -2,7 +2,7 @@ import { OrganizationAutocompleteField } from "@/components/autocomplete-fields"
 import { InputField } from "@/components/fields/input-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { Form, FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
-import type { OrganizationSelectOption } from "@trenova/shared/types/organization";
+import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import type { Control, UseFormReturn } from "react-hook-form";
 import type { CreateInternalPartnerPairFormValues } from "../edi-schemas";
 
@@ -10,7 +10,7 @@ type InternalPartnerPairFormProps = {
   id: string;
   form: UseFormReturn<CreateInternalPartnerPairFormValues>;
   onSubmit: (values: CreateInternalPartnerPairFormValues) => void;
-  onTargetOrganizationChange: (organization: OrganizationSelectOption | null) => void;
+  onTargetOrganizationChange: (organization: GraphQLSelectOption | null) => void;
 };
 
 export function InternalPartnerPairForm({

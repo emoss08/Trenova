@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/empty-state";
 import { NumberField } from "@/components/fields/number-field";
 import { EntityRedirectLink } from "@/components/link";
 import { Button } from "@trenova/shared/components/ui/button";
+import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +34,6 @@ import {
   type FieldDescriptor,
 } from "@trenova/shared/components/capability-form-section";
 import { apiService } from "@/services/api";
-import type { Commodity } from "@trenova/shared/types/commodity";
 import type { ResolvedModeProfile, Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -104,8 +104,8 @@ function CommodityDialog({
     ),
   }));
 
-  function handleCommoditySelected(option: Commodity | null) {
-    setValue(`commodities.${index}.commodity`, option ?? undefined);
+  function handleCommoditySelected(option: GraphQLSelectOption | null) {
+    setValue(`commodities.${index}.commodity`, option as never);
   }
 
   async function handleSave() {
@@ -321,11 +321,14 @@ export default function CommoditiesSection() {
             <div className="divide-y">
               {fields.map((field, index) => {
                 const item = commodities[index];
-                const commodityObj = item?.commodity;
-                const displayName = commodityObj?.name ?? "—";
-                const hasHazmat = !!commodityObj?.hazardousMaterialId;
-                const stackable = commodityObj?.stackable;
-                const fragile = commodityObj?.fragile;
+                const commodityObj = item?.commodity as unknown as Record<string, unknown> | undefined;
+                const displayName =
+                  (commodityObj as unknown as { name?: string })?.name ??
+                  (commodityObj as unknown as { label?: string })?.label ??
+                  "—";
+                const hasHazmat = !!(commodityObj as unknown as { hazardousMaterialId?: string })?.hazardousMaterialId;
+                const stackable = (commodityObj as unknown as { stackable?: boolean })?.stackable;
+                const fragile = (commodityObj as unknown as { fragile?: boolean })?.fragile;
                 const isDuplicate =
                   !!item?.commodityId && duplicateCommodityIds.has(item.commodityId);
 
@@ -354,7 +357,7 @@ export default function CommoditiesSection() {
                       )}
                     >
                       <EntityRedirectLink
-                        entityId={commodityObj?.id}
+                        entityId={(commodityObj as unknown as { id?: string })?.id}
                         baseUrl="/shipment-management/configuration-files/commodities"
                         panelOpen
                       >

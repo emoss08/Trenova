@@ -45,7 +45,7 @@ func emitConcurrencyEvent(event ConcurrencyEvent) {
 }
 
 func HandleNotFoundError(err error, entityName string) error {
-	if errors.Is(err, sql.ErrNoRows) {
+	if IsNotFoundError(err) {
 		return errortypes.NewNotFoundError(
 			fmt.Sprintf("%s not found within your organization", entityName),
 		)

@@ -5,17 +5,36 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/accounttype"
+	"github.com/emoss08/trenova/internal/core/domain/commodity"
+	"github.com/emoss08/trenova/internal/core/domain/detention"
+	"github.com/emoss08/trenova/internal/core/domain/documenttype"
+	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/order"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratezone"
+	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -133,6 +152,81 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		},
 		gqlmodel.SelectOptionResourceRateZone: {
 			resolve: r.resolveRateZoneSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceFleetCode: {
+			resolve: r.resolveFleetCodeSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceShipmentType: {
+			resolve: r.resolveShipmentTypeSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceServiceType: {
+			resolve: r.resolveServiceTypeSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceLocationCategory: {
+			resolve: r.resolveLocationCategorySelectOptions,
+		},
+		gqlmodel.SelectOptionResourceDistanceProfile: {
+			resolve: r.resolveDistanceProfileSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceOrganization: {
+			resolve: r.resolveOrganizationSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceUser: {
+			resolve: r.resolveUserSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceRole: {
+			resolve: r.resolveRoleSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceRateMatrix: {
+			resolve: r.resolveRateMatrixSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceRateAgreement: {
+			resolve: r.resolveRateAgreementSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceAccessorialCharge: {
+			resolve: r.resolveAccessorialChargeSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceAccountType: {
+			resolve: r.resolveAccountTypeSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceCommodity: {
+			resolve: r.resolveCommoditySelectOptions,
+		},
+		gqlmodel.SelectOptionResourceDocumentType: {
+			resolve: r.resolveDocumentTypeSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceDetentionPolicy: {
+			resolve: r.resolveDetentionPolicySelectOptions,
+		},
+		gqlmodel.SelectOptionResourceFormulaTemplate: {
+			resolve: r.resolveFormulaTemplateSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceHazardousMaterial: {
+			resolve: r.resolveHazardousMaterialSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceServiceFailureReasonCode: {
+			resolve: r.resolveServiceFailureReasonCodeSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceEdiCommunicationProfile: {
+			resolve: r.resolveEDICommunicationProfileSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceEdiDocumentType: {
+			resolve: r.resolveEDIDocumentTypeSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceEdiMappingProfile: {
+			resolve: r.resolveEDIMappingProfileSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceEdiPartner: {
+			resolve: r.resolveEDIPartnerSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceEdiPartnerDocumentProfile: {
+			resolve: r.resolveEDIPartnerDocumentProfileSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceEdiTemplate: {
+			resolve: r.resolveEDITemplateSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceEmailProfile: {
+			resolve: r.resolveEmailProfileSelectOptions,
 		},
 	}
 }
@@ -472,6 +566,971 @@ func (r *Resolver) resolveRateZoneSelectOptions(
 	)
 }
 
+func (r *Resolver) resolveFleetCodeSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.fleetCodeService.Get(
+				ctx,
+				repositories.GetFleetCodeByIDRequest{
+					ID:         id,
+					TenantInfo: &req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, fleetCodeSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.fleetCodeService.SelectOptions(ctx, req.selectQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		fleetCodeSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveShipmentTypeSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.shipmentTypeService.Get(
+				ctx,
+				repositories.GetShipmentTypeByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, shipmentTypeSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.shipmentTypeService.SelectOptions(
+		ctx,
+		&repositories.ShipmentTypeSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		shipmentTypeSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveServiceTypeSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.serviceTypeService.Get(
+				ctx,
+				repositories.GetServiceTypeByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, serviceTypeSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.serviceTypeService.SelectOptions(
+		ctx,
+		&repositories.ServiceTypeSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		serviceTypeSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveLocationCategorySelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.locationCategoryService.Get(
+				ctx,
+				repositories.GetLocationCategoryByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, locationCategorySelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.locationCategoryService.SelectOptions(ctx, req.selectQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		locationCategorySelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveDistanceProfileSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.distanceProfileService.Get(
+				ctx,
+				repositories.GetDistanceProfileByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, distanceProfileSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.distanceProfileService.SelectOptions(
+		ctx,
+		&repositories.DistanceProfileSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		distanceProfileSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveOrganizationSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		entities, err := r.organizationService.GetByIDs(
+			ctx,
+			portservices.GetOrganizationsByIDsRequest{
+				TenantInfo:      req.tenantInfo,
+				OrganizationIDs: req.ids,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		items := orderedSelectOptionItems(req.ids, entities, organizationID, organizationSelectOptionItem)
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.organizationService.SelectOptions(
+		ctx,
+		&repositories.SelectOrganizationOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+			Scope:              selectOptionStringFilter(req.filters, "scope"),
+			ExcludeCurrent:     selectOptionBoolFilter(req.filters, "excludeCurrent"),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		organizationSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveUserSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.userService.GetByID(
+				ctx,
+				repositories.GetUserByIDRequest{
+					TenantInfo:   req.tenantInfo,
+					LookupUserID: id,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, userSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.userService.SelectOptions(ctx, req.selectQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		userSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveRoleSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.roleService.GetRoleByID(
+				ctx,
+				repositories.GetRoleByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, roleSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.roleService.SelectRoleOptions(ctx, req.selectQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		roleSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveRateMatrixSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.rateMatrixService.GetByID(
+				ctx,
+				&repositories.GetRateMatrixByIDRequest{
+					RateMatrixID: id,
+					TenantInfo:   req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, rateMatrixSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.rateMatrixService.SelectOptions(ctx, req.selectQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		rateMatrixSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveRateAgreementSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.rateAgreementService.GetByID(
+				ctx,
+				&repositories.GetRateAgreementByIDRequest{
+					RateAgreementID: id,
+					TenantInfo:      req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, rateAgreementSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.rateAgreementService.SelectOptions(ctx, req.selectQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		rateAgreementSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveAccessorialChargeSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.accessorialChargeService.Get(
+				ctx,
+				repositories.GetAccessorialChargeByIDRequest{
+					ID:         id,
+					TenantInfo: &req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, accessorialChargeSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.accessorialChargeService.SelectOptions(
+		ctx,
+		req.selectQuery,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		accessorialChargeSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveAccountTypeSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.accountTypeService.Get(
+				ctx,
+				repositories.GetAccountTypeByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, accountTypeSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.accountTypeService.SelectOptions(
+		ctx,
+		&repositories.AccountTypeSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		accountTypeSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveCommoditySelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.commodityService.Get(
+				ctx,
+				repositories.GetCommodityByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, commoditySelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.commodityService.SelectOptions(
+		ctx,
+		&repositories.CommoditySelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		commoditySelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveDocumentTypeSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.documentTypeService.Get(
+				ctx,
+				repositories.GetDocumentTypeByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, documentTypeSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.documentTypeService.SelectOptions(
+		ctx,
+		req.selectQuery,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		documentTypeSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveDetentionPolicySelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.detentionPolicyService.GetByID(
+				ctx,
+				&repositories.GetDetentionPolicyByIDRequest{
+					DetentionPolicyID: id,
+					TenantInfo:        req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, detentionPolicySelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.detentionPolicyService.SelectOptions(
+		ctx,
+		&repositories.DetentionPolicySelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		detentionPolicySelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveFormulaTemplateSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.formulaTemplateService.GetByID(
+				ctx,
+				repositories.GetFormulaTemplateByIDRequest{
+					TemplateID: id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, formulaTemplateSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.formulaTemplateService.SelectOptions(
+		ctx,
+		&repositories.FormulaTemplateSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		formulaTemplateSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveHazardousMaterialSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.hazardousMaterialService.Get(
+				ctx,
+				repositories.GetHazardousMaterialByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, hazardousMaterialSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.hazardousMaterialService.SelectOptions(
+		ctx,
+		&repositories.HazardousMaterialSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		hazardousMaterialSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveServiceFailureReasonCodeSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.serviceFailureReasonCodeSvc.Get(
+				ctx,
+				repositories.GetServiceFailureReasonCodeByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, serviceFailureReasonCodeSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.serviceFailureReasonCodeSvc.SelectOptions(
+		ctx,
+		&repositories.ServiceFailureReasonCodeSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		serviceFailureReasonCodeSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveEDICommunicationProfileSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.ediService.GetCommunicationProfile(
+				ctx,
+				repositories.GetEDICommunicationProfileByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, ediCommunicationProfileSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.ediService.SelectCommunicationProfileOptions(
+		ctx,
+		&repositories.EDICommunicationProfileSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		ediCommunicationProfileSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveEDIDocumentTypeSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		result, err := r.ediService.SelectDocumentTypeOptions(
+			ctx,
+			&repositories.EDIDocumentTypeSelectOptionsRequest{
+				SelectQueryRequest: req.selectQuery,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		items := orderedSelectOptionItems(req.ids, result.Items, func(e *edi.EDIDocumentType) pulid.ID { return e.ID }, ediDocumentTypeSelectOptionItem)
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.ediService.SelectDocumentTypeOptions(
+		ctx,
+		&repositories.EDIDocumentTypeSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		ediDocumentTypeSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveEDIMappingProfileSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.ediService.GetMappingProfileByID(
+				ctx,
+				repositories.GetMappingProfileByIDRequest{
+					ProfileID:  id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, ediMappingProfileSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.ediService.SelectMappingProfileOptions(
+		ctx,
+		&repositories.EDIMappingProfileSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		ediMappingProfileSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveEDIPartnerSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.ediService.GetPartner(
+				ctx,
+				repositories.GetEDIPartnerByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, ediPartnerSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.ediService.SelectPartnerOptions(
+		ctx,
+		&repositories.EDIPartnerSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		ediPartnerSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveEDIPartnerDocumentProfileSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.ediService.GetPartnerDocumentProfile(
+				ctx,
+				repositories.GetEDIPartnerDocumentProfileByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, ediPartnerDocumentProfileSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.ediService.SelectPartnerDocumentProfileOptions(
+		ctx,
+		&repositories.EDIPartnerDocumentProfileSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+			PartnerID:          selectOptionIDFilter(req.filters, "partnerId"),
+			TransactionSet:     edi.TransactionSet(selectOptionStringFilter(req.filters, "transactionSet")),
+			Direction:          edi.DocumentDirection(selectOptionStringFilter(req.filters, "direction")),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		ediPartnerDocumentProfileSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveEDITemplateSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.ediService.GetTemplate(
+				ctx,
+				repositories.GetEDITemplateByIDRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, ediTemplateSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.ediService.SelectTemplateOptions(
+		ctx,
+		&repositories.EDITemplateSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+			TransactionSet:     edi.TransactionSet(selectOptionStringFilter(req.filters, "transactionSet")),
+			Direction:          edi.DocumentDirection(selectOptionStringFilter(req.filters, "direction")),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		ediTemplateSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveEmailProfileSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		items := make([]selectOptionConnectionItem, 0, len(req.ids))
+		for _, id := range req.ids {
+			entity, err := r.emailService.GetProfile(
+				ctx,
+				repositories.GetEmailEntityRequest{
+					ID:         id,
+					TenantInfo: req.tenantInfo,
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, emailProfileSelectOptionItem(entity))
+		}
+
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.emailService.SelectProfileOptions(
+		ctx,
+		&repositories.EmailProfileSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		emailProfileSelectOptionItem,
+	)
+}
+
 func (r *Resolver) resolveOrderSelectOptions(
 	ctx context.Context,
 	req selectOptionsRequest,
@@ -610,6 +1669,18 @@ func selectOptionBoolFilter(filters map[string]any, key string) bool {
 	default:
 		return false
 	}
+}
+
+func selectOptionStringFilter(filters map[string]any, key string) string {
+	value, ok := filters[key]
+	if !ok {
+		return ""
+	}
+	str, ok := value.(string)
+	if !ok {
+		return ""
+	}
+	return str
 }
 
 func (r *Resolver) resolveEDIConnectionSelectOptions(
@@ -969,6 +2040,517 @@ func rateZoneSelectOption(entity *ratezone.RateZone) *gqlmodel.SelectOption {
 	}
 }
 
+func fleetCodeSelectOptionItem(entity *fleetcode.FleetCode) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		fleetCodeSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func fleetCodeSelectOption(entity *fleetcode.FleetCode) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code,
+		Description: stringPtr(entity.Description),
+		Meta: map[string]any{
+			"code":  entity.Code,
+			"color": entity.Color,
+		},
+	}
+}
+
+func shipmentTypeSelectOptionItem(entity *shipmenttype.ShipmentType) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		shipmentTypeSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func shipmentTypeSelectOption(entity *shipmenttype.ShipmentType) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code,
+		Description: stringPtr(entity.Description),
+		Meta: map[string]any{
+			"code":  entity.Code,
+			"color": entity.Color,
+		},
+	}
+}
+
+func serviceTypeSelectOptionItem(entity *servicetype.ServiceType) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		serviceTypeSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func serviceTypeSelectOption(entity *servicetype.ServiceType) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code,
+		Description: stringPtr(entity.Description),
+		Meta: map[string]any{
+			"code":  entity.Code,
+			"color": entity.Color,
+		},
+	}
+}
+
+func locationCategorySelectOptionItem(entity *locationcategory.LocationCategory) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		locationCategorySelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func locationCategorySelectOption(entity *locationcategory.LocationCategory) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Description),
+		Meta: map[string]any{
+			"color": entity.Color,
+		},
+	}
+}
+
+func distanceProfileSelectOptionItem(entity *distanceprofile.DistanceProfile) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		distanceProfileSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func distanceProfileSelectOption(entity *distanceprofile.DistanceProfile) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.RoutingType + " \u00b7 " + entity.DistanceUnits),
+		Meta: map[string]any{
+			"routingType":   entity.RoutingType,
+			"distanceUnits": entity.DistanceUnits,
+			"isDefault":     entity.IsDefault,
+		},
+	}
+}
+
+func organizationSelectOptionItem(entity *tenant.Organization) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		organizationSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func organizationSelectOption(entity *tenant.Organization) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.ScacCode),
+		Meta: map[string]any{
+			"scacCode": entity.ScacCode,
+			"city":     entity.City,
+		},
+	}
+}
+
+func organizationID(entity *tenant.Organization) pulid.ID {
+	return entity.ID
+}
+
+func userSelectOptionItem(entity *tenant.User) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		userSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func userSelectOption(entity *tenant.User) *gqlmodel.SelectOption {
+	label := entity.Name
+	if label == "" {
+		label = entity.EmailAddress
+	}
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       label,
+		Description: stringPtr(entity.EmailAddress),
+		Meta: map[string]any{
+			"name":         entity.Name,
+			"email":        entity.EmailAddress,
+			"emailAddress": entity.EmailAddress,
+		},
+	}
+}
+
+func userID(entity *tenant.User) pulid.ID {
+	return entity.ID
+}
+
+func roleSelectOptionItem(entity *permission.Role) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		roleSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func roleSelectOption(entity *permission.Role) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Description),
+	}
+}
+
+func roleID(entity *permission.Role) pulid.ID {
+	return entity.ID
+}
+
+func rateMatrixSelectOptionItem(entity *ratematrix.RateMatrix) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		rateMatrixSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func rateMatrixSelectOption(entity *ratematrix.RateMatrix) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Code),
+		Meta: map[string]any{
+			"code": entity.Code,
+		},
+	}
+}
+
+func rateAgreementSelectOptionItem(entity *rateagreement.RateAgreement) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		rateAgreementSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func rateAgreementSelectOption(entity *rateagreement.RateAgreement) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Code),
+		Meta: map[string]any{
+			"code": entity.Code,
+		},
+	}
+}
+
+func accessorialChargeSelectOptionItem(entity *accessorialcharge.AccessorialCharge) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		accessorialChargeSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func accessorialChargeSelectOption(entity *accessorialcharge.AccessorialCharge) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code,
+		Description: stringPtr(entity.Description),
+		Meta: map[string]any{
+			"code":   entity.Code,
+			"method": string(entity.Method),
+			"amount": entity.Amount.String(),
+		},
+	}
+}
+
+func accountTypeSelectOptionItem(entity *accounttype.AccountType) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		accountTypeSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func accountTypeSelectOption(entity *accounttype.AccountType) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code,
+		Description: stringPtr(entity.Name),
+		Meta: map[string]any{
+			"code":  entity.Code,
+			"color": entity.Color,
+			"name":  entity.Name,
+		},
+	}
+}
+
+func commoditySelectOptionItem(entity *commodity.Commodity) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		commoditySelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func commoditySelectOption(entity *commodity.Commodity) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Description),
+	}
+}
+
+func documentTypeSelectOptionItem(entity *documenttype.DocumentType) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		documentTypeSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func documentTypeSelectOption(entity *documenttype.DocumentType) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code,
+		Description: stringPtr(entity.Name),
+		Meta: map[string]any{
+			"code":  entity.Code,
+			"color": entity.Color,
+			"name":  entity.Name,
+		},
+	}
+}
+
+func detentionPolicySelectOptionItem(entity *detention.DetentionPolicy) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		detentionPolicySelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func detentionPolicySelectOption(entity *detention.DetentionPolicy) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Code),
+		Meta: map[string]any{
+			"code": entity.Code,
+		},
+	}
+}
+
+func formulaTemplateSelectOptionItem(entity *formulatemplate.FormulaTemplate) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		formulaTemplateSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func formulaTemplateSelectOption(entity *formulatemplate.FormulaTemplate) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Description),
+	}
+}
+
+func hazardousMaterialSelectOptionItem(entity *hazardousmaterial.HazardousMaterial) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		hazardousMaterialSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func hazardousMaterialSelectOption(entity *hazardousmaterial.HazardousMaterial) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Description),
+		Meta: map[string]any{
+			"class": entity.Class,
+		},
+	}
+}
+
+func serviceFailureReasonCodeSelectOptionItem(entity *servicefailure.ReasonCode) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		serviceFailureReasonCodeSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func serviceFailureReasonCodeSelectOption(entity *servicefailure.ReasonCode) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code,
+		Description: stringPtr(entity.Label),
+		Meta: map[string]any{
+			"code":  entity.Code,
+			"label": entity.Label,
+		},
+	}
+}
+
+func ediCommunicationProfileSelectOptionItem(entity *edi.EDICommunicationProfile) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		ediCommunicationProfileSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func ediCommunicationProfileSelectOption(entity *edi.EDICommunicationProfile) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(string(entity.Method)),
+		Meta: map[string]any{
+			"method": string(entity.Method),
+			"status": string(entity.Status),
+		},
+	}
+}
+
+func ediDocumentTypeSelectOptionItem(entity *edi.EDIDocumentType) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		ediDocumentTypeSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func ediDocumentTypeSelectOption(entity *edi.EDIDocumentType) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code + " - " + entity.Name,
+		Description: stringPtr(string(entity.TransactionSet) + " / " + string(entity.Direction)),
+		Meta: map[string]any{
+			"code":           entity.Code,
+			"transactionSet": string(entity.TransactionSet),
+			"direction":      string(entity.Direction),
+			"defaultVersion": entity.DefaultVersion,
+		},
+	}
+}
+
+func ediMappingProfileSelectOptionItem(entity *edi.EDIMappingProfile) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		ediMappingProfileSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func ediMappingProfileSelectOption(entity *edi.EDIMappingProfile) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Description),
+	}
+}
+
+func ediPartnerSelectOptionItem(entity *edi.EDIPartner) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		ediPartnerSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func ediPartnerSelectOption(entity *edi.EDIPartner) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code + " - " + entity.Name,
+		Description: stringPtr(string(entity.Kind)),
+		Meta: map[string]any{
+			"code": entity.Code,
+			"kind": string(entity.Kind),
+		},
+	}
+}
+
+func ediPartnerDocumentProfileSelectOptionItem(entity *edi.EDIPartnerDocumentProfile) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		ediPartnerDocumentProfileSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func ediPartnerDocumentProfileSelectOption(entity *edi.EDIPartnerDocumentProfile) *gqlmodel.SelectOption {
+	label := entity.Name
+	if entity.Partner != nil {
+		label = entity.Partner.Code + " - " + entity.Name
+	}
+	description := string(entity.TransactionSet) + " \u00b7 " + string(entity.Direction)
+	if entity.Standard != "" {
+		description = string(entity.Standard) + " \u00b7 " + description
+	}
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       label,
+		Description: stringPtr(description),
+		Meta: map[string]any{
+			"transactionSet": string(entity.TransactionSet),
+			"direction":      string(entity.Direction),
+			"standard":       string(entity.Standard),
+			"status":         string(entity.Status),
+		},
+	}
+}
+
+func ediTemplateSelectOptionItem(entity *edi.EDITemplate) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		ediTemplateSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func ediTemplateSelectOption(entity *edi.EDITemplate) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.Description),
+		Meta: map[string]any{
+			"status": string(entity.Status),
+		},
+	}
+}
+
+func emailProfileSelectOptionItem(entity *email.Profile) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		emailProfileSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func emailProfileSelectOption(entity *email.Profile) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringPtr(entity.SenderEmail),
+		Meta: map[string]any{
+			"senderEmail": entity.SenderEmail,
+			"provider":    string(entity.Provider),
+		},
+	}
+}
+
 func shipmentSelectOptionItem(entity *shipment.Shipment) selectOptionConnectionItem {
 	return selectOptionConnectionItemFor(
 		shipmentSelectOption(entity),
@@ -1098,6 +2680,14 @@ func equipmentManufacturerID(entity *equipmentmanufacturer.EquipmentManufacturer
 }
 
 func locationID(entity *location.Location) pulid.ID {
+	return entity.ID
+}
+
+func shipmentTypeID(entity *shipmenttype.ShipmentType) pulid.ID {
+	return entity.ID
+}
+
+func serviceTypeID(entity *servicetype.ServiceType) pulid.ID {
 	return entity.ID
 }
 

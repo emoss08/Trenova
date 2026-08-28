@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
+import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import type {
   CarrierAssignmentPayload,
   CarrierAssignmentPayloadInput,
@@ -117,10 +117,10 @@ export function CarrierAssignmentFields({ form }: { form: CarrierAssignmentFormR
   const { control, getValues, setValue } = form;
   const { fields, append, remove } = useFieldArray({ control, name: "accessorials" });
 
-  const handleAccessorialChargeChange = (index: number, option: AccessorialCharge | null) => {
+  const handleAccessorialChargeChange = (index: number, option: GraphQLSelectOption | null) => {
     if (!option) return;
     if (!getValues(`accessorials.${index}.description`)) {
-      setValue(`accessorials.${index}.description`, option.description ?? option.code, {
+      setValue(`accessorials.${index}.description`, option.description ?? option.label, {
         shouldDirty: true,
         shouldValidate: true,
       });

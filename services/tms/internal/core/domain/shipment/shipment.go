@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/location"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -22,7 +24,12 @@ import (
 	"github.com/uptrace/bun"
 )
 
-var _ pagination.CursorEntity = (*Shipment)(nil)
+var (
+	_ pagination.CursorEntity            = (*Shipment)(nil)
+	_ domaintypes.PostgresSearchable     = (*Shipment)(nil)
+	_ customfield.CustomFieldsSupporter  = (*Shipment)(nil)
+	_ validationframework.TenantedEntity = (*Shipment)(nil)
+)
 
 type RatingBreakdownItem struct {
 	Name   string  `json:"name"`
@@ -169,6 +176,14 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 			).Error("Entry method must be a valid entry method"),
 		),
 		validation.Field(
+			&s.RateOverrideAmount,
+			validation.When(
+				s.RateOverrideAmount.Valid,
+				validation.Min(decimal.NewFromInt(0)).
+					Error("An overridden rate cannot be negative"),
+			),
+		),
+		validation.Field(
 			&s.TenderStatus,
 			validation.In(
 				TenderStatusTendered,
@@ -179,22 +194,6 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 			).Error("Tender status must be a valid tender status"),
 		),
 	))
-
-	s.validateRateOverride(multiErr)
-}
-
-func (s *Shipment) validateRateOverride(multiErr *errortypes.MultiError) {
-	if !s.RateOverrideAmount.Valid {
-		return
-	}
-
-	if s.RateOverrideAmount.Decimal.IsNegative() {
-		multiErr.Add(
-			"rateOverrideAmount",
-			errortypes.ErrInvalid,
-			"An overridden rate cannot be negative",
-		)
-	}
 }
 
 func (s *Shipment) HasRateOverride() bool {
@@ -393,6 +392,14 @@ func (s *Shipment) GetOrganizationID() pulid.ID {
 
 func (s *Shipment) GetBusinessUnitID() pulid.ID {
 	return s.BusinessUnitID
+}
+
+func (s *Shipment) GetResourceID() string {
+	return s.ID.String()
+}
+
+func (s *Shipment) GetResourceType() string {
+	return "shipment"
 }
 
 func (s *Shipment) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {

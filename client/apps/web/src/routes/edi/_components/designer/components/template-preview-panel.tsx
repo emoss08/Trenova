@@ -9,22 +9,22 @@ import {
   type EDIDocumentSourceField,
   type EDIDocumentSourceValues,
 } from "@/lib/edi/document-source";
-import type { EDIPartnerDocumentProfile } from "@trenova/shared/types/edi";
 import { RefreshCwIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { usePreviewEDIDocumentMutation } from "../hooks/use-edi-document-mutations";
 import { PreviewPane, parsePayload } from "./designer-shared";
+import type { SelectOption } from "@/lib/graphql/select-options";
 
 export default function TemplatePreviewPanel() {
   const [profileId, setProfileId] = useState("");
-  const [selectedProfile, setSelectedProfile] = useState<EDIPartnerDocumentProfile | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<SelectOption | null>(null);
   const [sourceValues, setSourceValues] = useState<EDIDocumentSourceValues>({});
   const previewMutation = usePreviewEDIDocumentMutation({
     onError: () => toast.error("Failed to preview EDI document"),
   });
-  const transactionSet = selectedProfile?.transactionSet;
-  const direction = selectedProfile?.direction;
+  const transactionSet = (selectedProfile?.meta?.transactionSet as string) || undefined;
+  const direction = (selectedProfile?.meta?.direction as string) || undefined;
   const canPreview = !!profileId && hasEDIDocumentSourceValue(sourceValues, transactionSet);
 
   useEffect(() => {

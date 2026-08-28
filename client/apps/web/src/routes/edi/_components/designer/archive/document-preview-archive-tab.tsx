@@ -32,6 +32,7 @@ import type {
   EDIPartnerDocumentProfile,
   UpsertEDIPartnerDocumentProfileRequest,
 } from "@trenova/shared/types/edi";
+import type { SelectOption } from "@/lib/graphql/select-options";
 import {
   ClipboardCheckIcon,
   CopyIcon,
@@ -289,7 +290,15 @@ export function DocumentPreviewArchiveTab() {
                 setProfileId(nextProfileId);
                 setSelectedProfile((current) => (current?.id === nextProfileId ? current : null));
               }}
-              onOptionChange={setSelectedProfile}
+              onOptionChange={(option: SelectOption | null) => {
+                if (!option) {
+                  setSelectedProfile(null);
+                  return;
+                }
+                const full = profilesQuery.data?.results.find((p) => p.id === option.id) ?? null;
+                if (full) setSelectedProfile(full);
+                else setSelectedProfile(null);
+              }}
               partnerId={partnerId}
               transactionSet={archiveTransactionSet}
               direction={archiveDirection}

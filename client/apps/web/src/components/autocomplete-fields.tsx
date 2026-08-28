@@ -4,47 +4,20 @@ import type {
 } from "@/lib/graphql/select-options";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
 import { formatRange } from "@trenova/shared/lib/date";
-import { formatLocation } from "@trenova/shared/lib/utils";
-import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
-import type { AccountType } from "@/types/account-type";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
-import type { Commodity } from "@trenova/shared/types/commodity";
-import type { RateAgreement, RateMatrix, RateZone } from "@trenova/shared/types/rate";
-import type { DetentionPolicy } from "@trenova/shared/types/detention";
-import type { DistanceProfile } from "@/types/distance-profile";
 import type { Document } from "@trenova/shared/types/document";
-import type { DocumentType } from "@trenova/shared/types/document-type";
-import type {
-  EDICommunicationProfile,
-  EDIDocumentType,
-  EDIMappingProfile,
-  EDIPartner,
-  EDIPartnerDocumentProfile,
-  EDITemplate,
-} from "@trenova/shared/types/edi";
-import type { EmailProfile } from "@trenova/shared/types/email";
 import type { SelectOption as StaticSelectOption } from "@trenova/shared/types/fields";
-import type { FleetCode } from "@trenova/shared/types/fleet-code";
-import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
-import type { HazardousMaterial } from "@/types/hazardous-material";
-import type { Location } from "@trenova/shared/types/location";
-import type { LocationCategory } from "@/types/location-category";
-import type { OrganizationSelectOption } from "@trenova/shared/types/organization";
-import type { Role } from "@trenova/shared/types/role";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
-import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
-import type { EquipmentType as EquipmentTypeOption } from "@/types/equipment-type";
-import type { ServiceType } from "@/types/service-type";
-import type { ShipmentType } from "@/types/shipment-type";
-import type { User } from "@trenova/shared/types/user";
 import type { ReactNode } from "react";
+
+// Ensure server endpoint types remain referenced for cross-package type checks
+export type _ServerEndpointTypes = API_ENDPOINTS | SELECT_OPTIONS_ENDPOINTS;
 import type { Control, FieldPath, FieldValues, Path, RegisterOptions } from "react-hook-form";
 import { Autocomplete, AutocompleteField } from "./fields/autocomplete/autocomplete";
 import { FieldWrapper } from "./fields/field-components";
 import { MultiSelectAutocompleteField } from "./fields/multi-select-field";
 import { ColorOptionValue } from "./fields/select-components";
 import { SelectField } from "./fields/select-field";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 
 type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   control: Control<TForm>;
@@ -225,6 +198,114 @@ const ediConnectionSelectOptionsGraphQL = {
   resource: "EDI_CONNECTION",
 } satisfies GraphQLSelectOptionsConfig;
 
+const locationSelectOptionsGraphQL = {
+  resource: "LOCATION",
+} satisfies GraphQLSelectOptionsConfig;
+
+const rateZoneSelectOptionsGraphQL = {
+  resource: "RATE_ZONE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const fleetCodeSelectOptionsGraphQL = {
+  resource: "FLEET_CODE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const shipmentTypeSelectOptionsGraphQL = {
+  resource: "SHIPMENT_TYPE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const serviceTypeSelectOptionsGraphQL = {
+  resource: "SERVICE_TYPE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const locationCategorySelectOptionsGraphQL = {
+  resource: "LOCATION_CATEGORY",
+} satisfies GraphQLSelectOptionsConfig;
+
+const distanceProfileSelectOptionsGraphQL = {
+  resource: "DISTANCE_PROFILE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const organizationSelectOptionsGraphQL = {
+  resource: "ORGANIZATION",
+} satisfies GraphQLSelectOptionsConfig;
+
+const userSelectOptionsGraphQL = {
+  resource: "USER",
+} satisfies GraphQLSelectOptionsConfig;
+
+const roleSelectOptionsGraphQL = {
+  resource: "ROLE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const rateMatrixSelectOptionsGraphQL = {
+  resource: "RATE_MATRIX",
+} satisfies GraphQLSelectOptionsConfig;
+
+const rateAgreementSelectOptionsGraphQL = {
+  resource: "RATE_AGREEMENT",
+} satisfies GraphQLSelectOptionsConfig;
+
+const accessorialChargeSelectOptionsGraphQL = {
+  resource: "ACCESSORIAL_CHARGE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const accountTypeSelectOptionsGraphQL = {
+  resource: "ACCOUNT_TYPE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const commoditySelectOptionsGraphQL = {
+  resource: "COMMODITY",
+} satisfies GraphQLSelectOptionsConfig;
+
+const documentTypeSelectOptionsGraphQL = {
+  resource: "DOCUMENT_TYPE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const detentionPolicySelectOptionsGraphQL = {
+  resource: "DETENTION_POLICY",
+} satisfies GraphQLSelectOptionsConfig;
+
+const formulaTemplateSelectOptionsGraphQL = {
+  resource: "FORMULA_TEMPLATE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const hazardousMaterialSelectOptionsGraphQL = {
+  resource: "HAZARDOUS_MATERIAL",
+} satisfies GraphQLSelectOptionsConfig;
+
+const serviceFailureReasonCodeSelectOptionsGraphQL = {
+  resource: "SERVICE_FAILURE_REASON_CODE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const ediCommunicationProfileSelectOptionsGraphQL = {
+  resource: "EDI_COMMUNICATION_PROFILE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const ediDocumentTypeSelectOptionsGraphQL = {
+  resource: "EDI_DOCUMENT_TYPE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const ediMappingProfileSelectOptionsGraphQL = {
+  resource: "EDI_MAPPING_PROFILE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const ediPartnerSelectOptionsGraphQL = {
+  resource: "EDI_PARTNER",
+} satisfies GraphQLSelectOptionsConfig;
+
+const ediPartnerDocumentProfileSelectOptionsGraphQL = {
+  resource: "EDI_PARTNER_DOCUMENT_PROFILE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const ediTemplateSelectOptionsGraphQL = {
+  resource: "EDI_TEMPLATE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const emailProfileSelectOptionsGraphQL = {
+  resource: "EMAIL_PROFILE",
+} satisfies GraphQLSelectOptionsConfig;
+
 function getDocumentLabel(option: Document) {
   const documentTypeLabel = option.documentType?.name?.trim();
   const fileName = option.originalName?.trim() || option.fileName?.trim() || option.id;
@@ -288,14 +369,15 @@ function EDIOptionStack({ primary, secondary }: { primary: ReactNode; secondary?
 
 export function RoleAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseMultiSelectAutocompleteFieldProps<Role, T>) {
+}: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <MultiSelectAutocompleteField<Role, T>
+    <MultiSelectAutocompleteField<GraphQLSelectOption, T>
       link="/roles/select-options/"
+      graphql={roleSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name || ""}
-      renderOption={(option) => option.name || ""}
-      getOptionLabel={(option) => option.name || ""}
+      getDisplayValue={(option) => option.label || ""}
+      renderOption={(option) => option.label || ""}
+      getOptionLabel={(option) => option.label || ""}
       {...props}
     />
   );
@@ -303,14 +385,15 @@ export function RoleAutocompleteField<T extends FieldValues>({
 
 export function RoleSelectAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<Role, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<Role, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/roles/select-options/"
+      graphql={roleSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name || ""}
+      getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.name || ""} secondary={option.description} />
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || ""} />
       )}
       {...props}
     />
@@ -371,14 +454,15 @@ export function PermissionOperationAutocompleteField<T extends FieldValues>({
 
 export function UserAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<User, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<User, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/users/select-options/"
+      graphql={userSelectOptionsGraphQL}
       initialLimit={50}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name || ""}
-      renderOption={(option) => option.name || ""}
+      getDisplayValue={(option) => option.label || ""}
+      renderOption={(option) => option.label || ""}
       {...props}
     />
   );
@@ -386,13 +470,14 @@ export function UserAutocompleteField<T extends FieldValues>({
 
 export function UserMultiSelectAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseMultiSelectAutocompleteFieldProps<User, T>) {
+}: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <MultiSelectAutocompleteField<User, T>
+    <MultiSelectAutocompleteField<GraphQLSelectOption, T>
       link="/users/select-options/"
+      graphql={userSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name || ""}
-      renderOption={(option) => option.name || ""}
+      getDisplayValue={(option) => option.label || ""}
+      renderOption={(option) => option.label || ""}
       {...props}
     />
   );
@@ -500,16 +585,25 @@ export function TrailerAutocompleteField<T extends FieldValues>({
 
 export function FleetCodeAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<FleetCode, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<FleetCode, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/fleet-codes/select-options/"
+      graphql={fleetCodeSelectOptionsGraphQL}
       popoutLink="/dispatch/configuration-files/fleet-codes"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => <ColorOptionValue color={option.color} value={option.code} />}
+      getDisplayValue={(option) => (
+        <ColorOptionValue
+          color={selectOptionMetaString(option, "color")}
+          value={option.label}
+        />
+      )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue color={option.color} value={option.code} />
+          <ColorOptionValue
+            color={selectOptionMetaString(option, "color")}
+            value={option.label}
+          />
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
@@ -524,16 +618,25 @@ export function FleetCodeAutocompleteField<T extends FieldValues>({
 
 export function ShipmentTypeAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<ShipmentType, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<ShipmentType, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/shipment-types/select-options/"
+      graphql={shipmentTypeSelectOptionsGraphQL}
       popoutLink="/shipment-management/configuration-files/shipment-types"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => <ColorOptionValue color={option.color} value={option.code} />}
+      getDisplayValue={(option) => (
+        <ColorOptionValue
+          color={selectOptionMetaString(option, "color")}
+          value={option.label}
+        />
+      )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue color={option.color} value={option.code} />
+          <ColorOptionValue
+            color={selectOptionMetaString(option, "color")}
+            value={option.label}
+          />
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
@@ -548,16 +651,25 @@ export function ShipmentTypeAutocompleteField<T extends FieldValues>({
 
 export function ServiceTypeAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<ServiceType, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<ServiceType, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/service-types/select-options/"
+      graphql={serviceTypeSelectOptionsGraphQL}
       popoutLink="/shipment-management/configuration-files/service-types"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => <ColorOptionValue color={option.color} value={option.code} />}
+      getDisplayValue={(option) => (
+        <ColorOptionValue
+          color={selectOptionMetaString(option, "color")}
+          value={option.label}
+        />
+      )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue color={option.color} value={option.code} />
+          <ColorOptionValue
+            color={selectOptionMetaString(option, "color")}
+            value={option.label}
+          />
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
@@ -711,20 +823,22 @@ export function CarrierAutocompleteField<T extends FieldValues>({
 
 export function EDICommunicationProfileAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<EDICommunicationProfile, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<EDICommunicationProfile, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/edi/communication-profiles/select-options/"
+      graphql={ediCommunicationProfileSelectOptionsGraphQL}
       selectedValueLink="/edi/communication-profiles/"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>{option.name}</span>
-          <span className="text-2xs text-muted-foreground w-full truncate">
-            {option.method} · {option.status}
-          </span>
-        </div>
+        <EDIOptionStack
+          primary={option.label || ""}
+          secondary={
+            option.description ||
+            `${selectOptionMetaString(option, "method")} · ${selectOptionMetaString(option, "status")}`.trim()
+          }
+        />
       )}
       {...props}
     />
@@ -753,22 +867,19 @@ export function EDIConnectionAutocompleteField<T extends FieldValues>({
 
 export function EDIMappingProfileAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<EDIMappingProfile, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<EDIMappingProfile, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/edi/mapping-profiles/select-options/"
+      graphql={ediMappingProfileSelectOptionsGraphQL}
       selectedValueLink="/edi/mapping-profiles/"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>{option.name}</span>
-          {option.description && (
-            <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
-            </span>
-          )}
-        </div>
+        <EDIOptionStack
+          primary={option.label || ""}
+          secondary={option.description || undefined}
+        />
       )}
       {...props}
     />
@@ -832,18 +943,29 @@ export function GLAccountMultiSelectAutocompleteField<T extends FieldValues>({
 
 export function AccountTypeAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<AccountType, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<AccountType, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/account-types/select-options/"
+      graphql={accountTypeSelectOptionsGraphQL}
       popoutLink="/billing/configuration-files/account-types"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => <ColorOptionValue color={option.color} value={option.code} />}
+      getDisplayValue={(option) => (
+        <ColorOptionValue
+          color={selectOptionMetaString(option, "color")}
+          value={option.label}
+        />
+      )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue color={option.color} value={option.code} />
-          {option?.name && (
-            <span className="text-2xs text-muted-foreground w-full truncate">{option.name}</span>
+          <ColorOptionValue
+            color={selectOptionMetaString(option, "color")}
+            value={option.label}
+          />
+          {selectOptionMetaString(option, "name") && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {selectOptionMetaString(option, "name")}
+            </span>
           )}
         </div>
       )}
@@ -854,23 +976,30 @@ export function AccountTypeAutocompleteField<T extends FieldValues>({
 
 export function LocationAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<Location, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<Location, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/locations/select-options/"
+      graphql={locationSelectOptionsGraphQL}
       popoutLink="/dispatch/locations"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => `${option.code} - ${option.name}`}
-      renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>
-            {option.code} - {option.name}
-          </span>
-          <span className="text-2xs text-muted-foreground w-full truncate">
-            {formatLocation(option)}
-          </span>
-        </div>
-      )}
+      getDisplayValue={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return code ? `${code} - ${option.label}` : option.label;
+      }}
+      renderOption={(option) => {
+        const code = selectOptionMetaString(option, "code");
+        return (
+          <div className="flex size-full flex-col items-start">
+            <span>{code ? `${code} - ${option.label}` : option.label}</span>
+            {option.description && (
+              <span className="text-2xs text-muted-foreground w-full truncate">
+                {option.description}
+              </span>
+            )}
+          </div>
+        );
+      }}
       {...props}
     />
   );
@@ -878,24 +1007,30 @@ export function LocationAutocompleteField<T extends FieldValues>({
 
 export function OrganizationAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<OrganizationSelectOption, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<OrganizationSelectOption, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/organizations/select-options/"
+      graphql={organizationSelectOptionsGraphQL}
       selectedValueLink="/organizations/"
       initialLimit={50}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) =>
-        option.scacCode ? `${option.scacCode} - ${option.name}` : option.name
-      }
-      renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>{option.scacCode ? `${option.scacCode} - ${option.name}` : option.name}</span>
-          {option.city && (
-            <span className="text-2xs text-muted-foreground w-full truncate">{option.city}</span>
-          )}
-        </div>
-      )}
+      getDisplayValue={(option) => {
+        const scac = selectOptionMetaString(option, "scacCode");
+        return scac ? `${scac} - ${option.label}` : option.label;
+      }}
+      renderOption={(option) => {
+        const scac = selectOptionMetaString(option, "scacCode");
+        const city = selectOptionMetaString(option, "city");
+        return (
+          <div className="flex size-full flex-col items-start">
+            <span>{scac ? `${scac} - ${option.label}` : option.label}</span>
+            {city && (
+              <span className="text-2xs text-muted-foreground w-full truncate">{city}</span>
+            )}
+          </div>
+        );
+      }}
       {...props}
     />
   );
@@ -903,25 +1038,17 @@ export function OrganizationAutocompleteField<T extends FieldValues>({
 
 export function EDIPartnerAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<EDIPartner, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<EDIPartner, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/edi/partners/select-options/"
+      graphql={ediPartnerSelectOptionsGraphQL}
       selectedValueLink="/edi/partners/"
       initialLimit={50}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => `${option.code} - ${option.name}`}
+      getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>
-            {option.code} - {option.name}
-          </span>
-          {option.internalOrganization?.name && (
-            <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.internalOrganization.name}
-            </span>
-          )}
-        </div>
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || selectOptionMetaString(option, "code") || undefined} />
       )}
       {...props}
     />
@@ -930,21 +1057,15 @@ export function EDIPartnerAutocompleteField<T extends FieldValues>({
 
 export function EDIDocumentTypeAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<EDIDocumentType, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<EDIDocumentType, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/edi/catalog/document-types/select-options/"
+      graphql={ediDocumentTypeSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => `${option.code} - ${option.name}`}
+      getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>
-            {option.code} - {option.name}
-          </span>
-          <span className="text-2xs text-muted-foreground w-full truncate">
-            {option.transactionSet} / {option.direction} / {option.defaultVersion}
-          </span>
-        </div>
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || undefined} />
       )}
       {...props}
     />
@@ -956,13 +1077,22 @@ export function EDITemplateAutocompleteField<T extends FieldValues>({
   direction,
   extraSearchParams,
   ...props
-}: BaseAutocompleteFieldProps<EDITemplate, T> & {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T> & {
   transactionSet?: string;
   direction?: string;
 }) {
+  const graphqlFilters = {
+    ...(transactionSet ? { transactionSet } : {}),
+    ...(direction ? { direction } : {}),
+  };
   return (
-    <AutocompleteField<EDITemplate, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/edi/templates/select-options/"
+      graphql={
+        Object.keys(graphqlFilters).length > 0
+          ? { ...ediTemplateSelectOptionsGraphQL, filters: graphqlFilters }
+          : ediTemplateSelectOptionsGraphQL
+      }
       selectedValueLink="/edi/templates/"
       extraSearchParams={{
         ...(transactionSet ? { transactionSet } : {}),
@@ -970,14 +1100,9 @@ export function EDITemplateAutocompleteField<T extends FieldValues>({
         ...extraSearchParams,
       }}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>{option.name}</span>
-          <span className="text-2xs text-muted-foreground w-full truncate">
-            {option.description ?? option.status}
-          </span>
-        </div>
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || selectOptionMetaString(option, "status") || undefined} />
       )}
       {...props}
     />
@@ -990,14 +1115,24 @@ export function EDIDocumentProfileAutocompleteField<T extends FieldValues>({
   direction,
   extraSearchParams,
   ...props
-}: BaseAutocompleteFieldProps<EDIPartnerDocumentProfile, T> & {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T> & {
   partnerId?: string;
   transactionSet?: string;
   direction?: string;
 }) {
+  const graphqlFilters: Record<string, unknown> = {
+    ...(partnerId ? { partnerId } : {}),
+    ...(transactionSet ? { transactionSet } : {}),
+    ...(direction ? { direction } : {}),
+  };
   return (
-    <AutocompleteField<EDIPartnerDocumentProfile, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/edi/document-profiles/select-options/"
+      graphql={
+        Object.keys(graphqlFilters).length > 0
+          ? { ...ediPartnerDocumentProfileSelectOptionsGraphQL, filters: graphqlFilters }
+          : ediPartnerDocumentProfileSelectOptionsGraphQL
+      }
       selectedValueLink="/edi/document-profiles/"
       extraSearchParams={{
         ...(partnerId ? { partnerId } : {}),
@@ -1006,16 +1141,9 @@ export function EDIDocumentProfileAutocompleteField<T extends FieldValues>({
         ...extraSearchParams,
       }}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <div className="flex size-full flex-col items-start">
-          <span>{option.name}</span>
-          {option.partner ? (
-            <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.partner.code} - {option.partner.name}
-            </span>
-          ) : null}
-        </div>
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || undefined} />
       )}
       {...props}
     />
@@ -1024,19 +1152,21 @@ export function EDIDocumentProfileAutocompleteField<T extends FieldValues>({
 
 export function EmailProfileAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<EmailProfile, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<EmailProfile, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/email-profiles/select-options/"
+      graphql={emailProfileSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
-        <div className="flex size-full min-w-0 flex-col items-start pr-4">
-          <span className="w-full truncate">{option.name}</span>
-          <span className="text-2xs text-muted-foreground w-full truncate">
-            {option.senderEmail} · {option.provider} · {option.status}
-          </span>
-        </div>
+        <EDIOptionStack
+          primary={option.label || ""}
+          secondary={
+            option.description ||
+            `${selectOptionMetaString(option, "senderEmail")} · ${selectOptionMetaString(option, "provider")}`.trim()
+          }
+        />
       )}
       {...props}
     />
@@ -1048,9 +1178,10 @@ export function ControlledEDIPartnerAutocompleteField({
   placeholder,
   ...props
 }: Omit<
-  ControlledAutocompleteFieldProps<EDIPartner>,
+  ControlledAutocompleteFieldProps<GraphQLSelectOption>,
   | "label"
   | "link"
+  | "graphql"
   | "renderOption"
   | "getOptionValue"
   | "getDisplayValue"
@@ -1061,17 +1192,18 @@ export function ControlledEDIPartnerAutocompleteField({
   placeholder?: string;
 }) {
   return (
-    <ControlledAutocompleteField<EDIPartner>
+    <ControlledAutocompleteField<GraphQLSelectOption>
       label={label}
       link="/edi/partners/select-options/"
+      graphql={ediPartnerSelectOptionsGraphQL}
       selectedValueLink="/edi/partners/"
       initialLimit={50}
       placeholder={placeholder}
       renderOption={(option) => (
-        <EDIOptionStack primary={`${option.code} - ${option.name}`} secondary={option.kind} />
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || selectOptionMetaString(option, "code") || undefined} />
       )}
       getOptionValue={(option) => option.id}
-      getDisplayValue={(option) => `${option.code} - ${option.name}`}
+      getDisplayValue={(option) => option.label || ""}
       {...props}
     />
   );
@@ -1150,9 +1282,10 @@ export function ControlledEDITemplateAutocompleteField({
   extraSearchParams,
   ...props
 }: Omit<
-  ControlledAutocompleteFieldProps<EDITemplate>,
+  ControlledAutocompleteFieldProps<GraphQLSelectOption>,
   | "label"
   | "link"
+  | "graphql"
   | "renderOption"
   | "getOptionValue"
   | "getDisplayValue"
@@ -1163,10 +1296,19 @@ export function ControlledEDITemplateAutocompleteField({
   direction?: string;
   extraSearchParams?: Record<string, string | string[]>;
 }) {
+  const graphqlFilters: Record<string, unknown> = {
+    ...(transactionSet ? { transactionSet } : {}),
+    ...(direction ? { direction } : {}),
+  };
   return (
-    <ControlledAutocompleteField<EDITemplate>
+    <ControlledAutocompleteField<GraphQLSelectOption>
       label="Template"
       link="/edi/templates/select-options/"
+      graphql={
+        Object.keys(graphqlFilters).length > 0
+          ? { ...ediTemplateSelectOptionsGraphQL, filters: graphqlFilters }
+          : ediTemplateSelectOptionsGraphQL
+      }
       selectedValueLink="/edi/templates/"
       extraSearchParams={{
         ...(transactionSet ? { transactionSet } : {}),
@@ -1174,10 +1316,10 @@ export function ControlledEDITemplateAutocompleteField({
         ...extraSearchParams,
       }}
       renderOption={(option) => (
-        <EDIOptionStack primary={option.name} secondary={option.description ?? option.status} />
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || selectOptionMetaString(option, "status") || undefined} />
       )}
       getOptionValue={(option) => option.id}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label || ""}
       {...props}
     />
   );
@@ -1190,9 +1332,10 @@ export function ControlledEDIDocumentProfileAutocompleteField({
   extraSearchParams,
   ...props
 }: Omit<
-  ControlledAutocompleteFieldProps<EDIPartnerDocumentProfile>,
+  ControlledAutocompleteFieldProps<GraphQLSelectOption>,
   | "label"
   | "link"
+  | "graphql"
   | "renderOption"
   | "getOptionValue"
   | "getDisplayValue"
@@ -1204,10 +1347,20 @@ export function ControlledEDIDocumentProfileAutocompleteField({
   direction?: string;
   extraSearchParams?: Record<string, string | string[]>;
 }) {
+  const graphqlFilters: Record<string, unknown> = {
+    ...(partnerId ? { partnerId } : {}),
+    ...(transactionSet ? { transactionSet } : {}),
+    ...(direction ? { direction } : {}),
+  };
   return (
-    <ControlledAutocompleteField<EDIPartnerDocumentProfile>
+    <ControlledAutocompleteField<GraphQLSelectOption>
       label="Document Profile"
       link="/edi/document-profiles/select-options/"
+      graphql={
+        Object.keys(graphqlFilters).length > 0
+          ? { ...ediPartnerDocumentProfileSelectOptionsGraphQL, filters: graphqlFilters }
+          : ediPartnerDocumentProfileSelectOptionsGraphQL
+      }
       selectedValueLink="/edi/document-profiles/"
       extraSearchParams={{
         ...(transactionSet ? { transactionSet } : {}),
@@ -1216,13 +1369,10 @@ export function ControlledEDIDocumentProfileAutocompleteField({
         ...extraSearchParams,
       }}
       renderOption={(option) => (
-        <EDIOptionStack
-          primary={option.name}
-          secondary={option.partner ? `${option.partner.code} - ${option.partner.name}` : undefined}
-        />
+        <EDIOptionStack primary={option.label || ""} secondary={option.description || undefined} />
       )}
       getOptionValue={(option) => option.id}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label || ""}
       {...props}
     />
   );
@@ -1230,36 +1380,23 @@ export function ControlledEDIDocumentProfileAutocompleteField({
 
 export function FormulaTemplateAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<FormulaTemplate, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<FormulaTemplate, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/formula-templates/select-options/"
+      graphql={formulaTemplateSelectOptionsGraphQL}
       popoutLink="billing/configuration-files/formula-templates"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label}
       renderOption={(option) => (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <div className="flex size-full flex-col items-start">
-                <span>{option.name}</span>
-                {option?.description && (
-                  <span className="text-2xs text-muted-foreground w-full truncate">
-                    {option?.description}
-                  </span>
-                )}
-              </div>
-            }
-          />
-          <TooltipContent align="center" sideOffset={20} side="left" className="size-full">
-            <div className="flex size-full flex-col gap-0.5">
-              <h3 className="font-semibold">Expression:</h3>
-              <div className="border-muted/20 bg-muted/10 flex w-full rounded-md border p-1">
-                {option?.expression}
-              </div>
-            </div>
-          </TooltipContent>
-        </Tooltip>
+        <div className="flex size-full flex-col items-start">
+          <span>{option.label}</span>
+          {option?.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description}
+            </span>
+          )}
+        </div>
       )}
       {...props}
     />
@@ -1268,18 +1405,25 @@ export function FormulaTemplateAutocompleteField<T extends FieldValues>({
 
 export function LocationCategoryAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<LocationCategory, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<LocationCategory, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/location-categories/select-options/"
+      graphql={locationCategorySelectOptionsGraphQL}
       popoutLink="/dispatch/configuration-files/location-categories"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
-        <ColorOptionValue color={option.color ?? undefined} value={option.name} />
+        <ColorOptionValue
+          color={selectOptionMetaString(option, "color")}
+          value={option.label}
+        />
       )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue color={option.color ?? undefined} value={option.name} />
+          <ColorOptionValue
+            color={selectOptionMetaString(option, "color")}
+            value={option.label}
+          />
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option?.description}
@@ -1294,20 +1438,22 @@ export function LocationCategoryAutocompleteField<T extends FieldValues>({
 
 export function DistanceProfileAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<DistanceProfile, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<DistanceProfile, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/distance-profiles/select-options/"
+      graphql={distanceProfileSelectOptionsGraphQL}
       popoutLink="/admin/distance-profiles"
       initialLimit={50}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full min-w-0 flex-col items-start">
-          <span className="w-full truncate">{option.name}</span>
+          <span className="w-full truncate">{option.label}</span>
           <span className="text-2xs text-muted-foreground w-full truncate">
-            {option.routingType} · {option.distanceUnits}
-            {option.isDefault ? " · Default" : ""}
+            {selectOptionMetaString(option, "routingType")} ·{" "}
+            {selectOptionMetaString(option, "distanceUnits")}
+            {selectOptionMetaBoolean(option, "isDefault") ? " · Default" : ""}
           </span>
         </div>
       )}
@@ -1318,20 +1464,29 @@ export function DistanceProfileAutocompleteField<T extends FieldValues>({
 
 export function DocumentTypeAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<DocumentType, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<DocumentType, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/document-types/select-options/"
+      graphql={documentTypeSelectOptionsGraphQL}
       popoutLink="/billing/configuration-files/document-types"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
-        <ColorOptionValue color={option.color ?? undefined} value={option.code} />
+        <ColorOptionValue
+          color={selectOptionMetaString(option, "color")}
+          value={option.label}
+        />
       )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue color={option.color ?? undefined} value={option.code} />
-          {option?.name && (
-            <span className="text-2xs text-muted-foreground w-full truncate">{option.name}</span>
+          <ColorOptionValue
+            color={selectOptionMetaString(option, "color")}
+            value={option.label}
+          />
+          {selectOptionMetaString(option, "name") && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {selectOptionMetaString(option, "name")}
+            </span>
           )}
         </div>
       )}
@@ -1342,16 +1497,20 @@ export function DocumentTypeAutocompleteField<T extends FieldValues>({
 
 export function DocumentTypeMultiSelectField<T extends FieldValues>({
   ...props
-}: BaseMultiSelectAutocompleteFieldProps<DocumentType, T>) {
+}: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <MultiSelectAutocompleteField<DocumentType, T>
+    <MultiSelectAutocompleteField<GraphQLSelectOption, T>
       link="/document-types/select-options/"
+      graphql={documentTypeSelectOptionsGraphQL}
       nestedValues
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name || ""}
-      getOptionLabel={(option) => option.name || ""}
+      getDisplayValue={(option) => selectOptionMetaString(option, "name") || option.label || ""}
+      getOptionLabel={(option) => selectOptionMetaString(option, "name") || option.label || ""}
       renderOption={(option) => (
-        <ColorOptionValue color={option.color ?? undefined} value={option.code} />
+        <ColorOptionValue
+          color={selectOptionMetaString(option, "color")}
+          value={option.label}
+        />
       )}
       {...props}
     />
@@ -1385,17 +1544,22 @@ export function DocumentMultiSelectAutocompleteField<T extends FieldValues>({
 
 export function ServiceFailureReasonCodeAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<ServiceFailureReasonCode, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<ServiceFailureReasonCode, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/service-failure-reason-codes/select-options/"
+      graphql={serviceFailureReasonCodeSelectOptionsGraphQL}
       selectedValueLink="/service-failure-reason-codes/"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.code || option.label || ""}
+      getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span className="w-full truncate font-medium">{option.code}</span>
-          <span className="text-2xs text-muted-foreground w-full truncate">{option.label}</span>
+          <span className="w-full truncate font-medium">{option.label}</span>
+          {option.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description}
+            </span>
+          )}
         </div>
       )}
       {...props}
@@ -1405,19 +1569,20 @@ export function ServiceFailureReasonCodeAutocompleteField<T extends FieldValues>
 
 export function HazardousMaterialAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<HazardousMaterial, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<HazardousMaterial, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/hazardous-materials/select-options/"
+      graphql={hazardousMaterialSelectOptionsGraphQL}
       popoutLink="/shipment-management/configuration-files/hazardous-materials"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.name}</span>
-          {option?.class && (
+          <span>{option.label}</span>
+          {selectOptionMetaString(option, "class") && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              Class {option.class}
+              Class {selectOptionMetaString(option, "class")}
             </span>
           )}
         </div>
@@ -1429,23 +1594,17 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
 
 export function CommodityAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<Commodity, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<Commodity, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/commodities/select-options/"
+      graphql={commoditySelectOptionsGraphQL}
       popoutLink="/shipment-management/configuration-files/commodities"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <div className="flex items-center gap-1.5">
-            <span>{option.name}</span>
-            {option?.hazardousMaterialId && (
-              <span className="inline-flex items-center rounded border border-yellow-600/30 bg-yellow-600/20 px-1 py-px text-[10px] font-medium text-yellow-700 dark:text-yellow-400">
-                Hazmat
-              </span>
-            )}
-          </div>
+          <span>{option.label}</span>
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description}
@@ -1612,14 +1771,15 @@ export function FuelSurchargeProgramAutocompleteField<T extends FieldValues>({
 
 export function ShipmentTypeMultiSelectField<T extends FieldValues>({
   ...props
-}: BaseMultiSelectAutocompleteFieldProps<ShipmentType, T>) {
+}: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <MultiSelectAutocompleteField<ShipmentType, T>
+    <MultiSelectAutocompleteField<GraphQLSelectOption, T>
       link="/shipment-types/select-options/"
+      graphql={shipmentTypeSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.code || ""}
-      renderOption={(option) => option.code || ""}
-      getOptionLabel={(option) => option.code || ""}
+      getDisplayValue={(option) => option.label || ""}
+      renderOption={(option) => option.label || ""}
+      getOptionLabel={(option) => option.label || ""}
       {...props}
     />
   );
@@ -1627,14 +1787,15 @@ export function ShipmentTypeMultiSelectField<T extends FieldValues>({
 
 export function ServiceTypeMultiSelectField<T extends FieldValues>({
   ...props
-}: BaseMultiSelectAutocompleteFieldProps<ServiceType, T>) {
+}: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <MultiSelectAutocompleteField<ServiceType, T>
+    <MultiSelectAutocompleteField<GraphQLSelectOption, T>
       link="/service-types/select-options/"
+      graphql={serviceTypeSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.code || ""}
-      renderOption={(option) => option.code || ""}
-      getOptionLabel={(option) => option.code || ""}
+      getDisplayValue={(option) => option.label || ""}
+      renderOption={(option) => option.label || ""}
+      getOptionLabel={(option) => option.label || ""}
       {...props}
     />
   );
@@ -1642,14 +1803,15 @@ export function ServiceTypeMultiSelectField<T extends FieldValues>({
 
 export function CommodityMultiSelectField<T extends FieldValues>({
   ...props
-}: BaseMultiSelectAutocompleteFieldProps<Commodity, T>) {
+}: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <MultiSelectAutocompleteField<Commodity, T>
+    <MultiSelectAutocompleteField<GraphQLSelectOption, T>
       link="/commodities/select-options/"
+      graphql={commoditySelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name || ""}
-      renderOption={(option) => option.name || ""}
-      getOptionLabel={(option) => option.name || ""}
+      getDisplayValue={(option) => option.label || ""}
+      renderOption={(option) => option.label || ""}
+      getOptionLabel={(option) => option.label || ""}
       {...props}
     />
   );
@@ -1657,14 +1819,24 @@ export function CommodityMultiSelectField<T extends FieldValues>({
 
 export function EquipmentTypeMultiSelectField<T extends FieldValues>({
   ...props
-}: BaseMultiSelectAutocompleteFieldProps<EquipmentTypeOption, T>) {
+}: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <MultiSelectAutocompleteField<EquipmentTypeOption, T>
+    <MultiSelectAutocompleteField<GraphQLSelectOption, T>
       link="/equipment-types/select-options/"
+      graphql={equipmentTypeSelectOptionsGraphQL}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.code || ""}
-      renderOption={(option) => option.code || ""}
-      getOptionLabel={(option) => option.code || ""}
+      getDisplayValue={(option) => option.label || ""}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
+          {option?.description && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option?.description}
+            </span>
+          )}
+        </div>
+      )}
+      getOptionLabel={(option) => option.label || ""}
       {...props}
     />
   );
@@ -1672,18 +1844,21 @@ export function EquipmentTypeMultiSelectField<T extends FieldValues>({
 
 export function DetentionPolicyAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<DetentionPolicy, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<DetentionPolicy, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/detention-policies/select-options/"
+      graphql={detentionPolicySelectOptionsGraphQL}
       popoutLink="/detention/configuration-files/detention-policies"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.name}</span>
-          {option?.code && (
-            <span className="text-2xs text-muted-foreground w-full truncate">{option.code}</span>
+          <span>{option.label}</span>
+          {selectOptionMetaString(option, "code") && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {selectOptionMetaString(option, "code")}
+            </span>
           )}
         </div>
       )}
@@ -1694,16 +1869,17 @@ export function DetentionPolicyAutocompleteField<T extends FieldValues>({
 
 export function AccessorialChargeAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<AccessorialCharge, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<AccessorialCharge, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/accessorial-charges/select-options/"
+      graphql={accessorialChargeSelectOptionsGraphQL}
       popoutLink="/billing/configuration-files/accessorial-charges"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.code}
+      getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.code}</span>
+          <span>{option.label}</span>
           {option?.description && (
             <span className="text-2xs text-muted-foreground w-full truncate">
               {option.description}
@@ -1718,18 +1894,21 @@ export function AccessorialChargeAutocompleteField<T extends FieldValues>({
 
 export function RateZoneAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<RateZone, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<RateZone, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/rate-zones/select-options/"
+      graphql={rateZoneSelectOptionsGraphQL}
       popoutLink="/billing/configuration-files/rate-zones"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.name}</span>
-          {option?.code && (
-            <span className="text-2xs text-muted-foreground w-full truncate">{option.code}</span>
+          <span>{option.label}</span>
+          {(option.description || selectOptionMetaString(option, "code")) && (
+            <span className="text-2xs text-muted-foreground w-full truncate">
+              {option.description || selectOptionMetaString(option, "code")}
+            </span>
           )}
         </div>
       )}
@@ -1740,19 +1919,20 @@ export function RateZoneAutocompleteField<T extends FieldValues>({
 
 export function RateMatrixAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<RateMatrix, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<RateMatrix, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/rate-matrices/select-options/"
+      graphql={rateMatrixSelectOptionsGraphQL}
       popoutLink="/billing/configuration-files/rate-matrices"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.name}</span>
-          {option?.description && (
+          <span>{option.label}</span>
+          {(option.description || selectOptionMetaString(option, "code")) && (
             <span className="text-2xs text-muted-foreground w-full truncate">
-              {option.description}
+              {option.description || selectOptionMetaString(option, "code")}
             </span>
           )}
         </div>
@@ -1764,18 +1944,19 @@ export function RateMatrixAutocompleteField<T extends FieldValues>({
 
 export function RateAgreementAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<RateAgreement, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<RateAgreement, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/rate-agreements/select-options/"
+      graphql={rateAgreementSelectOptionsGraphQL}
       popoutLink="/billing/rate-agreements"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.name}</span>
+          <span>{option.label}</span>
           <span className="text-2xs text-muted-foreground w-full truncate">
-            {option.code}
+            {option.description || selectOptionMetaString(option, "code")}
           </span>
         </div>
       )}
