@@ -68,6 +68,15 @@ var (
 		},
 	)
 
+	DeadLetteredRecords = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "gtc",
+			Name:      "dead_lettered_records_total",
+			Help:      "Total number of records parked in the dead-letter queue after exhausted retries",
+		},
+		[]string{"projection"},
+	)
+
 	RetryAttempts = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "gtc",

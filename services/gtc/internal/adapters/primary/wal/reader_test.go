@@ -52,6 +52,28 @@ func TestAdvanceLSNDoesNotMoveBackward(t *testing.T) {
 	}
 }
 
+func TestResumeLSNUsesStartLSNBeforeFirstAdvance(t *testing.T) {
+	t.Parallel()
+
+	reader := &Reader{}
+	if got := reader.resumeLSN("0/10"); got != "0/10" {
+		t.Fatalf("expected resume lsn 0/10 before any advance, got %s", got)
+	}
+}
+
+func TestResumeLSNPrefersAdvancedLSN(t *testing.T) {
+	t.Parallel()
+
+	reader := &Reader{}
+	if err := reader.AdvanceLSN("0/20"); err != nil {
+		t.Fatalf("AdvanceLSN returned error: %v", err)
+	}
+
+	if got := reader.resumeLSN("0/10"); got != "0/20" {
+		t.Fatalf("expected resume lsn to use the advanced position 0/20, got %s", got)
+	}
+}
+
 func TestAdvanceLSNRejectsInvalidValue(t *testing.T) {
 	t.Parallel()
 
