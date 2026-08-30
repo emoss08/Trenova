@@ -1,7 +1,7 @@
 -- Code generated from the PostgreSQL migrations by
 -- scripts/dialect-convert/convert.py. Hand-edits are preserved only if you
 -- stop regenerating this file; see docs/databases.md.
--- Source: 20260928000000_shipment_auto_rating.tx.up.sql
+-- Source: 20260928100000_shipment_auto_rating.tx.up.sql
 ALTER TABLE "shipments"
 ADD COLUMN "auto_rated" INTEGER NOT NULL DEFAULT 0;
 

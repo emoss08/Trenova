@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:f328cc7994f08055dd0c0f628782fdfbc19e4ab8642383921096944eb9d67d93"
+const Version = "sha256:66e060ad65100e627439475bc73df7c5c18b2fc811a1051ba437840a42f45fcd"
 
 var Default = Catalog{
 	Version: Version,
@@ -4921,6 +4921,25 @@ var Default = Catalog{
 					Label:        "Rate Locked",
 					Type:         FieldBool,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "autoRated",
+					Column:       buncolgen.NewColumn("auto_rated", "sp"),
+					Label:        "Auto Rated",
+					Type:         FieldBool,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "autoRatedAt",
+					Column:       buncolgen.NewColumn("auto_rated_at", "sp"),
+					Label:        "Auto Rated At",
+					Type:         FieldEpoch,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
 				},
