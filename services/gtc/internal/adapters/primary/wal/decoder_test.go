@@ -50,6 +50,54 @@ func TestDecoderEmitsCommittedTransaction(t *testing.T) {
 	}
 }
 
+func TestDecoderRejectsStreamedTransactionMessages(t *testing.T) {
+	t.Parallel()
+
+	decoder := NewDecoder()
+
+	if _, err := decoder.decodeWALData(encodeStreamStartMessage(42), pglogrepl.LSN(90)); err == nil {
+		t.Fatalf("expected streamed transaction message to be rejected")
+	}
+}
+
+func TestDecoderResetClearsTransactionState(t *testing.T) {
+	t.Parallel()
+
+	decoder := NewDecoder()
+	beginTime := time.Date(2026, 3, 20, 20, 12, 34, 0, time.UTC)
+
+	if _, err := decoder.decodeWALData(encodeBeginMessage(pglogrepl.LSN(100), beginTime, 42), pglogrepl.LSN(90)); err != nil {
+		t.Fatalf("decode begin: %v", err)
+	}
+	decoder.appendRecord(domain.SourceRecord{
+		Operation: domain.OperationInsert,
+		Schema:    "public",
+		Table:     "shipments",
+		NewData:   map[string]any{"id": "shp_1"},
+	})
+	decoder.relations[7] = &pglogrepl.RelationMessageV2{}
+
+	decoder.Reset()
+
+	if len(decoder.relations) != 0 {
+		t.Fatalf("expected relations to be cleared, got %d", len(decoder.relations))
+	}
+	if decoder.currentTransaction.records != nil {
+		t.Fatalf("expected buffered transaction records to be cleared")
+	}
+	if decoder.currentTransaction.xid != 0 {
+		t.Fatalf("expected transaction xid to be cleared, got %d", decoder.currentTransaction.xid)
+	}
+}
+
+func encodeStreamStartMessage(xid uint32) []byte {
+	buf := make([]byte, 1+4+1)
+	buf[0] = byte(pglogrepl.MessageTypeStreamStart)
+	binary.BigEndian.PutUint32(buf[1:5], xid)
+	buf[5] = 1
+	return buf
+}
+
 func encodeBeginMessage(finalLSN pglogrepl.LSN, commitTime time.Time, xid uint32) []byte {
 	buf := make([]byte, 1+8+8+4)
 	buf[0] = byte(pglogrepl.MessageTypeBegin)
