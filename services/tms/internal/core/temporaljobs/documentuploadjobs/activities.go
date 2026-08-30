@@ -292,7 +292,16 @@ func (a *Activities) finalizeUploadPersistDocument(
 		previewPath = a.startThumbnailWorkflow(ctx, doc)
 	}
 	if doc.ProcessingProfile.SupportsIntelligence() {
-		_ = a.documentIntelligence.EnqueueExtraction(ctx, doc, payload.UserID)
+		enqueueErr := a.documentIntelligence.EnqueueExtraction(ctx, doc, payload.UserID)
+		if enqueueErr != nil {
+			activity.GetLogger(ctx).Error(
+				"failed to enqueue document content extraction",
+				"documentId",
+				doc.ID.String(),
+				"error",
+				enqueueErr,
+			)
+		}
 	}
 	a.recordDocumentUploadUsage(ctx, doc, payload)
 	a.tryAutoMarkShipmentReadyToInvoice(
@@ -736,14 +745,22 @@ func (a *Activities) finalizeCreatedDocumentUpload(
 		}); err != nil {
 			return err
 		}
-		_ = a.searchProjection.Delete(ctx, previousDoc.ID, pagination.TenantInfo{
+		if deleteErr := a.searchProjection.Delete(ctx, previousDoc.ID, pagination.TenantInfo{
 			OrgID: session.OrganizationID,
 			BuID:  session.BusinessUnitID,
-		})
+		}); deleteErr != nil {
+			activity.GetLogger(ctx).Error(
+				"failed to delete previous document version from search projection",
+				"documentId",
+				previousDoc.ID.String(),
+				"error",
+				deleteErr,
+			)
+		}
 	}
 	createdDoc.IsCurrentVersion = true
 
-	_ = a.auditService.LogAction(&services.LogActionParams{
+	if auditErr := a.auditService.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     createdDoc.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -751,7 +768,15 @@ func (a *Activities) finalizeCreatedDocumentUpload(
 		CurrentState:   jsonutils.MustToJSON(createdDoc),
 		OrganizationID: createdDoc.OrganizationID,
 		BusinessUnitID: createdDoc.BusinessUnitID,
-	}, auditservice.WithComment("Document uploaded"))
+	}, auditservice.WithComment("Document uploaded")); auditErr != nil {
+		activity.GetLogger(ctx).Error(
+			"failed to log document upload audit action",
+			"documentId",
+			createdDoc.GetID().String(),
+			"error",
+			auditErr,
+		)
+	}
 	a.syncSearchProjection(ctx, createdDoc, "")
 	return nil
 }
@@ -827,7 +852,15 @@ func (a *Activities) syncSearchProjection(
 	doc *document.Document,
 	contentText string,
 ) {
-	_ = a.searchProjection.Upsert(ctx, doc, contentText)
+	if err := a.searchProjection.Upsert(ctx, doc, contentText); err != nil {
+		activity.GetLogger(ctx).Error(
+			"failed to sync document search projection",
+			"documentId",
+			doc.ID.String(),
+			"error",
+			err,
+		)
+	}
 }
 
 func (a *Activities) reconcileSession(
@@ -1051,7 +1084,14 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 		if errors.As(err, &started) {
 			return doc.PreviewStoragePath
 		}
-		_ = a.documentRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
+		activity.GetLogger(ctx).Error(
+			"failed to start thumbnail workflow",
+			"documentId",
+			doc.ID.String(),
+			"error",
+			err,
+		)
+		if updateErr := a.documentRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: doc.OrganizationID,
@@ -1059,7 +1099,15 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 			},
 			PreviewStatus:      document.PreviewStatusFailed,
 			PreviewStoragePath: "",
-		})
+		}); updateErr != nil {
+			activity.GetLogger(ctx).Error(
+				"failed to mark document preview as failed",
+				"documentId",
+				doc.ID.String(),
+				"error",
+				updateErr,
+			)
+		}
 		return ""
 	}
 

@@ -253,7 +253,7 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 		return nil, err
 	}
 
-	_ = a.auditService.LogAction(&services.LogActionParams{
+	if auditErr := a.auditService.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceInvoice,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -265,7 +265,12 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 		CurrentState:   jsonutils.MustToJSON(updated),
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
-	}, auditservice.WithComment("Invoice PDF generated"))
+	}, auditservice.WithComment("Invoice PDF generated")); auditErr != nil {
+		a.logger.Error("failed to log invoice PDF generation audit action",
+			zap.String("invoiceId", updated.ID.String()),
+			zap.Error(auditErr),
+		)
+	}
 
 	if _, err = a.invoiceService.AutoSendInvoiceAfterPDFGeneration(
 		ctx,

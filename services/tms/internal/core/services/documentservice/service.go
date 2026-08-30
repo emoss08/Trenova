@@ -341,7 +341,13 @@ func (s *Service) Upload(
 		s.startThumbnailWorkflow(ctx, log, createdDoc)
 	}
 	if createdDoc.ProcessingProfile.SupportsIntelligence() {
-		_ = s.documentIntelligence.EnqueueExtraction(ctx, createdDoc, req.TenantInfo.UserID)
+		enqueueErr := s.documentIntelligence.EnqueueExtraction(ctx, createdDoc, req.TenantInfo.UserID)
+		if enqueueErr != nil {
+			log.Error("failed to enqueue document content extraction",
+				zap.String("documentId", createdDoc.GetID().String()),
+				zap.Error(enqueueErr),
+			)
+		}
 	}
 	s.recordDocumentUploadUsage(ctx, log, createdDoc, req.TenantInfo, &req.Actor)
 	s.publishDocumentInvalidation(ctx, createdDoc, &req.Actor)
