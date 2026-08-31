@@ -48,11 +48,26 @@ func TestVersionsSendsAuthAndParsesResponse(t *testing.T) {
 	t.Parallel()
 
 	client := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, http.MethodGet, r.Method)
-		require.Equal(t, "/pcmversion", r.URL.Path)
-		require.Equal(t, "NA", r.URL.Query().Get("region"))
-		require.Equal(t, "test-key", r.Header.Get("Authorization"))
-		require.Equal(t, "application/json", r.Header.Get("Accept"))
+		if r.Method != http.MethodGet {
+			t.Errorf("expected GET, got %s", r.Method)
+			return
+		}
+		if r.URL.Path != "/pcmversion" {
+			t.Errorf("expected path /pcmversion, got %s", r.URL.Path)
+			return
+		}
+		if region := r.URL.Query().Get("region"); region != "NA" {
+			t.Errorf("expected region NA, got %q", region)
+			return
+		}
+		if auth := r.Header.Get("Authorization"); auth != "test-key" {
+			t.Errorf("expected Authorization test-key, got %q", auth)
+			return
+		}
+		if accept := r.Header.Get("Accept"); accept != "application/json" {
+			t.Errorf("expected Accept application/json, got %q", accept)
+			return
+		}
 		_, _ = w.Write([]byte(`{"pcmversions":["Current","PCM36"]}`))
 	})
 
@@ -65,7 +80,13 @@ func TestVersionsOmitsEmptyRegion(t *testing.T) {
 	t.Parallel()
 
 	client := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
-		require.False(t, r.URL.Query().Has("region"))
+		if r.URL.Query().Has("region") {
+			t.Errorf(
+				"expected no region query parameter, got %q",
+				r.URL.Query().Get("region"),
+			)
+			return
+		}
 		_, _ = w.Write([]byte(`{"pcmversions":[]}`))
 	})
 
@@ -110,19 +131,34 @@ func mileageHandler(t *testing.T, requestCount *int, batchSizes *[]int) http.Han
 	t.Helper()
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, http.MethodPost, r.Method)
-		require.Equal(t, "/route/routeReports", r.URL.Path)
-		require.Equal(t, "application/json", r.Header.Get("Content-Type"))
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+			return
+		}
+		if r.URL.Path != "/route/routeReports" {
+			t.Errorf("expected path /route/routeReports, got %s", r.URL.Path)
+			return
+		}
+		if contentType := r.Header.Get("Content-Type"); contentType != "application/json" {
+			t.Errorf("expected Content-Type application/json, got %q", contentType)
+			return
+		}
 
 		body, err := io.ReadAll(r.Body)
-		require.NoError(t, err)
+		if err != nil {
+			t.Errorf("read request body: %v", err)
+			return
+		}
 
 		var payload struct {
 			ReportRoutes []struct {
 				RouteID string `json:"RouteId"`
 			} `json:"ReportRoutes"`
 		}
-		require.NoError(t, sonic.Unmarshal(body, &payload))
+		if err = sonic.Unmarshal(body, &payload); err != nil {
+			t.Errorf("decode request payload: %v", err)
+			return
+		}
 
 		*requestCount++
 		*batchSizes = append(*batchSizes, len(payload.ReportRoutes))
@@ -139,7 +175,10 @@ func mileageHandler(t *testing.T, requestCount *int, batchSizes *[]int) http.Han
 		}
 
 		response, err := sonic.Marshal(reports)
-		require.NoError(t, err)
+		if err != nil {
+			t.Errorf("encode response payload: %v", err)
+			return
+		}
 		_, _ = w.Write(response)
 	}
 }
