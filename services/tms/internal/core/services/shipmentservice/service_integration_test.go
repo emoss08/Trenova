@@ -696,7 +696,7 @@ func TestUpdateIntegration_ReconcilesDetentionCharge(t *testing.T) {
 	now := timeutilsNow()
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
 	entity.BOL = "BOL-DETENTION-RECALC"
-	entity.Moves[0].Stops[0].ActualArrival = int64PtrForIntegration(now - (30*60 + 2*3600))
+	entity.Moves[0].Stops[0].ActualArrival = int64PtrForIntegration(now - (30*60 + 90*60))
 
 	created, err := svc.Create(
 		ctx,
