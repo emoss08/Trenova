@@ -1184,6 +1184,7 @@ func TestLoad_ControlPlaneEnvAliases(t *testing.T) {
 	assert.Equal(t, "inst_01", cfg.Platform.InstanceID)
 	assert.Equal(t, "cp_test_key", cfg.Platform.ControlPlane.APIKey)
 	assert.Equal(t, 30*time.Second, cfg.Platform.ControlPlane.GetHeartbeatInterval())
+	assert.Equal(t, time.Hour, cfg.Platform.ControlPlane.GetTenantSyncInterval())
 	assert.True(t, cfg.Platform.ControlPlane.FailOpenOnError)
 }
 

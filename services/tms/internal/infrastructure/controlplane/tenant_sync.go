@@ -18,6 +18,7 @@ type TenantSyncerParams struct {
 	Config *config.Config
 	Client Client
 	Repo   repositories.TenantSyncRepository
+	LC     fx.Lifecycle
 	Logger *zap.Logger
 }
 
@@ -27,6 +28,7 @@ type TenantSyncer struct {
 	repo   repositories.TenantSyncRepository
 	now    func() time.Time
 	logger *zap.Logger
+	cancel context.CancelFunc
 }
 
 func NewTenantSyncer(p TenantSyncerParams) *TenantSyncer {
@@ -38,7 +40,58 @@ func NewTenantSyncer(p TenantSyncerParams) *TenantSyncer {
 		logger: p.Logger.Named("control-plane-tenant-sync"),
 	}
 
+	p.LC.Append(fx.Hook{
+		OnStart: syncer.start,
+		OnStop:  syncer.stop,
+	})
+
 	return syncer
+}
+
+func (s *TenantSyncer) start(ctx context.Context) error {
+	if !s.cfg.Platform.ControlPlane.Enabled {
+		return nil
+	}
+
+	if err := s.SyncFull(ctx); err != nil {
+		if !failOpenAllowed(s.cfg) {
+			return err
+		}
+		s.logger.Warn("control plane startup tenant sync failed", zap.Error(err))
+	}
+
+	syncCtx, cancel := context.WithCancel(context.Background())
+	s.cancel = cancel
+	go s.run(syncCtx)
+	return nil
+}
+
+func (s *TenantSyncer) stop(context.Context) error {
+	if s.cancel != nil {
+		s.cancel()
+	}
+	return nil
+}
+
+func (s *TenantSyncer) run(ctx context.Context) {
+	ticker := time.NewTicker(s.cfg.Platform.ControlPlane.GetTenantSyncInterval())
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			syncCtx, cancel := context.WithTimeout(
+				ctx,
+				s.cfg.Platform.ControlPlane.GetTimeout(),
+			)
+			if err := s.SyncFull(syncCtx); err != nil {
+				s.logger.Warn("control plane tenant sync failed", zap.Error(err))
+			}
+			cancel()
+		}
+	}
 }
 
 func (s *TenantSyncer) SyncFull(ctx context.Context) error {
