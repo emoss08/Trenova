@@ -1091,7 +1091,7 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 			"error",
 			err,
 		)
-		if updateErr := a.documentRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
+		updateErr := a.documentRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
 			ID: doc.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: doc.OrganizationID,
@@ -1099,7 +1099,8 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 			},
 			PreviewStatus:      document.PreviewStatusFailed,
 			PreviewStoragePath: "",
-		}); updateErr != nil {
+		})
+		if updateErr != nil {
 			activity.GetLogger(ctx).Error(
 				"failed to mark document preview as failed",
 				"documentId",
