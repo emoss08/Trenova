@@ -1,5 +1,5 @@
 {
-  "operationCount": 424,
+  "operationCount": 425,
   "fragmentCount": 126,
   "operations": [
     {
@@ -2023,6 +2023,29 @@
       ],
       "usages": [],
       "sdl": "mutation CreateTableConfiguration($input: TableConfigurationInput!) {\n  createTableConfiguration(input: $input) {\n    ...TableConfigurationFields\n  }\n}\n\nfragment TableConfigurationFields on TableConfiguration {\n  id\n  organizationId\n  businessUnitId\n  userId\n  name\n  description\n  resource\n  tableConfig\n  visibility\n  isDefault\n  isOrgDefault\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n    profilePicUrl\n  }\n}"
+    },
+    {
+      "name": "CreateWorkerPto",
+      "kind": "mutation",
+      "domain": "worker",
+      "sourceFile": "src/operations/worker/page.graphql",
+      "hash": "sha256:e942c74696cc17f2d2c5e715c8a2818c0625fddefcc9f902ec860d0843216c39",
+      "rootFields": [
+        "createWorkerPTO"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateWorkerPTOInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "WorkerPtoRowFields",
+        "WorkerPtoWorkerFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateWorkerPto($input: CreateWorkerPTOInput!) {\n  createWorkerPTO(input: $input) {\n    ...WorkerPtoRowFields\n  }\n}\n\nfragment WorkerPtoRowFields on WorkerPTO {\n  id\n  workerId\n  organizationId\n  businessUnitId\n  approverId\n  rejectorId\n  status\n  type\n  startDate\n  endDate\n  reason\n  version\n  createdAt\n  updatedAt\n  worker {\n    ...WorkerPtoWorkerFields\n  }\n}\n\nfragment WorkerPtoWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
     },
     {
       "name": "CurrentCarrierSettlementPeriod",
@@ -11278,6 +11301,7 @@
       ],
       "usedByOperations": [
         "ApproveWorkerPto",
+        "CreateWorkerPto",
         "RejectWorkerPto",
         "UpcomingWorkerPto",
         "WorkerPtoTable"
@@ -11293,6 +11317,7 @@
       "fragments": [],
       "usedByOperations": [
         "ApproveWorkerPto",
+        "CreateWorkerPto",
         "RejectWorkerPto",
         "UpcomingWorkerPto",
         "WorkerPtoTable"
@@ -12184,6 +12209,37 @@
         }
       ],
       "sdl": "input CreateSettlementDisputeInput {\n  category: SettlementDisputeCategory!\n  description: String!\n  settlementId: ID!\n  settlementLineId: ID\n}"
+    },
+    "CreateWorkerPTOInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "endDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "startDate",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "type",
+          "type": "PTOType!",
+          "defaultValue": null
+        },
+        {
+          "name": "workerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input CreateWorkerPTOInput {\n  endDate: Int!\n  reason: String!\n  startDate: Int!\n  type: PTOType!\n  workerId: ID!\n}"
     },
     "DataTableConnectionInput": {
       "kind": "input",
@@ -16490,6 +16546,19 @@
       ],
       "sdl": "enum SettlementDisputeCategory {\n  IncorrectDeduction\n  IncorrectRate\n  MissingPay\n  MissingReimbursement\n  Other\n}"
     },
+    "PTOType": {
+      "kind": "enum",
+      "values": [
+        "Bereavement",
+        "Holiday",
+        "Maternity",
+        "Paternity",
+        "Personal",
+        "Sick",
+        "Vacation"
+      ],
+      "sdl": "enum PTOType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
+    },
     "FieldFilterInput": {
       "kind": "input",
       "fields": [
@@ -17696,19 +17765,6 @@
         "Requested"
       ],
       "sdl": "enum PTOStatus {\n  Approved\n  Cancelled\n  Rejected\n  Requested\n}"
-    },
-    "PTOType": {
-      "kind": "enum",
-      "values": [
-        "Bereavement",
-        "Holiday",
-        "Maternity",
-        "Paternity",
-        "Personal",
-        "Sick",
-        "Vacation"
-      ],
-      "sdl": "enum PTOType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
     },
     "PayPeriodFrequency": {
       "kind": "enum",

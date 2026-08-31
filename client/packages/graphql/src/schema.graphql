@@ -1617,6 +1617,14 @@ input CreateSettlementDisputeInput {
   settlementLineId: ID
 }
 
+input CreateWorkerPTOInput {
+  endDate: Int!
+  reason: String!
+  startDate: Int!
+  type: PTOType!
+  workerId: ID!
+}
+
 type CustomFieldDefinition {
   businessUnitId: ID!
   color: String
@@ -5795,6 +5803,7 @@ type Mutation {
   createTableConfiguration(input: TableConfigurationInput!): TableConfiguration!
   createTractor(input: TractorInput!): Tractor!
   createTrailer(input: TrailerInput!): Trailer!
+  createWorkerPTO(input: CreateWorkerPTOInput!): WorkerPTO!
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   deleteDetentionPolicy(id: ID!): Boolean!
   deleteDocumentTemplate(id: ID!): Boolean!

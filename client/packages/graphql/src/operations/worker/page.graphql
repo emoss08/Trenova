@@ -188,6 +188,12 @@ mutation PatchWorker(
   }
 }
 
+mutation CreateWorkerPto($input: CreateWorkerPTOInput!) {
+  createWorkerPTO(input: $input) {
+    ...WorkerPtoRowFields
+  }
+}
+
 mutation ApproveWorkerPto($id: ID!) {
   approveWorkerPTO(id: $id) {
     ...WorkerPtoRowFields

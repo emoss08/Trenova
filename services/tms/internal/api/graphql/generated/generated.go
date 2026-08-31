@@ -3856,6 +3856,7 @@ type ComplexityRoot struct {
 		CreateTableConfiguration              func(childComplexity int, input gqlmodel.TableConfigurationInput) int
 		CreateTractor                         func(childComplexity int, input gqlmodel.TractorInput) int
 		CreateTrailer                         func(childComplexity int, input gqlmodel.TrailerInput) int
+		CreateWorkerPto                       func(childComplexity int, input gqlmodel.CreateWorkerPTOInput) int
 		DecideAgentProposal                   func(childComplexity int, id string, input gqlmodel.AgentProposalDecisionInput) int
 		DeleteDetentionPolicy                 func(childComplexity int, id string) int
 		DeleteDocumentTemplate                func(childComplexity int, id string) int
@@ -7491,6 +7492,7 @@ type MutationResolver interface {
 	BulkUpdateTractorStatus(ctx context.Context, input gqlmodel.BulkUpdateTractorStatusInput) ([]*tractor.Tractor, error)
 	LocateTractor(ctx context.Context, input gqlmodel.LocateTractorInput) (*equipmentcontinuity.EquipmentContinuity, error)
 	PatchWorker(ctx context.Context, id string, input gqlmodel.WorkerPatchInput) (*worker.Worker, error)
+	CreateWorkerPto(ctx context.Context, input gqlmodel.CreateWorkerPTOInput) (*worker.WorkerPTO, error)
 	ApproveWorkerPto(ctx context.Context, id string) (*worker.WorkerPTO, error)
 	RejectWorkerPto(ctx context.Context, id string, reason string) (*worker.WorkerPTO, error)
 }
@@ -25472,6 +25474,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateTrailer(childComplexity, args["input"].(gqlmodel.TrailerInput)), true
+	case "Mutation.createWorkerPTO":
+		if e.ComplexityRoot.Mutation.CreateWorkerPto == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createWorkerPTO_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateWorkerPto(childComplexity, args["input"].(gqlmodel.CreateWorkerPTOInput)), true
 	case "Mutation.decideAgentProposal":
 		if e.ComplexityRoot.Mutation.DecideAgentProposal == nil {
 			break
@@ -43030,6 +43043,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateReportScheduleInput,
 		ec.unmarshalInputCreateReportViewInput,
 		ec.unmarshalInputCreateSettlementDisputeInput,
+		ec.unmarshalInputCreateWorkerPTOInput,
 		ec.unmarshalInputCustomerPaymentApplicationInput,
 		ec.unmarshalInputDataTableConnectionInput,
 		ec.unmarshalInputDetachPayEventInput,
@@ -54761,6 +54775,14 @@ input UpcomingWorkerPTOInput {
   timezone: String
 }
 
+input CreateWorkerPTOInput {
+  workerId: ID!
+  type: PTOType!
+  startDate: Int!
+  endDate: Int!
+  reason: String!
+}
+
 input WorkerPTOChartInput {
   startDateFrom: Int!
   startDateTo: Int!
@@ -54778,6 +54800,7 @@ extend type Query {
 
 extend type Mutation {
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
+  createWorkerPTO(input: CreateWorkerPTOInput!): WorkerPTO!
   approveWorkerPTO(id: ID!): WorkerPTO!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
 }
@@ -68825,6 +68848,20 @@ func (ec *executionContext) field_Mutation_createTrailer_args(ctx context.Contex
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.TrailerInput, error) {
 			return ec.unmarshalNTrailerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTrailerInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createWorkerPTO_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.CreateWorkerPTOInput, error) {
+			return ec.unmarshalNCreateWorkerPTOInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateWorkerPTOInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -150816,6 +150853,50 @@ func (ec *executionContext) fieldContext_Mutation_patchWorker(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createWorkerPTO(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createWorkerPTO(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateWorkerPto(ctx, fc.Args["input"].(gqlmodel.CreateWorkerPTOInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *worker.WorkerPTO) graphql.Marshaler {
+			return ec.marshalNWorkerPTO2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerPTO(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createWorkerPTO(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_WorkerPTO(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createWorkerPTO_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_approveWorkerPTO(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -217399,6 +217480,64 @@ func (ec *executionContext) unmarshalInputCreateSettlementDisputeInput(ctx conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateWorkerPTOInput(ctx context.Context, obj any) (gqlmodel.CreateWorkerPTOInput, error) {
+	var it gqlmodel.CreateWorkerPTOInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"workerId", "type", "startDate", "endDate", "reason"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "workerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workerId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WorkerID = data
+		case "type":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			data, err := ec.unmarshalNPTOType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPTOType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Type = data
+		case "startDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		case "reason":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Reason = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCustomerPaymentApplicationInput(ctx context.Context, obj any) (gqlmodel.CustomerPaymentApplicationInput, error) {
 	var it gqlmodel.CustomerPaymentApplicationInput
 	if obj == nil {
@@ -255234,6 +255373,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createWorkerPTO":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createWorkerPTO(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "approveWorkerPTO":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_approveWorkerPTO(ctx, field)
@@ -284712,6 +284858,11 @@ func (ec *executionContext) unmarshalNCreateReportViewInput2githubᚗcomᚋemoss
 
 func (ec *executionContext) unmarshalNCreateSettlementDisputeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateSettlementDisputeInput(ctx context.Context, v any) (gqlmodel.CreateSettlementDisputeInput, error) {
 	res, err := ec.unmarshalInputCreateSettlementDisputeInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateWorkerPTOInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateWorkerPTOInput(ctx context.Context, v any) (gqlmodel.CreateWorkerPTOInput, error) {
+	res, err := ec.unmarshalInputCreateWorkerPTOInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

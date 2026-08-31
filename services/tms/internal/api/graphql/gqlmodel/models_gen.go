@@ -564,6 +564,14 @@ type CreateSettlementDisputeInput struct {
 	Description      string                           `json:"description"`
 }
 
+type CreateWorkerPTOInput struct {
+	WorkerID  string         `json:"workerId"`
+	Type      worker.PTOType `json:"type"`
+	StartDate int            `json:"startDate"`
+	EndDate   int            `json:"endDate"`
+	Reason    string         `json:"reason"`
+}
+
 type CustomFieldDefinitionConnection struct {
 	Edges      []*CustomFieldDefinitionEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
