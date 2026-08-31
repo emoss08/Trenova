@@ -216,6 +216,14 @@ input UpcomingWorkerPTOInput {
   timezone: String
 }
 
+input CreateWorkerPTOInput {
+  workerId: ID!
+  type: PTOType!
+  startDate: Int!
+  endDate: Int!
+  reason: String!
+}
+
 input WorkerPTOChartInput {
   startDateFrom: Int!
   startDateTo: Int!
@@ -233,6 +241,7 @@ extend type Query {
 
 extend type Mutation {
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
+  createWorkerPTO(input: CreateWorkerPTOInput!): WorkerPTO!
   approveWorkerPTO(id: ID!): WorkerPTO!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
 }

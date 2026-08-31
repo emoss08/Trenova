@@ -52,6 +52,33 @@ func (r *mutationResolver) PatchWorker(ctx context.Context, id string, input gql
 	return updated, nil
 }
 
+// CreateWorkerPto is the resolver for the createWorkerPTO field.
+func (r *mutationResolver) CreateWorkerPto(ctx context.Context, input gqlmodel.CreateWorkerPTOInput) (*worker.WorkerPTO, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceWorkerPTO, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	workerID, err := pulid.MustParse(input.WorkerID)
+	if err != nil {
+		return nil, err
+	}
+
+	info := tenantInfo(authCtx)
+	entity := &worker.WorkerPTO{
+		OrganizationID: info.OrgID,
+		BusinessUnitID: info.BuID,
+		WorkerID:       workerID,
+		Status:         worker.PTOStatusRequested,
+		Type:           input.Type,
+		StartDate:      int64(input.StartDate),
+		EndDate:        int64(input.EndDate),
+		Reason:         input.Reason,
+	}
+
+	return r.workerPTOService.Create(ctx, entity, authCtx.UserID)
+}
+
 // ApproveWorkerPto is the resolver for the approveWorkerPTO field.
 func (r *mutationResolver) ApproveWorkerPto(ctx context.Context, id string) (*worker.WorkerPTO, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceWorkerPTO, permission.OpUpdate)

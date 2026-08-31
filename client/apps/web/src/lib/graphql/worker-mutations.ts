@@ -1,7 +1,9 @@
 import {
   ApproveWorkerPtoDocument,
+  CreateWorkerPtoDocument,
   PatchWorkerDocument,
   RejectWorkerPtoDocument,
+  type CreateWorkerPtoInput,
   type WorkerPatchInput,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -9,6 +11,10 @@ import type { Worker, WorkerPTO } from "@trenova/shared/types/worker";
 
 type PatchWorkerResponse = {
   patchWorker: unknown;
+};
+
+type CreateWorkerPTOResponse = {
+  createWorkerPTO: unknown;
 };
 
 type ApproveWorkerPTOResponse = {
@@ -30,6 +36,18 @@ export async function patchWorker(id: Worker["id"], input: WorkerPatchInput): Pr
   });
 
   return data.patchWorker as Worker;
+}
+
+export async function createWorkerPTO(input: CreateWorkerPtoInput): Promise<WorkerPTO> {
+  const data = await requestGraphQL<CreateWorkerPTOResponse>({
+    document: CreateWorkerPtoDocument,
+    operationName: "CreateWorkerPto",
+    variables: {
+      input,
+    },
+  });
+
+  return data.createWorkerPTO as WorkerPTO;
 }
 
 export async function approveWorkerPTO(id: WorkerPTO["id"]): Promise<WorkerPTO> {
