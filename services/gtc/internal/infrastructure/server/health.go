@@ -59,23 +59,23 @@ func StartHealthMonitor(
 			select {
 			case <-done:
 				return
-				case <-ticker.C:
-					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-					results := checker.HealthCheck(ctx)
-					cancel()
+			case <-ticker.C:
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				results := checker.HealthCheck(ctx)
+				cancel()
 
-					allHealthy := true
-					for _, healthy := range results {
-						if !healthy {
-							allHealthy = false
-						}
+				allHealthy := true
+				for _, healthy := range results {
+					if !healthy {
+						allHealthy = false
 					}
-
-					status.UpdateSinkStatus(results)
-					status.SetReady(checker.IsReady() && allHealthy && len(results) > 0)
 				}
+
+				status.UpdateSinkStatus(results)
+				status.SetReady(checker.IsReady() && allHealthy && len(results) > 0)
 			}
-		}()
+		}
+	}()
 
 	return func() {
 		closeOnce.Do(func() { close(done) })
