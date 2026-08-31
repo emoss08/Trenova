@@ -2,7 +2,7 @@ import { KpiCard, KpiHeader } from "@/components/kpi/kpi-card";
 import { ChartContainer, type ChartConfig } from "@trenova/shared/components/ui/chart";
 import { Activity } from "lucide-react";
 import { Area, AreaChart } from "recharts";
-import type { ApiKeyAnalyticsData } from "../mock-data";
+import type { ApiKeyAnalyticsData } from "../analytics-data";
 
 const chartConfig = {
   value: { label: "Requests", color: "hsl(142, 71%, 45%)" },

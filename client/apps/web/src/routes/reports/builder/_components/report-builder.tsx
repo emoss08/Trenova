@@ -5,7 +5,7 @@ import {
   useReportPreview,
   useUpdateReportDefinition,
 } from "@/hooks/use-reports";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import type { ReportCatalog, ReportDefinition } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";

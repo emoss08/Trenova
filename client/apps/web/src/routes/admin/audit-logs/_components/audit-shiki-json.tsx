@@ -1,7 +1,7 @@
 import { Input } from "@trenova/shared/components/ui/input";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { highlightCode } from "@/lib/shiki";
 import { cn } from "@trenova/shared/lib/utils";
