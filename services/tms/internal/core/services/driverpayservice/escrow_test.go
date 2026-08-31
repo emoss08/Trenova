@@ -106,7 +106,10 @@ func TestOpenEscrowAccount_RejectsDuplicateActiveAccount(t *testing.T) {
 func TestAdjustEscrowAccount_ValidatesRequest(t *testing.T) {
 	t.Parallel()
 	svc, _ := newTestService()
-	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
 
 	_, err := svc.AdjustEscrowAccount(t.Context(), &EscrowAdjustmentRequest{
 		TenantInfo:  tenantInfo,
@@ -214,7 +217,12 @@ func TestCloseEscrowAccount_RejectsAlreadyClosedAccount(t *testing.T) {
 		},
 	}
 
-	_, err := svc.CloseEscrowAccount(t.Context(), pagination.TenantInfo{}, account.ID, testActor())
+	_, err := svc.CloseEscrowAccount(
+		t.Context(),
+		pagination.TenantInfo{},
+		account.ID,
+		testActor(),
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "already closed")
 }

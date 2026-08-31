@@ -79,9 +79,11 @@ const searchFieldDescription = "description"
 
 func (p *PayProfile) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
-		validation.Field(&p.Name,
+		validation.Field(
+			&p.Name,
 			validation.Required.Error("Name is required"),
-			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
+			validation.Length(1, 100).
+				Error("Name must be between 1 and 100 characters"),
 		),
 		validation.Field(&p.CurrencyCode,
 			validation.Required.Error("Currency code is required"),
@@ -287,7 +289,11 @@ func (p *PayProfile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig 
 		TableAlias:      "dpp",
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
-			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "name",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
 			{
 				Name:   searchFieldDescription,
 				Type:   domaintypes.FieldTypeText,

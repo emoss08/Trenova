@@ -53,7 +53,11 @@ func TestRecurringDeduction_Validate(t *testing.T) {
 		mutate  func(r *RecurringDeduction)
 		wantErr bool
 	}{
-		{name: "valid deduction passes", mutate: func(r *RecurringDeduction) {}, wantErr: false},
+		{
+			name:    "valid deduction passes",
+			mutate:  func(r *RecurringDeduction) {},
+			wantErr: false,
+		},
 		{
 			name:    "missing worker fails",
 			mutate:  func(r *RecurringDeduction) { r.WorkerID = "" },
@@ -188,7 +192,11 @@ func TestRecurringEarning_Validate(t *testing.T) {
 		mutate  func(r *RecurringEarning)
 		wantErr bool
 	}{
-		{name: "valid earning passes", mutate: func(r *RecurringEarning) {}, wantErr: false},
+		{
+			name:    "valid earning passes",
+			mutate:  func(r *RecurringEarning) {},
+			wantErr: false,
+		},
 		{
 			name:    "missing worker fails",
 			mutate:  func(r *RecurringEarning) { r.WorkerID = "" },
