@@ -70,6 +70,12 @@ func (s *Service) Start(
 		return nil, err
 	}
 
+	if !control.BillingAgentEnabled {
+		return nil, errortypes.NewBusinessError(
+			"The billing exception agent is disabled for this organization",
+		)
+	}
+
 	run := &agent.AgentRun{
 		OrganizationID:   req.TenantInfo.OrgID,
 		BusinessUnitID:   req.TenantInfo.BuID,
