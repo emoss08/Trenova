@@ -164,7 +164,12 @@ func TestSystemPayCodes(t *testing.T) {
 
 	seen := make(map[string]struct{}, len(codes))
 	for _, code := range codes {
-		assert.True(t, code.Direction.IsValid(), "direction for %s must be valid", code.Code)
+		assert.True(
+			t,
+			code.Direction.IsValid(),
+			"direction for %s must be valid",
+			code.Code,
+		)
 		assert.Regexp(t, payCodePattern, code.Code)
 		assert.NotEmpty(t, code.Name)
 

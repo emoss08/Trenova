@@ -114,7 +114,10 @@ func TestWorkerPayAssignment_Validate(t *testing.T) {
 			name: "valid overrides pass",
 			mutate: func(a *WorkerPayAssignment) {
 				a.RateOverrides = []RateOverride{
-					{ComponentID: componentID, Rate: decimal.NewFromFloat(0.62)},
+					{
+						ComponentID: componentID,
+						Rate:        decimal.NewFromFloat(0.62),
+					},
 					{ComponentID: pulid.MustNew("dppc_"), Rate: decimal.Zero},
 				}
 			},

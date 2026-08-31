@@ -186,7 +186,11 @@ func TestPayProfileComponent_Validate(t *testing.T) {
 			mutate: func(c *PayProfileComponent) {
 				c.Method = CalcMethodFlatPerShipment
 				c.Bands = []MileageBand{
-					{MinMiles: 0, MaxMiles: 100, Rate: decimal.NewFromFloat(0.5)},
+					{
+						MinMiles: 0,
+						MaxMiles: 100,
+						Rate:     decimal.NewFromFloat(0.5),
+					},
 				}
 			},
 			wantErr: true,
@@ -265,8 +269,10 @@ func TestPayProfileComponent_ValidateBands(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "negative band rate fails",
-			bands:   []MileageBand{{MinMiles: 0, MaxMiles: 100, Rate: decimal.NewFromInt(-1)}},
+			name: "negative band rate fails",
+			bands: []MileageBand{
+				{MinMiles: 0, MaxMiles: 100, Rate: decimal.NewFromInt(-1)},
+			},
 			wantErr: true,
 		},
 		{
@@ -343,23 +349,30 @@ func TestPayProfileComponent_ResolveMileageRate(t *testing.T) {
 		)
 	})
 
-	t.Run("miles outside every closed band fall back to the component rate", func(t *testing.T) {
-		t.Parallel()
-		closed := &PayProfileComponent{
-			Rate: fallback,
-			Bands: []MileageBand{
-				{MinMiles: 100, MaxMiles: 200, Rate: decimal.NewFromFloat(0.50)},
-			},
-		}
-		assert.Equal(
-			t,
-			fallback.String(),
-			closed.ResolveMileageRate(decimal.NewFromInt(50)).String(),
-		)
-		assert.Equal(
-			t,
-			fallback.String(),
-			closed.ResolveMileageRate(decimal.NewFromInt(300)).String(),
-		)
-	})
+	t.Run(
+		"miles outside every closed band fall back to the component rate",
+		func(t *testing.T) {
+			t.Parallel()
+			closed := &PayProfileComponent{
+				Rate: fallback,
+				Bands: []MileageBand{
+					{
+						MinMiles: 100,
+						MaxMiles: 200,
+						Rate:     decimal.NewFromFloat(0.50),
+					},
+				},
+			}
+			assert.Equal(
+				t,
+				fallback.String(),
+				closed.ResolveMileageRate(decimal.NewFromInt(50)).String(),
+			)
+			assert.Equal(
+				t,
+				fallback.String(),
+				closed.ResolveMileageRate(decimal.NewFromInt(300)).String(),
+			)
+		},
+	)
 }

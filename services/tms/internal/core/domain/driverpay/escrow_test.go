@@ -244,7 +244,10 @@ func TestEscrowAccount_FundedPercent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			account := EscrowAccount{TargetAmountMinor: tt.target, BalanceMinor: tt.balance}
+			account := EscrowAccount{
+				TargetAmountMinor: tt.target,
+				BalanceMinor:      tt.balance,
+			}
 			assert.Equal(t, tt.want, account.FundedPercent().String())
 		})
 	}

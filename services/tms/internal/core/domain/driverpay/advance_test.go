@@ -152,7 +152,11 @@ func TestPayAdvance_SyncStatus(t *testing.T) {
 		writtenOff int64
 		want       AdvanceStatus
 	}{
-		{name: "untouched advance is outstanding", amount: 50_000, want: AdvanceStatusOutstanding},
+		{
+			name:   "untouched advance is outstanding",
+			amount: 50_000,
+			want:   AdvanceStatusOutstanding,
+		},
 		{
 			name:      "partial recovery",
 			amount:    50_000,
