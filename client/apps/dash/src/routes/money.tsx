@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { ExpensesSection } from "../_components/expenses-section";
 import { useDashFeatures } from "../_components/use-dash-features";
 import { DisputeStatusBadge, disputeCategoryLabels } from "../_components/portal-badges";
+import { canWithdrawDispute, escrowProgressPercent } from "../lib/settlement";
 
 export function DashMoneyPage() {
   const features = useDashFeatures();
@@ -61,9 +62,9 @@ export function DashMoneyPage() {
             {escrow.data.account.targetAmountMinor > 0 ? (
               <Progress
                 className="mt-3"
-                value={Math.min(
-                  100,
-                  (escrow.data.account.balanceMinor / escrow.data.account.targetAmountMinor) * 100,
+                value={escrowProgressPercent(
+                  escrow.data.account.balanceMinor,
+                  escrow.data.account.targetAmountMinor,
                 )}
               />
             ) : null}
@@ -159,7 +160,7 @@ type DisputeItemProps = {
 function DisputeItem({ dispute }: DisputeItemProps) {
   const queryClient = useQueryClient();
   const [pending, setPending] = useState(false);
-  const canWithdraw = dispute.status === "Open" || dispute.status === "InReview";
+  const canWithdraw = canWithdrawDispute(dispute.status);
 
   const handleWithdraw = async () => {
     setPending(true);
