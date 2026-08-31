@@ -111,7 +111,7 @@ func (r *Reader) Start(ctx context.Context, startLSN string, handler ports.Trans
 			continue
 		}
 
-		if err := r.setupReplication(ctx, startLSN); err != nil {
+		if err := r.setupReplication(ctx, r.resumeLSN(startLSN)); err != nil {
 			r.logger.Error("replication setup failed", zap.Error(err))
 			r.stopSlotMonitor()
 			r.closeConnection(ctx)
@@ -217,6 +217,7 @@ func (r *Reader) setupReplication(ctx context.Context, startLSN string) error {
 		return err
 	}
 
+	r.decoder.Reset()
 	r.clientLSN.Store(uint64(effectiveLSN))
 	r.startSlotMonitor(ctx)
 	r.logger.Info("replication started", zap.String("lsn", effectiveLSN.String()))
@@ -575,7 +576,7 @@ func (r *Reader) startReplicationWithRetry(ctx context.Context, startLSN pglogre
 		"proto_version '2'",
 		fmt.Sprintf("publication_names '%s'", r.config.PublicationName),
 		"messages 'true'",
-		"streaming 'true'",
+		"streaming 'false'",
 	}
 
 	deadline := time.Now().Add(r.config.SlotRetryTimeout)
@@ -687,6 +688,14 @@ func (r *Reader) streamLoop(ctx context.Context, handler ports.TransactionHandle
 			eventsProcessed += int64(len(result.Transaction.Records))
 		}
 	}
+}
+
+func (r *Reader) resumeLSN(startLSN string) string {
+	if current := r.clientLSN.Load(); current != 0 {
+		return pglogrepl.LSN(current).String()
+	}
+
+	return startLSN
 }
 
 func (r *Reader) AdvanceLSN(lsn string) error {

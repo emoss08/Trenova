@@ -1,6 +1,7 @@
 package wal
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/emoss08/gtc/internal/core/domain"
@@ -12,7 +13,6 @@ import (
 type Decoder struct {
 	relations          map[uint32]*pglogrepl.RelationMessageV2
 	typeMap            *pgtype.Map
-	inStream           bool
 	currentTransaction transactionState
 }
 
@@ -65,8 +65,13 @@ func (d *Decoder) Decode(rawMsg pgproto3.BackendMessage) (*DecodeResult, error) 
 	return &DecodeResult{}, nil
 }
 
+func (d *Decoder) Reset() {
+	d.relations = make(map[uint32]*pglogrepl.RelationMessageV2)
+	d.currentTransaction = transactionState{}
+}
+
 func (d *Decoder) decodeWALData(walData []byte, lsn pglogrepl.LSN) (*domain.TransactionRecords, error) {
-	logicalMsg, err := pglogrepl.ParseV2(walData, d.inStream)
+	logicalMsg, err := pglogrepl.ParseV2(walData, false)
 	if err != nil {
 		return nil, err
 	}
@@ -151,11 +156,14 @@ func (d *Decoder) decodeWALData(walData []byte, lsn pglogrepl.LSN) (*domain.Tran
 			}
 		}
 
-	case *pglogrepl.StreamStartMessageV2:
-		d.inStream = true
-
-	case *pglogrepl.StreamStopMessageV2:
-		d.inStream = false
+	case *pglogrepl.StreamStartMessageV2,
+		*pglogrepl.StreamStopMessageV2,
+		*pglogrepl.StreamCommitMessageV2,
+		*pglogrepl.StreamAbortMessageV2:
+		return nil, fmt.Errorf(
+			"received streamed transaction message %T: in-progress transaction streaming is not supported and must stay disabled in the replication plugin arguments",
+			msg,
+		)
 	}
 
 	return nil, nil

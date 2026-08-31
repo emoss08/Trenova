@@ -196,15 +196,25 @@ func (f *fakeSink) HealthCheck(ctx context.Context) error { return nil }
 func (f *fakeSink) Shutdown(ctx context.Context) error    { return nil }
 
 type fakeDLQ struct {
-	mu      sync.Mutex
-	records []domain.DeadLetterRecord
+	mu       sync.Mutex
+	records  []domain.DeadLetterRecord
+	writeErr error
 }
 
 func (f *fakeDLQ) Write(ctx context.Context, entry domain.DeadLetterRecord) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if f.writeErr != nil {
+		return f.writeErr
+	}
 	f.records = append(f.records, entry)
 	return nil
+}
+
+func (f *fakeDLQ) count() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return len(f.records)
 }
 
 func baseRuntimeParams(
@@ -535,12 +545,197 @@ func TestRuntimeWritesDeadLetterOnExhaustedRetries(t *testing.T) {
 		t.Fatalf("NewRuntime returned error: %v", err)
 	}
 
-	if err := runtime.Start(context.Background()); err == nil {
-		t.Fatalf("expected runtime to fail after exhausted retries")
+	if err := runtime.Start(context.Background()); err != nil {
+		t.Fatalf("expected runtime to continue after dead-lettering, got %v", err)
 	}
 
-	if len(dlq.records) != 1 {
-		t.Fatalf("expected one dead-letter entry, got %d", len(dlq.records))
+	if dlq.count() != 1 {
+		t.Fatalf("expected one dead-letter entry, got %d", dlq.count())
+	}
+}
+
+func TestRuntimeAdvancesCheckpointPastDeadLetteredRecord(t *testing.T) {
+	t.Parallel()
+
+	tailer := &fakeTailReader{
+		transactions: []domain.TransactionRecords{
+			{
+				CommitLSN: "0/20",
+				Records: []domain.SourceRecord{
+					{
+						Operation: domain.OperationUpdate,
+						Schema:    "public",
+						Table:     "shipments",
+						NewData:   map[string]any{"id": "shp_1"},
+					},
+				},
+			},
+		},
+	}
+	snapshotter := &fakeSnapshotReader{currentLSN: "0/10"}
+	checkpoints := &fakeCheckpointStore{bootstrapLSN: "0/10", walLSN: "0/10"}
+	metadataStore := &fakeMetadataStore{metadata: map[string]domain.TableMetadata{
+		"public.shipments": {Schema: "public", Table: "shipments", PrimaryKeys: []string{"id"}},
+	}}
+	failingSink := &fakeSink{kind: domain.DestinationMeilisearch, failures: 10}
+	dlq := &fakeDLQ{}
+
+	params := baseRuntimeParams(tailer, snapshotter, checkpoints, metadataStore, failingSink)
+	params.DeadLetter = dlq
+	params.RetryMax = 2
+	params.Projections = []domain.Projection{
+		{
+			Name:         "shipment-search",
+			SourceSchema: "public",
+			SourceTable:  "shipments",
+			Destination: domain.Destination{
+				Kind:  domain.DestinationMeilisearch,
+				Index: "shipments",
+			},
+		},
+	}
+
+	runtime, err := NewRuntime(params)
+	if err != nil {
+		t.Fatalf("NewRuntime returned error: %v", err)
+	}
+
+	if err := runtime.Start(context.Background()); err != nil {
+		t.Fatalf("expected runtime to continue past poison records, got %v", err)
+	}
+
+	if dlq.count() != 2 {
+		t.Fatalf("expected snapshot and transaction records to be dead-lettered, got %d", dlq.count())
+	}
+	if checkpoints.walLSN != "0/20" {
+		t.Fatalf("expected checkpoint to advance past dead-lettered transaction, got %s", checkpoints.walLSN)
+	}
+	if tailer.CurrentLSN() != "0/20" {
+		t.Fatalf("expected tailer lsn to advance past dead-lettered transaction, got %s", tailer.CurrentLSN())
+	}
+}
+
+func TestRuntimeFailsOnExhaustedRetriesWithoutDeadLetterQueue(t *testing.T) {
+	t.Parallel()
+
+	tailer := &fakeTailReader{}
+	snapshotter := &fakeSnapshotReader{currentLSN: "0/10"}
+	checkpoints := &fakeCheckpointStore{}
+	metadataStore := &fakeMetadataStore{metadata: map[string]domain.TableMetadata{
+		"public.shipments": {Schema: "public", Table: "shipments", PrimaryKeys: []string{"id"}},
+	}}
+	failingSink := &fakeSink{kind: domain.DestinationMeilisearch, failures: 5}
+
+	params := baseRuntimeParams(tailer, snapshotter, checkpoints, metadataStore, failingSink)
+	params.RetryMax = 2
+	params.Projections = []domain.Projection{
+		{
+			Name:         "shipment-search",
+			SourceSchema: "public",
+			SourceTable:  "shipments",
+			Destination: domain.Destination{
+				Kind:  domain.DestinationMeilisearch,
+				Index: "shipments",
+			},
+		},
+	}
+
+	runtime, err := NewRuntime(params)
+	if err != nil {
+		t.Fatalf("NewRuntime returned error: %v", err)
+	}
+
+	if err := runtime.Start(context.Background()); err == nil {
+		t.Fatalf("expected runtime to fail when no dead-letter queue is configured")
+	}
+}
+
+func TestRuntimeFailsWhenDeadLetterWriteFails(t *testing.T) {
+	t.Parallel()
+
+	tailer := &fakeTailReader{}
+	snapshotter := &fakeSnapshotReader{currentLSN: "0/10"}
+	checkpoints := &fakeCheckpointStore{}
+	metadataStore := &fakeMetadataStore{metadata: map[string]domain.TableMetadata{
+		"public.shipments": {Schema: "public", Table: "shipments", PrimaryKeys: []string{"id"}},
+	}}
+	failingSink := &fakeSink{kind: domain.DestinationMeilisearch, failures: 5}
+	dlq := &fakeDLQ{writeErr: errors.New("dlq unavailable")}
+
+	params := baseRuntimeParams(tailer, snapshotter, checkpoints, metadataStore, failingSink)
+	params.DeadLetter = dlq
+	params.RetryMax = 2
+	params.Projections = []domain.Projection{
+		{
+			Name:         "shipment-search",
+			SourceSchema: "public",
+			SourceTable:  "shipments",
+			Destination: domain.Destination{
+				Kind:  domain.DestinationMeilisearch,
+				Index: "shipments",
+			},
+		},
+	}
+
+	runtime, err := NewRuntime(params)
+	if err != nil {
+		t.Fatalf("NewRuntime returned error: %v", err)
+	}
+
+	if err := runtime.Start(context.Background()); err == nil {
+		t.Fatalf("expected runtime to fail when the dead-letter write fails")
+	}
+}
+
+func TestRuntimeReplayDeadLettersSurfacesFailures(t *testing.T) {
+	t.Parallel()
+
+	tailer := &fakeTailReader{}
+	snapshotter := &fakeSnapshotReader{currentLSN: "0/10"}
+	checkpoints := &fakeCheckpointStore{}
+	metadataStore := &fakeMetadataStore{metadata: map[string]domain.TableMetadata{
+		"public.shipments": {Schema: "public", Table: "shipments", PrimaryKeys: []string{"id"}},
+	}}
+	failingSink := &fakeSink{kind: domain.DestinationMeilisearch, failures: 10}
+	dlq := &fakeDLQ{}
+
+	params := baseRuntimeParams(tailer, snapshotter, checkpoints, metadataStore, failingSink)
+	params.DeadLetter = dlq
+	params.RetryMax = 2
+	params.Projections = []domain.Projection{
+		{
+			Name:         "shipment-search",
+			SourceSchema: "public",
+			SourceTable:  "shipments",
+			Destination: domain.Destination{
+				Kind:  domain.DestinationMeilisearch,
+				Index: "shipments",
+			},
+		},
+	}
+
+	runtime, err := NewRuntime(params)
+	if err != nil {
+		t.Fatalf("NewRuntime returned error: %v", err)
+	}
+
+	entries := []domain.DeadLetterRecord{
+		{
+			Projection: "shipment-search",
+			Record: domain.SourceRecord{
+				Operation: domain.OperationUpdate,
+				Schema:    "public",
+				Table:     "shipments",
+				NewData:   map[string]any{"id": "shp_1"},
+			},
+		},
+	}
+
+	if err := runtime.ReplayDeadLetters(context.Background(), entries); err == nil {
+		t.Fatalf("expected replay to surface the sink failure")
+	}
+	if dlq.count() != 0 {
+		t.Fatalf("expected replay failures to not be re-parked in the dlq, got %d entries", dlq.count())
 	}
 }
 

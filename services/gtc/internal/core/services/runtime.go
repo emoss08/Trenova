@@ -348,10 +348,57 @@ func (r *Runtime) handleRecordWithProjections(
 			zap.String("sink", string(projection.Destination.Kind)),
 		)
 
-		if err := r.writeProjection(ctx, projection, record); err != nil {
+		if err := r.writeProjectionOrDeadLetter(ctx, projection, record); err != nil {
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (r *Runtime) writeProjectionOrDeadLetter(
+	ctx context.Context,
+	projection domain.Projection,
+	record domain.SourceRecord,
+) error {
+	writeErr := r.writeProjection(ctx, projection, record)
+	if writeErr == nil {
+		return nil
+	}
+	if ctx.Err() != nil {
+		return writeErr
+	}
+	if r.dlqWriter == nil {
+		return writeErr
+	}
+
+	entry := domain.DeadLetterRecord{
+		TransactionID: record.Metadata.TransactionID,
+		CommitLSN:     record.Metadata.CommitLSN,
+		Projection:    projection.Name,
+		Error:         writeErr.Error(),
+		Attempts:      r.retryMax,
+		Record:        record,
+		CreatedAt:     time.Now().UTC(),
+	}
+	if dlqErr := r.dlqWriter.Write(ctx, entry); dlqErr != nil {
+		return fmt.Errorf(
+			"projection %s failed (%s) and dlq write failed: %w",
+			projection.Name,
+			writeErr.Error(),
+			dlqErr,
+		)
+	}
+
+	metrics.DeadLetteredRecords.WithLabelValues(projection.Name).Inc()
+	r.logger.Error("projection record sent to dlq, continuing",
+		zap.String("projection", projection.Name),
+		zap.String("table", record.FullTableName()),
+		zap.String("operation", record.Operation.String()),
+		zap.String("commit_lsn", record.Metadata.CommitLSN),
+		zap.Uint32("transaction_id", record.Metadata.TransactionID),
+		zap.Error(writeErr),
+	)
 
 	return nil
 }
@@ -374,6 +421,7 @@ func (r *Runtime) writeProjection(ctx context.Context, projection domain.Project
 
 		lastErr = err
 		r.setStatus(sink.Name(), false)
+		metrics.SinkErrors.WithLabelValues(sink.Name(), "write").Inc()
 		r.logger.Warn("projection write failed",
 			zap.String("projection", projection.Name),
 			zap.String("sink", sink.Name()),
@@ -386,35 +434,13 @@ func (r *Runtime) writeProjection(ctx context.Context, projection domain.Project
 		if attempt == r.retryMax {
 			break
 		}
+		metrics.RetryAttempts.WithLabelValues(sink.Name()).Inc()
 
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-time.After(r.retryBackoff):
 		}
-	}
-
-	if r.dlqWriter != nil {
-		entry := domain.DeadLetterRecord{
-			TransactionID: record.Metadata.TransactionID,
-			CommitLSN:     record.Metadata.CommitLSN,
-			Projection:    projection.Name,
-			Error:         lastErr.Error(),
-			Attempts:      r.retryMax,
-			Record:        record,
-			CreatedAt:     time.Now().UTC(),
-		}
-		if err := r.dlqWriter.Write(ctx, entry); err != nil {
-			return fmt.Errorf("projection %s failed and dlq write failed: %w", projection.Name, err)
-		}
-		r.logger.Error("projection sent to dlq",
-			zap.String("projection", projection.Name),
-			zap.String("table", record.FullTableName()),
-			zap.String("operation", record.Operation.String()),
-			zap.String("commit_lsn", record.Metadata.CommitLSN),
-			zap.Uint32("transaction_id", record.Metadata.TransactionID),
-			zap.Error(lastErr),
-		)
 	}
 
 	return fmt.Errorf("projection %s failed after %d attempts: %w", projection.Name, r.retryMax, lastErr)
