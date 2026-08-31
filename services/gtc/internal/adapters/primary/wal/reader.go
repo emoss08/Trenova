@@ -55,7 +55,6 @@ type Reader struct {
 const slotMonitorInterval = time.Minute
 
 type slotState struct {
-	Exists   bool
 	Active   bool
 	LagBytes int64
 }
@@ -294,22 +293,6 @@ func (r *Reader) syncPublicationTables(ctx context.Context) error {
 	return nil
 }
 
-func (r *Reader) publicationTableList() (string, error) {
-	tables := make([]string, 0, len(r.config.PublicationTables))
-	for _, fullName := range r.config.PublicationTables {
-		schema, table, err := splitFullTableName(fullName)
-		if err != nil {
-			return "", err
-		}
-		tables = append(tables, quoteQualifiedIdentifier(schema, table))
-	}
-	if len(tables) == 0 {
-		return "", fmt.Errorf("no publication tables configured")
-	}
-
-	return strings.Join(tables, ", "), nil
-}
-
 func (r *Reader) publicationTableListWithColumns(ctx context.Context) (string, error) {
 	entries := make([]string, 0, len(r.config.PublicationTables))
 	for _, fullName := range r.config.PublicationTables {
@@ -517,7 +500,6 @@ func (r *Reader) loadSlotState(ctx context.Context) (slotState, error) {
 	`
 
 	var state slotState
-	state.Exists = true
 	if err := conn.QueryRow(ctx, query, r.config.SlotName).Scan(&state.Active, &state.LagBytes); err != nil {
 		if err == pgx.ErrNoRows {
 			return slotState{}, fmt.Errorf("replication slot %q does not exist", r.config.SlotName)

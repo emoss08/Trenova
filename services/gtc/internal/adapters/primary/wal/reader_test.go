@@ -6,20 +6,27 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestPublicationTableList(t *testing.T) {
+func TestQuoteQualifiedIdentifier(t *testing.T) {
 	t.Parallel()
 
-	reader := &Reader{config: Config{
-		PublicationTables: []string{"public.shipments", "public.customers"},
-	}}
+	if got := quoteQualifiedIdentifier("public", "shipments"); got != `"public"."shipments"` {
+		t.Fatalf("unexpected qualified identifier: %s", got)
+	}
+}
 
-	value, err := reader.publicationTableList()
+func TestSplitFullTableName(t *testing.T) {
+	t.Parallel()
+
+	schema, table, err := splitFullTableName("public.customers")
 	if err != nil {
-		t.Fatalf("publicationTableList returned error: %v", err)
+		t.Fatalf("splitFullTableName returned error: %v", err)
+	}
+	if schema != "public" || table != "customers" {
+		t.Fatalf("unexpected split: %s %s", schema, table)
 	}
 
-	if value != `"public"."shipments", "public"."customers"` {
-		t.Fatalf("unexpected publication table list: %s", value)
+	if _, _, err = splitFullTableName("customers"); err == nil {
+		t.Fatalf("expected error for unqualified table name")
 	}
 }
 
@@ -95,7 +102,7 @@ func TestObserveSlotStateStartupFailAction(t *testing.T) {
 		logger: zap.NewNop(),
 	}
 
-	err := reader.observeSlotState(slotState{Exists: true, Active: false, LagBytes: 10}, true)
+	err := reader.observeSlotState(slotState{Active: false, LagBytes: 10}, true)
 	if err == nil {
 		t.Fatalf("expected startup failure when slot is inactive")
 	}
@@ -118,7 +125,7 @@ func TestObserveSlotStateStartupWarnAction(t *testing.T) {
 		logger: zap.NewNop(),
 	}
 
-	if err := reader.observeSlotState(slotState{Exists: true, Active: false, LagBytes: 10}, true); err != nil {
+	if err := reader.observeSlotState(slotState{Active: false, LagBytes: 10}, true); err != nil {
 		t.Fatalf("expected warn action to avoid startup failure, got %v", err)
 	}
 
@@ -140,7 +147,7 @@ func TestObserveSlotStateLagThreshold(t *testing.T) {
 		logger: zap.NewNop(),
 	}
 
-	if err := reader.observeSlotState(slotState{Exists: true, Active: true, LagBytes: 101}, false); err != nil {
+	if err := reader.observeSlotState(slotState{Active: true, LagBytes: 101}, false); err != nil {
 		t.Fatalf("expected lag threshold breach to update health without returning error, got %v", err)
 	}
 
