@@ -9,7 +9,7 @@ import {
 } from "@trenova/shared/components/ui/command";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { popoutWindowManager } from "@/hooks/popout-window/popout-window";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import {
   fetchGraphQLSelectOptions,

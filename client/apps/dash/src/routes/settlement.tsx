@@ -16,30 +16,13 @@ import { Link, useParams } from "react-router";
 import { DisputeDrawer } from "../_components/dispute-drawer";
 import { useDashFeatures } from "../_components/use-dash-features";
 import { DisputeStatusBadge } from "../_components/portal-badges";
-
-const categoryOrder = [
-  "Earning",
-  "GuaranteeTopUp",
-  "Reimbursement",
-  "Adjustment",
-  "CarryForward",
-  "Deduction",
-  "EscrowContribution",
-  "AdvanceRecovery",
-] as const;
-
-const categoryLabels: Record<string, string> = {
-  Earning: "Earnings",
-  GuaranteeTopUp: "Guarantee top-up",
-  Reimbursement: "Reimbursements",
-  Adjustment: "Adjustments",
-  CarryForward: "Carry forward",
-  Deduction: "Deductions",
-  EscrowContribution: "Escrow",
-  AdvanceRecovery: "Advance recovery",
-};
-
-const deductionCategories = new Set(["Deduction", "EscrowContribution", "AdvanceRecovery"]);
+import {
+  groupSettlementLines,
+  lineAmountVariant,
+  lineDetail,
+  settlementCategoryLabels,
+  signedLineAmountMinor,
+} from "../lib/settlement";
 
 export function DashSettlementPage() {
   const { settlementId = "" } = useParams();
@@ -62,15 +45,10 @@ export function DashSettlementPage() {
     [disputes.data, settlementId],
   );
 
-  const groupedLines = useMemo(() => {
-    const lines = settlement.data?.lines ?? [];
-    return categoryOrder
-      .map((category) => ({
-        category,
-        lines: lines.filter((line) => line.category === category),
-      }))
-      .filter((group) => group.lines.length > 0);
-  }, [settlement.data]);
+  const groupedLines = useMemo(
+    () => groupSettlementLines(settlement.data?.lines ?? []),
+    [settlement.data],
+  );
 
   const openDispute = (line: PortalSettlementLine | null) => {
     setDisputedLine(line);
@@ -176,31 +154,20 @@ export function DashSettlementPage() {
       {groupedLines.map((group) => (
         <section key={group.category} className="rounded-2xl border border-border bg-card">
           <h2 className="px-4 pt-3 text-xs font-medium text-muted-foreground uppercase">
-            {categoryLabels[group.category] ?? group.category}
+            {settlementCategoryLabels[group.category] ?? group.category}
           </h2>
           <ul className="divide-y divide-border">
             {group.lines.map((line) => (
               <li key={line.id} className="flex items-center gap-2 px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm">{line.description}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {[
-                      line.proNumber || null,
-                      Number(line.quantity) > 0 && Number(line.rate) > 0
-                        ? `${line.quantity} × ${line.rate}`
-                        : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{lineDetail(line)}</p>
                 </div>
                 <span className="text-sm font-medium tabular-nums">
                   <AmountDisplay
-                    value={
-                      deductionCategories.has(line.category) ? -line.amountMinor : line.amountMinor
-                    }
+                    value={signedLineAmountMinor(line)}
                     currency={data.currencyCode}
-                    variant={deductionCategories.has(line.category) ? "negative" : "neutral"}
+                    variant={lineAmountVariant(line.category)}
                   />
                 </span>
                 {features.allowSettlementDisputes ? (

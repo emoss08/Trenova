@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Separator } from "@trenova/shared/components/ui/separator";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import {
   fetchGraphQLSelectOptions,

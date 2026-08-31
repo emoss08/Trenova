@@ -9,7 +9,7 @@ import {
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { navigationConfig } from "@/config/navigation.config";
 import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { cn } from "@trenova/shared/lib/utils";

@@ -7,7 +7,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { hazardousClassChoices, packingGroupChoices, statusChoices } from "@/lib/choices";
 import type { DotHazmatReference } from "@/types/dot-hazmat-reference";
 import type { HazardousClass, HazardousMaterial } from "@/types/hazardous-material";
