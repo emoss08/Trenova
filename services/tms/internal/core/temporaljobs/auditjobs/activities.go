@@ -448,7 +448,13 @@ func (a *Activities) RetryDLQEntriesActivity(
 				"entryID", dlqEntry.ID.String(),
 				"retryCount", dlqEntry.RetryCount,
 			)
-			_ = a.adlq.MarkAsFailed(ctx, dlqEntry.ID, "Max retries exhausted")
+			markErr := a.adlq.MarkAsFailed(ctx, dlqEntry.ID, "Max retries exhausted")
+			if markErr != nil {
+				logger.Error("Failed to mark exhausted DLQ entry as failed",
+					"entryID", dlqEntry.ID.String(),
+					"error", markErr,
+				)
+			}
 			result.ExhaustedCount++
 			continue
 		}
@@ -459,7 +465,13 @@ func (a *Activities) RetryDLQEntriesActivity(
 				"entryID", dlqEntry.ID.String(),
 				"error", convErr,
 			)
-			_ = a.adlq.MarkAsFailed(ctx, dlqEntry.ID, "Invalid entry data: "+convErr.Error())
+			markErr := a.adlq.MarkAsFailed(ctx, dlqEntry.ID, "Invalid entry data: "+convErr.Error())
+			if markErr != nil {
+				logger.Error("Failed to mark invalid DLQ entry as failed",
+					"entryID", dlqEntry.ID.String(),
+					"error", markErr,
+				)
+			}
 			result.FailedCount++
 			result.FailedIDs = append(result.FailedIDs, dlqEntry.ID)
 			continue
@@ -473,7 +485,12 @@ func (a *Activities) RetryDLQEntriesActivity(
 			dlqEntry.RetryCount++
 			dlqEntry.LastError = insertErr.Error()
 			dlqEntry.NextRetryAt = timeutils.NowUnix() + int64(60*(1<<dlqEntry.RetryCount))
-			_ = a.adlq.Update(ctx, dlqEntry)
+			if updateErr := a.adlq.Update(ctx, dlqEntry); updateErr != nil {
+				logger.Error("Failed to persist DLQ entry retry state",
+					"entryID", dlqEntry.ID.String(),
+					"error", updateErr,
+				)
+			}
 			result.FailedCount++
 			result.FailedIDs = append(result.FailedIDs, dlqEntry.ID)
 			if a.metrics != nil {
