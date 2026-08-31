@@ -15,7 +15,7 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
-vi.mock("@/hooks/use-debounce", () => ({
+vi.mock("@trenova/shared/hooks/use-debounce", () => ({
   useDebounce: <T,>(value: T) => value,
 }));
 

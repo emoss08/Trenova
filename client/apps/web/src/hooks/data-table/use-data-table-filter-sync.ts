@@ -4,7 +4,7 @@ import {
   serializeUrlFilterState,
   type UrlFilterState,
 } from "@/lib/data-table";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import type { ColumnDef, FilterItem } from "@trenova/shared/types/data-table";
 import type { RowData } from "@tanstack/react-table";
 import { useCallback, useEffect, useRef, useState } from "react";

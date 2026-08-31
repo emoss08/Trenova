@@ -12,7 +12,7 @@ import { Switch } from "@trenova/shared/components/ui/switch";
 import type { GeneratedFuelRow } from "@/lib/graphql/fuel-surcharge";
 import { queries } from "@/lib/queries";
 import { cn } from "@trenova/shared/lib/utils";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useQuery } from "@tanstack/react-query";
 import { LoaderCircle, TriangleAlert, Wand2 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
