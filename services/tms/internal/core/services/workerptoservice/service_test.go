@@ -60,7 +60,10 @@ func TestCreateRejectsInvalidPTO(t *testing.T) {
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
-			create: func(_ context.Context, entity *worker.WorkerPTO) (*worker.WorkerPTO, error) {
+			create: func(
+				_ context.Context,
+				entity *worker.WorkerPTO,
+			) (*worker.WorkerPTO, error) {
 				repoCalled = true
 				return entity, nil
 			},
@@ -89,7 +92,10 @@ func TestCreatePersistsValidPTO(t *testing.T) {
 	svc := &Service{
 		l: zap.NewNop(),
 		repo: &fakePTORepo{
-			create: func(_ context.Context, entity *worker.WorkerPTO) (*worker.WorkerPTO, error) {
+			create: func(
+				_ context.Context,
+				entity *worker.WorkerPTO,
+			) (*worker.WorkerPTO, error) {
 				entity.ID = pulid.MustNew("wrkpto_")
 				return entity, nil
 			},
