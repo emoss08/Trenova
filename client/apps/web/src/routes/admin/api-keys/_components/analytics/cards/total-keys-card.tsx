@@ -1,6 +1,6 @@
 import { KPICard } from "@/components/kpi/kpi-simple-card";
 import { KeyRound } from "lucide-react";
-import type { ApiKeyAnalyticsData } from "../mock-data";
+import type { ApiKeyAnalyticsData } from "../analytics-data";
 
 type Props = {
   data: ApiKeyAnalyticsData["totalKeys"];

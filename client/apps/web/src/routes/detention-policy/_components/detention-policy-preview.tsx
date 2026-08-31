@@ -1,4 +1,4 @@
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { pricingFingerprint } from "@/lib/detention-policy";
 import { CalculationReceipt } from "@/routes/detention-desk/_components/calculation-receipt";
 import { apiService } from "@/services/api";

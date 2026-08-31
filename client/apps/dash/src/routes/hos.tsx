@@ -1,6 +1,5 @@
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { RingGauge } from "@trenova/shared/components/ui/ring-gauge";
 import type { RingGaugeTone } from "@trenova/shared/components/ui/ring-gauge";
@@ -19,42 +18,9 @@ import { useQuery } from "@tanstack/react-query";
 import { CircleCheckIcon, Clock4Icon, GaugeIcon, TriangleAlertIcon, TruckIcon } from "lucide-react";
 import { m } from "motion/react";
 import { useState } from "react";
+import { dutyStatusInfo, gaugeTone, timeAgo, toDateKey } from "../lib/hos";
 
-const HOUR_MS = 60 * 60 * 1000;
 const DAY_SECONDS = 24 * 60 * 60;
-
-function toDateKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function timeAgo(unixSeconds: number): string {
-  const seconds = Math.max(0, Math.floor(Date.now() / 1000) - unixSeconds);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-function gaugeTone(remainingMs: number, defaultTone: RingGaugeTone): RingGaugeTone {
-  if (remainingMs < HOUR_MS) return "critical";
-  if (remainingMs < 2 * HOUR_MS) return "warning";
-  return defaultTone;
-}
-
-const DUTY_STATUS: Record<string, { label: string; variant: BadgeVariant }> = {
-  driving: { label: "Driving", variant: "info" },
-  onDuty: { label: "On Duty", variant: "warning" },
-  offDuty: { label: "Off Duty", variant: "secondary" },
-  sleeperBed: { label: "Sleeper Berth", variant: "purple" },
-  yardMove: { label: "Yard Move", variant: "teal" },
-  personalConveyance: { label: "Personal Conveyance", variant: "teal" },
-};
 
 type ClockGaugeProps = {
   label: string;
@@ -90,8 +56,7 @@ function ClockGauge({ label, remainingMs, limitMs, defaultTone }: ClockGaugeProp
 }
 
 function ClockHero({ state }: { state: MyHosState }) {
-  const duty = state.dutyStatus ? DUTY_STATUS[state.dutyStatus] : null;
-  const dutyLabel = duty?.label ?? (state.dutyStatus ? toTitleCase(state.dutyStatus) : "Unknown");
+  const duty = dutyStatusInfo(state.dutyStatus);
 
   return (
     <m.section
@@ -128,7 +93,7 @@ function ClockHero({ state }: { state: MyHosState }) {
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
-        <Badge variant={duty?.variant ?? "secondary"}>{dutyLabel}</Badge>
+        <Badge variant={duty.variant}>{duty.label}</Badge>
         {state.currentVehicleId ? (
           <span className="inline-flex max-w-40 items-center gap-1 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground">
             <TruckIcon className="size-3.5 shrink-0" />

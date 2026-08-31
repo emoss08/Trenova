@@ -1,6 +1,6 @@
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { CommunicationProfileFormValues } from "@/routes/edi/_components/edi-schemas";

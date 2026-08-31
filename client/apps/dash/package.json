@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "build": "tsc -b && vite build",
     "preview": "pnpm run build && wrangler dev",
     "lint": "oxlint",

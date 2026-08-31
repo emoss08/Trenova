@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@trenova/shared/components/ui/table";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import {
   convertFilterItemsToFieldFilters,

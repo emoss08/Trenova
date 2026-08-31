@@ -1,4 +1,4 @@
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { canResolveContract, toRatingPreviewPayload } from "@/lib/shipment-rating-payload";
 import { apiService } from "@/services/api";
 import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
