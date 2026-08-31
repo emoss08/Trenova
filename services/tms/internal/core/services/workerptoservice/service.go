@@ -91,7 +91,11 @@ func (s *Service) Create(
 		zap.String("ptoID", entity.GetResourceID()),
 	)
 
-	// TODO: Validate PTO data
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
 
 	createdEntity, err := s.repo.Create(ctx, entity)
 	if err != nil {
