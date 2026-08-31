@@ -206,6 +206,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		fx.As(new(services.AccessAuthorizer)),
 	),
 	controlplane.NewHeartbeatReporter,
+	controlplane.NewTenantSyncer,
 	tenantprovisioningservice.New,
 	SelectEntitlementProvider,
 	SelectBillingProvider,
@@ -467,4 +468,5 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		fx.ParamTags(``, `group:"shipment_mutation_observers"`),
 	),
 	func(*controlplane.HeartbeatReporter) {},
+	func(*controlplane.TenantSyncer) {},
 ))

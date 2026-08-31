@@ -1165,12 +1165,13 @@ func (c *PlatformConfig) IsDevelopmentDeployment() bool {
 }
 
 type PlatformControlPlaneConfig struct {
-	Enabled           bool          `mapstructure:"enabled"`
-	Endpoint          string        `mapstructure:"endpoint"          validate:"omitempty,url,no_trailing_slash"`
-	APIKey            string        `mapstructure:"apiKey"`
-	Timeout           time.Duration `mapstructure:"timeout"`
-	HeartbeatInterval time.Duration `mapstructure:"heartbeatInterval"`
-	FailOpenOnError   bool          `mapstructure:"failOpenOnError"`
+	Enabled            bool          `mapstructure:"enabled"`
+	Endpoint           string        `mapstructure:"endpoint"           validate:"omitempty,url,no_trailing_slash"`
+	APIKey             string        `mapstructure:"apiKey"`
+	Timeout            time.Duration `mapstructure:"timeout"`
+	HeartbeatInterval  time.Duration `mapstructure:"heartbeatInterval"`
+	TenantSyncInterval time.Duration `mapstructure:"tenantSyncInterval"`
+	FailOpenOnError    bool          `mapstructure:"failOpenOnError"`
 }
 
 func (c *PlatformControlPlaneConfig) GetTimeout() time.Duration {
@@ -1187,6 +1188,14 @@ func (c *PlatformControlPlaneConfig) GetHeartbeatInterval() time.Duration {
 	}
 
 	return c.HeartbeatInterval
+}
+
+func (c *PlatformControlPlaneConfig) GetTenantSyncInterval() time.Duration {
+	if c.TenantSyncInterval <= 0 {
+		return time.Hour
+	}
+
+	return c.TenantSyncInterval
 }
 
 type SystemConfig struct {
