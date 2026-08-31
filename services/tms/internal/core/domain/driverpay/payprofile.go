@@ -239,7 +239,7 @@ func (c *PayProfileComponent) validateBands(multiErr *errortypes.MultiError) {
 			multiErr.Add("bands", errortypes.ErrInvalid, "Band rate cannot be negative")
 			return
 		}
-		if band.MinMiles <= prevMax {
+		if band.MinMiles < prevMax {
 			multiErr.Add(
 				"bands",
 				errortypes.ErrInvalid,
