@@ -3,6 +3,7 @@ module github.com/emoss08/gtc
 go 1.26
 
 require (
+	github.com/alicebob/miniredis/v2 v2.38.0
 	github.com/bytedance/sonic v1.15.2
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-ozzo/ozzo-validation/v4 v4.4.1
@@ -40,6 +41,7 @@ require (
 	github.com/prometheus/procfs v0.21.1 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect

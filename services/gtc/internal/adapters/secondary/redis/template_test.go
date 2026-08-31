@@ -45,6 +45,93 @@ func TestTemplateExecuteUsesNewAndOldData(t *testing.T) {
 	}
 }
 
+func TestWildcardPatternReplacesValuePlaceholders(t *testing.T) {
+	t.Parallel()
+
+	tmpl, err := ParseTemplate(
+		`cache:customers:{{ value "organization_id" .New .Old }}:{{ value "business_unit_id" .New .Old }}:{{ value "id" .New .Old }}`,
+	)
+	if err != nil {
+		t.Fatalf("ParseTemplate returned error: %v", err)
+	}
+
+	pattern, err := tmpl.WildcardPattern(domain.SourceRecord{
+		Operation: domain.OperationTruncate,
+		Schema:    "public",
+		Table:     "customers",
+	}, []string{"id", "organization_id", "business_unit_id"})
+	if err != nil {
+		t.Fatalf("WildcardPattern returned error: %v", err)
+	}
+
+	if pattern != "cache:customers:*:*:*" {
+		t.Fatalf("unexpected wildcard pattern: %s", pattern)
+	}
+}
+
+func TestWildcardPatternReplacesKeyAndFieldPlaceholders(t *testing.T) {
+	t.Parallel()
+
+	tmpl, err := ParseTemplate(
+		`cache:{{ .Schema }}.{{ .Table }}:{{ key .PrimaryKeys .New .Old }}:{{ field "id" .New }}`,
+	)
+	if err != nil {
+		t.Fatalf("ParseTemplate returned error: %v", err)
+	}
+
+	pattern, err := tmpl.WildcardPattern(domain.SourceRecord{
+		Operation: domain.OperationTruncate,
+		Schema:    "public",
+		Table:     "shipments",
+	}, []string{"id"})
+	if err != nil {
+		t.Fatalf("WildcardPattern returned error: %v", err)
+	}
+
+	if pattern != "cache:public.shipments:*:*" {
+		t.Fatalf("unexpected wildcard pattern: %s", pattern)
+	}
+}
+
+func TestWildcardPatternEscapesGlobCharacters(t *testing.T) {
+	t.Parallel()
+
+	tmpl, err := ParseTemplate(`cache:a*b?[x]\z:{{ value "id" .New .Old }}`)
+	if err != nil {
+		t.Fatalf("ParseTemplate returned error: %v", err)
+	}
+
+	pattern, err := tmpl.WildcardPattern(domain.SourceRecord{
+		Operation: domain.OperationTruncate,
+		Schema:    "public",
+		Table:     "example",
+	}, []string{"id"})
+	if err != nil {
+		t.Fatalf("WildcardPattern returned error: %v", err)
+	}
+
+	if pattern != `cache:a\*b\?\[x\]\\z:*` {
+		t.Fatalf("unexpected escaped pattern: %s", pattern)
+	}
+}
+
+func TestWildcardPatternRejectsTemplateWithoutLiteralContent(t *testing.T) {
+	t.Parallel()
+
+	tmpl, err := ParseTemplate(`{{ value "id" .New .Old }}`)
+	if err != nil {
+		t.Fatalf("ParseTemplate returned error: %v", err)
+	}
+
+	if _, err = tmpl.WildcardPattern(domain.SourceRecord{
+		Operation: domain.OperationTruncate,
+		Schema:    "public",
+		Table:     "example",
+	}, []string{"id"}); err == nil {
+		t.Fatalf("expected error for template with no literal content")
+	}
+}
+
 func TestTemplateExecuteUsesPrimaryKeys(t *testing.T) {
 	t.Parallel()
 
