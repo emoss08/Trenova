@@ -448,7 +448,8 @@ func (a *Activities) RetryDLQEntriesActivity(
 				"entryID", dlqEntry.ID.String(),
 				"retryCount", dlqEntry.RetryCount,
 			)
-			if markErr := a.adlq.MarkAsFailed(ctx, dlqEntry.ID, "Max retries exhausted"); markErr != nil {
+			markErr := a.adlq.MarkAsFailed(ctx, dlqEntry.ID, "Max retries exhausted")
+			if markErr != nil {
 				logger.Error("Failed to mark exhausted DLQ entry as failed",
 					"entryID", dlqEntry.ID.String(),
 					"error", markErr,

@@ -10574,7 +10574,6 @@
                         "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_shipment.RatingGuardrail"
                     },
                     "rateQuoteId": {
-                        "description": "The fields below name the contract that priced the shipment, when one\ndid. They point at the quote rather than duplicating it: the quote is\nwhere the full explanation lives, and copying any of it here would let\nthe two drift.",
                         "type": "string"
                     },
                     "ratedAt": {
@@ -10637,7 +10636,6 @@
                         "type": "array"
                     },
                     "autoRated": {
-                        "description": "AutoRated marks a shipment whose rating method, base rate and contract\naccessorials are the ones a rate agreement put there, untouched since.\n\nA contract prices a shipment once. What it produced then lives in the\nshipment's ordinary fields, where anyone can see and edit it, and this\nsays whether anyone has. It is the only durable answer to how often the\ncontracts are actually being used, which is why it is a column rather\nthan something inferred from the quote at read time.",
                         "type": "boolean"
                     },
                     "autoRatedAt": {
@@ -10773,7 +10771,6 @@
                         "type": "string"
                     },
                     "rateLocked": {
-                        "description": "RateLocked suppresses re-rating outright, for a shipment already invoiced\nwhose numbers the customer has seen.",
                         "type": "boolean"
                     },
                     "rateOverrideAmount": {
