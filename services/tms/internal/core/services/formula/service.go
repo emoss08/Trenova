@@ -2,12 +2,14 @@ package formula
 
 import (
 	"context"
+	goErrors "errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
+	formulaerrors "github.com/emoss08/trenova/internal/core/services/formula/errors"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -196,6 +198,17 @@ func (s *Service) Rate(
 		Lookup:    lookup,
 	})
 	if err != nil {
+		// A record missing a field the formula never guarded is an authoring
+		// problem with a clear fix, and the caller should see it as one rather
+		// than as an internal failure.
+		var missing *formulaerrors.MissingFieldError
+		if goErrors.As(err, &missing) {
+			return nil, errortypes.NewValidationError(
+				"expression",
+				errortypes.ErrInvalid,
+				missing.Error(),
+			)
+		}
 		return nil, err
 	}
 
@@ -418,6 +431,18 @@ func (s *Service) ValidateExpressionWithEnv(
 	env map[string]any,
 ) error {
 	return s.engine.ValidateExpressionWithEnv(ctx, expression, env)
+}
+
+// UnguardedNullableFields lists the nullable schema fields an expression uses
+// without a guard, so an author hears about it while typing rather than from
+// the first shipment that fails to rate.
+func (s *Service) UnguardedNullableFields(
+	ctx context.Context,
+	expression string,
+	schemaID string,
+	variables map[string]any,
+) ([]engine.NullableFieldWarning, error) {
+	return s.engine.UnguardedNullableFields(ctx, expression, schemaID, variables)
 }
 
 func (s *Service) ValidateExpressionDetailed(

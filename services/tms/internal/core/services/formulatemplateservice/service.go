@@ -854,6 +854,18 @@ const (
 	previewEvaluationTimeout = 2 * time.Second
 )
 
+// ExpressionWarning is advice the preview carries alongside a valid result:
+// the expression works on the sample, and would fail on a real record shaped
+// a particular way. Scope says which expression, in the same field-path form
+// validation errors use, so the Studio can apply the fix in place.
+type ExpressionWarning struct {
+	Scope      string `json:"scope"`
+	Field      string `json:"field"`
+	Type       string `json:"type,omitempty"`
+	Message    string `json:"message"`
+	Suggestion string `json:"suggestion"`
+}
+
 type TestExpressionResponse struct {
 	Valid             bool                                   `json:"valid"`
 	Result            any                                    `json:"result,omitempty"`
@@ -863,6 +875,7 @@ type TestExpressionResponse struct {
 	ResolvedVariables map[string]any                         `json:"resolvedVariables,omitempty"`
 	Guardrail         *formulatemplatetypes.GuardrailResult  `json:"guardrail,omitempty"`
 	Rounding          *formulatemplatetypes.RoundingResult   `json:"rounding,omitempty"`
+	Warnings          []ExpressionWarning                    `json:"warnings,omitempty"`
 }
 
 func (s *Service) DescribeSchema(
@@ -886,20 +899,80 @@ func (s *Service) TestExpression(
 		}
 	}
 
+	var resp *TestExpressionResponse
 	if req.ShipmentID != nil {
-		return s.testExpressionAgainstShipment(ctx, req)
-	}
-
-	lookup, err := s.lookupForTest(ctx, req)
-	if err != nil {
-		return &TestExpressionResponse{
-			Valid:   false,
-			Error:   err.Error(),
-			Message: "Failed to load rate tables",
+		resp = s.testExpressionAgainstShipment(ctx, req)
+	} else {
+		lookup, lookupErr := s.lookupForTest(ctx, req)
+		if lookupErr != nil {
+			return &TestExpressionResponse{
+				Valid:   false,
+				Error:   lookupErr.Error(),
+				Message: "Failed to load rate tables",
+			}
 		}
+		resp = s.testExpressionWithEnv(ctx, req, lookup)
 	}
 
-	return s.testExpressionWithEnv(ctx, req, lookup)
+	if resp.Valid {
+		resp.Warnings = s.nullableFieldWarnings(ctx, req)
+	}
+
+	return resp
+}
+
+// nullableFieldWarnings runs the unguarded-field check over the expression and
+// every breakdown line. A check that cannot run (a schema the engine does not
+// know, an expression that will not parse) contributes nothing: the result
+// already carries the error that matters.
+func (s *Service) nullableFieldWarnings(
+	ctx context.Context,
+	req *TestExpressionRequest,
+) []ExpressionWarning {
+	warnings := s.warningsForScope(ctx, "expression", req.Expression, req)
+
+	for i, def := range req.Breakdowns {
+		if def == nil {
+			continue
+		}
+		scope := fmt.Sprintf("breakdownDefinitions[%d].expression", i)
+		warnings = append(warnings, s.warningsForScope(ctx, scope, def.Expression, req)...)
+	}
+
+	return warnings
+}
+
+func (s *Service) warningsForScope(
+	ctx context.Context,
+	scope, expression string,
+	req *TestExpressionRequest,
+) []ExpressionWarning {
+	found, err := s.formulaService.UnguardedNullableFields(
+		ctx,
+		expression,
+		req.SchemaID,
+		req.Variables,
+	)
+	if err != nil || len(found) == 0 {
+		return nil
+	}
+
+	warnings := make([]ExpressionWarning, 0, len(found))
+	for _, item := range found {
+		warnings = append(warnings, ExpressionWarning{
+			Scope: scope,
+			Field: item.Field,
+			Type:  item.Type,
+			Message: fmt.Sprintf(
+				"%s can be empty on a shipment, and this expression would then fail to rate "+
+					"instead of pricing it.",
+				item.Field,
+			),
+			Suggestion: item.Suggestion,
+		})
+	}
+
+	return warnings
 }
 
 // lookupForTest loads the tenant's rate tables only when the expression or a
@@ -1124,6 +1197,7 @@ func (s *Service) validateExpression(
 			zap.String("warning", outcome.Warning),
 		)
 	}
+	s.logUnguardedNullableFields(ctx, entity, variables)
 
 	multiErr := errortypes.NewMultiError()
 	for i, def := range entity.BreakdownDefinitions {
@@ -1267,4 +1341,35 @@ func (s *Service) resolveTemplateSnapshot(
 	}
 
 	return snapshotFromTemplate(template), template.CurrentVersionNumber
+}
+
+// logUnguardedNullableFields records, at save time, the nullable fields a
+// template relies on without a guard. Saving is still allowed: the Studio has
+// already shown the author the same warning with a one-click fix, and a draft
+// is where an unfinished formula belongs.
+func (s *Service) logUnguardedNullableFields(
+	ctx context.Context,
+	entity *formulatemplate.FormulaTemplate,
+	variables map[string]any,
+) {
+	found, err := s.formulaService.UnguardedNullableFields(
+		ctx,
+		entity.Expression,
+		entity.SchemaID,
+		variables,
+	)
+	if err != nil || len(found) == 0 {
+		return
+	}
+
+	fields := make([]string, 0, len(found))
+	for _, item := range found {
+		fields = append(fields, item.Field)
+	}
+
+	s.l.Info("formula template uses nullable fields without a guard",
+		zap.String("templateID", entity.ID.String()),
+		zap.String("name", entity.Name),
+		zap.Strings("fields", fields),
+	)
 }

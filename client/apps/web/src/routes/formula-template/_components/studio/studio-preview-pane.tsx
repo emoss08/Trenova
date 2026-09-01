@@ -7,7 +7,10 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { guardNullableField, scopeToFormPath } from "@/components/formula-editor/guard-nullable";
 import type {
+  ExpressionWarning,
+  FormulaTemplateFormValues,
   GuardrailResult,
   RoundingResult,
   TestBreakdownItem,
@@ -26,6 +29,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
+import { useFormContext, type Path } from "react-hook-form";
 import type { LivePreviewState } from "./use-live-preview";
 
 function GuardrailNotice({ guardrail }: { guardrail: GuardrailResult }) {
@@ -76,6 +80,52 @@ function RoundingNotice({ rounding }: { rounding: RoundingResult }) {
     <div className="text-muted-foreground text-2xs mt-1">
       Rounded {modeLabel} to {places} from{" "}
       <span className="font-mono tabular-nums">{rounding.unroundedAmount.toFixed(6)}</span>.
+    </div>
+  );
+}
+
+function NullableWarnings({ warnings }: { warnings: ExpressionWarning[] }) {
+  const { getValues, setValue } = useFormContext<FormulaTemplateFormValues>();
+
+  const applyFix = (warning: ExpressionWarning) => {
+    const path = scopeToFormPath(warning.scope) as Path<FormulaTemplateFormValues>;
+    const current = getValues(path);
+    if (typeof current !== "string") return;
+    const guarded = guardNullableField(current, warning.field, warning.suggestion);
+    if (guarded === current) return;
+    setValue(path, guarded as never, { shouldDirty: true, shouldValidate: true });
+  };
+
+  return (
+    <div className="mt-4 space-y-2">
+      <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+        <AlertTriangleIcon className="size-3" />
+        Would fail on some shipments
+      </div>
+      <div className="space-y-1.5">
+        {warnings.map((warning) => (
+          <div
+            key={`${warning.scope}:${warning.field}`}
+            className="flex items-start justify-between gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200"
+          >
+            <div className="min-w-0 space-y-0.5">
+              <p>{warning.message}</p>
+              {warning.scope !== "expression" && (
+                <p className="text-2xs opacity-80">In {warning.scope}</p>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              className="shrink-0 font-mono"
+              onClick={() => applyFix(warning)}
+            >
+              Use {warning.suggestion}
+            </Button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -287,6 +337,10 @@ export function StudioPreviewPane({ preview }: { preview: LivePreviewState }) {
 
                 {isValid && result.breakdown && result.breakdown.length > 0 && (
                   <BreakdownResultTable items={result.breakdown} />
+                )}
+
+                {isValid && result.warnings && result.warnings.length > 0 && (
+                  <NullableWarnings warnings={result.warnings} />
                 )}
 
                 {result.resolvedVariables && Object.keys(result.resolvedVariables).length > 0 && (

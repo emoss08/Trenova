@@ -188,7 +188,7 @@ func registerShipmentSchema(registry *schema.Registry) {
 					"code": { "type": "string" }
 				}
 			},
-			"weight": { "type": "number" },
+			"weight": { "type": ["number", "null"] },
 			"pieces": { "type": "integer" },
 			"ratingUnit": { "type": "integer" },
 			"baseRate": { "type": "number" },

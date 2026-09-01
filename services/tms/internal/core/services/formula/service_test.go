@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -1063,4 +1064,27 @@ func TestService_Rate_AppliesTemplateRoundingPolicy(t *testing.T) {
 	require.NotNil(t, resp.Rounding)
 	assert.True(t, resp.Rounding.Applied)
 	assert.Equal(t, "HalfEven", resp.Rounding.Mode)
+}
+
+func TestService_Rate_MissingNullableFieldIsAValidationError(t *testing.T) {
+	t.Parallel()
+
+	svc := setupService(t)
+	template := &formulatemplate.FormulaTemplate{
+		ID:         pulid.MustNew("ft_"),
+		Name:       "per pound",
+		Expression: "weight * 0.5",
+		SchemaID:   "shipment",
+		Status:     formulatemplate.StatusActive,
+	}
+
+	_, err := svc.Rate(t.Context(), &formula.RateRequest{
+		Template: template,
+		Entity:   &shipment.Shipment{},
+	})
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsError(err), "must surface as a validation problem, not a 500")
+	assert.Contains(t, err.Error(), "weight")
+	assert.Contains(t, err.Error(), "coalesce(weight, 0)")
 }

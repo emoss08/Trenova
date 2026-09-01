@@ -258,6 +258,9 @@ func (e *Engine) evaluateProgram(
 
 	compiled, err := e.Compile(expression, env)
 	if err != nil {
+		if missing := missingFieldError(expression, env, resolveFailures); missing != nil {
+			return nil, missing
+		}
 		return nil, withResolveFailures(err, resolveFailures)
 	}
 

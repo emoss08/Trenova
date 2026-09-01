@@ -294,3 +294,41 @@ func TestRunTestCases_ScenarioUsesCandidateRoundingPolicy(t *testing.T) {
 	assert.True(t, result.Results[0].Passed, result.Results[0].Error)
 	assert.True(t, decimal.NewFromInt(34).Equal(result.Results[0].ActualAmount))
 }
+
+func TestTestExpression_WarnsAboutUnguardedNullableFields(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: "weight * 0.5",
+		SchemaID:   "shipment",
+		Variables:  map[string]any{"weight": 1000.0},
+		TenantInfo: newTenantInfo(),
+		Breakdowns: []*formulatypes.BreakdownDefinition{
+			{Name: "perPound", Label: "Per pound", Expression: "weight * 0.5"},
+			{Name: "safe", Label: "Guarded", Expression: "coalesce(weight, 0) * 0.5"},
+		},
+	})
+
+	require.True(t, result.Valid, result.Error)
+	require.Len(t, result.Warnings, 2)
+	assert.Equal(t, "expression", result.Warnings[0].Scope)
+	assert.Equal(t, "weight", result.Warnings[0].Field)
+	assert.Equal(t, "coalesce(weight, 0)", result.Warnings[0].Suggestion)
+	assert.Equal(t, "breakdownDefinitions[0].expression", result.Warnings[1].Scope)
+}
+
+func TestTestExpression_GuardedNullableFieldHasNoWarning(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: "coalesce(weight, 0) * 0.5 + totalDistance",
+		SchemaID:   "shipment",
+		Variables:  map[string]any{"totalDistance": 10.0},
+		TenantInfo: newTenantInfo(),
+	})
+
+	require.True(t, result.Valid, result.Error)
+	assert.Empty(t, result.Warnings)
+}

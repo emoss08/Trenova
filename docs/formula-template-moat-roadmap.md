@@ -122,14 +122,18 @@ crash.
 Validation substitutes `0` for nullable numbers, so `weight * rate` validates and
 then fails on a shipment with no weight, blocking the shipment save.
 
-- [ ] Save-time validation also runs against a nil-shaped env and surfaces the
-      outcome as a warning to the author (`formula/engine/environment.go`,
-      `formulatemplateservice/service.go` `validateExpression`)
-- [ ] `TestExpressionResponse.Warnings` rendered in the preview pane as an amber
-      notice with the offending variable and a one-click `coalesce(...)` fix
-- [ ] Rating a shipment with a nil-arithmetic failure produces a 422 with the
-      variable name, never a 500
-- [ ] Test: nullable `weight` with no value yields the warning, not a pass
+- [x] `engine.UnguardedNullableFields` re-compiles the expression with each
+      referenced nullable field nil-shaped; the preview returns the result as
+      `warnings[]` (scope, field, suggestion) and save-time validation logs it
+      (`formula/engine/nullable.go`, `formulatemplateservice/service.go`)
+- [x] `TestExpressionResponse.warnings` rendered in the preview pane as an amber
+      notice per field with a one-click "Use coalesce(field, 0)" fix that rewrites
+      the expression or breakdown line in place (`guard-nullable.ts`)
+- [x] Rating a shipment whose nullable field is empty yields
+      `MissingFieldError` (names the field and the guard) which `Rate` maps to a
+      validation error, so it surfaces as a 4xx naming the field instead of a 500
+- [x] Tests: unguarded `weight` warns (engine, service, breakdown scope); guarded
+      does not; nil `weight` on a real record is a validation error naming it
 
 ### 1.7 Error classification and small correctness fixes
 

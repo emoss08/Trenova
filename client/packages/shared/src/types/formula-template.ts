@@ -273,6 +273,15 @@ export const testBreakdownItemSchema = z.object({
 });
 export type TestBreakdownItem = z.output<typeof testBreakdownItemSchema>;
 
+export const expressionWarningSchema = z.object({
+  scope: z.string(),
+  field: z.string(),
+  type: z.string().optional(),
+  message: z.string(),
+  suggestion: z.string(),
+});
+export type ExpressionWarning = z.output<typeof expressionWarningSchema>;
+
 export const testExpressionResponseSchema = z.object({
   valid: z.boolean(),
   result: z.any().optional(),
@@ -282,6 +291,7 @@ export const testExpressionResponseSchema = z.object({
   breakdown: z.array(testBreakdownItemSchema).nullish(),
   guardrail: guardrailResultSchema.nullish(),
   rounding: roundingResultSchema.nullish(),
+  warnings: z.array(expressionWarningSchema).nullish(),
 });
 export type TestExpressionResponse = z.infer<typeof testExpressionResponseSchema>;
 
