@@ -11312,6 +11312,19 @@ components:
                 totalDeltaPct:
                     type: number
             type: object
+        github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ExpressionWarning:
+            properties:
+                field:
+                    type: string
+                message:
+                    type: string
+                scope:
+                    type: string
+                suggestion:
+                    type: string
+                type:
+                    type: string
+            type: object
         github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatePayload:
             properties:
                 breakdownDefinitions:
@@ -11479,6 +11492,10 @@ components:
                     $ref: '#/components/schemas/github_com_emoss08_trenova_pkg_formulatemplatetypes.RoundingResult'
                 valid:
                     type: boolean
+                warnings:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ExpressionWarning'
+                    type: array
             type: object
         github_com_emoss08_trenova_internal_core_services_formulatemplateservice.UpdateTestCaseRequest:
             properties:
@@ -22843,7 +22860,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/gin.H'
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
                     description: Bad Request
                 "401":
                     content:

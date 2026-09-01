@@ -110,8 +110,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 
 	selectOptions := api.Group("/select-options")
-	selectOptions.GET("/", h.selectOptions)
-	selectOptions.GET("/:templateID", h.getOption)
+	selectOptions.GET("/", requireRead, h.selectOptions)
+	selectOptions.GET("/:templateID", requireRead, h.getOption)
 }
 
 // @Summary List formula templates
@@ -1320,7 +1320,7 @@ func (h *Handler) fork(c *gin.Context) {
 // @Param from query int true "From version"
 // @Param to query int true "To version"
 // @Success 200 {object} gin.H
-// @Failure 400 {object} gin.H
+// @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
@@ -1338,20 +1338,20 @@ func (h *Handler) compareVersions(c *gin.Context) {
 	toVersion := helpers.QueryInt64(c, "to", 0)
 
 	if fromVersion <= 0 || toVersion <= 0 {
-		c.JSON(
-			http.StatusBadRequest,
-			gin.H{
-				"error": "Both 'from' and 'to' version parameters are required and must be positive",
-			},
-		)
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"from",
+			errortypes.ErrRequired,
+			"Both 'from' and 'to' version parameters are required and must be positive",
+		))
 		return
 	}
 
 	if fromVersion == toVersion {
-		c.JSON(
-			http.StatusBadRequest,
-			gin.H{"error": "The 'from' and 'to' versions must be different"},
-		)
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"to",
+			errortypes.ErrInvalid,
+			"The 'from' and 'to' versions must be different",
+		))
 		return
 	}
 
@@ -1711,6 +1711,12 @@ func (h *Handler) approvalImpact(c *gin.Context) {
 		return
 	}
 
+	// Both sides of the comparison are real shipments with real charges, so
+	// reading them needs the same permission the shipment itself does.
+	if !h.allowShipmentRead(c, authCtx) {
+		return
+	}
+
 	response, err := h.service.ApprovalImpact(
 		c.Request.Context(),
 		&formulatemplateservice.ApprovalImpactRequest{
@@ -1757,6 +1763,12 @@ func (h *Handler) backtest(c *gin.Context) {
 	var req backtestRequest
 	if err = c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
+		return
+	}
+
+	// Both sides of the comparison are real shipments with real charges, so
+	// reading them needs the same permission the shipment itself does.
+	if !h.allowShipmentRead(c, authCtx) {
 		return
 	}
 

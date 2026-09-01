@@ -2,8 +2,6 @@ package formulatemplateservice
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -335,7 +333,7 @@ func (s *Service) lookupVersion(
 		VersionNumber: versionNumber,
 	})
 	if err != nil {
-		if dberror.IsNotFoundError(err) || errors.Is(err, sql.ErrNoRows) {
+		if errortypes.IsNotFoundError(err) || dberror.IsNotFoundError(err) {
 			return nil, nil //nolint:nilnil // nil version means the stamp points at nothing
 		}
 		return nil, err

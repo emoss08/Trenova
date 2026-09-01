@@ -124,7 +124,7 @@ func TestBulkDuplicateEntityCarriesFullContentAsDraft(t *testing.T) {
 		CurrentVersionNumber: 4,
 	}
 
-	duplicate := buildDuplicateEntity(source)
+	duplicate := buildDuplicateEntity(source, source.Name+" (Copy)")
 
 	assert.Equal(t, "Per Mile (Copy)", duplicate.Name)
 	assert.Equal(t, source.Description, duplicate.Description)
@@ -140,4 +140,16 @@ func TestBulkDuplicateEntityCarriesFullContentAsDraft(t *testing.T) {
 	assert.Equal(t, source.CurrentVersionNumber, *duplicate.SourceVersionNumber)
 	assert.Nil(t, duplicate.SubmittedByID)
 	assert.Nil(t, duplicate.ApprovedByID)
+}
+
+func TestNextAvailableName(t *testing.T) {
+	t.Parallel()
+
+	taken := map[string]struct{}{
+		"Per Mile (Copy)":   {},
+		"Per Mile (Copy) 2": {},
+	}
+
+	assert.Equal(t, "Flat (Copy)", nextAvailableName(taken, "Flat (Copy)"))
+	assert.Equal(t, "Per Mile (Copy) 3", nextAvailableName(taken, "Per Mile (Copy)"))
 }

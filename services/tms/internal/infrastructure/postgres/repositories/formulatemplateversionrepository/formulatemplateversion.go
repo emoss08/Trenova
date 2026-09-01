@@ -78,6 +78,9 @@ func (r *repository) GetByTemplateAndVersion(
 		}).
 		Scan(ctx)
 	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, dberror.HandleNotFoundError(err, "FormulaTemplateVersion")
+		}
 		log.Error("failed to get formula template version", zap.Error(err))
 		return nil, err
 	}
@@ -256,6 +259,9 @@ func (r *repository) UpdateTags(
 		Returning("*").
 		Scan(ctx)
 	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, dberror.HandleNotFoundError(err, "FormulaTemplateVersion")
+		}
 		log.Error("failed to update version tags", zap.Error(err))
 		return nil, err
 	}
@@ -325,6 +331,9 @@ func (r *repository) UpdateEffectiveDate(
 		Returning("*").
 		Scan(ctx)
 	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, dberror.HandleNotFoundError(err, "FormulaTemplateVersion")
+		}
 		log.Error("failed to update version effective date", zap.Error(err))
 		return nil, err
 	}

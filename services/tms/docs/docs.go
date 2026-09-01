@@ -12132,7 +12132,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/gin.H"
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                         }
                     },
                     "401": {
@@ -47844,6 +47844,26 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ExpressionWarning": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "scope": {
+                    "type": "string"
+                },
+                "suggestion": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatePayload": {
             "type": "object",
             "properties": {
@@ -48096,6 +48116,12 @@ const docTemplate = `{
                 },
                 "valid": {
                     "type": "boolean"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ExpressionWarning"
+                    }
                 }
             }
         },

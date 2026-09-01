@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -836,12 +837,15 @@ func TestCreateVersion_Success(t *testing.T) {
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
 	deps.versionRepo.On("Create", mock.Anything, mock.Anything).Return(createdVersion, nil)
 
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
 	result, err := deps.svc.CreateVersion(ctx, req)
 
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), result.VersionNumber)
 	deps.repo.AssertExpectations(t)
 	deps.versionRepo.AssertExpectations(t)
+	deps.auditSvc.AssertExpectations(t)
 }
 
 func TestCreateVersion_TemplateNotFound(t *testing.T) {
@@ -2482,4 +2486,109 @@ func TestTestExpression_BreakdownsWithoutShipment(t *testing.T) {
 	assert.True(t, decimal.NewFromInt(1).Equal(result.Breakdown[0].Amount))
 	assert.Empty(t, result.Breakdown[0].Error)
 	assert.NotEmpty(t, result.Breakdown[1].Error)
+}
+
+func TestFork_MissingRequestedVersionFails(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	source := newTestTemplate()
+	requested := int64(9)
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(source, nil)
+	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.MatchedBy(
+		func(req *repositories.GetVersionRequest) bool { return req.VersionNumber == requested },
+	)).Return(nil, errortypes.NewNotFoundError("FormulaTemplateVersion not found"))
+
+	result, err := deps.svc.Fork(t.Context(), &repositories.ForkTemplateRequest{
+		TenantInfo:       newTenantInfo(),
+		SourceTemplateID: source.ID,
+		SourceVersion:    &requested,
+		NewName:          "Forked",
+	})
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.True(t, errortypes.IsNotFoundError(err))
+	deps.repo.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
+func TestRollback_RejectsSnapshotThatNoLongerValidates(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	current := newTestTemplate()
+	broken := &formulatemplate.FormulaTemplateVersion{
+		TemplateID:    current.ID,
+		VersionNumber: 1,
+		Name:          current.Name,
+		Type:          current.Type,
+		Expression:    "totalDistance +* 2",
+		SchemaID:      current.SchemaID,
+		Status:        formulatemplate.StatusActive,
+	}
+
+	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).Return(broken, nil)
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(current, nil)
+
+	result, err := deps.svc.Rollback(t.Context(), &repositories.RollbackRequest{
+		TenantInfo:    newTenantInfo(),
+		TemplateID:    current.ID,
+		TargetVersion: 1,
+	})
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	deps.repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
+func TestDuplicate_RejectsOversizedBatch(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	ids := make([]pulid.ID, 0, maxBulkTemplateIDs+1)
+	for range maxBulkTemplateIDs + 1 {
+		ids = append(ids, pulid.MustNew("ft_"))
+	}
+
+	result, err := deps.svc.Duplicate(
+		t.Context(),
+		&repositories.BulkDuplicateFormulaTemplateRequest{
+			TenantInfo:  newTenantInfo(),
+			TemplateIDs: ids,
+		},
+	)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	deps.repo.AssertNotCalled(t, "GetByIDs", mock.Anything, mock.Anything)
+}
+
+func TestBulkUpdateStatus_RejectsEmptyAndOversizedBatches(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	_, err := deps.svc.BulkUpdateStatus(
+		t.Context(),
+		&repositories.BulkUpdateFormulaTemplateStatusRequest{
+			TenantInfo: newTenantInfo(),
+			Status:     formulatemplate.StatusInactive,
+		},
+	)
+	require.Error(t, err)
+
+	ids := make([]pulid.ID, 0, maxBulkTemplateIDs+1)
+	for range maxBulkTemplateIDs + 1 {
+		ids = append(ids, pulid.MustNew("ft_"))
+	}
+	_, err = deps.svc.BulkUpdateStatus(
+		t.Context(),
+		&repositories.BulkUpdateFormulaTemplateStatusRequest{
+			TenantInfo:  newTenantInfo(),
+			TemplateIDs: ids,
+			Status:      formulatemplate.StatusInactive,
+		},
+	)
+	require.Error(t, err)
+	deps.repo.AssertNotCalled(t, "GetByIDs", mock.Anything, mock.Anything)
 }

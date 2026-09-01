@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
@@ -191,6 +192,9 @@ func (r *repository) Create(
 
 	_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
 	if err != nil {
+		if dberror.IsUniqueConstraintViolation(err) {
+			return nil, duplicateTemplateName(entity.Name)
+		}
 		log.Error("failed to create formula template", zap.Error(err))
 		return nil, err
 	}
@@ -221,6 +225,9 @@ func (r *repository) Update(
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
+		if dberror.IsUniqueConstraintViolation(err) {
+			return nil, duplicateTemplateName(entity.Name)
+		}
 		log.Error("failed to update formula template", zap.Error(err))
 		return nil, err
 	}
@@ -391,8 +398,16 @@ func (r *repository) BulkDuplicate(
 	}
 
 	newEntities := make([]*formulatemplate.FormulaTemplate, 0, len(entities))
+	taken, err := r.namesLike(ctx, req.TenantInfo, entities)
+	if err != nil {
+		log.Error("failed to read existing template names", zap.Error(err))
+		return nil, err
+	}
+
 	for _, e := range entities {
-		newEntities = append(newEntities, buildDuplicateEntity(e))
+		name := nextAvailableName(taken, e.Name+" (Copy)")
+		taken[name] = struct{}{}
+		newEntities = append(newEntities, buildDuplicateEntity(e, name))
 	}
 
 	results, err := r.db.DBForContext(ctx).
@@ -416,8 +431,63 @@ func (r *repository) BulkDuplicate(
 	return newEntities, nil
 }
 
+// namesLike collects every template name in the tenant that starts with a
+// source's copy name, so the batch can pick names nothing already holds.
+func (r *repository) namesLike(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	sources []*formulatemplate.FormulaTemplate,
+) (map[string]struct{}, error) {
+	taken := make(map[string]struct{}, len(sources))
+	if len(sources) == 0 {
+		return taken, nil
+	}
+
+	ft := buncolgen.FormulaTemplateColumns
+	var names []string
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*formulatemplate.FormulaTemplate)(nil)).
+		Column(ft.Name.String()).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.FormulaTemplateScopeTenant(sq, tenantInfo)
+			return sq.WhereGroup(" AND ", func(orGroup *bun.SelectQuery) *bun.SelectQuery {
+				for _, source := range sources {
+					orGroup = orGroup.WhereOr(ft.Name.Like(), source.Name+" (Copy%")
+				}
+				return orGroup
+			})
+		})
+	if err := query.Scan(ctx, &names); err != nil {
+		return nil, err
+	}
+
+	for _, name := range names {
+		taken[name] = struct{}{}
+	}
+
+	return taken, nil
+}
+
+// nextAvailableName returns base when it is free, otherwise "base 2",
+// "base 3", and so on: a second duplicate of the same template gets its own
+// name rather than colliding with the first.
+func nextAvailableName(taken map[string]struct{}, base string) string {
+	if _, exists := taken[base]; !exists {
+		return base
+	}
+
+	for suffix := 2; ; suffix++ {
+		candidate := fmt.Sprintf("%s %d", base, suffix)
+		if _, exists := taken[candidate]; !exists {
+			return candidate
+		}
+	}
+}
+
 func buildDuplicateEntity(
 	source *formulatemplate.FormulaTemplate,
+	name string,
 ) *formulatemplate.FormulaTemplate {
 	sourceID := source.ID
 	sourceVersion := source.CurrentVersionNumber
@@ -425,7 +495,7 @@ func buildDuplicateEntity(
 	return &formulatemplate.FormulaTemplate{
 		OrganizationID:       source.OrganizationID,
 		BusinessUnitID:       source.BusinessUnitID,
-		Name:                 fmt.Sprintf("%s (Copy)", source.Name),
+		Name:                 name,
 		Description:          source.Description,
 		Type:                 source.Type,
 		Expression:           source.Expression,
@@ -458,7 +528,7 @@ func (r *repository) CountUsages(
 		Count int    `bun:"count"`
 	}
 
-	shipmentUsage := r.db.DB().NewSelect().
+	shipmentUsage := r.db.DBForContext(ctx).NewSelect().
 		ColumnExpr("'shipment' as type").
 		ColumnExpr("COUNT(*) as count").
 		TableExpr("shipments").
@@ -469,7 +539,7 @@ func (r *repository) CountUsages(
 				Where("business_unit_id = ?", req.TenantInfo.BuID)
 		})
 
-	accessorialUsage := r.db.DB().NewSelect().
+	accessorialUsage := r.db.DBForContext(ctx).NewSelect().
 		ColumnExpr("'accessorial_charge' as type").
 		ColumnExpr("COUNT(*) as count").
 		TableExpr("accessorial_charges").
@@ -480,10 +550,34 @@ func (r *repository) CountUsages(
 				Where("business_unit_id = ?", req.TenantInfo.BuID)
 		})
 
+	ruleUsage := r.db.DBForContext(ctx).NewSelect().
+		ColumnExpr("'rate_agreement_rule' as type").
+		ColumnExpr("COUNT(*) as count").
+		TableExpr("rate_agreement_rules").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("formula_template_id = ?", req.TemplateID).
+				Where("organization_id = ?", req.TenantInfo.OrgID).
+				Where("business_unit_id = ?", req.TenantInfo.BuID)
+		})
+
+	agreementAccessorialUsage := r.db.DBForContext(ctx).NewSelect().
+		ColumnExpr("'rate_agreement_accessorial' as type").
+		ColumnExpr("COUNT(*) as count").
+		TableExpr("rate_agreement_accessorials").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("formula_template_id = ?", req.TemplateID).
+				Where("organization_id = ?", req.TenantInfo.OrgID).
+				Where("business_unit_id = ?", req.TenantInfo.BuID)
+		})
+
 	var results []usageResult
-	err := r.db.DB().NewSelect().
+	err := r.db.DBForContext(ctx).NewSelect().
 		TableExpr("(?) AS shipment_usage", shipmentUsage).
 		UnionAll(accessorialUsage).
+		UnionAll(ruleUsage).
+		UnionAll(agreementAccessorialUsage).
 		Scan(ctx, &results)
 	if err != nil {
 		log.Error("failed to count usages", zap.Error(err))
@@ -534,5 +628,13 @@ func (r *repository) SelectOptions(
 				"ft.description",
 			},
 		},
+	)
+}
+
+func duplicateTemplateName(name string) error {
+	return errortypes.NewValidationError(
+		"name",
+		errortypes.ErrDuplicate,
+		fmt.Sprintf("A formula template named %q already exists", name),
 	)
 }

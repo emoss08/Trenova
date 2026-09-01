@@ -67,7 +67,7 @@ func TestEvaluateWithEnv_SlowExpressionIsCancelled(t *testing.T) {
 		},
 	)
 
-	require.ErrorIs(t, err, context.DeadlineExceeded)
+	require.ErrorIs(t, err, context.DeadlineExceeded, "the caller's own deadline is reported as such")
 	assert.Less(t, time.Since(start), 900*time.Millisecond, "evaluation must stop at cancellation")
 
 	assert.Eventually(t, func() bool {
@@ -162,7 +162,8 @@ func TestRun_TimeoutLeavesCallerEnvUntouched(t *testing.T) {
 		Expression: "slow() * weight",
 		Env:        env,
 	})
-	require.ErrorIs(t, err, context.DeadlineExceeded)
+	require.ErrorIs(t, err, engine.ErrEvaluationTimeout, "the engine budget is its own error")
+	assert.NotErrorIs(t, err, context.DeadlineExceeded, "a live caller must not see a request timeout")
 	assert.Less(t, time.Since(start), 350*time.Millisecond, "the override must shorten the leash")
 
 	// The abandoned goroutine is still inside slow() here; the caller's map

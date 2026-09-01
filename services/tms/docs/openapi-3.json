@@ -15996,6 +15996,26 @@
                 },
                 "type": "object"
             },
+            "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ExpressionWarning": {
+                "properties": {
+                    "field": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "scope": {
+                        "type": "string"
+                    },
+                    "suggestion": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ImportTemplatePayload": {
                 "properties": {
                     "breakdownDefinitions": {
@@ -16247,6 +16267,12 @@
                     },
                     "valid": {
                         "type": "boolean"
+                    },
+                    "warnings": {
+                        "items": {
+                            "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ExpressionWarning"
+                        },
+                        "type": "array"
                     }
                 },
                 "type": "object"
@@ -35244,7 +35270,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/gin.H"
+                                    "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                                 }
                             }
                         },

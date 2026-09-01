@@ -2,11 +2,13 @@ package formulatemplatetestcaserepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -42,6 +44,9 @@ func (r *repository) Create(
 
 	_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
 	if err != nil {
+		if dberror.IsUniqueConstraintViolation(err) {
+			return nil, duplicateScenarioName(entity.Name)
+		}
 		log.Error("failed to create formula template test case", zap.Error(err))
 		return nil, err
 	}
@@ -71,6 +76,9 @@ func (r *repository) Update(
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
+		if dberror.IsUniqueConstraintViolation(err) {
+			return nil, duplicateScenarioName(entity.Name)
+		}
 		log.Error("failed to update formula template test case", zap.Error(err))
 		return nil, err
 	}
@@ -163,4 +171,12 @@ func (r *repository) ListByTemplate(
 	}
 
 	return entities, nil
+}
+
+func duplicateScenarioName(name string) error {
+	return errortypes.NewValidationError(
+		"name",
+		errortypes.ErrDuplicate,
+		fmt.Sprintf("A scenario named %q already exists on this template", name),
+	)
 }

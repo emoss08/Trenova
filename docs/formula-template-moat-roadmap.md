@@ -137,27 +137,33 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 ### 1.7 Error classification and small correctness fixes
 
-- [ ] `SchemaError`/`ComputeError`/`TransformError` map to 422 with the expression
-      path (`formula/errors/errors.go`, `internal/api/helpers/classifier.go`)
-- [ ] Version repo wraps `sql.ErrNoRows` (`formulatemplateversionrepository.go`
+- [x] `SchemaError`/`ComputeError`/`TransformError`/`VariableError`/`ResolveError`/
+      `MissingFieldError` classify as validation problems (`classifyFormula` in
+      `internal/api/helpers/classifier.go`); the engine's own deadline is
+      `engine.ErrEvaluationTimeout`, distinct from a caller's context deadline
+- [x] Version repo wraps `sql.ErrNoRows` (`formulatemplateversionrepository.go`
       `GetByTemplateAndVersion`, `UpdateTags`, `UpdateEffectiveDate`); unique
       violations on test-case names map to 409/422
-- [ ] `compareVersions` routes errors through `ErrorHandler`
+- [x] `compareVersions` routes errors through `ErrorHandler`
       (`formulatemplatehandler/handler.go`)
-- [ ] Permission middleware on `select-options` routes; shipment-read check on
+- [x] Permission middleware on `select-options` routes; shipment-read check on
       `backtest` and `impact`
-- [ ] `Fork` fails when the requested version does not exist instead of forking
+- [x] `Fork` fails when the requested version does not exist instead of forking
       latest (`service.go` `resolveTemplateSnapshot`)
-- [ ] `Rollback` and `CreateVersion` run `validateTemplate`; `CreateVersion` writes
+- [x] `Rollback` and `CreateVersion` run `validateTemplate`; `CreateVersion` writes
       an audit entry
-- [ ] `CountUsages` includes rate agreement rules/accessorials, rate matrices, rate
-      quotes, and customer fallback templates
+- [x] `CountUsages` includes rate agreement rules and rate agreement accessorials
+      (the only other tables that reference templates; quotes are records, not
+      consumers) and the Studio/rollback dialog label them
       (`formulatemplaterepository/formulatemplate.go`)
-- [ ] Unique index `(organization_id, business_unit_id, name)` and list index
+- [x] Unique index `(organization_id, business_unit_id, name)` and list index
       `(organization_id, business_unit_id, created_at DESC)`; index on
-      `accessorial_charges.formula_template_id`
-- [ ] Body/field caps: expression length, variable/breakdown counts, `templateIds`
-      length on duplicate/bulk (`domain/formulatemplate/formulatemplate.go`)
+      `accessorial_charges.formula_template_id` (migration `20261002000000`);
+      duplicates pick a free "(Copy N)" name and a name collision on create or
+      update is a 409 on `name`
+- [x] Field caps: expression ≤ 10,000 chars, ≤ 50 custom variables (breakdowns
+      were already capped at 20), `templateIds` 1–100 on duplicate/bulk status
+      (`domain/formulatemplate/formulatemplate.go`, service `validateBulkTemplateIDs`)
 
 ---
 

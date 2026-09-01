@@ -19,6 +19,15 @@ import (
 	"github.com/uptrace/bun"
 )
 
+const (
+	// MaxExpressionLength bounds a single expression. The engine already caps
+	// the parsed node count; this keeps the text itself from being used as a
+	// payload, and ten thousand characters is far past any real tariff.
+	MaxExpressionLength = 10_000
+	// MaxVariableDefinitions bounds the custom variables a template declares.
+	MaxVariableDefinitions = 50
+)
+
 var (
 	_ bun.BeforeAppendModelHook          = (*FormulaTemplate)(nil)
 	_ validationframework.TenantedEntity = (*FormulaTemplate)(nil)
@@ -69,7 +78,11 @@ type FormulaTemplate struct {
 func (ft *FormulaTemplate) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(ft,
 		validation.Field(&ft.Name, validation.Required, validation.Length(1, 100)),
-		validation.Field(&ft.Expression, validation.Required),
+		validation.Field(&ft.Expression,
+			validation.Required,
+			validation.Length(1, MaxExpressionLength).
+				Error("Expression cannot exceed 10,000 characters"),
+		),
 		validation.Field(&ft.Type, validation.Required, validation.In(
 			TemplateTypeFreightCharge,
 			TemplateTypeAccessorialCharge,
@@ -94,6 +107,13 @@ func (ft *FormulaTemplate) Validate(multiErr *errortypes.MultiError) {
 	))
 
 	ft.validateGuardrails(multiErr)
+	if len(ft.VariableDefinitions) > MaxVariableDefinitions {
+		multiErr.Add(
+			"variableDefinitions",
+			errortypes.ErrInvalid,
+			"A template cannot declare more than 50 custom variables",
+		)
+	}
 	formulatypes.ValidateBreakdownDefinitions(ft.BreakdownDefinitions, multiErr)
 }
 

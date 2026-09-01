@@ -274,6 +274,10 @@ func (s *Service) Duplicate(
 		zap.Any("request", req),
 	)
 
+	if err := validateBulkTemplateIDs(req.TemplateIDs); err != nil {
+		return nil, err
+	}
+
 	sources, err := s.repo.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
 		TenantInfo:  req.TenantInfo,
 		TemplateIDs: req.TemplateIDs,
@@ -352,6 +356,10 @@ func (s *Service) BulkUpdateStatus(
 			"Bulk status updates can only archive templates; "+
 				"an archived template is reactivated by submitting it for review",
 		)
+	}
+
+	if err := validateBulkTemplateIDs(req.TemplateIDs); err != nil {
+		return nil, err
 	}
 
 	templates, err := s.repo.GetByIDs(ctx, repositories.GetFormulaTemplatesByIDsRequest{
@@ -454,6 +462,10 @@ func (s *Service) CreateVersion(
 		return nil, err
 	}
 
+	if err = s.validateTemplate(ctx, template); err != nil {
+		return nil, err
+	}
+
 	var changeSummary map[string]jsonutils.FieldChange
 	if template.CurrentVersionNumber >= 1 {
 		prevVersion, verr := s.versionRepo.GetByTemplateAndVersion(
@@ -465,12 +477,21 @@ func (s *Service) CreateVersion(
 			},
 		)
 		if verr == nil && prevVersion != nil {
-			changeSummary, _ = jsonutils.JSONDiff(prevVersion, template, &jsonutils.DiffOptions{
-				IgnoreFields: versionDiffIgnoreFields,
-			})
+			var diffErr error
+			changeSummary, diffErr = jsonutils.JSONDiff(
+				prevVersion,
+				template,
+				&jsonutils.DiffOptions{
+					IgnoreFields: versionDiffIgnoreFields,
+				},
+			)
+			if diffErr != nil {
+				log.Warn("failed to compute change summary for version", zap.Error(diffErr))
+			}
 		}
 	}
 
+	previous := *template
 	newVersionNumber := template.CurrentVersionNumber + 1
 	template.CurrentVersionNumber = newVersionNumber
 
@@ -501,6 +522,15 @@ func (s *Service) CreateVersion(
 	if err != nil {
 		return nil, err
 	}
+
+	s.logAuditAction(
+		log,
+		template,
+		permission.OpUpdate,
+		req.TenantInfo.UserID,
+		&previous,
+		fmt.Sprintf("Version %d created", newVersionNumber),
+	)
 
 	return createdVersion, nil
 }
@@ -550,6 +580,12 @@ func (s *Service) Rollback(
 
 	resolved := currentTemplate.ApplyVersionFull(targetVersion)
 	resolved.CurrentVersionNumber = currentTemplate.CurrentVersionNumber + 1
+
+	// Old content can name a rate table that has since been removed; a
+	// rollback must fail on that here, not at the next approval.
+	if err = s.validateTemplate(ctx, resolved); err != nil {
+		return nil, err
+	}
 
 	changeMessage := req.ChangeMessage
 	if changeMessage == "" {
@@ -619,13 +655,17 @@ func (s *Service) Fork(
 		return nil, err
 	}
 
-	snapshot, sourceVersionNum := s.resolveTemplateSnapshot(
+	snapshot, sourceVersionNum, err := s.resolveTemplateSnapshot(
 		ctx,
 		log,
 		sourceTemplate,
 		req.SourceVersion,
 		req.TenantInfo,
 	)
+	if err != nil {
+		log.Error("failed to resolve requested source version", zap.Error(err))
+		return nil, err
+	}
 
 	forkedTemplate := &formulatemplate.FormulaTemplate{
 		OrganizationID:       req.TenantInfo.OrgID,
@@ -1316,31 +1356,39 @@ func (s *Service) logAuditAction(
 	}
 }
 
+// resolveTemplateSnapshot picks the content a fork starts from. A version the
+// caller asked for by number must exist: forking "v3" and quietly receiving
+// the latest content instead would be a copy of the wrong thing with the
+// right label on it. Only when no version was named does the latest snapshot,
+// and failing that the row itself, stand in.
 func (s *Service) resolveTemplateSnapshot(
 	ctx context.Context,
 	log *zap.Logger,
 	template *formulatemplate.FormulaTemplate,
 	requestedVersion *int64,
 	tenant pagination.TenantInfo,
-) (snapshot templateSnapshot, versionNumber int64) {
+) (templateSnapshot, int64, error) {
 	if requestedVersion != nil {
 		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &repositories.GetVersionRequest{
 			TenantInfo:    tenant,
 			TemplateID:    template.ID,
 			VersionNumber: *requestedVersion,
 		})
-		if err == nil {
-			return snapshotFromVersion(version), version.VersionNumber
+		if err != nil {
+			return templateSnapshot{}, 0, err
 		}
-		log.Warn("failed to get requested version, falling back to template", zap.Error(err))
+		return snapshotFromVersion(version), version.VersionNumber, nil
 	}
 
 	version, err := s.versionRepo.GetLatestVersion(ctx, template.ID, tenant)
-	if err == nil {
-		return snapshotFromVersion(version), version.VersionNumber
+	if err == nil && version != nil {
+		return snapshotFromVersion(version), version.VersionNumber, nil
+	}
+	if err != nil {
+		log.Warn("no version snapshot found, forking the template row", zap.Error(err))
 	}
 
-	return snapshotFromTemplate(template), template.CurrentVersionNumber
+	return snapshotFromTemplate(template), template.CurrentVersionNumber, nil
 }
 
 // logUnguardedNullableFields records, at save time, the nullable fields a
@@ -1372,4 +1420,28 @@ func (s *Service) logUnguardedNullableFields(
 		zap.String("name", entity.Name),
 		zap.Strings("fields", fields),
 	)
+}
+
+// maxBulkTemplateIDs bounds the id lists bulk operations accept. A duplicate
+// of a hundred templates is already a strange request; an unbounded one is a
+// way to hold a transaction open for as long as the caller likes.
+const maxBulkTemplateIDs = 100
+
+func validateBulkTemplateIDs(ids []pulid.ID) error {
+	switch {
+	case len(ids) == 0:
+		return errortypes.NewValidationError(
+			"templateIds",
+			errortypes.ErrRequired,
+			"At least one template is required",
+		)
+	case len(ids) > maxBulkTemplateIDs:
+		return errortypes.NewValidationError(
+			"templateIds",
+			errortypes.ErrInvalid,
+			fmt.Sprintf("Cannot act on more than %d templates at once", maxBulkTemplateIDs),
+		)
+	default:
+		return nil
+	}
 }

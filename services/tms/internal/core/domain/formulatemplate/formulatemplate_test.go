@@ -1,6 +1,7 @@
 package formulatemplate
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -746,4 +747,37 @@ func TestFormulaTemplate_ValidateRoundingPolicy(t *testing.T) {
 	multiErr = errortypes.NewMultiError()
 	unset.Validate(multiErr)
 	assert.False(t, multiErr.HasErrors(), "an unset policy is normalized, not rejected")
+}
+
+func TestFormulaTemplate_ValidateCaps(t *testing.T) {
+	t.Parallel()
+
+	tooLong := &FormulaTemplate{
+		Name:       "t",
+		Expression: strings.Repeat("1+", MaxExpressionLength/2) + "1",
+		Type:       TemplateTypeFreightCharge,
+		Status:     StatusDraft,
+	}
+	multiErr := errortypes.NewMultiError()
+	tooLong.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors(), "expression over the cap must be rejected")
+
+	tooMany := &FormulaTemplate{
+		Name:       "t",
+		Expression: "x",
+		Type:       TemplateTypeFreightCharge,
+		Status:     StatusDraft,
+	}
+	for i := range MaxVariableDefinitions + 1 {
+		tooMany.VariableDefinitions = append(
+			tooMany.VariableDefinitions,
+			&formulatypes.VariableDefinition{
+				Name: fmt.Sprintf("v%d", i),
+				Type: formulatypes.VariableValueTypeNumber,
+			},
+		)
+	}
+	multiErr = errortypes.NewMultiError()
+	tooMany.Validate(multiErr)
+	assert.True(t, multiErr.HasErrors(), "too many variables must be rejected")
 }

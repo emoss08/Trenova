@@ -93,6 +93,11 @@ func NewEngine(p Params) (*Engine, error) {
 }
 
 var (
+	// ErrEvaluationTimeout is the engine's own deadline. It is deliberately
+	// not the caller's context error: an HTTP request that was still alive
+	// while a formula ran past its budget has a formula problem, not a
+	// timed-out request, and the two must not be told apart by guesswork.
+	ErrEvaluationTimeout    = goErrors.New("formula evaluation exceeded its time budget")
 	ErrTemplateNil          = goErrors.New("template is nil")
 	ErrSchemaNotFound       = goErrors.New("schema not found")
 	ErrNonFiniteResult      = goErrors.New("expression produced a non-finite number")
@@ -341,7 +346,9 @@ func (e *Engine) run(
 	program *vm.Program,
 	env map[string]any,
 ) (any, error) {
-	ctx, cancel := context.WithTimeout(ctx, evaluationTimeoutFor(ctx))
+	parent := ctx
+	timeout := evaluationTimeoutFor(ctx)
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	vmEnv := make(map[string]any, len(env)+1)
@@ -368,7 +375,10 @@ func (e *Engine) run(
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		if parentErr := parent.Err(); parentErr != nil {
+			return nil, parentErr
+		}
+		return nil, fmt.Errorf("%w (%s)", ErrEvaluationTimeout, timeout)
 	case res := <-resultCh:
 		return res.value, res.err
 	}
@@ -405,7 +415,7 @@ func (e *Engine) ValidateExpressionDetailed(
 
 	output, err := e.run(ctx, compiled.program, env)
 	if err != nil {
-		if goErrors.Is(err, context.DeadlineExceeded) {
+		if goErrors.Is(err, context.DeadlineExceeded) || goErrors.Is(err, ErrEvaluationTimeout) {
 			return ValidationOutcome{Err: errors.NewSchemaError(expression, "validate", err)}
 		}
 		return ValidationOutcome{Warning: err.Error()}

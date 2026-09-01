@@ -42,6 +42,10 @@ function formatUsageType(type: string): string {
       return "shipments";
     case "accessorial_charge":
       return "accessorial charges";
+    case "rate_agreement_rule":
+      return "rate agreement rules";
+    case "rate_agreement_accessorial":
+      return "rate agreement accessorials";
     default:
       return type;
   }

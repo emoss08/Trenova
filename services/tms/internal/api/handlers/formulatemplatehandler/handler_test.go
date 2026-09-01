@@ -2247,10 +2247,7 @@ func TestFormulaTemplateHandler_CompareVersions_SameVersions(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Contains(t, resp["error"], "different")
+	assert.Contains(t, ginCtx.Recorder.Body.String(), "different")
 }
 
 func TestFormulaTemplateHandler_CompareVersions_ServiceError(t *testing.T) {

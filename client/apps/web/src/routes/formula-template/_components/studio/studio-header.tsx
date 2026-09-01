@@ -41,6 +41,8 @@ import type { ApprovalAction } from "../approval-action-dialog";
 const USAGE_LABELS: Record<string, string> = {
   shipment: "shipments",
   accessorial_charge: "accessorial charges",
+  rate_agreement_rule: "rate agreement rules",
+  rate_agreement_accessorial: "rate agreement accessorials",
 };
 
 function UsageChip({ templateId }: { templateId: string }) {
