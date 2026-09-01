@@ -11,6 +11,7 @@ import {
 import type {
   FormulaTemplate,
   FormulaTemplateVersion,
+  FormulaTestCase,
 } from "@trenova/shared/types/formula-template";
 
 function makeTemplate(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate {
@@ -82,14 +83,55 @@ describe("slugify", () => {
   });
 });
 
+function makeTestCase(overrides: Partial<FormulaTestCase> = {}): FormulaTestCase {
+  return {
+    id: "ftc1",
+    templateId: "t1",
+    organizationId: "org1",
+    businessUnitId: "bu1",
+    name: "500 mile haul",
+    description: "Baseline lane",
+    variables: { totalDistance: 500 },
+    expectedAmount: 1250,
+    tolerance: 0.01,
+    createdById: "user1",
+    createdAt: 1700000000,
+    updatedAt: 1700000000,
+    ...overrides,
+  } as FormulaTestCase;
+}
+
 describe("buildTemplateExport", () => {
   it("builds export without versions", () => {
     const template = makeTemplate();
     const result = buildTemplateExport(template);
-    expect(result.exportVersion).toBe("1.1");
+    expect(result.exportVersion).toBe("1.2");
     expect(result.exportedAt).toBeDefined();
     expect(result.template.name).toBe("My Template");
     expect(result.versionHistory).toBeUndefined();
+    expect(result.template.testCases).toBeUndefined();
+  });
+
+  it("carries test scenarios so an import keeps the approval gate", () => {
+    const result = buildTemplateExport(makeTemplate(), {
+      testCases: [makeTestCase(), makeTestCase({ name: "Zero-distance move", expectedAmount: 0 })],
+    });
+    expect(result.template.testCases).toEqual([
+      {
+        name: "500 mile haul",
+        description: "Baseline lane",
+        variables: { totalDistance: 500 },
+        expectedAmount: 1250,
+        tolerance: 0.01,
+      },
+      {
+        name: "Zero-distance move",
+        description: "Baseline lane",
+        variables: { totalDistance: 500 },
+        expectedAmount: 0,
+        tolerance: 0.01,
+      },
+    ]);
   });
 
   it("carries breakdown definitions and guardrails so an import round-trips", () => {
@@ -104,7 +146,7 @@ describe("buildTemplateExport", () => {
   it("includes version history when provided", () => {
     const template = makeTemplate();
     const versions = [makeVersion({ versionNumber: 1 }), makeVersion({ versionNumber: 2 })];
-    const result = buildTemplateExport(template, versions);
+    const result = buildTemplateExport(template, { versions });
     expect(result.versionHistory).toHaveLength(2);
     expect(result.versionHistory![0].versionNumber).toBe(1);
     expect(result.versionHistory![0].breakdownDefinitions).toHaveLength(1);
@@ -113,7 +155,7 @@ describe("buildTemplateExport", () => {
 
   it("omits versionHistory for empty versions array", () => {
     const template = makeTemplate();
-    const result = buildTemplateExport(template, []);
+    const result = buildTemplateExport(template, { versions: [] });
     expect(result.versionHistory).toBeUndefined();
   });
 });
@@ -121,7 +163,7 @@ describe("buildTemplateExport", () => {
 describe("buildVersionExport", () => {
   it("exports one version's content including breakdowns and guardrails", () => {
     const result = buildVersionExport(makeTemplate(), makeVersion({ versionNumber: 3 }));
-    expect(result.exportVersion).toBe("1.1");
+    expect(result.exportVersion).toBe("1.2");
     expect(result.template.expression).toBe("weight * 0.5");
     expect(result.template.breakdownDefinitions).toHaveLength(1);
     expect(result.template.minCharge).toBe(250);
@@ -149,7 +191,7 @@ describe("buildBulkExport", () => {
 
   it("has exportVersion and exportedAt", () => {
     const result = buildBulkExport([makeTemplate()]);
-    expect(result.exportVersion).toBe("1.1");
+    expect(result.exportVersion).toBe("1.2");
     expect(result.exportedAt).toBeDefined();
   });
 

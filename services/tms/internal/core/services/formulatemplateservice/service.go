@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/formula"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
@@ -38,6 +39,7 @@ type Params struct {
 	ShipmentRepo   repositories.ShipmentRepository
 	FormulaService *formula.Service
 	AuditService   services.AuditService
+	Notifications  *notificationservice.Service `optional:"true"`
 }
 
 type Service struct {
@@ -49,6 +51,7 @@ type Service struct {
 	shipmentRepo   repositories.ShipmentRepository
 	formulaService *formula.Service
 	auditService   services.AuditService
+	notifications  *notificationservice.Service
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
@@ -61,6 +64,7 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 		shipmentRepo:   p.ShipmentRepo,
 		formulaService: p.FormulaService,
 		auditService:   p.AuditService,
+		notifications:  p.Notifications,
 	}
 }
 

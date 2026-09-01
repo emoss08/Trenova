@@ -45,6 +45,14 @@ import {
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { z } from "zod";
 
+export type ImportTestCasePayload = {
+  name: string;
+  description?: string;
+  variables?: Record<string, unknown>;
+  expectedAmount: number;
+  tolerance?: number;
+};
+
 export type ImportTemplatePayload = {
   name: string;
   description?: string;
@@ -58,6 +66,7 @@ export type ImportTemplatePayload = {
   metadata?: FormulaTemplate["metadata"];
   sourceTemplateId?: string | null;
   sourceVersionNumber?: number | null;
+  testCases?: ImportTestCasePayload[];
 };
 
 export type ImportTemplatesRequest = {

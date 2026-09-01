@@ -146,8 +146,13 @@ export function FormulaStudioEditPage() {
     mutationFn: async (values: FormulaTemplateFormValues) => {
       return api.put<FormulaTemplate>(`/formula-templates/${id}/`, values);
     },
-    onSuccess: async () => {
+    onSuccess: async (updated) => {
       toast.success("Formula template saved");
+      // Reseat the form on the saved record right away so the dirty flag —
+      // and with it the unsaved-changes guard — clears without waiting for
+      // the query refetch.
+      form.reset(updated as FormulaTemplateFormValues);
+      setSeatedVersion(updated.version ?? 0);
       await invalidateFormulaTemplate(queryClient);
     },
     form,

@@ -47799,6 +47799,12 @@ const docTemplate = `{
                 "sourceVersionNumber": {
                     "type": "integer"
                 },
+                "testCases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseInput"
+                    }
+                },
                 "type": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TemplateType"
                 },

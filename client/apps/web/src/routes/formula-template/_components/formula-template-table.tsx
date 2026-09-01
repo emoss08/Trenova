@@ -196,13 +196,28 @@ export default function FormulaTemplatesDataTable() {
     [handleDuplicate, handleExportClick, requestArchive],
   );
 
-  const handleBulkExport = useCallback((rows: FormulaTemplate[]) => {
-    const exportData = buildBulkExport(rows);
-    const filename = getBulkExportFilename();
-    downloadJson(exportData, filename);
-    toast.success(`Exported ${rows.length} templates`, {
-      description: filename,
-    });
+  const handleBulkExport = useCallback(async (rows: FormulaTemplate[]) => {
+    try {
+      const testCaseLists = await Promise.all(
+        rows.map((row) =>
+          row.id ? apiService.formulaTemplateService.listTestCases(row.id) : Promise.resolve([]),
+        ),
+      );
+      const testCasesByTemplateId = Object.fromEntries(
+        rows.flatMap((row, index) => (row.id ? [[row.id, testCaseLists[index]]] : [])),
+      );
+
+      const exportData = buildBulkExport(rows, testCasesByTemplateId);
+      const filename = getBulkExportFilename();
+      downloadJson(exportData, filename);
+      toast.success(`Exported ${rows.length} templates`, {
+        description: filename,
+      });
+    } catch {
+      toast.error("Export failed", {
+        description: "Could not export the selected templates. Please try again.",
+      });
+    }
   }, []);
 
   const handleBulkDuplicate = useCallback((rows: FormulaTemplate[]) => {
@@ -243,7 +258,7 @@ export default function FormulaTemplatesDataTable() {
         id: "export",
         label: "Export",
         icon: DownloadIcon,
-        onClick: handleBulkExport,
+        onClick: (rows) => void handleBulkExport(rows),
       },
       {
         id: "archive",

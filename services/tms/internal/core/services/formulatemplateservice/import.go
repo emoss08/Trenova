@@ -19,6 +19,9 @@ import (
 
 const (
 	importMaxTemplates = 50
+	importMaxTestCases = 100
+
+	maxImportTestCaseNameLength = 100
 
 	ImportConflictReject = "reject"
 	ImportConflictRename = "rename"
@@ -27,6 +30,7 @@ const (
 var supportedImportVersions = map[string]struct{}{
 	"1.0": {},
 	"1.1": {},
+	"1.2": {},
 }
 
 type ImportTemplatePayload struct {
@@ -42,6 +46,7 @@ type ImportTemplatePayload struct {
 	Metadata             map[string]any                      `json:"metadata"`
 	SourceTemplateID     *pulid.ID                           `json:"sourceTemplateId"`
 	SourceVersionNumber  *int64                              `json:"sourceVersionNumber"`
+	TestCases            []*TestCaseInput                    `json:"testCases"`
 }
 
 type ImportTemplatesRequest struct {
@@ -81,7 +86,7 @@ func (s *Service) Import(
 	var created []*formulatemplate.FormulaTemplate
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		created = make([]*formulatemplate.FormulaTemplate, 0, len(entities))
-		for _, entity := range entities {
+		for index, entity := range entities {
 			createdEntity, txErr := s.repo.Create(txCtx, entity)
 			if txErr != nil {
 				log.Error("failed to create imported template", zap.Error(txErr))
@@ -92,6 +97,13 @@ func (s *Service) Import(
 				txCtx, createdEntity, 1, req.TenantInfo.UserID, "Imported", nil,
 			); txErr != nil {
 				log.Error("failed to create version snapshot", zap.Error(txErr))
+				return txErr
+			}
+
+			if txErr = s.createImportedTestCases(
+				txCtx, createdEntity, req.TenantInfo, payloads[index].TestCases,
+			); txErr != nil {
+				log.Error("failed to create imported test scenarios", zap.Error(txErr))
 				return txErr
 			}
 
@@ -320,6 +332,8 @@ func (s *Service) buildImportEntities(
 			addIndexedValidationError(indexed, vErr)
 		}
 
+		validateImportTestCases(indexed, payload.TestCases)
+
 		entities = append(entities, entity)
 	}
 
@@ -328,6 +342,70 @@ func (s *Service) buildImportEntities(
 	}
 
 	return entities, nil
+}
+
+// validateImportTestCases mirrors the domain rules for a scenario before any
+// template exists to hang one on, so a broken export is refused with indexed
+// field errors instead of failing mid-transaction.
+func validateImportTestCases(indexed *errortypes.MultiError, testCases []*TestCaseInput) {
+	if len(testCases) > importMaxTestCases {
+		indexed.Add(
+			"testCases",
+			errortypes.ErrInvalid,
+			fmt.Sprintf("Cannot import more than %d test scenarios per template", importMaxTestCases),
+		)
+		return
+	}
+
+	for index, testCase := range testCases {
+		if testCase == nil {
+			continue
+		}
+
+		caseErrs := indexed.WithIndex("testCases", index)
+		switch {
+		case testCase.Name == "":
+			caseErrs.Add("name", errortypes.ErrRequired, "Name is required")
+		case len(testCase.Name) > maxImportTestCaseNameLength:
+			caseErrs.Add(
+				"name",
+				errortypes.ErrInvalid,
+				"Name cannot be longer than 100 characters",
+			)
+		}
+
+		if testCase.ExpectedAmount.IsNegative() {
+			caseErrs.Add(
+				"expectedAmount",
+				errortypes.ErrInvalid,
+				"Expected amount cannot be negative",
+			)
+		}
+
+		if testCase.Tolerance.IsNegative() {
+			caseErrs.Add("tolerance", errortypes.ErrInvalid, "Tolerance cannot be negative")
+		}
+	}
+}
+
+func (s *Service) createImportedTestCases(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	tenantInfo pagination.TenantInfo,
+	testCases []*TestCaseInput,
+) error {
+	for _, testCase := range testCases {
+		if testCase == nil {
+			continue
+		}
+
+		entity := buildTestCaseEntity(template.ID, tenantInfo, testCase)
+		if _, err := s.testCaseRepo.Create(ctx, entity); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func addIndexedValidationError(indexed *errortypes.MultiError, err error) {

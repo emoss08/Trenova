@@ -19,6 +19,8 @@ import { FileUpIcon, UploadIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
+const SUPPORTED_EXPORT_VERSIONS = new Set(["1.0", "1.1", "1.2"]);
+
 type ParsedImport = {
   templates: ImportTemplatePayload[];
   exportVersion: string;
@@ -33,7 +35,7 @@ function parseImportFile(filename: string, raw: string): ParsedImport {
 
   const record = parsed as Record<string, unknown>;
   const exportVersion = typeof record.exportVersion === "string" ? record.exportVersion : "";
-  if (exportVersion !== "1.0" && exportVersion !== "1.1") {
+  if (!SUPPORTED_EXPORT_VERSIONS.has(exportVersion)) {
     throw new Error("Unsupported export version. Expected a Trenova formula template export.");
   }
 
@@ -179,9 +181,17 @@ export function ImportTemplateDialog({
                     className="flex items-center justify-between gap-2 border-b px-3 py-1.5 text-xs last:border-b-0"
                   >
                     <span className="truncate font-medium">{template.name}</span>
-                    <Badge variant="outline" className="text-2xs shrink-0">
-                      {template.type}
-                    </Badge>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {(template.testCases?.length ?? 0) > 0 && (
+                        <Badge variant="outline" className="text-2xs">
+                          {template.testCases?.length}{" "}
+                          {template.testCases?.length === 1 ? "scenario" : "scenarios"}
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="text-2xs">
+                        {template.type}
+                      </Badge>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -1,8 +1,19 @@
 import type {
   FormulaTemplate,
   FormulaTemplateVersion,
+  FormulaTestCase,
 } from "@trenova/shared/types/formula-template";
 import { downloadJsonFile } from "@trenova/shared/lib/utils";
+
+export const FORMULA_TEMPLATE_EXPORT_VERSION = "1.2";
+
+export type ExportedTestCase = {
+  name: string;
+  description: string;
+  variables: Record<string, unknown>;
+  expectedAmount: number;
+  tolerance: number;
+};
 
 export type FormulaTemplateExportPayload = {
   name: string;
@@ -18,10 +29,11 @@ export type FormulaTemplateExportPayload = {
   metadata: FormulaTemplate["metadata"];
   sourceTemplateId: string | null | undefined;
   sourceVersionNumber: number | null | undefined;
+  testCases?: ExportedTestCase[];
 };
 
 export type FormulaTemplateExport = {
-  exportVersion: "1.1";
+  exportVersion: typeof FORMULA_TEMPLATE_EXPORT_VERSION;
   exportedAt: string;
   template: FormulaTemplateExportPayload;
   versionHistory?: Array<{
@@ -44,7 +56,7 @@ export type FormulaTemplateExport = {
 };
 
 export type BulkFormulaTemplateExport = {
-  exportVersion: "1.1";
+  exportVersion: typeof FORMULA_TEMPLATE_EXPORT_VERSION;
   exportedAt: string;
   templates: Array<FormulaTemplateExportPayload>;
 };
@@ -60,8 +72,21 @@ export function downloadJson(data: unknown, filename: string): void {
   downloadJsonFile(filename, data);
 }
 
-function toExportPayload(template: FormulaTemplate): FormulaTemplateExportPayload {
+export function toExportedTestCase(testCase: FormulaTestCase): ExportedTestCase {
   return {
+    name: testCase.name,
+    description: testCase.description,
+    variables: testCase.variables,
+    expectedAmount: testCase.expectedAmount,
+    tolerance: testCase.tolerance,
+  };
+}
+
+function toExportPayload(
+  template: FormulaTemplate,
+  testCases?: FormulaTestCase[],
+): FormulaTemplateExportPayload {
+  const payload: FormulaTemplateExportPayload = {
     name: template.name,
     description: template.description,
     type: template.type,
@@ -76,16 +101,28 @@ function toExportPayload(template: FormulaTemplate): FormulaTemplateExportPayloa
     sourceTemplateId: template.sourceTemplateId,
     sourceVersionNumber: template.sourceVersionNumber,
   };
+
+  if (testCases && testCases.length > 0) {
+    payload.testCases = testCases.map(toExportedTestCase);
+  }
+
+  return payload;
 }
+
+export type TemplateExportOptions = {
+  versions?: FormulaTemplateVersion[];
+  testCases?: FormulaTestCase[];
+};
 
 export function buildTemplateExport(
   template: FormulaTemplate,
-  versions?: FormulaTemplateVersion[],
+  options?: TemplateExportOptions,
 ): FormulaTemplateExport {
+  const { versions, testCases } = options ?? {};
   const exportData: FormulaTemplateExport = {
-    exportVersion: "1.1",
+    exportVersion: FORMULA_TEMPLATE_EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
-    template: toExportPayload(template),
+    template: toExportPayload(template, testCases),
   };
 
   if (versions && versions.length > 0) {
@@ -111,12 +148,15 @@ export function buildTemplateExport(
   return exportData;
 }
 
+// A version export deliberately carries no test scenarios: scenarios live on
+// the template and pin its current behaviour, which an older version's
+// expression has no obligation to satisfy.
 export function buildVersionExport(
   template: Pick<FormulaTemplate, "name">,
   version: FormulaTemplateVersion,
 ): FormulaTemplateExport {
   return {
-    exportVersion: "1.1",
+    exportVersion: FORMULA_TEMPLATE_EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
     template: {
       name: template.name,
@@ -136,11 +176,16 @@ export function buildVersionExport(
   };
 }
 
-export function buildBulkExport(templates: FormulaTemplate[]): BulkFormulaTemplateExport {
+export function buildBulkExport(
+  templates: FormulaTemplate[],
+  testCasesByTemplateId?: Record<string, FormulaTestCase[]>,
+): BulkFormulaTemplateExport {
   return {
-    exportVersion: "1.1",
+    exportVersion: FORMULA_TEMPLATE_EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
-    templates: templates.map(toExportPayload),
+    templates: templates.map((template) =>
+      toExportPayload(template, template.id ? testCasesByTemplateId?.[template.id] : undefined),
+    ),
   };
 }
 

@@ -11329,6 +11329,10 @@ definitions:
                 type: string
             sourceVersionNumber:
                 type: integer
+            testCases:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseInput'
+                type: array
             type:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TemplateType'
             variableDefinitions:

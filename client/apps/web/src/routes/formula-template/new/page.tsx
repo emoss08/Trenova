@@ -42,6 +42,9 @@ export function FormulaStudioCreatePage() {
         description: "It starts as a draft. Submit it for review when it is ready.",
       });
       await invalidateFormulaTemplate(queryClient);
+      // Reset onto the saved record before navigating so the unsaved-changes
+      // guard sees a clean form and lets the redirect through.
+      form.reset(created as FormulaTemplateFormValues);
       if (created.id) {
         void navigate(`/billing/configuration-files/formula-templates/${created.id}/edit`, {
           replace: true,

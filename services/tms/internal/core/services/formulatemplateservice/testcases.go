@@ -62,23 +62,7 @@ func (s *Service) CreateTestCase(
 		return nil, err
 	}
 
-	entity := &formulatemplate.TestCase{
-		TemplateID:     template.ID,
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		Name:           req.Name,
-		Description:    req.Description,
-		Variables:      req.Variables,
-		ExpectedAmount: req.ExpectedAmount,
-		Tolerance:      req.Tolerance,
-		CreatedByID:    req.TenantInfo.UserID,
-	}
-	if entity.Variables == nil {
-		entity.Variables = map[string]any{}
-	}
-	if entity.Tolerance.IsZero() {
-		entity.Tolerance = defaultTestCaseTolerance
-	}
+	entity := buildTestCaseEntity(template.ID, req.TenantInfo, &req.TestCaseInput)
 
 	if vErr := validateTestCase(entity); vErr != nil {
 		return nil, vErr
@@ -162,6 +146,35 @@ func (s *Service) DeleteTestCase(
 	}
 
 	return nil
+}
+
+// buildTestCaseEntity is the single place a scenario's storage shape and
+// defaults are decided, so the authoring path and the import path cannot
+// drift apart.
+func buildTestCaseEntity(
+	templateID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+	input *TestCaseInput,
+) *formulatemplate.TestCase {
+	entity := &formulatemplate.TestCase{
+		TemplateID:     templateID,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Name:           input.Name,
+		Description:    input.Description,
+		Variables:      input.Variables,
+		ExpectedAmount: input.ExpectedAmount,
+		Tolerance:      input.Tolerance,
+		CreatedByID:    tenantInfo.UserID,
+	}
+	if entity.Variables == nil {
+		entity.Variables = map[string]any{}
+	}
+	if entity.Tolerance.IsZero() {
+		entity.Tolerance = defaultTestCaseTolerance
+	}
+
+	return entity
 }
 
 func validateTestCase(entity *formulatemplate.TestCase) error {

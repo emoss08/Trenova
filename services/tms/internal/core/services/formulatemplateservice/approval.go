@@ -24,7 +24,7 @@ func (s *Service) Submit(
 	ctx context.Context,
 	req *ApprovalActionRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
-	return s.approvals().Apply(ctx, req, templateTransition{
+	submitted, err := s.approvals().Apply(ctx, req, templateTransition{
 		Operation:    "Submit",
 		From:         formulatemplate.StatusDraft,
 		To:           formulatemplate.StatusInReview,
@@ -41,6 +41,13 @@ func (s *Service) Submit(
 			template.ReviewComment = r.Comment
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.notifySubmitted(ctx, req.TenantInfo, submitted)
+
+	return submitted, nil
 }
 
 func (s *Service) Approve(
@@ -112,6 +119,13 @@ func (s *Service) Approve(
 		return nil, err
 	}
 
+	s.notifyReviewOutcome(ctx, req.TenantInfo, &reviewOutcome{
+		Template:    approved,
+		SubmitterID: approved.SubmittedByID,
+		Approved:    true,
+		Comment:     req.Comment,
+	})
+
 	return approved, nil
 }
 
@@ -123,7 +137,10 @@ func (s *Service) Reject(
 		return nil, err
 	}
 
-	return s.approvals().Apply(ctx, req, templateTransition{
+	// Reject clears the submission stamp, so the submitter is captured before
+	// Apply wipes it — they are the one who needs to hear the outcome.
+	var submitterID *pulid.ID
+	rejected, err := s.approvals().Apply(ctx, req, templateTransition{
 		Operation:    "Reject",
 		From:         formulatemplate.StatusInReview,
 		To:           formulatemplate.StatusDraft,
@@ -134,11 +151,27 @@ func (s *Service) Reject(
 			r *ApprovalActionRequest,
 			_ int64,
 		) {
+			if template.SubmittedByID != nil {
+				captured := *template.SubmittedByID
+				submitterID = &captured
+			}
 			template.SubmittedByID = nil
 			template.SubmittedAt = nil
 			template.ReviewComment = r.Comment
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.notifyReviewOutcome(ctx, req.TenantInfo, &reviewOutcome{
+		Template:    rejected,
+		SubmitterID: submitterID,
+		Approved:    false,
+		Comment:     req.Comment,
+	})
+
+	return rejected, nil
 }
 
 // approvals binds the shared review cycle to this service's repository, status

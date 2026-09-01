@@ -16020,6 +16020,12 @@
                     "sourceVersionNumber": {
                         "type": "integer"
                     },
+                    "testCases": {
+                        "items": {
+                            "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.TestCaseInput"
+                        },
+                        "type": "array"
+                    },
                     "type": {
                         "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_core_domain_formulatemplate.TemplateType"
                     },

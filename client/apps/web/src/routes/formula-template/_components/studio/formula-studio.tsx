@@ -1,5 +1,7 @@
 import { insertSnippet } from "@/components/formula-editor/insert-at-cursor";
+import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
+import { apiService } from "@/services/api";
 import {
   buildTemplateExport,
   downloadJson,
@@ -96,16 +98,24 @@ export function FormulaStudio({
     [form],
   );
 
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
     if (!template) return;
-    const exportData = buildTemplateExport(template);
-    const filename = getExportFilename(template, false);
-    downloadJson(exportData, filename);
-    toast.success("Template exported", { description: filename });
+    try {
+      const testCases = await apiService.formulaTemplateService.listTestCases(template.id);
+      const exportData = buildTemplateExport(template, { testCases });
+      const filename = getExportFilename(template, false);
+      downloadJson(exportData, filename);
+      toast.success("Template exported", { description: filename });
+    } catch {
+      toast.error("Export failed", {
+        description: "Could not export the template. Please try again.",
+      });
+    }
   }, [template]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
+      <UnsavedChangesGuard when={form.formState.isDirty} />
       <StudioHeader
         mode={mode}
         template={template}
@@ -117,7 +127,7 @@ export function FormulaStudio({
         onVersionHistory={() => setVersionHistoryOpen(true)}
         onFork={() => setForkDialogOpen(true)}
         onLineage={() => setLineageDialogOpen(true)}
-        onExport={handleExport}
+        onExport={() => void handleExport()}
         onImport={() => setImportDialogOpen(true)}
         onBacktest={() => setBacktestOpen(true)}
       />
