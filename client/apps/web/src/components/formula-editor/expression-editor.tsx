@@ -1,18 +1,19 @@
 import { FieldWrapper } from "@/components/fields/field-components";
-import { useTheme } from "@trenova/shared/components/theme-provider";
+import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import type { VariableDefinitionInput } from "@trenova/shared/types/formula-template";
-import { EditorView } from "@codemirror/view";
+import type { EditorView } from "@codemirror/view";
 import CodeMirror, {
   type ReactCodeMirrorProps,
   type ReactCodeMirrorRef,
 } from "@uiw/react-codemirror";
-import { useMemo, useRef, type Ref } from "react";
+import { useCallback, useEffect, useMemo, useRef, type Ref } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
+import { useActiveEditorRegistration } from "./active-editor";
 import { darkTheme, lightTheme } from "./editor-theme";
-import { createExprLinter } from "./expr-lint";
-import { buildKnownIdentifiers, exprLanguageSupport, type KnownIdentifiers } from "./expr-language";
+import { buildKnownIdentifiers, type KnownIdentifiers } from "./expr-language";
+import { useExprExtensions } from "./use-expr-extensions";
 
 type ExpressionEditorProps<T extends FieldValues> = FormControlProps<T> &
   ReactCodeMirrorProps & {
@@ -23,7 +24,18 @@ type ExpressionEditorProps<T extends FieldValues> = FormControlProps<T> &
     variant?: "default" | "mini";
     lint?: boolean;
     editorRef?: Ref<ReactCodeMirrorRef>;
+    /** The editor reference-pane inserts fall back to when nothing else was focused. */
+    primary?: boolean;
   };
+
+function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
+  if (!ref) return;
+  if (typeof ref === "function") {
+    ref(value);
+  } else {
+    (ref as { current: T | null }).current = value;
+  }
+}
 
 export function ExpressionEditor<T extends FieldValues>({
   name,
@@ -34,27 +46,40 @@ export function ExpressionEditor<T extends FieldValues>({
   variant = "default",
   lint = true,
   editorRef,
+  primary = false,
   control,
   rules,
   ...props
 }: ExpressionEditorProps<T>) {
-  const { theme } = useTheme();
+  const resolvedTheme = useResolvedTheme();
+  const { setActive, setPrimary } = useActiveEditorRegistration();
 
   const known = useMemo(
     () => knownIdentifiers ?? buildKnownIdentifiers(undefined, customVariables),
     [knownIdentifiers, customVariables],
   );
 
-  const knownRef = useRef(known);
-  knownRef.current = known;
+  const viewRef = useRef<EditorView | null>(null);
+  const extensions = useExprExtensions(known, lint, viewRef);
 
-  const extensions = useMemo(() => {
-    const list = [exprLanguageSupport(known), EditorView.lineWrapping];
-    if (lint) {
-      list.push(createExprLinter(() => knownRef.current));
+  const handleRef = useCallback(
+    (instance: ReactCodeMirrorRef | null) => {
+      viewRef.current = instance?.view ?? null;
+      assignRef(editorRef, instance);
+      if (primary) {
+        setPrimary?.(instance?.view ?? null);
+      }
+    },
+    [editorRef, primary, setPrimary],
+  );
+
+  // The view is created after the ref callback fires, so the primary
+  // registration is refreshed once it exists.
+  useEffect(() => {
+    if (primary && viewRef.current) {
+      setPrimary?.(viewRef.current);
     }
-    return list;
-  }, [known, lint]);
+  });
 
   const isMini = variant === "mini";
 
@@ -71,6 +96,7 @@ export function ExpressionEditor<T extends FieldValues>({
           required={!!rules?.required}
         >
           <div
+            onFocusCapture={() => setActive?.(viewRef.current)}
             className={cn(
               "border-input overflow-hidden rounded-md border transition-all duration-200",
               "focus-within:border-brand focus-within:ring-brand/30 focus-within:ring-4 focus-within:outline-hidden",
@@ -79,7 +105,7 @@ export function ExpressionEditor<T extends FieldValues>({
             )}
           >
             <CodeMirror
-              ref={editorRef}
+              ref={handleRef}
               value={field.value || ""}
               onChange={(value) => field.onChange(value)}
               extensions={extensions}
@@ -99,7 +125,7 @@ export function ExpressionEditor<T extends FieldValues>({
                 highlightSelectionMatches: true,
                 searchKeymap: false,
               }}
-              theme={theme === "dark" ? darkTheme : lightTheme}
+              theme={resolvedTheme === "dark" ? darkTheme : lightTheme}
               {...props}
             />
           </div>

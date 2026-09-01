@@ -195,6 +195,7 @@ export function StudioEditorPane({
           height="240px"
           knownIdentifiers={known}
           editorRef={editorRef}
+          primary
         />
         <div className="flex items-start justify-between gap-3">
           <p className="text-muted-foreground text-2xs flex items-center gap-1">

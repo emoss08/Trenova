@@ -1,10 +1,12 @@
 import { apiService } from "@/services/api";
 import { Button } from "@trenova/shared/components/ui/button";
+import { cn } from "@trenova/shared/lib/utils";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import type { ExplainFormulaResponse } from "@trenova/shared/types/formula-template";
 import { useMutation } from "@tanstack/react-query";
 import { MessageCircleQuestionIcon, XIcon } from "lucide-react";
 import { useState } from "react";
+import { explanationStatus } from "./explanation-status";
 
 type AiExplainPanelProps = {
   expression: string;
@@ -13,6 +15,7 @@ type AiExplainPanelProps = {
 
 export function AiExplainPanel({ expression, schemaId }: AiExplainPanelProps) {
   const [dismissed, setDismissed] = useState(false);
+  const [explainedFor, setExplainedFor] = useState<string | null>(null);
 
   const { mutate, data, isPending, error, reset } = useMutation<
     ExplainFormulaResponse,
@@ -24,7 +27,10 @@ export function AiExplainPanel({ expression, schemaId }: AiExplainPanelProps) {
         expression: currentExpression,
         schemaId,
       }),
+    onSuccess: (_result, currentExpression) => setExplainedFor(currentExpression),
   });
+
+  const status = explanationStatus({ expression, explainedFor, hasExplanation: !!data });
 
   const handleExplain = () => {
     if (!expression.trim()) return;
@@ -75,7 +81,24 @@ export function AiExplainPanel({ expression, schemaId }: AiExplainPanelProps) {
           )}
 
           {data && (
-            <p className="pr-6 text-sm leading-relaxed whitespace-pre-wrap">{data.explanation}</p>
+            <div className="space-y-2 pr-6">
+              {status === "stale" && (
+                <div className="flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs text-amber-800 dark:text-amber-200">
+                  <span>The formula changed since this explanation was written.</span>
+                  <Button type="button" variant="ghost" size="xs" onClick={handleExplain}>
+                    Explain again
+                  </Button>
+                </div>
+              )}
+              <p
+                className={cn(
+                  "text-sm leading-relaxed whitespace-pre-wrap",
+                  status === "stale" && "text-muted-foreground",
+                )}
+              >
+                {data.explanation}
+              </p>
+            </div>
           )}
         </div>
       )}

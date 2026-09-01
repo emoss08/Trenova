@@ -232,13 +232,13 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 ### 2.6 Editor correctness and performance
 
-- [ ] Editor theme uses `useResolvedTheme` so system-dark users get the dark
+- [x] Editor theme uses `useResolvedTheme` so system-dark users get the dark
       CodeMirror theme (`components/formula-editor/expression-editor.tsx`)
-- [ ] Language/completion extensions live in a `Compartment` reconfigured on
+- [x] Language/completion extensions live in a `Compartment` reconfigured on
       identifier changes instead of rebuilding every editor on each keystroke
-- [ ] Reference pane inserts into the focused editor (main or breakdown mini),
+- [x] Reference pane inserts into the focused editor (main or breakdown mini),
       not always the main one (`studio/formula-studio.tsx` `handleInsert`)
-- [ ] Explain panel clears or marks stale when the expression changes
+- [x] Explain panel clears or marks stale when the expression changes
       (`studio/ai/ai-explain-panel.tsx`)
 
 ### 2.7 Dead-ends and wiring

@@ -1,4 +1,7 @@
-import { insertSnippet } from "@/components/formula-editor/insert-at-cursor";
+import {
+  ActiveEditorProvider,
+  useActiveEditorInsert,
+} from "@/components/formula-editor/active-editor";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
 import { apiService } from "@/services/api";
@@ -47,7 +50,15 @@ type FormulaStudioProps = {
   onTemplateChanged?: (template: FormulaTemplate) => void;
 };
 
-export function FormulaStudio({
+export function FormulaStudio(props: FormulaStudioProps) {
+  return (
+    <ActiveEditorProvider>
+      <FormulaStudioBody {...props} />
+    </ActiveEditorProvider>
+  );
+}
+
+function FormulaStudioBody({
   mode,
   template,
   isSubmitting,
@@ -93,11 +104,13 @@ export function FormulaStudio({
     [],
   );
 
-  const handleInsert = useCallback((text: string, cursorOffset?: number) => {
-    const view = editorRef.current?.view;
-    if (!view) return;
-    insertSnippet(view, text, cursorOffset);
-  }, []);
+  const insertIntoActiveEditor = useActiveEditorInsert();
+  const handleInsert = useCallback(
+    (text: string, cursorOffset?: number) => {
+      insertIntoActiveEditor(text, cursorOffset);
+    },
+    [insertIntoActiveEditor],
+  );
 
   const handleAiInsert = useCallback(
     (result: { expression: string; variableDefinitions: VariableDefinition[] }) => {
