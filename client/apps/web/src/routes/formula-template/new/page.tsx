@@ -37,7 +37,7 @@ export function FormulaStudioCreatePage() {
     },
   });
 
-  const { mutateAsync } = useApiMutation({
+  const { mutate } = useApiMutation({
     mutationFn: async (values: FormulaTemplateFormValues) => {
       return api.post<FormulaTemplate>("/formula-templates/", values);
     },
@@ -61,9 +61,9 @@ export function FormulaStudioCreatePage() {
     resourceName: "Formula Template",
   });
 
-  const onSave = form.handleSubmit(async (values) => {
-    await mutateAsync(values);
-  });
+  // `mutate` reports failure through the hook's error handling; `mutateAsync`
+  // would also reject, and a rejection nobody awaits is an unhandled promise.
+  const onSave = form.handleSubmit((values) => mutate(values));
 
   return (
     <FormProvider {...form}>

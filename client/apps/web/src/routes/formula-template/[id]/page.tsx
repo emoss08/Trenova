@@ -146,7 +146,7 @@ export function FormulaStudioEditPage() {
     }
   }, [template, seatedVersion, form]);
 
-  const { mutateAsync } = useApiMutation({
+  const { mutate } = useApiMutation({
     mutationFn: async (values: FormulaTemplateFormValues) => {
       return api.put<FormulaTemplate>(`/formula-templates/${id}/`, values);
     },
@@ -165,9 +165,9 @@ export function FormulaStudioEditPage() {
 
   const isSeated = seatedVersion !== null;
 
-  const onSave = form.handleSubmit(async (values) => {
+  const onSave = form.handleSubmit((values) => {
     if (!isSeated) return;
-    await mutateAsync(values);
+    mutate(values);
   });
 
   if (isError) {

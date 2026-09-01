@@ -174,7 +174,11 @@ export function FormulaStudio({
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={45} minSize={20}>
-              <StudioReferencePane known={known} onInsert={handleInsert} />
+              <StudioReferencePane
+                known={known}
+                schemaId={schemaId || "shipment"}
+                onInsert={handleInsert}
+              />
             </ResizablePanel>
           </ResizablePanelGroup>
         </ResizablePanel>

@@ -171,17 +171,17 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 ### 2.1 Surface real errors
 
-- [ ] Approval dialog routes failures through `handleMutationError` so self-approval,
-      failing scenarios, and invalid expressions show the server's message
-      (`approval-action-dialog.tsx`)
-- [ ] Preview shows an error card when the test request fails; previous result is
+- [x] Approval dialog shows the server's reason inline (self-approval, failing
+      scenarios, invalid expression) via `describeApiError`
+      (`lib/api-error-message.ts`, `approval-action-dialog.tsx`)
+- [x] Preview shows an error card when the test request fails; previous result is
       dimmed while pending; last successful run is timestamped
       (`studio/use-live-preview.ts`, `studio/studio-preview-pane.tsx`)
-- [ ] Schema fetch failure shows a non-blocking banner ("using built-in reference")
+- [x] Schema fetch failure shows a non-blocking banner ("using built-in reference")
       instead of silently linting against the fallback (`hooks/use-formula-schema.ts`)
-- [ ] Validation errors in the collapsed Details section auto-expand it and badge
+- [x] Validation errors in the collapsed Details section auto-expand it and badge
       the trigger (`studio/studio-editor-pane.tsx`)
-- [ ] Save handlers use `mutate` or catch, no more `void onSave()` over a rejecting
+- [x] Save handlers use `mutate` or catch, no more `void onSave()` over a rejecting
       `mutateAsync` (`new/page.tsx`, `[id]/page.tsx`)
 
 ### 2.2 Scenarios stay live

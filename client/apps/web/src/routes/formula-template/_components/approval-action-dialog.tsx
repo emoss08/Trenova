@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { describeApiError } from "@/lib/api-error-message";
 import { apiService } from "@/services/api";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -83,6 +84,7 @@ export function ApprovalActionDialog({
   const queryClient = useQueryClient();
   const [comment, setComment] = useState("");
   const [showCommentError, setShowCommentError] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const config = ACTION_CONFIG[action];
   const Icon = config.icon;
 
@@ -90,6 +92,7 @@ export function ApprovalActionDialog({
     if (!open) {
       setComment("");
       setShowCommentError(false);
+      setServerError(null);
     }
   }, [open]);
 
@@ -112,10 +115,13 @@ export function ApprovalActionDialog({
       void queryClient.invalidateQueries({ queryKey: ["formulaTemplate"] });
       onOpenChange(false);
     },
-    onError: () => {
-      toast.error(`Failed to ${action} template`, {
-        description: "Please try again or contact your system administrator.",
-      });
+    onError: (error) => {
+      // The server says exactly why a review step was refused: a self
+      // approval, a failing scenario, an invalid expression. That reason is
+      // the whole point of the dialog, so it stays on screen.
+      const reason = describeApiError(error, `Failed to ${action} the template.`);
+      setServerError(reason);
+      toast.error(`Could not ${action} template`, { description: reason });
     },
   });
 
@@ -127,6 +133,7 @@ export function ApprovalActionDialog({
       return;
     }
 
+    setServerError(null);
     mutation.mutate(trimmedComment);
   };
 
@@ -168,6 +175,15 @@ export function ApprovalActionDialog({
             <p className="text-2xs text-destructive">A comment is required to reject</p>
           )}
         </div>
+
+        {serverError && (
+          <div
+            role="alert"
+            className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-xs"
+          >
+            {serverError}
+          </div>
+        )}
 
         <DialogFooter>
           <Button

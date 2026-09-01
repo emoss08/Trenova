@@ -30,8 +30,8 @@ import {
   SparklesIcon,
   WandSparklesIcon,
 } from "lucide-react";
-import { useState, type Ref } from "react";
-import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { useEffect, useState, type Ref } from "react";
+import { Controller, useFormContext, useFormState, useWatch } from "react-hook-form";
 import { BreakdownDefinitionEditor } from "../breakdown-definition-editor";
 import { AiExplainPanel } from "./ai/ai-explain-panel";
 import { StarterTemplatePicker } from "./starter-template-picker";
@@ -73,6 +73,16 @@ export function StudioEditorPane({
 }: StudioEditorPaneProps) {
   const { control, register } = useFormContext<FormulaTemplateFormValues>();
   const [detailsOpen, setDetailsOpen] = useState(true);
+  const { errors } = useFormState({ control, name: ["name", "type", "description"] });
+  const detailErrorCount = [errors.name, errors.type, errors.description].filter(Boolean).length;
+
+  // A validation error in a collapsed section is an error nobody can see;
+  // open the section the moment one lands.
+  useEffect(() => {
+    if (detailErrorCount > 0) {
+      setDetailsOpen(true);
+    }
+  }, [detailErrorCount]);
 
   const expression = useWatch({ control, name: "expression" });
   const schemaId = useWatch({ control, name: "schemaId" });
@@ -90,6 +100,11 @@ export function StudioEditorPane({
                   title="Template Details"
                   description="Name, type, and description"
                 />
+                {detailErrorCount > 0 && !detailsOpen && (
+                  <Badge variant="inactive" className="text-2xs mr-2">
+                    {detailErrorCount} {detailErrorCount === 1 ? "issue" : "issues"}
+                  </Badge>
+                )}
                 <ChevronDownIcon
                   className={`text-muted-foreground size-4 transition-transform ${
                     detailsOpen ? "rotate-180" : ""

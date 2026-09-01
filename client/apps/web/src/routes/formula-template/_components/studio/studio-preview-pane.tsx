@@ -130,6 +130,16 @@ function NullableWarnings({ warnings }: { warnings: ExpressionWarning[] }) {
   );
 }
 
+const RUN_TIME_FORMAT = new Intl.DateTimeFormat(undefined, {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
+function formatRunTime(timestamp: number): string {
+  return RUN_TIME_FORMAT.format(new Date(timestamp));
+}
+
 function BreakdownResultTable({ items }: { items: TestBreakdownItem[] }) {
   return (
     <div className="mt-4 space-y-2">
@@ -194,6 +204,8 @@ export function StudioPreviewPane({ preview }: { preview: LivePreviewState }) {
   const {
     result,
     isPending,
+    requestError,
+    lastRunAt,
     testValues,
     setTestValues,
     useRealShipment,
@@ -212,7 +224,18 @@ export function StudioPreviewPane({ preview }: { preview: LivePreviewState }) {
         <div className="flex items-center gap-2">
           <FlaskConical className="text-muted-foreground size-4" />
           <span className="text-sm font-semibold">Live Preview</span>
-          {isPending && <Spinner className="size-3.5" />}
+          {isPending ? (
+            <span className="text-muted-foreground text-2xs flex items-center gap-1">
+              <Spinner className="size-3" />
+              Updating
+            </span>
+          ) : (
+            lastRunAt && (
+              <span className="text-muted-foreground text-2xs tabular-nums">
+                Ran {formatRunTime(lastRunAt)}
+              </span>
+            )
+          )}
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5">
@@ -267,7 +290,27 @@ export function StudioPreviewPane({ preview }: { preview: LivePreviewState }) {
 
           {!useRealShipment && <TestDataEditor values={testValues} onChange={setTestValues} />}
 
-          {!hasResult && (
+          {requestError && (
+            <div
+              role="alert"
+              className="border-destructive/40 bg-destructive/10 flex items-start justify-between gap-3 rounded-lg border px-3 py-2 text-xs"
+            >
+              <div className="space-y-0.5">
+                <p className="text-destructive font-medium">Preview could not run</p>
+                <p className="text-muted-foreground">{requestError}</p>
+                {hasResult && (
+                  <p className="text-muted-foreground text-2xs">
+                    The result below is from the last successful run.
+                  </p>
+                )}
+              </div>
+              <Button type="button" variant="outline" size="xs" onClick={runNow}>
+                Retry
+              </Button>
+            </div>
+          )}
+
+          {!hasResult && !requestError && (
             <div className="text-muted-foreground flex flex-col items-center gap-2 py-8 text-center text-sm">
               <FlaskConical className="size-8 opacity-40" />
               <span>Start typing an expression and the result appears here.</span>
@@ -276,11 +319,13 @@ export function StudioPreviewPane({ preview }: { preview: LivePreviewState }) {
 
           {hasResult && (
             <div
+              aria-busy={isPending}
               className={cn(
-                "overflow-hidden rounded-lg border",
+                "overflow-hidden rounded-lg border transition-opacity",
                 isValid
                   ? "border-emerald-500/30 bg-emerald-500/5"
                   : "border-destructive/30 bg-destructive/5",
+                (isPending || requestError) && "opacity-60",
               )}
             >
               <div

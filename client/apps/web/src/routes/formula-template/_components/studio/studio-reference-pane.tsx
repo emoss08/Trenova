@@ -3,6 +3,7 @@ import type {
   KnownIdentifiers,
   VariableDoc,
 } from "@/components/formula-editor/known-identifiers";
+import { useFormulaSchema } from "@/hooks/use-formula-schema";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -38,6 +39,7 @@ const FUNCTION_CATEGORY_LABELS: Record<string, string> = {
 
 type StudioReferencePaneProps = {
   known: KnownIdentifiers;
+  schemaId: string;
   onInsert: (text: string, cursorOffset?: number) => void;
 };
 
@@ -139,9 +141,10 @@ function FunctionRow({
   );
 }
 
-export function StudioReferencePane({ known, onInsert }: StudioReferencePaneProps) {
+export function StudioReferencePane({ known, schemaId, onInsert }: StudioReferencePaneProps) {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<"variables" | "functions">("variables");
+  const { isError: schemaUnavailable, refetch: refetchSchema } = useFormulaSchema(schemaId);
 
   const query = search.trim().toLowerCase();
 
@@ -186,6 +189,26 @@ export function StudioReferencePane({ known, onInsert }: StudioReferencePaneProp
           <span className="text-sm font-semibold">Reference</span>
           <span className="text-muted-foreground text-2xs ml-auto">Click to insert</span>
         </div>
+        {schemaUnavailable && (
+          <div
+            role="status"
+            className="text-2xs flex items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-amber-800 dark:text-amber-200"
+          >
+            <span>
+              Showing the built-in reference; the live schema could not be loaded, so newer
+              variables may be missing and flagged as unknown.
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              className="h-5 shrink-0"
+              onClick={() => void refetchSchema()}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
         <div className="relative">
           <SearchIcon className="text-muted-foreground absolute top-1/2 left-2 size-3.5 -translate-y-1/2" />
           <Input

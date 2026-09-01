@@ -1,4 +1,5 @@
 import { DEFAULT_TEST_VALUES } from "@/components/formula-editor/test-data-editor";
+import { describeApiError } from "@/lib/api-error-message";
 import { apiService } from "@/services/api";
 import type {
   FormulaTemplateFormValues,
@@ -14,6 +15,10 @@ const PREVIEW_DEBOUNCE_MS = 600;
 export type LivePreviewState = {
   result: TestExpressionResponse | undefined;
   isPending: boolean;
+  /** Set when the preview request itself failed (network, server), as opposed to the expression being invalid. */
+  requestError: string | null;
+  /** Wall-clock time of the last successful preview run. */
+  lastRunAt: number | null;
   testValues: Record<string, unknown>;
   setTestValues: (values: Record<string, unknown>) => void;
   useRealShipment: boolean;
@@ -41,13 +46,15 @@ export function useLivePreview(): LivePreviewState {
   });
   const [useRealShipment, setUseRealShipment] = useState(false);
   const [shipmentId, setShipmentId] = useState("");
+  const [lastRunAt, setLastRunAt] = useState<number | null>(null);
 
-  const { mutate, data, isPending, reset } = useMutation<
+  const { mutate, data, error, isPending, reset } = useMutation<
     TestExpressionResponse,
     Error,
     TestExpressionRequest
   >({
     mutationFn: (request) => apiService.formulaTemplateService.test(request),
+    onSuccess: () => setLastRunAt(Date.now()),
   });
 
   const buildRequest = useCallback((): TestExpressionRequest | null => {
@@ -118,6 +125,8 @@ export function useLivePreview(): LivePreviewState {
   return {
     result: data,
     isPending,
+    requestError: error ? describeApiError(error, "The preview request failed.") : null,
+    lastRunAt,
     testValues,
     setTestValues,
     useRealShipment,
