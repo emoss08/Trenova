@@ -1,5 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { saveDemotesToDraft } from "@/lib/formula-template-material";
+import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { queries } from "@/lib/queries";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { api } from "@trenova/shared/lib/api";
@@ -212,7 +213,7 @@ export function FormulaStudioEditPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => void navigate("/billing/configuration-files/formula-templates")}
+          onClick={() => void navigate(formulaTemplateRoutes.list)}
         >
           Back to Formula Templates
         </Button>

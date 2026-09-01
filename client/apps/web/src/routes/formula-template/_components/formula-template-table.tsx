@@ -7,6 +7,7 @@ import {
   downloadJson,
   getBulkExportFilename,
 } from "@/lib/formula-template-export";
+import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
 import { pluralize } from "@trenova/shared/lib/utils";
@@ -284,10 +285,8 @@ export default function FormulaTemplatesDataTable() {
         enableRowSelection
         dockActions={dockActions}
         contextMenuActions={contextMenuActions}
-        onAddRecord={() => void navigate("/billing/configuration-files/formula-templates/new")}
-        onRowClick={(row) =>
-          void navigate(`/billing/configuration-files/formula-templates/${row.original.id}/edit`)
-        }
+        onAddRecord={() => void navigate(formulaTemplateRoutes.new)}
+        onRowClick={(row) => void navigate(formulaTemplateRoutes.edit(row.original.id))}
         addRecordActions={[
           {
             id: "install-standards",
@@ -330,7 +329,11 @@ export default function FormulaTemplatesDataTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <ImportTemplateDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} />
+      <ImportTemplateDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onImported={(response) => void navigate(importLandingRoute(response))}
+      />
       <DuplicateAlertDialog
         open={isDuplicateDialogOpen}
         onOpenChange={setIsDuplicateDialogOpen}
@@ -383,7 +386,10 @@ export default function FormulaTemplatesDataTable() {
           if (!open) setForkDialogTemplate(null);
         }}
         template={forkDialogTemplate}
-        onForkSuccess={() => setForkDialogTemplate(null)}
+        onForkSuccess={(forked) => {
+          setForkDialogTemplate(null);
+          if (forked.id) void navigate(formulaTemplateRoutes.edit(forked.id));
+        }}
       />
       <ForkLineageDialog
         open={lineageDialogTemplate !== null}
@@ -392,6 +398,10 @@ export default function FormulaTemplatesDataTable() {
         }}
         templateId={lineageDialogTemplate?.id}
         currentTemplateId={lineageDialogTemplate?.id}
+        onNavigateToTemplate={(templateId) => {
+          setLineageDialogTemplate(null);
+          void navigate(formulaTemplateRoutes.edit(templateId));
+        }}
       />
     </>
   );

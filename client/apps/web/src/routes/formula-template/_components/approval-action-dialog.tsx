@@ -9,6 +9,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { describeApiError } from "@/lib/api-error-message";
+import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -117,8 +118,7 @@ export function ApprovalActionDialog({
     },
     onSuccess: () => {
       toast.success(config.successMessage);
-      void queryClient.invalidateQueries({ queryKey: ["formula-template-list"] });
-      void queryClient.invalidateQueries({ queryKey: ["formulaTemplate"] });
+      void invalidateFormulaTemplate(queryClient);
       onOpenChange(false);
     },
     onError: (error) => {

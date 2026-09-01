@@ -1,4 +1,5 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { api } from "@trenova/shared/lib/api";
 import {
@@ -50,11 +51,9 @@ export function FormulaStudioCreatePage() {
       // guard sees a clean form and lets the redirect through.
       form.reset(created as FormulaTemplateFormValues);
       if (created.id) {
-        void navigate(`/billing/configuration-files/formula-templates/${created.id}/edit`, {
-          replace: true,
-        });
+        void navigate(formulaTemplateRoutes.edit(created.id), { replace: true });
       } else {
-        void navigate("/billing/configuration-files/formula-templates");
+        void navigate(formulaTemplateRoutes.list);
       }
     },
     form,

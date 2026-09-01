@@ -4,6 +4,7 @@ import {
 } from "@/components/formula-editor/active-editor";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
+import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
 import { apiService } from "@/services/api";
 import {
   buildTemplateExport,
@@ -23,6 +24,7 @@ import type {
 } from "@trenova/shared/types/formula-template";
 import { useCallback, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ApprovalActionDialog, type ApprovalAction } from "../approval-action-dialog";
 import { ForkLineageDialog } from "../fork-lineage-dialog";
@@ -66,6 +68,7 @@ function FormulaStudioBody({
   onTemplateChanged,
 }: FormulaStudioProps) {
   const form = useFormContext<FormulaTemplateFormValues>();
+  const navigate = useNavigate();
   const editorRef = useRef<ReactCodeMirrorRef>(null);
 
   const [approvalAction, setApprovalAction] = useState<ApprovalAction | null>(null);
@@ -253,7 +256,10 @@ function FormulaStudioBody({
         open={forkDialogOpen}
         onOpenChange={setForkDialogOpen}
         template={template}
-        onForkSuccess={() => setForkDialogOpen(false)}
+        onForkSuccess={(forked) => {
+          setForkDialogOpen(false);
+          if (forked.id) void navigate(formulaTemplateRoutes.edit(forked.id));
+        }}
       />
 
       <ForkLineageDialog
@@ -261,9 +267,17 @@ function FormulaStudioBody({
         onOpenChange={setLineageDialogOpen}
         templateId={template?.id}
         currentTemplateId={template?.id}
+        onNavigateToTemplate={(templateId) => {
+          setLineageDialogOpen(false);
+          void navigate(formulaTemplateRoutes.edit(templateId));
+        }}
       />
 
-      <ImportTemplateDialog open={importDialogOpen} onOpenChange={setImportDialogOpen} />
+      <ImportTemplateDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onImported={(response) => void navigate(importLandingRoute(response))}
+      />
 
       <BacktestSheet
         open={backtestOpen}

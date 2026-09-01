@@ -1,4 +1,5 @@
 import { usePermission } from "@/hooks/use-permission";
+import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { queries } from "@/lib/queries";
 import { formulaTemplateStatusChoices } from "@/lib/choices";
 import { ColorOptionValue } from "@/components/fields/select-components";
@@ -193,7 +194,7 @@ export function StudioHeader({
           type="button"
           variant="ghost"
           size="icon-sm"
-          onClick={() => void navigate("/billing/configuration-files/formula-templates")}
+          onClick={() => void navigate(formulaTemplateRoutes.list)}
         >
           <ArrowLeftIcon className="size-4" />
         </Button>

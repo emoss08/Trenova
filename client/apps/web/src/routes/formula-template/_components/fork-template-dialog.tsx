@@ -16,10 +16,21 @@ import {
   type ForkRequest,
   type FormulaTemplate,
 } from "@trenova/shared/types/formula-template";
+import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+
+/** Form defaults for forking a template; recomputed whenever the target changes. */
+export function forkDefaultsFor(template: FormulaTemplate | null): ForkRequest {
+  return {
+    newName: template ? `${template.name} (Fork)` : "",
+    sourceVersion: template?.currentVersionNumber,
+    changeMessage: "",
+  };
+}
 
 type ForkTemplateDialogProps = {
   open: boolean;
@@ -38,11 +49,7 @@ export function ForkTemplateDialog({
 
   const form = useForm<ForkRequest>({
     resolver: zodResolver(forkRequestSchema),
-    defaultValues: {
-      newName: template ? `${template.name} (Fork)` : "",
-      sourceVersion: template?.currentVersionNumber,
-      changeMessage: "",
-    },
+    defaultValues: forkDefaultsFor(template),
   });
 
   const {
@@ -51,6 +58,14 @@ export function ForkTemplateDialog({
     reset,
     formState: { isSubmitting },
   } = form;
+
+  // The dialog is mounted once and pointed at different templates, so the
+  // defaults captured at mount are the wrong template's by the time it opens.
+  useEffect(() => {
+    if (open) {
+      reset(forkDefaultsFor(template));
+    }
+  }, [open, template, reset]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -67,7 +82,7 @@ export function ForkTemplateDialog({
           description: `Created "${forkedTemplate.name}"`,
         });
 
-        void queryClient.invalidateQueries({ queryKey: ["formula-template-list"] });
+        void invalidateFormulaTemplate(queryClient);
         handleClose();
         onForkSuccess?.(forkedTemplate);
       })
