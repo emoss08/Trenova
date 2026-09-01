@@ -12,10 +12,7 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import type {
-  FormulaTestCase,
-  FormulaTestCaseInput,
-} from "@trenova/shared/types/formula-template";
+import type { FormulaTestCase, FormulaTestCaseInput } from "@trenova/shared/types/formula-template";
 import { FlaskConicalIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -27,13 +24,22 @@ export type ScenarioDraft = {
   tolerance: string;
 };
 
-function draftFromCase(testCase: FormulaTestCase | null): ScenarioDraft {
+/** Inputs and result carried over from a preview the author wants to pin. */
+export type ScenarioPrefill = {
+  variables: Record<string, unknown>;
+  result: number | null;
+};
+
+function draftFromCase(
+  testCase: FormulaTestCase | null,
+  prefill: ScenarioPrefill | null = null,
+): ScenarioDraft {
   if (!testCase) {
     return {
       name: "",
       description: "",
-      variables: {},
-      expectedAmount: "",
+      variables: prefill ? { ...prefill.variables } : {},
+      expectedAmount: prefill?.result != null ? String(prefill.result) : "",
       tolerance: "0.01",
     };
   }
@@ -51,10 +57,9 @@ type ScenarioDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editing: FormulaTestCase | null;
-  currentSample?: {
-    variables: Record<string, unknown>;
-    result: number | null;
-  };
+  /** When creating, start from these inputs and this expected result. */
+  prefill?: ScenarioPrefill | null;
+  currentSample?: ScenarioPrefill;
   isSaving: boolean;
   onSave: (input: FormulaTestCaseInput) => void;
 };
@@ -63,19 +68,20 @@ export function ScenarioDialog({
   open,
   onOpenChange,
   editing,
+  prefill = null,
   currentSample,
   isSaving,
   onSave,
 }: ScenarioDialogProps) {
-  const [draft, setDraft] = useState<ScenarioDraft>(() => draftFromCase(editing));
+  const [draft, setDraft] = useState<ScenarioDraft>(() => draftFromCase(editing, prefill));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
-      setDraft(draftFromCase(editing));
+      setDraft(draftFromCase(editing, prefill));
       setError(null);
     }
-  }, [open, editing]);
+  }, [open, editing, prefill]);
 
   const handleUseCurrentSample = () => {
     if (!currentSample) return;
@@ -137,9 +143,7 @@ export function ScenarioDialog({
                 <Input
                   id="scenario-name"
                   value={draft.name}
-                  onChange={(event) =>
-                    setDraft((prev) => ({ ...prev, name: event.target.value }))
-                  }
+                  onChange={(event) => setDraft((prev) => ({ ...prev, name: event.target.value }))}
                   placeholder="500 mile hazmat load"
                   className="h-8"
                 />

@@ -33,7 +33,9 @@ import { StudioHeader } from "./studio-header";
 import { StudioPreviewPane } from "./studio-preview-pane";
 import { StudioReferencePane } from "./studio-reference-pane";
 import { StudioScenariosPane } from "./studio-scenarios-pane";
+import type { ScenarioPrefill } from "./scenario-dialog";
 import { useLivePreview } from "./use-live-preview";
+import { useLiveScenarios } from "./use-live-scenarios";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
 
@@ -71,6 +73,25 @@ export function FormulaStudio({
 
   const known = useKnownIdentifiers(schemaId || "shipment", customVariables ?? []);
   const preview = useLivePreview();
+  const liveScenarios = useLiveScenarios(template?.id ?? null);
+  const [pinDraft, setPinDraft] = useState<ScenarioPrefill | null>(null);
+
+  const scenarioSummary = liveScenarios.results
+    ? {
+        passed: liveScenarios.results.passed,
+        total: liveScenarios.results.total,
+        isStale: liveScenarios.isStale,
+        isPending: liveScenarios.isPending,
+      }
+    : null;
+
+  const handlePinScenario = useCallback(
+    (sample: { variables: Record<string, unknown>; result: number }) => {
+      setPinDraft({ variables: sample.variables, result: sample.result });
+      setRightTab("scenarios");
+    },
+    [],
+  );
 
   const handleInsert = useCallback((text: string, cursorOffset?: number) => {
     const view = editorRef.current?.view;
@@ -122,6 +143,7 @@ export function FormulaStudio({
         templateName={templateName ?? ""}
         isSubmitting={isSubmitting}
         isDirty={form.formState.isDirty}
+        scenarios={scenarioSummary}
         onSave={onSave}
         onApprovalAction={setApprovalAction}
         onVersionHistory={() => setVersionHistoryOpen(true)}
@@ -165,9 +187,18 @@ export function FormulaStudio({
                 </div>
                 <div className="min-h-0 flex-1">
                   {rightTab === "preview" ? (
-                    <StudioPreviewPane preview={preview} />
+                    <StudioPreviewPane
+                      preview={preview}
+                      onPinScenario={template ? handlePinScenario : undefined}
+                    />
                   ) : (
-                    <StudioScenariosPane templateId={template?.id ?? null} preview={preview} />
+                    <StudioScenariosPane
+                      templateId={template?.id ?? null}
+                      preview={preview}
+                      live={liveScenarios}
+                      pinDraft={pinDraft}
+                      onPinConsumed={() => setPinDraft(null)}
+                    />
                   )}
                 </div>
               </div>

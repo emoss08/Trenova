@@ -17,6 +17,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@trenova/shared/components/ui/hover-card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { cn } from "@trenova/shared/lib/utils";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
@@ -26,6 +28,7 @@ import {
   ClockIcon,
   DownloadIcon,
   FileUpIcon,
+  FlaskConicalIcon,
   GitBranchIcon,
   GitForkIcon,
   HistoryIcon,
@@ -89,12 +92,48 @@ function UsageChip({ templateId }: { templateId: string }) {
   );
 }
 
+export type ScenarioSummary = {
+  passed: number;
+  total: number;
+  isStale: boolean;
+  isPending: boolean;
+};
+
+function ScenarioBadge({ summary }: { summary: ScenarioSummary }) {
+  const allPassing = summary.passed === summary.total;
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Badge
+            variant={allPassing ? "active" : "inactive"}
+            className={cn("gap-1 text-xs", (summary.isStale || summary.isPending) && "opacity-60")}
+          >
+            <FlaskConicalIcon className="size-3" />
+            {summary.passed}/{summary.total}
+          </Badge>
+        }
+      />
+      <TooltipContent>
+        {summary.isPending
+          ? "Re-running scenarios against the editor"
+          : summary.isStale
+            ? "Scenario results are from before your latest edit"
+            : allPassing
+              ? "Every scenario passes against the current content"
+              : `${summary.total - summary.passed} scenario(s) fail; approval is blocked until they pass`}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 type StudioHeaderProps = {
   mode: "create" | "edit";
   template: FormulaTemplate | null;
   templateName: string;
   isSubmitting: boolean;
   isDirty: boolean;
+  scenarios?: ScenarioSummary | null;
   onSave: () => void;
   onApprovalAction: (action: ApprovalAction) => void;
   onVersionHistory: () => void;
@@ -111,6 +150,7 @@ export function StudioHeader({
   templateName,
   isSubmitting,
   isDirty,
+  scenarios,
   onSave,
   onApprovalAction,
   onVersionHistory,
@@ -153,6 +193,7 @@ export function StudioHeader({
                 v{template.currentVersionNumber}
               </Badge>
             )}
+            {scenarios && scenarios.total > 0 && <ScenarioBadge summary={scenarios} />}
             {template?.sourceTemplateId && (
               <button
                 type="button"

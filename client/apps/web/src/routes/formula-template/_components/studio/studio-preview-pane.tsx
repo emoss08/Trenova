@@ -8,6 +8,7 @@ import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { guardNullableField, scopeToFormPath } from "@/components/formula-editor/guard-nullable";
+import { flattenResolvedVariables } from "@/components/formula-editor/resolved-variables";
 import type {
   ExpressionWarning,
   FormulaTemplateFormValues,
@@ -23,6 +24,7 @@ import {
   ChevronRight,
   FlaskConical,
   ListTree,
+  PinIcon,
   PlayIcon,
   ShieldIcon,
   Truck,
@@ -176,21 +178,39 @@ function BreakdownResultTable({ items }: { items: TestBreakdownItem[] }) {
   );
 }
 
-function ResolvedVariablesView({ variables }: { variables: Record<string, unknown> }) {
+function ResolvedVariablesView({
+  variables,
+  onUseValues,
+}: {
+  variables: Record<string, unknown>;
+  onUseValues?: (values: Record<string, unknown>) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const count = Object.keys(variables).length;
 
   return (
     <div className="mt-4 space-y-2">
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase"
-      >
-        {isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-        <Braces className="size-3" />
-        Resolved Variables ({count})
-      </button>
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase"
+        >
+          {isOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+          <Braces className="size-3" />
+          Resolved Variables ({count})
+        </button>
+        {onUseValues && (
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            onClick={() => onUseValues(flattenResolvedVariables(variables))}
+          >
+            Use these values
+          </Button>
+        )}
+      </div>
       {isOpen && (
         <pre className="bg-background/50 max-h-64 overflow-auto rounded-md border p-3 font-mono text-xs whitespace-pre-wrap">
           {JSON.stringify(variables, null, 2)}
@@ -200,7 +220,13 @@ function ResolvedVariablesView({ variables }: { variables: Record<string, unknow
   );
 }
 
-export function StudioPreviewPane({ preview }: { preview: LivePreviewState }) {
+type StudioPreviewPaneProps = {
+  preview: LivePreviewState;
+  /** Offered when a template exists to pin the current inputs and result as a scenario. */
+  onPinScenario?: (sample: { variables: Record<string, unknown>; result: number }) => void;
+};
+
+export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneProps) {
   const {
     result,
     isPending,
@@ -217,6 +243,18 @@ export function StudioPreviewPane({ preview }: { preview: LivePreviewState }) {
 
   const hasResult = result !== undefined;
   const isValid = result?.valid ?? false;
+  const numericResult = typeof result?.result === "number" ? result.result : null;
+
+  const sampleForPin = (): Record<string, unknown> =>
+    useRealShipment && result?.resolvedVariables
+      ? flattenResolvedVariables(result.resolvedVariables)
+      : { ...testValues };
+
+  const adoptResolvedValues = (values: Record<string, unknown>) => {
+    setTestValues(values);
+    setUseRealShipment(false);
+    setShipmentId("");
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -351,6 +389,29 @@ export function StudioPreviewPane({ preview }: { preview: LivePreviewState }) {
                 >
                   {isValid ? "Expression Valid" : "Expression Invalid"}
                 </span>
+                {isValid && numericResult !== null && onPinScenario && (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="xs"
+                          className="ml-auto gap-1"
+                          onClick={() =>
+                            onPinScenario({ variables: sampleForPin(), result: numericResult })
+                          }
+                        >
+                          <PinIcon className="size-3" />
+                          Pin as scenario
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>
+                      Save these inputs and this result as a scenario that must keep passing
+                    </TooltipContent>
+                  </Tooltip>
+                )}
               </div>
 
               <div className="p-4">
@@ -389,7 +450,10 @@ export function StudioPreviewPane({ preview }: { preview: LivePreviewState }) {
                 )}
 
                 {result.resolvedVariables && Object.keys(result.resolvedVariables).length > 0 && (
-                  <ResolvedVariablesView variables={result.resolvedVariables} />
+                  <ResolvedVariablesView
+                    variables={result.resolvedVariables}
+                    onUseValues={useRealShipment ? adoptResolvedValues : undefined}
+                  />
                 )}
               </div>
             </div>

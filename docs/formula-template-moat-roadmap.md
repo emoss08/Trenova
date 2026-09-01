@@ -186,14 +186,14 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 ### 2.2 Scenarios stay live
 
-- [ ] Scenarios run on the same debounce as preview against the editor candidate;
+- [x] Scenarios run on the same debounce as preview against the editor candidate;
       header shows a live `n/m passing` badge (`studio/studio-scenarios-pane.tsx`,
       `studio/studio-header.tsx`)
-- [ ] Results are marked stale (not cleared) when the expression changes and re-run
+- [x] Results are marked stale (not cleared) when the expression changes and re-run
       automatically after add/edit/delete
-- [ ] "Pin as scenario" button on a green preview card, prefilled from the current
+- [x] "Pin as scenario" button on a green preview card, prefilled from the current
       sample and result (`studio/studio-preview-pane.tsx`)
-- [ ] "Use these values" on the resolved-variables view of a real-shipment preview
+- [x] "Use these values" on the resolved-variables view of a real-shipment preview
       copies them into test data or a new scenario
 
 ### 2.3 Readiness checklist gates Submit and Approve
