@@ -357,11 +357,13 @@ Every rating carries a trace that a non-programmer can read.
 
 ### 3.6 Backtest drill-in
 
-- [ ] Rows link to the shipment; summary counts guardrail clamps and evaluation
-      failures; CSV export
-- [ ] Version picker is a dropdown from `listVersions` with tags and dates, not a
+- [x] Rows link to the shipment; summary counts guardrail clamps and evaluation
+      failures; CSV export (summary gains `guardrailCount`, `currentErrorCount`,
+      `candidateErrorCount`; Pro # opens the shipment panel; Export CSV writes every row
+      with amounts, delta, clamp flag, and both error columns)
+- [x] Version picker is a dropdown from `listVersions` with tags and dates, not a
       free number (`formula-template-backtest-tab.tsx`)
-- [ ] Backtest sheet shows a skeleton while lazy-loading (`backtest-sheet.tsx`)
+- [x] Backtest sheet shows a skeleton while lazy-loading (`backtest-sheet.tsx`)
 
 ---
 

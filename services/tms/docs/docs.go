@@ -47988,10 +47988,16 @@ const docTemplate = `{
         "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.BacktestSummary": {
             "type": "object",
             "properties": {
+                "candidateErrorCount": {
+                    "type": "integer"
+                },
                 "candidateTotal": {
                     "type": "number"
                 },
                 "changedCount": {
+                    "type": "integer"
+                },
+                "currentErrorCount": {
                     "type": "integer"
                 },
                 "currentTotal": {
@@ -48004,6 +48010,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "evaluatedCount": {
+                    "type": "integer"
+                },
+                "guardrailCount": {
                     "type": "integer"
                 },
                 "increasedCount": {

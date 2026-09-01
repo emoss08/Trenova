@@ -50,18 +50,21 @@ type BacktestResult struct {
 // backtest calls them current and candidate while a rate simulation calls them
 // before and after. The arithmetic is shared; only the words differ.
 type BacktestSummary struct {
-	ShipmentCount  int             `json:"shipmentCount"`
-	EvaluatedCount int             `json:"evaluatedCount"`
-	ChangedCount   int             `json:"changedCount"`
-	IncreasedCount int             `json:"increasedCount"`
-	DecreasedCount int             `json:"decreasedCount"`
-	ErrorCount     int             `json:"errorCount"`
-	CurrentTotal   decimal.Decimal `json:"currentTotal"`
-	CandidateTotal decimal.Decimal `json:"candidateTotal"`
-	TotalDelta     decimal.Decimal `json:"totalDelta"`
-	TotalDeltaPct  decimal.Decimal `json:"totalDeltaPct"`
-	MaxIncrease    decimal.Decimal `json:"maxIncrease"`
-	MaxDecrease    decimal.Decimal `json:"maxDecrease"`
+	ShipmentCount       int             `json:"shipmentCount"`
+	EvaluatedCount      int             `json:"evaluatedCount"`
+	ChangedCount        int             `json:"changedCount"`
+	IncreasedCount      int             `json:"increasedCount"`
+	DecreasedCount      int             `json:"decreasedCount"`
+	ErrorCount          int             `json:"errorCount"`
+	CurrentErrorCount   int             `json:"currentErrorCount"`
+	CandidateErrorCount int             `json:"candidateErrorCount"`
+	GuardrailCount      int             `json:"guardrailCount"`
+	CurrentTotal        decimal.Decimal `json:"currentTotal"`
+	CandidateTotal      decimal.Decimal `json:"candidateTotal"`
+	TotalDelta          decimal.Decimal `json:"totalDelta"`
+	TotalDeltaPct       decimal.Decimal `json:"totalDeltaPct"`
+	MaxIncrease         decimal.Decimal `json:"maxIncrease"`
+	MaxDecrease         decimal.Decimal `json:"maxDecrease"`
 }
 
 type BacktestResponse struct {
@@ -368,29 +371,43 @@ func shipmentRatingDate(entity *shipment.Shipment) int64 {
 
 func buildBacktestSummary(results []*BacktestResult) BacktestSummary {
 	var acc ratesimulation.Accumulator
+	var currentErrors, candidateErrors, clamps int
 
 	for _, result := range results {
+		failed := result.CurrentError != "" || result.CandidateError != ""
 		acc.Add(ratesimulation.Delta{
 			Before: result.CurrentAmount,
 			After:  result.CandidateAmount,
-			Failed: result.CurrentError != "" || result.CandidateError != "",
+			Failed: failed,
 		})
+		if result.CurrentError != "" {
+			currentErrors++
+		}
+		if result.CandidateError != "" {
+			candidateErrors++
+		}
+		if result.GuardrailApplied && !failed {
+			clamps++
+		}
 	}
 
 	shared := acc.Summary()
 
 	return BacktestSummary{
-		ShipmentCount:  shared.ShipmentCount,
-		EvaluatedCount: shared.EvaluatedCount,
-		ChangedCount:   shared.ChangedCount,
-		IncreasedCount: shared.IncreasedCount,
-		DecreasedCount: shared.DecreasedCount,
-		ErrorCount:     shared.ErrorCount,
-		CurrentTotal:   shared.BeforeTotal,
-		CandidateTotal: shared.AfterTotal,
-		TotalDelta:     shared.TotalDelta,
-		TotalDeltaPct:  shared.TotalDeltaPct,
-		MaxIncrease:    shared.MaxIncrease,
-		MaxDecrease:    shared.MaxDecrease,
+		ShipmentCount:       shared.ShipmentCount,
+		EvaluatedCount:      shared.EvaluatedCount,
+		ChangedCount:        shared.ChangedCount,
+		IncreasedCount:      shared.IncreasedCount,
+		DecreasedCount:      shared.DecreasedCount,
+		ErrorCount:          shared.ErrorCount,
+		CurrentErrorCount:   currentErrors,
+		CandidateErrorCount: candidateErrors,
+		GuardrailCount:      clamps,
+		CurrentTotal:        shared.BeforeTotal,
+		CandidateTotal:      shared.AfterTotal,
+		TotalDelta:          shared.TotalDelta,
+		TotalDeltaPct:       shared.TotalDeltaPct,
+		MaxIncrease:         shared.MaxIncrease,
+		MaxDecrease:         shared.MaxDecrease,
 	}
 }

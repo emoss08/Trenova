@@ -550,3 +550,26 @@ func TestListStandards_ExposesTheCatalog(t *testing.T) {
 		assert.NotEmpty(t, standard.Type)
 	}
 }
+
+func TestBuildBacktestSummary_CountsClampsAndFailuresSeparately(t *testing.T) {
+	t.Parallel()
+
+	results := []*BacktestResult{
+		{
+			CurrentAmount:    decimal.NewFromInt(100),
+			CandidateAmount:  decimal.NewFromInt(150),
+			GuardrailApplied: true,
+		},
+		{CurrentAmount: decimal.NewFromInt(100), CandidateAmount: decimal.NewFromInt(100)},
+		{CurrentError: "no rating detail"},
+		{CandidateError: "boom", GuardrailApplied: true},
+		{CurrentError: "x", CandidateError: "y"},
+	}
+
+	summary := buildBacktestSummary(results)
+
+	assert.Equal(t, 1, summary.GuardrailCount, "clamps count only on rows that evaluated")
+	assert.Equal(t, 2, summary.CurrentErrorCount)
+	assert.Equal(t, 2, summary.CandidateErrorCount)
+	assert.Equal(t, 3, summary.ErrorCount)
+}

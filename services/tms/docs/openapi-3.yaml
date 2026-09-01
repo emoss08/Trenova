@@ -11314,9 +11314,13 @@ components:
             type: object
         github_com_emoss08_trenova_internal_core_services_formulatemplateservice.BacktestSummary:
             properties:
+                candidateErrorCount:
+                    type: integer
                 candidateTotal:
                     type: number
                 changedCount:
+                    type: integer
+                currentErrorCount:
                     type: integer
                 currentTotal:
                     type: number
@@ -11325,6 +11329,8 @@ components:
                 errorCount:
                     type: integer
                 evaluatedCount:
+                    type: integer
+                guardrailCount:
                     type: integer
                 increasedCount:
                     type: integer
