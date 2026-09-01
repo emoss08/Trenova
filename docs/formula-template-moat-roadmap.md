@@ -331,10 +331,13 @@ Every rating carries a trace that a non-programmer can read.
 
 ### 3.4 Breakdown reconciliation
 
-- [ ] Preview shows Σ breakdown vs total and an "unallocated" residual row
-- [ ] Warning when guardrails clamped the total but breakdown lines still sum to the
-      raw amount; optional "scale lines to clamped total" setting on the template
-- [ ] Breakdown row errors map back to the matching mini-editor as inline
+- [x] Preview shows Σ breakdown vs total and an "unallocated" residual row
+- [x] Warning when guardrails clamped the total but breakdown lines still sum to the
+      raw amount. The optional "scale lines to clamped total" template setting is
+      deferred: it is a rating-behaviour change (a new template field and a
+      migration) rather than a display fix, and belongs with a decision on
+      whether invoices should show scaled or raw lines
+- [x] Breakdown row errors map back to the matching mini-editor as inline
       diagnostics
 
 ### 3.5 Library and starters

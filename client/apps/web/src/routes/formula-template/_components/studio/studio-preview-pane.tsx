@@ -9,6 +9,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { guardNullableField, scopeToFormPath } from "@/components/formula-editor/guard-nullable";
 import { shortcutHint } from "@/components/formula-editor/studio-shortcuts";
+import {
+  breakdownErrorsByPath,
+  reconcileBreakdown,
+} from "@/components/formula-editor/breakdown-reconcile";
 import { ReceiptView } from "@/components/formula-editor/receipt-view";
 import { flattenResolvedVariables } from "@/components/formula-editor/resolved-variables";
 import type {
@@ -32,7 +36,7 @@ import {
   Truck,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormContext, useWatch, type Path } from "react-hook-form";
 import type { LivePreviewState } from "./use-live-preview";
 
@@ -144,7 +148,27 @@ function formatRunTime(timestamp: number): string {
   return RUN_TIME_FORMAT.format(new Date(timestamp));
 }
 
-function BreakdownResultTable({ items }: { items: TestBreakdownItem[] }) {
+function BreakdownResultTable({
+  items,
+  total,
+  rawAmount,
+  guardrailApplied,
+}: {
+  items: TestBreakdownItem[];
+  total: number | null;
+  rawAmount: number | null;
+  guardrailApplied: boolean;
+}) {
+  const reconciliation =
+    total !== null
+      ? reconcileBreakdown({
+          total,
+          rawAmount: rawAmount ?? total,
+          guardrailApplied,
+          lines: items,
+        })
+      : null;
+
   return (
     <div className="mt-4 space-y-2">
       <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
@@ -175,7 +199,40 @@ function BreakdownResultTable({ items }: { items: TestBreakdownItem[] }) {
             )}
           </div>
         ))}
+        {reconciliation && (
+          <div
+            className={cn(
+              "bg-muted/40 flex items-center justify-between gap-3 border-t px-3 py-1.5 text-xs",
+              !reconciliation.balanced && "text-amber-700 dark:text-amber-300",
+            )}
+          >
+            <span className="font-medium">
+              {reconciliation.balanced
+                ? "Lines explain the total"
+                : reconciliation.residual > 0
+                  ? "Unallocated"
+                  : "Lines exceed the total"}
+              {reconciliation.failedCount > 0 &&
+                ` · ${reconciliation.failedCount} line${reconciliation.failedCount === 1 ? "" : "s"} failed`}
+            </span>
+            <span className="font-mono tabular-nums">
+              {reconciliation.balanced
+                ? formatCurrency(reconciliation.sum)
+                : `${formatCurrency(reconciliation.sum)} of ${formatCurrency(total ?? 0)} · ${formatCurrency(Math.abs(reconciliation.residual))}`}
+            </span>
+          </div>
+        )}
       </div>
+      {reconciliation?.clampMismatch && (
+        <div className="flex items-start gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
+          <ShieldIcon className="mt-0.5 size-3 shrink-0" />
+          <span>
+            A guardrail moved the total to {formatCurrency(total ?? 0)}, but the lines still add up
+            to the raw {formatCurrency(rawAmount ?? 0)}. An invoice built from these lines would not
+            match the charge.
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -229,9 +286,10 @@ type StudioPreviewPaneProps = {
 };
 
 export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneProps) {
-  const { control } = useFormContext<FormulaTemplateFormValues>();
+  const { control, setError, clearErrors } = useFormContext<FormulaTemplateFormValues>();
   const schemaId = useWatch({ control, name: "schemaId" }) || "shipment";
   const customVariables = useWatch({ control, name: "variableDefinitions" }) ?? [];
+  const breakdownDefinitions = useWatch({ control, name: "breakdownDefinitions" });
   const {
     result,
     isPending,
@@ -249,6 +307,22 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
   const hasResult = result !== undefined;
   const isValid = result?.valid ?? false;
   const numericResult = typeof result?.result === "number" ? result.result : null;
+
+  // A breakdown line that fails belongs under its own editor, not only in
+  // the result card. Errors set here are cleared here, and only here.
+  const ownedErrorPaths = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const next = breakdownErrorsByPath(result?.breakdown ?? [], breakdownDefinitions ?? []);
+    for (const path of ownedErrorPaths.current) {
+      if (!(path in next)) {
+        clearErrors(path as Path<FormulaTemplateFormValues>);
+      }
+    }
+    for (const [path, message] of Object.entries(next)) {
+      setError(path as Path<FormulaTemplateFormValues>, { type: "preview", message });
+    }
+    ownedErrorPaths.current = new Set(Object.keys(next));
+  }, [result, breakdownDefinitions, setError, clearErrors]);
 
   const sampleForPin = (): Record<string, unknown> =>
     useRealShipment && result?.resolvedVariables
@@ -455,7 +529,12 @@ export function StudioPreviewPane({ preview, onPinScenario }: StudioPreviewPaneP
                 )}
 
                 {isValid && result.breakdown && result.breakdown.length > 0 && (
-                  <BreakdownResultTable items={result.breakdown} />
+                  <BreakdownResultTable
+                    items={result.breakdown}
+                    total={numericResult}
+                    rawAmount={result.receipt?.rawAmount ?? result.guardrail?.rawAmount ?? null}
+                    guardrailApplied={result.guardrail?.applied ?? false}
+                  />
                 )}
 
                 {isValid && result.warnings && result.warnings.length > 0 && (
