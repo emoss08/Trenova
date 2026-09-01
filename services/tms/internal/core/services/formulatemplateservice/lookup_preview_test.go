@@ -332,3 +332,116 @@ func TestTestExpression_GuardedNullableFieldHasNoWarning(t *testing.T) {
 	require.True(t, result.Valid, result.Error)
 	assert.Empty(t, result.Warnings)
 }
+
+func readinessByKey(resp *ReadinessResponse) map[string]ReadinessCheck {
+	byKey := make(map[string]ReadinessCheck, len(resp.Checks))
+	for _, check := range resp.Checks {
+		byKey[check.Key] = check
+	}
+	return byKey
+}
+
+func TestReadiness_FailingScenarioBlocksBothSteps(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusInReview
+	template.Expression = "totalDistance * 2"
+	submitter := pulid.MustNew("usr_")
+	template.SubmittedByID = &submitter
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.testCaseRepo.cases = []*formulatemplate.TestCase{
+		newTestCase("doubles distance", 200, 0.01),
+		newTestCase("wrong expectation", 999, 0.01),
+	}
+
+	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+
+	require.NoError(t, err)
+	assert.False(t, resp.CanSubmit)
+	assert.False(t, resp.CanApprove)
+	assert.Equal(t, 2, resp.ScenarioTotal)
+	assert.Equal(t, 1, resp.ScenarioPassed)
+	assert.Equal(t, []string{"wrong expectation"}, resp.ScenarioFailing)
+
+	checks := readinessByKey(resp)
+	assert.Equal(t, ReadinessFail, checks[ReadinessCheckScenarios].Status)
+	assert.Equal(t, ReadinessPass, checks[ReadinessCheckReviewer].Status)
+}
+
+func TestReadiness_SubmitterCannotApproveButOthersCan(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	tenant := newTenantInfo()
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusInReview
+	template.Expression = "totalDistance * 2"
+	template.SubmittedByID = &tenant.UserID
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.testCaseRepo.cases = []*formulatemplate.TestCase{newTestCase("ok", 200, 0.01)}
+
+	asSubmitter, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
+		TenantInfo: tenant,
+		TemplateID: template.ID,
+	})
+	require.NoError(t, err)
+	assert.False(t, asSubmitter.CanApprove)
+	assert.Equal(t, ReadinessFail, readinessByKey(asSubmitter)[ReadinessCheckReviewer].Status)
+
+	other := newTenantInfo()
+	asReviewer, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
+		TenantInfo: other,
+		TemplateID: template.ID,
+	})
+	require.NoError(t, err)
+	assert.True(t, asReviewer.CanApprove)
+	assert.False(t, asReviewer.CanSubmit, "an in-review template is not submittable")
+}
+
+func TestReadiness_WarnsAboutUnguardedFieldsAndMissingDescription(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusDraft
+	template.Description = ""
+	template.Expression = "weight * 0.5"
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+
+	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+
+	require.NoError(t, err)
+	assert.True(t, resp.CanSubmit, "warnings do not block")
+	checks := readinessByKey(resp)
+	assert.Equal(t, ReadinessWarn, checks[ReadinessCheckNullables].Status)
+	assert.Contains(t, checks[ReadinessCheckNullables].Detail, "weight")
+	assert.Equal(t, ReadinessWarn, checks[ReadinessCheckDescription].Status)
+	assert.Equal(t, ReadinessWarn, checks[ReadinessCheckScenarios].Status)
+}
+
+func TestReadiness_BrokenExpressionBlocks(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Status = formulatemplate.StatusDraft
+	template.Expression = "totalDistance +* 2"
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+
+	resp, err := deps.svc.Readiness(t.Context(), &ReadinessRequest{
+		TenantInfo: newTenantInfo(),
+		TemplateID: template.ID,
+	})
+
+	require.NoError(t, err)
+	assert.False(t, resp.CanSubmit)
+	assert.Equal(t, ReadinessFail, readinessByKey(resp)[ReadinessCheckExpression].Status)
+}

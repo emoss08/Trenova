@@ -47,6 +47,10 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.approvalImpact(templateId),
   }),
+  readiness: (templateId: FormulaTemplate["id"]) => ({
+    queryKey: [templateId],
+    queryFn: async () => apiService.formulaTemplateService.readiness(templateId),
+  }),
 });
 
 export async function invalidateFormulaTemplate(queryClient: QueryClient): Promise<void> {

@@ -3017,3 +3017,37 @@ func TestFormulaTemplateHandler_TestExpression_ReportsRounding(t *testing.T) {
 	assert.Equal(t, "Up", rounding["mode"])
 	assert.Equal(t, true, rounding["applied"])
 }
+
+func TestFormulaTemplateHandler_Readiness_DraftWithoutScenarios(t *testing.T) {
+	t.Parallel()
+
+	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusDraft)
+	handler := setupHandler(t, repo, &mockVersionRepo{})
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/formula-templates/" + ftID.String() + "/readiness").
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, true, resp["canSubmit"])
+	assert.Equal(t, false, resp["canApprove"], "a draft cannot be approved")
+
+	checks, ok := resp["checks"].([]any)
+	require.True(t, ok)
+	byKey := make(map[string]map[string]any, len(checks))
+	for _, item := range checks {
+		check, isMap := item.(map[string]any)
+		require.True(t, isMap)
+		byKey[check["key"].(string)] = check
+	}
+	assert.Equal(t, "pass", byKey["expression"]["status"])
+	assert.Equal(t, "warn", byKey["scenarios"]["status"])
+	assert.Equal(t, "warn", byKey["description"]["status"])
+}

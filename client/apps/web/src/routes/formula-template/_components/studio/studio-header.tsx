@@ -213,16 +213,32 @@ export function StudioHeader({
         {mode === "edit" &&
           (template?.status === "Draft" || template?.status === "Inactive") &&
           canSubmit && (
-            <Button
-              type="button"
-              variant="outline"
-              size="xs"
-              className="gap-1.5"
-              onClick={() => onApprovalAction("submit")}
-            >
-              <SendIcon className="size-3" />
-              {template?.status === "Inactive" ? "Reactivate via Review" : "Submit for Review"}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      className="gap-1.5"
+                      disabled={isDirty}
+                      onClick={() => onApprovalAction("submit")}
+                    >
+                      <SendIcon className="size-3" />
+                      {template?.status === "Inactive"
+                        ? "Reactivate via Review"
+                        : "Submit for Review"}
+                    </Button>
+                  </span>
+                }
+              />
+              <TooltipContent>
+                {isDirty
+                  ? "Save your changes first; review always covers what is saved"
+                  : "Send the saved content to a reviewer"}
+              </TooltipContent>
+            </Tooltip>
           )}
         {mode === "edit" && template?.status === "InReview" && (
           <>

@@ -16,6 +16,7 @@ import { CheckIcon, SendIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ApprovalImpactPanel } from "./approval-impact-panel";
+import { ReadinessPanel } from "./readiness-panel";
 
 export type ApprovalAction = "submit" | "approve" | "reject";
 
@@ -85,14 +86,19 @@ export function ApprovalActionDialog({
   const [comment, setComment] = useState("");
   const [showCommentError, setShowCommentError] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  // null while the check is loading; true when the server says go, or when
+  // the check itself failed and the server must be the judge.
+  const [ready, setReady] = useState<boolean | null>(null);
   const config = ACTION_CONFIG[action];
   const Icon = config.icon;
+  const gated = action === "submit" || action === "approve";
 
   useEffect(() => {
     if (!open) {
       setComment("");
       setShowCommentError(false);
       setServerError(null);
+      setReady(null);
     }
   }, [open]);
 
@@ -141,7 +147,7 @@ export function ApprovalActionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={action === "approve" ? "sm:max-w-[520px]" : "sm:max-w-[420px]"}>
+      <DialogContent className={action === "reject" ? "sm:max-w-[420px]" : "sm:max-w-[520px]"}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="size-4" />
@@ -150,6 +156,10 @@ export function ApprovalActionDialog({
           </DialogTitle>
           <DialogDescription>{config.description}</DialogDescription>
         </DialogHeader>
+
+        {gated && open && template?.id && (
+          <ReadinessPanel templateId={template.id} step={action} onReadinessChange={setReady} />
+        )}
 
         {action === "approve" && open && template?.id && (
           <ApprovalImpactPanel templateId={template.id} />
@@ -200,6 +210,7 @@ export function ApprovalActionDialog({
             onClick={handleConfirm}
             isLoading={mutation.isPending}
             loadingText={config.loadingLabel}
+            disabled={gated && ready === false}
           >
             {config.confirmLabel}
           </Button>

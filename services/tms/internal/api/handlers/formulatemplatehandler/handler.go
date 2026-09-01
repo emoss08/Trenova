@@ -97,6 +97,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	idGroup.POST("/reject", requireReject, h.reject)
 	idGroup.POST("/backtest", requireAuthoring, h.backtest)
 	idGroup.POST("/impact", requireRead, h.approvalImpact)
+	idGroup.GET("/readiness", requireRead, h.readiness)
 	idGroup.GET("/test-cases", requireRead, h.listTestCases)
 	idGroup.POST("/test-cases", requireUpdate, h.createTestCase)
 	idGroup.PUT("/test-cases/:testCaseID", requireUpdate, h.updateTestCase)
@@ -1727,6 +1728,45 @@ func (h *Handler) approvalImpact(c *gin.Context) {
 			},
 			TemplateID: templateID,
 			Limit:      req.Limit,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// @Summary Report whether a formula template is ready to submit or approve
+// @ID formulaTemplateReadiness
+// @Tags Formula Templates
+// @Produce json
+// @Param templateID path string true "Formula template ID"
+// @Success 200 {object} formulatemplateservice.ReadinessResponse
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/{templateID}/readiness [get]
+func (h *Handler) readiness(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	response, err := h.service.Readiness(
+		c.Request.Context(),
+		&formulatemplateservice.ReadinessRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			TemplateID: templateID,
 		},
 	)
 	if err != nil {

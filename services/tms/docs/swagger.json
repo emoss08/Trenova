@@ -16130,6 +16130,52 @@
             },
             "type": "object"
         },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReadinessCheck": {
+            "properties": {
+                "detail": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReadinessResponse": {
+            "properties": {
+                "canApprove": {
+                    "type": "boolean"
+                },
+                "canSubmit": {
+                    "type": "boolean"
+                },
+                "checks": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReadinessCheck"
+                    },
+                    "type": "array"
+                },
+                "scenarioFailing": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "scenarioPassed": {
+                    "type": "integer"
+                },
+                "scenarioTotal": {
+                    "type": "integer"
+                }
+            },
+            "type": "object"
+        },
         "github_com_emoss08_trenova_internal_core_services_formulatemplateservice.RunTestCasesRequest": {
             "properties": {
                 "candidate": {
@@ -31936,6 +31982,58 @@
                     }
                 ],
                 "summary": "Get formula template lineage",
+                "tags": [
+                    "Formula Templates"
+                ]
+            }
+        },
+        "/formula-templates/{templateID}/readiness": {
+            "get": {
+                "operationId": "formulaTemplateReadiness",
+                "parameters": [
+                    {
+                        "description": "Formula template ID",
+                        "in": "path",
+                        "name": "templateID",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_services_formulatemplateservice.ReadinessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Report whether a formula template is ready to submit or approve",
                 "tags": [
                     "Formula Templates"
                 ]

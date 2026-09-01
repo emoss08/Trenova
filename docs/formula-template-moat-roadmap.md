@@ -198,13 +198,13 @@ then fails on a shipment with no weight, blocking the shipment save.
 
 ### 2.3 Readiness checklist gates Submit and Approve
 
-- [ ] `ReadinessPanel` computed client-side: lint clean, preview valid, scenarios
-      passing, no unsaved changes, description present, rate tables resolvable,
-      submitter ≠ current user for Approve (new
-      `studio/readiness-panel.tsx`)
-- [ ] Submit button disabled while dirty with a tooltip explaining why; Approve
+- [x] `ReadinessPanel` (`_components/readiness-panel.tsx`) renders the server's
+      checks (review state, independent reviewer, expression + rate tables,
+      description, unguarded optional fields, scenarios) so the list can never
+      disagree with the gate
+- [x] Submit button disabled while dirty with a tooltip explaining why; Approve
       dialog shows the checklist above the impact panel
-- [ ] Server-side `GET /:id/readiness` returning the same checks so the list page
+- [x] Server-side `GET /:id/readiness` returning the same checks so the list page
       and notifications can use it (`formulatemplateservice/readiness.go`,
       handler route)
 

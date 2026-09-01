@@ -2,6 +2,8 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   backtestResponseSchema,
+  readinessResponseSchema,
+  type ReadinessResponse,
   explainFormulaResponseSchema,
   forkLineageSchema,
   formulaSchemaResponseSchema,
@@ -385,5 +387,11 @@ export class FormulaTemplateService {
     });
 
     return safeParse(backtestResponseSchema, response, "Approval Impact");
+  }
+
+  public async readiness(templateId: FormulaTemplate["id"]): Promise<ReadinessResponse> {
+    const response = await api.get<ReadinessResponse>(`/formula-templates/${templateId}/readiness`);
+
+    return safeParse(readinessResponseSchema, response, "Formula Template Readiness");
   }
 }

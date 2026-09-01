@@ -836,6 +836,24 @@ export type TestCaseCandidate = {
   roundingPrecision?: number;
 };
 
+export const readinessCheckSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  status: z.enum(["pass", "warn", "fail"]),
+  detail: z.string().optional(),
+});
+export type ReadinessCheck = z.output<typeof readinessCheckSchema>;
+
+export const readinessResponseSchema = z.object({
+  canSubmit: z.boolean(),
+  canApprove: z.boolean(),
+  checks: z.array(readinessCheckSchema),
+  scenarioTotal: z.number(),
+  scenarioPassed: z.number(),
+  scenarioFailing: z.array(z.string()).nullish(),
+});
+export type ReadinessResponse = z.output<typeof readinessResponseSchema>;
+
 export const installStandardsResponseSchema = z.object({
   installed: listFormulaTemplateResponseSchema,
   skipped: z
